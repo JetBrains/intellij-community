@@ -26,7 +26,7 @@ class GradleDaemonJvmCriteriaView(
   private val versionsDropdownList: IntRange,
   private val vendorDropdownList: List<String>,
   private val displayAdvancedSettings: Boolean,
-  private val disposable: Disposable
+  disposable: Disposable,
 ): JPanel(VerticalLayout(0)) {
 
   val selectedCriteria: GradleDaemonJvmCriteria
@@ -53,59 +53,61 @@ class GradleDaemonJvmCriteriaView(
   @get:VisibleForTesting
   lateinit var vendorComboBox: ComboBox<String>
 
-  init {
-    val gradleJvmView = panel {
+  private val component = panel {
+    row {
+      comment(GradleBundle.message("gradle.settings.text.daemon.toolchain.title")).applyToComponent {
+        font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
+        foreground = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)
+      }
+    }
+    row {
+      label(GradleBundle.message("gradle.settings.text.daemon.toolchain.version"))
+      versionComboBox = comboBox(versionsDropdownList.map { it.toString() }.reversed(), textListCellRenderer { it })
+        .columns(COLUMNS_SHORT)
+        .cellValidation {
+          addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
+          addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
+        }
+        .applyToComponent {
+          selectAnyValue(initialVersion)
+        }.component
+    }
+    collapsibleGroup(ApplicationBundle.message("title.advanced.settings")) {
       row {
-        comment(GradleBundle.message("gradle.settings.text.daemon.toolchain.title")).applyToComponent {
+        label(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor"))
+        vendorComboBox = comboBox(listOf(ANY_VENDOR_PLACEHOLDER, CUSTOM_VENDOR_PLACEHOLDER) + vendorDropdownList, textListCellRenderer { it })
+          .columns(COLUMNS_SHORT)
+          .onChanged {
+            if (it.selectedItem == CUSTOM_VENDOR_PLACEHOLDER) {
+              it.selectAnyValue("", true)
+            }
+            else {
+              it.isEditable = false
+            }
+          }
+          .cellValidation {
+            addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
+            addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
+          }
+          .applyToComponent {
+            selectAnyValue(initialVendor)
+          }.component
+      }
+      row {
+        comment(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.hint")).applyToComponent {
           font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
           foreground = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)
         }
       }
-      row {
-        label(GradleBundle.message("gradle.settings.text.daemon.toolchain.version"))
-        versionComboBox = comboBox(versionsDropdownList.map { it.toString() }.reversed(), textListCellRenderer { it })
-          .columns(COLUMNS_SHORT)
-          .cellValidation {
-            addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
-            addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
-          }
-          .applyToComponent {
-            selectAnyValue(initialVersion)
-          }.component
-      }
-      collapsibleGroup(ApplicationBundle.message("title.advanced.settings")) {
-        row {
-          label(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor"))
-          vendorComboBox = comboBox(listOf(ANY_VENDOR_PLACEHOLDER, CUSTOM_VENDOR_PLACEHOLDER) + vendorDropdownList, textListCellRenderer { it })
-            .columns(COLUMNS_SHORT)
-            .onChanged {
-              if (it.selectedItem == CUSTOM_VENDOR_PLACEHOLDER) {
-                it.selectAnyValue("", true)
-              } else {
-                it.isEditable = false
-              }
-            }
-            .cellValidation {
-              addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
-              addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
-            }
-            .applyToComponent {
-              selectAnyValue(initialVendor)
-            }.component
-        }
-        row {
-          comment(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.hint")).applyToComponent {
-            font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
-            foreground = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)
-          }
-        }
-      }.topGap(TopGap.NONE)
-        .visible(displayAdvancedSettings)
-    }.apply {
-      registerValidators(disposable)
-      validateAll()
-    }
-    add(gradleJvmView)
+    }.topGap(TopGap.NONE)
+      .visible(displayAdvancedSettings)
+  }
+
+  init {
+    component.registerValidators(disposable)
+    component.validateAll()
+
+    add(component)
   }
 
   fun applySelection() {
