@@ -1,7 +1,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.ide.DataManager
-import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.SwingClientProperty
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory

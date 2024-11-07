@@ -1,6 +1,6 @@
 package com.intellij.notebooks.visualization.outputs.impl
 
-import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.outputs.hoveredCollapsingComponentRect
 import com.intellij.notebooks.visualization.r.inlays.ResizeController
 import com.intellij.openapi.actionSystem.ActionManager

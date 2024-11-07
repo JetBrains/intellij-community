@@ -4,6 +4,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.notebooks.ui.jupyterToolbar.JupyterAboveCellToolbarService
 import com.intellij.notebooks.ui.jupyterToolbar.JupyterAddNewCellToolbar
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
