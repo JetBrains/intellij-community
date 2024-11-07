@@ -721,8 +721,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       }
 
       override fun isSelected(e: AnActionEvent): Boolean {
-        val newRange = findRange(range)
-        return (newRange as LocalRange).changelistId == changelist.id
+        val newRange = findRange(range) ?: return false
+        newRange as? LocalRange ?: return false
+        return newRange.changelistId == changelist.id
       }
 
       override fun setSelected(e: AnActionEvent, state: Boolean) {
