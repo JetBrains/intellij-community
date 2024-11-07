@@ -1,81 +1,60 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.ui.tree.render;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.debugger.ui.tree.render
 
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.FullValueEvaluatorProvider;
-import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.execution.filters.ExceptionFilter;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.sun.jdi.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.engine.FullValueEvaluatorProvider
+import com.intellij.debugger.engine.JavaValue.JavaFullValueEvaluator
+import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
+import com.intellij.execution.filters.ExceptionFilter
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.xdebugger.frame.XFullValueEvaluator
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
 
-import java.util.Collections;
+internal class StackTraceElementObjectRenderer : CompoundRendererProvider() {
+  override fun getName(): String = "StackTraceElement"
 
-final class StackTraceElementObjectRenderer extends CompoundRendererProvider {
-  private static final Logger LOG = Logger.getInstance(StackTraceElementObjectRenderer.class);
+  override fun getClassName(): String = "java.lang.StackTraceElement"
 
-  @Override
-  protected String getName() {
-    return "StackTraceElement";
-  }
+  override fun isEnabled(): Boolean = true
 
-  @Override
-  protected String getClassName() {
-    return "java.lang.StackTraceElement";
-  }
+  override fun getFullValueEvaluatorProvider(): FullValueEvaluatorProvider {
+    return object : FullValueEvaluatorProvider {
+      override fun getFullValueEvaluator(evaluationContext: EvaluationContextImpl, valueDescriptor: ValueDescriptorImpl): XFullValueEvaluator? {
+        val value = valueDescriptor.value as? ObjectReference ?: return null
+        return object : JavaFullValueEvaluator(JavaDebuggerBundle.message("message.node.navigate"), evaluationContext) {
+          override fun isShowValuePopup(): Boolean = false
 
-  @Override
-  protected boolean isEnabled() {
-    return true;
-  }
-
-  @Override
-  protected FullValueEvaluatorProvider getFullValueEvaluatorProvider() {
-    return (evaluationContext, valueDescriptor) -> new JavaValue.JavaFullValueEvaluator(JavaDebuggerBundle.message("message.node.navigate"),
-                                                                                        evaluationContext) {
-      @Override
-      public void evaluate(@NotNull XFullValueEvaluationCallback callback) {
-        Value value = valueDescriptor.getValue();
-        ClassType type = ((ClassType)value.type());
-        Method toString = DebuggerUtils.findMethod(type, "toString", "()Ljava/lang/String;");
-        if (toString != null) {
-          try {
-            Value res =
-              evaluationContext.getDebugProcess()
-                .invokeMethod(evaluationContext, (ObjectReference)value, toString, Collections.emptyList());
-            if (res instanceof StringReference) {
-              callback.evaluated("");
-              final String line = ((StringReference)res).value();
-              ApplicationManager.getApplication().runReadAction(() -> {
-                Project project = valueDescriptor.getProject();
-                ExceptionFilter filter = new ExceptionFilter(project, evaluationContext.getDebugProcess().getSession().getSearchScope());
-                Filter.Result result = filter.applyFilter(line, line.length());
-                if (result != null) {
-                  final HyperlinkInfo info = result.getFirstHyperlinkInfo();
-                  if (info != null) {
-                    DebuggerUIUtil.invokeLater(() -> info.navigate(project));
+          override fun evaluate(callback: XFullValueEvaluationCallback) {
+            try {
+              val res = DebuggerUtilsImpl.invokeObjectMethod(evaluationContext, value, "toString", "()Ljava/lang/String;", emptyList())
+              if (res is StringReference) {
+                callback.evaluated("")
+                val line = res.value()
+                ReadAction.run<Throwable> {
+                  val project = valueDescriptor.project
+                  val filter = ExceptionFilter(project, evaluationContext.debugProcess.session.searchScope)
+                  val result = filter.applyFilter(line, line.length)
+                  if (result != null) {
+                    val info = result.getFirstHyperlinkInfo()
+                    if (info != null) {
+                      DebuggerUIUtil.invokeLater { info.navigate(project) }
+                    }
                   }
                 }
-              });
+              }
             }
-          }
-          catch (EvaluateException e) {
-            LOG.info("Exception while getting stack info", e);
+            catch (e: EvaluateException) {
+              logger<StackTraceElementObjectRenderer>().info("Exception while getting stack info", e)
+            }
           }
         }
       }
-
-      @Override
-      public boolean isShowValuePopup() {
-        return false;
-      }
-    };
+    }
   }
 }
