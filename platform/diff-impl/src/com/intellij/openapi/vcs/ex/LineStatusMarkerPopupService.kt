@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.codeInsight.hint.EditorHintListener
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -125,6 +128,7 @@ internal class LineStatusMarkerPopupService {
       trackCaretPosition(editor, popupDisposable, hint)
       trackScrolling(editor, popupDisposable, hint)
       trackMouseClick(editor, popupDisposable, hint)
+      trackEditorLookup(editor, popupDisposable, hint)
     }
 
     private fun trackFileEditorChange(popupDisposable: Disposable, hint: LightweightHint) {
@@ -186,6 +190,21 @@ internal class LineStatusMarkerPopupService {
           hint.hide()
         }
       }, popupDisposable)
+    }
+
+    private fun trackEditorLookup(editor: Editor, popupDisposable: Disposable, hint: LightweightHint) {
+      val project = editor.project
+      if (project != null) LookupManager.hideActiveLookup(project) // reset current
+
+      ApplicationManager.getApplication().getMessageBus().connect(popupDisposable)
+        .subscribe(EditorHintListener.TOPIC, object : EditorHintListener {
+          override fun hintShown(sourceEditor: Editor, editorHint: LightweightHint, flags: Int, hintInfo: HintHint) {
+            if (sourceEditor !== editor) return
+            if (editorHint is Lookup) {
+              hint.hide()
+            }
+          }
+        })
     }
 
     @JvmStatic
