@@ -17,11 +17,11 @@ import com.intellij.vcs.commit.DefaultCommitMessagePolicy
 import com.intellij.vcs.commit.DefaultCommitMessagePolicy.CommitMessageController
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
-import git4idea.GitDisposable
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryFiles.MERGE_MSG
 import git4idea.repo.GitRepositoryStateChangeListener
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -29,57 +29,44 @@ internal class GitMergeCommitMessagePolicy: DefaultCommitMessagePolicy {
   override fun enabled(project: Project): Boolean = getSingleGitRepository(project) != null
 
   override fun getMessage(project: Project): CommitMessage? = GitMergeCommitMessageHolder.getInstance(project).getMessage()
-    ?.let { GitMergeCommitMessage(it) }
 
   override fun initAsyncMessageUpdate(project: Project, controller: CommitMessageController, disposable: Disposable) {
     LOG.debug("Git merge commit message listener initialized")
-    GitMergeCommitMessageHolder.getInstance(project).subscribe(disposable, controller)
+    GitMergeCommitMessageChangedListener.subscribeController(project, controller, disposable)
   }
 }
 
 internal class GitMergeCommitMessageActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    AsyncVfsEventsPostProcessor.getInstance().addListener(
-      GitMergeCommitMessageHolder.getInstance(project),
-      GitDisposable.getInstance(project).coroutineScope
-    )
-
-    // Repository update events arrive faster than VFS refresh events.
-    // However, merge message file content might still be missing
-    project.messageBus.connect(GitDisposable.Companion.getInstance(project))
-      .subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
-        override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
-          if (getSingleGitRepository(project) == null) return
-
-          GitDisposable.getInstance(project).coroutineScope.launch {
-            GitMergeCommitMessageHolder.getInstance(project).tryUpdateMergeCommitMessage(repository)
-          }
-        }
-      })
+    GitMergeCommitMessageHolder.getInstance(project).initListeners()
   }
 }
 
 @Service(Service.Level.PROJECT)
-internal class GitMergeCommitMessageHolder(private val project: Project) : AsyncVfsEventsListener {
+internal class GitMergeCommitMessageHolder(
+  private val project: Project,
+  val coroutineScope: CoroutineScope,
+) : AsyncVfsEventsListener, GitRepositoryStateChangeListener {
+
   private var currentMessage: String? = null
 
-  fun getMessage(): String? = currentMessage
+  fun getMessage(): GitMergeCommitMessage? = currentMessage?.let { GitMergeCommitMessage(it) }
 
-  fun subscribe(disposable: Disposable, controller: CommitMessageController) {
-    project.messageBus.connect(disposable).subscribe(GitMergeCommitMessageChangedListener.TOPIC, object : GitMergeCommitMessageChangedListener {
-      override fun messageUpdated(message: String?) {
-        runInEdt {
-          if (message == null) {
-            LOG.info("Merge commit message is irrelevant. Trying to restore previous message")
-            controller.tryRestoreCommitMessage()
-          }
-          else {
-            LOG.info("Merge commit message is set")
-            controller.setCommitMessage(GitMergeCommitMessage(message))
-          }
-        }
-      }
-    })
+  fun initListeners() {
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
+
+    // Repository update events arrive faster than VFS refresh events.
+    // However, merge message file content might still be missing
+    val busConnection = project.messageBus.connect(coroutineScope)
+    busConnection.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, this)
+  }
+
+  override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
+    if (getSingleGitRepository(project) == null) return
+
+    coroutineScope.launch {
+      tryUpdateMergeCommitMessage(repository)
+    }
   }
 
   override suspend fun filesChanged(events: List<VFileEvent>) {
@@ -112,7 +99,7 @@ internal class GitMergeCommitMessageHolder(private val project: Project) : Async
 
     if (newMessage != currentMessage) {
       currentMessage = newMessage
-      project.messageBus.syncPublisher<GitMergeCommitMessageChangedListener>(GitMergeCommitMessageChangedListener.TOPIC).messageUpdated(newMessage)
+      project.messageBus.syncPublisher(GitMergeCommitMessageChangedListener.TOPIC).messageUpdated(newMessage)
     }
   }
 
@@ -128,6 +115,24 @@ private interface GitMergeCommitMessageChangedListener {
     @Topic.ProjectLevel
     val TOPIC: Topic<GitMergeCommitMessageChangedListener> =
       Topic(GitMergeCommitMessageChangedListener::class.java, Topic.BroadcastDirection.NONE, true)
+
+    fun subscribeController(project: Project, controller: CommitMessageController, disposable: Disposable) {
+      val busConnection = project.messageBus.connect(disposable)
+      busConnection.subscribe(TOPIC, object : GitMergeCommitMessageChangedListener {
+        override fun messageUpdated(message: String?) {
+          runInEdt {
+            if (message == null) {
+              LOG.info("Merge commit message is irrelevant. Trying to restore previous message")
+              controller.tryRestoreCommitMessage()
+            }
+            else {
+              LOG.info("Merge commit message is set")
+              controller.setCommitMessage(GitMergeCommitMessage(message))
+            }
+          }
+        }
+      })
+    }
   }
 }
 
