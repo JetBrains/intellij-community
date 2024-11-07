@@ -1745,12 +1745,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
         }
+        // Assign to handle escaping if necessary
         addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
-      addInstruction(new JvmPushInstruction(var, null, true));
-      push(arrayType, expression);
-      addInstruction(new AssignInstruction(originalExpression, var));
+      if (ControlFlow.isTempVariable(var)) {
+        addInstruction(new JvmPushInstruction(var, null, true));
+        push(arrayType, expression);
+        addInstruction(new AssignInstruction(null, var));
+      } else {
+        push(arrayType, expression);
+      }
     }
   }
 
