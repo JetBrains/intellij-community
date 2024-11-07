@@ -8,6 +8,8 @@ MAX_COLWIDTH = 100000
 ONE_DIM, TWO_DIM, WITH_TYPES = range(3)
 NP_ROWS_TYPE = "int64"
 
+CSV_FORMAT_SEPARATOR = '~'
+
 is_pd = False
 try:
     import pandas as pd
@@ -53,7 +55,7 @@ def get_data(arr, use_csv_serialization, start_index=None, end_index=None, forma
         return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True))
 
     def convert_data_to_csv(data):
-        return repr(_create_table(data, start_index, end_index, format).to_csv(na_rep = "None", float_format=format, sep="~"))
+        return repr(_create_table(data, start_index, end_index, format).to_csv(na_rep = "None", float_format=format, sep=CSV_FORMAT_SEPARATOR))
 
     if use_csv_serialization:
         computed_data = _compute_data(arr, convert_data_to_csv, format)
@@ -74,7 +76,7 @@ def display_data_html(arr, start_index=None, end_index=None):
 def display_data_csv(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
     def ipython_display(data):
-        print(_create_table(data, start_index, end_index).to_csv(na_rep = "None", sep="~"))
+        print(_create_table(data, start_index, end_index).to_csv(na_rep = "None", sep=CSV_FORMAT_SEPARATOR))
 
     _compute_data(arr, ipython_display)
 
@@ -170,7 +172,7 @@ class _NpTable:
         return html
 
 
-    def to_csv(self, na_rep = "None", float_format=None, sep='~'):
+    def to_csv(self, na_rep = "None", float_format=None, sep=CSV_FORMAT_SEPARATOR):
         csv_stream = io.StringIO()
         np_array_without_nones = np.where(self.array == None, np.nan, self.array)
         if float_format is None or float_format == 'null':
@@ -188,18 +190,18 @@ class _NpTable:
         csv_rows = csv_string.split('\n')
         csv_rows_with_index = []
         for row_index in range(self.array.shape[0]):
-            csv_rows_with_index.append(str(row_index) + "~" + csv_rows[row_index])
+            csv_rows_with_index.append(str(row_index) + CSV_FORMAT_SEPARATOR + csv_rows[row_index])
         return "\n".join(csv_rows_with_index)
 
     def _collect_col_names_csv(self):
         if self.type == ONE_DIM:
-            return "~0"
+            return f'{CSV_FORMAT_SEPARATOR}0'
 
         if self.type == WITH_TYPES:
-            return "~" + "~".join(['{}'.format(name) for name in self.array.dtype.names])
+            return CSV_FORMAT_SEPARATOR + CSV_FORMAT_SEPARATOR.join(['{}'.format(name) for name in self.array.dtype.names])
 
         # TWO_DIM
-        return "~" + "~".join(['{}'.format(i) for i in range(self.array.shape[1])])
+        return CSV_FORMAT_SEPARATOR + CSV_FORMAT_SEPARATOR.join(['{}'.format(i) for i in range(self.array.shape[1])])
 
 
     def slice(self, start_index=None, end_index=None):

@@ -6,6 +6,7 @@ MAX_COLWIDTH = 100000
 pl_version_major, pl_version_minor, _ = pl.__version__.split(".")
 pl_version_major, pl_version_minor = int(pl_version_major), int(pl_version_minor)
 COUNT_COL_NAME = "counts" if pl_version_major == 0 and pl_version_minor < 20 else "count"
+CSV_FORMAT_SEPARATOR = '~'
 
 
 def get_type(table):
@@ -46,12 +47,12 @@ def __write_to_csv(table, null_value="null", float_precision=None):
             return str(value)
 
     lines = []
-    lines.append("~".join(table.columns))
+    lines.append(CSV_FORMAT_SEPARATOR.join(table.columns))
     for row in table.rows():
         line = []
         for value in row:
             line.append(serialize_nested(value, null_value, float_precision))
-        lines.append("~".join(line))
+        lines.append(CSV_FORMAT_SEPARATOR.join(line))
     return "\n".join(lines)
 
 
