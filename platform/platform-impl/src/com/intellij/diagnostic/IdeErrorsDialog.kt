@@ -2,7 +2,6 @@
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
-import com.intellij.diagnostic.IdeErrorsDialog.ReportAction.entries
 import com.intellij.diagnostic.MessagePool.TooManyErrorsException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -30,7 +29,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectTypeService
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.LoadingDecorator
 import com.intellij.openapi.ui.Messages
@@ -312,14 +313,14 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     }
   }
 
-  override fun createLeftSideActions(): Array<Action> {
-    if (myProject != null && !myProject.isDefault && PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))) {
-      ActionManager.getInstance().getAction("Unscramble")?.let {
-        return arrayOf(AnalyzeAction(it))
+  override fun createLeftSideActions(): Array<Action> =
+    ActionManager.getInstance().getAction("Unscramble")
+      ?.takeIf {
+        IntelliJProjectUtil.isIntelliJPlatformProject(myProject) ||
+        ProjectTypeService.getProjectTypes(myProject).any { it.id == "INTELLIJ_PLUGIN" }  // `DevKitProjectTypeProvider.IDE_PLUGIN_PROJECT`
       }
-    }
-    return emptyArray()
-  }
+      ?.let { arrayOf(AnalyzeAction(it)) }
+    ?: emptyArray()
 
   override fun getDimensionServiceKey(): String? = "IDE.errors.dialog"
 
