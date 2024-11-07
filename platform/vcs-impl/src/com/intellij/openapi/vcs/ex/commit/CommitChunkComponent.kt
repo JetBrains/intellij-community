@@ -63,6 +63,8 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
     override fun actionPerformed(e: AnActionEvent) {
       executorEventDispatcher.multicaster.executorCalled(null)
     }
+  }.apply {
+    registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), this@CommitChunkPanel, this@CommitChunkPanel)
   }
 
   private val amendCommitToggle = object : ToggleAction(VcsBundle.message("checkbox.amend") , null, PlatformVcsImplIcons.AmendInline) {
