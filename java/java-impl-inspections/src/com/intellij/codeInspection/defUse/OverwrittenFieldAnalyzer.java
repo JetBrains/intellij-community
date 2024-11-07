@@ -1,217 +1,158 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
-import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.*;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Analyze overwritten fields based on DFA-CFG (unlike usual CFG, it includes method calls, so we can know when field value may leak)
  */
 final class OverwrittenFieldAnalyzer {
-  private final Instruction[] myInstructions;
-  private final MultiMap<Instruction, Instruction> myForwardMap;
-  private final MultiMap<Instruction, Instruction> myBackwardMap;
-  private final DfaValueFactory myFactory;
-
-  OverwrittenFieldAnalyzer(ControlFlow flow) {
-    myFactory = flow.getFactory();
-    myInstructions = flow.getInstructions();
-    myForwardMap = calcForwardMap();
-    myBackwardMap = calcBackwardMap();
-  }
-
-  @NotNull
-  private StreamEx<DfaVariableValue> getReadVariables(Instruction instruction) {
-    if (instruction instanceof JvmPushInstruction && !((JvmPushInstruction)instruction).isReferenceWrite()) {
-      DfaValue value = ((PushInstruction)instruction).getValue();
-      if (value instanceof DfaVariableValue) {
-        return StreamEx.of((DfaVariableValue)value);
-      }
-    }
-    else if (instruction instanceof PushValueInstruction &&
-             ((PushValueInstruction)instruction).getDfaAnchor() instanceof JavaEndOfInstanceInitializerAnchor) {
-      return StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class)
-        .filter(var -> var.getPsiVariable() instanceof PsiMember);
-    }
-    return StreamEx.empty();
-  }
-
-  private boolean isInterestingInstruction(Instruction instruction) {
-    if (instruction == myInstructions[0]) return true;
-    if (!instruction.isLinear()) return true;
-
-    if (instruction instanceof AssignInstruction && ((AssignInstruction)instruction).getAssignedValue() instanceof DfaVariableValue ||
-        instruction instanceof MethodCallInstruction ||
-        instruction instanceof FinishElementInstruction ||
-        instruction instanceof FlushFieldsInstruction) {
-      return true;
-    }
-    return getReadVariables(instruction).findFirst().isPresent();
-  }
-
-  Set<AssignInstruction> getOverwrittenFields() {
-    // Contains instructions where overwrite without read is detected
-    // Initially: all assignment instructions; during DFA traverse, some are removed
-    Set<AssignInstruction> overwrites = StreamEx.of(myInstructions).select(AssignInstruction.class).toSet();
-    if (overwrites.isEmpty()) return Collections.emptySet();
-    Set<AssignInstruction> visited = new HashSet<>();
-    List<Instruction> entryPoints = StreamEx.of(myInstructions).select(ControlTransferInstruction.class)
-      .filter(cti -> cti.getTransfer().getTarget().getPossibleTargets().length == 0)
-      .collect(Collectors.toList());
-
-    Deque<InstructionState> queue = new ArrayDeque<>(10);
-    for (Instruction i : entryPoints) {
-      queue.addLast(new InstructionState(i, new BitSet()));
-    }
-
-    int limit = myForwardMap.size() * 100;
-    Map<BitSet, IntSet> processed = new HashMap<>();
-    int steps = 0;
-    while (!queue.isEmpty()) {
-      if (steps > limit) {
-        return Set.of();
-      }
-      if (steps % 1024 == 0) {
-        ProgressManager.checkCanceled();
-      }
-      InstructionState state = queue.removeFirst();
-      Collection<Instruction> nextInstructions = myBackwardMap.get(state.instruction);
-      BitSet nextVars = handleState(state.instruction, state.nextVars, visited, overwrites);
-      for (Instruction next : nextInstructions) {
-        IntSet instructionSet = processed.computeIfAbsent(nextVars, k -> new IntOpenHashSet());
-        int index = next.getIndex() + 1;
-        if (!instructionSet.contains(index)) {
-          instructionSet.add(index);
-          queue.addLast(new InstructionState(next, nextVars));
-          steps++;
-        }
-      }
-    }
-    overwrites.retainAll(visited);
-    return overwrites;
-  }
-  
-  private BitSet handleState(Instruction instruction, BitSet beforeVars, Set<AssignInstruction> visited, Set<AssignInstruction> overwrites) {
-    // beforeVars: IDs of variables that were written but not read yet
-    if (beforeVars.isEmpty() && !(instruction instanceof AssignInstruction)) return beforeVars;
-    if (instruction instanceof FlushFieldsInstruction) {
-      return new BitSet();
-    }
-    BitSet afterVars = (BitSet)beforeVars.clone();
-    boolean skipDependent = false;
-    StreamEx<DfaVariableValue> readVariables;
-    if (instruction instanceof AssignInstruction assignInstruction) {
-      visited.add(assignInstruction);
-      DfaValue value = assignInstruction.getAssignedValue();
-      if (value instanceof DfaVariableValue var) {
-        int id = value.getID();
-        readVariables = StreamEx.of(var.getDependentVariables());
-        if (!beforeVars.get(id)) {
-          overwrites.remove(instruction);
-          afterVars.set(id);
-        }
-      } else {
-        readVariables = StreamEx.empty();
-      }
-      skipDependent = true;
-    }
-    else if (instruction instanceof MethodCallInstruction callInstruction) {
-      if (!callInstruction.getMutationSignature().isPure()) {
-        return new BitSet();
-      }
-      // We assume that pure methods may read only static fields and fields which are passed as parameters (directly or by qualifier).
-      // This might be incorrect in rare cases but allows finding many useful bugs.
-      readVariables = StreamEx.of(myFactory.getValues())
-        .select(DfaVariableValue.class)
-        .filter(value -> value.getPsiVariable() instanceof PsiField field &&
-                         field.hasModifierProperty(PsiModifier.STATIC));
-    }
-    else {
-      readVariables = getReadVariables(instruction);
-    }
-    if (instruction instanceof PushInstruction pushInstruction) {
-      // Avoid forgetting about qualifier.field on qualifier.field = x;
-      DfaAnchor anchor = pushInstruction.getDfaAnchor();
-      PsiExpression expression = anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : null;
-      skipDependent = expression != null && PsiUtil.skipParenthesizedExprUp(expression).getParent() instanceof PsiReferenceExpression
-                    && ExpressionUtils.getCallForQualifier(expression) == null;
-    }
-    if (!skipDependent) {
-      readVariables = readVariables.flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct();
-    }
-    readVariables.forEach(v -> afterVars.clear(v.getID()));
-    return afterVars;
-  }
-
-  private List<Instruction> getSuccessors(Instruction ins) {
-    return IntStreamEx.of(ins.getSuccessorIndexes()).elements(myInstructions).toList();
-  }
-
-  private MultiMap<Instruction, Instruction> calcBackwardMap() {
-    MultiMap<Instruction, Instruction> result = MultiMap.create();
-    for (Instruction instruction : myInstructions) {
-      for (Instruction next : myForwardMap.get(instruction)) {
-        result.putValue(next, instruction);
-      }
-    }
-    return result;
-  }
-
-  private MultiMap<Instruction, Instruction> calcForwardMap() {
-    MultiMap<Instruction, Instruction> result = MultiMap.create();
-    for (Instruction instruction : myInstructions) {
-      if (isInterestingInstruction(instruction)) {
-        for (Instruction next : getSuccessors(instruction)) {
-          while (true) {
-            if (isInterestingInstruction(next)) {
-              result.putValue(instruction, next);
-              break;
-            }
-            if (next.getIndex() + 1 >= myInstructions.length) {
-              break;
-            }
-            next = myInstructions[next.getIndex() + 1];
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  static @NotNull Set<AssignInstruction> getOverwrittenFields(@Nullable ControlFlow flow) {
+  static @NotNull Set<DfaAnchor> getOverwrittenFields(@Nullable ControlFlow flow) {
     if (flow == null) return Set.of();
     if (!ContainerUtil.exists(flow.getInstructions(), i -> i instanceof AssignInstruction ai &&
                                                            ai.getAssignedValue() instanceof DfaVariableValue var &&
                                                            var.getPsiVariable() instanceof PsiField)) {
       return Set.of();
     }
-    return new OverwrittenFieldAnalyzer(flow).getOverwrittenFields();
+    DfaValueFactory factory = flow.getFactory();
+    FieldAnalysisListener listener = new FieldAnalysisListener(factory);
+    new StandardDataFlowInterpreter(flow, listener) {
+      @Override
+      protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
+        if (instructionState.getInstruction() instanceof ReturnInstruction) {
+          DfaMemoryState state = instructionState.getMemoryState();
+          for (DfaValue value : factory.getValues()) {
+            if (value instanceof DfaVariableValue var && var.getDescriptor() == WriteNotReadDescriptor.INSTANCE) {
+              DfaAnchor anchor = state.getDfType(var).getConstantOfType(DfaAnchor.class);
+              if (anchor != null) {
+                listener.myAnchors.remove(anchor);
+              }
+            }
+          }
+          return DfaInstructionState.EMPTY_ARRAY;
+        }
+        return super.acceptInstruction(instructionState);
+      }
+    }.interpret(new JvmDfaMemoryStateImpl(factory));
+    return listener.myAnchors;
   }
 
-  private record InstructionState(Instruction instruction, BitSet nextVars) {
+  private static class DfAnchorConstantType extends DfConstantType<DfaAnchor> {
+    protected DfAnchorConstantType(DfaAnchor value) {
+      super(value);
+    }
+
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      return this.equals(other) ? this : TOP;
+    }
+
+    @Override
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+      return this.equals(other) ? this : null;
+    }
+  }
+
+  private static class WriteNotReadDescriptor implements VariableDescriptor {
+    private static final WriteNotReadDescriptor INSTANCE = new WriteNotReadDescriptor();
+
+    @Override
+    public boolean isStable() {
+      return false;
+    }
+
+    @Override
+    public boolean isCall() {
+      return true;
+    }
+
+    @Override
+    public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+      return DfType.TOP;
+    }
+
+    @Override
+    public String toString() {
+      return "writtenAt";
+    }
+  }
+
+  private static class FieldAnalysisListener implements DfaListener {
+    private final DfaValueFactory myFactory;
+    private final Set<DfaAnchor> myAnchors;
+
+    private FieldAnalysisListener(DfaValueFactory factory) {
+      myFactory = factory;
+      myAnchors = new HashSet<>();
+    }
+
+    @Override
+    public void beforePush(@NotNull DfaValue @NotNull [] args,
+                           @NotNull DfaValue value,
+                           @NotNull DfaAnchor anchor,
+                           @NotNull DfaMemoryState state) {
+      if (value instanceof DfaVariableValue var && var.getPsiVariable() instanceof PsiField) {
+        if (anchor instanceof JavaExpressionAnchor exprAnchor &&
+            (ExpressionUtils.isVoidContext(exprAnchor.getExpression()) ||
+             exprAnchor.getExpression() instanceof PsiAssignmentExpression ||
+             PsiUtil.isIncrementDecrementOperation(exprAnchor.getExpression()))) {
+          return;
+        }
+        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(WriteNotReadDescriptor.INSTANCE, var);
+        state.flushVariable(wnr);
+      }
+    }
+
+    @Override
+    public void beforeAssignment(@NotNull DfaValue source,
+                                 @NotNull DfaValue dest,
+                                 @NotNull DfaMemoryState state,
+                                 @Nullable DfaAnchor anchor) {
+      if (dest instanceof DfaVariableValue var && var.getPsiVariable() instanceof PsiField && anchor != null) {
+        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(WriteNotReadDescriptor.INSTANCE, var);
+        DfaAnchor oldAnchor = state.getDfType(wnr).getConstantOfType(DfaAnchor.class);
+        if (oldAnchor != null) {
+          myAnchors.add(oldAnchor);
+        }
+      }
+    }
+
+    @Override
+    public void afterAssignment(@NotNull DfaValue source,
+                                 @NotNull DfaValue dest,
+                                 @NotNull DfaMemoryState state,
+                                 @Nullable DfaAnchor anchor) {
+      if (dest instanceof DfaVariableValue var && var.getPsiVariable() instanceof PsiField && anchor != null) {
+        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(WriteNotReadDescriptor.INSTANCE, var);
+        state.flushVariable(wnr);
+        state.meetDfType(wnr, new DfAnchorConstantType(anchor));
+      }
+    }
   }
 }
 

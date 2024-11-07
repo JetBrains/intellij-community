@@ -12,6 +12,11 @@ public class FieldOverwrite {
     data = new int[] {10, 20, 30, 40};
   }
 
+  void twiceAssignment() {
+    val = <warning descr="The value '1' assigned to 'val' is never used">val</warning> = 1;
+    val2 = <warning descr="The value '2' assigned to 'val2' is never used">val2</warning> += 2;
+  }
+
   void increment() {
     <warning descr="The value changed at 'val++' is never used">val++</warning>;
     val=2;
@@ -22,6 +27,48 @@ public class FieldOverwrite {
   void use() {
     val = 1;
     val = calc(2);
+  }
+  
+  void branches(boolean b) {
+    val = 1;
+    if (b) {
+      val = 2;
+    }
+  }
+
+  void branches2(boolean b) {
+    <warning descr="The value '1' assigned to 'val' is never used">val</warning> = 1;
+    if (b) {
+      val = 2;
+    } else {
+      val = 3;
+    }
+  }
+  
+  void diamondBranches(boolean b) {
+    if (b) {
+      <warning descr="The value '2' assigned to 'val' is never used">val</warning> = 2;
+    } else {
+      <warning descr="The value '2' assigned to 'val2' is never used">val2</warning> = 2;
+    }
+    if (b) {
+      val = 3;
+    } else {
+      val2 = 3;
+    }
+  }
+
+  void diamondBranchesOk(boolean b) {
+    if (b) {
+      val = 2;
+    } else {
+      val2 = 2;
+    }
+    if (!b) {
+      val = 3;
+    } else {
+      val2 = 3;
+    }
   }
 
   int calc(int x) {
