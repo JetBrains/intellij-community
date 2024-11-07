@@ -171,6 +171,10 @@ internal class LineStatusMarkerPopupService {
     private fun trackScrolling(editor: Editor, popupDisposable: Disposable, hint: LightweightHint) {
       editor.getScrollingModel().addVisibleAreaListener(object : VisibleAreaListener {
         override fun visibleAreaChanged(e: VisibleAreaEvent) {
+          val old = e.oldRectangle
+          val new = e.newRectangle
+          if (old != null && old.x == new.x && old.y == new.y) return
+
           hint.hide()
         }
       }, popupDisposable)
