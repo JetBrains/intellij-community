@@ -11,6 +11,7 @@ import java.nio.file.Path
 
 object GradleDaemonJvmCriteriaViewFactory {
 
+  @JvmStatic
   fun createView(externalProjectPath: Path, gradleVersion: GradleVersion, disposable: Disposable): GradleDaemonJvmCriteriaView {
     val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
     return GradleDaemonJvmCriteriaView(

@@ -85,7 +85,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   private final @NotNull GradleProjectSettings myInitialSettings;
 
-  private final @NotNull Alarm myAlarm = new Alarm();
+  private final @NotNull Disposable myDisposable = Disposer.newDisposable("IdeaGradleProjectSettingsControlBuilder.myDisposable");
+
+  private final @NotNull Alarm myAlarm = new Alarm(myDisposable);
 
   /**
    * The target {@link Project} reference of the UI control.
@@ -270,7 +272,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Override
   public void disposeUIResources() {
     ExternalSystemUiUtil.disposeUi(this);
-    Disposer.dispose(myAlarm);
+    Disposer.dispose(myDisposable);
   }
 
   /**
@@ -740,8 +742,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         myGradleJvmWrapper.remove(myGradleDaemonJvmCriteriaView);
       }
 
-      myGradleDaemonJvmCriteriaView = GradleDaemonJvmCriteriaViewFactory.INSTANCE.createView(
-        Path.of(gradleProjectSettings.getExternalProjectPath()), gradleProjectSettings.resolveGradleVersion(), myProjectRefDisposable);
+      var projectPath = Path.of(gradleProjectSettings.getExternalProjectPath());
+      var gradleVersion = gradleProjectSettings.resolveGradleVersion();
+      myGradleDaemonJvmCriteriaView = GradleDaemonJvmCriteriaViewFactory.createView(projectPath, gradleVersion, myDisposable);
       myGradleJvmWrapper.add(myGradleDaemonJvmCriteriaView, BorderLayout.CENTER);
     }
   }
