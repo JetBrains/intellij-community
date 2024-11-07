@@ -223,7 +223,21 @@ object ChangeTypeQuickFixFactories {
             val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
-            registerExpressionTypeFixes(expression, expectedType, actualType)
+
+            val declaration = if (expression is KtReferenceExpression) {
+                expression.mainReference.resolve() as? KtCallableDeclaration
+            } else {
+                null
+            }
+
+            buildList {
+                declaration?.let {
+                    add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(expectedType)))
+                }
+                addAll(
+                    registerExpressionTypeFixes(expression, expectedType, actualType)
+                )
+            }
         }
 
     @OptIn(KaExperimentalApi::class)

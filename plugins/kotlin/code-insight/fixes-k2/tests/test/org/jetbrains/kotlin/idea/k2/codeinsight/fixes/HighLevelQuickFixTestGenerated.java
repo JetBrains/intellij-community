@@ -5241,6 +5241,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeWhenValueParameterListIsAbsent.kt");
         }
 
+        @TestMetadata("changeVariableType1.kt")
+        public void testChangeVariableType1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeVariableType1.kt");
+        }
+
+        @TestMetadata("changeVariableType2.kt")
+        public void testChangeVariableType2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/changeVariableType2.kt");
+        }
+
         @TestMetadata("compareToTypeMismatch.kt")
         public void testCompareToTypeMismatch() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/compareToTypeMismatch.kt");
