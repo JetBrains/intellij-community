@@ -17,12 +17,11 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
-import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -79,7 +78,7 @@ public final class ColorAndFontDescriptionPanel extends JPanel implements Option
 
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
     myEffectsCombo.setModel(new CollectionComboBoxModel<>(new ArrayList<>(myEffectsMap.keySet())));
-    myEffectsCombo.setRenderer(SimpleListCellRenderer.create(IdeBundle.message("label.invalid.color"), Functions.id()));
+    myEffectsCombo.setRenderer(BuilderKt.textListCellRenderer(IdeBundle.message("label.invalid.color"), s -> s) );
 
     ActionListener actionListener = e -> {
       if (myUiEventsEnabled) {

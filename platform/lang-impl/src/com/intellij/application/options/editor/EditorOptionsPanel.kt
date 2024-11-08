@@ -46,7 +46,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -426,11 +425,11 @@ internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorO
         row(message("combobox.next.error.action.goes.to.label")) {
           comboBox(
             DefaultComboBoxModel(arrayOf(true, false)),
-            renderer = SimpleListCellRenderer.create("") {
+            renderer = textListCellRenderer {
               when (it) {
                 true -> message("combobox.next.error.action.goes.to.errors")
                 false -> message("combobox.next.error.action.goes.to.all.problems")
-                else -> it.toString()
+                null -> ""
               }
             }
           ).bindItem(codeAnalyzerSettings::isNextErrorActionGoesToErrorsFirst
