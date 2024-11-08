@@ -72,6 +72,10 @@ private data class GotItPromoHtmlPage(val htmlText: String, val htmlPageSize: Di
   override val width: Int get() = htmlPageSize.width
 }
 
+private data class GotItPromoComponent(val component: Component): GotItPromoContent {
+  override val width: Int? get() = component.preferredSize.width
+}
+
 @ApiStatus.Internal
 class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   constructor(text: @Nls String) : this({ text })
@@ -120,6 +124,17 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     this.text = InlineCodeExtension.patchCodeTags(withPatchedShortcuts)
     this.linkActionsMap = builder.getLinkActions()
     this.iconsMap = builder.getIcons()
+  }
+
+  /**
+   * Add optional custom component above the header or description
+   */
+  fun withCustomComponentPromo(component: Component): GotItComponentBuilder {
+    if (promoContent != null) {
+      error("Choose one of promo content")
+    }
+    promoContent = GotItPromoComponent(component)
+    return this
   }
 
   /**
@@ -431,6 +446,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
           }
         }
         is GotItPromoImage -> JLabel(adjustIcon(promo.image, useContrastColors))
+        is GotItPromoComponent -> JPanel().apply {
+          add(promo.component)
+        }
       }
 
       component.border = object : Border {
