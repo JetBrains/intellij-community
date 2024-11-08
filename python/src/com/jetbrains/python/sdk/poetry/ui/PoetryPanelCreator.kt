@@ -13,7 +13,6 @@ import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.sdkHomes
-import kotlinx.coroutines.runBlocking
 import java.util.function.Supplier
 
 fun createPoetryPanel(
@@ -27,7 +26,7 @@ fun createPoetryPanel(
     allowCreatingNewEnvironments(project) -> PyAddNewPoetryPanel(project, module, existingSdks, null, context)
     else -> null
   }
-  val existingPoetryPanel = PyAddExistingPoetryEnvPanel(project, module, existingSdks, null, context)
+  val existingPoetryPanel = PyAddExistingPoetryEnvPanel(project, module, existingSdks, null)
   val panels = listOfNotNull(newPoetryPanel, existingPoetryPanel)
   val existingSdkPaths = sdkHomes(existingSdks)
   val defaultPanel = when {

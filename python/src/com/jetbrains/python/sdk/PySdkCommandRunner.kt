@@ -44,7 +44,6 @@ internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<Str
  *
  * @param [executable] The [Path] to the executable to run.
  * @param [projectPath] The path to the project directory in which to run the executable, or null if no specific directory is required.
- * @param [errorMessage] The message to log or show in case of an error during the execution.
  * @param [args] The arguments to pass to the executable.
  * @return A [Result] object containing the output of the command execution.
  */
@@ -59,7 +58,6 @@ suspend fun runExecutable(executable: Path, projectPath: Path?, vararg args: Str
  *
  * @param [projectPath] the path to the project directory where the command should be executed
  * @param [command] the command to be executed
- * @param [errorMessage] the error message to be shown in case of failure
  * @param [args] optional arguments for the command
  * @return a [Result] object containing the output of the command execution
  */

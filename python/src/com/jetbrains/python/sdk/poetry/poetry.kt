@@ -67,13 +67,16 @@ suspend fun setupPoetrySdkUnderProgress(
 internal val Sdk.isPoetry: Boolean
   get() = sdkAdditionalData is PyPoetrySdkAdditionalData
 
+
+internal fun sdkHomes(sdks: List<Sdk>): Set<String> {
+  return sdks.mapNotNull { it.homePath }.toSet()
+}
+
 internal fun allModules(project: Project?): List<Module> {
   return project?.let {
     ModuleUtil.getModulesOfType(it, PythonModuleTypeBase.getInstance())
   }?.sortedBy { it.name } ?: emptyList()
 }
-
-internal fun sdkHomes(sdks: List<Sdk>): Set<String> = sdks.mapNotNull { it.homePath }.toSet()
 
 private suspend fun setUpPoetry(projectPathString: String, python: String?, installPackages: Boolean, poetryPath: String? = null): Result<Path> {
   val poetryExecutablePathString = when (poetryPath) {
