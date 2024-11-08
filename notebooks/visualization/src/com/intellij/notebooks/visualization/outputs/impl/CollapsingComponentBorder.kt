@@ -1,8 +1,8 @@
 package com.intellij.notebooks.visualization.outputs.impl
 
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.ui.JBUI
-import com.intellij.notebooks.ui.visualization.notebookAppearance
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Insets

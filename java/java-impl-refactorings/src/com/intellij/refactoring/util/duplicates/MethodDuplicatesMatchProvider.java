@@ -13,19 +13,25 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 class MethodDuplicatesMatchProvider implements MatchProvider {
   private final PsiMethod myMethod;
   private final List<Match> myDuplicates;
   private static final Logger LOG = Logger.getInstance(MethodDuplicatesMatchProvider.class);
+  private final Map<Match, @Nls String> myConfirmDuplicatePrompts;
 
   MethodDuplicatesMatchProvider(PsiMethod method, List<Match> duplicates) {
     myMethod = method;
     myDuplicates = duplicates;
+    myConfirmDuplicatePrompts = StreamEx.of(duplicates).mapToEntry(this::computeConfirmDuplicatePrompt)
+      .nonNullValues().toMap();
   }
 
   @Override
@@ -160,6 +166,10 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   @Override
   @Nullable
   public String getConfirmDuplicatePrompt(final Match match) {
+    return myConfirmDuplicatePrompts.get(match);
+  }
+
+  private @Nls @Nullable String computeConfirmDuplicatePrompt(Match match) {
     final PsiElement matchStart = match.getMatchStart();
     String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
     final boolean shouldBeStatic = isEssentialStaticContextAbsent(match, myMethod);

@@ -14,6 +14,7 @@ import javax.swing.JComponent
 internal class ToolWindowTabFileImpl(
   fileName: String,
   icon: Icon?,
+  val toolWindowId: String,
   val component: JComponent
 ) : LightVirtualFile(fileName, ToolWindowTabFileType(icon), ""), OptionallyIncluded {
 

@@ -21,17 +21,19 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
         val array = debugProbesImpl.dumpCoroutinesInfoAsJsonAndReferences(executionContext)
             ?: return emptyList()
 
-        if (array.length() != 4) {
+        val arrayValues = array.values // fetch all values at once
+
+        if (arrayValues.size != 4) {
             error("The result array of 'dumpCoroutinesInfoAsJSONAndReferences' should be of size 4")
         }
 
-        val coroutinesInfoAsJsonString = array.getValue(0).safeAs<StringReference>()?.value()
+        val coroutinesInfoAsJsonString = arrayValues[0].safeAs<StringReference>()?.value()
             ?: error("The first element of the result array must be a string")
-        val lastObservedThreadRefs = array.getValue(1).safeAs<ArrayReference>()?.toTypedList<ThreadReference?>()
+        val lastObservedThreadRefs = arrayValues[1].safeAs<ArrayReference>()?.toTypedList<ThreadReference?>()
             ?: error("The second element of the result array must be an array")
-        val lastObservedFrameRefs = array.getValue(2).safeAs<ArrayReference>()?.toTypedList<ObjectReference?>()
+        val lastObservedFrameRefs = arrayValues[2].safeAs<ArrayReference>()?.toTypedList<ObjectReference?>()
             ?: error("The third element of the result array must be an array")
-        val coroutineInfoRefs = array.getValue(3).safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
+        val coroutineInfoRefs = arrayValues[3].safeAs<ArrayReference>()?.toTypedList<ObjectReference>()
             ?: error("The fourth element of the result array must be an array")
         val coroutinesInfo = Gson().fromJson(coroutinesInfoAsJsonString, Array<CoroutineInfoFromJson>::class.java)
 
@@ -109,14 +111,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
     )
 
     private inline fun <reified T> ArrayReference.toTypedList(): List<T> {
-        val result = mutableListOf<T>()
-        for (value in values) {
-            if (value !is T) {
-                error("Value has type ${value::class.java}, but ${T::class.java} was expected")
-            }
-            result.add(value)
-        }
-        return result
+        return values.map { it as? T ?: error("Value has type ${it::class.java}, but ${T::class.java} was expected") }
     }
 
     companion object {

@@ -21,6 +21,8 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
   fun isPerTaskOutputSupported(): Boolean = isGradleAtLeast("4.7")
 
+  fun isBuildCompilationReportSupported(): Boolean = isGradleAtLeast("8.11")
+
   fun isBuiltInTestEventsUsed(): Boolean = isGradleAtLeast("7.6")
 
   fun isIntellijTestEventsUsed(): Boolean = !isBuiltInTestEventsUsed()

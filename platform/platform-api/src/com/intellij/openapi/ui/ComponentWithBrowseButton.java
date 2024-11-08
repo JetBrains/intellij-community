@@ -105,7 +105,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
     UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(insets);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
   }
 

@@ -179,7 +179,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
           try {
             info = provider.getLineMarkerInfo(element);
           }
-          catch (ProcessCanceledException | IndexNotReadyException e) {
+          catch (IndexNotReadyException e) {
+            continue;
+          }
+          catch (ProcessCanceledException e) {
             throw e;
           }
           catch (Exception e) {
@@ -214,14 +217,16 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();
-    //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
       LineMarkerProvider provider = providers.get(j);
       try {
         provider.collectSlowLineMarkers(elements, slowLineMarkers);
       }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
+      catch (IndexNotReadyException e) {
+        continue;
+      }
+      catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {

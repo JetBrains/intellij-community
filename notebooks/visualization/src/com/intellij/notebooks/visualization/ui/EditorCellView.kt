@@ -3,8 +3,9 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
-import com.intellij.notebooks.ui.visualization.*
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCodeCellBackgroundLineMarkerRenderer
 import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
@@ -310,12 +311,6 @@ class EditorCellView(
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
           o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o)
-        }
-      }
-    } else if (editor.editorKind != EditorKind.DIFF) {
-      addCellHighlighter {
-        editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-          o.lineMarkerRenderer = NotebookTextCellBackgroundLineMarkerRenderer(o)
         }
       }
     }

@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ExtendableSettingsEditor
 import com.intellij.openapi.options.ExtensionSettingsEditor
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.SettingsEditorGroup
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.WriteExternalException
@@ -85,7 +86,7 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
       try {
         extension.writeExternal(configuration, element)
       }
-      catch (ignored: WriteExternalException) {
+      catch (_: WriteExternalException) {
         return@processApplicableExtensions
       }
 
@@ -213,7 +214,11 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   protected inline fun processApplicableExtensions(configuration: U, handler: (T) -> Unit) {
     for (extension in extensionPoint.lazySequence()) {
       if (extension.isApplicableFor(configuration)) {
-        handler(extension)
+        try {
+          handler(extension)
+        }
+        catch (_: IndexNotReadyException) {
+        }
       }
     }
   }
@@ -221,7 +226,11 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
   protected inline fun processEnabledExtensions(configuration: U, runnerSettings: RunnerSettings?, handler: (T) -> Unit) {
     for (extension in extensionPoint.lazySequence()) {
       if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
-        handler(extension)
+        try {
+          handler(extension)
+        }
+        catch (_: IndexNotReadyException) {
+        }
       }
     }
   }

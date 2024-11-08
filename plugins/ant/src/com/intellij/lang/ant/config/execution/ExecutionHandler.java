@@ -7,12 +7,11 @@ import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.*;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
@@ -115,9 +114,9 @@ public final class ExecutionHandler {
 
         javaParameters = builder.getCommandLine();
 
-        WslTargetEnvironmentConfiguration wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.getJdk());
-        if (wslConfiguration != null) {
-          request = new WslTargetEnvironmentRequest(wslConfiguration);
+        final var configuration = JavaCommandLineState.checkCreateNonLocalConfiguration(javaParameters.getJdk());
+        if (configuration != null) {
+          request = new EelTargetEnvironmentRequest(configuration);
         }
         else {
           request = new LocalTargetEnvironmentRequest();

@@ -955,8 +955,6 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$None
 - sort(java.util.List):java.util.List
-*f:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorterKt
-- sf:sort(com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter,com.intellij.openapi.ListSelection):com.intellij.openapi.ListSelection
 f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - *sf:controlInlaysIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object

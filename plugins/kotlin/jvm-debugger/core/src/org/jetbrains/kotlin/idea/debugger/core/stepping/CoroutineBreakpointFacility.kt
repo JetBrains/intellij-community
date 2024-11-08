@@ -26,14 +26,14 @@ object CoroutineBreakpointFacility {
             currentLocation
         } ?: return false
         val nextLocationAfterResume = getLocationOfNextInstructionAfterResume(resumeLocation)
-        thisLogger().debug("Trying to set a resume breakpoint in the current method: resumeLocation: $resumeLocation, method: ${resumeLocation.safeMethod()}, nextLocationAfterResumeIndex = $nextLocationAfterResume")
+        thisLogger().debug("Trying to set a resume breakpoint in the current method: resumeMethod: ${resumeLocation.safeMethod()}, nextCallLocationLine = ${nextLocationAfterResume?.lineNumber()}")
         return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResume)
     }
 
     fun installResumeBreakpointInCallerMethod(suspendContext: SuspendContextImpl): Boolean {
         val resumeLocation = StackFrameInterceptor.instance?.callerLocation(suspendContext) ?: return false
         val nextLocationAfterResume = getLocationOfNextInstructionAfterResume(resumeLocation)
-        thisLogger().debug("Trying to set a resume breakpoint in the caller method: resumeLocation: $resumeLocation, method: ${resumeLocation.safeMethod()}, nextLocationAfterResumeIndex = $nextLocationAfterResume")
+        thisLogger().debug("Trying to set a resume breakpoint in the caller method: resumeMethod: ${resumeLocation.safeMethod()}, nextCallLocationLine = ${nextLocationAfterResume?.lineNumber()}")
         return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResume)
     }
 

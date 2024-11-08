@@ -19,6 +19,8 @@ class JTextFieldUI(data: ComponentData) : UiComponent(data) {
     get() = textFieldComponent.getText()
     set(value) = driver.withContext(OnDispatcher.EDT) { textFieldComponent.setText(value) }
 
+  val selectedText: String get() = textFieldComponent.getSelectedText()
+
   fun appendText(appendString: String) {
     text += appendString
   }
@@ -27,5 +29,6 @@ class JTextFieldUI(data: ComponentData) : UiComponent(data) {
 @Remote("javax.swing.text.JTextComponent")
 interface JTextComponent {
   fun getText(): String
+  fun getSelectedText(): String
   fun setText(document: String)
 }

@@ -336,15 +336,15 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected var repositoryPath: String?
     get() {
-      val path = repositoryFile.path
+      val path = repositoryFile.toString()
       return FileUtil.toSystemIndependentName(path)
     }
     protected set(path) {
       mavenGeneralSettings.setLocalRepository(path)
     }
 
-  protected val repositoryFile: File
-    get() = mavenGeneralSettings.effectiveLocalRepository
+  protected val repositoryFile: Path
+    get() = mavenGeneralSettings.effectiveRepositoryPath
 
   protected val projectPath: String
     get() = myProjectRoot!!.path

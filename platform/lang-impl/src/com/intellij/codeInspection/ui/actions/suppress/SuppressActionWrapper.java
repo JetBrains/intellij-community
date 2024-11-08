@@ -46,13 +46,16 @@ public final class SuppressActionWrapper extends ActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(final @Nullable AnActionEvent e) {
-    final InspectionResultsView view = getView(e);
-    if (view == null) return AnAction.EMPTY_ARRAY;
-    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
-    if (wrapper == null) return AnAction.EMPTY_ARRAY;
+    return getSuppressionActions(getView(e));
+  }
+
+  public static AnAction @NotNull [] getSuppressionActions(InspectionResultsView view) {
+    if (view == null) return EMPTY_ARRAY;
+    final InspectionToolWrapper<?, ?> wrapper = view.getTree().getSelectedToolWrapper(true);
+    if (wrapper == null) return EMPTY_ARRAY;
     final Set<SuppressIntentionAction> suppressActions = view.getSuppressActionHolder().getSuppressActions(wrapper);
 
-    if (suppressActions.isEmpty()) return AnAction.EMPTY_ARRAY;
+    if (suppressActions.isEmpty()) return EMPTY_ARRAY;
     final AnAction[] actions = new AnAction[suppressActions.size() + 1];
 
     int i = 0;

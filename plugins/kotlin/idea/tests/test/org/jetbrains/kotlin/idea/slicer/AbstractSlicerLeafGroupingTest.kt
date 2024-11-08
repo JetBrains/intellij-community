@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.slicer
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.slicer.SliceLanguageSupportProvider
 import com.intellij.slicer.SliceLeafAnalyzer
 import com.intellij.slicer.SliceRootNode
@@ -14,15 +15,17 @@ abstract class AbstractSlicerLeafGroupingTest : AbstractSlicerTest() {
     }
 
     override fun doTest(path: String, sliceProvider: SliceLanguageSupportProvider, rootNode: SliceRootNode) {
-        val treeStructure = TestSliceTreeStructure(rootNode)
-        val analyzer = createAnalyzer(sliceProvider)
-        val possibleElementsByNode = analyzer.createMap()
-        val leafExpressions = analyzer.calcLeafExpressions(rootNode, treeStructure, possibleElementsByNode)
-        val newRootNode = analyzer.createTreeGroupedByValues(leafExpressions, rootNode, possibleElementsByNode)
-        val renderedForest = buildString {
-            newRootNode.children.map { groupRootNode -> buildTreeRepresentation(groupRootNode) }.sorted().forEach {
-                append(it)
-                append("\n")
+        val renderedForest = ActionUtil.underModalProgress(project, "") {
+            val treeStructure = TestSliceTreeStructure(rootNode)
+            val analyzer = createAnalyzer(sliceProvider)
+            val possibleElementsByNode = analyzer.createMap()
+            val leafExpressions = analyzer.calcLeafExpressions(rootNode, treeStructure, possibleElementsByNode)
+            val newRootNode = analyzer.createTreeGroupedByValues(leafExpressions, rootNode, possibleElementsByNode)
+            buildString {
+                newRootNode.children.map { groupRootNode -> buildTreeRepresentation(groupRootNode) }.sorted().forEach {
+                    this.append(it)
+                    this.append("\n")
+                }
             }
         }
         KotlinTestUtils.assertEqualsToFile(getResultFile(path), renderedForest)

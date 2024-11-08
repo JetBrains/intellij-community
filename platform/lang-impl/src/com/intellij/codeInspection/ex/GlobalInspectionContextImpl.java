@@ -82,10 +82,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Span;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -169,7 +166,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   public void addView(@NotNull InspectionResultsView view) {
-    addView(view, view.getViewTitle(), false);
+    addView(view, InspectionsBundle.message("inspection.results"), false);
+    ReadAction
+      .nonBlocking(view::getViewTitle)
+      .finishOnUiThread(ModalityState.any(), (@Nls String title) -> {
+        if (myViewClosed) return;
+        myContent.setDisplayName(title);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override
@@ -546,7 +550,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             final ProblemDescriptor firstDescriptor = descriptors.get(0);
             LocalInspectionToolWrapper toolWrapper =
               firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
-              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolName()).getTool()
+              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolShortName()).getTool()
               : entry.getKey();
             InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
             BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());

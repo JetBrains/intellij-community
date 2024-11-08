@@ -89,10 +89,6 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
     BaseProjectImportErrorHandler().getUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath)
 
   override fun preImportCheck() {}
-  override fun enhanceTaskProcessing(taskNames: List<String>,
-                                     jvmParametersSetup: String?,
-                                     initScriptConsumer: Consumer<String>) {
-  }
 
   override fun enhanceRemoteProcessing(parameters: SimpleJavaParameters) {}
 }

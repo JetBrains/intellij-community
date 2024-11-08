@@ -10,7 +10,7 @@ internal annotation class LcrDslMarker
 
 /**
  * Builds [ListCellRenderer], which can contains several cells with texts, icons and other entities placed in one row.
- * Covers most common kinds of renderers and provides all necessary functionality:
+ * Covers the most common kinds of renderers and provides all necessary functionality:
  *
  * * Rectangular selection and correct insets for old UI
  * * Rounded selection, correct insets and height for new UI
@@ -18,7 +18,7 @@ internal annotation class LcrDslMarker
  * * Uses gray text and icons in disabled state
  * * Colored text has different color in selected state
  * * Supports IDE scaling and compact mode
- * * Provides accessibility details for rows: by default it is concatenation of accessible names of all visible cells
+ * * Provides accessibility details for rows: by default, it is concatenation of accessible names of all visible cells
  *
  * Because of all described nuances, it is hard to write correct own render. So using Kotlin UI DSL is highly recommended
  */

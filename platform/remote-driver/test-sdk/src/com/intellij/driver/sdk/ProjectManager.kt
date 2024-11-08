@@ -8,14 +8,14 @@ import com.intellij.driver.model.RdTarget
 @Remote("com.intellij.openapi.project.ProjectManager")
 interface ProjectManager {
   fun getOpenProjects(): Array<Project>
-  fun getDefaultProject(): Project?
+  fun getDefaultProject(): Project
 }
 
 fun Driver.getOpenProjects(): List<Project> {
   return service<ProjectManager>().getOpenProjects().toList()
 }
 
-fun Driver.getDefaultProject(): Project? {
+fun Driver.getDefaultProject(): Project {
   return service<ProjectManager>().getDefaultProject()
 }
 

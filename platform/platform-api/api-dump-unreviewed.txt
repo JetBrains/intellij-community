@@ -5193,8 +5193,6 @@ f:com.intellij.openapi.ui.validation.ValidationUtilKt
 - sf:validationErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 - sf:validationErrorIf(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:validationErrorIf(java.lang.String,kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
-- sf:validationFileErrorFor(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
-- sf:validationFileErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 - sf:validationPathErrorFor(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:validationPathErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 c:com.intellij.openapi.util.DefaultModificationTracker
@@ -6716,15 +6714,11 @@ a:com.intellij.ui.ListUtil$Updatable
 - pa:update():V
 c:com.intellij.ui.LoadingNode
 - javax.swing.tree.DefaultMutableTreeNode
-- com.intellij.ui.treeStructure.TreeNodeViewModel
 - sf:Companion:com.intellij.ui.LoadingNode$Companion
 - <init>():V
 - <init>(java.lang.String):V
 - b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getChildren():kotlinx.coroutines.flow.Flow
-- getPresentation():kotlinx.coroutines.flow.Flow
 - sf:getText():java.lang.String
-- presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
 f:com.intellij.ui.LoadingNode$Companion
 - f:getText():java.lang.String
 a:com.intellij.ui.MouseDragHelper
@@ -8773,6 +8767,9 @@ f:com.intellij.ui.dsl.builder.UtilsKt
 - sf:cleanupHtml(java.lang.String):java.lang.String
 - sf:listCellRenderer(kotlin.jvm.functions.Function2):com.intellij.ui.SimpleListCellRenderer
 f:com.intellij.ui.dsl.builder.VerticalComponentGap
+- sf:BOTH:com.intellij.ui.dsl.builder.VerticalComponentGap
+- sf:Companion:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
+- sf:NONE:com.intellij.ui.dsl.builder.VerticalComponentGap
 - <init>():V
 - <init>(java.lang.Boolean,java.lang.Boolean):V
 - b:<init>(java.lang.Boolean,java.lang.Boolean,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -8784,6 +8781,7 @@ f:com.intellij.ui.dsl.builder.VerticalComponentGap
 - f:getBottom():java.lang.Boolean
 - f:getTop():java.lang.Boolean
 - hashCode():I
+f:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
 f:com.intellij.ui.dsl.gridLayout.Gaps
 - sf:Companion:com.intellij.ui.dsl.gridLayout.Gaps$Companion
 - sf:EMPTY:com.intellij.ui.dsl.gridLayout.Gaps
@@ -8895,8 +8893,6 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
-f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
-- sf:stripHorizontalInsets(javax.swing.JComponent):V
 com.intellij.ui.dualView.CellWrapper
 - a:wrap(java.awt.Component,javax.swing.JTable,java.lang.Object,Z,Z,I,I,java.lang.Object):V
 com.intellij.ui.dualView.DualTreeElement
@@ -10354,7 +10350,6 @@ com.intellij.ui.treeStructure.TreeBulkExpansionListener
 - treeBulkCollapseStarted(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
 - treeBulkExpansionEnded(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
 - treeBulkExpansionStarted(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
-f:com.intellij.ui.treeStructure.TreeDomainModelKt
 f:com.intellij.ui.treeStructure.TreeSwingModelKt
 f:com.intellij.ui.treeStructure.TreeViewModelKt
 c:com.intellij.ui.treeStructure.WeightBasedComparator

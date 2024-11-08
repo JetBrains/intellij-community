@@ -74,7 +74,7 @@ internal object OptInFixFactories {
             if (targetElement !is KtDeclaration) return null
             if (applicableTargets == null) return null
 
-            val actualTargetList = (targetElement as? KtDeclaration)?.symbol?.getActualAnnotationTargets() ?: return null
+            val actualTargetList = targetElement.symbol.getActualAnnotationTargets() ?: return null
             return OptInGeneralUtils.collectPropagateOptInAnnotationFix(
                 targetElement,
                 kind,

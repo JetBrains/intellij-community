@@ -19,20 +19,25 @@ import com.jediterm.terminal.TerminalCustomCommandListener
 import junit.framework.TestCase.failNotEquals
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.output.*
+import org.jetbrains.plugins.terminal.block.prompt.ShellEditorBufferReportShellCommandListener
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil.toCommandLine
+import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Assert
 import org.junit.Assume
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.fail
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.function.BiPredicate
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -131,6 +136,34 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
       "command_started",
     )
     assertListEquals(expected, actual, ignoreUnexpectedEntriesOf = listOf("prompt_shown"))
+  }
+
+  @TestFor(issues = ["IJPL-101408", "IJPL-165429"], classes = [ShellEditorBufferReportShellCommandListener::class])
+  @Test
+  fun `shell shell editor buffer reporting`() {
+    val actual = mutableListOf<String?>()
+    val session = startBlockTerminalSession(disableSavingHistory = false) {
+      val eventName = it.getOrNull(0)
+      actual.add(eventName)
+    }
+
+    assumeTrue(session.shellIntegration.shellType in listOf(ShellType.ZSH, ShellType.BASH))
+
+    val completableFuture = CompletableFuture<String>()
+
+    ShellEditorBufferReportShellCommandListener(session) { buffer ->
+      completableFuture.complete(buffer)
+    }
+      .also { it -> session.commandManager.addListener(it, session) }
+
+    session.terminalOutputStream.sendString("echo 1\nfoo", true)
+    try {
+      val buffer = completableFuture.get(10000, MILLISECONDS)
+      assert(buffer != null)
+    }
+    catch (e: Exception) {
+      fail("Buffer was not reported", e)
+    }
   }
 
   @Test

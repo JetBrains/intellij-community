@@ -29,6 +29,7 @@ public final class GradleOutputParserProvider implements ExternalSystemOutputPar
     if (taskId.getType().equals(ExternalSystemTaskType.RESOLVE_PROJECT)) {
       parsers.add(new GradleSyncOutputParser());
     }
+    parsers.add(new GradleCompilationReportParser());
     parsers.add(new GradleBuildScriptErrorParser());
     parsers.add(new JavacOutputParser("java", "scala"));
     parsers.add(new KotlincOutputParser());

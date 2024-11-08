@@ -20,17 +20,6 @@ abstract class AbstractFirSlicerLeafGroupingTest: AbstractSlicerLeafGroupingTest
         return (sliceProvider as KotlinSliceProvider).leafAnalyzer
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun doTest(
-        path: String,
-        sliceProvider: SliceLanguageSupportProvider,
-        rootNode: SliceRootNode
-    ) {
-        allowAnalysisOnEdt {
-            super.doTest(path, sliceProvider, rootNode)
-        }
-    }
-
     override fun getResultFile(path: String): File {
         val file = File(path.replace(".kt", ".k2.leafGroups.txt"))
         if (file.exists()) {

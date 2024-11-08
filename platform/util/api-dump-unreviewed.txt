@@ -101,6 +101,7 @@ a:com.intellij.execution.process.BaseProcessHandler
 - p:doDestroyProcess():V
 - getCharset():java.nio.charset.Charset
 - getCommandLine():java.lang.String
+- getCommandLineForLog():java.lang.String
 - f:getProcess():java.lang.Process
 - getProcessInput():java.io.OutputStream
 - p:onOSProcessTerminated(I):V

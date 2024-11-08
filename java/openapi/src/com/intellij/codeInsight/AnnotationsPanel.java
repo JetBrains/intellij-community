@@ -174,7 +174,7 @@ public class AnnotationsPanel {
     tablePanel.setPreferredSize(new JBDimension(tablePanel.getPreferredSize().width, 200));
 
     myComponent = new JPanel(new GridBagLayout());
-    myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.anchor = GridBagConstraints.WEST;
     constraints.weightx = 1;

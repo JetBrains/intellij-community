@@ -84,7 +84,7 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
 
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {

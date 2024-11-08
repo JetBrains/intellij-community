@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl.light.legacy
 
 import com.jetbrains.jsonSchema.impl.light.DESCRIPTION
+import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_ENUM_METADATA
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectBackedByJacksonBase
 
 private val fieldNamesOldParserIsAwareOf =
@@ -20,7 +21,9 @@ internal fun isOldParserAwareOfFieldName(fieldName: String): Boolean {
 // Old code did not have any tests for this method, so the updated implementation might have mistakes.
 // Consider adding a test if you know something about 'x-intellij-enum-metadata'
 internal fun JsonSchemaObjectBackedByJacksonBase.tryReadEnumMetadata(): Map<String, Map<String, String>>? {
-  return rawSchemaNode.fields()?.asSequence()
+  return rawSchemaNode.fields()?.asSequence()?.singleOrNull {
+    it.key == X_INTELLIJ_ENUM_METADATA
+  }?.value?.fields()?.asSequence()
     ?.mapNotNull { (name, valueNode) ->
       when {
         valueNode.isTextual -> {

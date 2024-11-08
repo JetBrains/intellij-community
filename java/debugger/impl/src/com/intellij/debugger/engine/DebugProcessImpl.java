@@ -94,7 +94,6 @@ import com.sun.jdi.request.StepRequest;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Job;
 import one.util.streamex.StreamEx;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -1488,7 +1487,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     @NotNull List<? extends Value> args,
                                     final int invocationOptions,
                                     boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHandler(method, invocationOptions)) {
+    if (!internalEvaluate && shouldInvokeWithHelper(method, invocationOptions)) {
       return invokeWithHelper(method.declaringType(), objRef, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {
@@ -1506,7 +1505,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean shouldInvokeWithHandler(@NotNull Method method, int invocationOptions) {
+  private static boolean shouldInvokeWithHelper(@NotNull Method method, int invocationOptions) {
     return Registry.is("debugger.evaluate.method.helper") &&
            !BitUtil.isSet(invocationOptions, ObjectReference.INVOKE_NONVIRTUAL) && // TODO: support
            !DebuggerUtils.isPrimitiveType(method.returnTypeName()) &&
@@ -1604,7 +1603,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             @NotNull List<? extends Value> args,
                             int extraInvocationOptions,
                             boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHandler(method, extraInvocationOptions)) {
+    if (!internalEvaluate && shouldInvokeWithHelper(method, extraInvocationOptions)) {
       return invokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {
@@ -1626,7 +1625,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             InterfaceType interfaceType,
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
-    if (shouldInvokeWithHandler(method, 0)) {
+    if (shouldInvokeWithHelper(method, 0)) {
       return invokeWithHelper(interfaceType, null, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {
@@ -1680,7 +1679,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      @NotNull List<? extends Value> args,
                                      final int invocationOptions,
                                      boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHandler(method, invocationOptions)) {
+    if (!internalEvaluate && shouldInvokeWithHelper(method, invocationOptions)) {
       return (ObjectReference)invokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {

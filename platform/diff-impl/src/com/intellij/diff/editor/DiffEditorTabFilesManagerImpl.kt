@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
-import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -24,11 +23,6 @@ import com.intellij.util.containers.headTail
 internal class DiffEditorTabFilesManagerImpl(val project: Project) : DiffEditorTabFilesManager {
   override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-    if (!ClientId.isCurrentlyUnderLocalId) {
-      // do not use FileEditorManagerImpl.getWindows - these are not implemented for clients
-      return editorManager.openFile(file = diffFile, focusEditor = focusEditor, searchForOpen = true)
-    }
-
     val openMode = if (isDiffInEditor) FileEditorManagerImpl.OpenMode.DEFAULT else FileEditorManagerImpl.OpenMode.NEW_WINDOW
     val newTab = editorManager.openFile(
       file = diffFile,

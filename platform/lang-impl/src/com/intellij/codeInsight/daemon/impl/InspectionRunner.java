@@ -180,8 +180,8 @@ class InspectionRunner {
         });
         return true;
       };
-      // start InspectionContexts in `init` parallel to discovering injected fragments and running inspection runner on them too.
-      // note that the parallelism is restricted: all InspectionContexts from `init` are run in parallel, within each
+      // Start InspectionContexts in `init` parallel to discovering injected fragments and running inspection runner on them too.
+      // Note that the parallelism is restricted: all InspectionContexts from `init` are run in parallel, within each
       // the InspectionContext with (visible=true) is run and then InspectionContext with (visible=false).
       // Thus, we avoid running the same inspection tool visitor in a reentrant manner (on visible elements parallel to invisible elements),
       // because some of them are not ready for that.
@@ -326,7 +326,7 @@ class InspectionRunner {
     Set<String> activeTools =  new HashSet<>();
     for (LocalInspectionToolWrapper tool : toolWrappers) {
       if (tool.runForWholeFile()) {
-        // no redundants for whole file tools pass
+        // no redundant elements for whole file tools pass
         continue;
       }
 

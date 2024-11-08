@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -75,41 +76,48 @@ object AddDependencyQuickFixHelper: QuickFixesPsiBasedFactory<PsiElement>(PsiEle
 
         val registrar = mutableListOf<IntentionAction>()
         OrderEntryFix.registerFixes(reference, registrar) { shortName ->
-            val scope = GlobalSearchScope.allScope(project)
-            val classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(shortName, scope)
-            if (classesByName.isNotEmpty()) return@registerFixes classesByName
-            val importedFqName = importDirective?.takeUnless { it.isAllUnder }?.importedFqName
-            if (importedFqName != null) {
-                PsiShortNamesCache.getInstance(project).getClassesByName(importedFqName.shortName().asString(), scope)
-                    .takeUnless { it.isEmpty() }
-                    ?.let { return@registerFixes it }
-            }
-
-            val importedFqNameAsString = importedFqName?.asString()
-            val declarations =
-                if (importedFqNameAsString != null) {
-                    KotlinTopLevelPropertyFqnNameIndex[importedFqNameAsString, project, scope]
-                } else {
-                    KotlinPropertyShortNameIndex[shortName, project, scope].filter { (it as? KtProperty)?.isTopLevel == true }
-                }.takeUnless { it.isEmpty() } ?:
-                if (importedFqNameAsString != null) {
-                    KotlinTopLevelFunctionFqnNameIndex[importedFqNameAsString, project, scope]
-                } else {
-                    KotlinFunctionShortNameIndex[shortName, project, scope].filter { (it as? KtNamedFunction)?.isTopLevel == true }
-                }
-
-            if (declarations.isNotEmpty()) {
-                val lightClasses = declarations
-                    .flatMap { it.toLightElements() }
-                    .mapNotNull { (it as? KtLightMember<*>)?.containingClass }
-                    .toSet()
-                if (lightClasses.isNotEmpty()) {
-                    return@registerFixes lightClasses.toTypedArray()
-                }
-            }
-
-            PsiClass.EMPTY_ARRAY
+            findDeclarationsByShortName(shortName, importDirective, project)
         }
         return registrar
     }
+}
+
+fun findDeclarationsByShortName(
+    shortName: String,
+    importDirective: KtImportDirective?,
+    project: Project
+): Array<out PsiClass> {
+    val scope = GlobalSearchScope.allScope(project)
+    val classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(shortName, scope)
+    if (classesByName.isNotEmpty()) return classesByName
+    val importedFqName = importDirective?.takeUnless { it.isAllUnder }?.importedFqName
+    if (importedFqName != null) {
+        PsiShortNamesCache.getInstance(project).getClassesByName(importedFqName.shortName().asString(), scope)
+            .takeUnless { it.isEmpty() }
+            ?.let { return it }
+    }
+
+    val importedFqNameAsString = importedFqName?.asString()
+    val declarations =
+        if (importedFqNameAsString != null) {
+            KotlinTopLevelPropertyFqnNameIndex[importedFqNameAsString, project, scope]
+        } else {
+            KotlinPropertyShortNameIndex[shortName, project, scope].filter { (it as? KtProperty)?.isTopLevel == true }
+        }.takeUnless { it.isEmpty() } ?: if (importedFqNameAsString != null) {
+            KotlinTopLevelFunctionFqnNameIndex[importedFqNameAsString, project, scope]
+        } else {
+            KotlinFunctionShortNameIndex[shortName, project, scope].filter { it.isTopLevel == true }
+        }
+
+    if (declarations.isNotEmpty()) {
+        val lightClasses = declarations
+            .flatMap { it.toLightElements() }
+            .mapNotNull { (it as? KtLightMember<*>)?.containingClass }
+            .toSet()
+        if (lightClasses.isNotEmpty()) {
+            return lightClasses.toTypedArray()
+        }
+    }
+
+    return PsiClass.EMPTY_ARRAY
 }

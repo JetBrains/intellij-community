@@ -81,7 +81,7 @@ private fun KaSession.isAccessibleAsMemberCallable(
 ): Boolean {
     if (symbol !is KaCallableSymbol || containingDeclarationPatched(symbol) !is KaClassLikeSymbol) return false
 
-    if (symbol is KaEnumEntrySymbol) {
+    if (isEnumStaticMember(symbol)) {
         return isAccessibleAsMemberCallableDeclaration(symbol, element)
     }
 

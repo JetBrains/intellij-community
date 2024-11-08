@@ -40,7 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * @deprecated use {@link MavenNewProjectWizardStep} instead
@@ -221,8 +221,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   public MavenProject findPotentialParentProject(Project project) {
     if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
 
-    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myContext.getProjectFileDirectory(),
-                                                                                              MavenConstants.POM_XML));
+    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(myContext.getProjectFileDirectory(),
+                                                                                             MavenConstants.POM_XML));
     if (parentPom == null) return null;
 
     return MavenProjectsManager.getInstance(project).findProject(parentPom);

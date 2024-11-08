@@ -3,7 +3,8 @@ package com.intellij.openapi.ui.validation
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.ui.ValidationInfo
-import java.io.File
+import java.io.IOException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 /**
@@ -32,25 +33,23 @@ fun <T1, T2> validationErrorFor(getMessage: (T1, T2) -> @NlsContexts.DialogMessa
  * Created validation with [Path] parameter that produces error if [getMessage] returns non-null value.
  */
 fun validationPathErrorFor(getMessage: (Path) -> @NlsContexts.DialogMessage String?): DialogValidation.WithParameter<() -> String> =
-  validationErrorFor<String> { getMessage(Path.of(it)) }
+  validationErrorFor<String> {
+    try {
+      getMessage(Path.of(it))
+    }
+    catch (exception: InvalidPathException) {
+      exception.message
+    }
+    catch (exception: IOException) {
+      exception.message
+    }
+  }
 
 /**
  * Created validation with custom and [Path] parameters that produces error if [getMessage] returns non-null value.
  */
 fun <T> validationPathErrorFor(getMessage: (T, Path) -> @NlsContexts.DialogMessage String?): DialogValidation.WithTwoParameters<T, () -> String> =
   validationErrorWithTwoParametersFor(getMessage) { validationPathErrorFor(it) }
-
-/**
- * Created validation with [File] parameter that produces error if [getMessage] returns non-null value.
- */
-fun validationFileErrorFor(getMessage: (File) -> @NlsContexts.DialogMessage String?): DialogValidation.WithParameter<() -> String> =
-  validationPathErrorFor { getMessage(it.toFile()) }
-
-/**
- * Created validation with custom and [File] parameters that produces error if [getMessage] returns non-null value.
- */
-fun <T> validationFileErrorFor(getMessage: (T, File) -> @NlsContexts.DialogMessage String?): DialogValidation.WithTwoParameters<T, () -> String> =
-  validationErrorWithTwoParametersFor(getMessage) { validationFileErrorFor(it) }
 
 /**
  * Created validation with parameter that produces error if [isNotValid] is true.

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object InlineCompletionLogs : CounterUsagesCollector() {
   // TODO use ML_RECORDER_ID
-  val GROUP = EventLogGroup("inline.completion.v2", 24, recorder = "ML")
+  val GROUP = EventLogGroup("inline.completion.v2", 26, recorder = "ML")
 
   override fun getGroup(): EventLogGroup = GROUP
 

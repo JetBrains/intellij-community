@@ -2,24 +2,22 @@
 package com.intellij.ide.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.DirtyUI
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
 
 /** A hacky way to reduce flickering. */
-@ApiStatus.Internal
-class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
+internal class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
   private var savedSelfieImage: BufferedImage? = null
 
-  inner class FreezingPaintPanel : JComponent() {
+  private inner class FreezingPaintPanel : JComponent() {
     @DirtyUI
     override fun paint(g: Graphics) {
       val image = savedSelfieImage
@@ -47,7 +45,13 @@ class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
     if (savedSelfieImage != null) {
       return
     }
-    savedSelfieImage = takeSelfie(content)
+    savedSelfieImage = try {
+      takeSelfie(content)
+    }
+    catch (e: Exception) {
+      thisLogger().error(e)
+      return
+    }
     if (savedSelfieImage == null) {
       return
     }
@@ -70,7 +74,10 @@ class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
     @JvmStatic
     private fun takeSelfie(component: Component): BufferedImage? {
       val graphicsConfiguration = component.graphicsConfiguration ?: return null
-      val image = ImageUtil.createImage(graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+      val width = component.width
+      val height = component.height
+      if (width <= 0 || height <= 0) return null
+      val image = ImageUtil.createImage(graphicsConfiguration, width, height, BufferedImage.TYPE_INT_ARGB)
       setupAntialiasing(image.graphics)
       component.paint(image.graphics)
       return image

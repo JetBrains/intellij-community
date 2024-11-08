@@ -6,8 +6,8 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptReloadActionAvailability"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptReloadActionAvailability"
+            qualifiedName="org.jetbrains.kotlin.kotlinScriptLazyResolveProhibitionCondition"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptLazyResolveProhibitionCondition"
             area="IDEA_PROJECT"
             dynamic="true"/>
 

@@ -24,7 +24,7 @@ open class BaseHtmlEditorPane : JEditorPane() {
     isOpaque = false
     addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
     margin = JBInsets.emptyInsets()
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent())
 
     val caret = caret as DefaultCaret
     caret.updatePolicy = DefaultCaret.NEVER_UPDATE

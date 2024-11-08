@@ -195,7 +195,10 @@ class HighlightVisitorRunner {
         try {
           visitor.visit(psiElement);
         }
-        catch (ProcessCanceledException | IndexNotReadyException | AlreadyDisposedException e) {
+        catch (IndexNotReadyException e) {
+          break;
+        }
+        catch (ProcessCanceledException | AlreadyDisposedException e) {
           throw e;
         }
         catch (Exception e) {

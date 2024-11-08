@@ -1424,14 +1424,17 @@ e:com.intellij.diagnostic.VMOptions$MemoryKind
 - s:values():com.intellij.diagnostic.VMOptions$MemoryKind[]
 c:com.intellij.diagnostic.WindowsDefenderChecker
 - <init>():V
+- f:excludeProjectPaths(com.intellij.openapi.project.Project,java.nio.file.Path,java.util.List):Z
 - f:excludeProjectPaths(com.intellij.openapi.project.Project,java.util.List):Z
 - f:filterDevDrivePaths(java.util.List):java.util.List
 - getConfigurationInstructionsUrl():java.lang.String
 - s:getInstance():com.intellij.diagnostic.WindowsDefenderChecker
 - f:getPathsToExclude(com.intellij.openapi.project.Project):java.util.List
+- f:getPathsToExclude(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.List
 - f:ignoreStatusCheck(com.intellij.openapi.project.Project,Z):V
 - f:isRealTimeProtectionEnabled():java.lang.Boolean
 - f:isStatusCheckIgnored(com.intellij.openapi.project.Project):Z
+- f:isUntrustworthyLocation(java.nio.file.Path):Z
 com.intellij.diagnostic.WindowsDefenderChecker$Extension
 - a:getPaths(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.Collection
 f:com.intellij.diagnostic.WindowsDefenderChecker$FILE_FS_PERSISTENT_VOLUME_INFORMATION
@@ -3329,8 +3332,9 @@ a:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction
 - p:<init>(Z):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- s:hasLocalBrowser():Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction
+c:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction
 - com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction
 - <init>():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -16762,10 +16766,12 @@ c:com.intellij.ui.popup.tree.TreePopupImpl
 - p:createContent():javax.swing.JComponent
 - dispose():V
 - expandAll():V
+- p:extractUserObject(java.lang.Object):java.lang.Object
 - p:getActionMap():javax.swing.ActionMap
 - p:getInputMap():javax.swing.InputMap
 - p:getPreferredFocusableComponent():javax.swing.JComponent
 - handleNextStep(com.intellij.openapi.ui.popup.PopupStep,java.lang.Object):V
+- p:handleSelect(Z,java.awt.event.MouseEvent):V
 - isModalContext():Z
 - p:onAutoSelectionTimer():V
 - p:onChildSelectedFor(java.lang.Object):V

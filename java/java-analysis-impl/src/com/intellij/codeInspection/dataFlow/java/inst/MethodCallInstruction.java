@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -538,7 +537,8 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
-    return ContainerUtil.createMaybeSingletonList(tryCast(myPrecalculatedReturnValue, DfaVariableValue.class));
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return myPrecalculatedReturnValue instanceof DfaVariableValue var ? 
+           List.of(var.getDescriptor()) : List.of();
   }
 }

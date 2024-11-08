@@ -35,7 +35,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     setComponent(pathTextField);
     setText(ExecutionBundle.message("label.path.mappings"));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, pathTextField.getChildComponent());
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     getComponent().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {

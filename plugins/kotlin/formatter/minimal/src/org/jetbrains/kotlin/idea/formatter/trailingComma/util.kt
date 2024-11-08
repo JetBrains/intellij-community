@@ -57,7 +57,7 @@ private fun KotlinCodeStyleSettings.addTrailingCommaIsAllowedFor(type: IElementT
 }
 
 fun PsiElement.canAddTrailingComma(): Boolean = when {
-    this is KtWhenEntry && (isElse || parent.cast<KtWhenExpression>().leftParenthesis == null) -> false
+    this is KtWhenEntry && (isElse || parent.cast<KtWhenExpression>().leftParenthesis == null || guard != null) -> false
     this is KtFunctionLiteral && arrow == null -> false
     else -> PsiUtilCore.getElementType(this) in TYPES_WITH_TRAILING_COMMA
 }

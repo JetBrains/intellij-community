@@ -2,7 +2,7 @@
 package com.intellij.platform.diagnostic.telemetry.impl.agent
 
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext.Companion.TRACE_CONTEXT_JVM_PROPERTY_NAME
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext.TRACE_CONTEXT_JVM_PROPERTY_NAME
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import kotlin.io.path.pathString

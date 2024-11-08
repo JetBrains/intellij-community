@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.KotlinUFile
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethodBase
@@ -2183,6 +2184,91 @@ interface UastResolveApiFixtureTestBase {
                 }
             }
         )
+    }
+
+    fun checkResolveThisExpressionForExtensionFunctionType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt",
+            """
+                fun foo(p: Any.(Any) -> Any) { }
+                
+                class Hello {
+                  fun test() {
+                    val a = Any()
+                    a.apply {
+                      this // 0
+                    }
+                    a.apply a@ {
+                      this // 1
+                      this@a // 2
+                      this@Hello // 3
+                    }
+                    a.let {
+                      this // 4
+                    }
+                    foo {
+                      this // 5
+                    }
+                    foo b@ {
+                      this // 6
+                      this@b // 7
+                      this@Hello // 8
+                    }
+                    foo { thing ->
+                      this // 9
+                    }
+                    foo c@ { thing ->
+                      this // 10
+                      this@c // 11
+                      this@Hello // 12
+                    }
+                    foo { it ->
+                      this // 13
+                    }
+                    foo d@ { it ->
+                      this // 14
+                      this@d // 15
+                      this@Hello // 16
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+        val resolved = mutableListOf<UElement>()
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                override fun visitThisExpression(node: UThisExpression): Boolean {
+                    val r = node.resolve()
+                    TestCase.assertNotNull(r)
+                    resolved.add(r!!.toUElement()!!)
+                    return super.visitThisExpression(node)
+                }
+            }
+        )
+
+        fun isUParameterNamedThis(element: UElement) =
+            element is UParameter && element.name == LAMBDA_THIS_PARAMETER_NAME
+
+        fun isUClassNamedHello(element: UElement) =
+            element is UClass && element.name == "Hello"
+
+        TestCase.assertTrue(isUParameterNamedThis(resolved[0]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[1]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[2]))
+        TestCase.assertTrue(isUClassNamedHello(resolved[3]))
+        TestCase.assertTrue(isUClassNamedHello(resolved[4]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[5]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[6]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[7]))
+        TestCase.assertTrue(isUClassNamedHello(resolved[8]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[9]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[10]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[11]))
+        TestCase.assertTrue(isUClassNamedHello(resolved[12]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[13]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[14]))
+        TestCase.assertTrue(isUParameterNamedThis(resolved[15]))
+        TestCase.assertTrue(isUClassNamedHello(resolved[16]))
     }
 
     fun checkResolvePropertiesInCompanionObjectFromBinaryDependency(myFixture: JavaCodeInsightTestFixture) {

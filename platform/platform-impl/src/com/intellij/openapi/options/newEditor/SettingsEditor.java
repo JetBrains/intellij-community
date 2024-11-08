@@ -49,8 +49,8 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
@@ -437,7 +437,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   protected boolean cancel(AWTEvent source) {
-    if (source instanceof KeyEvent && filter.context.isHoldingFilter()) {
+    if (source instanceof KeyEvent && filter.context.isHoldingFilter) {
       search.setText("");
       return false;
     }
@@ -498,7 +498,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   void checkModified(Configurable configurable) {
     Configurable parent = filter.context.getParentConfigurable(configurable);
-    if (ConfigurableWrapper.hasOwnContent(parent)) {
+    if (parent != null && ConfigurableWrapper.hasOwnContent(parent)) {
       checkModifiedForItem(parent);
       for (Configurable child : filter.context.getChildren(parent)) {
         checkModifiedForItem(child);
@@ -510,15 +510,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     updateStatus(configurable);
   }
 
-  private void checkModifiedForItem(final Configurable configurable) {
-    if (configurable != null) {
-      JComponent component = editor.getContent(configurable);
-      if (component == null && ConfigurableWrapper.hasOwnContent(configurable)) {
-        component = editor.readContent(configurable);
-      }
-      if (component != null) {
-        checkModifiedInternal(configurable);
-      }
+  private void checkModifiedForItem(@NotNull Configurable configurable) {
+    JComponent component = editor.getContent(configurable);
+    if (component == null && ConfigurableWrapper.hasOwnContent(configurable)) {
+      component = editor.readContent(configurable);
+    }
+    if (component != null) {
+      checkModifiedInternal(configurable);
     }
   }
 

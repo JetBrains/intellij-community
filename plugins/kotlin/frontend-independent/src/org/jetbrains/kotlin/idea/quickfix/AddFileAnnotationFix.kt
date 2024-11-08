@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -17,48 +17,51 @@ import org.jetbrains.kotlin.renderer.render
 /**
  * A quick fix to add file-level annotations, e.g. `@file:OptIn(SomeExperimentalAnnotation::class)`.
  *
- * The fix either creates a new annotation or adds the argument to the existing annotation entry.
- * It does not check whether the annotation class allows duplicating annotations; it is the caller responsibility.
- * For example, only one `@file:OptIn(...)` annotation is allowed, so if this annotation entry already exists,
- * the caller should pass the non-null smart pointer to it as the `existingAnnotationEntry` argument.
+ * The fix either adds the argument to an existing annotation entry found via `annotationFinder`,
+ * or creates a new annotation if no entry is found.
  *
- * @param file the file where the annotation should be added
+ * @param element the file where the annotation should be added
  * @param annotationFqName the fully qualified name of the annotation class (e.g., `kotlin.OptIn`)
  * @param argumentClassFqName the fully qualified name of the argument class (e.g., `SomeExperimentalAnnotation`) (optional)
- * @param existingAnnotationEntry a smart pointer to the existing annotation entry with the same annotation class (optional)
+ * @param annotationFinder function that locates an existing annotation entry in the file, if present (optional)
  */
 open class AddFileAnnotationFix(
-    file: KtFile,
+    element: KtFile,
     private val annotationFqName: FqName,
     private val argumentClassFqName: FqName? = null,
-    private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-) : KotlinQuickFixAction<KtFile>(file) {
-    override fun getText(): String {
+    private val annotationFinder: (KtFile, FqName) -> KtAnnotationEntry? = { _, _ -> null },
+) : PsiUpdateModCommandAction<KtFile>(element) {
+    override fun getPresentation(context: ActionContext, element: KtFile): Presentation {
         val annotationName = annotationFqName.shortName().asString()
         val innerText = argumentClassFqName?.shortName()?.asString()?.let { "$it::class" } ?: ""
         val annotationText = "$annotationName($innerText)"
-        return KotlinBundle.message("fix.add.annotation.text.containing.file", annotationText, element?.name ?: "")
+        val actionName = KotlinBundle.message("fix.add.annotation.text.containing.file", annotationText, element.name)
+        return Presentation.of(actionName)
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.annotation.family")
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val fileToAnnotate = element ?: return
+    override fun invoke(
+        context: ActionContext,
+        element: KtFile,
+        updater: ModPsiUpdater,
+    ) {
         val innerText = argumentClassFqName?.render()?.let { "$it::class" }
         val annotationText = when (innerText) {
             null -> annotationFqName.render()
             else -> "${annotationFqName.render()}($innerText)"
         }
 
-        val psiFactory = KtPsiFactory(project)
-        if (fileToAnnotate.fileAnnotationList == null) {
+        val psiFactory = KtPsiFactory(context.project)
+        val annotationList = element.fileAnnotationList
+        if (annotationList == null) {
             // If there are no existing file-level annotations, create an annotation list with the new annotation
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(annotationText)
-            val createdAnnotationList = replaceFileAnnotationList(fileToAnnotate, newAnnotationList)
-            fileToAnnotate.addAfter(psiFactory.createWhiteSpace("\n"), createdAnnotationList)
+            val createdAnnotationList = replaceFileAnnotationList(element, newAnnotationList)
+            element.addAfter(psiFactory.createWhiteSpace("\n"), createdAnnotationList)
             ShortenReferencesFacility.getInstance().shorten(createdAnnotationList)
         } else {
-            val annotationList = fileToAnnotate.fileAnnotationList ?: return
+            val existingAnnotationEntry = annotationFinder.invoke(element, annotationFqName)
             if (existingAnnotationEntry == null) {
                 // There are file-level annotations, but the fix is expected to add a new entry
                 val newAnnotation = psiFactory.createFileAnnotation(annotationText)
@@ -75,23 +78,22 @@ open class AddFileAnnotationFix(
     /**
      * Add an argument to the existing annotation.
      *
-     * @param annotationEntry a smart pointer to the existing annotation entry
+     * @param annotationEntry the existing annotation entry
      * @param argumentText the argument text
      */
-    private fun addArgumentToExistingAnnotation(annotationEntry: SmartPsiElementPointer<KtAnnotationEntry>, argumentText: String) {
-        val entry = annotationEntry.element ?: return
-        val existingArgumentList = entry.valueArgumentList
-        val psiFactory = KtPsiFactory(entry.project)
+    private fun addArgumentToExistingAnnotation(annotationEntry: KtAnnotationEntry, argumentText: String) {
+        val existingArgumentList = annotationEntry.valueArgumentList
+        val psiFactory = KtPsiFactory(annotationEntry.project)
         val newArgumentList = psiFactory.createCallArguments("($argumentText)")
         when {
             existingArgumentList == null -> // use the new argument list
-                entry.addAfter(newArgumentList, entry.lastChild)
+                annotationEntry.addAfter(newArgumentList, annotationEntry.lastChild)
             existingArgumentList.arguments.isEmpty() -> // replace '()' with the new argument list
                 existingArgumentList.replace(newArgumentList)
             else -> // add the new argument to the existing list
                 existingArgumentList.addArgument(newArgumentList.arguments[0])
         }
-        ShortenReferencesFacility.getInstance().shorten(entry)
+        ShortenReferencesFacility.getInstance().shorten(annotationEntry)
     }
 }
 
@@ -99,27 +101,27 @@ open class AddFileAnnotationFix(
 /**
  * A specialized version of [AddFileAnnotationFix] that adds @OptIn(...) annotations to the containing file.
  *
- * This class reuses the parent's [invoke] method, but overrides the [getText] method to provide
+ * This class reuses the parent's [invoke] method, but overrides the [getPresentation] method to provide
  * more descriptive opt-in related messages.
  *
  * TODO: migrate from FqName to ClassId fully when the K1 plugin is dropped.
  *
- * @param file the file there the annotation should be added
+ * @param element the file there the annotation should be added
  * @param optInFqName name of OptIn annotation
  * @param argumentClassFqName the fully qualified name of the annotation to opt-in
- * @param existingAnnotationEntry the already existing annotation entry (if any)
+ * @param annotationFinder function that locates an existing annotation entry in the file, if present (optional)
  */
 class UseOptInFileAnnotationFix(
-    file: KtFile,
+    element: KtFile,
     optInFqName: FqName,
-    private val argumentClassFqName: FqName,
-    existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>?
-) : AddFileAnnotationFix(file, optInFqName, argumentClassFqName, existingAnnotationEntry) {
-    private val fileName = file.name
+    annotationFinder: (file: KtFile, annotationFqName: FqName) -> KtAnnotationEntry?,
+    private val argumentClassFqName: FqName
+) : AddFileAnnotationFix(element, optInFqName, argumentClassFqName, annotationFinder) {
 
-    override fun getText(): String {
+    override fun getPresentation(context: ActionContext, element: KtFile): Presentation {
         val argumentText = argumentClassFqName.shortName().asString()
-        return KotlinBundle.message("fix.opt_in.text.use.containing.file", argumentText, fileName)
+        val actionName = KotlinBundle.message("fix.opt_in.text.use.containing.file", argumentText, element.name)
+        return Presentation.of(actionName)
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")

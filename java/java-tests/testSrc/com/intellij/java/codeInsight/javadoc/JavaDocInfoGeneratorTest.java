@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
@@ -326,6 +327,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testDumbMode() {
+    if (!Registry.is("ide.dumb.mode.check.awareness")) return;
     DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       doTestAtCaret();
     });

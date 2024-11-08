@@ -1,0 +1,10 @@
+{
+    "modules": [
+        { "name": "common", "platform": "common", "dependencies": ["library"] },
+        { "name": "jvm", "platform": "jvm", "refinement_dependencies": ["common"] },
+        { "name": "native", "platform": "native", "refinement_dependencies": ["common"] }
+    ],
+    "libraries": [
+        { "name": "library" }
+    ]
+}

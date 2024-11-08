@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createTypeByKtType
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -38,10 +39,38 @@ object CallableReturnTypeUpdaterUtils {
         typeInfo: TypeInfo,
         project: Project,
         editor: Editor? = null,
+    ) = updateType(
+        declaration,
+        typeInfo,
+        project,
+        editor = editor,
+        updater = null,
+    )
+
+    fun updateType(
+        declaration: KtCallableDeclaration,
+        typeInfo: TypeInfo,
+        project: Project,
+        updater: ModPsiUpdater,
+    ) = updateType(
+        declaration,
+        typeInfo,
+        project,
+        editor = null,
+        updater = updater,
+    )
+
+    private fun updateType(
+        declaration: KtCallableDeclaration,
+        typeInfo: TypeInfo,
+        project: Project,
+        editor: Editor? = null,
         updater: ModPsiUpdater? = null
     ) {
-        if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
-            declaration.setType(typeInfo.defaultType, project, updater)
+        if (updater != null && typeInfo.useTemplate) {
+            setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, updater)
+        } else if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
+            declaration.setAndShortenTypeReference(typeInfo.defaultType, project, updater)
         } else {
             setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
         }
@@ -63,17 +92,28 @@ object CallableReturnTypeUpdaterUtils {
         }
     }
 
-    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project, updater: ModPsiUpdater? = null) {
+    private fun KtCallableDeclaration.setAndShortenTypeReference(
+        type: TypeInfo.Type,
+        project: Project,
+        updater: ModPsiUpdater? = null,
+    ) {
+        setTypeReference(type, project)?.let {
+            shortenReferences(it)
+            updater?.moveCaretTo(it.endOffset)
+        }
+    }
+
+    private fun KtCallableDeclaration.setTypeReference(
+        type: TypeInfo.Type,
+        project: Project,
+    ): KtTypeReference? {
         val newTypeRef = if (isProcedure(type)) {
             null
         } else {
             KtPsiFactory(project).createType(type.longTypeRepresentation)
         }
         typeReference = newTypeRef
-        typeReference?.let {
-            shortenReferences(it)
-            updater?.moveCaretTo(it.endOffset)
-        }
+        return typeReference
     }
 
     private fun KtCallableDeclaration.isProcedure(type: TypeInfo.Type) =
@@ -92,7 +132,7 @@ object CallableReturnTypeUpdaterUtils {
         if (!declarationAndTypes.hasNext()) return
         val (declaration: KtCallableDeclaration, typeInfo: TypeInfo) = declarationAndTypes.next()
         // Set a placeholder type so that it can be referenced
-        declaration.setType(TypeInfo.ANY, project)
+        declaration.setAndShortenTypeReference(TypeInfo.ANY, project)
         PsiDocumentManager.getInstance(project).apply {
             commitAllDocuments()
             doPostponedOperationsAndUnblockDocument(editor.document)
@@ -111,6 +151,20 @@ object CallableReturnTypeUpdaterUtils {
             editor,
             builder.buildInlineTemplate(),
             createPostTypeUpdateProcessor(declaration, declarationAndTypes, project, editor)
+        )
+    }
+
+    private fun setTypeWithTemplate(
+        declarationAndTypes: Iterator<Pair<KtCallableDeclaration, TypeInfo>>,
+        project: Project,
+        updater: ModPsiUpdater,
+    ) {
+        if (!declarationAndTypes.hasNext()) return
+        val (declaration: KtCallableDeclaration, typeInfo: TypeInfo) = declarationAndTypes.next()
+        val newTypeRef = declaration.setTypeReference(typeInfo.defaultType, project) ?: return
+        updater.templateBuilder().field(
+            newTypeRef,
+            TypeChooseValueExpression(listOf(typeInfo.defaultType) + typeInfo.otherTypes, typeInfo.defaultType)
         )
     }
 
@@ -145,7 +199,7 @@ object CallableReturnTypeUpdaterUtils {
         val declarationType = declaration.returnType
         val overriddenTypes = (declaration.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols
             ?.map { it.returnType }
-            ?.distinct()
+            ?.distinctBy { createTypeByKtType(it) }
             ?.toList()
             ?: emptyList()
         val cannotBeNull = overriddenTypes.any { !it.canBeNull }
@@ -156,10 +210,10 @@ object CallableReturnTypeUpdaterUtils {
             // multiple super types.
             .bfs { it.directSupertypes(shouldApproximate = true).iterator() }
             .map { it.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true) }
-            .distinct()
+            .distinctBy { createTypeByKtType(it) }
             .let { types ->
                 when {
-                    cannotBeNull -> types.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }.distinct()
+                    cannotBeNull -> types.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }.distinctBy { createTypeByKtType(it) }
                     declarationType.hasFlexibleNullability -> types.flatMap { type ->
                         listOf(type.withNullability(KaTypeNullability.NON_NULLABLE), type.withNullability(KaTypeNullability.NULLABLE))
                     }
@@ -240,7 +294,7 @@ object CallableReturnTypeUpdaterUtils {
         val otherTypes: List<Type> = emptyList(),
         val useTemplate: Boolean = false,
     ) {
-        class Type(val isUnit: Boolean, val isError: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
+        data class Type(val isUnit: Boolean, val isError: Boolean, val longTypeRepresentation: String, val shortTypeRepresentation: String)
 
         companion object {
             context(KaSession)
@@ -252,7 +306,7 @@ object CallableReturnTypeUpdaterUtils {
 
             context(KaSession)
             @OptIn(KaExperimentalApi::class)
-            private fun createTypeByKtType(ktType: KaType): Type = Type(
+            internal fun createTypeByKtType(ktType: KaType): Type = Type(
                 isUnit = ktType.isUnitType,
                 isError = ktType is KaErrorType,
                 longTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),

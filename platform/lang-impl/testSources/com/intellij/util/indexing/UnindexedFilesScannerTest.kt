@@ -31,6 +31,7 @@ import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.mocks.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.*
@@ -399,7 +400,8 @@ class UnindexedFilesScannerTest {
 
   private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Collection<FileIndexingRequest>> {
     return project.service<PerProjectIndexingQueue>().getFilesSubmittedDuring {
-      val scanningTask = UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null)
+      val parameters = CompletableDeferred(ScanningIterators("Test", listOf(filesAndDirs), null, ScanningType.PARTIAL))
+      val scanningTask = UnindexedFilesScanner(project, false, false, null, scanningParameters = parameters)
       return@getFilesSubmittedDuring scanningTask.queue().get()
     }
   }

@@ -5,8 +5,8 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
-import com.intellij.driver.sdk.ui.RectangleRef
 import java.awt.Point
+import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
 
 @Remote("com.intellij.openapi.editor.Editor")
@@ -23,12 +23,15 @@ interface Editor {
   fun getColorsScheme(): EditorColorsScheme
   fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int
   fun getSelectionModel(): SelectionModel
+  fun getSoftWrapModel(): SoftWrapModel
 }
+
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
   fun getLine(): Int
   fun getColumn(): Int
 }
+
 @Remote("com.intellij.openapi.editor.Document")
 interface Document {
   fun getText(): String
@@ -52,27 +55,32 @@ interface InlayModel {
 interface Inlay {
   fun getRenderer(): EditorCustomElementRenderer
   fun getOffset(): Int
-  fun getBounds(): RectangleRef
+  fun getBounds(): Rectangle
+}
+
+@Remote("com.intellij.openapi.editor.SoftWrapModel")
+interface SoftWrapModel {
+  fun isSoftWrappingEnabled(): Boolean
 }
 
 @Remote("com.intellij.openapi.editor.EditorCustomElementRenderer")
-interface EditorCustomElementRenderer{
+interface EditorCustomElementRenderer {
   fun getText(): String?
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer")
-interface DeclarativeInlayRenderer{
+interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList")
-interface InlayPresentationList{
+interface InlayPresentationList {
   fun getEntries(): Array<TextInlayPresentationEntry>
 }
 
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry")
-interface TextInlayPresentationEntry{
+interface TextInlayPresentationEntry {
   fun getText(): String
 }
 

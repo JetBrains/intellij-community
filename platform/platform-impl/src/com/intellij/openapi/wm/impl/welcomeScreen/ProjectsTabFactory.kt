@@ -195,7 +195,7 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   }
 
   private fun createEmptyStatePanel(): JComponent {
-    val emptyStateProjectsPanel = EmptyStateProjectsPanel(parentDisposable)
+    val emptyStateProjectsPanel = emptyStateProjectPanel(parentDisposable)
     initDnD(emptyStateProjectsPanel)
     return emptyStateProjectsPanel
   }

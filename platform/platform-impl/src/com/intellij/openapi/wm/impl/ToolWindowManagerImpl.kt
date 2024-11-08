@@ -222,28 +222,14 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
           toolWindowManager.revalidateStripeButtons()
 
-          val toolWindowId = getToolWindowIdForComponent(event.component) ?: return
-
-          val activeEntry = toolWindowManager.idToEntry.get(toolWindowId) ?: return
-          val windowInfo = activeEntry.readOnlyWindowInfo
-          // just removed
-          if (!windowInfo.isVisible) {
-            return
+          if (Registry.`is`("auto.hide.all.tool.windows.on.focus.change", false)) {
+            hideAllUnfocusedAutoHideToolWindows(toolWindowManager, event.oppositeComponent)
+          }
+          else {
+            val toolWindowId = getToolWindowIdForComponent(event.component) ?: return
+            hideIfAutoHideToolWindowLostFocus(toolWindowManager, toolWindowId, event.oppositeComponent)
           }
 
-          if (!(windowInfo.isAutoHide || windowInfo.type == ToolWindowType.SLIDING)) {
-            return
-          }
-
-          // let's check that tool window actually loses focus
-          if (getToolWindowIdForComponent(event.oppositeComponent) != toolWindowId) {
-            // a toolwindow lost focus
-            val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
-            if (!focusGoesToPopup) {
-              val info = toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindowId)
-              toolWindowManager.deactivateToolWindow(info, activeEntry)
-            }
-          }
         }
         else if (event.id == FocusEvent.FOCUS_GAINED) {
           val component = event.component ?: return
@@ -253,6 +239,35 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                 (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
               }
             }
+          }
+        }
+      }
+
+      private fun hideAllUnfocusedAutoHideToolWindows(toolWindowManager: ToolWindowManagerImpl, focusedComponent: Component) {
+        for (id in toolWindowManager.idToEntry.keys) {
+          hideIfAutoHideToolWindowLostFocus(toolWindowManager, id, focusedComponent)
+        }
+      }
+
+      private fun hideIfAutoHideToolWindowLostFocus(toolWindowManager: ToolWindowManagerImpl, toolWindowId: String, focusedComponent: Component) {
+        val activeEntry = toolWindowManager.idToEntry.get(toolWindowId) ?: return
+        val windowInfo = activeEntry.readOnlyWindowInfo
+        // just removed
+        if (!windowInfo.isVisible) {
+          return
+        }
+
+        if (!(windowInfo.isAutoHide || windowInfo.type == ToolWindowType.SLIDING)) {
+          return
+        }
+
+        // let's check that tool window actually loses focus
+        if (getToolWindowIdForComponent(focusedComponent) != toolWindowId) {
+          // a toolwindow lost focus
+          val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(focusedComponent) != null
+          if (!focusGoesToPopup) {
+            val info = toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindowId)
+            toolWindowManager.deactivateToolWindow(info, activeEntry)
           }
         }
       }
@@ -331,6 +346,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           process { manager ->
             if (manager.currentState != KeyState.HOLD) {
               manager.resetHoldState()
+            }
+            if (Registry.`is`("auto.hide.all.tool.windows.on.any.action", false)) {
+              val focusedComponent = IdeFocusManager.getInstance(manager.project).focusOwner
+              if (focusedComponent != null) {
+                hideAllUnfocusedAutoHideToolWindows(manager, focusedComponent)
+              }
             }
           }
 

@@ -5,10 +5,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +31,14 @@ public final class TestIconProvider extends IconProvider {
       try {
         if (framework.isIgnoredMethod(element)) {
           Icon ignoredTestIcon = AllIcons.RunConfigurations.IgnoredTest;
-          LayeredIcon icon = LayeredIcon.layeredIcon(() -> new Icon[]{ignoredTestIcon, PlatformIcons.PUBLIC_ICON});
-          icon.setIcon(PlatformIcons.PUBLIC_ICON, 1, ignoredTestIcon.getIconWidth(), 0);
-          return icon;
+          if (BitUtil.isSet(flags, Iconable.ICON_FLAG_VISIBILITY)) {
+            LayeredIcon icon = LayeredIcon.layeredIcon(() -> new Icon[]{ignoredTestIcon, PlatformIcons.PUBLIC_ICON});
+            icon.setIcon(PlatformIcons.PUBLIC_ICON, 1, ignoredTestIcon.getIconWidth(), 0);
+            return icon;
+          }
+          else {
+            return ignoredTestIcon;
+          }
         }
       }
       catch (AbstractMethodError ignored) {}
@@ -42,8 +49,14 @@ public final class TestIconProvider extends IconProvider {
 
       try {
         if (framework.isTestMethod(element)) {
-          LayeredIcon mark = LayeredIcon.layeredIcon(new Icon[]{IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), AllIcons.RunConfigurations.TestMark, PlatformIcons.PUBLIC_ICON});
-          mark.setIcon(PlatformIcons.PUBLIC_ICON, 2, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method).getIconWidth(), 0);
+          LayeredIcon mark;
+          if (BitUtil.isSet(flags, Iconable.ICON_FLAG_VISIBILITY)) {
+            mark = LayeredIcon.layeredIcon(new Icon[]{IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), AllIcons.RunConfigurations.TestMark, PlatformIcons.PUBLIC_ICON});
+            mark.setIcon(PlatformIcons.PUBLIC_ICON, 2, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method).getIconWidth(), 0);
+          }
+          else {
+            mark = LayeredIcon.layeredIcon(new Icon[]{IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), AllIcons.RunConfigurations.TestMark});
+          }
           return mark;
         }
       }

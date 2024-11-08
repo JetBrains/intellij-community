@@ -117,8 +117,7 @@ class NavBarService(private val project: Project, cs: CoroutineScope) {
           yield()
         }
         showHint(dataContext, project, component)
-        vm.selectTail()
-        vm.showPopup()
+        vm.selectTail(true)
       }
     }
 

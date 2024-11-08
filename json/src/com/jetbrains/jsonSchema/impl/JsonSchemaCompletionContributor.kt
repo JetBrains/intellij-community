@@ -109,9 +109,10 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       insideStringLiteral = isInsideQuotedString
     }
 
-    private val customizers by lazy {
+    private val completionCustomizer by lazy {
       JsonSchemaCompletionCustomizer.EXTENSION_POINT_NAME.extensionList
         .filter { it.isApplicable(originalPosition.containingFile) }
+        .singleOrNull()
     }
 
 
@@ -132,7 +133,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         psiWalker.getParentPropertyAdapter(completionPsiElement)?.parentObject,
         completionType == CompletionType.SMART
       )
-      val completionCustomizer = customizers.singleOrNull()
       JsonSchemaResolver(myProject, rootSchema, position, schemaExpansionRequest)
         .resolve()
         .forEach { schema ->
@@ -180,7 +180,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       for (o in anEnum) {
         if (o !is String) continue
         completionVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(
-          if (!shouldWrapInQuotes(o, false)) o else StringUtil.wrapWithDoubleQuote(o)
+          if (!shouldWrapInQuotes(o, false)) o else (psiWalker?.escapeInvalidIdentifier(o) ?: StringUtil.wrapWithDoubleQuote(o))
         )))
       }
     }
@@ -195,7 +195,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .forEach { name ->
           knownNames.add(name)
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
-          if (customizers.singleOrNull()?.acceptsPropertyCompletionItem(propertySchema, completionPsiElement) != false) {
+          if (completionCustomizer?.acceptsPropertyCompletionItem(propertySchema, completionPsiElement) != false) {
             addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
           }
         }
@@ -220,12 +220,12 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
             val description = valueMetadata?.get("description")
             val deprecated = valueMetadata?.get("deprecationMessage")
             val order = if (isEnumOrderSensitive) i else null
-            val handlers = customizers.mapNotNull { p -> p.createHandlerForEnumValue(schema, variant, completionPsiElement) }.toList()
+            val handler = completionCustomizer?.createHandlerForEnumValue(schema, variant, completionPsiElement)
             addValueVariant(
               key = variant,
               description = description,
               deprecated = deprecated != null,
-              handler = handlers.singleOrNull(),
+              handler = handler,
               order = order
             )
           }
@@ -400,7 +400,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     fun shouldWrapInQuotes(key: String?, isValue: Boolean): Boolean {
       return wrapInQuotes && psiWalker != null &&
-             (isValue && psiWalker.requiresValueQuotes() || !isValue && psiWalker.requiresNameQuotes() || !psiWalker.isValidIdentifier(key,
+             (isValue && psiWalker.requiresValueQuotes() || !isValue && psiWalker.requiresNameQuotes() || key != null && !psiWalker.isValidIdentifier(key,
                                                                                                                                        myProject))
     }
 
@@ -412,7 +412,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       var schemaObject = jsonSchemaObject
       val variants = JsonSchemaResolver(myProject, schemaObject, JsonPointerPosition(), sourcePsiAdapter).resolve()
       schemaObject = ObjectUtils.coalesce(variants.firstOrNull(), schemaObject)
-      propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else StringUtil.wrapWithDoubleQuote(propertyKey)
+      propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else (psiWalker?.escapeInvalidIdentifier(propertyKey) ?: StringUtil.wrapWithDoubleQuote(propertyKey))
 
       val builder = LookupElementBuilder.create(propertyKey)
         .withPresentableText(completionPath?.let { it.prefix() + "." + key }

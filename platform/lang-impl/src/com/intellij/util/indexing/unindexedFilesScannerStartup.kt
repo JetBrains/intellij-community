@@ -144,10 +144,11 @@ private fun scheduleFullScanning(
     clearIndexesForDirtyFiles(project, notSeenIds.result.plus(additionalOrphanDirtyFiles), projectDirtyFilesQueue, false)
   }
   else CompletableDeferred(Unit)
-
-  UnindexedFilesScanner(project, true, isFilterUpToDate, null, null, indexingReason,
-                        fullScanningType, someDirtyFilesScheduledForIndexing.asCompletableFuture(),
-                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds)
+  val parameters = CompletableDeferred(ScanningIterators(indexingReason, null, null, fullScanningType))
+  UnindexedFilesScanner(project, true, isFilterUpToDate,
+                        someDirtyFilesScheduledForIndexing.asCompletableFuture(),
+                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
+                        scanningParameters = parameters)
     .queue()
   return someDirtyFilesScheduledForIndexing
 }
@@ -170,8 +171,11 @@ private fun scheduleDirtyFilesScanning(
   val projectDirtyFilesFromOrphanQueue = coroutineScope.async { projectDirtyFiles.await()?.projectDirtyFilesFromOrphanQueue ?: emptyList() }
   val iterators = listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFromProjectQueue, false),
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
-  UnindexedFilesScanner(project, true, true, iterators, null,
-                        indexingReason, partialScanningType, projectDirtyFiles.asCompletableFuture())
+
+  val scanningIterators = CompletableDeferred(ScanningIterators(indexingReason, iterators, null, partialScanningType))
+  UnindexedFilesScanner(project, true, true,
+                        projectDirtyFiles.asCompletableFuture(),
+                        scanningParameters = scanningIterators)
     .queue()
   return projectDirtyFiles
 }
@@ -299,7 +303,7 @@ private enum class ReusingPersistentFilterCondition(val reason: FullScanningReas
       return state.filterHolder.wasDataLoadedFromDisk(state.project)
     }
   },
-  IS_SCANNING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
+  IS_SCANNING_AND_INDEXING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
       return state.project.getService(ProjectIndexingDependenciesService::class.java).isScanningAndIndexingCompleted()
     }

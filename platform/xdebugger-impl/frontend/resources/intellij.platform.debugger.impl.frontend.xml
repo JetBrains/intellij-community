@@ -5,9 +5,14 @@
   </dependencies>
   <actions>
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
+    <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
+      <add-to-group group-id="DebugReloadGroup" anchor="first"/>
+      <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
+    <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
   </extensions>
 </idea-plugin>

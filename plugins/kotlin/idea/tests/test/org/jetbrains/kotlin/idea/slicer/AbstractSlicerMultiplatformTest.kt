@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.slicer
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.slicer.SliceLanguageSupportProvider
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
@@ -25,7 +26,7 @@ abstract class AbstractSlicerMultiplatformTest : AbstractMultiModuleTest() {
         val offset = document.extractMarkerOffset(project, "<caret>")
 
         testSliceFromOffset(file, offset) { _, rootNode ->
-            KotlinTestUtils.assertEqualsToFile(getResultsFile(testRoot), buildTreeRepresentation(rootNode))
+            KotlinTestUtils.assertEqualsToFile(getResultsFile(testRoot), ActionUtil.underModalProgress(project, "") {  buildTreeRepresentation(rootNode) })
         }
     }
 

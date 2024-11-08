@@ -66,17 +66,16 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
-    val specification = details.repository.createPackageSpecification(details.name, details.availableVersions.first())
+    val version = versionSelector.text.takeIf { it != latestText }
+    val specification = details.repository.createPackageSpecification(details.name, version)
     project.service<PyPackagingToolWindowService>().installPackage(specification)
-
   }
 
   private val installWithOptionAction: Action = wrapAction(message("action.PyInstallWithOptionPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
     val version = versionSelector.text.takeIf { it != latestText }
-    InstallWithOptionsPackageAction.installWithOptions(project, details,version)
+    InstallWithOptionsPackageAction.installWithOptions(project, details, version)
   }
-
 
   private val versionSelector = JBComboBoxLabel()
 
@@ -154,7 +153,6 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE)
   }
 
-
   private val component = PyPackagesUiComponents.borderPanel {
     add(PyPackagesUiComponents.borderPanel {
       border = SideBorder(JBColor.GRAY, SideBorder.BOTTOM)
@@ -181,7 +179,6 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
     selectedPackageDetails.set(packageDetails)
   }
 
-
   private fun updatePackageVersion(newVersion: String) {
     val details = selectedPackageDetails.get() ?: return
     val newVersionSpec = details.toPackageSpecification(newVersion)
@@ -201,7 +198,6 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
   }
 
   private fun calculateVersionText() = (selectedPackage.get() as? InstalledPackage)?.currentVersion?.presentableText ?: latestText
-
 
   private fun wrapAction(@Nls text: String, @Nls progressText: String, actionPerformed: suspend () -> Unit): Action = object : AbstractAction(text) {
     override fun actionPerformed(e: ActionEvent) {

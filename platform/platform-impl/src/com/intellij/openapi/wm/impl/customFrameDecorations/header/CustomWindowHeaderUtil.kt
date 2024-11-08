@@ -1,17 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.FrameInfoHelper
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.X11UiUtil
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.WindowMoveListener
@@ -62,22 +59,25 @@ object CustomWindowHeaderUtil {
            (isToolbarInHeader(uiSettings, false) || IdeFrameDecorator.isCustomDecorationActive())
   }
 
-  internal inline fun isCompactHeader(
-    uiSettings: UISettings,
-    mainToolbarActionSupplier: () -> List<Pair<ActionGroup, HorizontalLayout.Group>>,
-  ): Boolean {
-    if (isCompactHeader(uiSettings)) return true
+  internal inline fun isCompactHeader(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, HorizontalLayout.Group>>): Boolean {
+    if (isCompactHeader()) {
+      return true
+    }
+
     val mainToolbarHasNoActions = mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
     return if (SystemInfoRt.isMac) {
       mainToolbarHasNoActions
     }
     else {
-      mainToolbarHasNoActions && !uiSettings.separateMainMenu
+      mainToolbarHasNoActions && !UISettings.getInstance().separateMainMenu
     }
   }
 
-  internal fun isCompactHeader(uiSettings: UISettings): Boolean {
-    return DistractionFreeModeController.shouldMinimizeCustomHeader() || !uiSettings.showNewMainToolbar
+  internal fun isCompactHeader(): Boolean {
+    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+      return false
+    }
+    return DistractionFreeModeController.shouldMinimizeCustomHeader() || !UISettings.getInstance().showNewMainToolbar
   }
 
   internal fun isToolbarInHeader(uiSettings: UISettings, isFullscreen: Boolean): Boolean {

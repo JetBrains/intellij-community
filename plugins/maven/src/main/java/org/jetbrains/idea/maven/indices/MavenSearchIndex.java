@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.model.RepositoryKind;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Set;
 
 public interface MavenSearchIndex extends MavenRepositoryIndex {
@@ -38,10 +38,10 @@ public interface MavenSearchIndex extends MavenRepositoryIndex {
   }
 
   @Nullable
-  default File getRepositoryFile() {
+  default Path getRepositoryFile() {
     MavenRepositoryInfo repository = getRepository();
     if (repository.getKind() == RepositoryKind.LOCAL) {
-      return new File(repository.getUrl());
+      return Path.of(repository.getUrl());
     }
     return null;
   }

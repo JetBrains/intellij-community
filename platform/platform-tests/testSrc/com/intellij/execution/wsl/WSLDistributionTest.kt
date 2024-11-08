@@ -13,7 +13,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
+import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
 import com.intellij.platform.eel.provider.EelProcessResultImpl
@@ -46,6 +48,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.*
 import java.io.File
+import java.lang.reflect.Field
 import java.nio.file.FileSystems
 import java.util.stream.Stream
 import kotlin.reflect.full.memberProperties
@@ -419,8 +422,12 @@ class WSLDistributionTest {
     fun `workingDirectory is preserved`() {
       val options = WSLCommandLineOptions()
 
+      val uncPrefix = WSLUtil.getUncPrefix()
+
+      val workDir = """${uncPrefix}$WSL_ID\foo\bar"""
+
       val sourceCmd = GeneralCommandLine("true")
-        .withWorkDirectory("""\\wsl.localhost\$WSL_ID\foo\bar""")
+        .withWorkDirectory(workDir)
 
       val cmd = WslTestStrategy.Ijent.patch(sourceCmd, options)
 

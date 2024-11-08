@@ -123,7 +123,11 @@ public final class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public boolean isWritingAllowed() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    Application app = ApplicationManager.getApplication();
+    // Check to suppress LOG.error() about implicit lock
+    if (!app.isWriteIntentLockAcquired()) {
+      ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    }
     return myWritingAllowed;
   }
 

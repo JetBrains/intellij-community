@@ -27,7 +27,7 @@ interface NavBarVm {
 
   fun shiftSelectionTo(shift: SelectionShift)
 
-  fun selectTail()
+  fun selectTail(withPopupOpen: Boolean)
 
   fun showPopup()
 }

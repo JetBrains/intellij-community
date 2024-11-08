@@ -41,8 +41,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -99,7 +99,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (!isStatic &&
         ContainerUtil.exists(ImplicitUsageProvider.EP_NAME.getExtensionList(), p -> p.isClassWithCustomizedInitialization(psiClass))) {
-      addInstruction(new EscapeInstruction(Collections.singleton(ThisDescriptor.createThisValue(getFactory(), psiClass))));
+      addInstruction(new EscapeInstruction(List.of(new ThisDescriptor(psiClass))));
       addInstruction(new FlushFieldsInstruction());
     }
     for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
@@ -177,9 +177,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.finishElement(element);
     if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) &&
         !(element instanceof PsiSwitchLabeledRuleStatement))) {
-      List<DfaVariableValue> synthetics = myCurrentFlow.getSynthetics(element);
+      List<VariableDescriptor> synthetics = myCurrentFlow.getSynthetics(element);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
-      instruction.getVarsToFlush().addAll(synthetics);
+      instruction.flushVars(synthetics);
       addInstruction(instruction);
     }
   }
@@ -231,8 +231,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (arrayStore != null) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-      var staticVariable = ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
-      addInstruction(new JavaArrayStoreInstruction(arrayStore, rExpr, transfer, staticVariable));
+      VariableDescriptor staticDescriptor = ArrayElementDescriptor.fromArrayAccess(arrayStore);
+      addInstruction(new JavaArrayStoreInstruction(arrayStore, rExpr, transfer, staticDescriptor));
     } else {
       addInstruction(new AssignInstruction(rExpr, JavaDfaValueFactory.getExpressionDfaValue(myFactory, lExpr)));
     }
@@ -796,24 +796,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void handleClosure(PsiElement closure) {
-    Set<PsiVariable> variables = new HashSet<>();
-    Set<DfaVariableValue> escapedVars = new HashSet<>();
+    Set<VariableDescriptor> descriptors = new HashSet<>();
     closure.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement target = expression.resolve();
-        if (PsiUtil.isJvmLocalVariable(target)) {
-          variables.add((PsiVariable)target);
-        }
-        if (target instanceof PsiMember) {
-          DfaValue escapedVar = JavaDfaValueFactory.getQualifierOrThisValue(getFactory(), expression);
-          if (escapedVar == null) {
-            escapedVar = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), expression);
-          }
-          if (escapedVar instanceof DfaVariableValue dfaVar) {
-            escapedVars.add(dfaVar);
-          }
+        VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(target);
+        if (descriptor != null) {
+          descriptors.add(descriptor);
         }
       }
 
@@ -822,17 +813,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         super.visitThisExpression(expression);
         DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), expression);
         if (value instanceof DfaVariableValue dfaVar) {
-          escapedVars.add(dfaVar);
+          descriptors.add(dfaVar.getDescriptor());
         }
       }
     });
-    for (DfaValue value : getFactory().getValues()) {
-      if (value instanceof DfaVariableValue dfaVar && dfaVar.getPsiVariable() instanceof PsiVariable var && variables.contains(var)) {
-        escapedVars.add(dfaVar);
-      }
-    }
-    if (!escapedVars.isEmpty()) {
-      addInstruction(new EscapeInstruction(escapedVars));
+    if (!descriptors.isEmpty()) {
+      addInstruction(new EscapeInstruction(List.copyOf(descriptors)));
     }
     List<PsiElement> closures;
     if (closure instanceof PsiClass psiClass) {
@@ -1681,10 +1667,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void readArrayElement(@NotNull PsiArrayAccessExpression expression) {
     DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-    DfaVariableValue staticValue =
-      ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), DfaVariableValue.class);
     addInstruction(new ArrayAccessInstruction(new JavaExpressionAnchor(expression), new ArrayIndexProblem(expression), transfer,
-                                              staticValue));
+                                              ArrayElementDescriptor.fromArrayAccess(expression)));
   }
 
   private @Nullable DfaVariableValue getTargetVariable(PsiExpression expression) {
@@ -2446,8 +2430,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     DfaValue dest = JavaDfaValueFactory.getExpressionDfaValue(myFactory, operand);
     if (arrayStore != null) {
-      addInstruction(new JavaArrayStoreInstruction(arrayStore, null, null,
-                                                   ObjectUtils.tryCast(dest, DfaVariableValue.class)));
+      VariableDescriptor staticDescriptor = ArrayElementDescriptor.fromArrayAccess(arrayStore);
+      addInstruction(new JavaArrayStoreInstruction(arrayStore, null, null, staticDescriptor));
     } else {
       addInstruction(new AssignInstruction(operand, null, dest));
     }

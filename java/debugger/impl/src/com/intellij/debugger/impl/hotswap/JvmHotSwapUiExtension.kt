@@ -16,12 +16,6 @@ import javax.swing.Icon
 private class JvmHotSwapUiExtension : HotSwapUiExtension {
   override fun isApplicable(): Boolean = PlatformUtils.isIntelliJ()
   override fun showFloatingToolbar() = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
-  override val successStatusLocation get() =
-    if (Registry.`is`("debugger.hotswap.show.ide.popup")) {
-      HotSwapUiExtension.SuccessStatusLocation.IDE_POPUP
-    } else {
-      HotSwapUiExtension.SuccessStatusLocation.NOTIFICATION
-    }
 
   override val hotSwapIcon: Icon
     get() = PlatformDebuggerImplIcons.Actions.DebuggerSync

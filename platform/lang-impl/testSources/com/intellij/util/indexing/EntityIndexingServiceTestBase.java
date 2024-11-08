@@ -75,7 +75,7 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
       WriteAction.run(() -> remover.consume(createdEntities));
     }
 
-    new UnindexedFilesScanner(getProject(), iterators, null, getTestName(false)).queue();
+    new UnindexedFilesScanner(getProject(), iterators, getTestName(false)).queue();
   }
 
   private static void assertSameIterators(List<IndexableFilesIterator> actualIterators,

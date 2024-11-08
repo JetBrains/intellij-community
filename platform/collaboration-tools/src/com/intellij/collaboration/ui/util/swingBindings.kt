@@ -6,7 +6,8 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -266,20 +267,28 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter:
       setter(text)
     }
   }
-  cs.launchNow(CoroutineName("Text binding for $this")) {
-    textFlow.collectScoped { newText ->
+
+  fun doSetText(newText: String) {
+    WriteIntentReadAction.run {
       if (text != newText) {
-        writeAction {
-          setText(newText.filter { it != '\r' })
+        val noCr = newText.filter { it != '\r' }
+        WriteAction.run<Throwable> {
+          setText(noCr)
         }
       }
-      addDocumentListener(listener)
-      try {
-        awaitCancellation()
-      }
-      finally {
-        removeDocumentListener(listener)
-      }
+    }
+  }
+
+  cs.launchNow(CoroutineName("Text binding for $this")) {
+    addDocumentListener(listener)
+    textFlow.collectScoped { newText ->
+      doSetText(newText)
+    }
+    try {
+      awaitCancellation()
+    }
+    finally {
+      removeDocumentListener(listener)
     }
   }
 }

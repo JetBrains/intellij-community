@@ -532,16 +532,13 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             return latestStable;
         }
 
-        IdeKotlinVersion version = KotlinJpsPluginSettings.getBundledVersion();
-        KotlinVersion bundledKotlinVersion = version.getKotlinVersion();
-        int bundledMajorVersion = bundledKotlinVersion.getMajor();
-        int bundledMinorVersion = bundledKotlinVersion.getMinor();
+        LanguageVersion bundledLanguageVersion = KotlinJpsPluginSettings.getBundledVersion().getLanguageVersion();
         latestStable = VersionView.LatestStable.INSTANCE;
 
         // workaround to avoid cases when Kotlin plugin bundles the latest compiler with effectively NOT STABLE version.
         // Actually, the latest stable version is bundled in jps
         for (LanguageVersion languageVersion : LanguageVersion.getEntries()) {
-            if (languageVersion.getMajor() <= bundledMajorVersion && languageVersion.getMinor() <= bundledMinorVersion) {
+            if (languageVersion.compareTo(bundledLanguageVersion) <= 0) {
                 latestStable = VersionView.Companion.deserialize(languageVersion.getVersionString(), false);
             } else {
                 break;

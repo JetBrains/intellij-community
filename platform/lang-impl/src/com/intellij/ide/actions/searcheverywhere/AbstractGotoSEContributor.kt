@@ -379,13 +379,13 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       return true
     }
 
-    if (!selected.isValid) {
-      LOG.warn("Cannot navigate to invalid PsiElement")
-      return true
-    }
-
     project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
       val command = readAction {
+        if (!selected.isValid) {
+          LOG.warn("Cannot navigate to invalid PsiElement")
+          return@readAction null
+        }
+
         val psiElement = preparePsi(selected, searchText)
         val file = PsiUtilCore.getVirtualFile(psiElement)
         val extendedNavigatable = if (file == null) {
@@ -433,7 +433,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
         }
       }
 
-      command()
+      command?.invoke()
     }
 
     return true

@@ -9,9 +9,7 @@ import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -498,7 +496,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
 
     if (isReplaceDuplicates()) {
-      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), myProject.getDisposed());
+      processMethodsDuplicates();
     }
   }
 
@@ -507,13 +505,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private void processMethodsDuplicates() {
-    final Runnable runnable = () -> {
-      if (!myMethodToReplaceIn.isValid()) return;
-      MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
-                                            new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
-    };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
-                                                                      JavaRefactoringBundle.message("introduce.parameter.duplicates.progress"), true, myProject);
+    if (!myMethodToReplaceIn.isValid()) return;
+    MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
+                                          new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {

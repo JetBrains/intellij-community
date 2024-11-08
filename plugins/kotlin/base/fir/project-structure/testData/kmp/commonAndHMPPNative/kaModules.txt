@@ -1,0 +1,298 @@
+KaLibraryModule:
+  description: Library NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-1729)
+  targetPlatform: Native (android_arm32)/Native (android_arm64)/Native (android_x64)/Native (android_x86)/Native (ios_arm64)/Native (ios_simulator_arm64)/Native (ios_x64)/Native (linux_arm32_hfp)/Native (linux_arm64)/Native (linux_x64)/Native (macos_arm64)/Native (macos_x64)/Native (mingw_x64)/Native (tvos_arm64)/Native (tvos_simulator_arm64)/Native (tvos_x64)/Native (watchos_arm32)/Native (watchos_arm64)/Native (watchos_device_arm64)/Native (watchos_simulator_arm64)/Native (watchos_x64)
+  libraryName: NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-1729)
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JVM (1.8)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1
+  targetPlatform: Native (mingw_x64)
+  libraryName: org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-1729))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1
+  targetPlatform: Native (general)
+  libraryName: org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0
+  targetPlatform: Native (mingw_x64)
+  libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-1729))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0
+  targetPlatform: Native (general)
+  libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0
+  targetPlatform: Native (general)
+  libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains:annotations-java5:24.0.0
+  targetPlatform: JVM (1.8)
+  libraryName: org.jetbrains:annotations-java5:24.0.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of Common
+  targetPlatform: JS/JVM (1.8)
+  name: Common
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <Common>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of Linux
+  targetPlatform: Native (linux_arm64)/Native (linux_x64)
+  name: Linux
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <Linux>
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-1729))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)
+    KaSourceModule(Common, production)
+    KaSourceModule(Native, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(Common, production)
+    KaSourceModule(Native, production)
+
+KaSourceModule:
+  description: Sources of MinGW
+  targetPlatform: Native (mingw_x64)
+  name: MinGW
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <MinGW>
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-1729))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0)
+    KaSourceModule(Common, production)
+    KaSourceModule(Native, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(Common, production)
+    KaSourceModule(Native, production)
+
+KaSourceModule:
+  description: Sources of Native
+  targetPlatform: Native (linux_arm64)/Native (linux_x64)/Native (mingw_x64)
+  name: Native
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <Native>
+  regularDependencies:
+    KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.1.20-dev-1729))
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)
+    KaSourceModule(Common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(Common, production)
+
+KaSourceModule:
+  description: Sources of light_idea_test_case
+  targetPlatform: JVM (1.8)
+  name: light_idea_test_case
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <light_idea_test_case>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>

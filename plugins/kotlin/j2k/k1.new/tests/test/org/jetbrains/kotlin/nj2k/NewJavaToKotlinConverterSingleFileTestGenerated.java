@@ -2112,6 +2112,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/detectProperties/SpecialSetterParameterName.java");
         }
 
+        @TestMetadata("TestJunit4.java")
+        public void testTestJunit4() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/TestJunit4.java");
+        }
+
+        @TestMetadata("TestJunit5.java")
+        public void testTestJunit5() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/TestJunit5.java");
+        }
+
         @TestMetadata("UnresolvedType.java")
         public void testUnresolvedType() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/UnresolvedType.java");

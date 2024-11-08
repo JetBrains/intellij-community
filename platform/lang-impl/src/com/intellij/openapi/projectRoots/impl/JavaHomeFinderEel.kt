@@ -86,11 +86,14 @@ internal fun javaHomeFinderEel(eel: EelApi): JavaHomeFinderBasic {
         processRunner = { cmd ->
           runBlockingMaybeCancellable {
             // TODO Introduce Windows Registry access in EelApi
-            val process = eel.exec.execute(EelExecApi.ExecuteProcessOptions.Builder(cmd.first()).args(cmd.drop(1)).build()).getOrThrow {
-              throw IOException("Failed to read Windows Registry: $it")
+            val process = eel.exec.execute(EelExecApi.ExecuteProcessOptions.Builder(cmd.first()).args(cmd.drop(1)).build()).getOr {
+              // registry reading can fail, in this case we return no output just like `com.intellij.openapi.util.io.WindowsRegistryUtil.readRegistry`
+              return@runBlockingMaybeCancellable ""
             }
             val result = process.awaitProcessResult()
-            if (result.exitCode != 0) throw IOException("Failed to read Windows Registry: $result")
+            if (result.exitCode != 0) {
+              return@runBlockingMaybeCancellable ""
+            }
             result.stdout
           }
         }

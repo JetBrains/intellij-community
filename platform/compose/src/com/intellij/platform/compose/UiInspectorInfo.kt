@@ -4,6 +4,7 @@ package com.intellij.platform.compose
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorCustomComponentChildProvider
 import com.intellij.internal.inspector.UiInspectorCustomComponentProvider
+import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.skiko.ExperimentalSkikoApi
 import org.jetbrains.skiko.swing.SkiaSwingLayer
@@ -11,15 +12,35 @@ import java.awt.Rectangle
 import javax.accessibility.AccessibleComponent
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
+import javax.swing.event.AncestorEvent
 
 @Suppress("FunctionName")
 @OptIn(ExperimentalSkikoApi::class)
 internal fun ComposeUiInspector(composePanel: JComponent) {
-  val skiaComponent = UIUtil.findComponentOfType<SkiaSwingLayer>(composePanel, SkiaSwingLayer::class.java)
+  val skiaComponent = findSkiaLayer(composePanel)
 
-  if (skiaComponent != null && skiaComponent.getClientProperty(UiInspectorCustomComponentProvider.KEY) == null) {
-    skiaComponent.putClientProperty(UiInspectorCustomComponentProvider.KEY, ComposeUiInspectorProvider(skiaComponent))
+  if (skiaComponent == null) {
+    composePanel.addAncestorListener(object : AncestorListenerAdapter() {
+      override fun ancestorAdded(event: AncestorEvent) {
+        findSkiaLayer(composePanel)?.also {
+          composePanel.removeAncestorListener(this)
+          configureSkiaLayer(it)
+        }
+      }
+    })
   }
+  else {
+    configureSkiaLayer(skiaComponent)
+  }
+}
+
+@OptIn(ExperimentalSkikoApi::class)
+private fun findSkiaLayer(composePanel: JComponent): SkiaSwingLayer? {
+  return UIUtil.findComponentOfType<SkiaSwingLayer>(composePanel, SkiaSwingLayer::class.java)
+}
+
+private fun configureSkiaLayer(skiaComponent: JComponent) {
+  skiaComponent.putClientProperty(UiInspectorCustomComponentProvider.KEY, ComposeUiInspectorProvider(skiaComponent))
 }
 
 private class ComposeUiInspectorProvider(private val composePanel: JComponent) : UiInspectorCustomComponentProvider {

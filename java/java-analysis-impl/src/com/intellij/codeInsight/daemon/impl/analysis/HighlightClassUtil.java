@@ -55,7 +55,7 @@ import java.util.function.Consumer;
  */
 public final class HighlightClassUtil {
   /**
-   * new ref(...) or new ref(..) { ... } where ref is abstract class
+   * new ref(...) or new ref(...) { ... } where ref is abstract class
    */
   static HighlightInfo.Builder checkAbstractInstantiation(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
@@ -134,7 +134,7 @@ public final class HighlightClassUtil {
   static HighlightInfo.Builder checkInstantiationOfAbstractClass(@NotNull PsiClass aClass, @NotNull PsiElement highlightElement) {
     HighlightInfo.Builder errorResult = null;
     if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-        (!(highlightElement instanceof PsiNewExpression) || !(((PsiNewExpression)highlightElement).getType() instanceof PsiArrayType))) {
+        (!(highlightElement instanceof PsiNewExpression newExpression) || !(newExpression.getType() instanceof PsiArrayType))) {
       String baseClassName = aClass.getName();
       PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
       String message;
@@ -151,7 +151,7 @@ public final class HighlightClassUtil {
         // suggest to make not abstract only if possible
         QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(aClass, MemberRequestsKt.modifierRequest(JvmModifier.ABSTRACT, false)));
       }
-      if (anyAbstractMethod != null && highlightElement instanceof PsiNewExpression && ((PsiNewExpression)highlightElement).getClassReference() != null) {
+      if (anyAbstractMethod != null && highlightElement instanceof PsiNewExpression newExpression && newExpression.getClassReference() != null) {
         IntentionAction action = QuickFixFactory.getInstance().createImplementAbstractClassMethodsFix(highlightElement);
         errorResult.registerFix(action, null, null, null, null);
       }
@@ -163,7 +163,7 @@ public final class HighlightClassUtil {
     return CachedValuesManager.getCachedValue(aClass, () -> {
       PsiField[] fields = aClass.getFields();
       for (PsiField field : fields) {
-        if (field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) {
+        if (field instanceof PsiEnumConstant constant && constant.getInitializingClass() != null) {
           return new CachedValueProvider.Result<>(true, PsiModificationTracker.MODIFICATION_COUNT);
         }
       }
@@ -239,9 +239,9 @@ public final class HighlightClassUtil {
     }
     PsiElement parent = aClass.getParent();
     boolean checkSiblings;
-    if (parent instanceof PsiClass && !PsiUtil.isLocalOrAnonymousClass((PsiClass)parent) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
+    if (parent instanceof PsiClass psiClass && !PsiUtil.isLocalOrAnonymousClass(psiClass) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
       // optimization: instead of iterating PsiClass children manually we can get'em all from caches
-      PsiClass innerClass = ((PsiClass)parent).findInnerClassByName(name, false);
+      PsiClass innerClass = psiClass.findInnerClassByName(name, false);
       if (innerClass != null && innerClass != aClass) {
         if (innerClass.getTextOffset() > aClass.getTextOffset()) {
           // report duplicate lower in text
@@ -281,9 +281,9 @@ public final class HighlightClassUtil {
       parent = element;
 
       if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
-      if (element instanceof PsiClass && name.equals(((PsiClass)element).getName())) {
+      if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
         HighlightInfo.Builder info = createInfoAndRegisterRenameFix(aClass, name, "duplicate.class");
-        IntentionAction action = QuickFixFactory.getInstance().createNavigateToDuplicateElementFix((PsiClass)element);
+        IntentionAction action = QuickFixFactory.getInstance().createNavigateToDuplicateElementFix(psiClass);
         if (info != null) {
           info.registerFix(action, null, null, null, null);
         }
@@ -361,11 +361,11 @@ public final class HighlightClassUtil {
     }
 
     PsiElement file = aClass.getParent();
-    if (file instanceof PsiJavaFile && !((PsiJavaFile)file).getPackageName().isEmpty()) {
-      PsiElement directory = file.getParent();
+    if (file instanceof PsiJavaFile javaFile && !javaFile.getPackageName().isEmpty()) {
+      PsiDirectory directory = javaFile.getParent();
       if (directory != null) {
         String simpleName = aClass.getName();
-        PsiDirectory subDirectory = simpleName == null ? null : ((PsiDirectory)directory).findSubdirectory(simpleName);
+        PsiDirectory subDirectory = simpleName == null ? null : directory.findSubdirectory(simpleName);
         if (subDirectory != null && simpleName.equals(subDirectory.getName()) && PsiTreeUtil.findChildOfType(subDirectory, PsiJavaFile.class) != null) {
           return createInfoAndRegisterRenameFix(aClass, name, "class.clashes.with.package");
         }
@@ -714,7 +714,7 @@ public final class HighlightClassUtil {
     }
     if (!PsiUtil.isLocalClass(aClass)) return null;
     PsiElement anchor = StreamEx.iterate(aClass.getFirstChild(), Objects::nonNull, PsiElement::getNextSibling)
-      .findFirst(e -> e instanceof PsiKeyword && ((PsiKeyword)e).getTokenType().equals(token))
+      .findFirst(e -> e instanceof PsiKeyword keyword && keyword.getTokenType().equals(token))
       .orElseThrow(NoSuchElementException::new);
     PsiFile file = aClass.getContainingFile();
     if (feature == null) {
@@ -770,7 +770,7 @@ public final class HighlightClassUtil {
     for (PsiImportStatementBase importStatement : importStatements) {
       if (importStatement.isOnDemand()) continue;
       PsiElement resolved = importStatement.resolve();
-      if (resolved instanceof PsiClass && !resolved.equals(aClass) && Comparing.equal(aClass.getName(), ((PsiClass)resolved).getName(), true)) {
+      if (resolved instanceof PsiClass psiClass && !resolved.equals(aClass) && Comparing.equal(aClass.getName(), psiClass.getName(), true)) {
         String description = JavaErrorBundle.message("class.already.imported", HighlightUtil.formatClass(aClass, false));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description);
       }
@@ -828,8 +828,8 @@ public final class HighlightClassUtil {
         IntentionAction action = QuickFixFactory.getInstance().createRemoveNewQualifierFix(expression, aClass);
         info.registerFix(action, null, null, null, null);
       } else {
-        if (aClass instanceof PsiAnonymousClass) {
-          PsiClass baseClass = PsiUtil.resolveClassInType(((PsiAnonymousClass)aClass).getBaseClassType());
+        if (aClass instanceof PsiAnonymousClass anonymousClass) {
+          PsiClass baseClass = PsiUtil.resolveClassInType(anonymousClass.getBaseClassType());
           if (baseClass != null && baseClass.isInterface()) {
             info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
               .descriptionAndTooltip(JavaErrorBundle.message("anonymous.class.implements.interface.cannot.have.qualifier"));
@@ -961,8 +961,8 @@ public final class HighlightClassUtil {
 
   static HighlightInfo.Builder checkCreateInnerClassFromStaticContext(@NotNull PsiNewExpression expression, @NotNull PsiType type, @NotNull PsiClass aClass) {
     if (type instanceof PsiArrayType || type instanceof PsiPrimitiveType) return null;
-    if (aClass instanceof PsiAnonymousClass) {
-      aClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
+    if (aClass instanceof PsiAnonymousClass anonymousClass) {
+      aClass = anonymousClass.getBaseClassType().resolve();
       if (aClass == null) return null;
     }
 

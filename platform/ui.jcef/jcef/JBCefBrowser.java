@@ -71,18 +71,17 @@ public class JBCefBrowser extends JBCefBrowserBase {
           }
           return true; // suppress focusing the browser on navigation events
         }
+
+        if (isOffScreenRendering()) {
+          return false;
+        }
+
         if (!browser.getUIComponent().hasFocus()) {
           if (SystemInfo.isLinux) {
-            if (isOffScreenRendering()) {
-              browser.getUIComponent().requestFocusInWindow();
-            }
-            else {
-              browser.getUIComponent().requestFocus();
-            }
+            browser.getUIComponent().requestFocus();
           }
           else {
-            if (!SystemInfo.isMac || !isOffScreenRendering())
-              browser.getUIComponent().requestFocusInWindow();
+            browser.getUIComponent().requestFocusInWindow();
           }
         }
         return false;

@@ -78,5 +78,6 @@
     <orderEntry type="module" module-name="kotlin.base.analysis.analysis-api.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.compose.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.injection.k2.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="TEST" />
   </component>
 </module>

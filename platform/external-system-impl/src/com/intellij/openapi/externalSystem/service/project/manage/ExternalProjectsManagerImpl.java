@@ -287,7 +287,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
         throw new ExecutionException(ExternalSystemBundle.message("dialog.message.before.build.triggering.task.failed"));
       }
     } else {
-      LOG.error("projectTasksBeforeRun called before external system initialization finished");
+      LOG.debug("projectTasksBeforeRun called before external system initialization finished");
     }
   }
 
@@ -298,7 +298,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
         throw new ExecutionException(ExternalSystemBundle.message("dialog.message.after.build.triggering.task.failed"));
       }
     } else {
-      LOG.error("projectTasksAfterRun called before external system initialization finished");
+      LOG.debug("projectTasksAfterRun called before external system initialization finished");
     }
   }
 

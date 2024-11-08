@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
@@ -16,7 +15,6 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
 import java.io.File
-import java.util.*
 
 class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
@@ -1118,7 +1116,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun assertDeclaredPlugins(vararg expected: PluginInfo) {
-    val defaultPlugins = Arrays.asList(
+    val defaultPlugins = listOf(
       p("org.apache.maven.plugins", "maven-site-plugin"),
       p("org.apache.maven.plugins", "maven-deploy-plugin"),
       p("org.apache.maven.plugins", "maven-compiler-plugin"),
@@ -1129,13 +1127,9 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
       p("org.apache.maven.plugins", "maven-surefire-plugin"))
     val expectedList: MutableList<PluginInfo> = ArrayList()
     expectedList.addAll(defaultPlugins)
-    if (isMaven4) {
-      expectedList.add(p("org.apache.maven.plugins", "maven-wrapper-plugin"))
-    }
-    expectedList.addAll(Arrays.asList(*expected))
-    val actualList = p(
-      mavenProject.declaredPlugins)
-    assertUnorderedElementsAreEqual(actualList, expectedList)
+    expectedList.addAll(listOf(*expected))
+    val actualList = p(mavenProject.declaredPlugins)
+    assertUnorderedElementsAreEqual(actualList.sortedBy { it.toString() }, expectedList.sortedBy { it.toString() })
   }
 
   private fun findPlugin(groupId: String, artifactId: String): MavenPlugin? {

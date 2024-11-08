@@ -53,6 +53,7 @@ public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance(ProjectSdksModel.class);
 
   private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<>();
+  private final List<Sdk> myRemovedSdks = new ArrayList<>();
   private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(Listener.class);
 
   private boolean myModified;
@@ -219,7 +220,7 @@ public class ProjectSdksModel implements SdkModel {
         if (myProjectSdks.containsKey(tableItem)) {
           itemsInTable.add(tableItem);
         }
-        else {
+        if (myRemovedSdks.contains(tableItem)) {
           jdkTable.removeJdk(tableItem);
         }
       }
@@ -308,6 +309,7 @@ public class ProjectSdksModel implements SdkModel {
       myProjectSdks.remove(projectJdk);
       SdkDownloadTracker.getInstance().onSdkRemoved(projectJdk);
       mySdkEventsDispatcher.getMulticaster().beforeSdkRemove(projectJdk);
+      myRemovedSdks.add(projectJdk);
       myModified = true;
     }
   }

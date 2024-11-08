@@ -34,7 +34,7 @@ class EnvFileComponent(workingDir: () -> VirtualFile?) : LabeledComponent<TextFi
     labelLocation = BorderLayout.WEST
     setText(ExecutionBundle.message("environment.variables.filepath.component.title"))
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, envFilesComponent.childComponent)
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
   }
 
   override fun addChangeListener(changeListener: ChangeListener) {

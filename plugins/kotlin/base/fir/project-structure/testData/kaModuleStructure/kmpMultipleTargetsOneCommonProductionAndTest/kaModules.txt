@@ -1,0 +1,95 @@
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JVM (1.8)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of common
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  name: common
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <common>
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of common
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  name: common
+  sourceModuleKind: TEST
+  stableModuleName: <common>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    KaSourceModule(common, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of jvm
+  targetPlatform: JVM (1.8)
+  name: jvm
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <jvm>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(common, production)
+
+KaSourceModule:
+  description: Sources of jvm
+  targetPlatform: JVM (1.8)
+  name: jvm
+  sourceModuleKind: TEST
+  stableModuleName: <jvm>
+  regularDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(common, test)
+    KaSourceModule(jvm, production)
+  friendDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(jvm, production)
+  dependsOnDependencies:
+    KaSourceModule(common, test)
+
+KaSourceModule:
+  description: Sources of native
+  targetPlatform: JVM (1.8)
+  name: native
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <native>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(common, production)
+
+KaSourceModule:
+  description: Sources of native
+  targetPlatform: JVM (1.8)
+  name: native
+  sourceModuleKind: TEST
+  stableModuleName: <native>
+  regularDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(common, test)
+    KaSourceModule(native, production)
+  friendDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(native, production)
+  dependsOnDependencies:
+    KaSourceModule(common, test)

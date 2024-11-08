@@ -13,6 +13,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -319,7 +320,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       ProjectTaskManager.getInstance(project).compile(files);
     } else {
       ProjectTaskManagerImpl taskManager = (ProjectTaskManagerImpl)ProjectTaskManager.getInstance(project);
-      ProjectTask task = taskManager.createModulesFilesTask(files);
+      ProjectTask task = ReadAction.compute(() -> taskManager.createModulesFilesTask(files));
       taskManager.run(createContext(callback), task);
     }
     // The control flow continues at MyCompilationStatusListener.finished.

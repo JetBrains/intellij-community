@@ -237,7 +237,10 @@ public final class ThreadingAssertions {
     // Don't report implicit locks for unit tests, too many false positives
     if (app != null && app.isUnitTestMode())
       return false;
-    return implicitLock;
+    // Reset to decrease noise
+    boolean il = implicitLock;
+    implicitLock = false;
+    return il;
   }
 
   public static void setImplicitLockOnEDT(boolean implicitLock) {

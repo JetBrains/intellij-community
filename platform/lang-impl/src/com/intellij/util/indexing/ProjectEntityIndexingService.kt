@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.projectRoots.Sdk
@@ -47,15 +47,19 @@ import com.intellij.workspaceModel.core.fileIndex.DependencyDescription.OnParent
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl.Companion.EP_NAME
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
 class ProjectEntityIndexingService(
   private val project: Project,
+  private val scope: CoroutineScope,
 ) {
 
   private val tracker = CustomEntitiesCausingReindexTracker()
@@ -70,18 +74,11 @@ class ProjectEntityIndexingService(
     }
 
     if (changes.isEmpty()) {
-      runFullRescan(project, "Project roots have changed")
-    }
-    if (isSynchronousTaskExecution) {
-      doIndexChanges(project, changes)
-    }
-    else {
-      ApplicationManager.getApplication().executeOnPooledThread(Runnable {
-        if (ModalityState.defaultModalityState() === ModalityState.any()) {
-          LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (140820241138)")
-        }
-        doIndexChanges(project, changes)
-      })
+      logRootChanges(project, true)
+      UnindexedFilesScanner(project, "Project roots have changed").queue()
+    } else {
+      val parameters = computeScanningParameters(changes)
+      UnindexedFilesScanner(project, parameters).queue()
     }
   }
 
@@ -165,25 +162,20 @@ class ProjectEntityIndexingService(
     return IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(ProjectEntityIndexingService::class.java)
-    private val ROOT_CHANGES_LOGGER = RootChangesLogger()
-
-    fun getInstance(project: Project): ProjectEntityIndexingService {
-      return project.service()
-    }
-
-    private fun doIndexChanges(project: Project, changes: List<RootsChangeRescanningInfo>) {
+  private fun computeScanningParameters(changes: List<RootsChangeRescanningInfo>): Deferred<ScanningParameters> {
+    return scope.async {
       var indexDependencies = false
       for (change in changes) {
         if (change === RootsChangeRescanningInfo.TOTAL_RESCAN) {
-          runFullRescan(project, "Reindex requested by project root model changes")
-          return
+          return@async ScanningIterators(
+            "Reindex requested by project root model changes",
+          )
         }
         else if (change === RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
           if (!indexDependencies && !DependenciesIndexedStatusService.shouldBeUsed()) {
-            runFullRescan(project, "Reindex of changed dependencies requested, but not enabled")
-            return
+            return@async ScanningIterators(
+              "Reindex of changed dependencies requested, but not enabled",
+            )
           }
           else {
             indexDependencies = true
@@ -196,14 +188,15 @@ class ProjectEntityIndexingService(
       if (indexDependencies) {
         val dependencyBuildersPair = DependenciesIndexedStatusService.getInstance(project).getDeltaWithLastIndexedStatus()
         if (dependencyBuildersPair == null) {
-          runFullRescan(project, "Reindex of changed dependencies requested, but status is not initialized")
-          return
+          return@async ScanningIterators(
+            "Reindex of changed dependencies requested, but status is not initialized",
+          )
         }
         builders.addAll(dependencyBuildersPair.first)
         dependenciesStatusMark = dependencyBuildersPair.second
       }
 
-      val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
+      val entityStorage = project.serviceAsync<WorkspaceModel>().currentSnapshot
       for (change in changes) {
         if (change === RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change === RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
           continue
@@ -223,11 +216,11 @@ class ProjectEntityIndexingService(
         }
         else {
           LOG.warn("Unexpected change " + change.javaClass + " " + change + ", full reindex requested")
-          runFullRescan(project, "Reindex on unexpected change in EntityIndexingServiceImpl")
-          return
+          return@async ScanningIterators(
+            "Reindex on unexpected change in EntityIndexingServiceImpl",
+          )
         }
       }
-
       if (!builders.isEmpty()) {
         val mergedIterators = IndexableIteratorBuilders.instantiateBuilders(builders, project, entityStorage)
 
@@ -244,15 +237,23 @@ class ProjectEntityIndexingService(
             reasonMessage += " and " + (debugNames.size - maxNamesToLog) + " iterators more"
           }
           logRootChanges(project, false)
-          // should be under writeAction
-          UnindexedFilesScanner(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue()
+          return@async ScanningIterators(
+            reasonMessage,
+            mergedIterators,
+            dependenciesStatusMark
+          )
         }
       }
+      return@async CancelledScanning
     }
+  }
 
-    private fun runFullRescan(project: Project, reason: @NonNls String) {
-      logRootChanges(project, true)
-      UnindexedFilesScanner(project, reason).queue()
+  companion object {
+    private val LOG = Logger.getInstance(ProjectEntityIndexingService::class.java)
+    private val ROOT_CHANGES_LOGGER = RootChangesLogger()
+
+    fun getInstance(project: Project): ProjectEntityIndexingService {
+      return project.service()
     }
 
     private fun logRootChanges(project: Project, isFullReindex: Boolean) {

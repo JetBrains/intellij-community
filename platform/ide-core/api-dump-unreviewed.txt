@@ -2572,8 +2572,8 @@ c:com.intellij.projectImport.ProjectAttachProcessor
 - beforeAttach(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - beforeDetach(com.intellij.openapi.module.Module):V
 - sf:canAttachToProject():Z
+- defaultOptionIndex(com.intellij.openapi.project.Project):I
 - getActionText(com.intellij.openapi.project.Project):java.lang.String
-- getDefaultOptionIndex():I
 - getDescription(com.intellij.openapi.project.Project):java.lang.String
 - sf:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):com.intellij.projectImport.ProjectAttachProcessor
 - isEnabled(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):Z

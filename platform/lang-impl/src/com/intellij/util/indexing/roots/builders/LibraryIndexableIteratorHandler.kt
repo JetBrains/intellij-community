@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.jps.entities.*
@@ -76,10 +77,12 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
                                     entityStorage: EntityStorage,
                                     project: Project): LibraryIndexableFilesIterator? {
     return libraryId.findLibraryBridge(entityStorage, project)?.let {
-      when (root) {
-        AllRoots -> LibraryIndexableFilesIteratorImpl.createIterator(it)
-        is RootList -> LibraryIndexableFilesIteratorImpl.createIterator(it, root.roots, root.sourceRoots)
-      }
+      ReadAction.nonBlocking<LibraryIndexableFilesIterator?> {
+        when (root) {
+          AllRoots -> LibraryIndexableFilesIteratorImpl.createIterator(it)
+          is RootList -> LibraryIndexableFilesIteratorImpl.createIterator(it, root.roots, root.sourceRoots)
+        }
+      }.executeSynchronously()
     }
   }
 

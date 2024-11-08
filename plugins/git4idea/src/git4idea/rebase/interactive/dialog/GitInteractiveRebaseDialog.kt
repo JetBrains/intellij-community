@@ -12,11 +12,11 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.*
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.ArrayUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -26,16 +26,13 @@ import com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
-import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
-import git4idea.rebase.interactive.GitRebaseTodoModel.Element
-import git4idea.rebase.interactive.GitRebaseTodoModel.Type
 import git4idea.rebase.interactive.dialog.view.MoveTableItemRunnable
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
@@ -125,6 +122,9 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntry>(
       },
       PLACE
     )
+
+    val diffAction = fullCommitDetailsListPanel.changesBrowser.diffAction
+    diffAction.registerCustomShortcutSet(commitsTable, null);
 
     title = GitBundle.message("rebase.interactive.dialog.title")
     setOKButtonText(GitBundle.message("rebase.interactive.dialog.start.rebase"))

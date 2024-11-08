@@ -1,7 +1,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
-import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.openapi.editor.impl.EditorImpl

@@ -106,8 +106,8 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
           List<HighlightInfo> allInfos = descriptors.isEmpty() ? null : new ArrayList<>(descriptors.size());
           for (ProblemDescriptor descriptor : descriptors) {
             PsiElement descriptorPsiElement = descriptor.getPsiElement();
-            HighlightDisplayKey key = HighlightDisplayKey.find(holder.myToolWrapper.getShortName());
             if (LOG.isTraceEnabled()) {
+              HighlightDisplayKey key = HighlightDisplayKey.find(holder.myToolWrapper.getShortName());
               LOG.trace("collectInformationWithProgress:applyIncrementallyCallback: toolId:" + holder.myToolWrapper.getShortName() + ": " +
                         descriptor + "; psi:" + descriptorPsiElement + "; isEnabled:" +
                         myProfileWrapper.getInspectionProfile().isToolEnabled(key, getFile()));
@@ -244,16 +244,13 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
                                              @NotNull LocalInspectionToolWrapper tool,
                                              @NotNull Consumer<? super HighlightInfo> infoProcessor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (myIgnoreSuppressed) {
-      LocalInspectionToolWrapper toolWrapper = tool;
-      if (descriptor instanceof ProblemDescriptorWithReporterName name) {
-        String reportingToolName = name.getReportingToolName();
-        toolWrapper = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
-      }
-      if (toolWrapper.getTool().isSuppressedFor(psiElement)) {
-        registerSuppressedElements(psiElement, toolWrapper.getID(), toolWrapper.getAlternativeID(), mySuppressedElements);
-        return;
-      }
+    if (descriptor instanceof ProblemDescriptorWithReporterName name) {
+      String reportingToolName = name.getReportingToolShortName();
+      tool = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
+    }
+    if (myIgnoreSuppressed && tool.getTool().isSuppressedFor(psiElement)) {
+      registerSuppressedElements(psiElement, tool.getID(), tool.getAlternativeID(), mySuppressedElements);
+      return;
     }
 
     PsiFile file = psiElement.getContainingFile();

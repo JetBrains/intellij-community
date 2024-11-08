@@ -85,11 +85,11 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
-  public void testManyOverloadsWithVarargs() {
+  public void testManyOverloadsWithVarargsPerformance() {
     Benchmark.newBenchmark("Overload resolution with 14 overloads", () -> doTest(false)).start();
   }
 
-  public void testConstructorOverloadsWithDiamonds() {
+  public void testConstructorOverloadsWithDiamondsPerformance() {
     Benchmark.newBenchmark("Overload resolution with chain constructor calls with diamonds", () -> doTest(false)).start();
   }
 

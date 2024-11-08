@@ -39,6 +39,7 @@ public enum JavaElementKind {
   RECEIVER_PARAMETER("element.receiver.parameter"),
   RECORD("element.record"),
   RECORD_COMPONENT("element.record_component"),
+  RECORD_HEADER("element.record_header"),
   SEMICOLON("element.type.semicolon"),
   SNIPPET_BODY("element.snippet_body"),
   STATEMENT("element.statement"),
@@ -161,6 +162,9 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiRecordComponent) {
       return RECORD_COMPONENT;
+    }
+    if (element instanceof PsiRecordHeader) {
+      return RECORD_HEADER;
     }
     if (element instanceof PsiLocalVariable) {
       return LOCAL_VARIABLE;

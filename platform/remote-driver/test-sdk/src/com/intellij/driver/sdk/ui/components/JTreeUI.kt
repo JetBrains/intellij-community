@@ -1,15 +1,17 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
-import com.intellij.driver.sdk.remoteDev.BeControlAdapter
-import com.intellij.driver.sdk.remoteDev.JTreeFixtureAdapter
+import com.intellij.driver.sdk.remoteDev.*
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import java.awt.Point
@@ -17,11 +19,11 @@ import javax.swing.JTree
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-
-fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { byType(JTree::class.java) },
-                                                              JTreeUiComponent::class.java)
+fun Finder.tree(@Language("xpath") xpath: String? = null) =
+  x(xpath ?: xQuery { byType(JTree::class.java) }, JTreeUiComponent::class.java)
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
+  private val treeComponent get() = driver.cast(component, JTreeComponent::class)
   val fixture: JTreeFixtureRef
     get() = driver.new(JTreeFixtureRef::class, robot, component)
 
@@ -31,31 +33,32 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
       clickRow(it.row)
     } ?: throw PathNotFoundException("row not found")
   }
+
   fun rightClickRow(row: Int) = fixture.rightClickRow(row)
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
-    expandPath(*path, fullMatch = fullMatch)
+    expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       clickRow(it.row)
     } ?: throw PathNotFoundException(path.toList())
   }
 
   fun rightClickPath(vararg path: String, fullMatch: Boolean = true) {
-    expandPath(*path, fullMatch = fullMatch)
+    expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       rightClickRow(it.row)
     } ?: throw PathNotFoundException(path.toList())
   }
 
   fun doubleClickPath(vararg path: String, fullMatch: Boolean = true) {
-    expandPath(*path, fullMatch = fullMatch)
+    expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       doubleClickRow(it.row)
     } ?: throw PathNotFoundException(path.toList())
   }
 
   private fun selectPathWithEnter(vararg path: String, fullMatch: Boolean = true) {
-    expandPath(*path, fullMatch = fullMatch)
+    expandPath(*path.sliceArray(0..path.lastIndex - 1), fullMatch = fullMatch)
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       clickRow(it.row)
       keyboard { enter() }
@@ -66,24 +69,13 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     fixture.expandAll(timeout.inWholeMilliseconds.toInt())
   }
 
-  fun expandPath(vararg path: String, fullMatch: Boolean = true) = waitFor("Expand path '${path.toList()}'", 10.seconds) {
-    try {
-      val expandedPath = mutableListOf<String>()
-      path.forEach {
-        var currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
-        if (currentPathPaths.isEmpty()) {
-          doubleClickPath(*expandedPath.toTypedArray(), fullMatch = fullMatch)
-          currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
-        }
-        if (currentPathPaths.isEmpty()) {
-          throw PathNotFoundException(expandedPath + listOf(it))
-        }
-        expandedPath.add(it)
-      }
-      true
-    }
-    catch (e: PathNotFoundException) {
-      false
+  fun expandPath(vararg path: String, fullMatch: Boolean = true) {
+    for (subPathLength in 0 until path.size) {
+      val subPath = path.sliceArray(0..subPathLength)
+      findExpandedPath(*subPath, fullMatch = fullMatch)?.let {
+        driver.withContext(OnDispatcher.EDT) { treeComponent.expandRow(it.row) }
+        wait(1.seconds) // wait expand
+      } ?: PathNotFoundException(path.toList())
     }
   }
 
@@ -117,8 +109,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   protected fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
 
-  private fun findExpandedPaths(vararg path: String,
-                                fullMatch: Boolean): List<TreePathToRow> = collectExpandedPaths().filter { expandedPath ->
+  private fun findExpandedPaths(
+    vararg path: String,
+    fullMatch: Boolean,
+  ): List<TreePathToRow> = collectExpandedPaths().filter { expandedPath ->
     expandedPath.path.size == path.size && expandedPath.path.containsAllNodes(*path, fullMatch = fullMatch) ||
     expandedPath.path.size - 1 == path.size && expandedPath.path.drop(1).containsAllNodes(*path, fullMatch = fullMatch)
   }
@@ -138,7 +132,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun pathExists(vararg path: String): Boolean{
+  fun pathExists(vararg path: String): Boolean {
     return try {
       clickPath(*path, fullMatch = false)
       true
@@ -178,4 +172,30 @@ interface JTreeFixtureRef : Component {
   fun selectRow(row: Int): JTreeFixtureRef?
   fun expandAll(timeoutMs: Int)
   fun getRowPoint(row: Int): Point
+}
+
+@Remote("javax.swing.JTree")
+@BeControlClass(JTreeComponentClassBuilder::class)
+interface JTreeComponent {
+  fun expandRow(row: Int)
+}
+
+class JTreeComponentClassBuilder : BeControlBuilder {
+  override fun build(driver: Driver, frontendComponent: Component, backendComponent: Component): Component {
+    return JTreeComponentBeControl(driver, frontendComponent, backendComponent)
+  }
+}
+
+class JTreeComponentBeControl(
+  driver: Driver,
+  frontendComponent: Component,
+  backendComponent: Component,
+) : BeControlComponentBase(driver, frontendComponent, backendComponent), JTreeComponent {
+  private val frontendJTreeComponent: JTreeComponent by lazy {
+    driver.cast(onFrontend { byType(JTree::class.java) }.component, JTreeComponent::class)
+  }
+
+  override fun expandRow(row: Int) {
+    return frontendJTreeComponent.expandRow(row)
+  }
 }

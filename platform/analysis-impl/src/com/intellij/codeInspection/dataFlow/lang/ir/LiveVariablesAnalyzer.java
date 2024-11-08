@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -17,79 +16,62 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
   @Override
   protected boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
-    if (!instruction.getRequiredVariables(myFactory).isEmpty() || !instruction.getWrittenVariables(myFactory).isEmpty()) return true;
+    if (!instruction.getRequiredDescriptors(myFactory).isEmpty()) return true;
     return !instruction.isLinear() || instruction instanceof FinishElementInstruction;
   }
 
-  private @Nullable Map<FinishElementInstruction, BitSet> findLiveVars() {
-    final Map<FinishElementInstruction, BitSet> result = new HashMap<>();
+  private @Nullable Map<FinishElementInstruction, Set<VariableDescriptor>> findLiveVars() {
+    final Map<FinishElementInstruction, Set<VariableDescriptor>> result = new HashMap<>();
 
     boolean ok = runDfa(false, (instruction, liveVars) -> {
-      if (instruction instanceof FinishElementInstruction) {
-        BitSet set = result.get(instruction);
+      if (instruction instanceof FinishElementInstruction finishInstruction) {
+        Set<VariableDescriptor> set = result.get(instruction);
         if (set != null) {
-          set.or(liveVars);
-          return (BitSet)set.clone();
+          set.addAll(liveVars);
+          return new HashSet<>(set);
         }
         else if (!liveVars.isEmpty()) {
-          result.put((FinishElementInstruction)instruction, (BitSet)liveVars.clone());
+          result.put(finishInstruction, new HashSet<>(liveVars));
         }
       }
 
-      List<DfaVariableValue> writtenVariables = instruction.getWrittenVariables(myFactory);
-      if (!writtenVariables.isEmpty()) {
-        BitSet newVars = (BitSet)liveVars.clone();
-        for (DfaVariableValue written : writtenVariables) {
-          newVars.clear(written.getID());
-          for (DfaVariableValue var : written.getDependentVariables()) {
-            newVars.clear(var.getID());
-          }
-        }
-        return newVars;
-      } else {
-        var processor = new Consumer<DfaVariableValue>() {
-          boolean cloned = false;
-          BitSet newVars = liveVars;
+      var processor = new Consumer<VariableDescriptor>() {
+        boolean cloned = false;
+        Set<VariableDescriptor> newVars = liveVars;
 
-          @Override
-          public void accept(DfaVariableValue value) {
-            if (!newVars.get(value.getID())) {
-              if (!cloned) {
-                newVars = (BitSet)newVars.clone();
-                cloned = true;
-              }
-              newVars.set(value.getID());
+        @Override
+        public void accept(VariableDescriptor value) {
+          if (!newVars.contains(value)) {
+            if (!cloned) {
+              newVars = new HashSet<>(newVars);
+              cloned = true;
             }
+            newVars.add(value);
           }
-        };
-        StreamEx.of(instruction.getRequiredVariables(myFactory))
-          .flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct().forEach(processor);
-        return processor.newVars;
-      }
+        }
+      };
+      instruction.getRequiredDescriptors(myFactory).forEach(processor);
+      return processor.newVars;
     });
     return ok ? result : null;
   }
 
   void flushDeadVariablesOnStatementFinish() {
-    final Map<FinishElementInstruction, BitSet> liveVars = findLiveVars();
+    final Map<FinishElementInstruction, Set<VariableDescriptor>> liveVars = findLiveVars();
     if (liveVars == null) return;
 
-    final MultiMap<FinishElementInstruction, DfaVariableValue> toFlush = MultiMap.createSet();
+    final MultiMap<FinishElementInstruction, VariableDescriptor> toFlush = MultiMap.createSet();
 
     boolean ok = runDfa(true, (instruction, prevLiveVars) -> {
-      if (instruction instanceof FinishElementInstruction) {
-        BitSet currentlyLive = liveVars.get(instruction);
+      if (instruction instanceof FinishElementInstruction finishInstruction) {
+        Set<VariableDescriptor> currentlyLive = liveVars.get(instruction);
         if (currentlyLive == null) {
-          currentlyLive = new BitSet();
+          currentlyLive = new HashSet<>();
         }
-        int index = 0;
-        while (true) {
-          int setBit = prevLiveVars.nextSetBit(index);
-          if (setBit < 0) break;
-          if (!currentlyLive.get(setBit)) {
-            toFlush.putValue((FinishElementInstruction)instruction, (DfaVariableValue)myFactory.getValue(setBit));
+        for (VariableDescriptor var : prevLiveVars) {
+          if (!currentlyLive.contains(var)) {
+            toFlush.putValue(finishInstruction, var);
           }
-          index = setBit + 1;
         }
         return currentlyLive;
       }
@@ -99,9 +81,9 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
 
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
-        Collection<DfaVariableValue> values = toFlush.get(instruction);
-        values.removeIf(var -> var.getDescriptor().isImplicitReadPossible());
-        instruction.getVarsToFlush().addAll(values);
+        Collection<VariableDescriptor> values = toFlush.get(instruction);
+        values.removeIf(var -> var.isImplicitReadPossible());
+        instruction.flushVars(values);
       }
     }
   }

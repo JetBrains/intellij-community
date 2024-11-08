@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -40,17 +39,14 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFa
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
-import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isCheapEnoughToSearchUsages
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
-import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -184,92 +180,6 @@ object K2UnusedSymbolUtil {
       toLightMethods().any { JavaHighlightUtil.isSerializationRelatedMethod(it, it.containingClass) }
 
 
-  private fun PsiNamedElement.getClassNameForCompanionObject(): String? {
-      return if (this is KtObjectDeclaration && this.isCompanion()) {
-          getNonStrictParentOfType<KtClass>()?.name
-      } else {
-          null
-      }
-  }
-
-  private fun isCheapEnoughToSearchUsages(declaration: KtNamedDeclaration): PsiSearchHelper.SearchCostResult {
-      val project = declaration.project
-      val psiSearchHelper = PsiSearchHelper.getInstance(project)
-
-      if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }) {
-          // Not all script configurations are loaded; behave like it is used
-          return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
-      }
-
-      val useScope = psiSearchHelper.getUseScope(declaration)
-      if (useScope is GlobalSearchScope) {
-          var zeroOccurrences = true
-          val list = listOf(declaration.name) + declarationAccessorNames(declaration) +
-                  listOfNotNull(declaration.getClassNameForCompanionObject())
-          for (name in list) {
-              if (name == null) continue
-              when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
-                  PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> {
-                  } // go on, check other names
-                  PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> zeroOccurrences = false
-                  PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES // searching usages is too expensive; behave like it is used
-              }
-          }
-
-          if (zeroOccurrences) return PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
-      }
-      return PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
-  }
-
-  /**
-   * returns list of declaration accessor names, e.g., a pair of getter/setter for property declaration
-   *
-   * note: could be more than declaration.getAccessorNames()
-   * as declaration.getAccessorNames() relies on LightClasses and therefore some of them could be not available
-   * (as not accessible outside class)
-   *
-   * e.g.: private setter w/o body is not visible outside class and could not be used
-   */
-  private fun declarationAccessorNames(declaration: KtNamedDeclaration): List<String> =
-      when (declaration) {
-          is KtProperty -> listOfPropertyAccessorNames(declaration)
-          is KtParameter -> listOfParameterAccessorNames(declaration)
-          else -> emptyList()
-      }
-
-  private fun listOfParameterAccessorNames(parameter: KtParameter): List<String> {
-      val accessors = mutableListOf<String>()
-      if (parameter.hasValOrVar()) {
-          parameter.name?.let {
-              accessors.add(JvmAbi.getterName(it))
-              if (parameter.isVarArg)
-                  accessors.add(JvmAbi.setterName(it))
-          }
-      }
-      return accessors
-  }
-
-  private fun listOfPropertyAccessorNames(property: KtProperty): List<String> {
-      val accessors = mutableListOf<String>()
-      val propertyName = property.name ?: return accessors
-      accessors.add(property.getCustomGetterName() ?: JvmAbi.getterName(propertyName))
-      if (property.isVar) accessors.add(property.getCustomSetterName() ?: JvmAbi.setterName(propertyName))
-      return accessors
-  }
-
-  private fun KtProperty.getCustomGetterName(): String? = getter?.annotationEntries?.getCustomAccessorName()
-      ?: annotationEntries.filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_GETTER }.getCustomAccessorName()
-
-  private fun KtProperty.getCustomSetterName(): String? = setter?.annotationEntries?.getCustomAccessorName()
-      ?: annotationEntries.filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_SETTER }.getCustomAccessorName()
-
-  // If the property or its accessor has 'JvmName' annotation, it should be used instead
-  private fun List<KtAnnotationEntry>.getCustomAccessorName(): String? {
-      val customJvmNameAnnotation = firstOrNull { it.shortName?.asString() == "JvmName" } ?: return null
-      return customJvmNameAnnotation.valueArguments.firstOrNull()?.getArgumentExpression()?.let { ElementManipulators.getValueText(it) }
-  }
-
-
   private fun isAnnotationParameter(parameter: KtParameter): Boolean {
       val constructor = parameter.ownerFunction as? KtConstructor<*> ?: return false
       return constructor.containingClassOrObject?.isAnnotation() ?: false
@@ -365,7 +275,7 @@ object K2UnusedSymbolUtil {
 
                       val parameter = userType.getStrictParentOfType<KtParameter>() ?: return@any false
                       val callableDeclaration = parameter.getStrictParentOfType<KtCallableDeclaration>()?.let {
-                          if (it !is KtNamedFunction) it.containingClass() else it
+                          it as? KtNamedFunction ?: it.containingClass()
                       } ?: return@any false
                       val typeParameters = callableDeclaration.typeParameters.map { it.name }
                       if (typeParameters.isEmpty()) return@any false

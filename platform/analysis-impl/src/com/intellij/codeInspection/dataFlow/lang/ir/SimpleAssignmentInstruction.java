@@ -10,8 +10,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * Assign the value from the stack to a specified static destination
  */
@@ -40,11 +38,6 @@ public class SimpleAssignmentInstruction extends ExpressionPushingInstruction {
     stateBefore.setVarValue(myDestination, value);
     pushResult(interpreter, stateBefore, myDestination);
     return nextStates(interpreter, stateBefore);
-  }
-
-  @Override
-  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
-    return List.of(myDestination);
   }
 
   @Override

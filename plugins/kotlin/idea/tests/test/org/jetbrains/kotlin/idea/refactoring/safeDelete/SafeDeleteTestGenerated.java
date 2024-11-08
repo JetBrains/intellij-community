@@ -919,6 +919,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParam2.kt");
         }
 
+        @TestMetadata("enumConstructor.kt")
+        public void testEnumConstructor() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/enumConstructor.kt");
+        }
+
         @TestMetadata("extNamedParam1.kt")
         public void testExtNamedParam1() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam1.kt");

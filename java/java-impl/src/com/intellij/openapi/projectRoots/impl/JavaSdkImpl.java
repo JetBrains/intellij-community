@@ -186,7 +186,12 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String suggestHomePath() {
-    return JavaHomeFinder.defaultJavaLocation();
+    return JavaHomeFinder.defaultJavaLocation(null);
+  }
+
+  @Override
+  public @Nullable String suggestHomePath(@NotNull Path path) {
+    return JavaHomeFinder.defaultJavaLocation(path);
   }
 
   @Override

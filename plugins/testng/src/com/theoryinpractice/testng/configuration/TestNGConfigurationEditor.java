@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
@@ -62,35 +63,35 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
   private JPanel panel;
 
-  private LabeledComponent<EditorTextFieldWithBrowseButton> classField;
-  private LabeledComponent<ModuleDescriptionsComboBox> moduleClasspath;
+  private LabeledComponentNoThrow<EditorTextFieldWithBrowseButton> classField;
+  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> moduleClasspath;
   private JrePathEditor alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
   private JComboBox<TestType> myTestKind;
   private JBLabel myTestLabel;
   private final TestNGConfigurationModel model;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> methodField;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> packageField;
-  private LabeledComponent<TextFieldWithBrowseButton.NoPathCompletion> groupField;
-  private LabeledComponent<TextFieldWithBrowseButton> suiteField;
+  private LabeledComponentNoThrow<EditorTextFieldWithBrowseButton> methodField;
+  private LabeledComponentNoThrow<EditorTextFieldWithBrowseButton> packageField;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton.NoPathCompletion> groupField;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> suiteField;
   private JComponent anchor;
   private JRadioButton packagesInProject;
   private JRadioButton packagesInModule;
   private JRadioButton packagesAcrossModules;
   private JPanel packagePanel;
   private TestNGParametersTableModel propertiesTableModel;
-  private LabeledComponent<TextFieldWithBrowseButton> propertiesFile;
-  private LabeledComponent<TextFieldWithBrowseButton> outputDirectory;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> propertiesFile;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> outputDirectory;
   private TableView propertiesTableView;
   private JPanel commonParametersPanel;//temp compilation problems
   private JList myListenersList;
   private JCheckBox myUseDefaultReportersCheckBox;
-  private LabeledComponent<JPanel> myPattern;
+  private LabeledComponentNoThrow<JPanel> myPattern;
   private JPanel myPropertiesPanel;
   private JPanel myListenersPanel;
-  private LabeledComponent<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
-  private LabeledComponent<JCheckBox> myUseModulePath;
-  private LabeledComponent<JCheckBox> myAsyncStackTraceForExceptions;
+  private LabeledComponentNoThrow<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
+  private LabeledComponentNoThrow<JCheckBox> myUseModulePath;
+  private LabeledComponentNoThrow<JCheckBox> myAsyncStackTraceForExceptions;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<>();
@@ -364,7 +365,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   }
 
   private void createUIComponents() {
-    myShortenCommandLineCombo = new LabeledComponent<>();
+    myShortenCommandLineCombo = new LabeledComponentNoThrow<>();
   }
 
   private static void registerListener(JRadioButton[] buttons, ChangeListener changelistener) {

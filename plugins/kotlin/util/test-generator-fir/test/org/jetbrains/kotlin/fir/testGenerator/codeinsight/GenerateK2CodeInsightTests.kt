@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinBinariesCheckerTest
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinSourceCheckerTest
+import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
 import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
@@ -148,6 +149,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         }
         testClass<AbstractKtCallChainHintsProviderTest> {
             model("../../../idea/tests/testData/codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
+        }
+
+        testClass<AbstractKotlinCodeVisionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.codeVision.KotlinCodeVisionProviderTestGenerated") {
+            model("../../../idea/tests/testData/codeInsight/codeVision")
         }
 
         testClass<AbstractFirRenderingKDocTest> {

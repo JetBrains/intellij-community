@@ -469,6 +469,22 @@ fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Location
     }
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumeLocation)
     MethodBytecodeUtil.visit(resumedMethod, visitor, true)
+    val nextCallLocation = resumedMethod.locationOfCodeIndex(visitor.nextCallOffset.toLong())
+    if (visitor.nextCallOffset == -1) {
+        LOG.debug("[coroutine-debug] Failed to find nextCallOffset in resumeMethod $resumedMethod")
+        return null
+    }
+    if (nextCallLocation.safeLineNumber() == resumedMethod.allLineLocations().first().lineNumber()) {
+        // If the nextCallOffset corresponds to the first line of the method,
+        // this may happen because the "LINENUMBER" does not follow the resume Label instruction.
+        val nextOffset = resumedMethod.allLineLocations().map { it.codeIndex() }.first { it > visitor.nextCallOffset }
+        LOG.debug("[coroutine-debug] nextCallOffset = ${visitor.nextCallOffset} points to the first line of resumeMethod $resumedMethod.")
+        if (nextOffset != -1L) {
+            val nextLocation = resumedMethod.locationOfCodeIndex(nextOffset)
+            LOG.debug("[coroutine-debug] Trying to stop at the next location at line ${nextLocation}.")
+            return nextLocation
+        }
+    }
     return resumedMethod.locationOfCodeIndex(visitor.nextCallOffset.toLong())
 }
 

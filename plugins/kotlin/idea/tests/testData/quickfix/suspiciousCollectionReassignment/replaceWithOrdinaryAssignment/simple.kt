@@ -1,4 +1,5 @@
 // "Replace with ordinary assignment" "true"
+// PRIORITY: LOW
 // TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousCollectionReassignmentInspection
 // ACTION: Change type to mutable
 // ACTION: Remove braces from 'if' statement

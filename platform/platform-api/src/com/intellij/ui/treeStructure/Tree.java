@@ -628,6 +628,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (expandImpl != null && model != null) {
         Object treeRoot = model.getRoot();
         if (treeRoot != null && !model.isLeaf(treeRoot)) {
+          super.clearToggledPaths(); // to clear JTree.expandedState populated by JTree.setModel(), to avoid leaks
           expandImpl.markPathExpanded(new CachingTreePath(treeRoot));
         }
       }
@@ -904,9 +905,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     if (expandImpl != null) {
       expandImpl.clearToggledPaths();
     }
-    else {
-      super.clearToggledPaths();
-    }
+    // Technically, we only need this if expandImpl == null,
+    // but in theory it might happen that some code in JTree that
+    // we forgot to override might add something to expandImpl,
+    // and that may cause leaks like IJPL-165735, so better make sure it's cleared anyway.
+    super.clearToggledPaths();
   }
 
   @Override

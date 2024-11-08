@@ -165,6 +165,11 @@ public class FirMultiModuleRenameTestGenerated extends AbstractFirMultiModuleRen
         runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test");
     }
 
+    @TestMetadata("overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test")
+    public void testOverrideInternalPropertyByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/renameMultiModule/overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test");
+    }
+
     @TestMetadata("suspendFunImplInImplModule/suspendFunImplInImplModule.test")
     public void testSuspendFunImplInImplModule_SuspendFunImplInImplModule() throws Exception {
         runTest("../../idea/tests/testData/refactoring/renameMultiModule/suspendFunImplInImplModule/suspendFunImplInImplModule.test");

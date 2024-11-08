@@ -25,6 +25,13 @@ public final class GuiDesignerConfiguration implements PersistentStateComponent<
 
   public boolean COPY_FORMS_RUNTIME_TO_OUTPUT = true;
 
+  /**
+   * If INSTRUMENT_CLASSES is false, the user may select between generating source files
+   * upon Build (default, GENERATE_SOURCES_ON_SAVE is false) and
+   * generating right after saving the form (GENERATE_SOURCES_ON_SAVE is true)
+   */
+  public boolean GENERATE_SOURCES_ON_SAVE = false;
+
   public @NlsSafe String DEFAULT_LAYOUT_MANAGER = UIFormXmlConstants.LAYOUT_INTELLIJ;
 
   public @NlsSafe String DEFAULT_FIELD_ACCESSIBILITY = PsiModifier.PRIVATE;

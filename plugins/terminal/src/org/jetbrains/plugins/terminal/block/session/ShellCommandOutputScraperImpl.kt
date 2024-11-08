@@ -3,12 +3,12 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.block.session.scraper.*
 import org.jetbrains.plugins.terminal.block.session.util.Debouncer
+import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 
@@ -118,8 +118,4 @@ internal fun TerminalTextBuffer.collectLines(
     terminalLinesCollector.addLine(getLine(ind))
   }
   terminalLinesCollector.flush()
-}
-
-internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, listener: TerminalModelListener) {
-  TerminalUtil.addModelListener(this, parentDisposable, listener)
 }

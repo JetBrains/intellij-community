@@ -949,20 +949,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (processor != null &&
         !isDataSpell() &&
         (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
-      when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject(projectToClose, processor) }) {
-        -1 -> {
-          return true
-        }
-        GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> {
-          if (!closeAndDisposeKeepingFrame(projectToClose)) {
-            return true
-          }
-        }
-        GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
-          processor.beforeAttach(options.project)
-          if (attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
-            return true
-          }
+      while (true) {
+        val result = tryToOpen(projectToClose, processor, options, projectDir)
+        if (result != null) {
+          return result
         }
       }
     }
@@ -1008,6 +998,32 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
+    return false
+  }
+
+  private suspend fun tryToOpen(
+    projectToClose: Project,
+    processor: ProjectAttachProcessor,
+    options: OpenProjectTask,
+    projectDir: Path,
+  ): Boolean? {
+    when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject(projectToClose, processor) }) {
+      -1 -> {
+        return true
+      }
+      GeneralSettings.OPEN_PROJECT_SAME_WINDOW -> {
+        if (!closeAndDisposeKeepingFrame(projectToClose)) {
+          return true
+        }
+      }
+      GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
+        processor.beforeAttach(options.project)
+        if (attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, processor = processor, callback = options.callback)) {
+          return true
+        }
+        else return null // cannot attach, retry
+      }
+    }
     return false
   }
 

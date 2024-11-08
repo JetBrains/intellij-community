@@ -40,6 +40,16 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
         runTest("testData/codeInsight/generate/secondaryConstructors/emptyClass.kt");
     }
 
+    @TestMetadata("emptyClassWithComment.kt")
+    public void testEmptyClassWithComment() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClassWithComment.kt");
+    }
+
+    @TestMetadata("emptyClassWithCommentAfter.kt")
+    public void testEmptyClassWithCommentAfter() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClassWithCommentAfter.kt");
+    }
+
     @TestMetadata("emptyExists.kt")
     public void testEmptyExists() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/emptyExists.kt");

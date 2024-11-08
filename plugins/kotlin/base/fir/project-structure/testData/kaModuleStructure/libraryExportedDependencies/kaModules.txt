@@ -1,0 +1,77 @@
+KaLibraryModule:
+  description: Library L
+  targetPlatform: JVM (1.8)
+  libraryName: L
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JVM (1.8)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of A1
+  targetPlatform: JVM (1.8)
+  name: A1
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <A1>
+  regularDependencies:
+    KaLibraryModule(L)
+    KaSourceModule(B1, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of A2
+  targetPlatform: JVM (1.8)
+  name: A2
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <A2>
+  regularDependencies:
+    KaLibraryModule(L)
+    KaSourceModule(B2, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of B1
+  targetPlatform: JVM (1.8)
+  name: B1
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <B1>
+  regularDependencies:
+    KaLibraryModule(L)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of B2
+  targetPlatform: JVM (1.8)
+  name: B2
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <B2>
+  regularDependencies:
+    KaLibraryModule(L)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>

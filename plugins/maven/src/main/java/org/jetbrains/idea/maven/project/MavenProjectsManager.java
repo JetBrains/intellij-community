@@ -22,7 +22,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -57,7 +56,6 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -158,8 +156,17 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
   }
 
+  @Deprecated(forRemoval = true)
   public File getLocalRepository() {
-    return getGeneralSettings().getEffectiveLocalRepository();
+    return getRepositoryPath().toFile();
+  }
+
+  public Path getRepositoryPathUnderModalProgress() {
+    return getGeneralSettings().getEffectiveRepositoryPathUnderModalProgress();
+  }
+
+  public Path getRepositoryPath() {
+    return getGeneralSettings().getEffectiveRepositoryPath();
   }
 
   @ApiStatus.Internal

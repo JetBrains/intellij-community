@@ -4,19 +4,22 @@ package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.QueryExecutorBase
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.*
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightClassPropertyMethods
 import org.jetbrains.kotlin.asJava.LightClassUtil.getLightFieldForCompanionObject
@@ -48,13 +51,13 @@ import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.DestructuringDeclarationReferenceSearcher
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.concurrent.Callable
 
 data class KotlinReferencesSearchOptions(
     val acceptCallableOverrides: Boolean = false,
@@ -252,6 +255,31 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                         ?.let { searcher ->
                             longTasks.add { searcher.run() }
                         }
+                }
+
+                element?.element?.takeIf { (it as? KtConstructor<*>)?.containingClass()?.isEnum() == true }?.let { el ->
+                    val klass = (el as KtConstructor<*>).containingClass() as KtClass
+                    klass.declarations.filterIsInstance<KtEnumEntry>().forEach { enumEntry ->
+                        enumEntry.descendantsOfType<KtEnumEntrySuperclassReferenceExpression>().forEach { superEntry ->
+                            val target = analyze(superEntry) {
+                                superEntry.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.psi
+                            }
+                            if (target != el &&
+                                !(kotlinOptions.acceptOverloads && target is KtConstructor<*> && target.containingClass() == klass)
+                            ) {
+                                return@forEach
+                            }
+
+                            consumer.process(object : PsiReferenceBase<KtEnumEntrySuperclassReferenceExpression>(superEntry) {
+                                override fun resolve(): PsiElement? = el
+                                override fun getRangeInElement(): TextRange {
+                                    return TextRange(0, superEntry.textLength)
+                                }
+                                override fun handleElementRename(newElementName: String): PsiElement = superEntry
+                            })
+                        }
+                    }
+
                 }
             }
 

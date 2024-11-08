@@ -231,6 +231,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         homePath = request.projectDir,
       )
     }
+
+    launch(Dispatchers.IO) {
+      platformDistributionEntriesDeferred.await() // ensure platform dist files added to the list
+      pluginDistributionEntriesDeferred.await() // ensure plugins dist files added to the list
+      copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
+    }
   }
     .invokeOnCompletion {
       // close debug logging to prevent locking of output directory on Windows
@@ -600,10 +606,6 @@ private suspend fun layoutPlatform(
   )
   lateinit var sortedClassPath: Set<Path>
   coroutineScope {
-    launch(Dispatchers.IO) {
-      copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
-    }
-
     launch {
       val classPath = LinkedHashSet<Path>()
       val libDir = runDir.resolve("lib")

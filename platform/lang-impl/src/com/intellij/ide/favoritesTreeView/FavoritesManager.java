@@ -205,7 +205,7 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
       list.setAttribute(CLASS_NAME, root.getData().getSecond());
       element.addContent(list);
       final List<TreeItem<Pair<AbstractUrl, String>>> children = root.getChildren();
-      if (children != null && !children.isEmpty()) {
+      if (!children.isEmpty()) {
         writeRoots(list, children);
       }
     }

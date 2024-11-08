@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.containers.ContainerUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -142,7 +143,14 @@ fun loadCommonDebuggerUtilsScript():String {
 }
 
 fun loadJvmDebugInitScript(): String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle")
+  return joinInitScripts(
+    loadToolingExtensionProvidingInitScript(
+      ExternalSystemRtClass::class.java
+    ),
+    loadCommonTasksUtilsScript(),
+    loadCommonDebuggerUtilsScript(),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle")
+  )
 }
 
 fun loadJvmOptionsInitScript(
@@ -198,7 +206,10 @@ fun loadApplicationInitScript(
   useClasspathFile: Boolean
 ): String {
   return joinInitScripts(
-    loadToolingExtensionProvidingInitScript(),
+    loadToolingExtensionProvidingInitScript(
+      GradleToolingExtensionImplClass::class.java,
+      GradleToolingExtensionClass::class.java
+    ),
     loadInitScript(
       "/org/jetbrains/plugins/gradle/tooling/internal/init/ApplicationTaskInitScript.gradle",
       mapOf(
@@ -287,15 +298,15 @@ fun createInitScript(prefix: String, content: String): Path {
   }
 }
 
-fun loadToolingExtensionProvidingInitScript(
-  toolingExtensionClasses: Set<Class<*>> = setOf(GradleToolingExtensionImplClass::class.java, GradleToolingExtensionClass::class.java),
-): String {
+fun loadToolingExtensionProvidingInitScript(vararg toolingExtensionClasses: Class<*>): String {
+  return loadToolingExtensionProvidingInitScript(toolingExtensionClasses.toSet())
+}
+
+fun loadToolingExtensionProvidingInitScript(toolingExtensionClasses: Set<Class<*>>): String {
   val tapiClasspath = getToolingExtensionsJarPaths(toolingExtensionClasses)
-    .toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
-  return loadInitScript(
-    "/org/jetbrains/plugins/gradle/tooling/internal/init/ClassPathExtensionInitScript.gradle",
-    mapOf("EXTENSIONS_JARS_PATH" to tapiClasspath)
-  )
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/ClassPathExtensionInitScript.gradle", mapOf(
+    "EXTENSIONS_JARS_PATH" to tapiClasspath.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
+  ))
 }
 
 private fun isContentEquals(path: Path, content: ByteArray): Boolean {

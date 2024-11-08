@@ -19,7 +19,7 @@ internal object TestProjectStructureReader {
         parser: TestProjectStructureParser<S>,
     ): S {
         val libraries = json.getAsJsonArray(TestProjectStructureFields.LIBRARIES_FIELD)?.map(TestProjectLibraryParser::parse).orEmpty()
-        val modules = json.getAsJsonArray(TestProjectStructureFields.MODULES_FIELD)!!.map(TestProjectModuleParser::parse)
+        val modules = json.getAsJsonArray(TestProjectStructureFields.MODULES_FIELD)?.map(TestProjectModuleParser::parse).orEmpty()
         return parser.parse(libraries, modules, json)
     }
 }

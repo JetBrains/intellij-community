@@ -6,7 +6,7 @@ plugins {
 {{default_android_block}}
 
 kotlin {
-    android()
+    {{androidTargetPlaceholder}}
     jvm()
     linuxX64()
 }

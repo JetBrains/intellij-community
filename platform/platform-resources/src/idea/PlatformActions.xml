@@ -767,7 +767,7 @@
           <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
           <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
           <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.MoveToolWindowTabToEditorAction"
-            icon="AllIcons.Actions.OpenNewTab"/>
+                  icon="AllIcons.Actions.OpenNewTab"/>
           <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction" use-shortcut-of="PinActiveTab"/>
           <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
@@ -803,6 +803,7 @@
             <action id="CloseAllToTheLeft" class="com.intellij.ide.actions.CloseAllEditorsToTheLeftAction"/>
             <action id="CloseAllToTheRight" class="com.intellij.ide.actions.CloseAllEditorsToTheRightAction"/>
             <action id="CloseAllReadonly" class="com.intellij.ide.actions.CloseAllReadonlyEditorsAction"/>
+            <reference ref="MoveToolWindowTabToEditorAction"/>
           </group>
           <separator/>
           <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction"/>
@@ -1724,12 +1725,6 @@
 
     <action id="RemoveMainToolbarActionsAction" class="com.intellij.openapi.wm.impl.headertoolbar.RemoveMainToolbarActionsAction"
             internal="true"/>
-
-    <group id="Search.Everywhere.Preview.Close">
-      <action id="search.everywhere.preview.close"
-              class="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview"
-              icon="AllIcons.Actions.CloseDarkGrey"/>
-    </group>
 
     <action id="plugins.autoupdate.repository.view" class="com.intellij.openapi.application.PluginsAutoUpdateRepositoryViewAction"
             internal="true"/>

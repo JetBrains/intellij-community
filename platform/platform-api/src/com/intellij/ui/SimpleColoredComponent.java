@@ -116,7 +116,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @Override
   public void updateUI() {
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
     Object value = UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (value == null) value = RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
     putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, value);

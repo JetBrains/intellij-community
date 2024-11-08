@@ -172,6 +172,15 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
 fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
 
+@Deprecated("Please use version with sdkAdditionalData parameter")
+fun createSdkByGenerateTask(
+  generateSdkHomePath: Task.WithResult<String, ExecutionException>,
+  existingSdks: List<Sdk>,
+  baseSdk: Sdk?,
+  associatedProjectPath: String?,
+  suggestedSdkName: String?,
+): Sdk = createSdkByGenerateTask(generateSdkHomePath, existingSdks, baseSdk, associatedProjectPath, suggestedSdkName, null)
+
 fun createSdkByGenerateTask(
   generateSdkHomePath: Task.WithResult<String, ExecutionException>,
   existingSdks: List<Sdk>,
@@ -207,6 +216,36 @@ fun createSdkByGenerateTask(
     PythonSdkType.getInstance(),
     sdkAdditionalData,
     sdkName)
+}
+
+@Internal
+suspend fun createSdk(
+  sdkHomePath: Path,
+  existingSdks: List<Sdk>,
+  associatedProjectPath: String?,
+  suggestedSdkName: String?,
+  sdkAdditionalData: PythonSdkAdditionalData? = null,
+): Result<Sdk> {
+  val homeFile = withContext(Dispatchers.IO) { StandardFileSystems.local().refreshAndFindFileByPath(sdkHomePath.pathString) }
+                 ?: return Result.failure(ExecutionException(
+                   PyBundle.message("python.sdk.directory.not.found", sdkHomePath.pathString)
+                 ))
+
+  val sdkName = suggestedSdkName ?: withContext(Dispatchers.IO) {
+    suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+  }
+
+  val sdk = SdkConfigurationUtil.setupSdk(
+    existingSdks.toTypedArray(),
+    homeFile,
+    PythonSdkType.getInstance(),
+    false,
+    sdkAdditionalData,
+    sdkName)
+
+  return sdk?.let { Result.success(it) } ?: Result.failure(ExecutionException(
+    PyBundle.message("python.sdk.failed.to.create.interpreter.title")
+  ))
 }
 
 fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {

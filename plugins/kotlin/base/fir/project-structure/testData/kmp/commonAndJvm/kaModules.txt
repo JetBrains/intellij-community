@@ -1,0 +1,151 @@
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: SDK
+  targetPlatform: JVM (1.8)
+  libraryName: SDK
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-1729
+  targetPlatform: JVM (1.8)
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-1729
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0
+  targetPlatform: JVM (1.8)
+  libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+    KaLibraryModule(org.jetbrains:annotations:23.0.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  libraryName: org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains:annotations-java5:24.0.0
+  targetPlatform: JVM (1.8)
+  libraryName: org.jetbrains:annotations-java5:24.0.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library org.jetbrains:annotations:23.0.0
+  targetPlatform: JVM (1.8)
+  libraryName: org.jetbrains:annotations:23.0.0
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of Common
+  targetPlatform: JS/JVM (1.8)
+  name: Common
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <Common>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of Jvm
+  targetPlatform: JVM (1.8)
+  name: Jvm
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <Jvm>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-1729)
+    KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0)
+    KaLibraryModule(org.jetbrains:annotations:23.0.0)
+    KaSourceModule(Common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(Common, production)
+
+KaSourceModule:
+  description: Sources of light_idea_test_case
+  targetPlatform: JVM (1.8)
+  name: light_idea_test_case
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <light_idea_test_case>
+  regularDependencies:
+    KaLibraryModule(SDK)
+    KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>

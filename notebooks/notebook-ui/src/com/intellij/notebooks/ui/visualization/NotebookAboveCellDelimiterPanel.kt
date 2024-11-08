@@ -5,6 +5,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.UIFormXmlConstants
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiff
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension

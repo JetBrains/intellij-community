@@ -26,8 +26,7 @@ public final class OrdinalFormat {
   private static NumberFormat getOrdinalFormat(Locale locale) {
     if (locale != null) {
       String language = locale.getLanguage();
-      if ("en".equals(language) ||
-          language != null && language.isEmpty() /*the bundle fallback locale*/) {
+      if ("en".equals(language) || language.isEmpty() /*the bundle fallback locale*/) {
         return new EnglishOrdinalFormat();
       }
     }

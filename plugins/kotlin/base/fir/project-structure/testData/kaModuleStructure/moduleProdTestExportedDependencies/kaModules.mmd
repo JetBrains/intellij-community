@@ -1,0 +1,79 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(SDK)"])
+  KaSourceModule_1["KaSourceModule(A1)<br />production<br />JVM (1.8)"]
+  KaSourceModule_2["KaSourceModule(A1)<br />test<br />JVM (1.8)"]
+  KaSourceModule_3["KaSourceModule(A2)<br />production<br />JVM (1.8)"]
+  KaSourceModule_4["KaSourceModule(A2)<br />test<br />JVM (1.8)"]
+  KaSourceModule_5["KaSourceModule(B1)<br />production<br />JVM (1.8)"]
+  KaSourceModule_6["KaSourceModule(B1)<br />test<br />JVM (1.8)"]
+  KaSourceModule_7["KaSourceModule(B2)<br />production<br />JVM (1.8)"]
+  KaSourceModule_8["KaSourceModule(B2)<br />test<br />JVM (1.8)"]
+  KaSourceModule_9["KaSourceModule(C)<br />production<br />JVM (1.8)"]
+  KaSourceModule_10["KaSourceModule(C)<br />test<br />JVM (1.8)"]
+  style KaLibraryModule_0 fill:#CC2B52
+  style KaSourceModule_1 fill:#608BC1
+  style KaSourceModule_2 fill:#31511E
+  style KaSourceModule_3 fill:#608BC1
+  style KaSourceModule_4 fill:#31511E
+  style KaSourceModule_5 fill:#608BC1
+  style KaSourceModule_6 fill:#31511E
+  style KaSourceModule_7 fill:#608BC1
+  style KaSourceModule_8 fill:#31511E
+  style KaSourceModule_9 fill:#608BC1
+  style KaSourceModule_10 fill:#31511E
+  KaSourceModule_1 --> KaSourceModule_5
+  KaSourceModule_1 --> KaSourceModule_9
+  KaSourceModule_10 --> KaSourceModule_9
+  KaSourceModule_2 --> KaSourceModule_1
+  KaSourceModule_2 --> KaSourceModule_10
+  KaSourceModule_2 --> KaSourceModule_5
+  KaSourceModule_2 --> KaSourceModule_6
+  KaSourceModule_2 --> KaSourceModule_9
+  KaSourceModule_3 --> KaSourceModule_7
+  KaSourceModule_3 --> KaSourceModule_9
+  KaSourceModule_4 --> KaSourceModule_10
+  KaSourceModule_4 --> KaSourceModule_3
+  KaSourceModule_4 --> KaSourceModule_7
+  KaSourceModule_4 --> KaSourceModule_8
+  KaSourceModule_4 --> KaSourceModule_9
+  KaSourceModule_5 --> KaSourceModule_9
+  KaSourceModule_6 --> KaSourceModule_10
+  KaSourceModule_6 --> KaSourceModule_5
+  KaSourceModule_6 --> KaSourceModule_9
+  KaSourceModule_7 --> KaSourceModule_9
+  KaSourceModule_8 --> KaSourceModule_10
+  KaSourceModule_8 --> KaSourceModule_7
+  KaSourceModule_8 --> KaSourceModule_9
+  KaSourceModule_10 --friend--> KaSourceModule_9
+  KaSourceModule_2 --friend--> KaSourceModule_1
+  KaSourceModule_4 --friend--> KaSourceModule_3
+  KaSourceModule_6 --friend--> KaSourceModule_5
+  KaSourceModule_8 --friend--> KaSourceModule_7
+  linkStyle 0 stroke:black
+  linkStyle 1 stroke:black
+  linkStyle 2 stroke:black
+  linkStyle 3 stroke:black
+  linkStyle 4 stroke:black
+  linkStyle 5 stroke:black
+  linkStyle 6 stroke:black
+  linkStyle 7 stroke:black
+  linkStyle 8 stroke:black
+  linkStyle 9 stroke:black
+  linkStyle 10 stroke:black
+  linkStyle 11 stroke:black
+  linkStyle 12 stroke:black
+  linkStyle 13 stroke:black
+  linkStyle 14 stroke:black
+  linkStyle 15 stroke:black
+  linkStyle 16 stroke:black
+  linkStyle 17 stroke:black
+  linkStyle 18 stroke:black
+  linkStyle 19 stroke:black
+  linkStyle 20 stroke:black
+  linkStyle 21 stroke:black
+  linkStyle 22 stroke:black
+  linkStyle 23 stroke:#E6C767
+  linkStyle 24 stroke:#E6C767
+  linkStyle 25 stroke:#E6C767
+  linkStyle 26 stroke:#E6C767
+  linkStyle 27 stroke:#E6C767

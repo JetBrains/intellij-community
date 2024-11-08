@@ -177,7 +177,7 @@ public class SearchTextField extends JPanel {
     }
     myTextField.putClientProperty("JTextField.variant", "search");
 
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toUnscaledGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {
       showPopup();

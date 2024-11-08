@@ -181,9 +181,10 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
       state.poetryExecutable.set(savedPath)
     }
     else {
-      val poetryExecutable = withContext(Dispatchers.IO) { com.jetbrains.python.sdk.poetry.detectPoetryExecutable() }
-      withContext(Dispatchers.EDT) {
-        poetryExecutable?.let { state.poetryExecutable.set(it.pathString) }
+      com.jetbrains.python.sdk.poetry.detectPoetryExecutable().getOrNull()?.let {
+        withContext(Dispatchers.EDT) {
+          state.poetryExecutable.set(it.pathString)
+        }
       }
     }
   }
@@ -195,9 +196,10 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
       state.pipenvExecutable.set(savedPath)
     }
     else {
-      val detectedExecutable = withContext(Dispatchers.IO) { com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable() }
-      withContext(Dispatchers.EDT) {
-        detectedExecutable?.let { state.pipenvExecutable.set(it.path) }
+      com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable().getOrNull()?.let {
+        withContext(Dispatchers.EDT) {
+          state.pipenvExecutable.set(it.pathString)
+        }
       }
     }
   }

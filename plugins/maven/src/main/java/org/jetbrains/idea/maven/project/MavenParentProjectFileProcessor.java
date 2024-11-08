@@ -69,7 +69,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
                                             @NotNull MavenParentDesc parentDesc) {
     RESULT_TYPE result = null;
     VirtualFile parentFile;
-    Path parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveLocalRepository(),
+    Path parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveRepositoryPath(),
                                                           parentDesc.getParentId(), "pom");
     parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile);
     if (parentFile != null) {

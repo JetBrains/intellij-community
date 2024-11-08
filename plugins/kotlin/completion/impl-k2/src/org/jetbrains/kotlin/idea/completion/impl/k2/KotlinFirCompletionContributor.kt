@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.addingPolicy.PassDirectlyPolicy
-import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
@@ -78,8 +76,9 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         if (shouldSuppressCompletion(parameters, result.prefixMatcher)) return
         val positionContext = KotlinPositionContextDetector.detect(parameters.position)
 
-        val result = result.withRelevanceSorter(parameters, positionContext)
+        val sink = result.withRelevanceSorter(parameters, positionContext)
             .withPrefixMatcher(parameters)
+            .let { LookupElementSink(it, parameters) }
 
         val completionFile = parameters.completionFile
         val originalFile = parameters.originalFile
@@ -102,16 +101,11 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
             completionFile.recordOriginalKtFile(originalFile)
 
-            val policyController = PolicyController(result)
-            policyController.invokeWithPolicy(PassDirectlyPolicy()) {
-                val resultSet = PolicyObeyingResultSet(result, policyController)
-
-                Completions.complete(
-                    parameters = parameters,
-                    positionContext = positionContext,
-                    sink = LookupElementSink(resultSet, parameters),
-                )
-            }
+            Completions.complete(
+                parameters = parameters,
+                positionContext = positionContext,
+                sink = sink,
+            )
         }
     }
 

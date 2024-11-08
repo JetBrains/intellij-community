@@ -160,9 +160,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         afterExecution(wasCancelled);
       }
       finally {
-        if (myProject != null) {
-          StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
-        }
+        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
       }
     });
   }

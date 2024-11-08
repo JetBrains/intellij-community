@@ -7,12 +7,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jediterm.terminal.model.TerminalModelListener
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
+import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -54,10 +54,6 @@ internal class ClassicTerminalVfsRefresher(private val widget: ShellTerminalWidg
   }
 
   private inner class CommandRunWatcher(private val isPromptSame: () -> Boolean): Disposable {
-    private val modelListener: TerminalModelListener = TerminalModelListener {
-      changes.tryEmit(Unit)
-    }
-
     private val changes: MutableSharedFlow<Unit> = MutableSharedFlow(0, 1, BufferOverflow.DROP_OLDEST)
 
     private val job: Job = coroutineScope.launch(Dispatchers.Default) {
@@ -68,7 +64,9 @@ internal class ClassicTerminalVfsRefresher(private val widget: ShellTerminalWidg
     }
 
     init {
-      widget.terminalTextBuffer.addModelListener(modelListener)
+      widget.terminalTextBuffer.addModelListener(this) {
+        changes.tryEmit(Unit)
+      }
       Disposer.register(widget, this)
     }
 
@@ -82,7 +80,6 @@ internal class ClassicTerminalVfsRefresher(private val widget: ShellTerminalWidg
     }
 
     override fun dispose() {
-      widget.terminalTextBuffer.removeModelListener(modelListener)
       job.cancel()
     }
   }

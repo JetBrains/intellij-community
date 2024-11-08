@@ -20,9 +20,9 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
-import java.io.File
 import java.util.*
 import java.util.function.Function
+import kotlin.io.path.exists
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
@@ -305,7 +305,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
     removeFromLocalRepository("junit")
     updateAllProjects()
-    val jarFile = File(repositoryFile, "junit/junit/4.0/junit-4.0.jar")
+    val jarFile = repositoryFile.resolve("junit/junit/4.0/junit-4.0.jar")
     assertTrue(jarFile.exists())
     projectsManager.listenForExternalChanges()
     waitForImportWithinTimeout {

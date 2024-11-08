@@ -19,7 +19,7 @@ public final class JdkFinderImpl implements JdkFinder {
 
   @Override
   public @Nullable String defaultJavaLocation() {
-    return JavaHomeFinder.defaultJavaLocation();
+    return JavaHomeFinder.defaultJavaLocation(null);
   }
 
   @Override

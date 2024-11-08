@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -67,7 +67,7 @@ public abstract class BaseVariableAnalyzer {
   /**
    * @return true if completed, false if "too complex"
    */
-  protected boolean runDfa(boolean forward, BiFunction<? super Instruction, ? super BitSet, ? extends BitSet> handleState) {
+  protected boolean runDfa(boolean forward, BiFunction<? super Instruction, ? super Set<VariableDescriptor>, ? extends Set<VariableDescriptor>> handleState) {
     List<Instruction> entryPoints;
     if (forward) {
       entryPoints = List.of(myInstructions[0]);
@@ -80,11 +80,11 @@ public abstract class BaseVariableAnalyzer {
     
     Deque<InstructionState> queue = new ArrayDeque<>(10);
     for (Instruction i : entryPoints) {
-      queue.addLast(new InstructionState(i, new BitSet()));
+      queue.addLast(new InstructionState(i, new HashSet<>()));
     }
 
     int limit = myForwardMap.size() * 100;
-    Map<BitSet, IntSet> processed = new HashMap<>();
+    Map<Set<VariableDescriptor>, IntSet> processed = new HashMap<>();
     int steps = 0;
     while (!queue.isEmpty()) {
       if (steps > limit) {
@@ -94,9 +94,9 @@ public abstract class BaseVariableAnalyzer {
         ProgressManager.checkCanceled();
       }
       InstructionState state = queue.removeFirst();
-      Instruction instruction = state.first;
+      Instruction instruction = state.instruction;
       Collection<Instruction> nextInstructions = forward ? myForwardMap.get(instruction) : myBackwardMap.get(instruction);
-      BitSet nextVars = handleState.apply(instruction, state.second);
+      Set<VariableDescriptor> nextVars = handleState.apply(instruction, state.nextVars);
       for (Instruction next : nextInstructions) {
         IntSet instructionSet = processed.computeIfAbsent(nextVars, k -> new IntOpenHashSet());
         int index = next.getIndex() + 1;
@@ -110,9 +110,6 @@ public abstract class BaseVariableAnalyzer {
     return true;
   }
 
-  private static class InstructionState extends Pair<Instruction, BitSet> {
-    InstructionState(Instruction first, BitSet second) {
-      super(first, second);
-    }
+  private record InstructionState(Instruction instruction, Set<VariableDescriptor> nextVars) {
   }
 }

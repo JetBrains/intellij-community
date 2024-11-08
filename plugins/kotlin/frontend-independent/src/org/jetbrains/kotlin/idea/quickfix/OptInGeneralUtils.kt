@@ -94,7 +94,7 @@ abstract class OptInGeneralUtilsBase {
     }
 
     fun findContainingClassOrObjectCandidate(element: KtDeclaration): CandidateData? {
-        val containingClassOrObject = if (element is KtClassOrObject) element else element.containingClassOrObject ?: return null
+        val containingClassOrObject = element as? KtClassOrObject ?: (element.containingClassOrObject ?: return null)
         return CandidateData(containingClassOrObject, AddAnnotationFix.Kind.ContainingClass(containingClassOrObject.name))
     }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.script.k2
 
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -8,7 +9,6 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.getUpdatedStorage
@@ -33,9 +33,8 @@ class MainKtsScriptConfigurationsSource(override val project: Project) : ScriptC
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
         project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()
 
-    override fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptConfigurations {
+    override suspend fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptConfigurations {
         val projectSdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
-
 
         val configurations = scripts.associate {
             val scriptSource = VirtualFileScriptSource(it.virtualFile)
@@ -49,12 +48,12 @@ class MainKtsScriptConfigurationsSource(override val project: Project) : ScriptC
                 }
             }
 
-            it.virtualFile to project.runReadActionInSmartMode {
+            it.virtualFile to smartReadAction(project) {
                 refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
             }
         }
 
-        configurations.forEach { script, result ->
+        configurations.forEach { (script, result) ->
             project.service<ScriptReportSink>().attachReports(script, result.reports)
         }
 

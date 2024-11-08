@@ -17941,6 +17941,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("castFunctionParameter.kt")
+            public void testCastFunctionParameter() throws Exception {
+                runTest("testData/quickfix/typeMismatch/casts/castFunctionParameter.kt");
+            }
+
             @TestMetadata("castQualifiedArgument.kt")
             public void testCastQualifiedArgument() throws Exception {
                 runTest("testData/quickfix/typeMismatch/casts/castQualifiedArgument.kt");
@@ -18210,16 +18215,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("changePrimaryConstructorParameterType.kt")
             public void testChangePrimaryConstructorParameterType() throws Exception {
                 runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changePrimaryConstructorParameterType.kt");
-            }
-
-            @TestMetadata("changeVariableType1.kt")
-            public void testChangeVariableType1() throws Exception {
-                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType1.kt");
-            }
-
-            @TestMetadata("changeVariableType2.kt")
-            public void testChangeVariableType2() throws Exception {
-                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType2.kt");
             }
 
             @TestMetadata("explicitCast1.kt")
@@ -19142,6 +19137,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/changeReturnTypeWhenValueParameterListIsAbsent.kt");
             }
 
+            @TestMetadata("changeVariableType1.kt")
+            public void testChangeVariableType1() throws Exception {
+                runTest("testData/quickfix/typeMismatch/changeVariableType1.kt");
+            }
+
+            @TestMetadata("changeVariableType2.kt")
+            public void testChangeVariableType2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/changeVariableType2.kt");
+            }
+
             @TestMetadata("compareToTypeMismatch.kt")
             public void testCompareToTypeMismatch() throws Exception {
                 runTest("testData/quickfix/typeMismatch/compareToTypeMismatch.kt");
@@ -19202,9 +19207,9 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/functionReflectType.kt");
             }
 
-            @TestMetadata("functionReflectTypeFir.kt")
-            public void testFunctionReflectTypeFir() throws Exception {
-                runTest("testData/quickfix/typeMismatch/functionReflectTypeFir.kt");
+            @TestMetadata("functionReflectType2.kt")
+            public void testFunctionReflectType2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/functionReflectType2.kt");
             }
 
             @TestMetadata("functionType.kt")

@@ -12,6 +12,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGenera
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryManager
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
@@ -53,7 +54,16 @@ internal class TerminalPromptController(
 
     Disposer.register(session, model)
 
-    session.addCommandListener(ShellEditorBufferReportShellCommandListener(session, model, editor), session)
+    val bufferReporting = ShellEditorBufferReportShellCommandListener(session) { buffer ->
+      if (buffer.isNotBlank()) {
+        invokeLater {
+          model.commandText = buffer
+          editor.caretModel.moveToOffset(editor.document.textLength)
+        }
+      }
+    }
+
+    session.addCommandListener(bufferReporting, session)
   }
 
   fun addListener(listener: PromptStateListener) {

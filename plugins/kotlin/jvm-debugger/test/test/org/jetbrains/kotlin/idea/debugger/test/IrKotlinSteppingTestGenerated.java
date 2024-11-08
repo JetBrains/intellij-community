@@ -1813,6 +1813,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoLabeledLambda.kt");
         }
 
+        @TestMetadata("smartStepIntoLambdaWithDefaultArgsFun.kt")
+        public void testSmartStepIntoLambdaWithDefaultArgsFun() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdaWithDefaultArgsFun.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
         public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");
@@ -2021,6 +2026,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
         @TestMetadata("stepThroughDefaultArgsConstructor.kt")
         public void testStepThroughDefaultArgsConstructor() throws Exception {
             runTest("testData/stepping/custom/stepThroughDefaultArgsConstructor.kt");
+        }
+
+        @TestMetadata("stepThroughDefaultArgsStatic.kt")
+        public void testStepThroughDefaultArgsStatic() throws Exception {
+            runTest("testData/stepping/custom/stepThroughDefaultArgsStatic.kt");
         }
 
         @TestMetadata("syntheticProvider.kt")

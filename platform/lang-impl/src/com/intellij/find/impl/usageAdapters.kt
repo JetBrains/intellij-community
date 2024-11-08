@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
 @ApiStatus.Internal
-fun getUsageInfo(adapters: List<UsageInfoAdapter>, project: Project): CompletableFuture<List<UsageInfo>> {
+fun getUsageInfoAsFuture(adapters: List<UsageInfoAdapter>, project: Project): CompletableFuture<List<UsageInfo>> {
   return UsageViewCoroutineScopeProvider.getInstance(project).coroutineScope.async {
     val futures: Array<CompletableFuture<Array<UsageInfo>>> = readAction {
       adapters.filter { it.isValid }.map { it.mergedInfosAsync }.toTypedArray()
@@ -21,4 +21,11 @@ fun getUsageInfo(adapters: List<UsageInfoAdapter>, project: Project): Completabl
     CompletableFuture.allOf(*futures).await()
     futures.map { it.get() }.flatMap { x -> x.toList() }
   }.asCompletableFuture()
+}
+
+@ApiStatus.Internal
+suspend fun getUsageInfo(adapters: List<UsageInfoAdapter>): List<UsageInfo> {
+  return readAction {
+    adapters.filter { it.isValid }.map { it.mergedInfos }.toTypedArray().flatMap { x -> x.toList() }
+  }
 }

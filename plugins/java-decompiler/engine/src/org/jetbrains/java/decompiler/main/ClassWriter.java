@@ -853,7 +853,12 @@ public class ClassWriter {
             }
 
             Type paramType;
-            if (descriptor != null) paramType = descriptor.parameterTypes.get(paramCount); else paramType = md.params[i];
+            if (descriptor != null && descriptor.parameterTypes.size() > paramCount) {
+              paramType = descriptor.parameterTypes.get(paramCount);
+            }
+            else {
+              paramType = md.params[i];
+            }
             appendParameterAnnotations(buffer, mt, paramType, paramCount);
 
             VarVersion pair = new VarVersion(index, 0);

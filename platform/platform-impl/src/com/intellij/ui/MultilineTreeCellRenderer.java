@@ -78,7 +78,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   @Override
   public void updateUI() {
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
   }
 
   protected void setMinHeight(int height) {

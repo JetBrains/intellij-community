@@ -6,12 +6,10 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * An instruction that pushes given value to the stack
@@ -30,8 +28,8 @@ public class PushInstruction extends EvalInstruction {
   }
 
   @Override
-  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
-    return ContainerUtil.createMaybeSingletonList(tryCast(myValue, DfaVariableValue.class));
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return getValue() instanceof DfaVariableValue var ? List.of(var.getDescriptor()) : List.of();
   }
 
   public @NotNull DfaValue getValue() {

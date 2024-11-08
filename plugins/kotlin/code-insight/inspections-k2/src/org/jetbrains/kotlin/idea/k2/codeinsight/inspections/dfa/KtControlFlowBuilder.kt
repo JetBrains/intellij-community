@@ -54,7 +54,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.concurrent.ConcurrentHashMap
 
@@ -275,22 +274,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun processEscapes(expr: KtExpression) {
-        val vars = mutableSetOf<DfaVariableValue>()
-        val existingVars: Set<KtVariableDescriptor> = factory.values.asSequence()
-            .filterIsInstance<DfaVariableValue>()
-            .filter { v -> v.qualifier == null }
-            .map { v -> v.descriptor }
-            .filterIsInstance<KtVariableDescriptor>()
-            .toSet()
+        val vars = mutableSetOf<VariableDescriptor>()
         PsiTreeUtil.processElements(expr, KtSimpleNameExpression::class.java) { ref ->
             val nestedVar = KtVariableDescriptor.createFromSimpleName(factory, ref)
-            if (nestedVar != null && existingVars.contains(nestedVar.descriptor)) {
-                vars.addIfNotNull(nestedVar)
+            if (nestedVar != null) {
+                vars.add(nestedVar.descriptor)
             }
             return@processElements true
         }
         if (vars.isNotEmpty()) {
-            addInstruction(EscapeInstruction(vars))
+            addInstruction(EscapeInstruction(vars.toList()))
         }
     }
 

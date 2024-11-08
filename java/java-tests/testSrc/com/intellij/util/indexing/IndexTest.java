@@ -72,7 +72,7 @@ import com.intellij.util.*;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.IsFileChangedResult;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
-import com.intellij.util.indexing.dependencies.ScanningOrIndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.MapIndexStorage;
@@ -591,7 +591,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void assertIsIndexed(VirtualFile vFile) {
-    ScanningOrIndexingRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getReadOnlyTokenForTest();
+    ScanningRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getReadOnlyTokenForTest();
     assertTrue(
       IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || IndexingFlag.isIndexedFlagDisabled());
     assertThat(IndexingFlag.isFileChanged(vFile, indexingRequest.getFileIndexingStamp(vFile))).isEqualTo(IsFileChangedResult.NO);

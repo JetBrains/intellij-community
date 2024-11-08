@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.svg.SvgImageDecoder;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.function.Function;
 
@@ -66,8 +68,8 @@ public final class JBImageToolkit {
   }
 
   @ApiStatus.Internal
-  public static URL tryBuildBase64Url(@NotNull String url) throws MalformedURLException {
-    if (url.startsWith("data:image") && url.contains("base64")) {
+  public static URL tryBuildDataImageUrl(@NotNull String url) throws MalformedURLException {
+    if (url.startsWith("data:image/") && url.contains(",")) {
       return new URL(null, url, JBImageToolkit.dataImageStreamUrlHandler);
     }
     return null;
@@ -87,8 +89,10 @@ public final class JBImageToolkit {
     return SvgImageDecoder.Companion.detect(source, bufferedStream, -1, -1);
   }
 
-  private JBImageToolkit() {}
+  private JBImageToolkit() { }
+
   private static final URLStreamHandler dataImageStreamUrlHandler = new DataImageURLStreamHandler();
+
   private static class DataImageURLStreamHandler extends URLStreamHandler {
 
     @Override
@@ -105,9 +109,12 @@ public final class JBImageToolkit {
           connect(); // Mimics the semantics of an actual URL connection.
           var parts = StringUtil.split(u.toString(), ",");
           if (parts.size() == 2) {
+            var isBase64 = parts.get(0).endsWith(";base64");
             var encodedImage = parts.get(1);
-            return new ByteArrayInputStream(Base64.getDecoder().decode(encodedImage));
-          } else {
+            return new ByteArrayInputStream(isBase64 ? Base64.getDecoder().decode(encodedImage)
+                                                     : URLUtil.decode(encodedImage).getBytes(StandardCharsets.UTF_8));
+          }
+          else {
             throw new IOException("Malformed data url: " + u);
           }
         }

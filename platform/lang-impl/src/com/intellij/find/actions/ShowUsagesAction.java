@@ -1127,7 +1127,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
         String selectedFile = file;
 
-        UsageAdaptersKt.getUsageInfo(adapters, project).thenAccept(selectedUsages -> {
+        UsageAdaptersKt.getUsageInfoAsFuture(adapters, project).thenAccept(selectedUsages -> {
           ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
               .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
                 usagePreviewPanel.updateLayout(project, selectedUsages);

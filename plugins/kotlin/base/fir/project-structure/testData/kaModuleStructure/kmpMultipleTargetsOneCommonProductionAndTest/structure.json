@@ -1,0 +1,7 @@
+{
+    "modules": [
+        { "name": "common", "content_roots": ["production", "tests"] , "platform": "common" },
+        { "name": "jvm", "content_roots": ["production", "tests"] , "platform": "jvm", "refinement_dependencies": ["common"] },
+        { "name": "native", "content_roots": ["production", "tests"] , "platform": "jvm", "refinement_dependencies": ["common"] }
+    ]
+}

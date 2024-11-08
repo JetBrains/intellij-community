@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,15 +23,23 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.refactoring.util.duplicates.MatchProvider;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance(ExtractToMethodReferenceIntention.class);
@@ -173,27 +183,23 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
 
   private static void processMethodsDuplicates(PsiMethod method) {
     Project project = method.getProject();
-    final Runnable runnable = () -> {
-      if (!method.isValid()) return;
+    final Callable<@Nullable MatchProvider> runnable = () -> {
+      if (!method.isValid()) return null;
       PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
+      if (containingClass == null) return null;
 
-        final List<Match> duplicates = MethodDuplicatesHandler.hasDuplicates(containingClass, method);
-        for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext(); ) {
-          Match match = iterator.next();
-          final PsiElement matchStart = match.getMatchStart();
-          if (PsiTreeUtil.isAncestor(method, matchStart, false)) {
-            iterator.remove();
-            break;
-          }
-        }
-        if (!duplicates.isEmpty()) {
-          MethodDuplicatesHandler.replaceDuplicate(project, Collections.singletonMap(method, duplicates), Collections.singleton(method));
-        }
-      }
+      final List<Match> duplicates = MethodDuplicatesHandler.hasDuplicates(containingClass, method);
+      duplicates.removeIf(match -> PsiTreeUtil.isAncestor(method, match.getMatchStart(), false));
+      return duplicates.isEmpty() ? null : MatchProvider.create(method, duplicates);
     };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
-                                                                      JavaRefactoringBundle.message("replace.method.code.duplicates.title"), true, project);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(runnable)
+        .finishOnUiThread(ModalityState.nonModal(), matchProvider -> {
+          MethodDuplicatesHandler.replaceDuplicate(project, ContainerUtil.createMaybeSingletonList(matchProvider));
+        })
+        .expireWhen(() -> !method.isValid())
+        .submit(AppExecutorUtil.getAppExecutorService()),
+      JavaRefactoringBundle.message("replace.method.code.duplicates.title"), true, project);
   }
 
   private static String getUniqueMethodName(PsiClass targetClass,

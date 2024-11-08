@@ -485,8 +485,12 @@ class NotebookCellInlayManager private constructor(
     return cells[index]
   }
 
+  fun getCell(interval: NotebookCellLines.Interval): EditorCell {
+    return cells[interval.ordinal]
+  }
+
   fun getCell(pointer: NotebookIntervalPointer): EditorCell {
-    return getCell(pointer.get()!!.ordinal)
+    return getCell(pointer.get()!!)
   }
 
   fun invalidateCells() {

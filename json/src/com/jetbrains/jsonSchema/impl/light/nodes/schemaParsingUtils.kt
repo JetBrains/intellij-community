@@ -29,14 +29,14 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
   }
 
   override fun readUntypedNodeValueAsText(node: JsonNode, relativeChildPath: String?): String? {
-    if (!node.isObject) return null
+    if (!node.isObject && relativeChildPath != null) return null
     return getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
       .takeIf { it !is MissingNode }
       ?.toPrettyString()
   }
 
   override fun readTextNodeValue(node: JsonNode, relativeChildPath: String?): String? {
-    if (!node.isObject) return null
+    if (!node.isObject && relativeChildPath != null) return null
     val maybeString = getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
     return if (maybeString.isTextual)
       maybeString.asText()
@@ -54,7 +54,7 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
   }
 
   override fun readNumberNodeValue(node: JsonNode, relativeChildPath: String?): Number? {
-    if (!node.isObject) return null
+    if (!node.isObject && relativeChildPath != null) return null
     val maybeNumber = getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
     return when {
       maybeNumber.isInt -> maybeNumber.asInt()
@@ -70,7 +70,7 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
   }
 
   override fun readNodeAsMapEntries(node: JsonNode, relativeChildPath: String?): Sequence<Pair<String, JsonNode>>? {
-    if (!node.isObject) return null
+    if (!node.isObject && relativeChildPath != null) return null
     return getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
       .takeIf { it.isObject }
       ?.fields()
@@ -98,9 +98,9 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
       node.get(directChildName) ?: MissingNode.getInstance()
   }
 
-  private fun getChildArrayItems(node: JsonNode, name: String?): Sequence<JsonNode>? {
-    if (!node.isObject) return null
-    return getExistingChildByNonEmptyPathOrSelf(node, name)
+  private fun getChildArrayItems(node: JsonNode, relativeChildPath: String?): Sequence<JsonNode>? {
+    if (!node.isObject && relativeChildPath != null) return null
+    return getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
       .takeIf { it.isArray }
       ?.asSafely<ArrayNode>()
       ?.elements()

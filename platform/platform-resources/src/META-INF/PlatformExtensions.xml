@@ -309,8 +309,6 @@
                         serviceImplementation="com.intellij.ui.content.ContentFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ui.TreeUIHelper"
                         serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
-    <applicationService serviceInterface="com.intellij.ui.treeStructure.TreeDomainModelFactory"
-                        serviceImplementation="com.intellij.ui.tree.TreeDomainModelFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ui.treeStructure.TreeViewModelFactory"
                         serviceImplementation="com.intellij.ui.tree.TreeViewModelFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ui.treeStructure.TreeSwingModelFactory"
@@ -1129,7 +1127,7 @@
     <editorNotificationProvider implementation="com.intellij.ide.CommandLineWaitingManager$MyNotification"/>
     <editorNotificationProvider implementation="com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider"/>
 
-    <uiDataRule implementation="com.intellij.ide.impl.dataRules.BasicUiDataRule"/>
+    <uiDataRule implementation="com.intellij.ide.impl.dataRules.BasicUiDataRule" id="BasicUiDataRule"/>
     <getDataRule key="NavigatableArray" implementationClass="com.intellij.ide.impl.dataRules.NavigatableArrayRule"/>
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 
@@ -1787,11 +1785,6 @@
     <registryKey key="highlighting.passes.cache.experiment.group"
                  defaultValue="false"
                  description="Turn on the highlighting passes preload experiment"/>
-
-    <editorFloatingToolbarProvider
-      id="CloseSearchEverywherePreviewToolbar"
-      order="after DefaultFloatingToolbarProvider"
-      implementation="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreviewToolbar"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer"/>
 

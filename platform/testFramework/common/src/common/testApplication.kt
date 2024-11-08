@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
 import com.intellij.openapi.vfs.newvfs.ManagingFS
+import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.platform.ide.bootstrap.callAppInitialized
@@ -69,6 +70,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.ref.IgnoredTraverseEntry
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -357,6 +359,15 @@ fun waitForAppLeakingThreads(application: Application, timeout: Long, timeUnit: 
 
   val stubIndex = application.serviceIfCreated<StubIndex>() as? StubIndexImpl
   stubIndex?.waitUntilStubIndexedInitialized()
+
+  while (RefreshQueueImpl.isRefreshInProgress() || RefreshQueueImpl.isEventProcessingInProgress()) {
+    if (EDT.isCurrentThreadEdt()) {
+      EDT.dispatchAllInvocationEvents()
+    }
+    else {
+      UIUtil.pump()
+    }
+  }
 }
 
 @TestOnly

@@ -5,8 +5,10 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.xQuery
 import javax.swing.JScrollBar
 
+fun Finder.scrollBars(): List<JScrollBarUi> = xx(xQuery { byType (JScrollBar::class.java) }, JScrollBarUi::class.java).list()
+
 fun Finder.verticalScrollBar(f: JScrollBarUi.() -> Unit = {}) =
-  xx(xQuery { byType (JScrollBar::class.java) }, JScrollBarUi::class.java).list().single { it.getOrientation() == JScrollBar.VERTICAL }.apply(f)
+  scrollBars().single { it.getOrientation() == JScrollBar.VERTICAL }.apply(f)
 
 class JScrollBarUi(data: ComponentData): UiComponent(data) {
   private val scrollBar get() = driver.cast(component, JScrollBarComponent::class)

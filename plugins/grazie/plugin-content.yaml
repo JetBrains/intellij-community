@@ -28,11 +28,11 @@
   - name: intellij.grazie.core
     reason: <- intellij.grazie
     libraries:
-      org.languagetool:languagetool-core:
-      - name: $MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6/languagetool-core-6.jar
+      org.jetbrains.intellij.deps.languagetool:languagetool-core:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6/languagetool-core-6.jar
       - name: $MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1/openregex-1.jar
-      org.languagetool:language-en:
-      - name: $MAVEN_REPOSITORY$/org/languagetool/language-en/6/language-en-6.jar
+      org.jetbrains.intellij.deps.languagetool:language-en:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6/language-en-6.jar
       - name: $MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0/english-pos-dict-0.jar
       net.loomchild:segment:2.0.1:
       - name: $MAVEN_REPOSITORY$/net/loomchild/segment/2/segment-2.jar

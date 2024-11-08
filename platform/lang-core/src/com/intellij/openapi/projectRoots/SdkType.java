@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -43,6 +44,13 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /**
+   * @deprecated Please use {@link SdkType#suggestHomePath(Path)}.
+   * Sometimes a project is not located on the same file system where the IDE is running, and in this case
+   */
+  @Deprecated
+  public abstract @Nullable String suggestHomePath();
+
+  /**
    * Returns a recommended starting path for a file chooser (where SDKs of this type are usually may be found),
    * or {@code null} if not applicable/no SDKs found.
    * <p/>
@@ -51,9 +59,15 @@ public abstract class SdkType implements SdkTypeId {
    * <p/>
    * This method should work fast and allow running from the EDT thread. See the {@link #suggestHomePaths()}
    * for more advanced scenarios
+   *
+   * @param path Any path which belongs to the file system where the search for SDK should occur.
+   *             It can be any local path, but when JDK should be searched for in a container,
+   *             then it should be a path pointing to somewhere within a container.
    * @see #suggestHomePaths()
    */
-  public abstract @Nullable String suggestHomePath();
+  public @Nullable String suggestHomePath(@NotNull Path path) {
+    return suggestHomePath();
+  }
 
   /**
    * Returns a list of all valid SDKs found on this host.

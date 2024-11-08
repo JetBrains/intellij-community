@@ -52,8 +52,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
@@ -259,7 +259,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     mySplitter = new Splitter(true);
     boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
     myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable, false);
-    myCommitOptionsPanel = myCommitOptions.getComponent();
+    myCommitOptionsPanel = myCommitOptions.component;
     myWarningLabel = new JBLabel();
 
     JPanel mainPanel = new JPanel(new MyOptionsLayout(mySplitter, myCommitOptions, JBUIScale.scale(150), JBUIScale.scale(400)));
@@ -837,7 +837,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     MyOptionsLayout(@NotNull JComponent panel, @NotNull CommitOptionsPanel options, int minOptionsWidth, int maxOptionsWidth) {
       myPanel = panel;
       myOptions = options;
-      myOptionsPanel = options.getComponent();
+      myOptionsPanel = options.component;
       myMinOptionsWidth = minOptionsWidth;
       myMaxOptionsWidth = maxOptionsWidth;
     }

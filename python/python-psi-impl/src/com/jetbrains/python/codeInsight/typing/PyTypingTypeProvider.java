@@ -514,17 +514,43 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         return Ref.create(typedDictType);
       }
 
-      final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
-      if (annotatedType != null) {
-        return annotatedType;
-      }
-
       final PyExpression assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(target);
       if (assignedValue != null) {
         final PyType type = getTypeParameterTypeFromDeclaration(assignedValue, context);
         if (type != null) {
           return Ref.create(setTypeParameterDeclarationElement(target, type));
         }
+      }
+
+      // Return a type from an immediate type hint, e.g. from a syntactic annotation for
+      // 
+      // x: int = ...
+      //
+      // or find the "root" declaration and get a type from a type hint there, e.g.
+      // 
+      // x: int
+      // x = ...
+      //
+      // or
+      //
+      // class C:
+      //     attr: int
+      //     def __init__(self, x):
+      //         self.attr = x
+      //
+      // self.attr = ...
+
+      // assignments "inst.attr = ..." are not preserved in stubs anyway. See PyTargetExpressionElementType.shouldCreateStub.
+      if (target.isQualified() && context.myContext.maySwitchToAST(target)) {
+        PsiElement resolved = target.getReference(PyResolveContext.defaultContext(context.myContext)).resolve();
+        if (resolved instanceof PyTargetExpression resolvedTarget && PyUtil.isAttribute(resolvedTarget)) {
+          target = resolvedTarget;
+        }
+      }
+
+      final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
+      if (annotatedType != null) {
+        return annotatedType;
       }
 
       final String name = target.getReferencedName();

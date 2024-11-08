@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
@@ -120,8 +121,8 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
       if (headFile == null) return GitRecentProjectCachedBranch.Unknown
 
       val headFileContent = withContext(Dispatchers.IO) {
-        headFile.readText().trim()
-      }
+        if (Files.exists(headFile)) headFile.readText().trim() else null
+      } ?: return GitRecentProjectCachedBranch.Unknown
 
       val targetRef =
         (if (GitRefUtil.parseHash(headFileContent) == null) GitRefUtil.getTarget(headFileContent) else null)
@@ -132,6 +133,7 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
 
     private fun findGitHead(projectPath: String): Path? {
       val gitRoot = findGitRootFor(Path(projectPath)) ?: return null
+      // Note that git worktree scenario is not supported
       return gitRoot.resolve(GitUtil.DOT_GIT).resolve(GitUtil.HEAD)
     }
 

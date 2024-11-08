@@ -585,7 +585,6 @@
     <group id="EditorPopupMenuDebugJava">
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
-      <reference ref="XDebugger.Hotswap.Modified.Files"/>
       <separator/>
       <add-to-group group-id="EditorPopupMenuDebug" anchor="last"/>
     </group>

@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff.model
 
-import com.intellij.collaboration.ui.util.selectedItem
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.fileStatus
-import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.*
@@ -39,9 +37,4 @@ fun interface RefComparisonChangesSorter {
       override fun originPath(userObject: RefComparisonChange): FilePath? = userObject.filePathBefore
     }
   }
-}
-
-fun RefComparisonChangesSorter.sort(list: ListSelection<RefComparisonChange>): ListSelection<RefComparisonChange> {
-  val newList = sort(list.list)
-  return ListSelection.create(newList, list.selectedItem)
 }

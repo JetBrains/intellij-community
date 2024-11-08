@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
@@ -245,9 +246,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   private static @NotNull ClassReferencePointer computeFromTypeOwner(PsiElement parent, int index,
-                                                                     @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
+                                                                     @NotNull Reference<PsiJavaCodeReferenceElement> ref) {
     return new ClassReferencePointer() {
-      volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
+      volatile Reference<PsiJavaCodeReferenceElement> myCache = ref;
 
       @Override
       public @Nullable PsiJavaCodeReferenceElement retrieveReference() {
@@ -264,7 +265,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
       private @Nullable PsiJavaCodeReferenceElement findReferenceByIndex(PsiClassReferenceType type) {
         PsiTypeElement root = getRootTypeElement(type.getReference());
-        return root == null ? null : allReferencesInside(root).get(index);
+        if (root == null) {
+          return null;
+        }
+        List<PsiJavaCodeReferenceElement> referencesInside = allReferencesInside(root).toList();
+        return index < referencesInside.size() ? referencesInside.get(index) : null;
       }
 
       private @Nullable PsiType calcTypeByParent() {

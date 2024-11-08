@@ -1528,6 +1528,14 @@ f:com.intellij.openapi.components.ServiceBean
 - getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - s:loadServicesFromBeans(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Class):java.util.List
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+f:com.intellij.openapi.components.ServiceDescriptor
+- f:client:com.intellij.openapi.client.ClientKind
+- f:headlessImplementation:java.lang.String
+- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- f:overrides:Z
+- f:serviceImplementation:java.lang.String
+- f:serviceInterface:java.lang.String
+- f:testServiceImplementation:java.lang.String
 f:com.intellij.openapi.components.ServiceManager
 - s:createLazyKey(java.lang.Class):com.intellij.openapi.util.NotNullLazyKey
 - s:getService(com.intellij.openapi.project.Project,java.lang.Class):java.lang.Object
@@ -3875,6 +3883,7 @@ com.intellij.psi.PsiDirectory
 - a:findFile(java.lang.String):com.intellij.psi.PsiFile
 - a:findSubdirectory(java.lang.String):com.intellij.psi.PsiDirectory
 - a:getFiles():com.intellij.psi.PsiFile[]
+- getFiles(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile[]
 - a:getName():java.lang.String
 - a:getParent():com.intellij.psi.PsiDirectory
 - a:getParentDirectory():com.intellij.psi.PsiDirectory

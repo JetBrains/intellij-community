@@ -51,7 +51,7 @@ class MavenModuleBuilderHelperTest : MavenMultiVersionImportingTestCase() {
     val moduleBuilderHelper = MavenModuleBuilderHelper(
       MavenId("test", "m1", "1"), mavenProject, mavenProject, true, true, archetype, emptyMap(), "test"
     )
-    moduleBuilderHelper.copyGeneratedFiles(generatedPom.parent.parent.toNioPath().toFile(), modulePom, project, "m1")
+    moduleBuilderHelper.copyGeneratedFiles(generatedPom.parent.parent.toNioPath(), modulePom, project, "m1")
     val pomTxt = VfsUtil.loadText(modulePom)
     Assert.assertTrue(pomTxt.contains("parent"))
     Assert.assertTrue(pomTxt.contains("project"))

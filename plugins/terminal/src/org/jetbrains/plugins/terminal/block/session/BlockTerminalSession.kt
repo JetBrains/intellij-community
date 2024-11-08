@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Key
@@ -18,7 +17,9 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
 import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
+import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.ShellIntegration
+import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -134,12 +135,9 @@ internal class BlockTerminalSession(
     // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
     terminalStarterFuture.complete(null)
     terminalStarterFuture.getNow(null)?.let {
-      it.requestEmulatorStop()
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        it.ttyConnector.closeSafely() // close synchronously
-      }
-      else {
-        it.close() // close in background thread
+      it.close() // close in background
+      it.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
+        it.requestEmulatorStop()
       }
     }
     executorServiceManager.shutdownWhenAllExecuted()

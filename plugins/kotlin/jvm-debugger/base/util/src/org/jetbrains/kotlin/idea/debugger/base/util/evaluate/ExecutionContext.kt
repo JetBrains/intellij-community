@@ -74,12 +74,18 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     @Throws(EvaluateException::class)
-    fun invokeMethod(obj: ObjectReference, method: Method, args: List<Value?>, invocationOptions: Int = 0): Value? {
-        return debugProcess.invokeInstanceMethod(evaluationContext, obj, method, args, invocationOptions)
+    fun invokeMethod(
+        obj: ObjectReference,
+        method: Method,
+        args: List<Value?>,
+        invocationOptions: Int = 0,
+        internalEvaluate: Boolean = false
+    ): Value? {
+        return debugProcess.invokeInstanceMethod(evaluationContext, obj, method, args, invocationOptions, internalEvaluate)
     }
 
-    fun invokeMethod(type: ClassType, method: Method, args: List<Value?>): Value? {
-        return debugProcess.invokeMethod(evaluationContext, type, method, args)
+    fun invokeMethod(type: ClassType, method: Method, args: List<Value?>, internalEvaluate: Boolean = false): Value? {
+        return debugProcess.invokeMethod(evaluationContext, type, method, args, internalEvaluate)
     }
 
     fun invokeMethod(type: InterfaceType, method: Method, args: List<Value?>): Value? {

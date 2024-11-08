@@ -212,43 +212,6 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
-    private fun prepareOverrideRenaming(
-        declaration: PsiElement,
-        baseName: @NlsSafe String,
-        newBaseName: String,
-        safeNewName: String,
-        allRenames: MutableMap<PsiElement, String>
-    ) {
-        val project = declaration.project
-        val searchHelper = PsiSearchHelper.getInstance(project)
-        val overriders = ActionUtil.underModalProgress(project, KotlinBundle.message("rename.searching.for.all.overrides")) {
-            val multiplatformDeclarations =
-                if (declaration is KtNamedDeclaration) { withExpectedActuals(declaration) } else listOf(declaration)
-
-            multiplatformDeclarations.forEach {
-                allRenames[it] = safeNewName
-            }
-
-            multiplatformDeclarations.flatMap { d ->
-                renameRefactoringSupport.findAllOverridingMethods(d, searchHelper.getUseScope(d))
-            }
-        }
-
-        for (originalOverrider in overriders) {
-            // for possible Groovy wrappers
-            val overrider = (originalOverrider as? PsiMirrorElement)?.prototype as? PsiMethod ?: originalOverrider
-
-            if (overrider is SyntheticElement) continue
-
-            val overriderName = (overrider as PsiNamedElement).name
-            val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
-            if (newOverriderName != null) {
-                RenameUtil.assertNonCompileElement(overrider)
-                allRenames[overrider] = newOverriderName
-            }
-        }
-    }
-
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
         val wasRequiredOverride = (element.unwrapped as? KtNamedFunction)?.let { renameRefactoringSupport.overridesNothing(it) } != true
         val simpleUsages = ArrayList<UsageInfo>(usages.size)

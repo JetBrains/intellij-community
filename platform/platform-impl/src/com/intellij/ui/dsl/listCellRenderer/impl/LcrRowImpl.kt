@@ -17,7 +17,6 @@ import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
-import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -148,11 +147,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
     for ((i, cell) in cells.withIndex()) {
       val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.beforeGap))
-      cell.apply(component, enabled)
-
-      if (cell is LcrSimpleColoredTextImpl && cell.initParams.speedSearchHighlighting) {
-        SpeedSearchUtil.applySpeedSearchHighlighting(list, component as SimpleColoredComponent, true, isSelected)
-      }
+      cell.apply(component, enabled, list, isSelected)
     }
 
     return result

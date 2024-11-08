@@ -61,3 +61,11 @@ final class UnresolvedTests extends <error descr="Cannot resolve symbol 'Unresol
   @Override
   protected void foo() {}
 }
+
+abstract class AbstractCentral {
+  protected record Listener(String key) {
+    protected Listener {
+      System.out.println("1");
+    }
+  }
+}

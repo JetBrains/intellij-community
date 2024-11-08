@@ -21,7 +21,7 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 abstract class JupyterAbstractAboveCellToolbar(
   actionGroup: ActionGroup,
-  target: JComponent,
+  toolbarTargetComponent: JComponent,
   place: String = ActionPlaces.EDITOR_INLAY
 ): ActionToolbarImpl(place, actionGroup, true) {
   init {
@@ -33,7 +33,7 @@ abstract class JupyterAbstractAboveCellToolbar(
                                                 BorderFactory.createEmptyBorder(getVerticalPadding(), getHorizontalPadding(), getVerticalPadding(), getHorizontalPadding()))
     isOpaque = false
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    targetComponent = target
+    targetComponent = toolbarTargetComponent
     putClientProperty(SelectClickedCellEventHelper.SKIP_CLICK_PROCESSING_FOR_CELL_SELECTION, true)
     setSkipWindowAdjustments(false)
   }

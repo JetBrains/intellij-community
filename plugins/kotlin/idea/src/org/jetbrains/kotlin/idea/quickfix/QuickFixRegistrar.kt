@@ -659,7 +659,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NO_CONSTRUCTOR.registerFactory(AddDefaultConstructorFixFactory)
         NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFixFactory)
 
-        ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgument)
+        ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgumentFactory)
 
         ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION.registerFactory(ReplaceWithArrayCallInAnnotationFix)
         ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION.registerFactory(SurroundWithArrayOfWithSpreadOperatorInFunctionFix)

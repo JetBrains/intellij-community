@@ -843,16 +843,6 @@ f:com.intellij.xdebugger.impl.inline.InlineWatch
 - f:setMarker():Z
 - f:setPosition(com.intellij.xdebugger.XSourcePosition):V
 - f:updatePosition():Z
-c:com.intellij.xdebugger.impl.inline.InlineWatchNodeImpl
-- com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
-- com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
-- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.xdebugger.impl.inline.InlineWatch,com.intellij.xdebugger.frame.XStackFrame):V
-- getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
-- getLink():com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-- getPosition():com.intellij.xdebugger.XSourcePosition
-- getValueContainer():com.intellij.xdebugger.frame.XValue
-- getWatch():com.intellij.xdebugger.impl.inline.InlineWatch
-- nodeRemoved():V
 c:com.intellij.xdebugger.impl.inline.InlineWatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
@@ -1572,6 +1562,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 - getExpression():com.intellij.xdebugger.XExpression
 - getValueContainer():com.intellij.xdebugger.frame.XValue
+- p:shouldUpdateInlineDebuggerData():Z
 c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
@@ -1709,6 +1700,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
 - setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
 - setValueModificationStarted():V
+- p:shouldUpdateInlineDebuggerData():Z
 f:com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator
 - <init>():V
 - s:setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator$ConfigurableXValueNode):V

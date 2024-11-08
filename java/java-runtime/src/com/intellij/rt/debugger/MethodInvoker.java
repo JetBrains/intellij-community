@@ -5,6 +5,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 
 public final class MethodInvoker {
@@ -39,10 +40,19 @@ public final class MethodInvoker {
 
       // handle the case where null is passed as the vararg array
       // TODO: handle when vararg is not the only parameter
-      if (mt.parameterCount() == 1 && args.length == 1 && args[0] == null && mt.parameterType(0).isArray()) {
+      int parameterCount = mt.parameterCount();
+      if (parameterCount == 1 && args.length == 1 && args[0] == null && mt.parameterType(0).isArray()) {
         result = method.invoke((Object[])null);
       }
       else {
+        if (parameterCount > 0) {
+          Class<?> lastParameterType = mt.parameterType(parameterCount - 1);
+          if (args.length == parameterCount - 1 && lastParameterType.isArray()) {
+            // add an empty array if empty vararg parameter is passed
+            args = Arrays.copyOf(args, parameterCount);
+            args[parameterCount - 1] = Array.newInstance(lastParameterType.getComponentType(), 0);
+          }
+        }
         result = method.invokeWithArguments(args);
       }
       argsArray[argsArray.length - 1] = result; // store the result as the last array element to avoid it being collected

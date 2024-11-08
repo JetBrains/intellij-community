@@ -6138,100 +6138,163 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject")
-    public static class IntroduceWhenSubject extends AbstractK2LocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    public abstract static class IntroduceWhenSubject extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject")
+        public static class Uncategorized extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ifElseBranches.kt")
+            public void testIfElseBranches() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
+            }
+
+            @TestMetadata("lineBreaksAndComments.kt")
+            public void testLineBreaksAndComments() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/lineBreaksAndComments.kt");
+            }
+
+            @TestMetadata("qualified.kt")
+            public void testQualified() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified.kt");
+            }
+
+            @TestMetadata("qualified2.kt")
+            public void testQualified2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified2.kt");
+            }
+
+            @TestMetadata("qualified3.kt")
+            public void testQualified3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified3.kt");
+            }
+
+            @TestMetadata("qualified4.kt")
+            public void testQualified4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified4.kt");
+            }
+
+            @TestMetadata("this.kt")
+            public void testThis() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/this.kt");
+            }
+
+            @TestMetadata("whenWithEqualityTests.kt")
+            public void testWhenWithEqualityTests() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithEqualityTests.kt");
+            }
+
+            @TestMetadata("whenWithMultipleConditionTypes.kt")
+            public void testWhenWithMultipleConditionTypes() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithMultipleConditionTypes.kt");
+            }
+
+            @TestMetadata("whenWithNegativePatterns.kt")
+            public void testWhenWithNegativePatterns() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNegativePatterns.kt");
+            }
+
+            @TestMetadata("whenWithNegativeRangeTests.kt")
+            public void testWhenWithNegativeRangeTests() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNegativeRangeTests.kt");
+            }
+
+            @TestMetadata("whenWithNondivisibleConditions.kt")
+            public void testWhenWithNondivisibleConditions() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNondivisibleConditions.kt");
+            }
+
+            @TestMetadata("whenWithPatterns.kt")
+            public void testWhenWithPatterns() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithPatterns.kt");
+            }
+
+            @TestMetadata("whenWithRangeTests.kt")
+            public void testWhenWithRangeTests() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithRangeTests.kt");
+            }
+
+            @TestMetadata("whenWithSubject.kt")
+            public void testWhenWithSubject() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithSubject.kt");
+            }
+
+            @TestMetadata("whenWithSwappedEqualityTests.kt")
+            public void testWhenWithSwappedEqualityTests() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithSwappedEqualityTests.kt");
+            }
+
+            @TestMetadata("whenWithUnmatchedCandidateSubjects.kt")
+            public void testWhenWithUnmatchedCandidateSubjects() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithUnmatchedCandidateSubjects.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards")
+        public static class WhenGuards extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
-        @TestMetadata("ifElseBranches.kt")
-        public void testIfElseBranches() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("lineBreaksAndComments.kt")
-        public void testLineBreaksAndComments() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/lineBreaksAndComments.kt");
-        }
+            @TestMetadata("whenWithGuards.kt")
+            public void testWhenWithGuards() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuards.kt");
+            }
 
-        @TestMetadata("qualified.kt")
-        public void testQualified() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified.kt");
-        }
+            @TestMetadata("whenWithGuardsAdditionalAndConditions.kt")
+            public void testWhenWithGuardsAdditionalAndConditions() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsAdditionalAndConditions.kt");
+            }
 
-        @TestMetadata("qualified2.kt")
-        public void testQualified2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified2.kt");
-        }
+            @TestMetadata("whenWithGuardsAdditionalAndConditionsParenthesesLeft.kt")
+            public void testWhenWithGuardsAdditionalAndConditionsParenthesesLeft() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsAdditionalAndConditionsParenthesesLeft.kt");
+            }
 
-        @TestMetadata("qualified3.kt")
-        public void testQualified3() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified3.kt");
-        }
+            @TestMetadata("whenWithGuardsAdditionalAndConditionsParenthesesMiddle.kt")
+            public void testWhenWithGuardsAdditionalAndConditionsParenthesesMiddle() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsAdditionalAndConditionsParenthesesMiddle.kt");
+            }
 
-        @TestMetadata("qualified4.kt")
-        public void testQualified4() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/qualified4.kt");
-        }
+            @TestMetadata("whenWithGuardsAdditionalAndConditionsParenthesesRight.kt")
+            public void testWhenWithGuardsAdditionalAndConditionsParenthesesRight() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsAdditionalAndConditionsParenthesesRight.kt");
+            }
 
-        @TestMetadata("this.kt")
-        public void testThis() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/this.kt");
-        }
+            @TestMetadata("whenWithGuardsInapplicableComplexLhs.kt")
+            public void testWhenWithGuardsInapplicableComplexLhs() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsInapplicableComplexLhs.kt");
+            }
 
-        @TestMetadata("whenWithEqualityTests.kt")
-        public void testWhenWithEqualityTests() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithEqualityTests.kt");
-        }
+            @TestMetadata("whenWithGuardsNoFlag.kt")
+            public void testWhenWithGuardsNoFlag() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsNoFlag.kt");
+            }
 
-        @TestMetadata("whenWithMultipleConditionTypes.kt")
-        public void testWhenWithMultipleConditionTypes() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithMultipleConditionTypes.kt");
-        }
+            @TestMetadata("whenWithGuardsNotApplicableOrConditions.kt")
+            public void testWhenWithGuardsNotApplicableOrConditions() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsNotApplicableOrConditions.kt");
+            }
 
-        @TestMetadata("whenWithNegativePatterns.kt")
-        public void testWhenWithNegativePatterns() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNegativePatterns.kt");
-        }
-
-        @TestMetadata("whenWithNegativeRangeTests.kt")
-        public void testWhenWithNegativeRangeTests() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNegativeRangeTests.kt");
-        }
-
-        @TestMetadata("whenWithNondivisibleConditions.kt")
-        public void testWhenWithNondivisibleConditions() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithNondivisibleConditions.kt");
-        }
-
-        @TestMetadata("whenWithPatterns.kt")
-        public void testWhenWithPatterns() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithPatterns.kt");
-        }
-
-        @TestMetadata("whenWithRangeTests.kt")
-        public void testWhenWithRangeTests() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithRangeTests.kt");
-        }
-
-        @TestMetadata("whenWithSubject.kt")
-        public void testWhenWithSubject() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithSubject.kt");
-        }
-
-        @TestMetadata("whenWithSwappedEqualityTests.kt")
-        public void testWhenWithSwappedEqualityTests() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithSwappedEqualityTests.kt");
-        }
-
-        @TestMetadata("whenWithUnmatchedCandidateSubjects.kt")
-        public void testWhenWithUnmatchedCandidateSubjects() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenWithUnmatchedCandidateSubjects.kt");
+            @TestMetadata("whenWithGuardsWithGuardOrCondition.kt")
+            public void testWhenWithGuardsWithGuardOrCondition() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsWithGuardOrCondition.kt");
+            }
         }
     }
 
@@ -6350,6 +6413,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceFirstSetterInChain.kt");
             }
 
+            @TestMetadata("dontReplaceGetterAfterSuperCall.kt")
+            public void testDontReplaceGetterAfterSuperCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterAfterSuperCall.kt");
+            }
+
             @TestMetadata("dontReplaceGetterFromKotlinFile.kt")
             public void testDontReplaceGetterFromKotlinFile() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterFromKotlinFile.kt");
@@ -6378,6 +6446,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt")
             public void testDontReplaceIfPropertyHasLambdaAndSetterInsideIsLast() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
+            }
+
+            @TestMetadata("dontReplaceImplicitOverrideOfKotlinMethod.kt")
+            public void testDontReplaceImplicitOverrideOfKotlinMethod() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceImplicitOverrideOfKotlinMethod.kt");
             }
 
             @TestMetadata("dontReplaceIsEmptyOfAbstractCollectionInheritor.kt")
@@ -6460,6 +6533,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithReservedWord2.kt");
             }
 
+            @TestMetadata("dontReplaceWhenReceiverIsSuper.kt")
+            public void testDontReplaceWhenReceiverIsSuper() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceWhenReceiverIsSuper.kt");
+            }
+
             @TestMetadata("get.kt")
             public void testGet() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/get.kt");
@@ -6483,11 +6561,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("replaceGetterAfterSafeCall.kt")
             public void testReplaceGetterAfterSafeCall() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterAfterSafeCall.kt");
-            }
-
-            @TestMetadata("replaceGetterAfterSuperCall.kt")
-            public void testReplaceGetterAfterSuperCall() throws Exception {
-                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/replaceGetterAfterSuperCall.kt");
             }
 
             @TestMetadata("replaceGetterFromGenericClassMethod.kt")

@@ -89,6 +89,13 @@ class KotlinGradleFindUsagesTest : AbstractGradleCodeInsightTest() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
+    @TestMetadata("versionCatalog/includedBuildWithoutSettings/tomlLibraryUsageInBuildGradleKts.test")
+    fun testIncludedBuildWithoutSettingsTomlLibraryUsageInBuildGradleKts(gradleVersion: GradleVersion) {
+        verifyFindUsages(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
     @TestMetadata("topLevelPropertyNoUsage.test")
     fun testTopLevelPropertyNoUsage(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)

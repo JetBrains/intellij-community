@@ -386,11 +386,14 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private fun <T, E : Throwable?> runWriteAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
     val ts = getThreadState()
     val state = startWrite(ts, clazz)
+    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
     return try {
+      ThreadingAssertions.setImplicitLockOnEDT(false)
       block.compute()
     }
     finally {
       endWrite(ts, clazz, state)
+      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
     }
   }
 

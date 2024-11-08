@@ -2193,9 +2193,19 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("KTIJ-26747.kt")
+            public void testKTIJ_26747() throws Exception {
+                runTest("../../completion/testData/basic/common/primaryConstructor/KTIJ-26747.kt");
+            }
+
             @TestMetadata("parameterDefaultValue.kt")
             public void testParameterDefaultValue() throws Exception {
                 runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
+            }
+
+            @TestMetadata("parameterDefaultValueNotContainsUnitializedParams.kt")
+            public void testParameterDefaultValueNotContainsUnitializedParams() throws Exception {
+                runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValueNotContainsUnitializedParams.kt");
             }
 
             @TestMetadata("previousParameter.kt")
@@ -2647,6 +2657,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
             @TestMetadata("CompanionObjectMembers.kt")
             public void testCompanionObjectMembers() throws Exception {
                 runTest("../../completion/testData/basic/common/staticMembers/CompanionObjectMembers.kt");
+            }
+
+            @TestMetadata("EnumRendering.kt")
+            public void testEnumRendering() throws Exception {
+                runTest("../../completion/testData/basic/common/staticMembers/EnumRendering.kt");
             }
 
             @TestMetadata("EnumWithoutCompanionObject.kt")
@@ -3374,6 +3389,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../../completion/testData/basic/common/KTIJ20039.kt");
             }
 
+            @TestMetadata("KTIJ-26747.kt")
+            public void testKTIJ_26747() throws Exception {
+                runTest("../../completion/testData/basic/common/KTIJ-26747.kt");
+            }
+
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
             public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
                 runTest("../../completion/testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
@@ -3407,6 +3427,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
             @TestMetadata("LocalMultideclarationValues.kt")
             public void testLocalMultideclarationValues() throws Exception {
                 runTest("../../completion/testData/basic/common/LocalMultideclarationValues.kt");
+            }
+
+            @TestMetadata("MapEntry.kt")
+            public void testMapEntry() throws Exception {
+                runTest("../../completion/testData/basic/common/MapEntry.kt");
             }
 
             @TestMetadata("NamedObject.kt")
@@ -4133,6 +4158,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
             @TestMetadata("JavaStaticFieldsFromImports.kt")
             public void testJavaStaticFieldsFromImports() throws Exception {
                 runTest("../../completion/testData/basic/java/staticMembers/JavaStaticFieldsFromImports.kt");
+            }
+
+            @TestMetadata("JavaStaticMethodRendering.kt")
+            public void testJavaStaticMethodRendering() throws Exception {
+                runTest("../../completion/testData/basic/java/staticMembers/JavaStaticMethodRendering.kt");
             }
 
             @TestMetadata("JavaStaticMethods.kt")

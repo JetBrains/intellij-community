@@ -1332,12 +1332,12 @@ abstract class ComponentManagerImpl(
     ignoreDisposal {
       componentContainer.getInstanceHolder(keyClass = componentType)
     }?.let {
-      return HolderAdapter(key = componentType, it)
+      return HolderAdapter(key = componentType, holder = it)
     }
     for (holder in componentContainer.instanceHolders()) {
       val instanceClass = holder.instanceClass()
       if (componentType === instanceClass || componentType.isAssignableFrom(instanceClass)) {
-        return HolderAdapter(key = componentType, holder)
+        return HolderAdapter(key = componentType, holder = holder)
       }
     }
     return null
@@ -1647,11 +1647,11 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
-  catch (e : ProcessCanceledException) {
+  catch (e: ProcessCanceledException) {
     throw e
   }
   catch (e: CancellationException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(e)
     throw CeProcessCanceledException(e)
   }
 }

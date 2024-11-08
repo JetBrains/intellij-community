@@ -20,10 +20,14 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SettingsUtil
-import com.intellij.util.ui.GridBag
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.GridBagConstraints
@@ -41,43 +45,39 @@ import javax.swing.event.HyperlinkListener
 class IntentionDescriptionPanel {
   val component: JPanel
 
-  private val myAfterPanel: JPanel
-  private val myBeforePanel: JPanel
+  private val myAfterPanel = JPanel()
+  private val myBeforePanel = JPanel()
   private val myDescriptionBrowser = DescriptionEditorPane()
   private val myBeforeUsagePanels: MutableList<IntentionUsagePanel> = ArrayList<IntentionUsagePanel>()
   private val myAfterUsagePanels: MutableList<IntentionUsagePanel> = ArrayList<IntentionUsagePanel>()
-  private val myBeforeWrapperPanel: JPanel
-  private val myAfterWrapperPanel: JPanel
+  private lateinit var myBeforeWrapperRow: Row
+  private lateinit var myAfterWrapperRow: Row
 
   init {
     val descriptionScrollPane = ScrollPaneFactory.createScrollPane(myDescriptionBrowser)
     descriptionScrollPane.setBorder(null)
 
-    val examplePanel = JPanel(GridBagLayout())
-    val constraint = GridBag()
-      .setDefaultInsets(UIUtil.LARGE_VGAP, 0, 0, 0)
-      .setDefaultFill(GridBagConstraints.BOTH)
-      .setDefaultWeightY(0.5)
-      .setDefaultWeightX(1.0)
-
-    myBeforePanel = JPanel()
-    myBeforeWrapperPanel = UI.PanelFactory.panel(myBeforePanel)
-      .withLabel(CodeInsightBundle.message("border.title.before"))
-      .moveLabelOnTop()
-      .resizeX(true)
-      .resizeY(true)
-      .createPanel()
-    examplePanel.add(myBeforeWrapperPanel, constraint.nextLine())
-
-    myAfterPanel = JPanel()
-    myAfterWrapperPanel = UI.PanelFactory.panel(myAfterPanel)
-      .withLabel(CodeInsightBundle.message("border.title.after"))
-      .moveLabelOnTop()
-      .resizeX(true)
-      .resizeY(true)
-      .createPanel()
-    examplePanel.add(myAfterWrapperPanel, constraint.nextLine()
-    )
+    val examplePanel = panel {
+      myBeforeWrapperRow = row {
+        cell(myBeforePanel)
+          .label(CodeInsightBundle.message("border.title.before"), LabelPosition.TOP)
+          .align(Align.FILL)
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
+          }
+      }.topGap(TopGap.SMALL)
+        .resizableRow()
+      myAfterWrapperRow = row {
+        cell(myAfterPanel)
+          .label(CodeInsightBundle.message("border.title.after"), LabelPosition.TOP)
+          .align(Align.FILL)
+          .applyToComponent {
+            putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
+          }
+      }.resizableRow()
+    }.apply {
+      minimumSize = JBUI.size(100, 100)
+    }
 
     val mySplitter = OnePixelSplitter(true,
                                       "IntentionDescriptionPanel.VERTICAL_DIVIDER_PROPORTION",
@@ -129,8 +129,8 @@ class IntentionDescriptionPanel {
 
       myDescriptionBrowser.readHTML(description)
 
-      myBeforeWrapperPanel.isVisible = !actionMetaData.isSkipBeforeAfter
-      myAfterWrapperPanel.isVisible = !actionMetaData.isSkipBeforeAfter
+      myBeforeWrapperRow.visible(!actionMetaData.isSkipBeforeAfter)
+      myAfterWrapperRow.visible(!actionMetaData.isSkipBeforeAfter)
       showUsages(myBeforePanel, myBeforeUsagePanels, actionMetaData.getExampleUsagesBefore())
       showUsages(myAfterPanel, myAfterUsagePanels, actionMetaData.getExampleUsagesAfter())
 
@@ -146,14 +146,12 @@ class IntentionDescriptionPanel {
       myDescriptionBrowser
         .readHTML(CodeInsightBundle.message("intention.settings.category.text", intentionCategory))
 
-      val beforeTemplate: TextDescriptor =
-        PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE)
-      showUsages(myBeforePanel, myBeforeUsagePanels, arrayOf<TextDescriptor>(beforeTemplate))
-      val afterTemplate: TextDescriptor =
-        PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE)
-      myBeforeWrapperPanel.isVisible = true
-      myAfterWrapperPanel.isVisible = true
-      showUsages(myAfterPanel, myAfterUsagePanels, arrayOf<TextDescriptor>(afterTemplate))
+      val beforeTemplate = PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.before"), BEFORE_TEMPLATE)
+      showUsages(myBeforePanel, myBeforeUsagePanels, arrayOf(beforeTemplate))
+      val afterTemplate = PlainTextDescriptor(CodeInsightBundle.message("templates.intention.settings.category.after"), AFTER_TEMPLATE)
+      myBeforeWrapperRow.visible(true)
+      myAfterWrapperRow.visible(true)
+      showUsages(myAfterPanel, myAfterUsagePanels, arrayOf(afterTemplate))
 
       SwingUtilities.invokeLater(Runnable { component.revalidate() })
     }

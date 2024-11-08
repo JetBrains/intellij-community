@@ -1040,12 +1040,15 @@ internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit
     val runnableWithWIL =
       if (needWIL) {
         {
-          ThreadingAssertions.setImplicitLockOnEDT(true)
-          try {
-            WriteIntentReadAction.run(runnable)
-          } finally {
-            ThreadingAssertions.setImplicitLockOnEDT(false)
-          }
+            WriteIntentReadAction.run {
+              ThreadingAssertions.setImplicitLockOnEDT(true)
+              try {
+                runnable()
+              }
+              finally {
+                ThreadingAssertions.setImplicitLockOnEDT(false)
+              }
+            }
         }
       }
       else {

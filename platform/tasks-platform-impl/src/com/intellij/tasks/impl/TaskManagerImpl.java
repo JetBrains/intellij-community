@@ -13,9 +13,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -48,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -133,15 +131,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         }
       }
     };
-
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (myProject == project) {
-          TaskManagerImpl.this.projectOpened();
-        }
-      }
-    });
 
     // remove repositories pertaining to non-existent types
     TaskRepositoryType.addEPListChangeListener(this, () -> {
@@ -671,7 +660,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     projectOpened();
   }
 
-  private void projectOpened() {
+  void projectOpened() {
     TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
 
     servers:
@@ -1064,13 +1053,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       if (myConnection != null) {
         myConnection.cancel();
       }
-    }
-  }
-
-  private static final class Activity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      ((TaskManagerImpl)TaskManager.getManager(project)).projectOpened();
     }
   }
 }

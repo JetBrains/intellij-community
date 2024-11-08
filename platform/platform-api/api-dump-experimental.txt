@@ -811,34 +811,22 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 *:com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
 - a:getSizeAndLocation(javax.swing.JComponent):com.intellij.ui.awt.RelativeRectangle
 *:com.intellij.ui.treeStructure.TreeDomainModel
-- a:accessData(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - a:computeRoot(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.ui.treeStructure.TreeDomainModelKt
-- *sf:TreeDomainModel(com.intellij.ide.util.treeView.AbstractTreeStructure,Z,I):com.intellij.ui.treeStructure.TreeDomainModel
 *:com.intellij.ui.treeStructure.TreeNodeDomainModel
 - a:computeChildren(kotlin.coroutines.Continuation):java.lang.Object
-- a:computeLeafState(kotlin.coroutines.Continuation):java.lang.Object
+- a:computeIsLeaf(kotlin.coroutines.Continuation):java.lang.Object
 - a:computePresentation(com.intellij.ui.treeStructure.TreeNodePresentationBuilder,kotlin.coroutines.Continuation):java.lang.Object
-- a:getUserObject():java.lang.Object
 *:com.intellij.ui.treeStructure.TreeNodePresentation
-- a:getFullText():java.util.List
-- a:getIcon():javax.swing.Icon
-- a:getMainText():java.lang.String
-- a:getToolTip():java.lang.String
-- a:isLeaf():Z
 *:com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 - a:appendTextFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - a:build():com.intellij.ui.treeStructure.TreeNodePresentation
 - a:setIcon(javax.swing.Icon):V
 - a:setMainText(java.lang.String):V
 - a:setToolTipText(java.lang.String):V
-*:com.intellij.ui.treeStructure.TreeNodeTextFragment
-- a:getAttributes():com.intellij.ui.SimpleTextAttributes
-- a:getText():java.lang.String
 *:com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getChildren():kotlinx.coroutines.flow.Flow
+- a:getParent():com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getPresentation():kotlinx.coroutines.flow.Flow
-- a:getUserObject():java.lang.Object
 - a:presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
 *:com.intellij.ui.treeStructure.TreeSwingModel
 - com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
@@ -851,15 +839,14 @@ f:com.intellij.ui.treeStructure.TreeDomainModelKt
 f:com.intellij.ui.treeStructure.TreeSwingModelKt
 - *sf:TreeSwingModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeViewModel):com.intellij.ui.treeStructure.TreeSwingModel
 *:com.intellij.ui.treeStructure.TreeViewModel
-- a:accept(com.intellij.ui.tree.SuspendingTreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:accept(com.intellij.ui.tree.TreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:getComparator():java.util.Comparator
+- a:accept(com.intellij.ui.treeStructure.TreeViewModelVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
 - a:getDomainModel():com.intellij.ui.treeStructure.TreeDomainModel
 - a:getRoot():kotlinx.coroutines.flow.Flow
-- a:invalidate(javax.swing.tree.TreePath,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:setComparator(java.util.Comparator):V
+- a:invalidate(com.intellij.ui.treeStructure.TreeNodeViewModel,Z):V
 f:com.intellij.ui.treeStructure.TreeViewModelKt
 - *sf:TreeViewModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeDomainModel):com.intellij.ui.treeStructure.TreeViewModel
+*:com.intellij.ui.treeStructure.TreeViewModelVisitor
+- a:visit(com.intellij.ui.treeStructure.TreeNodeViewModel,kotlin.coroutines.Continuation):java.lang.Object
 *c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - id:java.lang.String

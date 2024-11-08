@@ -235,6 +235,10 @@
 
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
+    <codeInsight.codeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinReferencesCodeVisionProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="kotlin"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinInheritorsCodeVisionProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="kotlin"/>
 
     <callHierarchyProvider
             language="kotlin"

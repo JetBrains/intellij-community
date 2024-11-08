@@ -137,6 +137,8 @@ com.intellij.ide.structureView.StructureView
 com.intellij.ide.structureView.StructureViewBuilder
 - sf:PROVIDER:com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
+- createStructureViewSuspend(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- bs:createStructureViewSuspend$suspendImpl(com.intellij.ide.structureView.StructureViewBuilder,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - s:getProvider():com.intellij.ide.structureView.StructureViewBuilderProvider
 com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
@@ -220,9 +222,10 @@ e:com.intellij.ide.ui.AntialiasingType
 - s:canUseSubpixelAAForEditor():Z
 - s:canUseSubpixelAAForIDE():Z
 - s:getAAHintForSwingComponent():java.lang.Object
+- s:getAATextInfoForSwingComponent():com.intellij.util.ui.AATextInfo
 - s:getKeyForCurrentScope(Z):java.lang.Object
 - getPresentableName():java.lang.String
-- getTextInfo():java.lang.Object
+- getTextInfo():com.intellij.util.ui.AATextInfo
 - s:updateContext(java.awt.font.FontRenderContext,Z):java.awt.font.FontRenderContext
 - s:valueOf(java.lang.String):com.intellij.ide.ui.AntialiasingType
 - s:values():com.intellij.ide.ui.AntialiasingType[]

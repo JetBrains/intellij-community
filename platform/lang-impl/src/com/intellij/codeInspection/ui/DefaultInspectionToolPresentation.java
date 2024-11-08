@@ -25,7 +25,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
   @Override
   public boolean isSuppressed(RefEntity element) {
-    return mySuppressedElements.containsKey(element);
+    return mySuppressedElements.containsKey(element) && !myProblemElements.containsKey(element);
   }
 
   @Override
@@ -38,23 +38,19 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
     return mySuppressedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
-
   @Override
   public @NotNull GlobalInspectionContextImpl getContext() {
     return myContext;
   }
 
-
   protected boolean isDisposed() {
     return isDisposed;
   }
-
 
   @Override
   public void cleanup() {
     isDisposed = true;
   }
-
 
   @Override
   public @NotNull HTMLComposerImpl getComposer() {
@@ -70,9 +66,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
   }
 
   @Override
-  public @Nullable QuickFix<?> findQuickFixes(@NotNull CommonProblemDescriptor problemDescriptor,
-                                              RefEntity entity,
-                                              String hint) {
+  public @Nullable QuickFix<?> findQuickFixes(@NotNull CommonProblemDescriptor problemDescriptor, RefEntity entity, String hint) {
     InspectionProfileEntry tool = getToolWrapper().getTool();
     return !(tool instanceof GlobalInspectionTool) ? null : ((GlobalInspectionTool)tool).getQuickFix(hint);
   }
@@ -89,7 +83,6 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
     return problems;
   }
-
 
   @Override
   public void ignoreElement(@NotNull RefEntity refEntity) {

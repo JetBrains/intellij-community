@@ -107,9 +107,9 @@
       serviceImplementation="org.jetbrains.idea.maven.server.MavenServerResultTransformerImpl"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
-                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
+                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
                         serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
@@ -569,8 +569,8 @@
       <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
 
-    <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.wsl.WslMavenRemoteProcessSupportFactory"/>
-    <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
+    <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.eel.EelMavenRemoteProcessSupportFactory"/>
+    <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.eel.EelRemotePathTransformFactory"/>
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven3.Maven3Support"/>
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven4.Maven4Support"/>
 

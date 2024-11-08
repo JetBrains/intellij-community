@@ -4,35 +4,55 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.find.impl.getUsageInfo
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageInfo2UsageAdapter
-import com.intellij.usages.impl.UsagePreviewPanel.Companion.isOneAndOnlyOnePsiFileInUsages
-import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.mapLatest
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Consumer
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class SearchEverywherePreviewGenerator(val project: Project,
-                                                private val updatePreviewPanel: Consumer<List<UsageInfo>?>,
-                                                private val currentSelectedValueComputable: Computable<Any>): Disposable {
-  private val usagePreviewDisposableList: MutableList<Disposable> = mutableListOf()
+                                                private val updatePreviewPanel: Consumer<List<UsageInfo>?>): Disposable {
+  private val usagePreviewDisposableList = ConcurrentLinkedQueue<Disposable>()
+  private val requestSharedFlow = MutableSharedFlow<Any>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val previewFetchingScope: CoroutineScope?
 
-  fun schedulePreview(selectedValue: Any) {
-    serviceOrNull<SearchEverywhereCoroutineScopeService>()?.coroutineScope?.launch {
-      schedulePreviewSync(selectedValue)
+  init {
+    val seCoroutineScope = project.serviceOrNull<SearchEverywhereCoroutineScopeService>()?.coroutineScope
+    previewFetchingScope = seCoroutineScope?.childScope("SearchEverywherePreviewGenerator scope")
+
+    previewFetchingScope?.launch {
+      requestSharedFlow.mapLatest { selectedValue ->
+        fetchPreview(selectedValue).ifEmpty { null }
+      }.collectLatest { usageInfos ->
+        withContext(Dispatchers.EDT) {
+          updatePreviewPanel.accept(usageInfos)
+        }
+      }
+    }?.invokeOnCompletion {
+      usagePreviewDisposableList.forEach { Disposer.dispose(it) }
     }
   }
 
-  private suspend fun schedulePreviewSync(selectedValue: Any) {
+  fun schedulePreview(selectedValue: Any) {
+    check(requestSharedFlow.tryEmit(selectedValue))
+  }
+
+  private suspend fun fetchPreview(selectedValue: Any): List<UsageInfo> {
     val usageInfo = readAction {
       findFirstChild(selectedValue)
     }
@@ -50,19 +70,9 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
       }
     }
 
-    getUsageInfo(usages, project).thenAccept { infos: List<UsageInfo> ->
-      val usageInfos: List<UsageInfo>? = if (!infos.isEmpty()) infos else null
-      ReadAction.nonBlocking<Boolean> { isOneAndOnlyOnePsiFileInUsages(usageInfos) }
-        .finishOnUiThread(ModalityState.nonModal()) { _: Boolean? ->
-          if (currentSelectedValueComputable.compute() != selectedValue) return@finishOnUiThread
-          updatePreviewPanel.accept(usageInfos)
-        }
-        .coalesceBy(this)
-        .submit(AppExecutorUtil.getAppExecutorService())
-    }.exceptionally { throwable: Throwable? ->
-      Logger.getInstance(SearchEverywhereUI::class.java).error(throwable)
-      null
-    }
+    return runCatching {
+      getUsageInfo(usages)
+    }.getOrLogException(logger<SearchEverywhereUI>()) ?: emptyList()
   }
 
   private fun findFirstChild(selectedValue: Any): UsageInfo? {
@@ -88,7 +98,7 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
         val disposable = resultPair.second
 
         if (disposable != null) {
-          usagePreviewDisposableList.add(Disposable { Disposer.dispose(disposable) })
+          usagePreviewDisposableList.add(disposable)
         }
 
         return usageInfo
@@ -98,6 +108,6 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
   }
 
   override fun dispose() {
-    usagePreviewDisposableList.forEach { Disposer.dispose(it) }
+    previewFetchingScope?.cancel("SearchEverywherePreviewGenerator disposed")
   }
 }

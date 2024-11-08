@@ -9,23 +9,31 @@ import com.intellij.ui.treeStructure.TreeDomainModel
 import com.intellij.ui.treeStructure.TreeNodeDomainModel
 import com.intellij.ui.treeStructure.TreeNodePresentation
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
+import com.intellij.util.SmartList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.annotations.ApiStatus
 
-internal class TreeStructureDomainModelAdapter(
+@ApiStatus.Internal
+@ApiStatus.Experimental
+@ApiStatus.Obsolete
+class TreeStructureDomainModelAdapter(
   private val structure: AbstractTreeStructure,
   private val useReadAction: Boolean,
   concurrency: Int,
 ) : TreeDomainModel {
+
+  var comparator: Comparator<in NodeDescriptor<*>>? = null
+
   private val semaphore = Semaphore(concurrency)
 
   override suspend fun computeRoot(): TreeNodeDomainModel? = accessData {
-    structure.rootElement.validate()?.let { TreeStructureNodeDomainModel(structure.createDescriptor(it, null)) }
+    structure.rootElement.validate()?.toValidNodeModel(null)
   }
 
-  override suspend fun <T> accessData(accessor: () -> T): T = semaphore.withPermit {
+  private suspend fun <T> accessData(accessor: () -> T): T = semaphore.withPermit {
     if (useReadAction) {
       readAction {
         accessor()
@@ -45,9 +53,23 @@ internal class TreeStructureDomainModelAdapter(
     return this
   }
 
-  private inner class TreeStructureNodeDomainModel(override val userObject: NodeDescriptor<*>) : TreeNodeDomainModel {
-    override suspend fun computeLeafState(): LeafState = accessData {
-      structure.getLeafState(userObject.element)
+  private fun Any.toValidNodeModel(parentDescriptor: NodeDescriptor<*>?): TreeStructureNodeDomainModel? {
+    val validElement = validate() ?: return null
+    val descriptor = structure.createDescriptor(validElement, parentDescriptor)
+    descriptor.update()
+    return TreeStructureNodeDomainModel(descriptor)
+  }
+
+  private inner class TreeStructureNodeDomainModel(private val userObject: NodeDescriptor<*>) : TreeNodeDomainModel {
+    override fun getUserObject(): Any = userObject
+
+    override suspend fun computeIsLeaf(): Boolean = accessData {
+      val element = userObject.element
+      when (structure.getLeafState(element)) {
+        LeafState.ALWAYS -> true
+        LeafState.NEVER -> false
+        else -> element.validate()?.let { structure.getChildElements(it).isEmpty() } != false
+      }
     }
 
     override suspend fun computePresentation(builder: TreeNodePresentationBuilder): Flow<TreeNodePresentation> =
@@ -56,15 +78,18 @@ internal class TreeStructureDomainModelAdapter(
       })
 
     override suspend fun computeChildren(): List<TreeNodeDomainModel> = accessData {
-      userObject.element.validate()?.let { parentElement ->
-        structure.getChildElements(parentElement)
-          .asSequence()
-          .mapNotNull { it.validate() }
-          .map { childElement ->
-            TreeStructureNodeDomainModel(structure.createDescriptor(childElement, userObject))
-          }
-          .toList()
-      } ?: emptyList()
+      val comparator = comparator
+      val parentElement = userObject.element.validate() ?: return@accessData emptyList()
+      val result = SmartList<TreeStructureNodeDomainModel>()
+      val childElements = structure.getChildElements(parentElement)
+      for (childElement in childElements) {
+        val validChild = childElement.toValidNodeModel(userObject) ?: continue
+        result.add(validChild)
+      }
+      if (comparator != null) {
+        result.sortWith(Comparator.comparing({ it.userObject }, comparator))
+      }
+      return@accessData result
     }
 
     override fun toString(): String {
@@ -91,13 +116,18 @@ internal fun buildPresentation(builder: TreeNodePresentationBuilder, userObject:
     builder.setMainText(userObject.toString())
     return builder.build()
   }
-  userObject.update()
   val presentation = userObject.presentation
   return builder.run {
     setIcon(presentation.getIcon(false))
-    setMainText(presentation.presentableText ?: "")
-    for (fragment in presentation.coloredText) {
-      appendTextFragment(fragment.text, fragment.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    val mainText = presentation.presentableText ?: ""
+    setMainText(mainText)
+    if (presentation.coloredText.isEmpty()) {
+      appendTextFragment(mainText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
+    else {
+      for (fragment in presentation.coloredText) {
+        appendTextFragment(fragment.text, fragment.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      }
     }
     val location = presentation.locationString
     if (!location.isNullOrEmpty()) {
