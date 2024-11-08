@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.runtime.product.ProductMode
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -116,6 +117,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     return FilteredEventMergeStrategy(emptySet())
   }
 
+  @ApiStatus.Internal
   protected fun createLogger(alternativeRecorderId: String? = null): StatisticsEventLogger {
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP

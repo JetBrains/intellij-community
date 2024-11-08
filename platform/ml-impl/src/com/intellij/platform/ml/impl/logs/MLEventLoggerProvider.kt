@@ -21,7 +21,7 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 
-val maxFileSizeInBytes = 100 * 1024
+private val maxFileSizeInBytes = 100 * 1024
 
 /**
  * Creates collector of ML logs
