@@ -64,7 +64,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   open var format: String = ""
     get() {
       val format = formatTextFieldOldTable.getText()
-      return format.ifEmpty { "%" }
+      return format.ifEmpty { "%s" }
     }
     protected set(value) {
       field = value
