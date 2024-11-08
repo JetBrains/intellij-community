@@ -22,6 +22,11 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.GotItComponentBuilder.Companion.EXTENDED_MAX_WIDTH
 import com.intellij.ui.GotItComponentBuilder.Companion.MAX_LINES_COUNT
+import com.intellij.ui.GotItComponentBuilder.Companion.MAX_WIDTH
+import com.intellij.ui.InlineCodeExtension.Companion.getStyles
+import com.intellij.ui.InlineCodeExtension.Companion.patchCodeTags
+import com.intellij.ui.ShortcutExtension.Companion.getStyles
+import com.intellij.ui.ShortcutExtension.Companion.patchShortcutTags
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -55,6 +60,18 @@ import javax.swing.text.html.*
 import javax.swing.text.html.ParagraphView
 import kotlin.math.min
 
+private sealed interface GotItPromoContent {
+  val width: Int?
+}
+
+private data class GotItPromoImage(val image: Icon): GotItPromoContent {
+  override val width: Int get() = image.iconWidth
+}
+
+private data class GotItPromoHtmlPage(val htmlText: String, val htmlPageSize: Dimension): GotItPromoContent {
+  override val width: Int get() = htmlPageSize.width
+}
+
 @ApiStatus.Internal
 class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   constructor(text: @Nls String) : this({ text })
@@ -64,10 +81,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   private val linkActionsMap: Map<Int, () -> Unit>
   private val iconsMap: Map<Int, Icon>
 
-  private var image: Icon? = null
   private var withImageBorder: Boolean = false
-  private var htmlText: String? = null
-  private var htmlPageSize: Dimension? = null
+
+  private var promoContent: GotItPromoContent? = null
 
   @Nls
   private var header: String = ""
@@ -110,21 +126,20 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Add optional image above the header or description
    */
   fun withImage(image: Icon, withBorder: Boolean = true): GotItComponentBuilder {
-    if (htmlText != null) {
-      error("Image and browser page can not be showed both at once. Choose one of them.")
+    if (promoContent != null) {
+      error("Choose one of promo content")
     }
     val arcRatio = JBUI.CurrentTheme.GotItTooltip.CORNER_RADIUS.get().toDouble() / min(image.iconWidth, image.iconHeight)
-    this.image = RoundedIcon(image, arcRatio, false)
+    promoContent = GotItPromoImage(RoundedIcon(image, arcRatio, false))
     withImageBorder = withBorder
     return this
   }
 
   fun withBrowserPage(htmlText: String, size: Dimension, withBorder: Boolean = true): GotItComponentBuilder {
-    if (image != null) {
-      error("Image and browser page can not be showed both at once. Choose one of them.")
+    if (promoContent != null) {
+      error("Choose one of promo content")
     }
-    this.htmlText = htmlText
-    this.htmlPageSize = size
+    promoContent = GotItPromoHtmlPage(htmlText, size)
     withImageBorder = withBorder
     return this
   }
@@ -388,29 +403,35 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     val left = if (icon != null || stepText != null) JBUI.CurrentTheme.GotItTooltip.ICON_INSET.get() else 0
     val column = if (icon != null || stepText != null) 1 else 0
 
-    if (image != null || htmlText != null) {
+    val promo = promoContent
+    if (promo != null) {
       val borderSize = 1  // do not scale
-      val component = if (htmlText != null) {
-        val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
-        browser.loadHTML(htmlText!!)
-        val wrapper = object : Wrapper(browser.component) {
-          /** JCEF component is painting the whole background rect with no regard to opaque property. It breaks rounded borders.
-           *  So, it is a hack to paint the border again over the JCEF component to override it.
-           */
-          override fun paint(g: Graphics?) {
-            super.paint(g)
-            super.paintBorder(g)
+      val component = when(promo) {
+        is GotItPromoHtmlPage -> {
+          val browser = JBCefBrowser.createBuilder().setMouseWheelEventEnable(false).build()
+          browser.loadHTML(promo.htmlText)
+          val wrapper = object : Wrapper(browser.component) {
+            /** JCEF component is painting the whole background rect with no regard to opaque property. It breaks rounded borders.
+             *  So, it is a hack to paint the border again over the JCEF component to override it.
+             */
+            /** JCEF component is painting the whole background rect with no regard to opaque property. It breaks rounded borders.
+             *  So, it is a hack to paint the border again over the JCEF component to override it.
+             */
+            override fun paint(g: Graphics?) {
+              super.paint(g)
+              super.paintBorder(g)
+            }
+          }
+          wrapper.also {
+            UIUtil.setNotOpaqueRecursively(it)
+            val baseSize = promo.htmlPageSize
+            val adjustedSize = Dimension(baseSize.width + 2 * borderSize, baseSize.height + 2 * borderSize)
+            it.minimumSize = adjustedSize
+            it.preferredSize = adjustedSize
           }
         }
-        wrapper.also {
-          UIUtil.setNotOpaqueRecursively(it)
-          val baseSize = htmlPageSize!!
-          val adjustedSize = Dimension(baseSize.width + 2 * borderSize, baseSize.height + 2 * borderSize)
-          it.minimumSize = adjustedSize
-          it.preferredSize = adjustedSize
-        }
+        is GotItPromoImage -> JLabel(adjustIcon(promo.image, useContrastColors))
       }
-      else JLabel(adjustIcon(image!!, useContrastColors))
 
       component.border = object : Border {
         override fun paintBorder(c: Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
@@ -491,14 +512,14 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     }
 
     if (icon == null && stepText == null || header.isNotEmpty()) gc.nextLine()
-    val textWidth = (image?.iconWidth ?: htmlPageSize?.width)?.let { width ->
+    val textWidth = promoContent?.width?.let { width ->
       width - (iconOrStepLabel?.let { it.preferredSize.width + left } ?: 0)
     } ?: maxWidth
     val description = LimitedWidthEditorPane(builder,
                                              textWidth,
                                              useContrastColors,
                                              // allow to extend width only if there is no image and maxWidth was not changed by developer
-                                             allowWidthExtending = image == null && htmlText == null && maxWidth == MAX_WIDTH,
+                                             allowWidthExtending = promoContent == null && maxWidth == MAX_WIDTH,
                                              iconsMap)
     descriptionConsumer(description)
     panel.add(description,
