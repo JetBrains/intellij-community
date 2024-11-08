@@ -101,7 +101,7 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
     toolWindow.contentManager.setSelectedContentCB(content).doWhenProcessed {
       val fileName =
         if (tabName.isNullOrBlank() || tabName == toolWindow.stripeTitle) toolWindow.stripeTitle
-        else "${content.tabName} (${toolWindow.stripeTitle})"
+        else "$tabName (${toolWindow.stripeTitle})"
       val vFile = ToolWindowTabFileImpl(fileName, content.icon ?: toolWindow.icon, toolWindow.id, content.component)
       content.component = Placeholder(project, content, vFile)
       val explicitlyRequested = content.preferredFocusableComponent
