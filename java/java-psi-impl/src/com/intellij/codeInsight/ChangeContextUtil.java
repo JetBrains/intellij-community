@@ -194,22 +194,23 @@ public final class ChangeContextUtil {
 
   private static PsiReferenceExpression decodeReferenceExpression(@NotNull PsiReferenceExpression refExpr,
                                                                   PsiExpression thisAccessExpr,
-                                                                  PsiClass thisClass) throws IncorrectOperationException {
+                                                                  PsiClass thisClass) {
     PsiManager manager = refExpr.getManager();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     PsiExpression qualifier = refExpr.getQualifierExpression();
-    if (qualifier == null){
+    if (qualifier == null) {
       PsiMember refMember = refExpr.getCopyableUserData(REF_MEMBER_KEY);
       refExpr.putCopyableUserData(REF_MEMBER_KEY, null);
 
-      if (refMember != null && refMember.isValid()){
+      if (refMember != null && refMember.isValid()) {
         PsiClass containingClass = refMember.getContainingClass();
-        if (containingClass != null && containingClass.isValid() && refMember.hasModifierProperty(PsiModifier.STATIC)){
+        if (containingClass != null && containingClass.isValid() && refMember.hasModifierProperty(PsiModifier.STATIC)) {
           PsiElement refElement = refExpr.resolve();
-          if (!manager.areElementsEquivalent(refMember, refElement)){
+          if (!manager.areElementsEquivalent(refMember, refElement) || containingClass.isInterface()) {
             final PsiClass currentClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
-            if (currentClass == null || !InheritanceUtil.isInheritorOrSelf(currentClass, containingClass, true)) {
+            if (!InheritanceUtil.isInheritorOrSelf(currentClass, containingClass, true) ||
+                containingClass.isInterface() && containingClass != currentClass) {
               refExpr.setQualifierExpression(factory.createReferenceExpression(containingClass));
             }
           }
