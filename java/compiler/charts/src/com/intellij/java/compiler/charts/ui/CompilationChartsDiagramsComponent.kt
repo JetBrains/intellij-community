@@ -6,7 +6,6 @@ import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
-import com.intellij.java.compiler.charts.ui.CompilationChartsModuleInfo.CompilationChartsUsageInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager

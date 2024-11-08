@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.java.compiler.charts.CompilationChartsBundle
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.StatisticData
@@ -13,8 +12,6 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
 import java.awt.geom.Rectangle2D
-import javax.swing.JLabel
-import javax.swing.JPopupMenu
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -75,17 +72,17 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
   fun clips(area: Rectangle2D.Double) {
     val size = MaxSize(progress, settings)
     progress.bracket = Rectangle2D.Double(area.x,
-                                       0.0,
-                                       area.width,
-                                       size.height)
+                                          0.0,
+                                          area.width,
+                                          size.height)
     usage.bracket = Rectangle2D.Double(area.x,
-                                    size.height,
-                                    progress.bracket.width,
-                                    max(progress.height * 3, area.height - progress.bracket.height - axis.height))
+                                       size.height,
+                                       progress.bracket.width,
+                                       max(progress.height * 3, area.height - progress.bracket.height - axis.height))
     axis.bracket = Rectangle2D.Double(area.x,
-                                   progress.bracket.height + usage.bracket.height,
-                                   progress.bracket.width,
-                                   axis.height)
+                                      progress.bracket.height + usage.bracket.height,
+                                      progress.bracket.width,
+                                      axis.height)
   }
 }
 
@@ -126,114 +123,96 @@ internal data class MaxSize(val width: Double, val height: Double) {
   constructor(progress: ChartProgress, settings: ChartSettings) : this(with(settings.duration) { to - from }, (progress.rows()) * progress.height)
 }
 
-class CompilationChartsModuleInfo(private val vm: CompilationChartsViewModel, private val component: CompilationChartsDiagramsComponent) : MouseAdapter() {
-  private val components: MutableSet<Index> = HashSet()
-  private var currentPopup: JPopupMenu? = null
+class CompilationChartsModuleInfo(
+  private val vm: CompilationChartsViewModel,
+  private val component: CompilationChartsDiagramsComponent,
+) : MouseAdapter() {
+  private val components = mutableSetOf<ModuleIndex>()
+  private var currentPopup = CompilationChartsPopup(component)
 
   override fun mouseClicked(e: MouseEvent) {
     component.setFocus()
-    search(e.point)?.info?.let { info ->
-      currentPopup = JPopupMenu(info["name"]).apply {
-        add(JLabel(CompilationChartsBundle.message("charts.module.info", info["name"], info["duration"])))
-        show(this@CompilationChartsModuleInfo.component, e.point.x, e.point.y)
-      }
+    val index = search(e.point) ?: return
+    currentPopup.open(index, e.locationOnScreen)
+  }
+
+  override fun mouseMoved(e: MouseEvent) {
+    if (!currentPopup.contains(e)) {
+      currentPopup.close()
     }
   }
 
-  override fun mouseExited(e: MouseEvent) {
-    val popup = currentPopup ?: return
-    if (popup.isShowing && !popup.contains(e.point)) {
-      popup.isVisible = false
-    }
-  }
-
-  fun clear() {
-    components.clear()
-  }
+  fun clear() = components.clear()
 
   fun module(rect: Rectangle2D, key: EventKey, info: Map<String, String>) {
-    components.add(Index(rect, key, info))
+    components.add(ModuleIndex(rect, key, info))
   }
 
-  private fun search(point: Point): Index? {
-    components.forEach { index ->
-      if (index.x0 <= point.x && index.x1 >= point.x && index.y0 <= point.y && index.y1 >= point.y) return index
-    }
-    return null
+  private fun search(point: Point): ModuleIndex? = components.firstOrNull { it.contains(point) }
+}
+
+class CompilationChartsUsageInfo(val component: CompilationChartsDiagramsComponent, val charts: Charts, val zoom: Zoom) : MouseMotionListener {
+  var statistic: StatisticData? = null
+  override fun mouseDragged(e: MouseEvent) {
   }
 
-  private data class Index(
-    val x0: Double, val x1: Double,
-    val y0: Double, val y1: Double,
-    val key: EventKey,
-    val info: Map<String, String>,
-  ) {
-    constructor(rect: Rectangle2D, key: EventKey, info: Map<String, String>) : this(rect.x, rect.x + rect.width,
-                                                                                    rect.y, rect.y + rect.height,
-                                                                                    key, info)
-
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (other !is Index) return false
-      if (x0 != other.x0) return false
-      if (x1 != other.x1) return false
-      if (y0 != other.y0) return false
-      if (y1 != other.y1) return false
-      return true
-    }
-
-    override fun hashCode(): Int {
-      var result = x0.hashCode()
-      result = 31 * result + x1.hashCode()
-      result = 31 * result + y0.hashCode()
-      result = 31 * result + y1.hashCode()
-      return result
-    }
-  }
-
-  class CompilationChartsUsageInfo(val component: CompilationChartsDiagramsComponent, val charts: Charts, val zoom: Zoom) : MouseMotionListener {
-    var statistic: StatisticData? = null
-    override fun mouseDragged(e: MouseEvent) {
-    }
-
-    override fun mouseMoved(e: MouseEvent) {
-      val point = e.point
-      if (point.y >= charts.usage.bracket.y &&
-          point.y <= charts.usage.bracket.y + charts.usage.bracket.height) {
-        statistic = search(point)
-        if (statistic != null) {
-          component.smartDraw(false, false)
-        }
-      } else {
-        if (statistic != null) {
-          statistic = null
-          component.smartDraw(false, false)
-        }
+  override fun mouseMoved(e: MouseEvent) {
+    val point = e.point
+    if (point.y >= charts.usage.bracket.y &&
+        point.y <= charts.usage.bracket.y + charts.usage.bracket.height) {
+      statistic = search(point)
+      if (statistic != null) {
+        component.smartDraw(false, false)
       }
     }
-
-    fun draw(g2d: ChartGraphics) {
-      statistic?.let { stat ->
-        charts.usage.drawPoint(g2d, stat, charts.settings)
+    else {
+      if (statistic != null) {
+        statistic = null
+        component.smartDraw(false, false)
       }
-    }
-
-    private fun search(point: Point): StatisticData? {
-      if (charts.usage.model.isEmpty()) return null
-      var statistic = charts.usage.model.first()
-      var currentDistance = abs(zoom.toPixels(statistic.time - charts.settings.duration.from) - point.x)
-      var lastDistance = currentDistance
-      charts.usage.model.forEach { stat ->
-        val x = zoom.toPixels(stat.time - charts.settings.duration.from)
-        if (abs(point.x - x) < currentDistance) {
-          statistic = stat
-          lastDistance = currentDistance
-          currentDistance = abs(point.x - x)
-        } else if (lastDistance < currentDistance) {
-          return statistic
-        }
-      }
-      return statistic
     }
   }
+
+  fun draw(g2d: ChartGraphics) {
+    statistic?.let { stat ->
+      charts.usage.drawPoint(g2d, stat, charts.settings)
+    }
+  }
+
+  private fun search(point: Point): StatisticData? {
+    if (charts.usage.model.isEmpty()) return null
+    var statistic = charts.usage.model.first()
+    var currentDistance = abs(zoom.toPixels(statistic.time - charts.settings.duration.from) - point.x)
+    var lastDistance = currentDistance
+    charts.usage.model.forEach { stat ->
+      val x = zoom.toPixels(stat.time - charts.settings.duration.from)
+      if (abs(point.x - x) < currentDistance) {
+        statistic = stat
+        lastDistance = currentDistance
+        currentDistance = abs(point.x - x)
+      }
+      else if (lastDistance < currentDistance) {
+        return statistic
+      }
+    }
+    return statistic
+  }
+}
+
+data class ModuleIndex(
+  val x0: Double, val x1: Double,
+  val y0: Double, val y1: Double,
+  val key: EventKey,
+  val info: Map<String, String>,
+) {
+  constructor(rect: Rectangle2D, key: EventKey, info: Map<String, String>) : this(
+    rect.x, rect.x + rect.width,
+    rect.y, rect.y + rect.height,
+    key, info
+  )
+
+  fun contains(point: Point): Boolean = x0 <= point.x &&
+                                        x1 >= point.x &&
+                                        y0 <= point.y &&
+                                        y1 >= point.y
 }

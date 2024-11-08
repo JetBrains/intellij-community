@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Filter
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.*
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.StatisticData
@@ -114,7 +115,7 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
           val rect = getRectangle(event, thread, settings)
 
           settings.mouse.module(rect, event.key, mutableMapOf(
-            "duration" to Formats.formatDuration(((event.finish?.target?.time ?: state.currentTime) - event.start.target.time) / 1_000_000),
+            "duration" to NlsMessages.formatDurationApproximate(((event.finish?.target?.time ?: state.currentTime) - event.start.target.time) / 1_000_000),
             "name" to event.start.target.name,
             "type" to event.start.target.type,
             "test" to event.start.target.isTest.toString(),
