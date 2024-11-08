@@ -9,10 +9,12 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 @State(name = "DebuggerSettings", storages = @Storage("debugger.xml"), category = SettingsCategory.TOOLS)
@@ -121,6 +124,11 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     mySteppingFilters = steppingFilters != null ? steppingFilters : ClassFilter.EMPTY_ARRAY;
   }
 
+  @Override
+  public void noStateLoaded() {
+    resetToDefaults();
+  }
+
   @Nullable
   @Override
   public Element getState() {
@@ -142,19 +150,36 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     return state;
   }
 
+  private void resetToDefaults() {
+    try {
+      ReflectionUtil.copyFields(DebuggerSettings.class.getDeclaredFields(), new DebuggerSettings(), this,
+                                new DifferenceFilter<>(null, null) {
+                                  @Override
+                                  public boolean test(@NotNull Field field) {
+                                    return !field.getName().equals("mySteppingFilters") &&
+                                           !field.getName().equals("myContentStates");
+                                  }
+                                });
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+
+    setSteppingFilters(DEFAULT_STEPPING_FILTERS);
+    myContentStates.clear();
+  }
+
   @Override
   public void loadState(@NotNull Element state) {
+    resetToDefaults();
+
     XmlSerializer.deserializeInto(state, this);
 
     List<Element> steppingFiltersElement = state.getChildren("filter");
-    if (steppingFiltersElement.isEmpty()) {
-      setSteppingFilters(DEFAULT_STEPPING_FILTERS);
-    }
-    else {
+    if (!steppingFiltersElement.isEmpty()) {
       setSteppingFilters(DebuggerSettingsUtils.readFilters(steppingFiltersElement));
     }
 
-    myContentStates.clear();
     for (Element content : state.getChildren("content")) {
       ContentState contentState = new ContentState(content);
       myContentStates.put(contentState.getType(), contentState);
