@@ -1,8 +1,8 @@
 {
     "libraries": [
-        { "name": "L1", "roots": ["R1", "R2"] },
-        { "name": "L2", "roots": ["R1", "R2"] },
-        { "name": "L3", "roots": ["R1", "R3"] }
+        { "name": "L1"},
+        { "name": "L2" },
+        { "name": "L3" }
     ],
     "modules": [
         { "name": "A", "content_roots": ["production"], "dependencies": ["L1", "L3"] },
