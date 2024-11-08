@@ -82,6 +82,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testGenericArrayCreation() { doTest(); }
   public void testNoRedundantCast() { doTest(); }
   public void testFieldInitializer() { doTest(); }
+  public void testStaticInterfaceMethod() { doTest(); }
 
   public void testMethodCallInOtherAnonymousOrInner() { doTest(); }
 
