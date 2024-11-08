@@ -14,14 +14,15 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.KeyAdapter
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.Timer
 
 @Service(Service.Level.PROJECT)  // PY-66455 PY-72283
-class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposable {
+class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Disposable {
   private var currentEditor: Editor? = null
-  private var currentPanel: JPanel? = null
+  private var currentPanel: JComponent? = null
 
   private val additionalToolbarEnabled = Registry.`is`("jupyter.cell.additional.toolbar")
   private var currentToolbar: JupyterAddNewCellToolbar? = null
@@ -35,7 +36,7 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
   private var showToolbarJob: Job? = null
   private var isMouseInsidePanel = false
 
-  fun requestToolbarDisplay(panel: JPanel, editor: Editor) {
+  fun requestToolbarDisplay(panel: JComponent, editor: Editor) {
     showToolbarJob?.cancel()
     isMouseInsidePanel = true
 
@@ -89,11 +90,11 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
     hideToolbarUnconditionally()
     hideAdditionalToolbarUnconditionally()
   }
-  
+
   private fun createAndShowToolbar(editor: Editor) {
     actionGroup ?: return
     if (currentToolbar == null) {
-      currentToolbar = JupyterAddNewCellToolbar(actionGroup, editor.contentComponent)
+      currentToolbar = JupyterAddNewCellToolbar(actionGroup, currentPanel!!)
     }
     editor.contentComponent.add(currentToolbar, 0)
     hideToolbarTimer.stop()
@@ -106,7 +107,7 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
   private fun createAndShowAdditionalToolbar(editor: Editor) {
     additionalActionGroup ?: return
     if (currentAdditionalToolbar == null) {
-      currentAdditionalToolbar = JupyterAdditionalToolbar(additionalActionGroup, editor.contentComponent)
+      currentAdditionalToolbar = JupyterAdditionalToolbar(additionalActionGroup, currentPanel!!)
     }
     editor.contentComponent.add(currentAdditionalToolbar, 0)
     hideToolbarTimer.stop()
@@ -115,12 +116,13 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
     editor.contentComponent.revalidate()
     editor.contentComponent.repaint()
   }
-  
+
   private fun conditionallyHideAllToolbars() {
-    if (shouldHideAllToolbars()) {  
+    if (shouldHideAllToolbars()) {
       // Hide toolbars if the mouse is outside both
       hideAllToolbarsUnconditionally()
-    } else {
+    }
+    else {
       hideToolbarTimer.restart()
     }
   }
@@ -134,7 +136,7 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
 
     return !(isMouseInAddToolbar || isMouseInAdditionalToolbar)
   }
-  
+
   private fun hideToolbarUnconditionally() {
     currentToolbar?.let {
       currentEditor?.contentComponent?.remove(it)
@@ -166,7 +168,7 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
       tb.bounds = calculateToolbarBoundsForAdditional(e, p, tb)
     }
   }
-  
+
   private fun getActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ACTION_GROUP_ID) as? ActionGroup
   private fun getAdditionalActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_ACTION_GROUP_ID) as? ActionGroup
 
@@ -202,26 +204,26 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
 
     fun calculateToolbarBounds(
       editor: Editor,
-      panel: JPanel,
-      toolbar: JupyterAddNewCellToolbar
+      panel: JComponent,
+      toolbar: JupyterAddNewCellToolbar,
     ): Rectangle {
       return calculateToolbarBoundsCommon(editor, panel, toolbar, ADD_CELL_TOOLBAR_X_OFFSET_RATIO)
     }
 
     fun calculateToolbarBoundsForAdditional(
       editor: Editor,
-      panel: JPanel,
-      toolbar: JupyterAdditionalToolbar
+      panel: JComponent,
+      toolbar: JupyterAdditionalToolbar,
     ): Rectangle {
       return calculateToolbarBoundsCommon(editor, panel, toolbar, ADDITIONAL_TOOLBAR_X_OFFSET_RATIO, true)
     }
 
     private fun calculateToolbarBoundsCommon(
       editor: Editor,
-      panel: JPanel,
+      panel: JComponent,
       toolbar: JPanel,
       horizontalOffsetRatio: Double,
-      isAdditionalToolbar: Boolean = false
+      isAdditionalToolbar: Boolean = false,
     ): Rectangle {
       val panelHeight = panel.height
       val panelWidth = panel.width
