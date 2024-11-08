@@ -13,7 +13,10 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.jdi.GeneratedLocation;
+import com.intellij.debugger.jdi.GeneratedReferenceType;
+import com.intellij.debugger.jdi.JvmtiError;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.ui.CollectionHistoryView;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -1194,16 +1197,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine, StackTraceElement stackTraceElement) {
-    return findOrCreateLocation(virtualMachine, virtualMachine::classesByName, stackTraceElement);
-  }
-
-  @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine,
-                                              @NotNull ClassesByNameProvider classesByName,
-                                              StackTraceElement stackTraceElement) {
+  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine, @NotNull StackTraceElement stackTraceElement) {
     return findOrCreateLocation(virtualMachine,
-                                classesByName,
                                 stackTraceElement.getClassName(),
                                 stackTraceElement.getMethodName(),
                                 stackTraceElement.getLineNumber());
@@ -1214,16 +1209,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                               @NotNull String className,
                                               @NotNull String methodName,
                                               int line) {
-    return findOrCreateLocation(virtualMachine, virtualMachine::classesByName, className, methodName, line);
-  }
-
-  @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine,
-                                              @NotNull ClassesByNameProvider classesByName,
-                                              @NotNull String className,
-                                              @NotNull String methodName,
-                                              int line) {
-    ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
+    ReferenceType classType = ContainerUtil.getFirstItem(virtualMachine.classesByName(className));
     if (classType == null) {
       classType = new GeneratedReferenceType(virtualMachine, className);
     }
