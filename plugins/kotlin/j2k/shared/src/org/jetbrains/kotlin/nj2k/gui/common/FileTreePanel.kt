@@ -25,7 +25,7 @@ class FileTreePanel(
 
     private val tree : CheckboxTree
     private val rootNode : CheckedTreeNode
-    val fileSelectionListeners = mutableListOf<FilePickListener>()
+    val fileSelectionListeners = mutableListOf<FileTreeListener>()
 
     init {
         // ツリー構築
@@ -149,7 +149,7 @@ class FileTreePanel(
 
 }
 
-interface FilePickListener {
+interface FileTreeListener {
     fun onFilePick(selectedFiles: List<VirtualFile>)
     fun onFocus(file: VirtualFile)
 }
