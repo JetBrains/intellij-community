@@ -49,10 +49,13 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
                 KotlinGlobalSearchScopeMerger.getInstance(project).union(allModules.map { it.contentScope })
             }
         }
-        @OptIn(K1ModeProjectStructureApi::class)
-        return if (module is KtSourceModuleByModuleInfo) {
+        return if (module is KaSourceModule) {
             // remove dependency on `ModuleInfo` after KT-69980 is fixed
-            KotlinResolveScopeEnlarger.enlargeScope(scope, module.ideaModule, isTestScope = module.ideaModuleInfo is ModuleTestSourceInfo)
+            KotlinResolveScopeEnlarger.enlargeScope(
+                scope,
+                module.openapiModule,
+                isTestScope = module.sourceModuleKind == KaSourceModuleKind.TEST
+            )
         } else {
             scope
         }

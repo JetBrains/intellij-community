@@ -22,10 +22,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinLibraryDeduplicator
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleDependentsProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -43,10 +41,7 @@ internal class K2IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlin
         }
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
     override fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule> {
-        require(module is KtLibraryModuleByModuleInfo)
-
         return K2LibraryUsageIndex.getInstance(project)
             .getDependentModules(module.symbolicId)
             .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest(project) }
