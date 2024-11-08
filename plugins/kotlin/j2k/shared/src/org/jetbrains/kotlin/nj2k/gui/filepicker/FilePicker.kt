@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBFont
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.nj2k.gui.common.FilePickListener
 import org.jetbrains.kotlin.nj2k.gui.common.FileTreePanel
+import org.jetbrains.kotlin.nj2k.gui.common.FileViewerPanel
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.UIManager
