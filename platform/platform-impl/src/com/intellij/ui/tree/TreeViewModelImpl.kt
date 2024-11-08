@@ -35,7 +35,14 @@ private class TreeViewModelImpl(
     onBufferOverflow = BufferOverflow.DROP_OLDEST,
   )
   private val pendingUpdates = ConcurrentHashMap<TreeNodeViewModelImpl, NodeUpdate>()
-  private val fakeRoot = TreeNodeViewModelImpl(null, treeScope, FakeRootDomainModel(domainModel))
+  private val fakeRoot = TreeNodeViewModelImpl(
+    parentImpl = null,
+    nodeScope = treeScope,
+    domainModel = FakeRootDomainModel(domainModel),
+    schedule = { update ->
+      schedule(update)
+    }
+  )
 
   override val root: Flow<TreeNodeViewModel?>
     get() = fakeRoot.children.map { it.firstOrNull() }
@@ -67,7 +74,15 @@ private class TreeViewModelImpl(
         check(completedRequests.tryEmit(epoch))
       }
     }
-    scheduleNodeUpdate(fakeRoot, loadPresentation = true, loadChildren = true)
+    fakeRoot.schedule(NodeUpdate(loadPresentation = true, loadChildren = true))
+  }
+
+  private fun TreeNodeViewModelImpl.schedule(update: NodeUpdate) {
+    val existingUpdate = pendingUpdates.remove(this)
+    val newUpdate = existingUpdate.merge(update)
+    pendingUpdates[this] = newUpdate
+    val newEpoch = updateEpoch.incrementAndGet()
+    check(updateRequests.tryEmit(newEpoch))
   }
 
   private fun findTopmostRecursiveUpdate(node: TreeNodeViewModelImpl): Pair<TreeNodeViewModelImpl, NodeUpdate>? {
@@ -102,14 +117,6 @@ private class TreeViewModelImpl(
         }
       }
     }.join()
-  }
-
-  private fun scheduleNodeUpdate(node: TreeNodeViewModelImpl, loadPresentation: Boolean, loadChildren: Boolean) {
-    val existingUpdate = pendingUpdates.remove(node)
-    val newUpdate = existingUpdate.merge(NodeUpdate(loadPresentation, loadChildren))
-    pendingUpdates[node] = newUpdate
-    val newEpoch = updateEpoch.incrementAndGet()
-    check(updateRequests.tryEmit(newEpoch))
   }
 
   override suspend fun accept(visitor: TreeViewModelVisitor, allowLoading: Boolean): TreeNodeViewModel? {
@@ -148,170 +155,171 @@ private class TreeViewModelImpl(
     return null
   }
 
-  private data class NodeUpdate(
-    val loadPresentation: Boolean,
-    val loadChildren: Boolean,
-  )
-
-  private fun NodeUpdate?.merge(other: NodeUpdate): NodeUpdate =
-    if (this == null) {
-      other
-    }
-    else {
-      NodeUpdate(
-        loadPresentation = loadPresentation || other.loadPresentation,
-        loadChildren = loadChildren || other.loadChildren,
-      )
-    }
-
   override fun toString(): String {
     return "TreeViewModelImpl@${System.identityHashCode(this)}(domainModel=$domainModel)"
   }
+}
 
-  private inner class TreeNodeViewModelImpl(
-    val parentImpl: TreeNodeViewModelImpl?,
-    private val nodeScope: CoroutineScope,
-    private val domainModel: TreeNodeDomainModel,
-  ) : TreeNodeViewModel {
-    private val presentationLoaded = AtomicBoolean()
-    private val presentationFlow = MutableSharedFlow<TreeNodePresentation>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val lastComputedPresentation = AtomicReference<TreeNodePresentation>()
-    private val childrenLoaded = AtomicBoolean()
-    val childrenFlow = MutableSharedFlow<List<TreeNodeViewModelImpl>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val lastComputedChildren = AtomicReference<List<TreeNodeViewModelImpl>>()
+private data class NodeUpdate(
+  val loadPresentation: Boolean,
+  val loadChildren: Boolean,
+)
 
-    // We use a fake permanent root here to simplify a lot of code.
-    // To the outside world, the 2nd level root is visible as the real root.
-    override val parent: TreeNodeViewModel?
-      get() = if (parentImpl?.parentImpl == null) null else parentImpl
+private fun NodeUpdate?.merge(other: NodeUpdate): NodeUpdate =
+  if (this == null) {
+    other
+  }
+  else {
+    NodeUpdate(
+      loadPresentation = loadPresentation || other.loadPresentation,
+      loadChildren = loadChildren || other.loadChildren,
+    )
+  }
 
-    override val presentation: Flow<TreeNodePresentation>
-      get() {
-        ensurePresentationIsLoading()
-        return presentationFlow
-      }
+private class TreeNodeViewModelImpl(
+  val parentImpl: TreeNodeViewModelImpl?,
+  private val nodeScope: CoroutineScope,
+  private val domainModel: TreeNodeDomainModel,
+  private val schedule: TreeNodeViewModelImpl.(NodeUpdate) -> Unit,
+) : TreeNodeViewModel {
+  private val presentationLoaded = AtomicBoolean()
+  private val presentationFlow = MutableSharedFlow<TreeNodePresentation>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val lastComputedPresentation = AtomicReference<TreeNodePresentation>()
+  private val childrenLoaded = AtomicBoolean()
+  val childrenFlow = MutableSharedFlow<List<TreeNodeViewModelImpl>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val lastComputedChildren = AtomicReference<List<TreeNodeViewModelImpl>>()
 
-    override val children: Flow<List<TreeNodeViewModel>>
-      get() {
-        ensureChildrenAreLoading()
-        return childrenFlow
-      }
+  // We use a fake permanent root here to simplify a lot of code.
+  // To the outside world, the 2nd level root is visible as the real root.
+  override val parent: TreeNodeViewModel?
+    get() = if (parentImpl?.parentImpl == null) null else parentImpl
 
-    override fun getUserObject(): Any = domainModel.getUserObject()
-
-    private fun ensurePresentationIsLoading() {
-      if (presentationLoaded.compareAndSet(false, true)) {
-        scheduleNodeUpdate(this, loadPresentation = true, loadChildren = false)
-      }
+  override val presentation: Flow<TreeNodePresentation>
+    get() {
+      ensurePresentationIsLoading()
+      return presentationFlow
     }
 
-    fun ensureChildrenAreLoading() {
-      if (childrenLoaded.compareAndSet(false, true)) {
-        scheduleNodeUpdate(this, loadPresentation = false, loadChildren = true)
-      }
+  override val children: Flow<List<TreeNodeViewModel>>
+    get() {
+      ensureChildrenAreLoading()
+      return childrenFlow
     }
 
-    suspend fun accept(visitor: TreeViewModelVisitor): TreeVisitor.Action =
-      nodeScope.async(CoroutineName("Visiting ${this@TreeNodeViewModelImpl} for $visitor")) {
-        visitor.visit(this@TreeNodeViewModelImpl)
-      }.await()
+  override fun getUserObject(): Any = domainModel.getUserObject()
 
-    fun invalidate(recursive: Boolean) {
-      val reloadChildren = recursive && childrenLoaded.get()
-      if (reloadChildren) {
-        lastComputedChildren.get()?.forEach { it.invalidate(true) }
-        childrenFlow.resetReplayCache()
-      }
-      val reloadPresentation = presentationLoaded.get()
-      if (reloadPresentation) {
-        presentationFlow.resetReplayCache()
-      }
-      scheduleNodeUpdate(this, loadPresentation = reloadPresentation, loadChildren = reloadChildren)
+  private fun ensurePresentationIsLoading() {
+    if (presentationLoaded.compareAndSet(false, true)) {
+      schedule(NodeUpdate(loadPresentation = true, loadChildren = false))
     }
+  }
 
-    suspend fun update(loadPresentation: Boolean, loadChildren: Boolean) {
-      val updateJob = nodeScope.launch(CoroutineName("Updating $this")) {
-        if (loadPresentation) {
-          reloadPresentation()
-        }
-        if (loadChildren) {
-          reloadChildren()
-        }
+  fun ensureChildrenAreLoading() {
+    if (childrenLoaded.compareAndSet(false, true)) {
+      schedule(NodeUpdate(loadPresentation = false, loadChildren = true))
+    }
+  }
+
+  suspend fun accept(visitor: TreeViewModelVisitor): TreeVisitor.Action =
+    nodeScope.async(CoroutineName("Visiting ${this@TreeNodeViewModelImpl} for $visitor")) {
+      visitor.visit(this@TreeNodeViewModelImpl)
+    }.await()
+
+  fun invalidate(recursive: Boolean) {
+    val reloadChildren = recursive && childrenLoaded.get()
+    if (reloadChildren) {
+      lastComputedChildren.get()?.forEach { it.invalidate(true) }
+      childrenFlow.resetReplayCache()
+    }
+    val reloadPresentation = presentationLoaded.get()
+    if (reloadPresentation) {
+      presentationFlow.resetReplayCache()
+    }
+    schedule(NodeUpdate(loadPresentation = reloadPresentation, loadChildren = reloadChildren))
+  }
+
+  suspend fun update(loadPresentation: Boolean, loadChildren: Boolean) {
+    val updateJob = nodeScope.launch(CoroutineName("Updating $this")) {
+      if (loadPresentation) {
+        reloadPresentation()
       }
-      updateJob.join()
-    }
-
-    suspend fun reloadPresentation() {
-      emitPresentations()
-    }
-
-    suspend fun reloadChildren() {
-      emitChildren(domainModel.computeChildren())
-    }
-
-    private suspend fun emitPresentations() {
-      val builder = TreeNodePresentationBuilderImpl(domainModel.computeIsLeaf())
-      val lastPresentation = lastComputedPresentation.get()
-      // The flow provided by the domain model may cause flickering,
-      // as it's supposed to start from "simple" presentations and then add "heavy" parts.
-      // To avoid this flickering, we only use all provided presentations on the first load,
-      // and then just keep the cached one until the new presentation is computed fully.
-      // It's better to have an outdated presentation than flickering.
-      if (lastPresentation == null) {
-        domainModel.computePresentation(builder).collect { presentation ->
-          lastComputedPresentation.set(presentation)
-          check(presentationFlow.tryEmit(presentation))
-        }
+      if (loadChildren) {
+        reloadChildren()
       }
-      else {
-        val presentation = domainModel.computePresentation(builder).last()
+    }
+    updateJob.join()
+  }
+
+  suspend fun reloadPresentation() {
+    emitPresentations()
+  }
+
+  suspend fun reloadChildren() {
+    emitChildren(domainModel.computeChildren())
+  }
+
+  private suspend fun emitPresentations() {
+    val builder = TreeNodePresentationBuilderImpl(domainModel.computeIsLeaf())
+    val lastPresentation = lastComputedPresentation.get()
+    // The flow provided by the domain model may cause flickering,
+    // as it's supposed to start from "simple" presentations and then add "heavy" parts.
+    // To avoid this flickering, we only use all provided presentations on the first load,
+    // and then just keep the cached one until the new presentation is computed fully.
+    // It's better to have an outdated presentation than flickering.
+    if (lastPresentation == null) {
+      domainModel.computePresentation(builder).collect { presentation ->
         lastComputedPresentation.set(presentation)
         check(presentationFlow.tryEmit(presentation))
       }
     }
+    else {
+      val presentation = domainModel.computePresentation(builder).last()
+      lastComputedPresentation.set(presentation)
+      check(presentationFlow.tryEmit(presentation))
+    }
+  }
 
-    private fun emitChildren(domainChildren: List<TreeNodeDomainModel>) {
-      val children = computeChildren(domainChildren)
-      lastComputedChildren.set(children)
-      check(childrenFlow.tryEmit(children))
+  private fun emitChildren(domainChildren: List<TreeNodeDomainModel>) {
+    val children = computeChildren(domainChildren)
+    lastComputedChildren.set(children)
+    check(childrenFlow.tryEmit(children))
+  }
+
+  private fun computeChildren(domainChildren: List<TreeNodeDomainModel>): List<TreeNodeViewModelImpl> {
+    val oldChildren = hashMapOf<TreeNodeDomainModel, TreeNodeViewModelImpl>()
+    lastComputedChildren.get()?.associateByTo(oldChildren) { it.domainModel }
+
+    val newChildren = domainChildren.map { childDomainModel ->
+      val oldChild = oldChildren.remove(childDomainModel)
+      oldChild?.apply { schedule(NodeUpdate(loadPresentation = true, loadChildren = false)) }
+      ?: TreeNodeViewModelImpl(this, nodeScope.childScope(childDomainModel.toString()), childDomainModel, schedule)
     }
 
-    private fun computeChildren(domainChildren: List<TreeNodeDomainModel>): List<TreeNodeViewModelImpl> {
-      val oldChildren = hashMapOf<TreeNodeDomainModel, TreeNodeViewModelImpl>()
-      lastComputedChildren.get()?.associateByTo(oldChildren) { it.domainModel }
+    oldChildren.values.forEach { it.nodeScope.cancel() }
 
-      val newChildren = domainChildren.map { childDomainModel ->
-        val oldChild = oldChildren.remove(childDomainModel)
-        oldChild?.apply { scheduleNodeUpdate(oldChild, loadPresentation = true, loadChildren = false) }
-        ?: TreeNodeViewModelImpl(this, nodeScope.childScope(childDomainModel.toString()), childDomainModel)
-      }
+    return newChildren
+  }
 
-      oldChildren.values.forEach { it.nodeScope.cancel() }
+  override fun presentationSnapshot(): TreeNodePresentation {
+    val presentationSnapshot = lastComputedPresentation.get()
+    checkNotNull(presentationSnapshot) { "Presentation has not been computed yet" }
+    return presentationSnapshot
+  }
 
-      return newChildren
+  override fun toString(): String {
+    return "TreeNodeViewModelImpl@${System.identityHashCode(this)}(" +
+           "domainModel=$domainModel, " +
+           "presentationLoaded=${presentationLoaded.get()}, " +
+           "childrenLoaded=${childrenLoaded.get()}" +
+           ")"
+  }
+
+  suspend fun awaitPresentation(): Boolean {
+    val result = nodeScope.launch {
+      presentation.first()
     }
-
-    override fun presentationSnapshot(): TreeNodePresentation {
-      val presentationSnapshot = lastComputedPresentation.get()
-      checkNotNull(presentationSnapshot) { "Presentation has not been computed yet" }
-      return presentationSnapshot
-    }
-
-    override fun toString(): String {
-      return "TreeNodeViewModelImpl@${System.identityHashCode(this)}(" +
-             "domainModel=$domainModel, " +
-             "presentationLoaded=${presentationLoaded.get()}, " +
-             "childrenLoaded=${childrenLoaded.get()}" +
-             ")"
-    }
-
-    suspend fun awaitPresentation(): Boolean {
-      val result = nodeScope.launch {
-        presentation.first()
-      }
-      result.join()
-      return !result.isCancelled
-    }
+    result.join()
+    return !result.isCancelled
   }
 }
 
