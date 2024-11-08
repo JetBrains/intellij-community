@@ -8,6 +8,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 
 class GradleExtensionType(
+  val path: String,
   private val delegate: PsiClassType
 ) : PsiClassType(LanguageLevel.HIGHEST) {
 
@@ -16,7 +17,7 @@ class GradleExtensionType(
   override fun resolve(): PsiClass? = delegate.resolve()
   override fun resolveGenerics(): ClassResolveResult = delegate.resolveGenerics()
   override fun getParameters(): Array<PsiType> = delegate.parameters
-  override fun rawType(): PsiClassType = GradleExtensionType(delegate.rawType())
+  override fun rawType(): PsiClassType = GradleExtensionType(path, delegate.rawType())
 
   override fun getClassName(): String = delegate.className
   override fun getCanonicalText(): String = delegate.canonicalText

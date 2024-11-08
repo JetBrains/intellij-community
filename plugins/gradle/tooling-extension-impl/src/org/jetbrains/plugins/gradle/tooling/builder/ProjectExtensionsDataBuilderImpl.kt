@@ -8,6 +8,7 @@ import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.ExtensionContainer
 import org.gradle.api.reflect.HasPublicType
 import org.jetbrains.plugins.gradle.model.*
@@ -41,17 +42,31 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
 
     for (it in DefaultGroovyMethods.findAll(extensions)) {
       val extension = it as ExtensionContainer
-      val keyList = extractKeys(extension)
 
-      for (name in keyList) {
-        val value = extension.findByName(name)
-        if (value == null) continue
-
-        val rootTypeFqn = getType(value)
-        result.extensions.add(DefaultGradleExtension(name, rootTypeFqn))
-      }
+      extractExtensions(extension, "", result)
     }
     return result
+  }
+
+  private fun extractInnerExtensions(namePrefix: String, source: Any?, result: DefaultGradleExtensions) {
+    if (source !is ExtensionAware)
+      return;
+
+    val extension = source.extensions
+    extractExtensions(extension, namePrefix, result)
+  }
+
+  private fun extractExtensions(extension: ExtensionContainer, namePrefix: String, result: DefaultGradleExtensions) {
+    val keyList = extractKeys(extension)
+
+    for (name in keyList) {
+      val value = extension.findByName(name)
+      if (value == null) continue
+
+      val rootTypeFqn = getType(value)
+      result.extensions.add(DefaultGradleExtension(namePrefix + name, rootTypeFqn))
+      extractInnerExtensions("$namePrefix$name.", value, result)
+    }
   }
 
   private fun extractKeys(extension: ExtensionContainer): List<String> {

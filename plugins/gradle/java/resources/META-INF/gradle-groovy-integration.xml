@@ -103,7 +103,8 @@
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactHandlerContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskContainerContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleNamedDomainCollectionContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradlePropertyExtensionsContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDslExtensionContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleExtensionMembersContributor"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectCallTypeCalculator"/>
     <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactCallTypeCalculator"/>

@@ -18,6 +18,8 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 
 import java.io.File;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -55,41 +57,54 @@ public class GradleBuildScriptClasspathModelBuilder extends AbstractModelBuilder
       Collection<ExternalDependency> dependencies = new GradleDependencyResolver(context, project)
         .resolveDependencies(classpathConfiguration);
 
-      for (ExternalDependency dependency : new GradleDependencyTraverser(dependencies)) {
-        if (dependency instanceof ExternalProjectDependency) {
-          ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
-          Collection<File> projectDependencyArtifacts = projectDependency.getProjectDependencyArtifacts();
-          Collection<File> projectDependencyArtifactsSources = projectDependency.getProjectDependencyArtifactsSources();
-          buildScriptClasspath.add(new ClasspathEntryModelImpl(
-            projectDependencyArtifacts,
-            projectDependencyArtifactsSources,
-            Collections.emptySet()
-          ));
+      if (dependencies.size() > 0) {
+        for (ExternalDependency dependency : new GradleDependencyTraverser(dependencies)) {
+          if (dependency instanceof ExternalProjectDependency) {
+            ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
+            Collection<File> projectDependencyArtifacts = projectDependency.getProjectDependencyArtifacts();
+            Collection<File> projectDependencyArtifactsSources = projectDependency.getProjectDependencyArtifactsSources();
+            buildScriptClasspath.add(new ClasspathEntryModelImpl(
+              projectDependencyArtifacts,
+              projectDependencyArtifactsSources,
+              Collections.emptySet()
+            ));
+          }
+          else if (dependency instanceof ExternalLibraryDependency) {
+            final ExternalLibraryDependency libraryDep = (ExternalLibraryDependency)dependency;
+            buildScriptClasspath.add(new ClasspathEntryModelImpl(
+              GradleCollections.createMaybeSingletonList(libraryDep.getFile()),
+              GradleCollections.createMaybeSingletonList(libraryDep.getSource()),
+              GradleCollections.createMaybeSingletonList(libraryDep.getJavadoc())
+            ));
+          }
+          else if (dependency instanceof ExternalMultiLibraryDependency) {
+            ExternalMultiLibraryDependency multiLibraryDependency = (ExternalMultiLibraryDependency)dependency;
+            buildScriptClasspath.add(new ClasspathEntryModelImpl(
+              multiLibraryDependency.getFiles(),
+              multiLibraryDependency.getSources(),
+              multiLibraryDependency.getJavadoc()
+            ));
+          }
+          else if (dependency instanceof FileCollectionDependency) {
+            FileCollectionDependency fileCollectionDependency = (FileCollectionDependency)dependency;
+            buildScriptClasspath.add(new ClasspathEntryModelImpl(
+              fileCollectionDependency.getFiles(),
+              Collections.emptySet(),
+              Collections.emptySet()
+            ));
+          }
         }
-        else if (dependency instanceof ExternalLibraryDependency) {
-          final ExternalLibraryDependency libraryDep = (ExternalLibraryDependency)dependency;
-          buildScriptClasspath.add(new ClasspathEntryModelImpl(
-            GradleCollections.createMaybeSingletonList(libraryDep.getFile()),
-            GradleCollections.createMaybeSingletonList(libraryDep.getSource()),
-            GradleCollections.createMaybeSingletonList(libraryDep.getJavadoc())
-          ));
-        }
-        else if (dependency instanceof ExternalMultiLibraryDependency) {
-          ExternalMultiLibraryDependency multiLibraryDependency = (ExternalMultiLibraryDependency)dependency;
-          buildScriptClasspath.add(new ClasspathEntryModelImpl(
-            multiLibraryDependency.getFiles(),
-            multiLibraryDependency.getSources(),
-            multiLibraryDependency.getJavadoc()
-          ));
-        }
-        else if (dependency instanceof FileCollectionDependency) {
-          FileCollectionDependency fileCollectionDependency = (FileCollectionDependency)dependency;
-          buildScriptClasspath.add(new ClasspathEntryModelImpl(
-            fileCollectionDependency.getFiles(),
-            Collections.emptySet(),
-            Collections.emptySet()
-          ));
-        }
+      }
+    }
+
+    if (project.getBuildscript().getClassLoader() instanceof URLClassLoader) {
+      final URLClassLoader urlClassLoader = (URLClassLoader)project.getBuildscript().getClassLoader();
+      for (URL url : urlClassLoader.getURLs()) {
+        buildScriptClasspath.add(new ClasspathEntryModelImpl(
+          GradleCollections.createMaybeSingletonList(new File(url.getFile())),
+          Collections.emptySet(),
+          Collections.emptySet()
+        ));
       }
     }
 

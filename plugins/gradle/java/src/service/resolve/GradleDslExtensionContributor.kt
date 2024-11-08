@@ -6,7 +6,6 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import groovy.lang.Closure
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -18,17 +17,28 @@ import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
-class GradleProjectExtensionContributor : AbstractGradleExtensionContributor() {
-
-  override fun getParentClassName(): String = GRADLE_API_PROJECT
+/**
+ * Provides information on extensions registered to existing extensions in a gradle project.
+ * Then registers the relevant properties and configure methods for the extensions.
+ * <p>
+ *   This is different from the <code>GradleProjectExtensionContributor</code> in that it does not
+ *   require the extension to be a project extension.
+ *
+ *   This is also different from the <code>GradleExtensionsContributor</code> in that it does not
+ *   require the extension to be a convention.
+ * </p>
+ */
+class GradleDslExtensionContributor : AbstractGradleExtensionContributor() {
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,
                                       processor: PsiScopeProcessor,
                                       place: PsiElement,
                                       state: ResolveState) {
-    if (qualifierType !is GradleProjectAwareType) return
+    if (qualifierType !is GradleExtensionType) return
     if (aClass == null) return;
+
+    val qualifiedExtensionType : GradleExtensionType = qualifierType
 
     val processMethods = processor.shouldProcessMethods()
     val processProperties = processor.shouldProcessProperties()
@@ -39,9 +49,10 @@ class GradleProjectExtensionContributor : AbstractGradleExtensionContributor() {
     val containingFile = place.containingFile
     val extensionsData = GradlePropertyExtensionsContributor.getExtensionsFor(containingFile) ?: return
 
-    val name = processor.getName(state)
+    val elementName = processor.getName(state) ?: return;
+    val name = "${qualifiedExtensionType.path}.${elementName}"
     val allExtensions = extensionsData.extensions
-    val extensions = if (name == null) allExtensions.values else listOf(allExtensions[name] ?: return)
+    val extensions = listOf(allExtensions[name] ?: return)
 
     processExtensions(extensions, containingFile, place, processor, aClass, state)
   }

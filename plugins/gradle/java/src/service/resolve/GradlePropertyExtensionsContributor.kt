@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessProperties
 
-class GradleExtensionsContributor : NonCodeMembersContributor() {
+class GradlePropertyExtensionsContributor : NonCodeMembersContributor() {
 
   override fun getClassNames(): Collection<String> {
     return listOf(GradleCommonClassNames.GRADLE_API_EXTRA_PROPERTIES_EXTENSION, GRADLE_API_PROJECT)
