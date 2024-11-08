@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.*
-import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel.showPopupAt
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
@@ -541,22 +540,22 @@ class GitStageLineStatusTracker(
         return
       }
 
-      val popupDisposable = Disposer.newDisposable(tracker.disposable)
+      LineStatusMarkerPopupService.instance.buildAndShowPopup(tracker.disposable, editor, mousePosition) { popupDisposable->
+        val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+        val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+        installWordDiff(editor, stagedTextField, vcsTextField, range, popupDisposable)
 
-      val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
-      val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
-      installWordDiff(editor, stagedTextField, vcsTextField, range, popupDisposable)
+        val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
 
-      val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
+        val actions = createToolbarActions(editor, range, mousePosition)
+        val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
 
-      val actions = createToolbarActions(editor, range, mousePosition)
-      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
+        val additionalPanel = createStageLinksPanel(editor, range, mousePosition, popupDisposable)
 
-      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, popupDisposable)
-
-      val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
-      toolbar.setTargetComponent(popupPanel)
-      showPopupAt(editor, popupPanel, mousePosition, popupDisposable)
+        val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
+        toolbar.setTargetComponent(popupPanel)
+        popupPanel
+      }
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {

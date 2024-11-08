@@ -152,14 +152,6 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     return size;
   }
 
-
-  public static void showPopupAt(@NotNull Editor editor,
-                                 @NotNull LineStatusMarkerPopupPanel panel,
-                                 @Nullable Point mousePosition,
-                                 @NotNull Disposable popupDisposable) {
-    LineStatusMarkerPopupService.getInstance().showPopupAt(editor, panel, mousePosition, popupDisposable);
-  }
-
   @NotNull
   public static EditorTextField createTextField(@NotNull Editor editor, @NotNull String content) {
     EditorTextField field = new EditorTextField(content);
