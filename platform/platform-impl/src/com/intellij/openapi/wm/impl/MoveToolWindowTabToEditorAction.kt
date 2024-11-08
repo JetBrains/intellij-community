@@ -104,7 +104,10 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
         else "${content.tabName} (${toolWindow.stripeTitle})"
       val vFile = ToolWindowTabFileImpl(fileName, content.icon ?: toolWindow.icon, toolWindow.id, content.component)
       content.component = Placeholder(project, content, vFile)
-      content.putUserData(ORIGINAL_PREFERRED_FOCUSABLE_KEY, content.preferredFocusableComponent)
+      val explicitlyRequested = content.preferredFocusableComponent
+      if (explicitlyRequested != null && explicitlyRequested !== content.component) {
+        content.putUserData(ORIGINAL_PREFERRED_FOCUSABLE_KEY, explicitlyRequested)
+      }
       content.preferredFocusableComponent = content.component
       toolWindow.hide {
         prevSelection?.let { toolWindow.contentManager.setSelectedContent(it) }
