@@ -1,0 +1,7 @@
+class Clazz:
+    def foo():
+        s = 'singleQuotedString'
+        print(a)
+
+    def bar():
+        ...

@@ -1,0 +1,12 @@
+Original text:
+---------------
+first = """first"""
+second = """second"""
+third = """third"""
+---------------
+Subtree: Language: Python
+---------------
+<reparse>first = """first"""
+second = """
+third = """third"""</reparse>
+---------------

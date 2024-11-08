@@ -13,7 +13,7 @@ public class PyReparseableSingleQuotedStringTokenType extends PyReparseableToken
 
   @Override
   public boolean isReparseable(@NotNull String newText) {
-    if (!isSingleQuotedString(newText) || isChangedToTripleQuoted(newText)) { // fail-fast
+    if (!isSingleQuotedString(newText)) { // fail-fast
       return false;
     }
     PythonLexer lexer = new PythonLexer();
@@ -25,12 +25,10 @@ public class PyReparseableSingleQuotedStringTokenType extends PyReparseableToken
   }
 
   private static boolean isSingleQuotedString(@NotNull String newText) {
-    return (newText.startsWith("\"") && newText.endsWith("\"")) ||
-           (newText.startsWith("'") && newText.endsWith("'"));
-  }
-
-  private static boolean isChangedToTripleQuoted(@NotNull String newText) {
-    return (newText.startsWith("\"\"\"") && newText.endsWith("\"\"\"")) ||
-           (newText.startsWith("'''") && newText.endsWith("'''"));
+    return newText.length() > 1
+           && ((newText.startsWith("\"") && newText.endsWith("\""))
+               || (newText.startsWith("'") && newText.endsWith("'")))
+           && !(newText.startsWith("'''") || newText.startsWith("\"\"\""))
+           && !(newText.endsWith("'''") || newText.endsWith("\"\"\""));
   }
 }
