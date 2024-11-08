@@ -28,6 +28,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -48,7 +50,7 @@ class RootIndex {
   private static final FileTypeRegistry ourFileTypes = FileTypeRegistry.getInstance();
 
   @NotNull private final Project myProject;
-  private volatile OrderEntryGraph myOrderEntryGraph;
+  private final Lazy<OrderEntryGraph> myOrderEntryGraphLazy = LazyKt.lazy(() -> calculateOrderEntryGraph());
 
   RootIndex(@NotNull Project project) {
     myProject = project;
@@ -260,13 +262,14 @@ class RootIndex {
 
   @NotNull
   private OrderEntryGraph getOrderEntryGraph() {
-    OrderEntryGraph graph = myOrderEntryGraph;
-    if (graph == null) {
-      RootInfo rootInfo = buildRootInfo(myProject);
-      Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
-      myOrderEntryGraph = graph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
-    }
-    return graph;
+    return myOrderEntryGraphLazy.getValue();
+  }
+
+  @NotNull
+  private OrderEntryGraph calculateOrderEntryGraph() {
+    RootInfo rootInfo = buildRootInfo(myProject);
+    Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
+    return new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
   }
 
   /**
