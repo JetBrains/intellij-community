@@ -1,7 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.searchEverywhere
+package com.intellij.searchEverywhere.core
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
+import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
+import com.intellij.searchEverywhere.SearchEverywhereListItem
+import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
 import kotlinx.coroutines.CoroutineScope
 
 class DefaultViewItemsProvider<Item, Presentation: SearchEverywhereItemPresentation, Params>(

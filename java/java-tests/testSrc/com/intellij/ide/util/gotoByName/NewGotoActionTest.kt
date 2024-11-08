@@ -2,10 +2,10 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.searchEverywhere.DefaultViewItemsProvider
 import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
 import com.intellij.searchEverywhere.SearchEverywhereListItem
 import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
+import com.intellij.searchEverywhere.core.DefaultViewItemsProvider
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito
