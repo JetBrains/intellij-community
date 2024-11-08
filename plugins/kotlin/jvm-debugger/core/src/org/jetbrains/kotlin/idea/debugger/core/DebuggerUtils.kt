@@ -179,7 +179,7 @@ object DebuggerUtils {
     }
 
     private fun isApplicable(file: KtFile, className: JvmClassName): Boolean {
-        val classNames = ClassNameCalculator.getClassNames(file).values.map { it.fqnToInternalName() }
+        val classNames = ClassNameCalculator.getInstance().getTopLevelNames(file).map(String::fqnToInternalName)
         return className.internalName.isInnerClassOfAny(classNames)
     }
 
