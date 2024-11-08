@@ -96,4 +96,9 @@ public class SuppressAllForClassFix extends SuppressFix {
 
     super.invoke(project, element);
   }
+
+  @Override
+  public int getPriority() {
+    return 60;
+  }
 }

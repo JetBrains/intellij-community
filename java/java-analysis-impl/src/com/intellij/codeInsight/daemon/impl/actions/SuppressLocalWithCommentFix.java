@@ -48,4 +48,9 @@ public class SuppressLocalWithCommentFix extends SuppressByJavaCommentFix {
   public String getText() {
     return JavaAnalysisBundle.message("suppress.for.statement.with.comment");
   }
+
+  @Override
+  public int getPriority() {
+    return 20;
+  }
 }

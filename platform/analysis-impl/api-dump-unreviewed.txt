@@ -1698,7 +1698,9 @@ c:com.intellij.codeInspection.SetInspectionOptionFix
 - startInWriteAction():Z
 f:com.intellij.codeInspection.SuppressIntentionActionFromFix
 - com.intellij.codeInspection.SuppressIntentionAction
+- java.lang.Comparable
 - asModCommandAction():com.intellij.modcommand.ModCommandAction
+- compareTo(com.intellij.codeInsight.intention.IntentionAction):I
 - s:convertBatchToSuppressIntentionAction(com.intellij.codeInspection.SuppressQuickFix):com.intellij.codeInspection.SuppressIntentionAction
 - s:convertBatchToSuppressIntentionActions(com.intellij.codeInspection.SuppressQuickFix[]):com.intellij.codeInspection.SuppressIntentionAction[]
 - getContainer(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement

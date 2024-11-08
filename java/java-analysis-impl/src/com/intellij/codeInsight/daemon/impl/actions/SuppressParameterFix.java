@@ -68,4 +68,9 @@ public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCom
       JavaSuppressionUtil.addSuppressAnnotation(project, container, container, id != null ? id : myID);
     }
   }
+
+  @Override
+  public int getPriority() {
+    return 30;
+  }
 }

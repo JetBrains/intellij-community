@@ -2,11 +2,13 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class SuppressIntentionActionFromFix extends SuppressIntentionAction {
+public final class SuppressIntentionActionFromFix extends SuppressIntentionAction implements Comparable<IntentionAction> {
   private final SuppressQuickFix myFix;
 
   private SuppressIntentionActionFromFix(@NotNull SuppressQuickFix fix) {
@@ -32,6 +34,16 @@ public final class SuppressIntentionActionFromFix extends SuppressIntentionActio
   @Override
   public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return myFix.getElementToMakeWritable(currentFile);
+  }
+
+  @Override
+  public int compareTo(@NotNull IntentionAction o) {
+    if (o instanceof SuppressIntentionActionFromFix otherSuppressFix) {
+      final int i = getFixPriority() - otherSuppressFix.getFixPriority();
+      if (i != 0) return i;
+    }
+
+    return Comparing.compare(getFamilyName(), o.getFamilyName());
   }
 
   public static @NotNull SuppressIntentionAction convertBatchToSuppressIntentionAction(final @NotNull SuppressQuickFix fix) {
@@ -86,6 +98,10 @@ public final class SuppressIntentionActionFromFix extends SuppressIntentionActio
   @Override
   public boolean isSuppressAll() {
     return myFix.isSuppressAll();
+  }
+
+  private int getFixPriority() {
+    return myFix.getPriority();
   }
 
   @Override

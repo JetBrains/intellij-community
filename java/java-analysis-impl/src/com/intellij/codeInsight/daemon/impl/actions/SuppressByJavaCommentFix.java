@@ -5,7 +5,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -50,5 +52,10 @@ public class SuppressByJavaCommentFix extends SuppressByCommentModCommandFix {
   @Nullable
   protected PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
     return JavaSuppressionUtil.getElementToAnnotate(element, container);
+  }
+
+  @Override
+  public int getPriority() {
+    return 10;
   }
 }

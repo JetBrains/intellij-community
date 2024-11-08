@@ -1527,6 +1527,7 @@ a:com.intellij.codeInspection.SuppressIntentionAction
 com.intellij.codeInspection.SuppressQuickFix
 - com.intellij.codeInspection.LocalQuickFix
 - sf:EMPTY_ARRAY:com.intellij.codeInspection.SuppressQuickFix[]
+- getPriority():I
 - a:isAvailable(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):Z
 - a:isSuppressAll():Z
 com.intellij.codeInspection.SuppressableProblemGroup
