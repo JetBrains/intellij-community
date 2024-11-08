@@ -8,8 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManagementService
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -28,10 +26,6 @@ class PyPipEnvSdkProvider : PySdkProvider {
 
   override fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData? {
     return PyPipEnvSdkAdditionalData.load(element)
-  }
-
-  override fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService? {
-    return if (sdk.isPipEnv) PyPipEnvPackageManagementService(project, sdk) else null
   }
 
   override fun createEnvironmentAssociationFix(
