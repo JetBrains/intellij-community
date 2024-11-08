@@ -61,7 +61,7 @@ private class TreeViewModelImpl(
             val node = topUpdate.first
             val update = topUpdate.second
             pendingUpdates.remove(node)
-            update.update(node)
+            node.update(loadPresentation = update.loadPresentation, loadChildren = update.loadChildren)
           }
         }
         check(completedRequests.tryEmit(epoch))
@@ -125,9 +125,7 @@ private class TreeViewModelImpl(
         continue // The node was canceled and disappeared.
       }
       val visit = try {
-        node.nodeScope.async(CoroutineName("Visiting $node for $visitor")) {
-          visitor.visit(node)
-        }.await()
+        node.accept(visitor)
       }
       catch (_: CancellationException) {
         currentCoroutineContext().ensureActive() // Throw if OUR coroutine was canceled.
@@ -153,19 +151,7 @@ private class TreeViewModelImpl(
   private data class NodeUpdate(
     val loadPresentation: Boolean,
     val loadChildren: Boolean,
-  ) {
-    suspend fun update(node: TreeNodeViewModelImpl) {
-      val updateJob = node.nodeScope.launch(CoroutineName("Updating $node")) {
-        if (loadPresentation) {
-          node.reloadPresentation()
-        }
-        if (loadChildren) {
-          node.reloadChildren()
-        }
-      }
-      updateJob.join()
-    }
-  }
+  )
 
   private fun NodeUpdate?.merge(other: NodeUpdate): NodeUpdate =
     if (this == null) {
@@ -184,8 +170,8 @@ private class TreeViewModelImpl(
 
   private inner class TreeNodeViewModelImpl(
     val parentImpl: TreeNodeViewModelImpl?,
-    val nodeScope: CoroutineScope,
-    val domainModel: TreeNodeDomainModel,
+    private val nodeScope: CoroutineScope,
+    private val domainModel: TreeNodeDomainModel,
   ) : TreeNodeViewModel {
     private val presentationLoaded = AtomicBoolean()
     private val presentationFlow = MutableSharedFlow<TreeNodePresentation>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -225,6 +211,11 @@ private class TreeViewModelImpl(
       }
     }
 
+    suspend fun accept(visitor: TreeViewModelVisitor): TreeVisitor.Action =
+      nodeScope.async(CoroutineName("Visiting ${this@TreeNodeViewModelImpl} for $visitor")) {
+        visitor.visit(this@TreeNodeViewModelImpl)
+      }.await()
+
     fun invalidate(recursive: Boolean) {
       val reloadChildren = recursive && childrenLoaded.get()
       if (reloadChildren) {
@@ -236,6 +227,18 @@ private class TreeViewModelImpl(
         presentationFlow.resetReplayCache()
       }
       scheduleNodeUpdate(this, loadPresentation = reloadPresentation, loadChildren = reloadChildren)
+    }
+
+    suspend fun update(loadPresentation: Boolean, loadChildren: Boolean) {
+      val updateJob = nodeScope.launch(CoroutineName("Updating $this")) {
+        if (loadPresentation) {
+          reloadPresentation()
+        }
+        if (loadChildren) {
+          reloadChildren()
+        }
+      }
+      updateJob.join()
     }
 
     suspend fun reloadPresentation() {
