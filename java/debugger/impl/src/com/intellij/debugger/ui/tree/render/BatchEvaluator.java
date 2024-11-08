@@ -130,8 +130,8 @@ public final class BatchEvaluator {
       }
 
       // reserve one extra element for the return value to avoid gc collection of the result
-      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size() + 1, evaluationContext);
-      DebuggerUtilsEx.setArrayValues(argArray, values, false);
+      ArrayReference argArray =
+        DebuggerUtilsEx.mirrorOfArray(objectArrayClass, ContainerUtil.append(values, (Value)null), evaluationContext);
 
       Value result = ((DebugProcessImpl)debugProcess).invokeMethod(
         evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
@@ -165,7 +165,7 @@ public final class BatchEvaluator {
         return true;
       }
     }
-    catch (EvaluateException | ClassNotLoadedException | InvalidTypeException e) {
+    catch (EvaluateException e) {
       LOG.error(e);
     }
     return false;
