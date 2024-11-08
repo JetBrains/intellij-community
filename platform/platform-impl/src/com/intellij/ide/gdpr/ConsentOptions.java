@@ -108,7 +108,7 @@ public final class ConsentOptions implements ModificationTracker {
         Files.writeString(confirmedConsentsFile, data);
         if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
           DataSharingSettingsChangeListener syncPublisher =
-            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.TOPIC);
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.Companion.getTOPIC());
           syncPublisher.consentWritten();
         }
       }
@@ -231,7 +231,7 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   public @NotNull Pair<@NotNull Consent, @NotNull Boolean> getAiDataCollectionConsent() {
-    final Pair<List<Consent>, Boolean> consents =
+    Pair<List<Consent>, Boolean> consents =
       getConsents(consent -> isProductConsentOfKind(AI_DATA_COLLECTION_OPTION_ID, consent.getId()), false);
     if (consents.getFirst().size() != 1) {
       throw new IllegalStateException("Cannot find AI data sharing agreement, it is expected to be bundled");
@@ -299,7 +299,7 @@ public final class ConsentOptions implements ModificationTracker {
       if (applyServerChangesToConfirmedConsents(confirmed, fromServer)) {
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(confirmed.values().stream()));
       }
-      notifyConsentsUpdated();
+      myModificationCount.incrementAndGet();
     }
     catch (Exception e) {
       LOG.info("Unable to apply server consents", e);
@@ -413,7 +413,7 @@ public final class ConsentOptions implements ModificationTracker {
           allConfirmed.put(consent.getId(), consent);
         }
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(allConfirmed.values().stream()));
-        notifyConsentsUpdated();
+        myModificationCount.incrementAndGet();
       }
       catch (IOException e) {
         LOG.info("Unable to save confirmed consents", e);
@@ -586,13 +586,6 @@ public final class ConsentOptions implements ModificationTracker {
       return consentId.substring(0, consentId.length() - productCode.length() - 1);
     }
     return null;
-  }
-
-  private void notifyConsentsUpdated() {
-    myModificationCount.incrementAndGet();
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.TOPIC).consentsUpdated();
-    }
   }
 
   protected interface IOBackend {
