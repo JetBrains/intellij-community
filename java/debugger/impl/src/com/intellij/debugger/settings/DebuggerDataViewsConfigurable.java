@@ -2,7 +2,6 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
@@ -301,7 +300,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     final boolean isToStringRendererModified =
       (toStringRenderer.isOnDemand() == myCbEnableToString.isSelected()) ||
       (toStringRenderer.isUseClassFilters() != myRbFromList.isSelected()) ||
-      (!DebuggerUtilsEx.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
+      (!DebuggerSettingsUtils.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
     if (isToStringRendererModified) {
       return true;
     }

@@ -2,7 +2,6 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -131,7 +130,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     }
 
     if (!Arrays.equals(DEFAULT_STEPPING_FILTERS, mySteppingFilters)) {
-      DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
+      DebuggerSettingsUtils.writeFilters(state, "filter", mySteppingFilters);
     }
 
     for (ContentState eachState : myContentStates.values()) {
@@ -152,7 +151,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
       setSteppingFilters(DEFAULT_STEPPING_FILTERS);
     }
     else {
-      setSteppingFilters(DebuggerUtilsEx.readFilters(steppingFiltersElement));
+      setSteppingFilters(DebuggerSettingsUtils.readFilters(steppingFiltersElement));
     }
 
     myContentStates.clear();
@@ -185,7 +184,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       HOTSWAP_SHOW_FLOATING_BUTTON == secondSettings.HOTSWAP_SHOW_FLOATING_BUTTON &&
       Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE) &&
-      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
+      DebuggerSettingsUtils.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
       myCapturePoints.equals(secondSettings.myCapturePoints);
   }
 

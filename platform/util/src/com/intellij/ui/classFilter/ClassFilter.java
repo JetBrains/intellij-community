@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.classFilter;
 
@@ -88,7 +88,8 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
 
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ClassFilter classFilter)) return false;
+    if (!(o instanceof ClassFilter)) return false;
+    ClassFilter classFilter = (ClassFilter)o;
     return isEnabled() == classFilter.isEnabled() && getPattern().equals(classFilter.getPattern());
   }
 

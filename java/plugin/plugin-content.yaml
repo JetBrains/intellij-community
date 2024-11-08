@@ -16,6 +16,7 @@
   - name: intellij.java.frontback.impl
   - name: intellij.java.frontback.psi
   - name: intellij.java.frontback.psi.impl
+  - name: intellij.java.debugger.impl.shared
 - name: lib/java-impl.jar
   modules:
   - name: intellij.java.compiler

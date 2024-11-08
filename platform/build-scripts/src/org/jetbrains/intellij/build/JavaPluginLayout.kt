@@ -53,6 +53,7 @@ object JavaPluginLayout {
         "intellij.java.frontback.impl",
         "intellij.java.frontback.psi",
         "intellij.java.frontback.psi.impl",
+        "intellij.java.debugger.impl.shared",
       )) {
         spec.withModule(moduleName, "java-frontback.jar")
       }

@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+  </extensions>
+</idea-plugin>

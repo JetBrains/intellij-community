@@ -1945,6 +1945,28 @@ f:com.intellij.ui.NewUiValue
 - s:initialize(java.util.function.Supplier):V
 - s:isEnabled():Z
 - s:overrideNewUiForOneRemDevSession(Z):V
+c:com.intellij.ui.classFilter.ClassFilter
+- com.intellij.openapi.util.JDOMExternalizable
+- java.lang.Cloneable
+- sf:EMPTY_ARRAY:com.intellij.ui.classFilter.ClassFilter[]
+- ENABLED:Z
+- INCLUDE:Z
+- PATTERN:java.lang.String
+- <init>():V
+- <init>(java.lang.String):V
+- clone():com.intellij.ui.classFilter.ClassFilter
+- s:deepCopyOf(com.intellij.ui.classFilter.ClassFilter[]):com.intellij.ui.classFilter.ClassFilter[]
+- equals(java.lang.Object):Z
+- getPattern():java.lang.String
+- hashCode():I
+- isEnabled():Z
+- isInclude():Z
+- matches(java.lang.String):Z
+- readExternal(org.jdom.Element):V
+- setEnabled(Z):V
+- setInclude(Z):V
+- setPattern(java.lang.String):V
+- writeExternal(org.jdom.Element):V
 com.intellij.ui.icons.CompositeIcon
 - com.intellij.ui.icons.ReplaceableIcon
 - javax.swing.Icon

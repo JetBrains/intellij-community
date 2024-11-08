@@ -88,7 +88,6 @@
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.NodeRendererSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ViewsGeneralSettings"/>
-    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
     <projectService serviceImplementation="com.intellij.debugger.settings.DebuggerProjectSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>

@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
   </component>
   <component name="copyright">
     <Base>

@@ -8,6 +8,7 @@
 
   <xi:include href="intellij.java.frontback.psi.impl.xml"/>
   <xi:include href="intellij.java.frontback.impl.xml"/>
+  <xi:include href="intellij.java.debugger.impl.shared.xml"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml"/>
   <xi:include href="/META-INF/JavaPsiPlugin.xml"/>
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
