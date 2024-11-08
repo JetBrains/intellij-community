@@ -2749,6 +2749,7 @@ c:com.intellij.ide.actions.ShowSettingsUtilImpl
 - sf:getConfigurableGroups(com.intellij.openapi.project.Project,Z):com.intellij.openapi.options.ConfigurableGroup[]
 - sf:getConfigurables(com.intellij.openapi.project.Project,Z,Z):java.util.List
 - sf:getDialog(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.options.Configurable):com.intellij.openapi.ui.DialogWrapper
+- sf:showSettings(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.options.Configurable):V
 - showSettingsDialog(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable):V
 - showSettingsDialog(com.intellij.openapi.project.Project,java.lang.Class):V
 - showSettingsDialog(com.intellij.openapi.project.Project,java.lang.Class,java.util.function.Consumer):V
@@ -2762,6 +2763,7 @@ f:com.intellij.ide.actions.ShowSettingsUtilImpl$Companion
 - f:getConfigurableGroups(com.intellij.openapi.project.Project,Z):com.intellij.openapi.options.ConfigurableGroup[]
 - f:getConfigurables(com.intellij.openapi.project.Project,Z,Z):java.util.List
 - f:getDialog(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.options.Configurable):com.intellij.openapi.ui.DialogWrapper
+- f:showSettings(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.options.Configurable):V
 - f:showSettingsDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 c:com.intellij.ide.actions.SmartPopupActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -10059,7 +10061,7 @@ c:com.intellij.openapi.options.newEditor.SettingsDialog
 - doCancelAction(java.awt.AWTEvent):V
 - doOKAction():V
 - p:getDimensionServiceKey():java.lang.String
-- pf:getEditor():com.intellij.openapi.options.newEditor.AbstractEditor
+- f:getEditor():com.intellij.openapi.options.newEditor.AbstractEditor
 - p:getHelpId():java.lang.String
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:getStyle():com.intellij.openapi.ui.DialogWrapper$DialogStyle
@@ -10103,6 +10105,38 @@ c:com.intellij.openapi.options.newEditor.SettingsTreeView
 pf:com.intellij.openapi.options.newEditor.SettingsTreeView$AccessibleSettingsTreeView
 - javax.swing.JComponent$AccessibleJComponent
 - getAccessibleRole():javax.accessibility.AccessibleRole
+f:com.intellij.openapi.options.newEditor.settings.SettingsFile
+- com.intellij.testFramework.LightVirtualFile
+- <init>(javax.swing.JComponent):V
+- f:getComponent():javax.swing.JComponent
+- isIncludedInEditorHistory(com.intellij.openapi.project.Project):Z
+f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditor
+- com.intellij.openapi.fileEditor.FileEditor
+- <init>(javax.swing.JComponent):V
+- addPropertyChangeListener(java.beans.PropertyChangeListener):V
+- dispose():V
+- getComponent():javax.swing.JComponent
+- getFile():com.intellij.openapi.vfs.VirtualFile
+- getName():java.lang.String
+- getPreferredFocusedComponent():javax.swing.JComponent
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- isModified():Z
+- isValid():Z
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+- removePropertyChangeListener(java.beans.PropertyChangeListener):V
+- setState(com.intellij.openapi.fileEditor.FileEditorState):V
+f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider
+- com.intellij.openapi.fileEditor.FileEditorProvider
+- sf:Companion:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider$Companion
+- sf:ID:java.lang.String
+- <init>():V
+- accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
+- disposeEditor(com.intellij.openapi.fileEditor.FileEditor):V
+- getEditorTypeId():java.lang.String
+- getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
+- isDumbAware():Z
+f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider$Companion
 f:com.intellij.openapi.preview.PreviewProviderId
 c:com.intellij.openapi.progress.BackgroundTaskQueue
 - pf:myProcessor:com.intellij.util.concurrency.QueueProcessor

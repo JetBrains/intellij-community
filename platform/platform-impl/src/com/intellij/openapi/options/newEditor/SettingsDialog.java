@@ -88,7 +88,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     init(null, project);
   }
 
-  protected final AbstractEditor getEditor() {
+  public final AbstractEditor getEditor() {
     return editor;
   }
 
