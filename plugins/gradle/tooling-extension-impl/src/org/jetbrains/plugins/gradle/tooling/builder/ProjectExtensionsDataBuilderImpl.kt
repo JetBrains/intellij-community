@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.lang.Closure
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
+import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
@@ -40,41 +41,97 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
       result.gradleProperties.add(DefaultGradleProperty(name, typeFqn))
     }
 
-    for (it in DefaultGroovyMethods.findAll(extensions)) {
-      val extension = it as ExtensionContainer
-
-      extractExtensions(extension, "", result)
-    }
+    extractExtensions(extensions, "", result, null, 0)
     return result
   }
 
-  private fun extractInnerExtensions(namePrefix: String, source: Any?, result: DefaultGradleExtensions) {
-    if (source !is ExtensionAware)
-      return;
+  private fun extractExtensionWithKey(
+    extensions: ExtensionContainer,
+    key: String,
+    namePrefix: String,
+    result: DefaultGradleExtensions,
+    depth: Int
+  ) {
+    //Extensions can be recursive, so we need to limit the depth of the recursion
+    if (depth > MAX_EXTENSION_RECURSION) return
 
-    val extension = source.extensions
-    extractExtensions(extension, namePrefix, result)
-  }
+    //Get the extension
+    val extension = extensions.findByName(key) ?: return
 
-  private fun extractExtensions(extension: ExtensionContainer, namePrefix: String, result: DefaultGradleExtensions) {
-    val keyList = extractKeys(extension)
+    //Register the extension
+    result.extensions.add(DefaultGradleExtension("$namePrefix$key", getType(extension)))
 
-    for (name in keyList) {
-      val value = extension.findByName(name)
-      if (value == null) continue
+    //Create the new prefix for the next level of recursion
+    val newPrefix = "$namePrefix$key."
 
-      val rootTypeFqn = getType(value)
-      result.extensions.add(DefaultGradleExtension(namePrefix + name, rootTypeFqn))
-      extractInnerExtensions("$namePrefix$name.", value, result)
+    //We want to know if the extension is a collection, so we can extract the inner extensions of its elements behind a wildcard.
+    if (extension is NamedDomainObjectCollection<*>) {
+      extractExtensionsFromCollection(extension, newPrefix, result, depth)
+    }
+
+    //If the extension is an ExtensionAware, we can extract its inner extensions
+    if (extension is ExtensionAware) {
+      extractInnerExtensions(extension, newPrefix, result, depth)
     }
   }
 
-  private fun extractKeys(extension: ExtensionContainer): List<String> {
-    val result = mutableListOf<String>()
+  private fun extractInnerExtensions(source: ExtensionAware, namePrefix: String, result: DefaultGradleExtensions, depth: Int) {
+    extractExtensions(source.extensions, namePrefix, result, null, depth)
+  }
+
+  private fun extractExtensions(extension: ExtensionContainer, namePrefix: String, result: DefaultGradleExtensions, keyFilter: Set<String>?, depth: Int) {
+    val keyList = extractKeys(extension, keyFilter)
+
+    for (name in keyList) {
+      if (keyFilter != null && !keyFilter.contains(name)) {
+        continue
+      }
+
+      extractExtensionWithKey(extension, name, namePrefix, result, depth + 1)
+    }
+  }
+
+  private fun extractKeys(extension: ExtensionContainer, keyFilter: Set<String>?): Set<String> {
+    val result = mutableSetOf<String>()
     for (schema in extension.extensionsSchema) {
+      //If we have a key filter then we should only extract the keys that are in the filter
+      if (keyFilter != null && !keyFilter.contains(schema.name)) continue
       result.add(schema.name)
     }
     return result
+  }
+
+  private fun extractExtensionsFromCollection(source: NamedDomainObjectCollection<*>, namePrefix: String, result: DefaultGradleExtensions, depth: Int) {
+    var keyFilter: Set<String>? = null;
+    var sourceObject: ExtensionAware? = null
+    for (it in DefaultGroovyMethods.findAll(source)) {
+      //For now, we don't support nested collections
+      //The logic to process this would become rather contrived and complicated,
+      //because we would need to do a deep recursion to collect all possible keys, and ensure that they are
+      //all the same between all possible collection instances, this would get messy very quickly.
+      //The UX and speed of the feature would be negatively impacted.
+      //TODO (marchermans): Deal with recursive collections, possibly after we dealt with different extensions on different elements
+      if (it !is ExtensionAware) continue
+
+      if (keyFilter == null) {
+        //First object found that is an ExtensionAware, we can use it as the source object
+        keyFilter = extractKeys(it.extensions, null)
+        sourceObject = it
+        continue;
+      }
+
+      //If we have a key filter, we should intersect it with the keys of the current object
+      //We don't want to extract keys that are not present in all objects
+      //TODO (marchermans): We need to expand the UX here further, it is technically feasible to support different extensions on different elements.
+      val keys = extractKeys(it.extensions, null)
+      keyFilter = keyFilter.intersect(keys)
+    }
+
+    if (sourceObject == null) return
+    if (keyFilter == null) return
+    if (keyFilter.isEmpty()) return
+
+    extractExtensions(sourceObject.extensions, "$namePrefix*.", result, keyFilter, depth)
   }
 
   override fun reportErrorMessage(
@@ -93,6 +150,8 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
   }
 
   companion object {
+    const val MAX_EXTENSION_RECURSION = 15;
+
     private fun collectConfigurations(
       configurations: ConfigurationContainer,
       scriptClasspathConfiguration: Boolean
