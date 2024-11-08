@@ -325,7 +325,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myExecutionPointManager.setAlternativeSourceKindFlow(getAlternativeSourceKindState());
 
     if (myDebugProcess.checkCanInitBreakpoints()) {
-      initBreakpoints();
+      ReadAction.run(() -> initBreakpoints());
     }
     if (myDebugProcess instanceof XDebugProcessDebuggeeInForeground debuggeeInForeground &&
         debuggeeInForeground.isBringingToForegroundApplicable()) {
