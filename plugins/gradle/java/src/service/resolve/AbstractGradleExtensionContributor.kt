@@ -60,9 +60,8 @@ open class AbstractGradleExtensionContributor : NonCodeMembersContributor() {
       return null
     }
     val type = GradleExtensionType(name, delegateType)
-    val resolvedType = type.resolve()
     if (processProperties) {
-      val extensionProperty = GradleExtensionProperty(name.substringAfterLast("."), name.substringBeforeLast(".", ""), type, resolvedType ?: aClass)
+      val extensionProperty = GradleExtensionProperty(name.substringAfterLast("."), name.substringBeforeLast(".", ""), type, aClass)
       if (!processor.execute(extensionProperty, state)) {
         return false
       }
