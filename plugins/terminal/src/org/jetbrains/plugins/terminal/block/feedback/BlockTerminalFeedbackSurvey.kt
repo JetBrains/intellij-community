@@ -59,8 +59,8 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
     TerminalUsageTriggerCollector.triggerFeedbackSurveyEvent(project, TerminalFeedbackEvent.FEEDBACK_SENT, getFeedbackMoment(project))
   }
 
-  // Last date is an approximate time of 2024.3 release
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 12, 1)
+  // Last date is an approximate time of 2025.1 release
+  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 4, 1)
 
   override val requireIdeEAP: Boolean = false
 

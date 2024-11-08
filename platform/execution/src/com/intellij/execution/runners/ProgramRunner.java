@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +94,10 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   @SuppressWarnings("unused")
   @Deprecated
   default void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult) {
+  }
+
+  default @Nullable @NlsActions.ActionText String getStartActionText(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+    return null;
   }
 
   @Nullable

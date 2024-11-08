@@ -28,6 +28,8 @@ internal interface NativeFileHandler {
 
   fun isNative(name: String): Boolean
 
+  fun isCompatibleWithTargetPlatform(name: String): Boolean
+
   suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
@@ -242,11 +244,17 @@ private suspend fun handleZipSource(
       return@suspendAwareReadZipFile
     }
 
+    val sourceFileName = sourceFile.fileName.toString()
+    val isSkiko = sourceFileName.startsWith("skiko-awt-runtime-all-") && sourceFileName.endsWith(".jar")
+    val shouldStayInJar = if (isSkiko && nativeFileHandler != null) {
+      !nativeFileHandler.isNative(name) || nativeFileHandler.isCompatibleWithTargetPlatform(name)
+    } else true
+
     if (nativeFileHandler?.isNative(name) == true) {
       if (source.isPreSignedAndExtractedCandidate) {
         nativeFiles!!.value.add(name)
       }
-      else {
+      else if (shouldStayInJar) {
         packageIndexBuilder?.addFile(name)
 
         // sign it
@@ -261,7 +269,7 @@ private suspend fun handleZipSource(
         }
       }
     }
-    else {
+    else if (shouldStayInJar) {
       packageIndexBuilder?.addFile(name)
 
       val data = dataSupplier()

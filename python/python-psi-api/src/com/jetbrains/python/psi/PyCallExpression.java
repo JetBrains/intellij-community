@@ -207,5 +207,12 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
     public Map<PyExpression, PyCallableParameter> getMappedTupleParameters() {
       return myMappedTupleParameters;
     }
+
+    /**
+     * @return true if there are no unmapped parameters and no unmapped arguments, false otherwise
+     */
+    public boolean isComplete() {
+      return getUnmappedParameters().isEmpty() && getUnmappedArguments().isEmpty();
+    }
   }
 }

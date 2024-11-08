@@ -366,4 +366,14 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testInitByDataclassTransformOnMetaClass() {
     doMultiFileTest();
   }
+
+  // PY-42137
+  public void testMismatchedOverloadsHaveBothTooFewAndTooManyParameters() {
+    doTest();
+  }
+
+  // PY-42137
+  public void testMismatchedConditionalImplementationsHaveBothTooFewAndTooManyParameters() {
+    doTest();
+  }
 }

@@ -122,8 +122,20 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
 
-    highlightUnexpectedArguments(node, holder, mappings, context);
-    highlightUnfilledParameters(node, holder, mappings, context);
+    if (!mappings.isEmpty()) {
+      boolean specificMismatchKindReported = false;
+      if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedArguments().isEmpty())) {
+        highlightUnexpectedArguments(node, holder, mappings, context);
+        specificMismatchKindReported = true;
+      }
+      if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedParameters().isEmpty())) {
+        highlightUnfilledParameters(node, holder, mappings, context);
+        specificMismatchKindReported = true;
+      }
+      if (!specificMismatchKindReported && ContainerUtil.all(mappings, mapping -> !mapping.isComplete())) {
+        highlightIncorrectArguments(node, holder, mappings, context);
+      }
+    }
     highlightStarArgumentTypeMismatch(node, holder, context);
   }
 
@@ -224,8 +236,6 @@ public final class PyArgumentListInspection extends PyInspection {
                                                    @NotNull ProblemsHolder holder,
                                                    @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                    @NotNull TypeEvalContext context) {
-    if (mappings.isEmpty() || mappings.stream().anyMatch(mapping -> mapping.getUnmappedArguments().isEmpty())) return;
-
     if (mappings.size() == 1) {
       // if there is only one mapping, we could suggest quick fixes
       final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
@@ -270,8 +280,6 @@ public final class PyArgumentListInspection extends PyInspection {
                                                   @NotNull ProblemsHolder holder,
                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                   @NotNull TypeEvalContext context) {
-    if (mappings.isEmpty() || mappings.stream().anyMatch(mapping -> mapping.getUnmappedParameters().isEmpty())) return;
-
     Optional
       .ofNullable(node.getNode())
       .map(astNode -> astNode.findChildByType(PyTokenTypes.RPAR))
@@ -294,6 +302,16 @@ public final class PyArgumentListInspection extends PyInspection {
           }
         }
       );
+  }
+
+  private static void highlightIncorrectArguments(@NotNull PyArgumentList node,
+                                                  @NotNull ProblemsHolder holder,
+                                                  @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                  @NotNull TypeEvalContext context) {
+    holder.registerProblem(
+      node,
+      addPossibleCalleesRepresentation(PyPsiBundle.message("INSP.incorrect.arguments"), mappings, context, holder.isOnTheFly())
+    );
   }
 
   @NlsSafe

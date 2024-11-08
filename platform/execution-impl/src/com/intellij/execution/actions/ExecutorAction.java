@@ -4,6 +4,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.ExecutionManagerImplKt;
@@ -133,7 +134,9 @@ public class ExecutorAction extends AnAction
         }
       }
       else {
-        text = myExecutor.getStartActionText(configuration.getName());
+        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(getId(), configuration);
+        String actionText = runner == null ? null : runner.getStartActionText(myExecutor, configuration);
+        text = actionText != null ? actionText : myExecutor.getStartActionText(configuration.getName());
       }
     }
     else {

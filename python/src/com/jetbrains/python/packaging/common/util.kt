@@ -37,7 +37,7 @@ class PackageManagerHolder : Disposable {
     val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
 
     return cache.computeIfAbsent(cacheKey) {
-     PythonPackageManagerProvider.EP_NAME.extensionList
+      PythonPackageManagerProvider.EP_NAME.extensionList
         .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
     }
   }
@@ -83,7 +83,9 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(
   operation: suspend (() -> Result<T>),
 ): Result<T> {
   try {
-    return operation.invoke()
+    val result = operation.invoke()
+    result.exceptionOrNull()?.let { throw it }
+    return result
   }
   catch (ex: PyExecutionException) {
     val description = PyPackageManagementService.toErrorDescription(listOf(ex), sdk, packageName)

@@ -878,6 +878,11 @@ private class NativeFileHandlerImpl(private val context: BuildContext, private v
            name.endsWith("icudtl.dat")
   }
 
+  override fun isCompatibleWithTargetPlatform(name: String): Boolean {
+    if (!isNative(name)) return true
+    return NativeFilesMatcher.isCompatibleWithTargetPlatform(name, context.options.targetOs, context.options.targetArch)
+  }
+
   @Suppress("SpellCheckingInspection")
   override suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path? {
     if (!context.isMacCodeSignEnabled || context.proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {

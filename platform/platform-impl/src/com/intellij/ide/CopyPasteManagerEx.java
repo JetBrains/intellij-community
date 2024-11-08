@@ -110,4 +110,19 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       }
     }
   }
+
+  @Override
+  public boolean isSystemSelectionSupported() {
+    return ClientCopyPasteManager.getCurrentInstance().isSystemSelectionSupported();
+  }
+
+  @Override
+  public @Nullable Transferable getSystemSelectionContents() {
+    return ClientCopyPasteManager.getCurrentInstance().getSystemSelectionContents();
+  }
+
+  @Override
+  public void setSystemSelectionContents(@NotNull Transferable content) {
+    ClientCopyPasteManager.getCurrentInstance().setSystemSelectionContents(content);
+  }
 }

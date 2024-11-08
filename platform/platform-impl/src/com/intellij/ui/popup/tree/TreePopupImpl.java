@@ -173,7 +173,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   }
 
   // TODO: not-tested code:
-  private void selectFirstSelectableItem() {
+  protected void selectFirstSelectableItem() {
     for (int i = 0; i < myWizardTree.getRowCount(); i++) {
       TreePath path = myWizardTree.getPathForRow(i);
       if (getTreeStep().isSelectable(path.getLastPathComponent(), extractUserObject(path.getLastPathComponent()))) {
@@ -426,6 +426,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   @Override
   protected void onSpeedSearchPatternChanged() {
     myModel.updateTree(myWizardTree, mySpeedSearch.isHoldingFilter(), null);
+    selectFirstSelectableItem();
   }
 
   @Override

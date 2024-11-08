@@ -16,5 +16,7 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
   </component>
 </module>

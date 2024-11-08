@@ -1183,6 +1183,7 @@ com.intellij.execution.runners.ProgramRunner
 - s:getRunner(java.lang.String,com.intellij.execution.configurations.RunProfile):com.intellij.execution.runners.ProgramRunner
 - a:getRunnerId():java.lang.String
 - getSettingsEditor(com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration):com.intellij.openapi.options.SettingsEditor
+- getStartActionText(com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration):java.lang.String
 - onProcessStarted(com.intellij.execution.configurations.RunnerSettings,com.intellij.execution.ExecutionResult):V
 com.intellij.execution.runners.ProgramRunner$Callback
 - processNotStarted():V

@@ -5,8 +5,8 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateSingleModuleBuildChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateSingleModuleBuildFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateMultipleModulesChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateMultipleModulesFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
 import com.intellij.ide.projectWizard.generators.AssetsJava
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
@@ -72,7 +72,7 @@ import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlTable
 
-private const val GENERATE_SINGLE_MODULE_PROPERTY_NAME: String = "NewProjectWizard.generateSingleModule"
+private const val GENERATE_MULTIPLE_MODULES_PROPERTY_NAME: String = "NewProjectWizard.generateMultipleModules"
 
 private const val KOTLIN_GRADLE_PLUGIN_ID = "org.jetbrains.kotlin:kotlin-gradle-plugin"
 
@@ -109,10 +109,10 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override var generateOnboardingTips by generateOnboardingTipsProperty
 
-        val generateSingleModuleProperty = propertyGraph.property(false)
-            .bindBooleanStorage(GENERATE_SINGLE_MODULE_PROPERTY_NAME)
+        private val generateMultipleModulesProperty = propertyGraph.property(false)
+            .bindBooleanStorage(GENERATE_MULTIPLE_MODULES_PROPERTY_NAME)
 
-        override var generateSingleModule by generateSingleModuleProperty
+        override var generateMultipleModules by generateMultipleModulesProperty
 
         private val gradleVersionSupportsConventionPlugins = propertyGraph.property(false)
 
@@ -124,7 +124,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
 
         internal val shouldGenerateMultipleModules
-            get() = !generateSingleModule && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject &&
+            get() = generateMultipleModules && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject &&
                     gradleVersionSupportsConventionPlugins.get()
 
         private fun setupSampleCodeUI(builder: Panel) {
@@ -149,13 +149,13 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         private fun setupMultipleModulesUI(builder: Panel) {
             builder.row {
-                checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.generate.single.module"))
-                    .bindSelected(generateSingleModuleProperty)
+                checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.generate.multiple.modules"))
+                    .bindSelected(generateMultipleModulesProperty)
                     .enabledIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
-                    .whenStateChangedFromUi { logGenerateSingleModuleBuildChanged(it) }
-                    .onApply { logGenerateSingleModuleBuildFinished(generateSingleModule) }
+                    .whenStateChangedFromUi { logGenerateMultipleModulesChanged(it) }
+                    .onApply { logGenerateMultipleModulesFinished(generateMultipleModules) }
 
-                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.single.module"))
+                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.multiple.modules"))
             }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN).and(gradleVersionSupportsConventionPlugins))
         }
 

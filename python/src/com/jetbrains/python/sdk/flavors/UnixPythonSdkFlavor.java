@@ -5,8 +5,9 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.sdk.VirtualEnvReader;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,19 +15,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
 public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   private static final String[] BIN_DIRECTORIES = new String[]{"/usr/bin", "/usr/local/bin"};
   // file names of system pythons
-  private static final Set<@NonNls String> SYS_PYTHON_FILE_NAMES = Sets.newHashSet("pypy", "python3");
+  private static final Set<Pattern> SYS_PYTHON_FILE_NAMES =
+    Sets.newHashSet(Pattern.compile("pypy$"), Pattern.compile("python3(\\.[0-9]+)?$"));
 
   private UnixPythonSdkFlavor() {
   }
 
   public static UnixPythonSdkFlavor getInstance() {
-    return PythonSdkFlavor.EP_NAME.findExtension(UnixPythonSdkFlavor.class);
+    return EP_NAME.findExtension(UnixPythonSdkFlavor.class);
   }
 
   @Override
@@ -64,10 +67,14 @@ public final class UnixPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Emp
     return rootPath != null ? rootPath.resolve(dir.getRoot().relativize(dir)) : dir;
   }
 
-  static void collectUnixPythons(@NotNull Path binDirectory, @NotNull Collection<Path> candidates) {
+  @ApiStatus.Internal
+  public static void collectUnixPythons(@NotNull Path binDirectory, @NotNull Collection<Path> candidates) {
     try (var entries = Files.list(binDirectory)) {
       // Hack to exclude system python2
-      entries.filter(path -> SYS_PYTHON_FILE_NAMES.contains(path.getFileName().toString()))
+      entries
+        .filter(path ->
+                  ContainerUtil.exists(SYS_PYTHON_FILE_NAMES, regex -> regex.matcher(path.getFileName().toString()).matches())
+        )
         .collect(Collectors.toCollection(() -> candidates));
     }
     catch (IOException ignored) {

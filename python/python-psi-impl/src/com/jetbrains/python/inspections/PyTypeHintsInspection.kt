@@ -399,7 +399,7 @@ class PyTypeHintsInspection : PyInspection() {
       val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
       call
         .multiMapArguments(resolveContext)
-        .firstOrNull { it.unmappedArguments.isEmpty() && it.unmappedParameters.isEmpty() }
+        .firstOrNull { it.isComplete }
         ?.let { mapping ->
           mapping.mappedParameters.entries.forEach {
             val name = it.value.name

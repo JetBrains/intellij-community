@@ -408,5 +408,20 @@ public class MultiUserEditorUndoTest extends MultiUserEditorUndoTestCase {
     public void lostOwnership(Clipboard clipboard, Transferable contents) {
 
     }
+
+    @Override
+    public boolean isSystemSelectionSupported() {
+      return false;
+    }
+
+    @Override
+    public @Nullable Transferable getSystemSelectionContents() {
+      return null;
+    }
+
+    @Override
+    public void setSystemSelectionContents(@NotNull Transferable content) {
+
+    }
   }
 }

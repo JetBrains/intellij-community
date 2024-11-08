@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -33,6 +34,7 @@ import com.jetbrains.python.tables.TableCommandType;
 
 import java.net.ServerSocket;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -88,8 +90,11 @@ public class RemoteDebugger implements ProcessDebugger {
   private final long myHandshakeTimeout;
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
+    int connectRetryTimeout = Registry.intValue("python.debugger.remote.connect.retry.timeout.ms", 500);
+    int connectMaxAttempts = Registry.intValue("python.debugger.remote.connect.max.attempts", 20);
+
     myDebugProcess = debugProcess;
-    myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port);
+    myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port, Duration.ofMillis(connectRetryTimeout), connectMaxAttempts);
     myHandshakeTimeout = CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS;
   }
 

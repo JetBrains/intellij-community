@@ -1243,9 +1243,7 @@ public final class PyCallExpressionHelper {
                                                 @NotNull PyCallSiteExpression callSite,
                                                 @NotNull TypeEvalContext context) {
     final PyCallExpression.PyArgumentsMapping fullMapping = mapArguments(callSite, callable, context);
-    if (!fullMapping.getUnmappedArguments().isEmpty() || !fullMapping.getUnmappedParameters().isEmpty()) {
-      return false;
-    }
+    if (!fullMapping.isComplete()) return false;
 
     // TODO properly handle bidirectional operator methods, such as __eq__ and __neq__. 
     //  Based only on its name, it's impossible to which operand is the receiver and which one is the argument. 
