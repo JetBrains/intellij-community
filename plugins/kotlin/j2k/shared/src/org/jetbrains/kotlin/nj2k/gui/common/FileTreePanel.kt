@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.nj2k.gui.filepicker
+package org.jetbrains.kotlin.nj2k.gui.common
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -17,9 +17,10 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
-class FilePickerPanel(
+class FileTreePanel(
     rootFile: VirtualFile,
-    private val selectedFiles: MutableList<VirtualFile>
+    private val selectedFiles: MutableList<VirtualFile> = mutableListOf(),
+    hasCheckBox: Boolean = false
 ) : JBPanel<JBPanel<*>>(BorderLayout()) {
 
     val fileSelectionListeners = mutableListOf<FilePickListener>()
@@ -27,7 +28,7 @@ class FilePickerPanel(
     init {
         // ツリー構築
         val rootNode = createNode(rootFile)
-        val checkBoxTree = CheckboxTree(CheckBoxTreeCellRenderer(), rootNode)
+        val checkBoxTree = CheckboxTree(CheckBoxTreeCellRenderer(hasCheckBox), rootNode)
         uncheckAllNodes(rootNode)
         checkNodes(rootNode, selectedFiles)
         expandNodes(checkBoxTree, rootNode, selectedFiles)
@@ -108,29 +109,32 @@ class FilePickerPanel(
         })
     }
 
-}
-
-class CheckBoxTreeCellRenderer : CheckboxTree.CheckboxTreeCellRenderer() {
-    override fun customizeRenderer(
-        tree: JTree?,
-        value: Any?,
-        selected: Boolean,
-        expanded: Boolean,
-        leaf: Boolean,
-        row: Int,
-        hasFocus: Boolean
-    ) {
-        if (value !is DefaultMutableTreeNode) return
-        // アイコン/テキスト設定
-        (value.userObject as? VirtualFile)?.let { file ->
-            textRenderer.append(file.name)
-            textRenderer.icon = when {
-                file.isDirectory -> AllIcons.Nodes.Folder
-                file.isFile -> FileTypeManager.getInstance().getFileTypeByFile(file).icon
-                else -> null
+    // カスタムセルレンダラ
+    private class CheckBoxTreeCellRenderer(private val hasCheckBox: Boolean) : CheckboxTree.CheckboxTreeCellRenderer() {
+        override fun customizeRenderer(
+            tree: JTree?,
+            value: Any?,
+            selected: Boolean,
+            expanded: Boolean,
+            leaf: Boolean,
+            row: Int,
+            hasFocus: Boolean
+        ) {
+            if (value !is DefaultMutableTreeNode) return
+            // チェックボックス表示設定
+            checkbox.isVisible = hasCheckBox
+            // アイコン/テキスト設定
+            (value.userObject as? VirtualFile)?.let { file ->
+                textRenderer.append(file.name)
+                textRenderer.icon = when {
+                    file.isDirectory -> AllIcons.Nodes.Folder
+                    file.isFile -> FileTypeManager.getInstance().getFileTypeByFile(file).icon
+                    else -> null
+                }
             }
         }
     }
+
 }
 
 interface FilePickListener {

@@ -13,6 +13,8 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBFont
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.nj2k.gui.common.FilePickListener
+import org.jetbrains.kotlin.nj2k.gui.common.FileTreePanel
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.UIManager
@@ -21,7 +23,7 @@ class FilePicker(
     private val project: Project,
     private val rootFile: VirtualFile,
     private val convertFiles: MutableList<VirtualFile>
-) : DialogWrapper(true) , FilePickListener{
+) : DialogWrapper(true), FilePickListener {
 
     private val fileViewer = FileViewerPanel(project, rootFile)
     private val fileCounter = JBLabel(KotlinBundle.message("action.j2k.gui.file_picker.file_counter", getFileCount(convertFiles))).apply {
@@ -36,7 +38,7 @@ class FilePicker(
 
     override fun createCenterPanel(): JComponent {
         // ファイルピッカー
-        val filePicker = FilePickerPanel(rootFile, convertFiles)
+        val filePicker = FileTreePanel(rootFile, convertFiles, true)
         filePicker.fileSelectionListeners.add(this)
         filePicker.preferredSize = Dimension(400, 400)
         // ビューア
