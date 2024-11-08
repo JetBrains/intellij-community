@@ -39,7 +39,7 @@ public final class ConsentOptions implements ModificationTracker {
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
-  private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
+  private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID, AI_DATA_COLLECTION_OPTION_ID);
   private final BooleanSupplier myIsEap;
   private String myProductCode;
   private Set<String> myPluginCodes = Set.of();
@@ -233,15 +233,16 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   public @NotNull Permission getAiDataCollectionPermission() {
-    return getPermission(AI_DATA_COLLECTION_OPTION_ID);
+    return getPermission(lookupConsentID(AI_DATA_COLLECTION_OPTION_ID));
   }
 
   public void setAiDataCollectionPermission(boolean permitted) {
-    setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
+    setPermission(lookupConsentID(AI_DATA_COLLECTION_OPTION_ID), permitted);
   }
 
   public @NotNull Pair<@NotNull Consent, @NotNull Boolean> getAiDataCollectionConsent() {
-    final Pair<List<Consent>, Boolean> consents = getConsents(consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId()), false);
+    final Pair<List<Consent>, Boolean> consents =
+      getConsents(consent -> isProductConsentOfKind(AI_DATA_COLLECTION_OPTION_ID, consent.getId()), false);
     if (consents.getFirst().size() != 1) {
       throw new IllegalStateException("Cannot find AI data sharing agreement, it is expected to be bundled");
     }
@@ -336,7 +337,7 @@ public final class ConsentOptions implements ModificationTracker {
         allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
       }
       // AI plugin specific, only relevant to the plugin and must be requested explicitly.
-      allDefaults.remove(AI_DATA_COLLECTION_OPTION_ID);
+      allDefaults.remove(lookupConsentID(AI_DATA_COLLECTION_OPTION_ID));
     }
 
     for (Iterator<Map.Entry<String, Map<Locale, Consent>>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
