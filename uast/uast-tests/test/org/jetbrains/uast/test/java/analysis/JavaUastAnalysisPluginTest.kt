@@ -5,6 +5,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.analysis.UExpressionFact
 import org.jetbrains.uast.analysis.UNullability
@@ -144,7 +145,61 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
           }
       }
     """.trimIndent())
+
+  @Test
+  fun `test nullable field with primitive types`() = doTest("""
+      import org.jetbrains.annotations.Nullable;    
   
+      class SomeClass {
+          private @Nullable /*NULLABLE*/ String a;
+          private final @Nullable /*NULLABLE*/ Integer b;
+          private final @Nullable /*NULLABLE*/ Integer c;
+  
+          SomeClass(@Nullable String a, @Nullable Integer b, @Nullable Integer c) {
+              this.a = a;
+              this.b = b;
+              this.c = c;
+          }
+      }
+    """.trimIndent())
+
+  @Test
+  fun `test non nullable fields with primitive types`() = doTest("""
+      import org.jetbrains.annotations.NotNull;    
+        
+      class SomeClass {
+          private final @NotNull /*NOT_NULL*/ String a;
+          private final @NotNull /*NOT_NULL*/ Integer b;
+            
+          SomeClass(@NotNull String a, @NotNull Integer b) {
+              this.a = a;
+              this.b = b;
+          }
+      }
+    """.trimIndent())
+
+  @Test
+  fun `test complex fields`() = doTest("""
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
+          
+      class SomeClass {
+          private final @NotNull /*NOT_NULL*/ String a; 
+          private final @Nullable /*NULLABLE*/ Integer b;
+          private final @Nullable /*NULLABLE*/ D c;
+          private final @NotNull /*NOT_NULL*/ D d;
+          
+          SomeClass(@NotNull String a, @Nullable Integer b, @Nullable D c, @NotNull D d) {
+              this.a = a;
+              this.b = b;
+              this.c = c;
+              this.d = d;
+          }
+      }
+          
+      class D {}
+    """.trimIndent())
+
   private fun doTest(@Language("java") source: String) {
     val uastAnalysisPlugin = UastLanguagePlugin.byLanguage(JavaLanguage.INSTANCE)?.analysisPlugin
     assertInstanceOf(uastAnalysisPlugin, JavaUastAnalysisPlugin::class.java)
@@ -155,6 +210,12 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
 
     var visitAny = false
     file.accept(object : AbstractUastVisitor() {
+
+      override fun visitField(node: UField): Boolean {
+        val typeReference = node.typeReference ?: return super.visitField(node)
+        return visitExpression(typeReference)
+      }
+
       override fun visitExpression(node: UExpression): Boolean {
         val uNullability = node.comments.firstOrNull()?.text
                              ?.removePrefix("/*")
