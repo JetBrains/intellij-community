@@ -489,6 +489,9 @@ private class MySink : DataSink {
     if (validated == null) return
     val map = map ?: ProviderData().also { map = it }
     if (cachedDataForRules != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
+      if (map.uiSnapshot[key.name] != null) {
+        return
+      }
       for (map in cachedDataForRules) {
         if (map.uiSnapshot[key.name] != null) {
           return
