@@ -10,6 +10,7 @@ import com.intellij.ide.SaveAndSyncHandlerListener;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,9 @@ public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerL
 
   @Override
   public void beforeSave(@NotNull SaveAndSyncHandler.SaveTask task, boolean forceExecuteImmediately) {
+    if (!Registry.is("highlighting.essential.should.restart.in.full.mode.on.save.all")) {
+      return;
+    }
     boolean hasFilesWithEssentialHighlightingConfigured =
       Arrays.stream(FileEditorManager.getInstance(myProject).getOpenFiles())
         .map(vf -> ReadAction.nonBlocking(() -> PsiManagerEx.getInstanceEx(myProject).getFileManager().findFile(vf)).executeSynchronously())
