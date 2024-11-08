@@ -1530,6 +1530,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     invokerArgs.add(objRef); // object
     invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name() + ";" + method.signature(),
                                                    evaluationContext)); // method name and descriptor
+    invokerArgs.add(method.declaringType().classLoader()); // method's declaring type class loader to be able to resolve parameter types
 
     // argument values
     List<Value> args = new ArrayList<>(originalArgs);
@@ -1549,16 +1550,19 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       boxedArgs.add((Value)BoxingEvaluator.box(arg, evaluationContext));
     }
 
-    ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
-      evaluationContext,
-      CommonClassNames.JAVA_LANG_OBJECT + "[]",
-      evaluationContext.getClassLoader());
+    if (boxedArgs.size() < 10) {
+      invokerArgs.addAll(boxedArgs); // args
+      return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke" + boxedArgs.size(), invokerArgs, false);
+    }
+    else {
+      ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
+        evaluationContext,
+        CommonClassNames.JAVA_LANG_OBJECT + "[]",
+        evaluationContext.getClassLoader());
 
-    // reserve one extra element for the return value
-    boxedArgs.add(null);
-    invokerArgs.add(DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext)); // args
-    invokerArgs.add(method.declaringType().classLoader()); // method's declaring type class loader to be able to resolve parameter types
-    return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
+      invokerArgs.add(DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext)); // args
+      return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
+    }
   }
 
   private static ThreadReferenceProxy getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
