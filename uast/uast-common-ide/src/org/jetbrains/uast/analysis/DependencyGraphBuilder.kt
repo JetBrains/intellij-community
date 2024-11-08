@@ -844,7 +844,8 @@ private const val UAST_KT_ELVIS_NAME = "elvis"
 private const val TEMP_VAR_NAME = "@$,()"
 
 private fun hasImplicitReceiver(callExpression: UCallExpression): Boolean =
-  callExpression.receiver == null && callExpression.receiverType != null
+  (callExpression.receiver == null || callExpression.receiver?.sourcePsi == null) &&
+    callExpression.receiverType != null
 
 private val UExpression?.referenceOrThisIdentifier: String?
   get() = when (this) {

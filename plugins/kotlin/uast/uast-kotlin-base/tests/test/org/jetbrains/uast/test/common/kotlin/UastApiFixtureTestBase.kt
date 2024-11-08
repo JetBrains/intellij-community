@@ -4,6 +4,7 @@ package org.jetbrains.uast.test.common.kotlin
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
@@ -1128,6 +1129,83 @@ interface UastApiFixtureTestBase {
         TestCase.assertNotNull(unusedLambda)
         TestCase.assertNotNull(invokedLambda)
         TestCase.assertEquals(unusedLambda!!.asRecursiveLogString(), invokedLambda!!.asRecursiveLogString())
+    }
+
+    fun checkImplicitReceiver(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface BiggerIntent {
+                  fun overall()
+                }
+
+                interface MyIntent {
+                  fun foo()
+                }
+                
+                class Test {
+                  fun MyIntent.bar() {}
+                  
+                  fun baz() {}
+
+                  fun test(bigger: BiggerIntent, intent: MyIntent) {
+                    bigger.apply { // <this>: BiggerIntent
+                      overall() // BiggerIntent#overall
+                      intent.apply { // <this>: MyIntent
+                        overall() // BiggerIntent#overall
+                        foo() // MyIntent#foo
+                        bar() // MyIntent#bar
+                        baz() // Test#baz
+                      }
+                    }
+                    baz() // Test#baz
+                  }
+                }
+            """.trimIndent()
+        )
+        val names = listOf("overall", "foo", "bar", "baz")
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName !in names)
+                    return super.visitCallExpression(node)
+
+                val rcvType = node.receiverType
+                TestCase.assertEquals(
+                    node.sourcePsi?.text,
+                    when (node.methodName) {
+                        "overall" -> "BiggerIntent"
+                        "baz" -> "Test"
+                        else -> "MyIntent"
+                    },
+                    rcvType?.canonicalText
+                )
+
+                val rcv = node.receiver
+                TestCase.assertNotNull(node.sourcePsi?.text, rcv)
+
+                TestCase.assertEquals(
+                    node.sourcePsi?.text,
+                    rcvType?.canonicalText,
+                    rcv?.getExpressionType()?.canonicalText
+                )
+
+                val resolvedRcv = (rcv as? UResolvable)?.resolve()
+                TestCase.assertNotNull(node.sourcePsi?.text, resolvedRcv)
+                TestCase.assertTrue(
+                    node.sourcePsi?.text,
+                    if (node.methodName == "baz") {
+                        resolvedRcv is PsiClass
+                    } else {
+                        resolvedRcv is PsiParameter
+                    }
+                )
+
+                count++
+                return super.visitCallExpression(node)
+            }
+        })
+        TestCase.assertEquals(6, count)
     }
 
     fun checkLambdaImplicitParameters(myFixture: JavaCodeInsightTestFixture) {
