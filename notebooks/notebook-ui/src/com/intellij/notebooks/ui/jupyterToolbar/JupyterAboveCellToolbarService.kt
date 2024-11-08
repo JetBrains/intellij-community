@@ -188,7 +188,7 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
   companion object {
     fun getInstance(project: Project): JupyterAboveCellToolbarService = project.getService(JupyterAboveCellToolbarService::class.java)
 
-    private const val TOOLBAR_SHOW_DELAY = 250L
+    private const val TOOLBAR_SHOW_DELAY = 125L
     private const val TOOLBAR_HIDE_DELAY = 600
 
     private const val ADD_CELL_TOOLBAR_X_OFFSET_RATIO = 0.5
