@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.evaluation.*;
@@ -659,7 +658,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  @ReviseWhenPortedToJDK("13")
   private VirtualMachine connectorListen(String address, ListeningConnector connector)
     throws CantRunException, IOException, IllegalConnectorArgumentsException {
     if (address == null) {
@@ -676,9 +674,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
     }
-    if (Registry.is("debugger.jb.jdi") || Runtime.version().feature() >= 13) {
-      setConnectorArgument("localAddress", "*");
-    }
+    setConnectorArgument("localAddress", "*");
     setConnectorArgument("timeout", "0"); // wait forever
     try {
       String listeningAddress = connector.startListening(myArguments);
