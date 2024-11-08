@@ -34,8 +34,6 @@ public final class ConsentOptions implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
-  private static final String TEST_DEFAULT_CONSENTS_FILE_PROPERTY = "test.default.consents.file";
-  private static final String TEST_CONFIRMED_CONSENTS_FILE_PROPERTY = "test.confirmed.consents.file";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
@@ -52,20 +50,12 @@ public final class ConsentOptions implements ModificationTracker {
   }
 
   private static @NotNull Path getDefaultConsentsFile() {
-    Path fileForTests = getDefaultConsentsFileForTests();
-    if (fileForTests != null) {
-      return fileForTests;
-    }
     return PathManager.getCommonDataPath()
       .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
       .resolve("consentOptions/cached");
   }
 
   private static @NotNull Path getConfirmedConsentsFile() {
-    Path fileForTests = getConfirmedConsentsFileForTests();
-    if (fileForTests != null) {
-      return fileForTests;
-    }
     return PathManager.getCommonDataPath().resolve("consentOptions/accepted");
   }
 
@@ -616,15 +606,5 @@ public final class ConsentOptions implements ModificationTracker {
     void writeConfirmedConsents(@NotNull String data) throws IOException;
     @NotNull
     String readConfirmedConsents() throws IOException;
-  }
-
-  private static @Nullable Path getDefaultConsentsFileForTests() {
-    String path = System.getProperty(TEST_DEFAULT_CONSENTS_FILE_PROPERTY);
-    return path != null ? Path.of(path) : null;
-  }
-
-  private static @Nullable Path getConfirmedConsentsFileForTests() {
-    String path = System.getProperty(TEST_CONFIRMED_CONSENTS_FILE_PROPERTY);
-    return path != null ? Path.of(path) : null;
   }
 }
