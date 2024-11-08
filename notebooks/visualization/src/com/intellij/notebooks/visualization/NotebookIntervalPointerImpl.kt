@@ -106,7 +106,6 @@ class NotebookIntervalPointerFactoryImpl(
     get() = field?.takeIf { !project.isDisposed }
 
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
-    ThreadingAssertions.assertReadAccess()
     return pointers[interval.ordinal].also {
       require(it.interval == interval)
     }
