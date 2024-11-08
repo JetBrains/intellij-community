@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService

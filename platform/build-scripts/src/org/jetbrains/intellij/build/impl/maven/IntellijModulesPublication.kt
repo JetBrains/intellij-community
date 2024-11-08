@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.CompilationContext
@@ -12,7 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Publishes specified nightly versions of Intellij modules as a Maven artifacts using the output of [org.jetbrains.intellij.build.impl.MavenArtifactsBuilder].
+ * Publishes specified nightly versions of Intellij modules as a Maven artifacts using the output of [org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder].
  *
  * <p>
  * Note: Requires installed `mvn`.
@@ -34,7 +34,7 @@ class IntellijModulesPublication(
     val version: String,
     var modulesToPublish: List<String> = listProperty("intellij.modules.publication.list"),
     /**
-     * Output of [org.jetbrains.intellij.build.impl.MavenArtifactsBuilder]
+     * Output of [org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder]
      */
     var outputDir: Path = property("intellij.modules.publication.prebuilt.artifacts.dir")!!.let { Path.of(it).normalize() },
   ) {

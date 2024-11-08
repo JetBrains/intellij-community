@@ -4,6 +4,8 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
+import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.jps.model.module.JpsModule
 
 private val MODULE_GROUP_NAMES = java.util.Set.of("gradle", "uast")
