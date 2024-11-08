@@ -59,6 +59,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <extensions defaultExtensionNs="com.intellij">
     <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
+    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.uv.UvPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="UvPackageVersions" shortName="UvPackageVersionsInspection"/>
 
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
@@ -830,6 +831,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <pyAddSdkProvider implementation="com.jetbrains.python.sdk.poetry.PyAddPoetrySdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
 
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
+
     <!-- SDK Flavors -->
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.JythonSdkFlavor"/>
@@ -858,6 +861,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PoetryPackageManagerProvider"/>
 
+    <pySdkProvider implementation="com.jetbrains.python.sdk.uv.UvSdkProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.uv.UvPackageManagerProvider"/>
 
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>

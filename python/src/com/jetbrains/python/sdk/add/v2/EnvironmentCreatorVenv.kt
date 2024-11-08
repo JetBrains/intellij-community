@@ -36,7 +36,7 @@ import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
-class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
+class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
   private lateinit var versionComboBox: PythonInterpreterComboBox
 
   private val locationValidationFailed = propertyGraph.property(false)

@@ -157,5 +157,6 @@
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
   </component>
 </module>

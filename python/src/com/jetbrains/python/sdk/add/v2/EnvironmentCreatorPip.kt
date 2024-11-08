@@ -13,7 +13,7 @@ import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
 
 
-class PipEnvNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("pipenv", model) {
+class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("pipenv", model) {
   override val interpreterType: InterpreterType = InterpreterType.PIPENV
   override val executable: ObservableMutableProperty<String> = model.state.pipenvExecutable
   override val installationScript: Path? = null

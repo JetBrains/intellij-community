@@ -21,6 +21,7 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
+import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
@@ -58,6 +59,7 @@ enum class PythonSupportedEnvironmentManagers(val nameKey: String, val icon: Ico
   CONDA("sdk.create.custom.conda", PythonIcons.Python.Anaconda),
   POETRY("sdk.create.custom.poetry", POETRY_ICON),
   PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
+  UV("sdk.create.custom.uv", UV_ICON),
   PYTHON("sdk.create.custom.python", com.jetbrains.python.psi.icons.PythonPsiApiIcons.Python)
 }
 

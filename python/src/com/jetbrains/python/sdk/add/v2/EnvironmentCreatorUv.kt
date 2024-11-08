@@ -1,0 +1,43 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.add.v2
+
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.uv.uvPath
+import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
+import com.jetbrains.python.statistics.InterpreterType
+import java.nio.file.Path
+
+class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("uv", model) {
+  override val interpreterType: InterpreterType = InterpreterType.UV
+  override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
+  // FIXME: support uv installation
+  override val installationScript = null
+
+  override fun onShown() {
+    // FIXME: validate base interpreters against pyprojecttoml version. See poetry
+    basePythonComboBox.setItems(model.baseInterpreters)
+  }
+
+  override fun savePathToExecutableToProperties() {
+    PropertiesComponent.getInstance().uvPath = Path.of(executable.get())
+  }
+
+  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk> {
+    if (module == null) {
+      // FIXME: should not happen, proper error
+      return Result.failure(Exception("module is null"))
+    }
+
+    val python = homePath?.let { Path.of(it) }
+    return setupUvSdkUnderProgress(module, Path.of(projectPath), baseSdks, python)
+  }
+
+  override suspend fun detectExecutable() {
+    model.detectUvExecutable()
+  }
+}
