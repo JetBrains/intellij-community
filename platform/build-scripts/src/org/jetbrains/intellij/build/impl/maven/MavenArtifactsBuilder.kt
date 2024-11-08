@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
@@ -16,6 +16,9 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
+import org.jetbrains.intellij.build.impl.commonModuleExcludes
+import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
+import org.jetbrains.intellij.build.impl.getLibraryFilename
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.java.*
