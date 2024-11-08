@@ -601,5 +601,7 @@
     <extensionPoint name="iconSerializer" interface="com.intellij.ide.ui.icons.IconSerializer" dynamic="true"/>
 
     <extensionPoint name="projectTaskManagerListener" interface="com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint" dynamic="true" />
+
+    <extensionPoint name="logLevelConfigurationListener" interface="com.intellij.diagnostic.logs.LogLevelConfigurationManager$Listener" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
