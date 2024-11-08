@@ -56,25 +56,6 @@ final class SyntaxNodeDescriptorImpl implements MutableSyntaxNodeDescriptor {
     return myCaptures.get(key);
   }
 
-  @Nullable
-  @Override
-  public Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key) {
-    TextMateCapture[] realCaptures = myCaptures.get(key);
-    if (realCaptures == null) {
-      return null;
-    }
-    Int2ObjectMap<CharSequence> captures = new Int2ObjectOpenHashMap<>(realCaptures.length);
-    for (int group = 0; group < myCaptures.get(key).length; group++) {
-      TextMateCapture capture = realCaptures[group];
-      if (capture != null) {
-        captures.put(group, capture instanceof TextMateCapture.Name
-                            ? ((TextMateCapture.Name)capture).getName()
-                            : "");
-      }
-    }
-    return captures;
-  }
-
   @Override
   public boolean hasBackReference(Constants.@NotNull CaptureKey key, int group) {
     return true;
