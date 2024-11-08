@@ -11364,6 +11364,7 @@ a:com.intellij.ide.scratch.LRUPopupBuilder
 - withExtraMiddleValue(java.lang.Object,java.lang.String,javax.swing.Icon):com.intellij.ide.scratch.LRUPopupBuilder
 - withExtraSpeedSearchNamer(java.util.function.Function):com.intellij.ide.scratch.LRUPopupBuilder
 - withExtraTopValue(java.lang.Object,java.lang.String,javax.swing.Icon):com.intellij.ide.scratch.LRUPopupBuilder
+- withFilter(java.util.function.Predicate):com.intellij.ide.scratch.LRUPopupBuilder
 - withSelection(java.lang.Object):com.intellij.ide.scratch.LRUPopupBuilder
 f:com.intellij.ide.scratch.ScratchFileActions
 - <init>():V
@@ -11383,6 +11384,7 @@ a:com.intellij.ide.scratch.ScratchFileCreationHelper
 - sf:EXTENSION:com.intellij.lang.LanguageExtension
 - <init>():V
 - beforeCreate(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context):V
+- newScratchAllowed():Z
 - s:parseHeader(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.String):com.intellij.psi.PsiFile
 - prepareText(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context,com.intellij.openapi.actionSystem.DataContext):Z
 - s:reformat(com.intellij.openapi.project.Project,com.intellij.lang.Language,java.lang.String):java.lang.String
