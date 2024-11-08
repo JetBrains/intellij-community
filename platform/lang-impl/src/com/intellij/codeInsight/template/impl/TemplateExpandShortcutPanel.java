@@ -18,7 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public final class TemplateExpandShortcutPanel extends JPanel {
     for (@ListItem String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
       myExpandByCombo.addItem(s);
     }
-    myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", (@ListItem String value) -> {
+    myExpandByCombo.setRenderer(BuilderKt.textListCellRenderer("", (@ListItem String value) -> {
       if (Strings.areSameInstance(value, getCustom())) {
         Shortcut[] shortcuts = getCurrentCustomShortcuts();
         String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);

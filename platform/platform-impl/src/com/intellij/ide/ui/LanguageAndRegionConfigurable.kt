@@ -238,6 +238,8 @@ internal class LanguageAndRegionConfigurable :
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
+      useNewComboBoxRenderer()
+
       LanguageAndRegionUi.createContent(this, null, disposable!!, null, eventSource)
     }
   }
