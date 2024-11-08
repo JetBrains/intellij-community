@@ -1,8 +1,10 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.withRetries
 import org.intellij.lang.annotations.Language
 import java.awt.Point
+import kotlin.time.Duration.Companion.seconds
 
 fun Finder.bookmarksToolWindow(@Language("xpath") xpath: String? = null) =
   x(xpath ?: "//div[@class='InternalDecoratorImpl'][.//div[@class='BookmarksView']]", BookmarksToolWindowUiComponent::class.java)
@@ -75,7 +77,9 @@ class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun clickBookmark(textContains: String, doubleClick: Boolean = false) =
     bookmarksTree.waitAnyTextsContains(text = textContains).first().apply { if (doubleClick) {
-      click()
-      doubleClick()
+      withRetries(times = 2) {
+        doubleClick()
+        waitNotFound(2.seconds)
+      }
     } else click() }
 }
