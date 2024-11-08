@@ -23,20 +23,22 @@ class FileTreePanel(
     hasCheckBox: Boolean = false
 ) : JBPanel<JBPanel<*>>(BorderLayout()) {
 
+    private val tree : CheckboxTree
+    private val rootNode : CheckedTreeNode
     val fileSelectionListeners = mutableListOf<FilePickListener>()
 
     init {
         // ツリー構築
-        val rootNode = createNode(rootFile)
-        val checkBoxTree = CheckboxTree(CheckBoxTreeCellRenderer(hasCheckBox), rootNode)
+        rootNode = createNode(rootFile)
+        tree = CheckboxTree(CheckBoxTreeCellRenderer(hasCheckBox), rootNode)
         uncheckAllNodes(rootNode)
-        checkNodes(rootNode, selectedFiles)
-        expandNodes(checkBoxTree, rootNode, selectedFiles)
+        checkFilesNodes(selectedFiles)
+        expandFilesNodes(selectedFiles)
         // イベント登録
-        registerEvents(checkBoxTree)
+        registerEvents(tree)
         // スクロールパネルを追加
         val scrollpane = JBScrollPane()
-        scrollpane.setViewportView(checkBoxTree)
+        scrollpane.setViewportView(tree)
         add(scrollpane, BorderLayout.CENTER)
     }
 
@@ -52,7 +54,7 @@ class FileTreePanel(
     }
 
     // 全てのノードをチェック解除
-    private fun uncheckAllNodes(node: CheckedTreeNode) {
+    fun uncheckAllNodes(node: CheckedTreeNode) {
         node.isChecked = false
         node.children().asSequence().filterIsInstance<CheckedTreeNode>().forEach { uncheckAllNodes(it) }
     }
@@ -67,18 +69,28 @@ class FileTreePanel(
         }
     }
 
+    // 指定したファイルのノードをチェック
+    fun checkFilesNodes(files: List<VirtualFile>) {
+        checkNodes(rootNode, files)
+    }
+
     // 指定したノードを展開する.Leafをexpandしても反映されない不具合があるため、親ディレクトリをexpandする
-    private fun expandNodes(tree: JTree, node: CheckedTreeNode, files: List<VirtualFile>) {
+    private fun expandNodes(jTree: JTree, node: CheckedTreeNode, files: List<VirtualFile>) {
         val dirs = files.mapTo(mutableSetOf()) { if (it.isFile) it.parent else it }
         fun CheckedTreeNode.expandNodesInner(files: Set<VirtualFile>) {
             if (files.contains(this.userObject)) {
-                tree.expandPath(TreePath(this.path))
+                jTree.expandPath(TreePath(this.path))
             }
             children().asSequence()
                 .filterIsInstance<CheckedTreeNode>()
                 .forEach { it.expandNodesInner(files) }
         }
         node.expandNodesInner(dirs)
+    }
+
+    // 指定したファイルのノードを展開
+    fun expandFilesNodes(files: List<VirtualFile>) {
+        expandNodes(tree, rootNode, files)
     }
 
 
