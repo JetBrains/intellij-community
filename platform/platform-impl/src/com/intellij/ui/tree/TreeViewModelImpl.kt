@@ -73,7 +73,6 @@ private class TreeViewModelImpl(
         check(completedRequests.tryEmit(epoch))
       }
     }
-    fakeRoot.schedule(NodeUpdate(loadPresentation = true, loadChildren = true))
   }
 
   private fun TreeNodeViewModelImpl.schedule(update: NodeUpdate) {
