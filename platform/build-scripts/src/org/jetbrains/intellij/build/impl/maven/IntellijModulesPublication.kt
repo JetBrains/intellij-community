@@ -97,8 +97,8 @@ class IntellijModulesPublication(
 
   private fun deployModuleArtifact(coordinates: MavenCoordinates) {
     val dir = options.outputDir.resolve(coordinates.directoryPath).toFile()
-    val pom = File(dir, coordinates.getFileName("", "pom"))
-    val jar = File(dir, coordinates.getFileName("", "jar"))
+    val pom = File(dir, coordinates.getFileName(packaging = "pom"))
+    val jar = File(dir, coordinates.getFileName(packaging = "jar"))
     val sources = File(dir, coordinates.getFileName("sources", "jar"))
     if (jar.exists()) {
       deployJar(jar, pom, coordinates)

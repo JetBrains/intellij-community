@@ -298,7 +298,7 @@ data class MavenCoordinates(
   val directoryPath: String
     get() = "${groupId.replace('.', '/')}/$artifactId/$version"
 
-  fun getFileName(classifier: String, packaging: String): String {
+  fun getFileName(classifier: String = "", packaging: String): String {
     return "$artifactId-$version${if (classifier.isEmpty()) "" else "-$classifier"}.$packaging"
   }
 }
@@ -405,10 +405,10 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
         Files.createDirectories(artifactDir)
 
         generatePomXmlData(artifactData = artifactData,
-                           file = artifactDir.resolve(artifactData.coordinates.getFileName("", "pom")))
+                           file = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "pom")))
 
         buildJar(
-          targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("", "jar")),
+          targetFile = artifactDir.resolve(artifactData.coordinates.getFileName(packaging = "jar")),
           sources = modulesWithSources.map {
             DirSource(dir = context.getModuleOutputDir(it), excludes = commonModuleExcludes)
           },

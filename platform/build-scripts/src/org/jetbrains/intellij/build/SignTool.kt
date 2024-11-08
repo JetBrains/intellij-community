@@ -16,6 +16,8 @@ interface SignTool {
 
   suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>)
 
+  suspend fun signFilesWithGpg(files: List<Path>, context: BuildContext)
+
   /**
    * Returns `null` if failed to download and error is not fatal.
    */
