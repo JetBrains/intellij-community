@@ -43,6 +43,7 @@ class FilePicker(
         filePicker.preferredSize = Dimension(400, 400)
         // ビューア
         fileViewer.preferredSize = Dimension(600, 400)
+        // パネル作成
         return panel {
             row{
                 cell(JBLabel(KotlinBundle.message("action.j2k.gui.file_picker.header")).apply { font = JBFont.h3().asBold() })
