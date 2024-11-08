@@ -52,7 +52,7 @@ class GradleCompletionConsumer(val position: PsiElement, val delegate: GroovyCom
       val parentGradleExtensionNames = extensionElementHierarchy.names;
       val parentExtensionName = parentGradleExtensionNames.joinToString(".")
 
-      if (parentExtensionName == psi.parentKey) {
+      if (isMatchingParentExtensionName(parentExtensionName, psi.parentKey)) {
         delegate.consume(element)
       }
 
@@ -62,7 +62,7 @@ class GradleCompletionConsumer(val position: PsiElement, val delegate: GroovyCom
       val parentGradleExtensionNames = extensionElementHierarchy.names;
       val parentExtensionName = parentGradleExtensionNames.joinToString(".")
 
-      if (parentExtensionName == psi.parentKey) {
+      if (isMatchingParentExtensionName(parentExtensionName, psi.parentKey)) {
         delegate.consume(element)
       }
 
@@ -104,8 +104,28 @@ fun getGradleExtensionHierarchy(place: PsiElement): GradleExtensionNameHierarchy
   return GradleExtensionNameHierarchy(
     place.parentsOfType<GrFunctionalExpression>().map { it.parent }.filter { it is GrMethodCallExpression }
       .map { (it as GrMethodCallExpression).explicitCallReference }
-      .map { it?.methodName?: "" }.toList()
+      .map { it?.methodName?: "" }.toList().reversed()
   )
+}
+
+fun isMatchingParentExtensionName(parentExtensionName: String, parentKey: String): Boolean {
+  val parentSections = parentExtensionName.split(".")
+  val extensionSections = parentKey.split(".")
+
+  if (parentSections.size != extensionSections.size) {
+    return false
+  }
+
+  for (i in parentSections.indices) {
+    if (parentSections[i] != extensionSections[i]) {
+      if (parentSections[i] == "*" || extensionSections[i] == "*") {
+        continue
+      }
+      return false
+    }
+  }
+
+  return true;
 }
 
 @JvmInline
