@@ -27,10 +27,11 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
   private val existingInterpreterManager = propertyGraph.property(PYTHON)
 
   private val newInterpreterCreators = mapOf(
-    VIRTUALENV to PythonNewVirtualenvCreator(model),
-    CONDA to CondaNewEnvironmentCreator(model,  errorSink),
-    PIPENV to PipEnvNewEnvironmentCreator(model),
-    POETRY to PoetryNewEnvironmentCreator(model, moduleOrProject),
+    VIRTUALENV to EnvironmentCreatorVenv(model),
+    CONDA to CondaNewEnvironmentCreator(model, errorSink),
+    PIPENV to EnvironmentCreatorPip(model),
+    POETRY to EnvironmentCreatorPoetry(model, moduleOrProject),
+    UV to EnvironmentCreatorUv(model, moduleOrProject),
   )
 
   private val existingInterpreterSelectors = mapOf(
@@ -51,15 +52,6 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
       navigator.newEnvManager = newInterpreterManager
       navigator.existingEnvManager = existingInterpreterManager
     }
-
-    // todo delete this. testing busy state
-    //existingInterpreterManager.afterChange {
-    //  model.scope.launch {
-    //    model.interpreterLoading.value = true
-    //    delay(5000)
-    //    model.interpreterLoading.value = false
-    //  }
-    //}
 
     with(outerPanel) {
       buttonsGroup {

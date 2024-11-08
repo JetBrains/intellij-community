@@ -18,7 +18,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.VirtualEnvReader
@@ -125,6 +124,7 @@ enum class InterpreterType(val value: String) {
   REGULAR("regular"),
   POETRY("poetry"),
   PYENV("pyenv"),
+  UV("uv"),
 }
 
 enum class InterpreterCreationMode(val value: String) {

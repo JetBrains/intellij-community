@@ -31,6 +31,10 @@ open class PythonPackage(val name: String, val version: String, val isEditableMo
   }
 }
 
+open class PythonOutdatedPackage(name: String, version: String, isEditableMode: Boolean, val latestVersion: String)
+  : PythonPackage(name, version, isEditableMode)
+{}
+
 interface PythonPackageDetails {
 
   val name: String

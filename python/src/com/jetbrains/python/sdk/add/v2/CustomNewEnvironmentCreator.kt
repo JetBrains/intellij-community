@@ -66,9 +66,13 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              ProjectJdkTable.getInstance().allJdks.asList(),
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
-                             false).getOrElse { return Result.failure(it) }
+                             false)
+      .getOrElse { return Result.failure(it) }
     addSdk(newSdk)
+
+    module?.excludeInnerVirtualEnv(newSdk)
     model.addInterpreter(newSdk)
+
     return Result.success(newSdk)
   }
 
