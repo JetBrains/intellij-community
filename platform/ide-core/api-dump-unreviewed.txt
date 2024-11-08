@@ -2020,6 +2020,8 @@ com.intellij.openapi.ui.TextComponentAccessor
 - sf:TEXT_FIELD_WHOLE_TEXT:com.intellij.openapi.ui.TextComponentAccessor
 - a:getText(java.awt.Component):java.lang.String
 - a:setText(java.awt.Component,java.lang.String):V
+f:com.intellij.openapi.ui.UiComponentsUtil
+- sf:INSTANCE:com.intellij.openapi.ui.UiComponentsUtil
 f:com.intellij.openapi.ui.ValidationInfo
 - f:component:javax.swing.JComponent
 - f:message:java.lang.String

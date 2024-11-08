@@ -3,6 +3,7 @@ package com.intellij.platform.ide.newUiOnboarding.steps
 
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.UiComponentsUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -11,7 +12,6 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
-import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil.findUiComponent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.GotItComponentBuilder
 import com.intellij.util.ui.JBUI
@@ -28,7 +28,7 @@ open class ProjectWidgetStep : NewUiOnboardingStep {
     get() = NewUiOnboardingBundle.message("project.widget.step.text")
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
-    val button = findUiComponent(project) { button: ToolbarComboButton ->
+    val button = UiComponentsUtil.findUiComponent(project) { button: ToolbarComboButton ->
       ClientProperty.get(button, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
     } ?: return null
 
