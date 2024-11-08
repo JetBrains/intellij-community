@@ -41,11 +41,10 @@ internal class PatchedSimpleColoredComponent : SimpleColoredComponent() {
   var renderingHints: Map<RenderingHints.Key, Any?>? = null
 
   override fun applyAdditionalHints(g: Graphics2D) {
-    if (renderingHints == null) {
-      super.applyAdditionalHints(g)
-    }
-    else {
-      g.addRenderingHints(renderingHints)
+    super.applyAdditionalHints(g)
+
+    renderingHints?.let {
+      g.addRenderingHints(it)
     }
   }
 

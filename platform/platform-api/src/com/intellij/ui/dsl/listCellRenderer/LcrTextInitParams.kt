@@ -39,5 +39,5 @@ class LcrTextInitParams(foreground: Color) : LcrInitParams() {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  val renderingHints: MutableMap<RenderingHints.Key, Any?> = getDefaultTextRenderingHints()
+  var renderingHints: Map<RenderingHints.Key, Any?>? = null
 }

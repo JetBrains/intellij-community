@@ -21,6 +21,7 @@ internal class DialogPanelConfig {
   val validationRequestors: LinkedHashMap<JComponent, MutableList<DialogValidationRequestor>> = linkedMapOf()
   val validationsOnInput: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf()
   val validationsOnApply: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf()
+  var useComboBoxNewRenderer: Boolean = false
 }
 
 internal fun <C: JComponent?, T> MutableMap<C, MutableList<T>>.list(component: C): MutableList<T> {

@@ -182,6 +182,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     return panel {
+      useNewComboBoxRenderer()
+
       val autodetectSupportedPredicate = ComponentPredicate.fromValue(lafManager.autodetectSupported)
       val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(ComponentPredicate.fromObservableProperty(syncThemeProperty, disposable))
 
@@ -245,7 +247,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          comboBox(model, textListCellRenderer { it })
+          comboBox(model)
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item, false) != null) return@onChanged
@@ -365,9 +367,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
                 .selected(colorBlindnessProperty.get() != null)
-              comboBox(supportedValues)
+              comboBox(supportedValues, renderer = textListCellRenderer("") { PlatformEditorBundle.message(it.key) })
                 .enabledIf(enableColorBlindness.selected)
-                .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .bind({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                       { it, value -> it.selectedItem = value ?: supportedValues.first() },
@@ -569,7 +570,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.presentation.mode")) {
         row(message("presentation.mode.ide.scale")) {
-          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), textListCellRenderer { it })
+          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel())
             .bindItem({ settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true
@@ -702,7 +703,6 @@ private fun Row.fontSizeComboBox(prop: MutableProperty<@Nls String?>): Cell<Comb
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
-      renderer = textListCellRenderer { it }
       selectedItem = prop.get()
     }
     .bind(
@@ -722,12 +722,14 @@ private fun getIntValue(text: String?, defaultValue: Int): Int {
 
 private fun createAAListCellRenderer(myUseEditorFont: Boolean): ListCellRenderer<AntialiasingType?> {
   return listCellRenderer {
+    val aaHint = when (value) {
+      AntialiasingType.SUBPIXEL -> RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB
+      AntialiasingType.GREYSCALE -> RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+      AntialiasingType.OFF, null -> RenderingHints.VALUE_TEXT_ANTIALIAS_OFF
+    }
+
     text(value?.presentableName ?: "") {
-      renderingHints[RenderingHints.KEY_TEXT_ANTIALIASING] = when (this@listCellRenderer.value) {
-        AntialiasingType.SUBPIXEL -> RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB
-        AntialiasingType.GREYSCALE -> RenderingHints.VALUE_TEXT_ANTIALIAS_ON
-        AntialiasingType.OFF, null -> RenderingHints.VALUE_TEXT_ANTIALIAS_OFF
-      }
+      renderingHints = mapOf(RenderingHints.KEY_TEXT_ANTIALIASING to aaHint)
 
       if (myUseEditorFont) {
         val scheme = EditorColorsManager.getInstance().globalScheme

@@ -35,6 +35,19 @@ fun <T> textListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRender
   }
 }
 
+@ApiStatus.Internal
+fun <T> textListCellRenderer(nullValue: @Nls String, textExtractor: (T) -> @Nls String?): ListCellRenderer<T?> {
+  return listCellRenderer {
+    val value = value
+    if (value == null) {
+      text(nullValue)
+    }
+    else {
+      text(textExtractor(value) ?: nullValue)
+    }
+  }
+}
+
 /**
  * A version of [textListCellRenderer] with separator support
  */
