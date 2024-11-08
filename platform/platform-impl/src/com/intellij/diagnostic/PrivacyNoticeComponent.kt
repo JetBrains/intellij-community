@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.icons.AllIcons
@@ -10,6 +10,7 @@ import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -19,10 +20,11 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-@Deprecated("Use Kotlin UI DSL 2, or com.intellij.diagnostic.PrivacyNotice from Java code")
-class PrivacyNoticeComponent(@NlsContexts.Label private val label: String, @NlsContexts.Label private val expandedLabel: String) : JPanel(
-  GridBagLayout()) {
-
+@Deprecated("Internal component, and already outdated at that", level = DeprecationLevel.ERROR)
+@ApiStatus.Internal
+class PrivacyNoticeComponent(@NlsContexts.Label private val label: String, @NlsContexts.Label private val expandedLabel: String)
+  : JPanel(GridBagLayout())
+{
   private val iconLabel: JLabel = JLabel()
   private val titleLabel = JLabel()
   private val privacyPolicyPane: JEditorPane = JEditorPane()

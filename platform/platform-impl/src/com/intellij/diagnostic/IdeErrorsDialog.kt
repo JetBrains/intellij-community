@@ -7,7 +7,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
@@ -25,8 +27,6 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -34,7 +34,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectTypeService
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.LoadingDecorator
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -63,7 +62,6 @@ import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
 import java.net.URL
 import java.nio.charset.StandardCharsets
-import java.nio.file.FileVisitResult
 import java.util.*
 import java.util.function.Predicate
 import java.util.zip.CRC32
@@ -494,8 +492,10 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
       myLastIndex = myIndex
     }
     myCommentArea.isEditable = canReport
-    myCommentArea.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
-                                    if (canReport) null else Predicate<JBTextArea> { false })
+    myCommentArea.putClientProperty(
+      TextComponentEmptyText.STATUS_VISIBLE_FUNCTION,
+      if (canReport) null else Predicate<JBTextArea> { false }
+    )
     myAttachmentList.setEditable(canReport)
   }
 
@@ -542,7 +542,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private fun disablePlugin() {
     val plugin = selectedCluster().plugin
     if (plugin != null) {
-      confirmDisablePlugins(myProject, listOf(plugin))
+      DisablePluginsDialog.confirmDisablePlugins(myProject, listOf(plugin))
     }
   }
 
@@ -849,6 +849,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     private const val STACKTRACE_ATTACHMENT = "stacktrace.txt"
     private const val ACCEPTED_NOTICES_KEY = "exception.accepted.notices"
@@ -856,105 +857,32 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     private const val DISABLE_PLUGIN_URL = "#disable"
     private const val LAST_OK_ACTION = "IdeErrorsDialog.LAST_OK_ACTION"
 
-    @JvmField val ERROR_HANDLER_EP: ExtensionPointName<ErrorReportSubmitter> = create("com.intellij.errorHandler")
-    @JvmField val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
-
-    @JvmStatic
-    fun confirmDisablePlugins(project: Project?, pluginsToDisable: List<IdeaPluginDescriptor>) {
-      if (pluginsToDisable.isEmpty()) {
-        return
-      }
-      val pluginIdsToDisable = pluginsToDisable.mapTo(HashSet()) { obj: IdeaPluginDescriptor -> obj.pluginId }
-      val hasDependents = morePluginsAffected(pluginIdsToDisable)
-      val canRestart = ApplicationManager.getApplication().isRestartCapable
-      val message =
-        "<html>" +
-        if (pluginsToDisable.size == 1) {
-          val plugin = pluginsToDisable.iterator().next()
-          DiagnosticBundle.message("error.dialog.disable.prompt", plugin.name) + "<br/>" +
-          DiagnosticBundle.message(if (hasDependents) "error.dialog.disable.prompt.deps" else "error.dialog.disable.prompt.lone")
-        }
-        else {
-          DiagnosticBundle.message("error.dialog.disable.prompt.multiple") + "<br/>" +
-          DiagnosticBundle.message(if (hasDependents) "error.dialog.disable.prompt.deps.multiple" else "error.dialog.disable.prompt.lone.multiple")
-        } + "<br/><br/>" +
-        DiagnosticBundle.message(if (canRestart) "error.dialog.disable.plugin.can.restart" else "error.dialog.disable.plugin.no.restart") +
-        "</html>"
-      val title = DiagnosticBundle.message("error.dialog.disable.plugin.title")
-      val disable = DiagnosticBundle.message("error.dialog.disable.plugin.action.disable")
-      val cancel = IdeBundle.message("button.cancel")
-      val doDisable: Boolean
-      val doRestart: Boolean
-      if (canRestart) {
-        val restart = DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart")
-        val result = Messages.showYesNoCancelDialog(project, message, title, disable, restart, cancel, Messages.getQuestionIcon())
-        doDisable = result == Messages.YES || result == Messages.NO
-        doRestart = result == Messages.NO
-      }
-      else {
-        val result = Messages.showYesNoDialog(project, message, title, disable, cancel, Messages.getQuestionIcon())
-        doDisable = result == Messages.YES
-        doRestart = false
-      }
-      if (doDisable) {
-        PluginEnabler.HEADLESS.disable(pluginsToDisable)
-        if (doRestart) {
-          ApplicationManager.getApplication().restart()
-        }
-      }
-    }
-
-    private fun morePluginsAffected(pluginIdsToDisable: Set<PluginId>): Boolean {
-      val pluginIdMap = PluginManagerCore.buildPluginIdMap()
-      for (rootDescriptor in PluginManagerCore.plugins) {
-        if (!rootDescriptor.isEnabled || pluginIdsToDisable.contains(rootDescriptor.pluginId)) {
-          continue
-        }
-        if (!PluginManagerCore.processAllNonOptionalDependencies((rootDescriptor as IdeaPluginDescriptorImpl), pluginIdMap) { descriptor ->
-            when {
-              descriptor.isEnabled -> if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
-              else FileVisitResult.CONTINUE
-              else -> FileVisitResult.SKIP_SUBTREE
-            }
-          } /* no need to process its dependencies */
-        ) {
-          return true
-        }
-      }
-      return false
-    }
-
-    @JvmStatic
-    fun getPlugin(event: IdeaLoggingEvent): IdeaPluginDescriptor? {
-      var plugin: IdeaPluginDescriptor? = null
-      if (event is IdeaReportingEvent) {
-        plugin = event.plugin
-      }
-      else {
-        val t = event.throwable
-        if (t != null) {
-          plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(t))
-        }
-      }
-      return plugin
-    }
+    @JvmField
+    @ApiStatus.Internal
+    val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
 
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("use {@link PluginUtil#findPluginId} ", ReplaceWith("PluginUtil.getInstance().findPluginId(t)"))
+    @ApiStatus.Internal
+    @Deprecated("internal implementation detail; a plugin code should use `ErrorReportSubmitter.getPluginDescriptor`", level = DeprecationLevel.ERROR)
+    fun getPlugin(event: IdeaLoggingEvent): IdeaPluginDescriptor? =
+      event.throwable?.let { PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(it)) }
+
+    @JvmStatic
+    @ApiStatus.ScheduledForRemoval
+    @ApiStatus.Internal
+    @Deprecated("use {@link PluginUtil#findPluginId} ", ReplaceWith("PluginUtil.getInstance().findPluginId(t)"), level = DeprecationLevel.ERROR)
     fun findPluginId(t: Throwable): PluginId? =
       PluginUtil.getInstance().findPluginId(t)
 
     @JvmStatic
-    fun getSubmitter(t: Throwable, pluginId: PluginId?): ErrorReportSubmitter? =
-      getSubmitter(t, PluginManagerCore.getPlugin(pluginId))
-
-    private fun getSubmitter(t: Throwable, plugin: IdeaPluginDescriptor?): ErrorReportSubmitter? {
+    @ApiStatus.Internal
+    fun getSubmitter(t: Throwable, plugin: IdeaPluginDescriptor?): ErrorReportSubmitter? {
       if (t is TooManyErrorsException || t is AbstractMethodError) {
         return null
       }
       val reporters: List<ErrorReportSubmitter> = try {
-        ERROR_HANDLER_EP.extensionList
+        ErrorReportSubmitter.EP_NAME.extensionList
       }
       catch (_: Throwable) {
         return null

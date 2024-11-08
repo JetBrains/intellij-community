@@ -242,6 +242,7 @@ public class WindowsDefenderChecker {
   private static final int PERSISTENT_VOLUME_STATE_DEV_VOLUME = 0x00002000;
   private static final int PERSISTENT_VOLUME_STATE_TRUSTED_VOLUME = 0x00004000;
 
+  @ApiStatus.Internal
   @SuppressWarnings({"unused", "FieldMayBeFinal"})
   @Structure.FieldOrder({"VolumeFlags", "FlagMask", "Version", "Reserved"})
   public static final class FILE_FS_PERSISTENT_VOLUME_INFORMATION extends Structure implements AutoCloseable {

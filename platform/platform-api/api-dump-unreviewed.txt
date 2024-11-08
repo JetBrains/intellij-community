@@ -1920,9 +1920,6 @@ com.intellij.openapi.components.SettingsSavingComponent
 f:com.intellij.openapi.concurrency.PromiseUtilKt
 - sf:awaitPromise-8Mi8wO0(org.jetbrains.concurrency.Promise,J,kotlin.coroutines.Continuation):java.lang.Object
 - sf:waitForPromise-HG0u8IE(org.jetbrains.concurrency.Promise,J):java.lang.Object
-com.intellij.openapi.diagnostic.ErrorLogger
-- a:canHandle(com.intellij.openapi.diagnostic.IdeaLoggingEvent):Z
-- a:handle(com.intellij.openapi.diagnostic.IdeaLoggingEvent):V
 a:com.intellij.openapi.diagnostic.ErrorReportSubmitter
 - com.intellij.openapi.extensions.PluginAware
 - <init>():V

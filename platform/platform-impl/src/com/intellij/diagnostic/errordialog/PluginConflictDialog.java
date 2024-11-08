@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,22 +29,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class PluginConflictDialog extends DialogWrapper {
-  public static final int WIDTH = 450;
+  private static final int WIDTH = 450;
 
   private final @NotNull List<PluginId> myConflictingPlugins;
-
   private final boolean myIsConflictWithPlatform;
   private final @Nullable List<JBRadioButton> myRadioButtons;
 
   private JPanel myContentPane;
-
   private JBLabel myTopMessageLabel;
-
   private JPanel myConflictingPluginsListPanel;
 
-  public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins,
-                              boolean isConflictWithPlatform) {
+  public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     super(false);
 
     myConflictingPlugins = conflictingPlugins;
@@ -63,7 +61,6 @@ public final class PluginConflictDialog extends DialogWrapper {
 
     getOKAction().updateText();
     myTopMessageLabel.setText(getTopMessageText(conflictingPlugins, isConflictWithPlatform));
-
     myTopMessageLabel.setPreferredSize(JBUI.size(WIDTH, (int)myTopMessageLabel.getPreferredSize().getHeight()));
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
@@ -207,6 +204,7 @@ public final class PluginConflictDialog extends DialogWrapper {
   }
 
   @Override
+  @SuppressWarnings("ClassEscapesDefinedScope")
   protected @NotNull DisableAction getOKAction() {
     return ((DisableAction)myOKAction);
   }

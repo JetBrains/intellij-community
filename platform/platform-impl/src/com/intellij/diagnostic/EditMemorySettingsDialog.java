@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.IoErrorText;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +18,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
-@ApiStatus.Internal
-@ApiStatus.NonExtendable
-public class EditMemorySettingsDialog extends DialogWrapper {
+class EditMemorySettingsDialog extends DialogWrapper {
   private static final int MIN_VALUE = 256, HEAP_INCREMENT = 512;
 
   private final VMOptions.MemoryKind myOption;
@@ -29,7 +26,7 @@ public class EditMemorySettingsDialog extends DialogWrapper {
   private final EditMemorySettingsPanel content;
   private Action mySaveAndExitAction, mySaveAction;
 
-  public EditMemorySettingsDialog() {
+  EditMemorySettingsDialog() {
     this(VMOptions.MemoryKind.HEAP, false);
   }
 

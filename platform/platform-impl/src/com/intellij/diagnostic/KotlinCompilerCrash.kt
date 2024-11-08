@@ -1,5 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-open class KotlinCompilerCrash(message: String, cause: Throwable? = null, val version: String) : Exception(message, cause, false, false)  {
-}
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+open class KotlinCompilerCrash(message: String, cause: Throwable? = null, val version: String) : Exception(message, cause, false, false)

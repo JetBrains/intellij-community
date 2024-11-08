@@ -6,6 +6,8 @@ import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.IdeaLogger
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -38,7 +40,10 @@ internal val NOTIFY_SUCCESS_EACH_REPORT = AtomicBoolean(true) // dirty hack, rep
  * Third-party plugins need to provide their own implementations of [ErrorReportSubmitter].
  */
 @InternalIgnoreDependencyViolation
-open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr") : ErrorReportSubmitter() {
+open class ITNReporter internal constructor(private val postUrl: String) : ErrorReportSubmitter() {
+  @ApiStatus.Internal
+  constructor() : this("https://ea-report.jetbrains.com/trackerRpc/idea/createScr")
+
   private val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
 
   @Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
@@ -55,7 +60,9 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     consumer: Consumer<in SubmittedReportInfo>
   ): Boolean {
     val event = events[0]
-    val plugin = IdeErrorsDialog.getPlugin(event)
+    val plugin =
+      (event as? IdeaReportingEvent)?.plugin ?:
+      event.throwable?.let { PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(it)) }
     val errorBean = createReportBean(event, additionalInfo, plugin)
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
     return submit(project, errorBean, parentComponent, consumer::consume)
