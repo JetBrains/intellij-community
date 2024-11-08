@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
@@ -22,8 +21,9 @@ import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.pipenv.pipEnvPath
-import com.jetbrains.python.sdk.poetry.poetryPath
+import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
+import com.jetbrains.python.sdk.poetry.getPoetryExecutable
+import com.jetbrains.python.sdk.uv.getUvExecutable
 import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -94,11 +94,6 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
       withContext(uiContext) {
         state.condaExecutable.set(suggestedCondaLocalPath?.toString().orEmpty())
       }
-
-      //val environments = suggestedCondaPath?.let { PyCondaEnv.getEnvs(executor, suggestedCondaPath).getOrLogException(
-      //  PythonAddInterpreterPresenter.LOG) }
-      //baseConda = environments?.find { env -> env.envIdentity.let { it is PyCondaEnvIdentity.UnnamedEnv && it.isBase } }
-
     }
   }
 
@@ -172,32 +167,32 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
     super.initialize()
     detectPoetryExecutable()
     detectPipEnvExecutable()
+    detectUvExecutable()
   }
 
   suspend fun detectPoetryExecutable() {
-    // todo this is local case, fix for targets
-    val savedPath = PropertiesComponent.getInstance().poetryPath
-    if (savedPath != null) {
-      state.poetryExecutable.set(savedPath)
-    }
-    else {
-      val poetryExecutable = withContext(Dispatchers.IO) { com.jetbrains.python.sdk.poetry.detectPoetryExecutable() }
+    // FIXME: support targets
+    getPoetryExecutable().getOrNull()?.let {
       withContext(Dispatchers.EDT) {
-        poetryExecutable?.let { state.poetryExecutable.set(it.pathString) }
+        state.poetryExecutable.set(it.pathString)
       }
     }
   }
 
   suspend fun detectPipEnvExecutable() {
-    // todo this is local case, fix for targets
-    val savedPath = PropertiesComponent.getInstance().pipEnvPath
-    if (savedPath != null) {
-      state.pipenvExecutable.set(savedPath)
-    }
-    else {
-      val detectedExecutable = withContext(Dispatchers.IO) { com.jetbrains.python.sdk.pipenv.detectPipEnvExecutable() }
+    // FIXME: support targets
+    getPipEnvExecutable().getOrNull()?.let {
       withContext(Dispatchers.EDT) {
-        detectedExecutable?.let { state.pipenvExecutable.set(it.path) }
+        state.pipenvExecutable.set(it.pathString)
+      }
+    }
+  }
+
+  suspend fun detectUvExecutable() {
+    // FIXME: support targets
+    getUvExecutable()?.pathString?.let {
+      withContext(Dispatchers.EDT) {
+        state.uvExecutable.set(it)
       }
     }
   }
@@ -287,6 +282,7 @@ class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(pro
   val baseInterpreter: ObservableMutableProperty<PythonSelectableInterpreter?> = propertyGraph.property(null)
   val newCondaEnvName: ObservableMutableProperty<String> = propertyGraph.property("")
   val poetryExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
+  val uvExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
   val pipenvExecutable: ObservableMutableProperty<String> = propertyGraph.property("")
   val venvPath: ObservableMutableProperty<String> = propertyGraph.property("")
   val inheritSitePackages = propertyGraph.property(false)
