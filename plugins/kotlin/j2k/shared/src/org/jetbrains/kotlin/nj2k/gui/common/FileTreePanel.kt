@@ -11,6 +11,7 @@ import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import org.jetbrains.kotlin.idea.util.isJavaFileType
+import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import java.awt.BorderLayout
 import java.awt.event.MouseAdapter
 import javax.swing.JTree
@@ -27,10 +28,17 @@ class FileTreePanel(
     private val rootNode : CheckedTreeNode
     val fileSelectionListeners = mutableListOf<FileTreeListener>()
 
+    // オプション
+    var enableKotlin = false // Kotlinファイルを選択可能にするか
+        set(value){
+            field = value
+            tree.repaint()
+        }
+
     init {
         // ツリー構築
         rootNode = createNode(rootFile)
-        tree = CheckboxTree(CheckBoxTreeCellRenderer(hasCheckBox), rootNode)
+        tree = CheckboxTree(CheckBoxTreeCellRenderer(hasCheckBox, enableKotlin), rootNode)
         uncheckAllNodes(rootNode)
         checkFilesNodes(selectedFiles)
         expandFilesNodes(selectedFiles)
@@ -46,7 +54,7 @@ class FileTreePanel(
     private fun createNode(file: VirtualFile): CheckedTreeNode {
         val node = CheckedTreeNode(file)
         if (file.isDirectory) {
-            file.children.filter { it.isJavaFileType() || it.isDirectory }.forEach { child ->
+            file.children.filter { it.isJavaFileType() || it.isKotlinFileType() || it.isDirectory }.forEach { child ->
                 node.add(createNode(child))
             }
         }
@@ -93,7 +101,6 @@ class FileTreePanel(
         expandNodes(tree, rootNode, files)
     }
 
-
     // イベント登録
     private fun registerEvents(checkBoxTree: CheckboxTree) {
         // チェクボックスの状態変更イベント
@@ -122,7 +129,7 @@ class FileTreePanel(
     }
 
     // カスタムセルレンダラ
-    private class CheckBoxTreeCellRenderer(private val hasCheckBox: Boolean) : CheckboxTree.CheckboxTreeCellRenderer() {
+    private class CheckBoxTreeCellRenderer(private val hasCheckBox: Boolean, private val enableKotlin : Boolean) : CheckboxTree.CheckboxTreeCellRenderer() {
         override fun customizeRenderer(
             tree: JTree?,
             value: Any?,
@@ -142,6 +149,14 @@ class FileTreePanel(
                     file.isDirectory -> AllIcons.Nodes.Folder
                     file.isFile -> FileTypeManager.getInstance().getFileTypeByFile(file).icon
                     else -> null
+                }
+                // ノードごとに有効・無効切り替え(設定は次のノードにも引き継がれるため,最初に明示的にtrueにしておく)
+                // TODO : チェックボックスを無効化しても選択可能になってしまう問題を修正する
+                textRenderer.isEnabled = true
+                checkbox.isEnabled = true
+                if(file.isKotlinFileType() && !enableKotlin){
+                    textRenderer.isEnabled = false
+                    checkbox.isEnabled = false
                 }
             }
         }
