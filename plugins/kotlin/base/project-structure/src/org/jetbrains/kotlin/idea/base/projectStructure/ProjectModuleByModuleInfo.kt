@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODUL
 import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODULE_DEPENDENCIES_IGNORED
 import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.kotlinForwardDeclarationsWorkspaceEntity
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
 import org.jetbrains.kotlin.idea.base.projectStructure.util.createAtomicReferenceFieldUpdaterForProperty
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
@@ -196,13 +197,12 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
     override val project: Project get() = ideaModule.project
 }
 
-@ApiStatus.Internal
 @K1ModeProjectStructureApi
-class KtSourceModuleByModuleInfoForOutsider(
-    val fakeVirtualFile: VirtualFile,
-    val originalVirtualFile: VirtualFile?,
+internal class KtSourceModuleByModuleInfoForOutsider(
+    override val fakeVirtualFile: VirtualFile,
+    override val originalVirtualFile: VirtualFile?,
     moduleInfo: ModuleSourceInfo,
-) : KtSourceModuleByModuleInfo(moduleInfo) {
+) : KtSourceModuleByModuleInfo(moduleInfo), KaSourceModuleForOutsider {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is KtSourceModuleByModuleInfoForOutsider || other.fakeVirtualFile != fakeVirtualFile) return false
@@ -213,16 +213,6 @@ class KtSourceModuleByModuleInfoForOutsider(
 
     override val contentScope: GlobalSearchScope
         get() = adjustContentScope(super.contentScope)
-
-    fun adjustContentScope(scope: GlobalSearchScope): GlobalSearchScope {
-        val scopeWithFakeFile = GlobalSearchScope.fileScope(project, fakeVirtualFile).uniteWith(scope)
-
-        return if (originalVirtualFile != null) {
-            scopeWithFakeFile.minus(GlobalSearchScope.fileScope(project, originalVirtualFile))
-        } else {
-            scopeWithFakeFile
-        }
-    }
 }
 
 @ApiStatus.Internal

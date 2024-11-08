@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDecla
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
 import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 import org.jetbrains.kotlin.idea.base.projectStructure.*
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -32,8 +32,7 @@ internal class IdeKotlinDeclarationProviderFactory(private val project: Project)
     override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KaModule?): KotlinDeclarationProvider {
         val mainProvider = IdeKotlinDeclarationProvider(project, scope, contextualModule)
 
-        @OptIn(K1ModeProjectStructureApi::class)
-        if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
+        if (contextualModule is KaSourceModuleForOutsider) {
             val fakeKtFile = PsiManager.getInstance(contextualModule.project).findFile(contextualModule.fakeVirtualFile)
             if (fakeKtFile is KtFile) {
                 val providerForFake = KotlinFileBasedDeclarationProvider(fakeKtFile)
