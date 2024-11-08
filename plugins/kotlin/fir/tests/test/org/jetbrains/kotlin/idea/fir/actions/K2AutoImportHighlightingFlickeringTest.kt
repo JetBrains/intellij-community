@@ -26,7 +26,11 @@ class K2AutoImportHighlightingFlickeringTest: KotlinLightCodeInsightFixtureTestC
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
-    
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     fun `test highlighting does not flicker during auto-import`() {
         // type in the editor some not-imported class name along with some other unresolved references
         // and check that after that class was auto-imported, all other "unresolved references" diagnostics remain untouched
@@ -42,37 +46,44 @@ class K2AutoImportHighlightingFlickeringTest: KotlinLightCodeInsightFixtureTestC
             val fixture = myFixture as CodeInsightTestFixtureImpl
             fixture.canChangeDocumentDuringHighlighting(true)
             val settings = KotlinCodeInsightSettings.getInstance()
-            settings.addUnambiguousImportsOnTheFly = true
+            val oldSetting = settings.addUnambiguousImportsOnTheFly
+            try {
+                settings.addUnambiguousImportsOnTheFly = true
 
-            fixture.configureByText("x.kt", fileText)
+                fixture.configureByText("x.kt", fileText)
 
-            // assert no highlighters for "moduleA" ever got removed from the editor
-            val markupModel = DocumentMarkupModel.forDocument(editor.document, project, true) as MarkupModelEx
-            markupModel.addMarkupModelListener(testRootDisposable, object : MarkupModelListener {
-                override fun beforeRemoved(highlighter: RangeHighlighterEx) {
-                    val s = textHighlighted(highlighter)
-                    assertFalse("Highlighting must not spuriously remove highlighting during auto-import because it leads to flickers in the editor",
-                                "moduleA" == s)
-                }
-            })
+                // assert no highlighters for "moduleA" ever got removed from the editor
+                val markupModel = DocumentMarkupModel.forDocument(editor.document, project, true) as MarkupModelEx
+                markupModel.addMarkupModelListener(testRootDisposable, object : MarkupModelListener {
+                    override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+                        val s = textHighlighted(highlighter)
+                        assertFalse(
+                            "Highlighting must not spuriously remove highlighting during auto-import because it leads to flickers in the editor",
+                            "moduleA" == s
+                        )
+                    }
+                })
 
-            UsefulTestCase.assertEmpty(fixture.doHighlighting(HighlightSeverity.ERROR))
+                UsefulTestCase.assertEmpty(fixture.doHighlighting(HighlightSeverity.ERROR))
 
-            fixture.type("FileInputStream(moduleA)")
+                fixture.type("FileInputStream(moduleA)")
 
-            val errors = fixture.doHighlighting(HighlightSeverity.ERROR)
-            UsefulTestCase.assertNotEmpty(errors)
-            assertTrue(errors.any { info -> "moduleA" == textHighlighted(info.highlighter) })
+                val errors = fixture.doHighlighting(HighlightSeverity.ERROR)
+                UsefulTestCase.assertNotEmpty(errors)
+                assertTrue(errors.any { info -> "moduleA" == textHighlighted(info.highlighter) })
 
-            AppExecutorUtil.getAppExecutorService().submit {
-                DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(myFixture.file, myFixture.editor)
-            }.get()
+                AppExecutorUtil.getAppExecutorService().submit {
+                    DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(myFixture.file, myFixture.editor)
+                }.get()
 
-            val imports = (myFixture.file as KtFile).importDirectives
-            assertTrue(fixture.file.text, imports.any { directive -> directive.text.contains("java.io.FileInputStream") })
+                val imports = (myFixture.file as KtFile).importDirectives
+                assertTrue(fixture.file.text, imports.any { directive -> directive.text.contains("java.io.FileInputStream") })
 
-            val errors2 = fixture.doHighlighting(HighlightSeverity.ERROR)
-            assertTrue(errors2.any { info -> "moduleA" == textHighlighted(info.highlighter) })
+                val errors2 = fixture.doHighlighting(HighlightSeverity.ERROR)
+                assertTrue(errors2.any { info -> "moduleA" == textHighlighted(info.highlighter) })
+            } finally {
+                settings.addUnambiguousImportsOnTheFly = oldSetting
+            }
         }
     }
 

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
 /**
@@ -74,7 +75,7 @@ abstract class K2AbstractQuickFixTest(private val relativePath: String) : LightI
             }
 
             override fun setUp() {
-                super.setUp()
+                setUpWithKotlinPlugin { super.setUp() }
                 myFixture.setTestDataPath("$testDataPath/$relativeBasePath")
             }
         }

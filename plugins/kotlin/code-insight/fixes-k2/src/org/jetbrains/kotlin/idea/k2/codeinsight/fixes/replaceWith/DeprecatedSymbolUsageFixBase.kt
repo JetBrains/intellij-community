@@ -13,6 +13,13 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -79,7 +86,24 @@ object DeprecationFixFactory {
 
         val replaceWithData = fetchReplaceWithPattern(deprecatedSymbol) ?: return emptyList()
 
-        return listOf(DeprecatedSymbolUsageFix(expression, replaceWithData))
+        val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            modifiersRenderer = modifiersRenderer.with {
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
+            }
+            namedClassRenderer = KaNamedClassSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
+            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
+            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
+            namedFunctionRenderer = KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KaRendererAnnotationsFilter.NONE
+            }
+            keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
+        }
+        val text = KotlinBundle.message("replace.usages.of.0.in.whole.project", deprecatedSymbol.render(renderer))
+        return listOf(
+            DeprecatedSymbolUsageFix(expression, replaceWithData),
+            DeprecatedSymbolUsageInWholeProjectFix(expression, replaceWithData, text)
+        )
     }
 }
 
@@ -135,7 +159,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             replaceWith: ReplaceWithData,
         ): UsageReplacementStrategy? {
 
-            val target = element.mainReference.resolve()
+            val target = element.mainReference.resolve()?.let { it.navigationElement ?: it }
             when (target) {
                 is KtPrimaryConstructor, is KtClassLikeDeclaration -> {
                     val psiFactory = KtPsiFactory(element.project)

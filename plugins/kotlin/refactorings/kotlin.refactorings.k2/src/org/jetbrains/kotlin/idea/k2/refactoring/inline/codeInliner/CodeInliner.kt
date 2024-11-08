@@ -79,7 +79,7 @@ class CodeInliner(
             //the originalDeclaration in this case should point to the converted non-physical function
             (call.parent as? KtCallableReferenceExpression
                 ?: treeUpToCall())
-                .resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration ?: replacement.originalDeclaration
+                .resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi?.navigationElement as? KtDeclaration ?: replacement.originalDeclaration
         } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
             originalDeclaration.setter?.takeIf { inlineSetter && it.hasBody() } ?: originalDeclaration
@@ -180,8 +180,8 @@ class CodeInliner(
             typeParameters = (originalDeclaration as? KtConstructor<*>)?.containingClass()?.typeParameters ?: (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
             namer = { it.nameAsSafeName },
             typeRetriever = {
-                analyze(callableForParameters) {
-                    call.resolveToCall()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.symbol)
+                analyze(call) {
+                    call.resolveToCall()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.entries?.find { entry -> entry.key.psi?.navigationElement == it }?.value
                 }
             },
             renderType = {

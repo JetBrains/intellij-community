@@ -129,6 +129,9 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
 
             for (param in introduceValuesForParameters) {
                 val usagesReplaced = codeToInline.collectDescendantsOfType<KtExpression> { it.getCopyableUserData(PARAMETER_VALUE_KEY) == param.parameter.name() }
+                if (!usagesReplaced.isEmpty()) {
+                    val p = 0
+                }
                 introduceValue(
                     param.value,
                     param.valueType,
