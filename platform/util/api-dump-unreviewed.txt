@@ -4719,7 +4719,6 @@ a:com.intellij.util.io.FileAccessorCache
 - remove(java.lang.Object):Z
 f:com.intellij.util.io.FileAccessorCache$Handle
 - com.intellij.util.io.ResourceHandle
-- <init>(java.lang.Object,com.intellij.util.io.FileAccessorCache):V
 - allocate():V
 - close():V
 - get():java.lang.Object
