@@ -58,7 +58,7 @@ sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
     abstract val nameExpression: KtElement
     abstract val explicitReceiver: KtElement?
 
-    abstract fun getName(): Name
+    abstract val name: Name
 }
 
 sealed class KotlinSimpleNameReferencePositionContext : KotlinNameReferencePositionContext() {
@@ -66,7 +66,8 @@ sealed class KotlinSimpleNameReferencePositionContext : KotlinNameReferencePosit
     abstract override val nameExpression: KtSimpleNameExpression
     abstract override val explicitReceiver: KtExpression?
 
-    override fun getName(): Name = nameExpression.getReferencedNameAsName()
+    override val name: Name
+        get() = nameExpression.getReferencedNameAsName()
 }
 
 class KotlinImportDirectivePositionContext(
@@ -205,7 +206,8 @@ sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionConte
     abstract override val nameExpression: KDocName
     abstract override val explicitReceiver: KDocName?
 
-    override fun getName(): Name = nameExpression.getQualifiedNameAsFqName().shortName()
+    override val name: Name
+        get() = nameExpression.getQualifiedNameAsFqName().shortName()
 }
 
 class KDocParameterNamePositionContext(

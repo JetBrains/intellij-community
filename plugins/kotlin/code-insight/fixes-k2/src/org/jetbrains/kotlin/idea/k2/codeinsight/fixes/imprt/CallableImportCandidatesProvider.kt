@@ -32,7 +32,7 @@ internal open class CallableImportCandidatesProvider(
     override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<KaCallableSymbol> {
-        val unresolvedName = positionContext.getName()
+        val unresolvedName = positionContext.name
         val explicitReceiver = positionContext.explicitReceiver
         val fileSymbol = getFileSymbol()
 
