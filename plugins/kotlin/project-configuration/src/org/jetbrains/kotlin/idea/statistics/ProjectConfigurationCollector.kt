@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.configuration.getPlatform
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import java.util.Locale
 
 internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
@@ -55,8 +56,8 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
         val buildSystem = it.buildSystemType
         return when {
             buildSystem == BuildSystemType.JPS -> "JPS"
-            buildSystem.toString().toLowerCase().contains("maven") -> "Maven"
-            buildSystem.toString().toLowerCase().contains("gradle") -> "Gradle"
+            buildSystem.toString().lowercase(Locale.getDefault()).contains("maven") -> "Maven"
+            buildSystem.toString().lowercase(Locale.getDefault()).contains("gradle") -> "Gradle"
             else -> "unknown"
         }
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.psi.*
+import java.util.Locale
 
 object PyNamesMatchingMlCompletionFeatures {
   private val scopeNamesKey = Key<Map<String, Int>>("py.ml.completion.scope.names")
@@ -240,7 +241,7 @@ object PyNamesMatchingMlCompletionFeatures {
   }
 
   private fun splitByCamelCase(name: String): List<String> {
-    if (isAllLettersUpper(name)) return arrayListOf(processToken(name.toLowerCase()))
+    if (isAllLettersUpper(name)) return arrayListOf(processToken(name.lowercase(Locale.getDefault())))
     val result = ArrayList<String>()
     var curToken = ""
     for (ch in name) {
@@ -249,7 +250,7 @@ object PyNamesMatchingMlCompletionFeatures {
           result.add(processToken(curToken))
           curToken = ""
         }
-        curToken += ch.toLowerCase()
+        curToken += ch.lowercaseChar()
       }
       else {
         curToken += ch

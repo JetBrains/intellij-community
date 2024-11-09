@@ -41,6 +41,7 @@ import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
 import java.nio.file.Paths
+import java.util.Locale
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {
     companion object {
@@ -179,7 +180,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        if ("createfromusage" in testDataDirectory.path.toLowerCase()) {
+        if ("createfromusage" in testDataDirectory.path.lowercase(Locale.getDefault())) {
             // TODO: WTF
             KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
         } else {

@@ -13,6 +13,7 @@ import git4idea.config.UpdateMethod.REBASE
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.nio.file.Path
+import java.util.Locale
 
 class GitSubmoduleTest : GitSubmoduleTestBase() {
   private lateinit var main: GitRepository
@@ -211,7 +212,7 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
 
   private fun insertLogMarker(title: String) {
     LOG.info("")
-    LOG.info("--------- STARTING ${title.toUpperCase()} -----------")
+    LOG.info("--------- STARTING ${title.uppercase(Locale.getDefault())} -----------")
     LOG.info("")
   }
 }

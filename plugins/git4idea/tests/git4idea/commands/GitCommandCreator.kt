@@ -1,6 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands
 
+import java.util.Locale
+
 /**
  * Returns an instance of GitCommand object corresponding to the given Git command.
  *
@@ -9,7 +11,7 @@ package git4idea.commands
  */
 fun getGitCommandInstance(commandName: String): GitCommand {
   return try {
-    val fieldName = commandName.toUpperCase().replace('-', '_')
+    val fieldName = commandName.uppercase(Locale.getDefault()).replace('-', '_')
     GitCommand::class.java.getDeclaredField(fieldName).get(null) as GitCommand
   }
   catch (e: NoSuchFieldException) {
