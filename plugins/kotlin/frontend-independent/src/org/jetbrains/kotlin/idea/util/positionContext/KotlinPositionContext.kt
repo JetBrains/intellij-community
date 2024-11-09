@@ -132,8 +132,7 @@ class KotlinSuperReceiverNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
-    override val explicitReceiver: KtExpression?,
-    val superExpression: KtSuperExpression,
+    override val explicitReceiver: KtSuperExpression,
 ) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinExpressionNameReferencePositionContext(
@@ -319,11 +318,10 @@ object KotlinPositionContextDetector {
             }
 
             explicitReceiver is KtSuperExpression -> KotlinSuperReceiverNameReferencePositionContext(
-                position,
-                reference,
-                nameExpression,
-                explicitReceiver,
-                explicitReceiver
+                position = position,
+                reference = reference,
+                nameExpression = nameExpression,
+                explicitReceiver = explicitReceiver,
             )
 
             nameExpression is KtLabelReferenceExpression -> {

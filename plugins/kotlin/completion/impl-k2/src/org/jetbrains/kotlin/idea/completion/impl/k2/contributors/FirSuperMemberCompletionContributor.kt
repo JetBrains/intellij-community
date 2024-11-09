@@ -55,7 +55,7 @@ internal class FirSuperMemberCompletionContributor(
         positionContext: KotlinSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
     ) {
-        val superReceiver = positionContext.superExpression
+        val superReceiver = positionContext.explicitReceiver
         val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =

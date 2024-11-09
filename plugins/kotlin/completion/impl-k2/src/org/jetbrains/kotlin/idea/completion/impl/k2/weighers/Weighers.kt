@@ -98,7 +98,7 @@ internal class WeighingContext private constructor(
         fun create(
             parameters: KotlinFirCompletionParameters,
             elementInCompletionFile: PsiElement,
-            receiver: KtElement? = null,
+            explicitReceiver: KtElement? = null,
             expectedType: KaType? = null,
             implicitReceivers: List<KaImplicitReceiver> = emptyList(),
             symbolsToSkip: Set<KaSymbol> = emptySet(),
@@ -108,7 +108,7 @@ internal class WeighingContext private constructor(
             return WeighingContext(
                 token = token,
                 languageVersionSettings = parameters.languageVersionSettings,
-                explicitReceiver = receiver,
+                explicitReceiver = explicitReceiver,
                 positionInFakeCompletionFile = elementInCompletionFile,
                 myExpectedType = expectedType,
                 myImplicitReceivers = implicitReceivers,
@@ -138,17 +138,13 @@ internal class WeighingContext private constructor(
                 else -> positionContext.nameExpression.expectedType
             }
 
-            val (receiver, implicitReceivers) = when (positionContext) {
-                is KotlinSuperReceiverNameReferencePositionContext -> {
-                    // Implicit receivers do not match for this position completion context.
-                    positionContext.superExpression to emptyList<KaImplicitReceiver>()
-                }
+            val implicitReceivers = when (positionContext) {
+                // Implicit receivers do not match for this position completion context.
+                is KotlinSuperReceiverNameReferencePositionContext -> emptyList<KaImplicitReceiver>()
 
-                else -> {
-                    val scopeContext = parameters.originalFile
-                        .scopeContext(positionContext.nameExpression)
-                    positionContext.explicitReceiver to scopeContext.implicitReceivers
-                }
+                else -> parameters.originalFile
+                    .scopeContext(positionContext.nameExpression)
+                    .implicitReceivers
             }
 
             val symbolToSkip = when (positionContext) {
@@ -162,7 +158,7 @@ internal class WeighingContext private constructor(
             return create(
                 parameters = parameters,
                 elementInCompletionFile = positionContext.position,
-                receiver = receiver,
+                explicitReceiver = positionContext.explicitReceiver,
                 expectedType = expectedType,
                 implicitReceivers = implicitReceivers,
                 symbolsToSkip = setOfNotNull(symbolToSkip),
