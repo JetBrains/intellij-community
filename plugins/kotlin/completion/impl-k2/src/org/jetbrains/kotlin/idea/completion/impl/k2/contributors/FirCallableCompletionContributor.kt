@@ -116,14 +116,16 @@ internal open class FirCallableCompletionContributor(
     // todo replace with a sealed hierarchy; too many arguments
     protected data class CallableWithMetadataForCompletion(
         private val _signature: KaCallableSignature<*>,
-        private val _explicitReceiverTypeHint: KaType? = null,
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
         val itemText: @NlsSafe String? = null, // todo extract; only used for objects/enums
+        private val _explicitReceiverTypeHint: KaType? = null, // todo extract; only used for smart casts
     ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
             get() = _signature.token
+
         val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
+
         val explicitReceiverTypeHint: KaType? get() = withValidityAssertion { _explicitReceiverTypeHint }
     }
 
@@ -144,7 +146,8 @@ internal open class FirCallableCompletionContributor(
             )
         } else null
 
-        when (val receiver = positionContext.explicitReceiver) {
+        val receiver = positionContext.explicitReceiver
+        when (receiver) {
             null -> completeWithoutReceiver(positionContext, scopesContext, extensionChecker)
 
             else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
@@ -164,13 +167,12 @@ internal open class FirCallableCompletionContributor(
 
                     builder.withPresentableText(itemText)
                 }.map { builder ->
+                    receiver ?: return@map builder
+
                     if (builder.callableWeight?.kind != CallableMetadataProvider.CallableKind.RECEIVER_CAST_REQUIRED)
                         return@map builder
 
                     val explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint
-                        ?: return@map builder
-
-                    val receiver = weighingContext.explicitReceiver
                         ?: return@map builder
 
                     builder.adaptToExplicitReceiver(
@@ -265,14 +267,18 @@ internal open class FirCallableCompletionContributor(
                 }.forEach { yield(it) }
         }
 
-        collectExtensionsFromIndexAndResolveExtensionScope(
+        val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
             positionContext = positionContext,
             receiverTypes = scopeContext.implicitReceivers.map { it.type },
             extensionChecker = extensionChecker,
-        ).forEach { applicableExtension ->
-            val signature = applicableExtension.signature
-            yield(createCallableWithMetadata(signature, CompletionSymbolOrigin.Index, applicableExtension.insertionOptions))
+        ).map { applicableExtension ->
+            CallableWithMetadataForCompletion(
+                _signature = applicableExtension.signature,
+                options = applicableExtension.insertionOptions,
+                symbolOrigin = CompletionSymbolOrigin.Index,
+            )
         }
+        yieldAll(extensionDescriptors)
     }
 
     context(KaSession)
@@ -358,18 +364,26 @@ internal open class FirCallableCompletionContributor(
         yieldAll(callablesWithMetadata)
 
         val smartCastInfo = explicitReceiver.smartCastInfo
-        if (smartCastInfo?.isStable == false) {
-            // Collect members available from unstable smartcast as well.
-            val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
-                positionContext = positionContext,
-                typesOfPossibleReceiver = listOf(smartCastInfo.smartCastType),
-                scopeContext = scopeContext,
-                extensionChecker = extensionChecker,
+            ?: return@sequence
+        if (smartCastInfo.isStable) return@sequence
+        val smartCastType = smartCastInfo.smartCastType
+        val explicitReceiverTypeHint = smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
+
+        // Collect members available from unstable smartcast as well.
+        val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
+            positionContext = positionContext,
+            typesOfPossibleReceiver = listOf(smartCastType),
+            scopeContext = scopeContext,
+            extensionChecker = extensionChecker,
+        ).map {
+            if (explicitReceiverTypeHint != null) {
                 // Only offer the hint if the type is denotable.
-                explicitReceiverTypeHint = smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null },
-            )
-            yieldAll(callablesWithMetadataFromUnstableSmartCast)
+                it.copy(_explicitReceiverTypeHint = explicitReceiverTypeHint)
+            } else {
+                it
+            }
         }
+        yieldAll(callablesWithMetadataFromUnstableSmartCast)
     }
 
     context(KaSession)
@@ -378,7 +392,6 @@ internal open class FirCallableCompletionContributor(
         typesOfPossibleReceiver: List<KaType>,
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        explicitReceiverTypeHint: KaType? = null
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val nonExtensionMembers = typesOfPossibleReceiver.flatMap { typeOfPossibleReceiver ->
             collectNonExtensionsForType(
@@ -401,7 +414,6 @@ internal open class FirCallableCompletionContributor(
                 signatureWithScopeKind.signature,
                 signatureWithScopeKind.scopeKind,
                 isImportDefinitelyNotRequired = true,
-                explicitReceiverTypeHint = explicitReceiverTypeHint
             )
             yield(callableWithMetadata)
         }
@@ -415,25 +427,24 @@ internal open class FirCallableCompletionContributor(
                     scopeKind = scopeKind,
                     isImportDefinitelyNotRequired = false,
                     options = insertionOptions,
-                    explicitReceiverTypeHint = explicitReceiverTypeHint,
                 )
             )
         }
 
-        collectExtensionsFromIndexAndResolveExtensionScope(
+        val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
             positionContext = positionContext,
             receiverTypes = typesOfPossibleReceiver,
             extensionChecker = extensionChecker,
-        ).filter { filter(it.signature.symbol) }
-            .forEach { applicableExtension ->
-                val callableWithMetadata = createCallableWithMetadata(
-                    applicableExtension.signature,
-                    CompletionSymbolOrigin.Index,
-                    applicableExtension.insertionOptions,
-                    explicitReceiverTypeHint = explicitReceiverTypeHint
-                )
-                yield(callableWithMetadata)
-            }
+        ).filter {
+            filter(it.signature.symbol)
+        }.map { applicableExtension ->
+            CallableWithMetadataForCompletion(
+                _signature = applicableExtension.signature,
+                options = applicableExtension.insertionOptions,
+                symbolOrigin = CompletionSymbolOrigin.Index,
+            )
+        }
+        yieldAll(extensionDescriptors)
     }
 
     context(KaSession)
@@ -549,19 +560,11 @@ internal open class FirCallableCompletionContributor(
         scopeKind: KaScopeKind,
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(signature, isImportDefinitelyNotRequired),
-        explicitReceiverTypeHint: KaType? = null,
-    ): CallableWithMetadataForCompletion {
-        val symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind)
-        return CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
-    }
-
-    context(KaSession)
-    private fun createCallableWithMetadata(
-        signature: KaCallableSignature<*>,
-        symbolOrigin: CompletionSymbolOrigin,
-        options: CallableInsertionOptions = getOptions(signature),
-        explicitReceiverTypeHint: KaType? = null,
-    ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
+    ): CallableWithMetadataForCompletion = CallableWithMetadataForCompletion(
+        _signature = signature,
+        options = options,
+        symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind),
+    )
 
     private fun isUninitializedCallable(
         position: PsiElement,
