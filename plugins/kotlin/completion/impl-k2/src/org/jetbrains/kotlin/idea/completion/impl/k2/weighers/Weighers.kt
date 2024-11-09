@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
@@ -32,16 +33,18 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal class WeighingContext private constructor(
     override val token: KaLifetimeToken,
     val languageVersionSettings: LanguageVersionSettings,
-    val explicitReceiver: KtElement?,
     private val positionInFakeCompletionFile: PsiElement,
     private val myExpectedType: KaType?,
-    private val myImplicitReceivers: List<KaImplicitReceiver>,
+    private val myActualReceiverTypes: List<List<KaType>>,
     val contextualSymbolsCache: ContextualSymbolsCache,
     val importableFqNameClassifier: ImportableFqNameClassifier,
     private val mySymbolsToSkip: Set<KaSymbol>,
@@ -75,11 +78,8 @@ internal class WeighingContext private constructor(
             myExpectedType
         }
 
-    /** All implicit receivers in the current resolution context. The receiver declared in the inner most scope appears first. */
-    val implicitReceiver: List<KaImplicitReceiver>
-        get() = withValidityAssertion {
-            myImplicitReceivers
-        }
+    val actualReceiverTypes: List<List<KaType>>
+        get() = withValidityAssertion { myActualReceiverTypes }
 
     /**
      * Symbols that are very unlikely to be completed. They will appear on low positions in completion.
@@ -98,9 +98,8 @@ internal class WeighingContext private constructor(
         fun create(
             parameters: KotlinFirCompletionParameters,
             elementInCompletionFile: PsiElement,
-            explicitReceiver: KtElement? = null,
             expectedType: KaType? = null,
-            implicitReceivers: List<KaImplicitReceiver> = emptyList(),
+            actualReceiverTypes: List<List<KaType>> = emptyList(),
             symbolsToSkip: Set<KaSymbol> = emptySet(),
         ): WeighingContext {
             val completionFile = parameters.completionFile
@@ -108,10 +107,9 @@ internal class WeighingContext private constructor(
             return WeighingContext(
                 token = token,
                 languageVersionSettings = parameters.languageVersionSettings,
-                explicitReceiver = explicitReceiver,
                 positionInFakeCompletionFile = elementInCompletionFile,
                 myExpectedType = expectedType,
-                myImplicitReceivers = implicitReceivers,
+                myActualReceiverTypes = actualReceiverTypes,
                 contextualSymbolsCache = ContextualSymbolsCache(
                     getContextualSymbolsCache(
                         elementInCompletionFile = elementInCompletionFile,
@@ -138,15 +136,6 @@ internal class WeighingContext private constructor(
                 else -> positionContext.nameExpression.expectedType
             }
 
-            val implicitReceivers = when (positionContext) {
-                // Implicit receivers do not match for this position completion context.
-                is KotlinSuperReceiverNameReferencePositionContext -> emptyList<KaImplicitReceiver>()
-
-                else -> parameters.originalFile
-                    .scopeContext(positionContext.nameExpression)
-                    .implicitReceivers
-            }
-
             val symbolToSkip = when (positionContext) {
                 is KotlinWithSubjectEntryPositionContext -> (positionContext.subjectExpression as? KtSimpleNameExpression)
                     ?.mainReference
@@ -155,12 +144,23 @@ internal class WeighingContext private constructor(
                 else -> null
             }
 
+            fun implicitReceivers(): List<KaImplicitReceiver> = when (positionContext) {
+                // Implicit receivers do not match for this position completion context.
+                is KotlinSuperReceiverNameReferencePositionContext -> emptyList<KaImplicitReceiver>()
+
+                else -> parameters.originalFile
+                    .scopeContext(positionContext.nameExpression)
+                    .implicitReceivers
+            }
+
             return create(
                 parameters = parameters,
                 elementInCompletionFile = positionContext.position,
-                explicitReceiver = positionContext.explicitReceiver,
                 expectedType = expectedType,
-                implicitReceivers = implicitReceivers,
+                actualReceiverTypes = CallableMetadataProvider.calculateActualReceiverTypes(
+                    explicitReceiver = positionContext.explicitReceiver,
+                    implicitReceivers = ::implicitReceivers,
+                ),
                 symbolsToSkip = setOfNotNull(symbolToSkip),
             )
         }

@@ -12,10 +12,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
-import org.jetbrains.kotlin.idea.base.codeInsight.duration
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -35,8 +33,6 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import kotlin.system.measureNanoTime
-import kotlin.time.Duration.Companion.nanoseconds
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
     protected val parameters: KotlinFirCompletionParameters,
@@ -99,15 +95,10 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             }
         }.map { lookup ->
             if (!context.isPositionInsideImportOrPackageDirective) {
-                lateinit var actualReceiverTypes: List<List<KaType>>
-                lookup.duration = measureNanoTime {
-                    actualReceiverTypes = CallableMetadataProvider.calculateActualReceiverTypes(context)
-                }.nanoseconds
-
                 lookup.callableWeight = CallableMetadataProvider.getCallableMetadata(
                     signature = signature,
                     symbolOrigin = symbolOrigin,
-                    actualReceiverTypes = actualReceiverTypes,
+                    actualReceiverTypes = context.actualReceiverTypes,
                     isFunctionalVariableCall = signature.symbol is KaVariableSymbol
                             && lookup.`object` is FunctionCallLookupObject,
                 )

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
 import org.jetbrains.kotlin.idea.completion.reference
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -197,13 +197,15 @@ internal object CallableMetadataProvider {
         return null
     }
 
+    // todo refactor; move to an appropriate place
     context(KaSession)
     fun calculateActualReceiverTypes(
-        context: WeighingContext,
+        explicitReceiver: KtElement?,
+        implicitReceivers: () -> List<KaImplicitReceiver>,
     ): List<List<KaType>> {
-        val receiverTypes = context.explicitReceiver?.let {
+        val receiverTypes = explicitReceiver?.let {
             receiverTypes(it)
-        } ?: context.implicitReceiver.map { it.type }
+        } ?: implicitReceivers().map { it.type }
 
         return receiverTypes
             .filterNot { it is KaErrorType }
