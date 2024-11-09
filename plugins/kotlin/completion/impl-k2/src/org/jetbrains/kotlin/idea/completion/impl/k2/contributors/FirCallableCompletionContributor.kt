@@ -271,13 +271,7 @@ internal open class FirCallableCompletionContributor(
             positionContext = positionContext,
             receiverTypes = scopeContext.implicitReceivers.map { it.type },
             extensionChecker = extensionChecker,
-        ).map { applicableExtension ->
-            CallableWithMetadataForCompletion(
-                _signature = applicableExtension.signature,
-                options = applicableExtension.insertionOptions,
-                symbolOrigin = CompletionSymbolOrigin.Index,
-            )
-        }
+        )
         yieldAll(extensionDescriptors)
     }
 
@@ -435,15 +429,7 @@ internal open class FirCallableCompletionContributor(
             positionContext = positionContext,
             receiverTypes = typesOfPossibleReceiver,
             extensionChecker = extensionChecker,
-        ).filter {
-            filter(it.signature.symbol)
-        }.map { applicableExtension ->
-            CallableWithMetadataForCompletion(
-                _signature = applicableExtension.signature,
-                options = applicableExtension.insertionOptions,
-                symbolOrigin = CompletionSymbolOrigin.Index,
-            )
-        }
+        ).filter { filter(it.signature.symbol) }
         yieldAll(extensionDescriptors)
     }
 
@@ -475,7 +461,7 @@ internal open class FirCallableCompletionContributor(
         positionContext: KotlinNameReferencePositionContext,
         receiverTypes: List<KaType>,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-    ): Collection<ApplicableExtension> {
+    ): Collection<CallableWithMetadataForCompletion> {
         if (receiverTypes.isEmpty()) return emptyList()
 
         val extensionsFromIndex = symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(
@@ -487,7 +473,15 @@ internal open class FirCallableCompletionContributor(
             .filter { filter(it) }
             .filter { visibilityChecker.isVisible(it, positionContext) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker) }
-            .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
+            .let {
+                ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes)
+            }.map { applicableExtension ->
+                CallableWithMetadataForCompletion(
+                    _signature = applicableExtension.signature,
+                    options = applicableExtension.insertionOptions,
+                    symbolOrigin = CompletionSymbolOrigin.Index,
+                )
+            }
     }
 
     context(KaSession)

@@ -281,7 +281,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         @Suppress("SSBasedInspection", "UsagesOfObsoleteApi")
         if (activity is DumbAware) {
           if (pluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
-            LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
+            //LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
           }
           dumbService.runWithWaitForSmartModeDisabled().use {
             blockingContext {
