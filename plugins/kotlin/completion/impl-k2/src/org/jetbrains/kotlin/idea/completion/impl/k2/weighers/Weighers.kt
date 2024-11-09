@@ -213,9 +213,10 @@ internal object Weighers {
         NotImportedWeigher.addWeight(context, lookupElement, symbol, availableWithoutImport)
         ClassifierWeigher.addWeight(lookupElement, symbol, symbolWithOrigin.origin)
         VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
-        K2SoftDeprecationWeigher.addWeight(lookupElement, symbol, context.languageVersionSettings)
 
         if (symbol !is KaCallableSymbol) return@also
+
+        K2SoftDeprecationWeigher.addWeight(lookupElement, symbol, context.languageVersionSettings)
 
         PreferContextualCallablesWeigher.addWeight(lookupElement, symbol, context.contextualSymbolsCache)
         PreferFewerParametersWeigher. addWeight(lookupElement, symbol)
