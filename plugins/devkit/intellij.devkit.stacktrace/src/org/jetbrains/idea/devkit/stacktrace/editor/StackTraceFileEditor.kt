@@ -1,6 +1,7 @@
 package org.jetbrains.idea.devkit.stacktrace.editor
 
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -30,7 +31,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import org.jetbrains.idea.devkit.DevKitIcons
 import org.jetbrains.idea.devkit.stacktrace.DevKitStackTraceBundle
 import org.jetbrains.idea.devkit.stacktrace.util.StackTracePluginScope
 import java.awt.BorderLayout
@@ -129,7 +129,7 @@ class StackTraceFileEditor(private val project: Project, private val file: Virtu
         project, null,
         DevKitStackTraceBundle.message("tab.title.freeze.analyzer"),
         "${result.message}\n${result.additionalMessage ?: ""}\n======= Stack Trace: ========= \n${result.threads.joinToString { it -> it.stackTrace }}",
-        DevKitIcons.Freeze, false
+        AllIcons.Debugger.Freeze, false
       )
       contentManager.addContent(createNewContent(freezeDescriptor).apply {
         executionId = freezeDescriptor.executionId
