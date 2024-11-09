@@ -76,23 +76,26 @@ internal object CallableMetadataProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getCallableMetadata(
-        context: WeighingContext,
         signature: KaCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
+        actualReceiverTypes: List<List<KaType>>,
         isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {
         val symbol = signature.symbol
-        if (symbol is KaSyntheticJavaPropertySymbol) {
-            return getCallableMetadata(context, symbol.javaGetterSymbol.asSignature(), symbolOrigin, isFunctionalVariableCall)
-        }
-
-        if (symbol.isExtensionCall(isFunctionalVariableCall)) return extensionWeight(signature, context, isFunctionalVariableCall)
-
-        return when (val scopeKind = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
+        return if (symbol is KaSyntheticJavaPropertySymbol) {
+            getCallableMetadata(
+                signature = symbol.javaGetterSymbol.asSignature(),
+                symbolOrigin = symbolOrigin,
+                actualReceiverTypes = actualReceiverTypes,
+                isFunctionalVariableCall = isFunctionalVariableCall,
+            )
+        } else if (symbol.isExtensionCall(isFunctionalVariableCall)) {
+            extensionWeight(signature, actualReceiverTypes, isFunctionalVariableCall)
+        } else when (val scopeKind = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
             is KaScopeKind.LocalScope -> CallableMetadata(CallableKind.LOCAL, scopeKind.indexInTower)
 
             is KaScopeKind.TypeScope,
-            is KaScopeKind.StaticMemberScope -> nonExtensionWeight(signature, context)
+            is KaScopeKind.StaticMemberScope -> nonExtensionWeight(signature, actualReceiverTypes)
 
             is KaScopeKind.TypeParameterScope -> null
 
@@ -106,16 +109,15 @@ internal object CallableMetadataProvider {
     context(KaSession)
     private fun nonExtensionWeight(
         signature: KaCallableSignature<*>,
-        context: WeighingContext,
+        flattenedActualReceiverTypes: List<List<KaType>>,
     ): CallableMetadata? {
         val symbol = signature.symbol
 
         val expectedReceiver = getExpectedNonExtensionReceiver(signature.symbol) ?: return null
         val expectedReceiverType = buildClassType(expectedReceiver)
-        val flattenedActualReceiverTypes = getFlattenedActualReceiverTypes(context)
 
         val replaceTypeArguments = expectedReceiverType is KaClassType && expectedReceiverType.typeArguments.isNotEmpty()
-        val correctedFlattenedActualReceiverTypes = if (replaceTypeArguments) {
+        val actualReceiverTypes = if (replaceTypeArguments) {
             // replace type arguments to correctly compare actual types with built expected type
             flattenedActualReceiverTypes.map { typeConjuncts ->
                 typeConjuncts.mapNotNull { it.replaceTypeArgumentsWithStarProjections() }
@@ -128,7 +130,7 @@ internal object CallableMetadataProvider {
 
         return callableWeightByReceiver(
             symbol,
-            correctedFlattenedActualReceiverTypes,
+            actualReceiverTypes,
             expectedReceiverType,
         )
             // currently override members are considered as non-immediate in completion
@@ -139,10 +141,9 @@ internal object CallableMetadataProvider {
     @OptIn(KaExperimentalApi::class)
     private fun extensionWeight(
         signature: KaCallableSignature<*>,
-        context: WeighingContext,
+        actualReceiverTypes: List<List<KaType>>,
         isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {
-        val flattenedActualReceiverTypes = getFlattenedActualReceiverTypes(context)
         val expectedExtensionReceiverType = if (isFunctionalVariableCall) {
             (signature.returnType as? KaFunctionType)?.receiverType
         } else {
@@ -154,12 +155,11 @@ internal object CallableMetadataProvider {
         //   * the call site explicitly specifies the extension receiver , or
         //   * the call site specifies no receiver.
         // In other words, in this case, an explicit receiver can never be a dispatch receiver.
-        val weightBasedOnExtensionReceiver = callableWeightByReceiver(
+        return callableWeightByReceiver(
             signature.symbol,
-            flattenedActualReceiverTypes,
+            actualReceiverTypes,
             expectedExtensionReceiverType,
         )
-        return weightBasedOnExtensionReceiver
     }
 
     context(KaSession)
@@ -173,36 +173,44 @@ internal object CallableMetadataProvider {
     }
 
     context(KaSession)
-    private fun getFlattenedActualReceiverTypes(context: WeighingContext): List<List<KaType>> {
-        val actualExplicitReceiverTypes = context.explicitReceiver?.let { receiver ->
-            val expandedSymbol = receiver.reference()
-                ?.resolveToExpandedSymbol()
+    private fun receiverTypes(
+        receiver: KtElement,
+    ): List<KaType>? {
+        val expandedSymbol = receiver.reference()
+            ?.resolveToExpandedSymbol()
 
-            val referencedClass = (expandedSymbol as? KaClassLikeSymbol)
-                ?.takeIf {
-                    isInCallableReferenceExpression(receiver)
-                            || receiver is KDocName
-                }
-
-            if (referencedClass != null) {
-                listOfNotNull(
-                    referencedClass,
-                    referencedClass.companionObject,
-                ).map { buildClassType(it) }
-            } else {
-                (receiver as? KtExpression)
-                    ?.getTypeWithCorrectedNullability(expandedSymbol)
-                    ?.let { listOf(it) }
-            }
+        if (expandedSymbol is KaClassLikeSymbol
+            && (isInCallableReferenceExpression(receiver)
+                    || receiver is KDocName)
+        ) {
+            return listOfNotNull(
+                expandedSymbol,
+                expandedSymbol.companionObject,
+            ).map { buildClassType(it) }
         }
 
-        val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
-        return (actualExplicitReceiverTypes ?: actualImplicitReceiverTypes)
+        if (receiver is KtExpression) {
+            val receiverType = receiver.getTypeWithCorrectedNullability(expandedSymbol)
+            if (receiverType != null) return listOf(receiverType)
+        }
+
+        return null
+    }
+
+    context(KaSession)
+    fun calculateActualReceiverTypes(
+        context: WeighingContext,
+    ): List<List<KaType>> {
+        val receiverTypes = context.explicitReceiver?.let {
+            receiverTypes(it)
+        } ?: context.implicitReceiver.map { it.type }
+
+        return receiverTypes
             .filterNot { it is KaErrorType }
             .map { it.flatten() }
     }
 
-    private val KaClassLikeSymbol.companionObject: KaNamedClassSymbol?
+    private inline val KaClassLikeSymbol.companionObject: KaNamedClassSymbol?
         get() = (this as? KaNamedClassSymbol)?.companionObject
 
     context(KaSession)
@@ -264,7 +272,7 @@ internal object CallableMetadataProvider {
     context(KaSession)
     private fun callableWeightByReceiver(
         symbol: KaCallableSymbol,
-        flattenedActualReceiverTypes: List<List<KaType>>,
+        actualReceiverTypes: List<List<KaType>>,
         expectedReceiverType: KaType,
     ): CallableMetadata {
         var allReceiverTypesMatch = true
@@ -272,7 +280,7 @@ internal object CallableMetadataProvider {
         var bestMatchWeightKind: CallableKind? = null
 
         // minimal level corresponds to receivers with the closest scopes
-        for ((level, actualReceiverTypeConjuncts) in flattenedActualReceiverTypes.withIndex()) {
+        for ((level, actualReceiverTypeConjuncts) in actualReceiverTypes.withIndex()) {
             val weightKindsByMatchingReceiversFromLevel = actualReceiverTypeConjuncts
                 .mapNotNull { callableWeightKindByReceiverType(symbol, it, expectedReceiverType) }
 
@@ -294,7 +302,7 @@ internal object CallableMetadataProvider {
 
         // use `null` for the receiver index if the symbol matches every actual receiver in order to prevent members of common super
         // classes such as `Any` from appearing on top
-        if (allReceiverTypesMatch && flattenedActualReceiverTypes.size > 1) bestMatchIndex = null
+        if (allReceiverTypesMatch && actualReceiverTypes.size > 1) bestMatchIndex = null
 
         return CallableMetadata(bestMatchWeightKind, bestMatchIndex)
     }

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -23,8 +24,8 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.addCallableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -93,7 +94,16 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                 )?.let { yield(it) }
             }
         }.map { lookup ->
-            lookup.addCallableWeight(context, signature, symbolOrigin)
+            if (!context.isPositionInsideImportOrPackageDirective) {
+                lookup.callableWeight = CallableMetadataProvider.getCallableMetadata(
+                    signature = signature,
+                    symbolOrigin = symbolOrigin,
+                    actualReceiverTypes = CallableMetadataProvider.calculateActualReceiverTypes(context),
+                    isFunctionalVariableCall = signature.symbol is KaVariableSymbol
+                            && lookup.`object` is FunctionCallLookupObject,
+                )
+            }
+
             lookup.applyWeighs(context, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
             lookup.applyKindToPresentation()
         }
