@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.idea.devkit.stacktrace.DevKitStackTraceBundle
-import org.jetbrains.idea.devkit.stacktrace.FreezeDescriptor
+import org.jetbrains.idea.devkit.stacktrace.getFreezeRunDescriptor
 import org.jetbrains.idea.devkit.stacktrace.util.StackTracePluginScope
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
@@ -116,7 +116,7 @@ class StackTraceFileEditor(private val project: Project, private val file: Virtu
   }
 
   private suspend fun addFreezeAnalysisContent(contentManager: ContentManager) {
-    FreezeDescriptor.getFreezeRunDescriptor(document.text, project)?.let { freezeDescriptor ->
+    getFreezeRunDescriptor(document.text, project)?.let { freezeDescriptor ->
       contentManager.addContent(createNewContent(freezeDescriptor).apply {
         executionId = freezeDescriptor.executionId
         component = freezeDescriptor.component
