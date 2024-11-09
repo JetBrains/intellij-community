@@ -33,6 +33,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TestTimeOut;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -61,7 +62,6 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
     PlatformTestUtil.assumeEnoughParallelism();
   }
 
@@ -84,6 +84,11 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override

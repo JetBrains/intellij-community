@@ -1,0 +1,54 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "testFramework-junit5",
+  module_name = "intellij.platform.testFramework.junit5",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:annotations",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:junit-platform-launcher.provided",
+    "@libraries//:junit-jupiter-api",
+    "@libraries//:junit-jupiter-engine",
+    "@community//platform/util",
+    "@community//platform/util-ex",
+    "@community//platform/core-api:core",
+    "@community//platform/ide-core-impl",
+    "@community//platform/projectModel-impl",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/testFramework/common:testFramework-common",
+    "@community//java/java-runtime:java-rt",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@libraries//:opentest4j",
+    "@community//platform/testFramework/core:testFramework-core",
+    "@community//platform/util/jdom:util-jdom",
+  ],
+  exports = ["@community//platform/testFramework/common:testFramework-common"],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "testFramework-junit5_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":testFramework-junit5",
+    "@libraries//:junit-jupiter-params",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

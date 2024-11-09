@@ -38,14 +38,14 @@ public abstract class DataValidators {
 
   public static final ExtensionPointName<DataValidators> EP_NAME = ExtensionPointName.create("com.intellij.dataValidators");
 
-  public abstract void collectValidators(@NotNull Registry registry);
+  protected abstract void collectValidators(@NotNull ValidatorRegistry registry);
 
   public interface Validator<T> {
     boolean checkValid(@NotNull T data, @NotNull String dataId, @NotNull Object source);
   }
 
   @ApiStatus.NonExtendable
-  public interface Registry {
+  protected interface ValidatorRegistry {
     <T> void register(@NotNull DataKey<T> key, @NotNull Validator<? super T> validator);
   }
 
@@ -160,7 +160,7 @@ public abstract class DataValidators {
       return null;
     }
     Map<String, List<Validator<?>>> map = FactoryMap.create(__ -> new ArrayList<>());
-    Registry registry = new Registry() {
+    ValidatorRegistry registry = new ValidatorRegistry() {
       @Override
       public <T> void register(@NotNull DataKey<T> key,
                                @NotNull Validator<? super T> validator) {

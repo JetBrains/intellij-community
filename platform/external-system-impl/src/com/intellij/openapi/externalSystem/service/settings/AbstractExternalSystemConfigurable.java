@@ -81,9 +81,8 @@ public abstract class AbstractExternalSystemConfigurable<
       SystemSettings settings = getSettings();
       prepareSystemSettings(settings);
       prepareProjectSettings(settings);
-      return myComponent;
     }
-    return myComponent;
+    return ScrollPaneFactory.createScrollPane(myComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, true);
   }
 
   @SuppressWarnings("unchecked")

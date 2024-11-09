@@ -8,6 +8,7 @@ import org.junit.Assert
 import org.junit.Test
 
 class GrammarCheckerTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.DE.ZEITANGABEN")
 
   @Test
   fun `test empty text`() {

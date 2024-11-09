@@ -90,7 +90,7 @@ public interface TestIndexingModeSupporter {
 
     private static void onlyAllowOwnTasks(@NotNull Project project, @NotNull Disposable testRootDisposable) {
       UnindexedFilesScannerExecutorImpl.getInstance(project)
-        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReason(), INDEXING_REASON));
+        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReasonBlocking(), INDEXING_REASON));
       ApplicationManager.getApplication().invokeAndWait(() -> {
         UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
       });
@@ -155,6 +155,8 @@ public interface TestIndexingModeSupporter {
   static void addTest(@NotNull Class<? extends TestIndexingModeSupporter> aClass,
                       @NotNull TestIndexingModeSupporter.IndexingModeTestHandler handler,
                       @NotNull TestSuite parentSuite) {
+    if (handler.getIndexingMode() == DUMB_EMPTY_INDEX &&
+        !Registry.is("ide.dumb.mode.check.awareness")) return;
     if (handler.shouldIgnore(aClass)) return;
     try {
       TestSuite suite = handler.createTestSuite();

@@ -23,6 +23,7 @@ def create_kotlinc_options(name, jvm_target, x_optin = []):
       #"org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
     ] + x_optin,
     x_jvm_default = "all",
+    x_lambdas = "indy",
     warn = "off",
     visibility=["//visibility:public"],
     include_stdlibs = "none",

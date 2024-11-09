@@ -31,6 +31,7 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
     override fun asCompilerRef(element: PsiElement, names: NameEnumerator): CompilerRef? = asCompilerRefs(element, names)?.singleOrNull()
     override fun asCompilerRefs(element: PsiElement, names: NameEnumerator): List<CompilerRef>? =
         when (val originalElement = element.unwrapped) {
+            is KtEnumEntry -> originalElement.asEnumCompilerRefs(names)
             is KtClass -> originalElement.asClassCompilerRef(names)?.let(::listOf)
             is KtObjectDeclaration -> originalElement.asObjectCompilerRefs(names)
             is KtConstructor<*> -> originalElement.asConstructorCompilerRef(names)
@@ -79,6 +80,13 @@ class KotlinCompilerRefHelper : LanguageCompilerRefAdapter.ExternalLanguageHelpe
 
         return overridden
     }
+}
+
+private fun KtEnumEntry.asEnumCompilerRefs(enumerator: NameEnumerator): List<CompilerRef>? {
+    val containingClassOrObject = containingClassOrObject ?: return null
+    val owner = containingClassOrObject.asClassCompilerRef(enumerator) ?: return null
+    val name = name ?: return null
+    return listOf(owner.createField(enumerator.tryEnumerate(name)))
 }
 
 private fun KtCallableDeclaration.asCallableCompilerRefs(names: NameEnumerator): List<CompilerRef>? {

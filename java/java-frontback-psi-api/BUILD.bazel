@@ -1,0 +1,21 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-frontback-psi",
+  module_name = "intellij.java.frontback.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  deps = ["@community//platform/core-api:core"],
+  exports = ["@community//platform/core-api:core"],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

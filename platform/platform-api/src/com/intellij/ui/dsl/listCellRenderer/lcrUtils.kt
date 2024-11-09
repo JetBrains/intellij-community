@@ -5,6 +5,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBEmptyBorder
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.border.EmptyBorder
@@ -12,6 +13,7 @@ import javax.swing.border.EmptyBorder
 /**
  * Strips any horizontal insets ([EmptyBorder], [JBEmptyBorder]) and ipads ([SimpleColoredComponent.getIpad])
  */
+@ApiStatus.Internal
 fun stripHorizontalInsets(component: JComponent) {
   component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
 

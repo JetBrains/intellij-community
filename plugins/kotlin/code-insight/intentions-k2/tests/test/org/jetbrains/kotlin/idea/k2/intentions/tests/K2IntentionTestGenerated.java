@@ -7284,7 +7284,59 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate")
+    public static class InsertCurlyBracesToTemplate extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dontInsertBrackets1.kt")
+        public void testDontInsertBrackets1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/dontInsertBrackets1.kt");
+        }
+
+        @TestMetadata("insertBrackets1.kt")
+        public void testInsertBrackets1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets1.kt");
+        }
+
+        @TestMetadata("insertBrackets2.kt")
+        public void testInsertBrackets2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets2.kt");
+        }
+
+        @TestMetadata("insertBrackets3.kt")
+        public void testInsertBrackets3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets3.kt");
+        }
+
+        @TestMetadata("insertBrackets4.kt")
+        public void testInsertBrackets4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets4.kt");
+        }
+
+        @TestMetadata("insertBrackets5.kt")
+        public void testInsertBrackets5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets5.kt");
+        }
+
+        @TestMetadata("insertBracketsEnd.kt")
+        public void testInsertBracketsEnd() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsEnd.kt");
+        }
+
+        @TestMetadata("insertBracketsMiddle.kt")
+        public void testInsertBracketsMiddle() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsMiddle.kt");
+        }
+    }
 
 
 
@@ -7556,7 +7608,39 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression")
+    public static class ConvertVariableAssignmentToExpression extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("complexLhs.kt")
+        public void testComplexLhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/complexLhs.kt");
+        }
+
+        @TestMetadata("complexRhs.kt")
+        public void testComplexRhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/complexRhs.kt");
+        }
+
+        @TestMetadata("noAssignment.kt")
+        public void testNoAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/noAssignment.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/simple.kt");
+        }
+    }
 
 
 
@@ -11251,7 +11335,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment")
+    public static class ConvertBlockCommentToLineComment extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("afterStatement.kt")
+        public void testAfterStatement() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/afterStatement.kt");
+        }
+
+        @TestMetadata("beforeStatement.kt")
+        public void testBeforeStatement() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/beforeStatement.kt");
+        }
+
+        @TestMetadata("blankLine.kt")
+        public void testBlankLine() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/blankLine.kt");
+        }
+
+        @TestMetadata("docComment.kt")
+        public void testDocComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/docComment.kt");
+        }
+
+        @TestMetadata("endOflineComment.kt")
+        public void testEndOflineComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/endOflineComment.kt");
+        }
+
+        @TestMetadata("newLinesBetweenCommentAndDeclaration.kt")
+        public void testNewLinesBetweenCommentAndDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/newLinesBetweenCommentAndDeclaration.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/simple.kt");
+        }
+    }
 
 
 

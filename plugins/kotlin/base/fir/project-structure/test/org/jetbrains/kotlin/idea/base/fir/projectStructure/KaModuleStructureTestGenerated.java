@@ -60,14 +60,39 @@ public class KaModuleStructureTestGenerated extends AbstractKaModuleStructureTes
         runTest("testData/kaModuleStructure/libraryProdTestExportedDependencies/");
     }
 
+    @TestMetadata("moduleChainCycle")
+    public void testModuleChainCycle() throws Exception {
+        runTest("testData/kaModuleStructure/moduleChainCycle/");
+    }
+
     @TestMetadata("moduleExportedDependencies")
     public void testModuleExportedDependencies() throws Exception {
         runTest("testData/kaModuleStructure/moduleExportedDependencies/");
     }
 
+    @TestMetadata("moduleExportedDependenciesChain")
+    public void testModuleExportedDependenciesChain() throws Exception {
+        runTest("testData/kaModuleStructure/moduleExportedDependenciesChain/");
+    }
+
+    @TestMetadata("moduleExportedDependenciesChainCycle")
+    public void testModuleExportedDependenciesChainCycle() throws Exception {
+        runTest("testData/kaModuleStructure/moduleExportedDependenciesChainCycle/");
+    }
+
+    @TestMetadata("moduleExportedDependenciesSingleCycle")
+    public void testModuleExportedDependenciesSingleCycle() throws Exception {
+        runTest("testData/kaModuleStructure/moduleExportedDependenciesSingleCycle/");
+    }
+
     @TestMetadata("moduleProdTestExportedDependencies")
     public void testModuleProdTestExportedDependencies() throws Exception {
         runTest("testData/kaModuleStructure/moduleProdTestExportedDependencies/");
+    }
+
+    @TestMetadata("moduleSingleCycle")
+    public void testModuleSingleCycle() throws Exception {
+        runTest("testData/kaModuleStructure/moduleSingleCycle/");
     }
 
     @TestMetadata("productionAndTest")

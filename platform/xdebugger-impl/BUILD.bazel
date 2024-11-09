@@ -1,0 +1,64 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "debugger-impl",
+  module_name = "intellij.platform.debugger.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/xdebugger-api:debugger",
+    "@community//platform/lang-impl",
+    "@community//platform/execution-impl",
+    "@community//platform/diff-api:diff",
+    "@libraries//:streamex",
+    "@community//platform/statistics",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/analysis-impl",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:miglayout-swing",
+    "@community//platform/util/text-matching:util-text-matching",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/editor-ui-ex:editor-ex",
+    "@community//platform/platform-impl/ui:ide-ui",
+    "@libraries//:jackson-core",
+    "@libraries//:jackson-databind",
+    "@community//platform/kernel/shared:kernel",
+    "@community//platform/platform-impl/internal:ide-internal",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//platform/project/shared:project",
+  ],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "debugger-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":debugger-impl",
+    "@community//platform/xdebugger-testFramework:debugger-testFramework",
+    "@community//platform/testFramework",
+    "@community//platform/testFramework/extensions:testExtensions",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

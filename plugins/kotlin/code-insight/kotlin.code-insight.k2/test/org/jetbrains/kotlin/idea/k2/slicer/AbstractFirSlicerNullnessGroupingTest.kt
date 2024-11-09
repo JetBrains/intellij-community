@@ -20,17 +20,6 @@ abstract class AbstractFirSlicerNullnessGroupingTest: AbstractSlicerNullnessGrou
         return (sliceProvider as KotlinSliceProvider).nullnessAnalyzer
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun doTest(
-        path: String,
-        sliceProvider: SliceLanguageSupportProvider,
-        rootNode: SliceRootNode
-    ) {
-        allowAnalysisOnEdt {
-            super.doTest(path, sliceProvider, rootNode)
-        }
-    }
-
     override fun getResultsFile(path: String): File {
         val file = File(path.replace(".kt", ".k2.nullnessGroups.txt"))
         if (file.exists()) {

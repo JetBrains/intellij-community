@@ -9,6 +9,7 @@ import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerConnector.State
 import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
+import java.nio.file.Path
 import java.rmi.RemoteException
 
 
@@ -132,10 +133,10 @@ class DummyIndexer : MavenServerIndexer {
 
   override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): ArrayList<IndexedMavenId>? = null
 
-  override fun addArtifacts(indexId: MavenIndexId, artifactFiles: ArrayList<File>, token: MavenToken): ArrayList<AddArtifactResponse> {
+  override fun addArtifacts(indexId: MavenIndexId, artifactFiles: ArrayList<Path>, token: MavenToken): ArrayList<AddArtifactResponse> {
     val responses = ArrayList<AddArtifactResponse>()
     for (artifactFile in artifactFiles) {
-      responses.add(AddArtifactResponse(artifactFile, IndexedMavenId(null, null, null, null, null)))
+      responses.add(AddArtifactResponse(artifactFile.toFile(), IndexedMavenId(null, null, null, null, null)))
     }
     return responses
   }
@@ -151,7 +152,7 @@ class DummyIndexer : MavenServerIndexer {
   override fun release(token: MavenToken?) {
   }
 
-  override fun indexExists(dir: File?, token: MavenToken?): Boolean {
+  override fun indexExists(dir: Path?, token: MavenToken?): Boolean {
     return false
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
@@ -11,14 +12,12 @@ import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jediterm.terminal.ProcessTtyConnector;
-import com.jediterm.terminal.Terminal;
-import com.jediterm.terminal.TextStyle;
-import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.*;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
@@ -26,6 +25,7 @@ import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefreshService;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
+import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -244,6 +244,36 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     TerminalLineIntervalHighlighting highlighting = line.addCustomHighlighting(intervalStartOffset, intervalLength, style);
     getTerminalPanel().repaint();
     return highlighting;
+  }
+
+  @Override
+  public void close() {
+    //noinspection deprecation
+    TerminalStarter starter = getTerminalStarter();
+    if (starter == null) {
+      super.close();
+    }
+    else {
+      starter.close(); // close in background
+      TtyConnector connector = starter.getTtyConnector();
+      TerminalUtilKt.waitFor(connector, TerminalUtilKt.STOP_EMULATOR_TIMEOUT, () -> {
+        if (connector.isConnected()) {
+          LOG.warn("Cannot destroy " + getDebugName(connector));
+        }
+        super.close();
+        return Unit.INSTANCE;
+      });
+    }
+  }
+
+  private static @NotNull String getDebugName(@NotNull TtyConnector connector) {
+    ProcessTtyConnector processTtyConnector = getProcessTtyConnector(connector);
+    String commandLineText = null;
+    if (processTtyConnector != null) {
+      List<String> commandLine = processTtyConnector.getCommandLine();
+      commandLineText = commandLine != null ? Strings.join(commandLine, " ") : null;
+    }
+    return connector.getName() + ": " + Objects.requireNonNull(commandLineText, "<no command line>");
   }
 
   @Override

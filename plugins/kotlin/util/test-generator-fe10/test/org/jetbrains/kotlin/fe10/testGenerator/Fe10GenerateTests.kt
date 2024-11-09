@@ -490,7 +490,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractGotoTestOrCodeActionTest> {
-            model("navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+\$"))
+            model("navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+$"))
         }
 
         testClass<AbstractKotlinGotoImplementationMultiModuleTest> {
@@ -592,6 +592,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "unusedVariable", // In FE1.0, this is a quickfix rather than a local inspection
                     "canSimplifyDollarLiteral", // K2-only
                     "canConvertToMultiDollarString", // K2-only
+                    "branched/introduceWhenSubject/whenGuards", // K2-only
                 )
             )
         }
@@ -1071,10 +1072,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         testClass<AbstractKotlinCallChainHintsProviderTest> {
             model("codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
-        }
-
-        testClass<AbstractKotlinCodeVisionProviderTest> {
-            model("codeInsight/codeVision")
         }
 
         testClass<AbstractKotlinNavBarTest> {

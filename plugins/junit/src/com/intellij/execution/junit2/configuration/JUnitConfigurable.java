@@ -28,6 +28,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Condition;
@@ -86,15 +87,15 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private final BrowseModuleValueActionListener[] myBrowsers;
   private JComponent myPackagePanel;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myPackage;
-  private LabeledComponent<TextFieldWithBrowseButton> myDir;
-  private LabeledComponent<JPanel> myPattern;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> myDir;
+  private LabeledComponentNoThrow<JPanel> myPattern;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myClass;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMethod;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myCategory;
   // Fields
   private JPanel myWholePanel;
-  private LabeledComponent<ModuleDescriptionsComboBox> myModule;
-  private LabeledComponent<JCheckBox> myUseModulePath;
+  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> myModule;
+  private LabeledComponentNoThrow<JCheckBox> myUseModulePath;
   private CommonJavaParametersPanel myCommonJavaParameters;
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
@@ -109,9 +110,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JPanel myScopesPanel;
   private JComboBox<String> myRepeatCb;
   private JTextField myRepeatCountField;
-  private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
-  private LabeledComponent<RawCommandLineEditor> myUniqueIdField;
-  private LabeledComponent<RawCommandLineEditor> myTagsField;
+  private LabeledComponentNoThrow<JComboBox<String>> myChangeListLabeledComponent;
+  private LabeledComponentNoThrow<RawCommandLineEditor> myUniqueIdField;
+  private LabeledComponentNoThrow<RawCommandLineEditor> myTagsField;
   private final Project myProject;
   private JComponent anchor;
 

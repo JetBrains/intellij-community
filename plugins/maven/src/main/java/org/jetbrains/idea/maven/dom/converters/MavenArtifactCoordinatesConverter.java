@@ -38,7 +38,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
-import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -60,8 +60,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       MavenRepositoryInfo repository = MavenIndexUtils.getLocalRepository(contextProject);
       if (repository == null) return null;
       Path artifactPath = MavenUtil.getArtifactPath(Path.of(repository.getUrl()), id, "pom", null);
-      if (artifactPath != null && artifactPath.toFile().exists()) {
-        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath.toFile(), repository.getUrl());
+      if (artifactPath != null && Files.exists(artifactPath)) {
+        MavenIndicesManager.getInstance(contextProject).scheduleArtifactIndexing(id, artifactPath, repository.getUrl());
         return s;
       }
       return null;
@@ -238,9 +238,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private static PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      File file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
+      Path file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
       if (null == file) return null;
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(file);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);
@@ -412,7 +412,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       PsiManager psiManager = context.getPsiManager();
 
       Path artifactFile = MavenArtifactUtil
-        .getArtifactNioPath(projectsManager.getLocalRepository(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+        .getArtifactNioPath(projectsManager.getRepositoryPath(), id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
 
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(artifactFile);
       if (virtualFile != null) {

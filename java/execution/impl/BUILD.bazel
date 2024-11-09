@@ -1,0 +1,54 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-execution-impl",
+  module_name = "intellij.java.execution.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/openapi:java",
+    "@community//java/execution/openapi:java-execution",
+    "@community//java/java-runtime:java-rt",
+    "@community//java/debugger/impl:java-debugger-impl",
+    "@community//platform/testRunner",
+    "@community//java/compiler/openapi:java-compiler",
+    "@community//java/java-impl",
+    "@community//java/java-indexing-api:java-indexing",
+    "@community//platform/smRunner",
+    "@community//java/execution/jshell-protocol:java-jshell-protocol",
+    "@libraries//:intellij-test-discovery-agent",
+    "@community//lib:jshell-frontend",
+    "@community//platform/external-system-api:externalSystem",
+    "@community//platform/external-system-impl:externalSystem-impl",
+    "@libraries//:gson",
+    "@libraries//:jackson-core",
+    "@libraries//:miglayout-swing",
+    "@community//platform/vcs-impl",
+    "@community//platform/util/nanoxml:util-nanoxml",
+    "@libraries//:jackson-databind",
+    "@community//platform/xdebugger-impl:debugger-impl",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/statistics",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/threadDumpParser",
+  ],
+  exports = [
+    "@community//java/execution/openapi:java-execution",
+    "@community//platform/testRunner",
+    "@community//platform/statistics",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

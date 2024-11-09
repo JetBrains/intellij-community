@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "util-troveCompileOnly",
   module_name = "intellij.platform.util.troveCompileOnly",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = ["@libraries//:annotations"]

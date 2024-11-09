@@ -1,0 +1,48 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "copyright",
+  module_name = "intellij.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//xml/openapi:xml",
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@libraries//:velocity-engine-core",
+    "@community//xml/impl:xml-impl",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/external-system-api:externalSystem",
+    "@community//platform/core-ui",
+    "@community//platform/util/jdom:util-jdom",
+  ],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "copyright_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":copyright",
+    "@community//platform/testFramework/extensions:testExtensions",
+    "@community//platform/testFramework",
+    "@community//platform/configuration-store-impl:configurationStore-impl",
+    "@libraries//:junit-jupiter-api",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -279,10 +279,13 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
         deps.add(dep);
       }
       // do not add PsiFile as dependency because it will be translated to PSI_MOD_COUNT which fires too often, even for unrelated files
-      deps.add(psiFile.getFileDocument());
+      Document document = psiFile.getViewProvider().getDocument();
+      if (document != null) {
+        deps.add(document);
+      }
       cache.add(new SoftReference<>(psiFile));
 
-      return CachedValueProvider.Result.create(value, deps);
+      return CachedValueProvider.Result.create(value, List.copyOf(deps));
     }
   }
 }

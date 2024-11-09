@@ -1,0 +1,37 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resource",
+  resources = glob(["resource/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-frontback-impl",
+  module_name = "intellij.java.frontback.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/java-frontback-psi-api:java-frontback-psi",
+    "@community//java/java-frontback-psi-impl",
+    "@community//platform/core-impl",
+    "@community//platform/lang-impl",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/analysis-impl",
+    "@community//platform/core-ui",
+    "@community//xml/xml-frontback",
+    "@community//platform/core-api:core",
+    "@community//platform/util/jdom:util-jdom",
+  ],
+  exports = [
+    "@community//java/java-frontback-psi-api:java-frontback-psi",
+    "@community//java/java-frontback-psi-impl",
+    "@community//platform/core-impl",
+    "@community//xml/xml-frontback",
+  ],
+  runtime_deps = [":resource"]
+)
+### auto-generated section `build` end

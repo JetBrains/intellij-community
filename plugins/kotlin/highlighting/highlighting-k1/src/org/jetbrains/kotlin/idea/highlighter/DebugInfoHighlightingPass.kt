@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.checkers.utils.DebugInfoUtil
@@ -82,7 +84,8 @@ class DebugInfoHighlightingPass(file: KtFile, document: Document) : AbstractBind
               // Temporary workaround to ignore red code in library sources
               psiFile.shouldHighlightErrors() &&
               (isUnitTestMode() || isApplicationInternalMode() && (KotlinIdePlugin.isSnapshot || KotlinIdePlugin.isDev)) &&
-              RootKindFilter.projectAndLibrarySources.matches(psiFile)
+              RootKindFilter.projectAndLibrarySources.matches(psiFile) &&
+              (!DumbService.isDumb(psiFile.project) || Registry.`is`("ide.dumb.mode.check.awareness"))
 
             return if (useDebugInfoPass) DebugInfoHighlightingPass(psiFile as KtFile, editor.document) else null
         }

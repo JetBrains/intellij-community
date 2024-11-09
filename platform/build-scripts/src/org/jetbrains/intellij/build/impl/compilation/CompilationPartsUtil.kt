@@ -19,6 +19,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
@@ -254,7 +255,7 @@ private suspend fun upload(
 }
 
 internal fun getArchiveStorage(fallbackPersistentCacheRoot: Path): Path {
-  return (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: fallbackPersistentCacheRoot).resolve("idea-compile-parts-v2")
+  return (TeamCityHelper.persistentCachePath ?: fallbackPersistentCacheRoot).resolve("idea-compile-parts-v2")
 }
 
 @VisibleForTesting

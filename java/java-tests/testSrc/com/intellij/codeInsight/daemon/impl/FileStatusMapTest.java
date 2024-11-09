@@ -32,6 +32,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
@@ -64,7 +65,6 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
   }
 
   @Override
@@ -86,6 +86,11 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override

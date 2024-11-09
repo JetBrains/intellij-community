@@ -21,7 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
@@ -240,7 +243,7 @@ public class StandardDataFlowRunner {
       Collection<DfaMemoryState> states = closures.get(closure);
       if (!unusedVars.isEmpty()) {
         List<DfaMemoryState> stateList = StreamEx.of(states)
-          .peek(state -> state.flushVariables(unusedVars::contains))
+          .peek(state -> state.forgetVariables(unusedVars::contains))
           .distinct().toList();
         states = StateQueue.squash(stateList);
       }

@@ -34,6 +34,7 @@
   <xi:include href="platform-kind-resolution-fe10.xml"/>
   <xi:include href="jvm.xml"/>
   <xi:include href="jvm-k1.xml"/>
+  <xi:include href="actions-fe10.xml"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="ultimate-plugin.xml">

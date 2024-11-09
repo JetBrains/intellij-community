@@ -50,7 +50,7 @@ open class ProjectAttachProcessor {
 
   open fun beforeDetach(module: Module) {}
 
-  open fun isEnabled(project: Project?, path: Path?, newProject: Project?): Boolean = true
+  open fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean = true
 
   open fun getActionText(project: Project): @NlsContexts.Button String? = null
 

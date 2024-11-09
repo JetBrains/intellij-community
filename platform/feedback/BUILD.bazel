@@ -4,14 +4,14 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "feedback",
   module_name = "intellij.platform.feedback",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
@@ -28,6 +28,8 @@ kt_jvm_library(
     "@community//platform/util/xmlDom:util-xmlDom",
     "@community//platform/statistics",
     "@community//platform/core-ui",
+    "@community//platform/platform-impl/internal:ide-internal",
+    "@libraries//:jna-platform",
   ],
   runtime_deps = [":resources"]
 )

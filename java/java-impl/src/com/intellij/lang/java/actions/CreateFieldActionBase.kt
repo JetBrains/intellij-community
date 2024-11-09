@@ -10,7 +10,9 @@ import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 
 internal abstract class CreateFieldActionBase(
@@ -21,6 +23,20 @@ internal abstract class CreateFieldActionBase(
   override fun getRenderData(): JvmActionGroup.RenderData = JvmActionGroup.RenderData { request.fieldName }
 
   private fun fieldRenderer(project: Project) = JavaFieldRenderer(project, isConstant(), target, request)
+
+  override fun isAvailable(project: Project, file: PsiFile, target: PsiClass): Boolean {
+    if (!super.isAvailable(project, file, target)) return false
+    return isClassBodyValid(target)
+  }
+
+  private fun isClassBodyValid(target: PsiClass): Boolean {
+    if (target.lastChild is PsiErrorElement) return false
+    return target.children
+      .asSequence()
+      .filterIsInstance<PsiMethod>()
+      .mapNotNull { it.body }
+      .none { it.lastChild is PsiErrorElement }
+  }
 
   override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     fieldRenderer(project).doRender()

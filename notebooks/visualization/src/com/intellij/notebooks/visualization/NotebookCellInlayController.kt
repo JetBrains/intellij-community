@@ -1,14 +1,12 @@
 package com.intellij.notebooks.visualization
 
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.notebooks.visualization.ui.EditorCell
+import com.intellij.notebooks.visualization.ui.EditorCellView
+import com.intellij.notebooks.visualization.ui.EditorCellViewComponent
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.Key
-import com.intellij.notebooks.visualization.ui.EditorCell
-import com.intellij.notebooks.visualization.ui.EditorCellView
-import com.intellij.notebooks.visualization.ui.EditorCellViewComponent
 import java.awt.Graphics
 import java.awt.Rectangle
 
@@ -72,18 +70,16 @@ interface NotebookCellInlayController {
    * Marker interface for factories producing custom editors for cells
    */
   interface InputFactory {
-
     fun createComponent(editor: EditorImpl, cell: EditorCell): EditorCellViewComponent
 
     fun supports(editor: EditorImpl, cell: EditorCell): Boolean
-
   }
 
   val inlay: Inlay<*>
 
   val factory: Factory
 
-  fun onViewportChange() {}
+  fun onViewportChange() = Unit
 
   /**
    * The method may traverse iterator without returning to the initial position, the iterator is disposable.

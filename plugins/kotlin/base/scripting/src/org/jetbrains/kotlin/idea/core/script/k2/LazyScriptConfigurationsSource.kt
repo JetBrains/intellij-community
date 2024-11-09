@@ -1,19 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2
 
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -42,14 +41,16 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
             return currentData.configurations[virtualFile]
         }
 
+        if (KotlinScriptLazyResolveProhibitionCondition.prohibitLazyResolve(project, virtualFile)) return null
+
         coroutineScope.launch {
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
         }
 
-        return null
+        return data.get().configurations[virtualFile]
     }
 
-    override fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptConfigurations {
+    override suspend fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptConfigurations {
         val sdk = ProjectRootManager.getInstance(project).projectSdk
 
         val configurations = scripts.associate {
@@ -63,12 +64,12 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
                     }
                 }
 
-            it.virtualFile to project.runReadActionInSmartMode {
+            it.virtualFile to smartReadAction(project) {
                 refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
             }
         }
 
-        configurations.forEach { script, result ->
+        configurations.forEach { (script, result) ->
             project.service<ScriptReportSink>().attachReports(script, result.reports)
         }
 
@@ -84,16 +85,9 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
             project, configurationsData
         ) { KotlinCustomScriptModuleEntitySource(it) }
 
-        val scriptFiles =
-            configurationsData.configurations.keys.toSet()
-
         project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
             it.replaceBySource(
-                { source ->
-                    (source as? KotlinCustomScriptModuleEntitySource)?.let {
-                        scriptFiles.contains(it.virtualFileUrl?.virtualFile)
-                    } == true
-                },
+                { source -> source is KotlinCustomScriptModuleEntitySource },
                 updatedStorage
             )
         }

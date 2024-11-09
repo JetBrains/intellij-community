@@ -6,13 +6,14 @@ import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
+import java.awt.RenderingHints
 import javax.swing.UIManager
 
 @ApiStatus.Experimental
 class LcrTextInitParams(foreground: Color) : LcrInitParams() {
 
   /**
-   * A gray text, that is usually used for non-primary information in renderers
+   * A gray text that is usually used for non-primary information in renderers
    */
   val greyForeground: Color
     get() = NamedColorUtil.getInactiveTextColor()
@@ -35,4 +36,8 @@ class LcrTextInitParams(foreground: Color) : LcrInitParams() {
    * true if the text is used by speed search and therefore should be highlighted while searching
    */
   var speedSearchHighlighting: Boolean = false
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  var renderingHints: Map<RenderingHints.Key, Any?>? = null
 }

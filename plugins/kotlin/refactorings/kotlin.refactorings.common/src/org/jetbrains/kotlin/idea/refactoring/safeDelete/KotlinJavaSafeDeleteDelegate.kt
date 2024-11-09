@@ -27,9 +27,7 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
       paramIdx: Int,
       isVararg: Boolean
     ) {
-        if (reference !is KtReference) return
-
-        val element = reference.element
+        val element = reference.element as? KtElement ?: return
 
         val originalParameter = parameter.unwrapped ?: return
 

@@ -14,10 +14,10 @@ repositories {
 {{default_android_block}}
 
 kotlin {
-    android {
+    {{androidTargetPlaceholder}} {
         publishLibraryVariants("release", "debug")
     }
-    ios()
+    {{iosTargetPlaceholder}}
 }
 
 publishing {

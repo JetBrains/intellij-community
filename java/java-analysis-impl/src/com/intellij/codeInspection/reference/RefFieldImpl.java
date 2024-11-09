@@ -34,7 +34,14 @@ public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
-    this.setOwner((WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager));
+    WritableRefEntity parentRef = (WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager);
+    if (parentRef == null) return;
+    if (!myManager.isDeclarationsFound()) {
+      parentRef.add(this);
+    }
+    else {
+      this.setOwner(parentRef);
+    }
   }
 
   @Deprecated

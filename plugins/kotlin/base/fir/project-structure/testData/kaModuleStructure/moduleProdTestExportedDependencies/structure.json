@@ -1,9 +1,9 @@
 {
     "modules": [
-        { "name": "A1", "sourceSets": ["production", "test"], "dependencies": ["B1"] },
-        { "name": "B1", "sourceSets": ["production", "test"], "dependencies": [{"name": "C", "exported": true}] },
-        { "name": "A2", "sourceSets": ["production", "test"], "dependencies": ["B2"] },
-        { "name": "B2", "sourceSets": ["production", "test"], "dependencies": [{"name": "C", "exported": true}] },
-        { "name": "C", "sourceSets": ["production", "test"] }
+        { "name": "A1", "content_roots": ["production", "tests"], "dependencies": ["B1"] },
+        { "name": "B1", "content_roots": ["production", "tests"], "dependencies": [{"name": "C", "exported": true}] },
+        { "name": "A2", "content_roots": ["production", "tests"], "dependencies": ["B2"] },
+        { "name": "B2", "content_roots": ["production", "tests"], "dependencies": [{"name": "C", "exported": true}] },
+        { "name": "C", "content_roots": ["production", "tests"] }
     ]
 }

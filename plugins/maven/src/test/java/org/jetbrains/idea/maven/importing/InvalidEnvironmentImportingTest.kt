@@ -55,15 +55,11 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldShowLogsOfMavenServerIfNotStarted() = runBlocking {
-    try {
-      LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Maven server exception for tests")) {
-        MavenServerCMDState.setThrowExceptionOnNextServerStart()
+    LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Maven server exception for tests")) {
+      MavenServerCMDState.withThrowExceptionOnServerStart {
         createAndImportProject()
         assertEvent { it.message.contains("Maven server exception for tests") }
       }
-    }
-    finally {
-      MavenServerCMDState.resetThrowExceptionOnNextServerStart()
     }
   }
 

@@ -1,0 +1,43 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "builtInServer-impl",
+  module_name = "intellij.platform.builtInServer.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/projectModel-impl",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/xdebugger-api:debugger",
+    "@libraries//:guava",
+    "@libraries//:gson",
+    "@libraries//:commons-imaging",
+    "@community//platform/built-in-server-api:builtInServer",
+    "@community//platform/diff-api:diff",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:netty-codec-http2",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:jackson-core",
+    "@libraries//:netty-buffer",
+    "@libraries//:caffeine",
+    "@community//platform/util/concurrency",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@community//platform/platform-util-netty:ide-util-netty",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:netty-codec-compression",
+  ],
+  exports = ["@community//platform/built-in-server-api:builtInServer"],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

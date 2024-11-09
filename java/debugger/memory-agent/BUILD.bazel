@@ -1,0 +1,18 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "java-debugger-memory-agent",
+  module_name = "intellij.java.debugger.memory.agent",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util",
+    "@libraries//:debugger-memory-agent",
+    "@libraries//:commons-io",
+    "@libraries//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build` end

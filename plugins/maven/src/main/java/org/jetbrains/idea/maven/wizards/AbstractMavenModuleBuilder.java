@@ -39,8 +39,9 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -207,7 +208,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   protected VirtualFile createAndGetContentEntry() {
     String path = FileUtil.toSystemIndependentName(getContentEntryPath());
-    new File(path).mkdirs();
+    try {
+      Files.createDirectory(Path.of(path));
+    }
+    catch (IOException e) {
+      // ignore
+    }
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 

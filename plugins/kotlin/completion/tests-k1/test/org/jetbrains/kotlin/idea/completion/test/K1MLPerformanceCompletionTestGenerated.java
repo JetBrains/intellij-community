@@ -2193,6 +2193,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("KTIJ-26747.kt")
+            public void testKTIJ_26747() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/KTIJ-26747.kt");
+            }
+
             @TestMetadata("parameterDefaultValue.kt")
             public void testParameterDefaultValue() throws Exception {
                 runTest("../testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
@@ -2652,6 +2657,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("CompanionObjectMembers.kt")
             public void testCompanionObjectMembers() throws Exception {
                 runTest("../testData/basic/common/staticMembers/CompanionObjectMembers.kt");
+            }
+
+            @TestMetadata("EnumRendering.kt")
+            public void testEnumRendering() throws Exception {
+                runTest("../testData/basic/common/staticMembers/EnumRendering.kt");
             }
 
             @TestMetadata("EnumWithoutCompanionObject.kt")
@@ -3379,6 +3389,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/KTIJ20039.kt");
             }
 
+            @TestMetadata("KTIJ-26747.kt")
+            public void testKTIJ_26747() throws Exception {
+                runTest("../testData/basic/common/KTIJ-26747.kt");
+            }
+
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
             public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
@@ -3412,6 +3427,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("LocalMultideclarationValues.kt")
             public void testLocalMultideclarationValues() throws Exception {
                 runTest("../testData/basic/common/LocalMultideclarationValues.kt");
+            }
+
+            @TestMetadata("MapEntry.kt")
+            public void testMapEntry() throws Exception {
+                runTest("../testData/basic/common/MapEntry.kt");
             }
 
             @TestMetadata("NamedObject.kt")
@@ -4138,6 +4158,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("JavaStaticFieldsFromImports.kt")
             public void testJavaStaticFieldsFromImports() throws Exception {
                 runTest("../testData/basic/java/staticMembers/JavaStaticFieldsFromImports.kt");
+            }
+
+            @TestMetadata("JavaStaticMethodRendering.kt")
+            public void testJavaStaticMethodRendering() throws Exception {
+                runTest("../testData/basic/java/staticMembers/JavaStaticMethodRendering.kt");
             }
 
             @TestMetadata("JavaStaticMethods.kt")

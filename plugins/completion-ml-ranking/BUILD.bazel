@@ -1,0 +1,46 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "completionMlRanking",
+  module_name = "intellij.completionMlRanking",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:ngram-slp",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/lang-impl",
+    "@community//platform/analysis-impl",
+    "@community//platform/ml-impl",
+    "@community//platform/statistics",
+    "@community//platform/core-ui",
+    "@libraries//:caffeine",
+    "@libraries//:jackson-jr-objects",
+    "@libraries//:jackson-core",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/ml-api:ml",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//platform/platform-impl/internal:ide-internal",
+    "@community//platform/diagnostic/telemetry-impl:diagnostic-telemetry-impl",
+    "@community//platform/lang-api:lang",
+    "@community//platform/vcs-api:vcs",
+    "@community//platform/vcs-impl",
+    "@community//platform/diff-impl",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

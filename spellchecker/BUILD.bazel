@@ -1,22 +1,23 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 java_library(
   name = "compatibilityResources",
-  resources = glob(["compatibilityResources/**/*"])
+  resources = glob(["compatibilityResources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "spellchecker",
   module_name = "intellij.spellchecker",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
@@ -33,7 +34,7 @@ kt_jvm_library(
     "@libraries//:gec-spell-engine-local-jvm",
     "@libraries//:nlp-detect-jvm",
     "@libraries//:hunspell-en-jvm",
-    "@libraries//:utils-lucene-lt-compatibility-jvm",
+    "@libraries//:utils-lucene-lt-compatibility",
     "@libraries//:java-string-similarity",
     "@libraries//:lucene-core",
     "@libraries//:lucene-analysis-common",
@@ -41,6 +42,23 @@ kt_jvm_library(
     "@community//platform/util/jdom:util-jdom",
     "@libraries//:kotlinx-coroutines-core-jvm",
     "@libraries//:caffeine",
+  ],
+  runtime_deps = [
+    ":resources",
+    ":compatibilityResources",
+  ]
+)
+
+kt_jvm_test(
+  name = "spellchecker_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":spellchecker",
+    "@community//platform/testFramework",
+    "@community//tools/intellij.tools.ide.metrics.benchmark:tools-ide-metrics-benchmark",
   ],
   runtime_deps = [
     ":resources",

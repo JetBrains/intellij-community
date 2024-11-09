@@ -1,8 +1,9 @@
 module(name = "community")
 
+# bazel_dep(name = "rules_jps", version = "0.1")
 bazel_dep(name = "rules_kotlin", version = "2.0.0")
-bazel_dep(name = "rules_java", version = "7.11.1")
-bazel_dep(name = "rules_jvm_external", version = "6.4")
+bazel_dep(name = "rules_java", version = "7.12.2")
+bazel_dep(name = "rules_jvm_external", version = "6.5")
 
 bazel_dep(name = "libraries")
 

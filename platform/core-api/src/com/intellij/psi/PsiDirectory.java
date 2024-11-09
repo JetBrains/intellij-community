@@ -2,10 +2,13 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * Represents a file system directory and allows accessing its contents.
@@ -58,6 +61,17 @@ public interface PsiDirectory extends PsiFileSystemItem {
    * @return the array of files.
    */
   PsiFile @NotNull [] getFiles();
+
+  /**
+   * Returns the list of files in the directory which are contained in the given {@param scope}.
+   *
+   * @param scope the scope which filters the resulting files.
+   * @return the array of files.
+   */
+  default PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
+    PsiFile[] result = Arrays.stream(getFiles()).filter(psiFile -> scope.contains(psiFile.getVirtualFile())).toArray(PsiFile[]::new);
+    return result.length == 0 ? PsiFile.EMPTY_ARRAY : result;
+  }
 
   /**
    * Finds the subdirectory of this directory with the specified name.

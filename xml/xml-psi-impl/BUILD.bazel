@@ -4,19 +4,20 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "xml-psi-impl",
   module_name = "intellij.xml.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/core-api:core",
+    "@community//xml/xml-frontback-impl",
     "@community//xml/xml-psi-api:xml-psi",
+    "@community//platform/core-api:core",
     "@community//platform/core-impl",
     "@community//platform/analysis-impl",
     "@community//platform/projectModel-impl",
@@ -38,6 +39,7 @@ kt_jvm_library(
     "@community//platform/markdown-utils",
   ],
   exports = [
+    "@community//xml/xml-frontback-impl",
     "@community//xml/xml-psi-api:xml-psi",
     "@community//RegExpSupport:regexp",
   ],

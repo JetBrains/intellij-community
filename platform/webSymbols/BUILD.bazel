@@ -1,17 +1,18 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "webSymbols",
   module_name = "intellij.platform.webSymbols",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
@@ -30,6 +31,19 @@ kt_jvm_library(
     "@libraries//:markdown-jvm",
     "@libraries//:gson",
     "@community//platform/markdown-utils",
+  ],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "webSymbols_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":webSymbols",
+    "@community//platform/testFramework",
   ],
   runtime_deps = [":resources"]
 )

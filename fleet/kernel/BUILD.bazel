@@ -1,6 +1,6 @@
 ### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -15,7 +15,7 @@ kt_jvm_library(
   name = "fleet-kernel",
   module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],

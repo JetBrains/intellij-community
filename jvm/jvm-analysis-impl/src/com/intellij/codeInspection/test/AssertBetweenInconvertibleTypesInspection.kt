@@ -5,8 +5,10 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_VOID
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -65,6 +67,11 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     if (firstArgument.isNullLiteral() || secondArgument.isNullLiteral()) return
     val type1 = firstArgument.getExpressionType() ?: return
     val type2 = secondArgument.getExpressionType() ?: return
+
+    // Workaround for Kotlin's Nothing type becoming Void in UAST and causing false positives. See IDEA-361908.
+    val isKotlin = expression.lang == Language.findLanguageByID("kotlin")
+    if (isKotlin && (type1.equalsToText(JAVA_LANG_VOID) || type2.equalsToText(JAVA_LANG_VOID))) return
+
     checkMismatch(expression, type1, type2)
   }
 
@@ -94,7 +101,8 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     var checkType = isEqualsCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
     if (checkType is UastErrorType) return
     val receiverType = GenericsUtil.getVariableTypeByExpressionType(isEqualsCall.receiverType)
-    var sourceType = GenericsUtil.getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(receiverType, ASSERTJ_ASSERT, 1, false)) ?: return
+    var sourceType = GenericsUtil.getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(receiverType, ASSERTJ_ASSERT, 1, false))
+                     ?: return
     sourceType = normalizeType(sourceType, receiverType)
 
     // Handle implicit unwrapping of Stream<T> into List<T>. Learn more at:

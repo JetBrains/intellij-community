@@ -120,12 +120,21 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun clickOnPosition(line: Int, column: Int) {
-    setFocus()
-    click(interact {
+  private fun calculatePositionPoint(line: Int, column: Int): Point {
+    return interact {
       val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line - 1, column - 1))
       Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt() + editor.getLineHeight() / 2)
-    })
+    }
+  }
+
+  fun clickOnPosition(line: Int, column: Int) {
+    setFocus()
+    click(calculatePositionPoint(line, column))
+  }
+
+  fun hoverOnPosition(line: Int, column: Int) {
+    setFocus()
+    moveMouse(calculatePositionPoint(line, column))
   }
 
   fun getLineText(line: Int) = text.lines().getOrElse(line - 1) { "" }

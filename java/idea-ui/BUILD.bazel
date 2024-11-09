@@ -1,0 +1,46 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-ui",
+  module_name = "intellij.java.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/openapi:java",
+    "@community//java/compiler/openapi:java-compiler",
+    "@community//java/compiler/impl:java-compiler-impl",
+    "@community//java/java-impl",
+    "@community//java/java-impl-refactorings",
+    "@community//aether-dependency-resolver:java-aetherDependencyResolver",
+    "@community//platform/vcs-impl",
+    "@libraries//:guava",
+    "@libraries//:jna-platform",
+    "@community//platform/external-system-api:externalSystem",
+    "@community//platform/external-system-impl:externalSystem-impl",
+    "@libraries//:streamex",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/statistics",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//platform/lang-impl",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/feedback",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//xml/dom-openapi:xml-dom",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/backend/observation:backend-observation",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -13,6 +13,7 @@ import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ public class MavenImportingSettingsForm {
   private JTextField myDependencyTypes;
   private JBTextField myVMOptionsForImporter;
   private ExternalSystemJdkComboBox myJdkForImporterComboBox;
-  private JLabel myImporterJdkWarning;
+  private JBLabel myImporterJdkWarning;
   private JCheckBox myAutoDetectCompilerCheckBox;
 
   private final ComponentValidator myImporterJdkValidator;

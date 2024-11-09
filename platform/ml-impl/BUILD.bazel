@@ -1,0 +1,55 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "ml-impl",
+  module_name = "intellij.platform.ml.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:ngram-slp",
+    "@community//platform/util",
+    "@community//platform/util-ex",
+    "@community//platform/core-api:core",
+    "@community//platform/projectModel-impl",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/platform-impl/internal:ide-internal",
+    "@community//platform/util/text-matching:util-text-matching",
+    "@community//platform/lang-impl",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@community//platform/ml-api:ml",
+    "@community//platform/statistics",
+    "@libraries//:kotlin-reflect",
+    "@libraries//:usage",
+  ],
+  exports = ["@libraries//:usage"],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "ml-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":ml-impl",
+    "@community//platform/testFramework",
+    "@libraries//:assertj-core",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -3,17 +3,21 @@ package com.intellij.notebooks.ui.jupyterToolbar
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
-import java.awt.event.*
-import javax.swing.JPanel
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import javax.swing.JComponent
 
 /**
  * Adds listeners for "above cell" panels to trigger toolbar-related functions in the [JupyterAboveCellToolbarService].
  */
-class JupyterAboveCellPanelListeners(  // PY-66455
-  private val panel: JPanel,
+class JupyterAboveCellPanelListeners(
+  // PY-66455
+  private val panel: JComponent,
   project: Project,
-  private val editor: EditorImpl
-): Disposable  {
+  private val editor: EditorImpl,
+) : Disposable {
   private val toolbarService = JupyterAboveCellToolbarService.getInstance(project)
   private var panelMouseListener: MouseAdapter? = null
   private var panelComponentListener: ComponentAdapter? = null
@@ -39,17 +43,13 @@ class JupyterAboveCellPanelListeners(  // PY-66455
     panelComponentListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) = toolbarService.adjustAllToolbarsPositions()
       override fun componentMoved(e: ComponentEvent?) = toolbarService.adjustAllToolbarsPositions()
-      //override fun componentShown(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
-      //override fun componentHidden(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
     }
 
     panel.addComponentListener(panelComponentListener)
   }
 
-
   override fun dispose() {
     panel.removeMouseListener(panelMouseListener)
     panel.removeComponentListener(panelComponentListener)
   }
-
 }

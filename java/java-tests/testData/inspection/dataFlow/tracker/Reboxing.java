@@ -1,7 +1,9 @@
 /*
-Value is always false (x == null; line#11)
-  'x' was assigned (=; line#10)
-    Primitive value was boxed ("0".equals(key) ? -1 : m.get(key); line#10)
+Value is always false (x == null; line#13)
+  'x' was assigned (=; line#12)
+    One of the following happens:
+      Primitive value was boxed ("0".equals(key) ? -1 : m.get(key); line#12)
+      or expression cannot be null as it's a value of primitive type 'int' (-1; line#12)
  */
 import java.util.*;
 

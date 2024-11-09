@@ -12,7 +12,7 @@ android {
 }
 
 kotlin {
-    android()
+    androidTarget()
 
     val commonMain by sourceSets.getting
 

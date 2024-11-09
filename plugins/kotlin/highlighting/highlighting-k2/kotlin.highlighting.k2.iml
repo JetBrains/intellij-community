@@ -60,5 +60,6 @@
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
   </component>
 </module>

@@ -7,10 +7,12 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public abstract class JavaDirectoryService {
@@ -40,6 +42,20 @@ public abstract class JavaDirectoryService {
    * @return the array of classes.
    */
   public abstract PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir);
+
+  /**
+   * Returns the list of Java classes contained in the directory and the given {@param scope}.
+   *
+   * @return the array of classes.
+   */
+  public PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir, @NotNull GlobalSearchScope scope) {
+    PsiClass[] result =
+      Arrays.stream(getClasses(dir))
+        .filter(psiClass -> scope.contains(psiClass.getContainingFile().getVirtualFile()))
+        .toArray(PsiClass[]::new);
+
+    return result.length == 0 ? PsiClass.EMPTY_ARRAY : result;
+  }
 
   /**
    * Creates a class with the specified name in the directory.

@@ -1,17 +1,18 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "serviceContainer",
   module_name = "intellij.platform.serviceContainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
@@ -25,6 +26,20 @@ kt_jvm_library(
     "@community//platform/instanceContainer",
     "@community//platform/diagnostic",
     "@community//platform/util/coroutines:util-coroutines",
+  ],
+  runtime_deps = [":resources"]
+)
+
+kt_jvm_test(
+  name = "serviceContainer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    ":serviceContainer",
+    "@libraries//:junit",
+    "@libraries//:assertj-core",
   ],
   runtime_deps = [":resources"]
 )

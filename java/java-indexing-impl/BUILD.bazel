@@ -1,0 +1,31 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "java-indexing-impl",
+  module_name = "intellij.java.indexing.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/java-psi-api:java-psi",
+    "@community//java/java-psi-impl",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/indexing-impl",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/projectModel-impl",
+    "@community//java/java-indexing-api:java-indexing",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:intellij-deps-fastutil",
+  ],
+  exports = [
+    "@community//java/java-psi-api:java-psi",
+    "@community//java/java-psi-impl",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/indexing-impl",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//java/java-indexing-api:java-indexing",
+  ]
+)
+### auto-generated section `build` end

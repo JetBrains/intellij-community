@@ -63,6 +63,44 @@ public abstract class KotlinCompilerReferenceTestGenerated extends AbstractKotli
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compilerIndex/classOrObject")
+        public static class TestEnumEntry extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntry")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/compilerIndex/classOrObject/enumEntry/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/compilerIndex/classOrObject")
+        public static class TestEnumEntryWithClassInitializer extends AbstractKotlinCompilerReferenceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntryWithClassInitializer")
+            public void testEnumEntryWithClassInitializer() throws Exception {
+                runTest("testData/compilerIndex/classOrObject/enumEntryWithClassInitializer/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/compilerIndex/classOrObject")
         public static class TestInnerClass extends AbstractKotlinCompilerReferenceTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull

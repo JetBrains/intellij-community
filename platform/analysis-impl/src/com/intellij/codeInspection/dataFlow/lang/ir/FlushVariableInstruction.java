@@ -8,8 +8,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * Flush single variable
  */
@@ -30,11 +28,6 @@ public class FlushVariableInstruction extends Instruction {
 
   public @NotNull DfaVariableValue getVariable() {
     return myVariable;
-  }
-
-  @Override
-  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
-    return List.of(myVariable);
   }
 
   @Override

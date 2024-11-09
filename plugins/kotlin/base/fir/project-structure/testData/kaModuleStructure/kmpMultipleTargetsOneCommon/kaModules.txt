@@ -64,7 +64,7 @@ KaSourceModule:
 
 KaSourceModule:
   description: Sources of wasm
-  targetPlatform: JS
+  targetPlatform: Wasm (general)
   name: wasm
   sourceModuleKind: PRODUCTION
   stableModuleName: <wasm>

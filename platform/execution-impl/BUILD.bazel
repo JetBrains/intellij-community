@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "execution-impl",
   module_name = "intellij.platform.execution.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
@@ -44,6 +44,7 @@ kt_jvm_library(
     "@libraries//:rd-core",
     "@community//platform/rd-platform-community:rd-community",
     "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/eelProvider:eel-provider",
   ],
   exports = ["@community//platform/macro"]
 )

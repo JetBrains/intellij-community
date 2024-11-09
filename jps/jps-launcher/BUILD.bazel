@@ -1,0 +1,13 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "jps-build-launcher",
+  module_name = "intellij.platform.jps.build.launcher",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  deps = ["@libraries//:annotations"]
+)
+### auto-generated section `build` end

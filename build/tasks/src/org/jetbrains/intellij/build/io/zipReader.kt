@@ -216,7 +216,7 @@ private inline fun readZipEntries(buffer: ByteBuffer, fileSize: Int, entryProces
   }
 
   var isZip64 = true
-  if (buffer.getInt(offset - 20) == 0x07064b50) {
+  if (offset >= 20 && buffer.getInt(offset - 20) == 0x07064b50) {
     offset = buffer.getLong(offset - (20 - 8)).toInt()
     assert(buffer.getInt(offset) == 0x06064b50)
   }

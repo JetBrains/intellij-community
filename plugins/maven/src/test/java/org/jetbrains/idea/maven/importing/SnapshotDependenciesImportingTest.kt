@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
+import kotlin.io.path.exists
 
 class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   private var remoteRepoDir: File? = null
@@ -163,9 +164,9 @@ ${repositoriesSection()}<dependencies>
                        "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
                        "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
-    assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
-    assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
-    assertTrue(File(repositoryFile, "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
+    assertTrue(repositoryFile.resolve("/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
+    assertTrue(repositoryFile.resolve("/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
+    assertTrue(repositoryFile.resolve("/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
   }
 
   @Test

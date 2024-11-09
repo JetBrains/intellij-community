@@ -1,0 +1,25 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-structureView",
+  module_name = "intellij.java.structureView",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/structure-view-impl:structureView-impl",
+    "@community//java/java-psi-impl",
+    "@community//platform/util/ui:util-ui",
+    "@community//java/java-analysis-impl",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

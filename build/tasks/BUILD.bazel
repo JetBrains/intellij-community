@@ -1,17 +1,18 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_jvm_library(
   name = "build-tasks",
   module_name = "intellij.idea.community.build.tasks",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
@@ -46,5 +47,23 @@ kt_jvm_library(
     "@libraries//:slf4j-jdk14",
     "@libraries//:bcpkix-jdk18on",
   ]
+)
+
+kt_jvm_test(
+  name = "build-tasks_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":build-tasks",
+    "@community//platform/testFramework",
+    "@community//platform/testFramework/extensions:testExtensions",
+    "@libraries//:assertj-core",
+    "@libraries//:memoryfilesystem",
+    "@libraries//:junit-jupiter-api",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

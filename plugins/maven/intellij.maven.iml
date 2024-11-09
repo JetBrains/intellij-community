@@ -109,8 +109,9 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.maven.server.telemetry" />
     <orderEntry type="library" name="ASM" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.ijent" />
   </component>
   <component name="copyright">
     <Base>

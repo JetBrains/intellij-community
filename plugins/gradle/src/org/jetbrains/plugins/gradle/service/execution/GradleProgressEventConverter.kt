@@ -2,22 +2,21 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.build.events.EventResult
-import com.intellij.build.events.impl.*
+import com.intellij.build.events.impl.FinishEventImpl
+import com.intellij.build.events.impl.ProgressBuildEventImpl
+import com.intellij.build.events.impl.StartEventImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.event.*
+import com.intellij.openapi.externalSystem.model.task.event.OperationResult
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PathUtil
-import org.gradle.tooling.FileComparisonTestAssertionFailure
-import org.gradle.tooling.TestFailure
+import org.gradle.tooling.events.*
 import org.gradle.tooling.events.FailureResult
 import org.gradle.tooling.events.OperationDescriptor
-import org.gradle.tooling.events.OperationResult
-import org.gradle.tooling.events.ProgressEvent
 import org.gradle.tooling.events.SkippedResult
-import org.gradle.tooling.events.StatusEvent
 import org.gradle.tooling.events.SuccessResult
 import org.gradle.tooling.events.task.TaskFinishEvent
 import org.gradle.tooling.events.task.TaskProgressEvent
@@ -115,11 +114,11 @@ object GradleProgressEventConverter {
     }
   }
 
-  private fun convertTaskProgressEventResult(result: OperationResult): EventResult? {
+  private fun convertTaskProgressEventResult(result: org.gradle.tooling.events.OperationResult): EventResult? {
     return when (result) {
-      is SuccessResult -> SuccessResultImpl(result is TaskSuccessResult && result.isUpToDate)
-      is FailureResult -> FailureResultImpl(null, null)
-      is SkippedResult -> SkippedResultImpl()
+      is SuccessResult -> com.intellij.build.events.impl.SuccessResultImpl(result is TaskSuccessResult && result.isUpToDate)
+      is FailureResult -> com.intellij.build.events.impl.FailureResultImpl(null, null)
+      is SkippedResult -> com.intellij.build.events.impl.SkippedResultImpl()
       else -> {
         LOG.warn("Undefined operation result ${result.javaClass.getSimpleName()} $result")
         return null
@@ -161,19 +160,19 @@ object GradleProgressEventConverter {
     }
   }
 
-  private fun convertTestProgressEventResult(result: TestOperationResult): com.intellij.openapi.externalSystem.model.task.event.OperationResult {
+  private fun convertTestProgressEventResult(result: TestOperationResult): OperationResult {
     val startTime = result.startTime
     val endTime = result.endTime
     return when (result) {
-      is TestSuccessResult -> SuccessResult(startTime, endTime, false)
+      is TestSuccessResult -> com.intellij.openapi.externalSystem.model.task.event.SuccessResult(startTime, endTime, false)
       is TestFailureResult -> {
         val failures = result.failures.map { it -> convertTestFailure(it) }
-        FailureResult(startTime, endTime, failures)
+        com.intellij.openapi.externalSystem.model.task.event.FailureResult(startTime, endTime, failures)
       }
-      is TestSkippedResult -> SkippedResult(startTime, endTime)
+      is TestSkippedResult -> com.intellij.openapi.externalSystem.model.task.event.SkippedResult(startTime, endTime)
       else -> {
         LOG.warn("Undefined test operation result ${result.javaClass.getName()}")
-        OperationResult(startTime, endTime)
+        com.intellij.openapi.externalSystem.model.task.event.OperationResult(startTime, endTime)
       }
     }
   }
@@ -183,53 +182,41 @@ object GradleProgressEventConverter {
     val description = failure.description
     val causes = failure.causes.map { it -> convertTestFailure(it) }
 
-    return when (failure) {
-      is FileComparisonTestAssertionFailure -> {
-        val exceptionName = failure.className
-        val stackTrace = failure.stacktrace
+    if (failure is org.gradle.tooling.FileComparisonTestAssertionFailure) {
+      val exceptionName = failure.className
+      val stackTrace = failure.stacktrace
 
-        val expectedContent = failure.expectedContent
-        val expectedText = if (expectedContent != null) String(expectedContent, FILE_COMPARISON_CONTENT_CHARSET) else failure.expected
-        val expectedFile = if (expectedContent != null) failure.expected else null
+      val expectedContent = failure.expectedContent
+      val expectedText = if (expectedContent != null) String(expectedContent, FILE_COMPARISON_CONTENT_CHARSET) else failure.expected
+      val expectedFile = if (expectedContent != null) failure.expected else null
 
-        val actualContent = failure.actualContent
-        val actualText = if (actualContent != null) String(actualContent, FILE_COMPARISON_CONTENT_CHARSET) else failure.actual
-        val actualFile = if (actualContent != null) failure.actual else null
+      val actualContent = failure.actualContent
+      val actualText = if (actualContent != null) String(actualContent, FILE_COMPARISON_CONTENT_CHARSET) else failure.actual
+      val actualFile = if (actualContent != null) failure.actual else null
 
-        if (expectedText != null && actualText != null) {
-          TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText, expectedFile, actualFile)
-        }
-        else {
-          LOG.warn("Unexpected FileComparisonTestAssertionFailure ${failure.javaClass.getName()}")
-          Failure(message, description, emptyList())
-        }
-      }
-      is org.gradle.tooling.TestAssertionFailure -> {
-        val exceptionName = failure.className
-        val stackTrace = failure.stacktrace
-        val expectedText = failure.expected
-        val actualText = failure.actual
-        if (expectedText != null && actualText != null) {
-          TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText)
-        }
-        else {
-          LOG.warn("Unexpected TestAssertionFailure ${failure.javaClass.getName()}")
-          Failure(message, description, emptyList())
-        }
-      }
-      is TestFailure -> {
-        val exceptionName = failure.className
-        val stackTrace = failure.stacktrace
-        TestFailure(exceptionName, message, stackTrace, description, causes, false)
-      }
-      else -> {
-        LOG.warn("Undefined test failure type ${failure.javaClass.getName()}")
-        Failure(message, description, emptyList())
+      if (expectedText != null && actualText != null) {
+        return TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText, expectedFile, actualFile)
       }
     }
+    if (failure is org.gradle.tooling.TestAssertionFailure) {
+      val exceptionName = failure.className
+      val stackTrace = failure.stacktrace
+      val expectedText = failure.expected
+      val actualText = failure.actual
+      if (expectedText != null && actualText != null) {
+        return TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText);
+      }
+    }
+    if (failure is org.gradle.tooling.TestFailure) {
+      val exceptionName = failure.className
+      val stackTrace = failure.stacktrace
+      return TestFailure(exceptionName, message, stackTrace, description, causes, false)
+    }
+    LOG.warn("Undefined test failure type " + failure.javaClass.name)
+    return com.intellij.openapi.externalSystem.model.task.event.Failure(message, description, Collections.emptyList());
   }
 
-  private fun convertTestDescriptor(event: ProgressEvent): TestOperationDescriptor {
+  private fun convertTestDescriptor(event: ProgressEvent): com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor {
     val descriptor = event.descriptor
     val eventTime = event.eventTime
     val displayName = descriptor.displayName
@@ -238,9 +225,9 @@ object GradleProgressEventConverter {
         val suiteName = descriptor.suiteName
         val className = descriptor.className
         val methodName = descriptor.methodName
-        TestOperationDescriptor(displayName, eventTime, suiteName, className, methodName)
+        com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor(displayName, eventTime, suiteName, className, methodName)
       }
-      else -> TestOperationDescriptor(displayName, eventTime, null, null, null)
+      else -> com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor(displayName, eventTime, null, null, null)
     }
   }
 

@@ -982,4 +982,43 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
 
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
+
+  @Test
+  fun `Kotlin nullable types`() {
+    @Language("kotlin") val code = """
+      import org.junit.Test
+      import org.junit.Assert
+      
+      class MySampleTest {
+        @Test
+        fun myTest() {
+          val actual: String = "hello"
+          val expected: String? = "hello"
+          Assert.assertEquals(expected, actual)
+          Assert.assertEquals(actual, expected)
+        }
+      }""".trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
+
+  // Test for IDEA-361908
+  @Test
+  fun `Kotlin Nothing type`() {
+    @Language("kotlin") val code = """
+      import org.junit.Test
+      import org.junit.Assert
+      
+      class MySampleTest {
+        @Test
+        fun myTest() {
+          val actual: String = "hello"
+          val expected: Nothing? = null
+          Assert.assertEquals(expected, actual)
+          Assert.assertEquals(actual, expected)
+        }
+      }""".trimIndent()
+
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
+  }
 }

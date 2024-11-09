@@ -42,6 +42,7 @@ data class MavenProjectState(
   val activatedProfilesIds: MavenExplicitProfiles = MavenExplicitProfiles.NONE,
   val dependencyHash: String? = null,
   val unresolvedArtifactIds: Set<MavenId> = emptySet(),
+  // do not use nio.Path here, it's not serializable
   val localRepository: File? = null,
   val pluginInfos: List<MavenPluginInfo> = emptyList(),
   val readingProblems: Collection<MavenProjectProblem> = emptySet(),

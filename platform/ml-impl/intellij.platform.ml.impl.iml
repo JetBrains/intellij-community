@@ -50,5 +50,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" exported="" name="jetbrains.mlapi.usage" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" />
   </component>
 </module>

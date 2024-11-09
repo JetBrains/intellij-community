@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.idea.AppMode
+import com.intellij.internal.statistic.StatisticsServiceScope
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
@@ -10,6 +11,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.runtime.product.ProductMode
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -29,16 +32,12 @@ interface StatisticsEventLogger {
   fun rollOver()
 }
 
-/**
- * [useDefaultRecorderId] - When enabled, device and machine ids would match FUS(default) recorder. Must NOT be enabled for non-anonymized recorders.
- */
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long,
                                              private val maxFileSizeInBytes: Int,
                                              val sendLogsOnIdeClose: Boolean = false,
-                                             val isCharsEscapingRequired: Boolean = true,
-                                             val useDefaultRecorderId: Boolean = false) {
+                                             val isCharsEscapingRequired: Boolean = true) {
 
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
@@ -81,6 +80,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     }
   }
 
+  open val coroutineScope: CoroutineScope = StatisticsServiceScope.getScope()
   private val localLogger: StatisticsEventLogger by lazy { createLocalLogger() }
   private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
   internal val eventLogSystemLogger: EventLogSystemCollector by lazy { EventLogSystemCollector(this) }
@@ -117,7 +117,8 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     return FilteredEventMergeStrategy(emptySet())
   }
 
-  private fun createLogger(): StatisticsEventLogger {
+  @ApiStatus.Internal
+  protected fun createLogger(alternativeRecorderId: String? = null): StatisticsEventLogger {
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
@@ -132,19 +133,20 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
       null
     }
     val eventLogConfiguration = EventLogConfiguration.getInstance()
-    val config = eventLogConfiguration.getOrCreate(recorderId, if (useDefaultRecorderId) "FUS" else null)
+    val config = eventLogConfiguration.getOrCreate(recorderId, alternativeRecorderId)
     val writer = StatisticsEventLogFileWriter(recorderId, this, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
-      configService, recorderId, version.toString(), writer
+      configService, recorderId, version.toString(), writer, coroutineScope
     )
 
     val logger = StatisticsFileEventLogger(
       recorderId, config.sessionId, isHeadless, eventLogConfiguration.build, config.bucket.toString(), version.toString(),
       throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy(), ideMode, productMode
     )
-    Disposer.register(ApplicationManager.getApplication(), logger)
+
+    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(logger) }
     return logger
   }
 

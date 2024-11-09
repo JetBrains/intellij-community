@@ -1,11 +1,11 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_javac_options(
@@ -22,7 +22,7 @@ kt_jvm_library(
   name = "ide",
   module_name = "intellij.platform.ide",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = ":custom-javac-options",
   kotlinc_opts = "//:k17",
   deps = [

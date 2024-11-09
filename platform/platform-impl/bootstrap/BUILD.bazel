@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "ide-bootstrap",
   module_name = "intellij.platform.ide.bootstrap",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
@@ -28,6 +28,7 @@ kt_jvm_library(
     "@community//platform/lvcs-api:lvcs",
     "@community//platform/util/coroutines:util-coroutines",
     "@community//platform/indexing-api:indexing",
+    "@community//platform/platform-impl/ui:ide-ui",
     "@libraries//:jna-platform",
     "@libraries//:hash4j",
     "@libraries//:jbr-api",

@@ -1,0 +1,10 @@
+Additional checking of reference Getter: ENTRY
+Additional checking of reference KtSimpleNameReference: ENTRY
+Additional checking of reference Getter: entries
+Additional checking of reference KtSimpleNameReference: entries
+Additional checking of reference Getter: valueOf
+Additional checking of reference KtSimpleNameReference: valueOf
+Additional checking of reference Getter: values
+Additional checking of reference KtSimpleNameReference: values
+Additional checking of reference KtInvokeFunctionReference: valueOf("ENTRY")
+Additional checking of reference KtInvokeFunctionReference: values()

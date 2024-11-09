@@ -260,7 +260,7 @@ internal class JdkDownloadDialog(
     var archiveSizeCell: Cell<*>? = null
 
     row(ProjectBundle.message("dialog.row.jdk.version")) {
-      versionComboBox = comboBox(listOf<JdkVersionItem>().toMutableList(), textListCellRenderer { it!!.jdkVersion })
+      versionComboBox = comboBox(listOf<JdkVersionItem>().toMutableList(), textListCellRenderer { it?.jdkVersion })
         .align(AlignX.FILL)
         .component
     }

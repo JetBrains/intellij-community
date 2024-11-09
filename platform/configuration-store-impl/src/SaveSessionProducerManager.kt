@@ -6,10 +6,13 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
+import java.nio.file.AccessDeniedException
 import java.util.*
 
 internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boolean, private val collectVfsEvents: Boolean) {
@@ -82,7 +85,13 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
     catch (e: ProcessCanceledException) { throw e }
     catch (e: CancellationException) { throw e }
     catch (e: Exception) {
-      saveResult.addError(e)
+      val sessionAndFile = processAccessDeniedException(saveSession, e)
+      if (sessionAndFile != null) {
+        saveResult.addReadOnlyFile(sessionAndFile)
+      }
+      else {
+        saveResult.addError(e)
+      }
     }
   }
 
@@ -97,7 +106,21 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
     catch (e: ProcessCanceledException) { throw e }
     catch (e: CancellationException) { throw e }
     catch (e: Exception) {
-      saveResult.addError(e)
+      val sessionAndFile = processAccessDeniedException(saveSession, e)
+      if (sessionAndFile != null) {
+        saveResult.addReadOnlyFile(sessionAndFile)
+      }
+      else {
+        saveResult.addError(e)
+      }
     }
+  }
+
+  private fun processAccessDeniedException(saveSession: SaveSession, e: Exception): SaveSessionAndFile? {
+    val accessDeniedException = e as? AccessDeniedException ?: ExceptionUtil.findCause(e, AccessDeniedException::class.java) ?: return null
+    val filePath = accessDeniedException.file ?: return null
+    val file = LocalFileSystem.getInstance().findFileByPath(filePath) ?: return null
+
+    return SaveSessionAndFile(saveSession, file)
   }
 }

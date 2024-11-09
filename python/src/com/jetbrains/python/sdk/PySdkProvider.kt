@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -33,9 +32,6 @@ interface PySdkProvider {
    * Try to load additional data for your SDK. Check for attributes, specific to your SDK before loading it. Return null if there is none.
    */
   fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData?
-
-  // Packaging
-  fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService?
 
   // Inspections
   /**

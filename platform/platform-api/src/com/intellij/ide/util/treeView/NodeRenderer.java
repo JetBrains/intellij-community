@@ -16,7 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.TreeNodePresentation;
+import com.intellij.ui.treeStructure.TreeNodePresentationImpl;
 import com.intellij.ui.treeStructure.TreeNodeTextFragment;
 import com.intellij.ui.treeStructure.TreeNodeViewModel;
 import com.intellij.util.ui.StartupUiUtil;
@@ -39,14 +39,14 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (value instanceof TreeNodeViewModel vm) {
-      customizeViewModelRenderer(vm.presentationSnapshot(), selected, hasFocus);
+      customizeViewModelRenderer((TreeNodePresentationImpl)vm.presentationSnapshot(), selected, hasFocus);
     }
     else {
       customizeLegacyRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
     }
   }
 
-  private void customizeViewModelRenderer(@NotNull TreeNodePresentation presentation, boolean selected, boolean hasFocus) {
+  private void customizeViewModelRenderer(@NotNull TreeNodePresentationImpl presentation, boolean selected, boolean hasFocus) {
     setIcon(fixIconIfNeeded(presentation.getIcon(), selected, hasFocus));
     boolean isMain = true;
     for (@NotNull TreeNodeTextFragment fragment : presentation.getFullText()) {

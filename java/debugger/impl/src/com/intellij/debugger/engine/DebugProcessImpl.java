@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.evaluation.*;
@@ -94,7 +93,6 @@ import com.sun.jdi.request.StepRequest;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Job;
 import one.util.streamex.StreamEx;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -660,7 +658,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  @ReviseWhenPortedToJDK("13")
   private VirtualMachine connectorListen(String address, ListeningConnector connector)
     throws CantRunException, IOException, IllegalConnectorArgumentsException {
     if (address == null) {
@@ -677,9 +674,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
     }
-    if (Registry.is("debugger.jb.jdi") || Runtime.version().feature() >= 13) {
-      setConnectorArgument("localAddress", "*");
-    }
+    setConnectorArgument("localAddress", "*");
     setConnectorArgument("timeout", "0"); // wait forever
     try {
       String listeningAddress = connector.startListening(myArguments);
@@ -1488,7 +1483,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     @NotNull List<? extends Value> args,
                                     final int invocationOptions,
                                     boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHandler(method, invocationOptions)) {
+    if (!internalEvaluate && shouldInvokeWithHelper(method, invocationOptions)) {
       return invokeWithHelper(method.declaringType(), objRef, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {
@@ -1506,7 +1501,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  private static boolean shouldInvokeWithHandler(@NotNull Method method, int invocationOptions) {
+  private static boolean shouldInvokeWithHelper(@NotNull Method method, int invocationOptions) {
     return Registry.is("debugger.evaluate.method.helper") &&
            !BitUtil.isSet(invocationOptions, ObjectReference.INVOKE_NONVIRTUAL) && // TODO: support
            !DebuggerUtils.isPrimitiveType(method.returnTypeName()) &&
@@ -1531,6 +1526,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     invokerArgs.add(objRef); // object
     invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name() + ";" + method.signature(),
                                                    evaluationContext)); // method name and descriptor
+    invokerArgs.add(method.declaringType().classLoader()); // method's declaring type class loader to be able to resolve parameter types
 
     // argument values
     List<Value> args = new ArrayList<>(originalArgs);
@@ -1550,22 +1546,19 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       boxedArgs.add((Value)BoxingEvaluator.box(arg, evaluationContext));
     }
 
-    ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
-      evaluationContext,
-      CommonClassNames.JAVA_LANG_OBJECT + "[]",
-      evaluationContext.getClassLoader());
+    if (boxedArgs.size() < 10) {
+      invokerArgs.addAll(boxedArgs); // args
+      return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke" + boxedArgs.size(), invokerArgs, false);
+    }
+    else {
+      ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
+        evaluationContext,
+        CommonClassNames.JAVA_LANG_OBJECT + "[]",
+        evaluationContext.getClassLoader());
 
-    // reserve one extra element for the return value
-    ArrayReference arrayArgs = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs.size() + 1, evaluationContext);
-    try {
-      DebuggerUtilsEx.setArrayValues(arrayArgs, boxedArgs, false);
+      invokerArgs.add(DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext)); // args
+      return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
     }
-    catch (Exception e) {
-      throw new EvaluateException(e.getMessage(), e);
-    }
-    invokerArgs.add(arrayArgs);
-    invokerArgs.add(evaluationContext.getClassLoader()); // class loader
-    return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
   }
 
   private static ThreadReferenceProxy getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
@@ -1604,7 +1597,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             @NotNull List<? extends Value> args,
                             int extraInvocationOptions,
                             boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHandler(method, extraInvocationOptions)) {
+    if (!internalEvaluate && shouldInvokeWithHelper(method, extraInvocationOptions)) {
       return invokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {
@@ -1626,7 +1619,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             InterfaceType interfaceType,
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
-    if (shouldInvokeWithHandler(method, 0)) {
+    if (shouldInvokeWithHelper(method, 0)) {
       return invokeWithHelper(interfaceType, null, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {
@@ -1680,7 +1673,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      @NotNull List<? extends Value> args,
                                      final int invocationOptions,
                                      boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHandler(method, invocationOptions)) {
+    if (!internalEvaluate && shouldInvokeWithHelper(method, invocationOptions)) {
       return (ObjectReference)invokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext);
     }
     else {

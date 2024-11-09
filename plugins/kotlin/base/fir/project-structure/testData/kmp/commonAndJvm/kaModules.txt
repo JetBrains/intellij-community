@@ -23,22 +23,22 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library org.jetbrains.kotlin:kotlin-stdlib:2.0.20-dev-2651
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-3305
   targetPlatform: JVM (1.8)
-  libraryName: org.jetbrains.kotlin:kotlin-stdlib:2.0.20-dev-2651
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-3305
   isSdk: false
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
   friendDependencies:
     <empty>
   dependsOnDependencies:
     <empty>
 
 KaLibraryModule:
-  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651
+  description: Library org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305
   targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
-  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651
+  libraryName: org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305
   isSdk: false
   regularDependencies:
     KaLibraryModule(SDK)
@@ -54,8 +54,8 @@ KaLibraryModule:
   isSdk: false
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.0.20-dev-2651)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-3305)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
     KaLibraryModule(org.jetbrains:annotations:23.0.0)
   friendDependencies:
@@ -70,7 +70,7 @@ KaLibraryModule:
   isSdk: false
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
   friendDependencies:
     <empty>
   dependsOnDependencies:
@@ -95,8 +95,8 @@ KaLibraryModule:
   isSdk: false
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.0.20-dev-2651)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-3305)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
@@ -112,7 +112,7 @@ KaSourceModule:
   stableModuleName: <Common>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.1.20-dev-3305)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)
   friendDependencies:
     <empty>
@@ -127,7 +127,7 @@ KaSourceModule:
   stableModuleName: <Jvm>
   regularDependencies:
     KaLibraryModule(SDK)
-    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.0.20-dev-2651)
+    KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.1.20-dev-3305)
     KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0)
     KaLibraryModule(org.jetbrains:annotations:23.0.0)
     KaSourceModule(Common, production)

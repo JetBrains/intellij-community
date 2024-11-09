@@ -10,6 +10,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.openapi.util.io.toCanonicalPath
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -30,7 +32,9 @@ class GradleContentRootIndex {
     addSourceRoots(sources)
   }
 
-  private fun addSourceRoots(sources: Map<IExternalSystemSourceType, Collection<Path>>) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  fun addSourceRoots(sources: Map<out IExternalSystemSourceType, Collection<Path>>) {
     val contentRootPaths = HashSet<Path>()
     for (sourceRootPaths in sources.values) {
       for (sourceRootPath in sourceRootPaths) {
@@ -54,9 +58,11 @@ class GradleContentRootIndex {
     return contentRoots.mapTo(HashSet()) { it.toCanonicalPath() }
   }
 
-  private fun resolveContentRoots(
+  @VisibleForTesting
+  @ApiStatus.Internal
+  fun resolveContentRoots(
     externalProject: ExternalProject,
-    sources: Map<IExternalSystemSourceType, Collection<Path>>,
+    sources: Map<out IExternalSystemSourceType, Collection<Path>>,
   ): Set<Path> {
 
     val projectRootPath = externalProject.projectDir.toPath()

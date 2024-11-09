@@ -1,12 +1,12 @@
 {
     "libraries": [
-        { "name": "L1", "roots": ["R1", "R2"] },
-        { "name": "L2", "roots": ["R1", "R2"] },
-        { "name": "L3", "roots": ["R1", "R3"] }
+        { "name": "L1"},
+        { "name": "L2" },
+        { "name": "L3" }
     ],
     "modules": [
-        { "name": "A", "sourceSets": ["production"], "dependencies": ["L1", "L3"] },
-        { "name": "B", "sourceSets": ["production", "test"], "dependencies": ["L2", "A"] },
-        { "name": "C", "sourceSets": ["test"], "dependencies": ["L3", "A"] }
+        { "name": "A", "content_roots": ["production"], "dependencies": ["L1", "L3"] },
+        { "name": "B", "content_roots": ["production", "tests"], "dependencies": ["L2", "A"] },
+        { "name": "C", "content_roots": ["tests"], "dependencies": ["L3", "A"] }
     ]
 }

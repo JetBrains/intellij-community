@@ -13,7 +13,7 @@ class MavenArtifactUtilTest : MavenTestCase() {
     val artifactId = "artifactId"
     val version = "3.1.0"
     val incorrectVersion = "\r\n" + version
-    val path = MavenArtifactUtil.getArtifactNioPath(dir, groupId, artifactId, incorrectVersion, "pom").toString()
+    val path = MavenArtifactUtil.getArtifactNioPath(dir.toPath(), groupId, artifactId, incorrectVersion, "pom").toString()
     TestCase.assertTrue(path.contains(groupId))
     TestCase.assertTrue(path.contains(artifactId))
     TestCase.assertTrue(path.contains(version))
@@ -25,7 +25,7 @@ class MavenArtifactUtilTest : MavenTestCase() {
     val artifactId = "artifactId"
     val version = "3.1.0"
     val incorrectVersion = ">$version"
-    val path = MavenArtifactUtil.getArtifactNioPath(dir, groupId, artifactId, incorrectVersion, "pom").toString()
+    val path = MavenArtifactUtil.getArtifactNioPath(dir.toPath(), groupId, artifactId, incorrectVersion, "pom").toString()
     TestCase.assertTrue(path.contains(groupId))
     TestCase.assertTrue(path.contains(artifactId))
     TestCase.assertTrue(path.contains(version))
@@ -36,7 +36,7 @@ class MavenArtifactUtilTest : MavenTestCase() {
     val groupId = "mygroup.myid"
     val artifactId = "artifact-id"
     val version = "3.1.0"
-    val path = MavenArtifactUtil.getArtifactNioPath(dir, groupId, artifactId, version, "pom").toString()
+    val path = MavenArtifactUtil.getArtifactNioPath(dir.toPath(), groupId, artifactId, version, "pom").toString()
     TestCase.assertTrue(path.contains("mygroup"))
     TestCase.assertTrue(path.contains("myid"))
     TestCase.assertTrue(path.contains(artifactId))

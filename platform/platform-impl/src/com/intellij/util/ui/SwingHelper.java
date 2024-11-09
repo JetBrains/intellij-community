@@ -627,7 +627,7 @@ public final class SwingHelper {
     else {
       textPane = new JEditorPane();
     }
-    GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAATextInfoForSwingComponent());
     textPane.setFont(font != null ? font : StartupUiUtil.getLabelFont());
     textPane.setEditorKit(HTMLEditorKitBuilder.simple());
     textPane.setEditable(false);

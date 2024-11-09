@@ -218,6 +218,36 @@ fun createSdkByGenerateTask(
     sdkName)
 }
 
+@Internal
+suspend fun createSdk(
+  sdkHomePath: Path,
+  existingSdks: List<Sdk>,
+  associatedProjectPath: String?,
+  suggestedSdkName: String?,
+  sdkAdditionalData: PythonSdkAdditionalData? = null,
+): Result<Sdk> {
+  val homeFile = withContext(Dispatchers.IO) { StandardFileSystems.local().refreshAndFindFileByPath(sdkHomePath.pathString) }
+                 ?: return Result.failure(ExecutionException(
+                   PyBundle.message("python.sdk.directory.not.found", sdkHomePath.pathString)
+                 ))
+
+  val sdkName = suggestedSdkName ?: withContext(Dispatchers.IO) {
+    suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+  }
+
+  val sdk = SdkConfigurationUtil.setupSdk(
+    existingSdks.toTypedArray(),
+    homeFile,
+    PythonSdkType.getInstance(),
+    false,
+    sdkAdditionalData,
+    sdkName)
+
+  return sdk?.let { Result.success(it) } ?: Result.failure(ExecutionException(
+    PyBundle.message("python.sdk.failed.to.create.interpreter.title")
+  ))
+}
+
 fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
   runInEdt {
     val description = PyPackageManagementService.toErrorDescription(listOf(e), sdk) ?: return@runInEdt

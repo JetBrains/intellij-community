@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test.projectStructureTest
 
-import com.google.gson.JsonElement
 import com.google.gson.*
-import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
 import org.jetbrains.kotlin.idea.base.util.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString
@@ -68,14 +66,15 @@ object TestProjectLibraryParser {
     }
 }
 
+/**
+ * @param contentRoots A list of content roots of the module. Each content root's path is relative to the module's path in the test data. If
+ *  no content roots are specified, the whole module content is regarded as a single production source content root.
+ */
 data class TestProjectModule(
     val name: String,
     val targetPlatform: TargetPlatform,
     val dependencies: List<Dependency>,
-    /**
-     * `null` means production sourceset in module root directory
-     */
-    val sourceSets: List<SourceSet>?,
+    val contentRoots: List<TestContentRoot>,
 )
 
 data class Dependency(val name: String, val kind: DependencyKind, val isExported: Boolean)
@@ -86,19 +85,20 @@ enum class DependencyKind {
     REFINEMENT
 }
 
-enum class SourceSet(val directory: String) {
+/**
+ * A content root may either be specified as a [JsonObject], or as a string shortcut. In the shortcut form, the content root path is derived
+ * from [TestContentRootKind.defaultDirectoryName].
+ *
+ * @param path The content root path relative to the module root. If `null`, the path is equal to the module root.
+ */
+data class TestContentRoot(
+    val path: String?,
+    val kind: TestContentRootKind,
+)
+
+enum class TestContentRootKind(val defaultDirectoryName: String) {
     PRODUCTION("src"),
-    TEST("test")
-
-    ;
-
-    companion object {
-        fun fromString(string: String) = when (string) {
-            "production" -> PRODUCTION
-            "test" -> TEST
-            else -> error("Unexpected source set: $string")
-        }
-    }
+    TESTS("test"),
 }
 
 /**
@@ -116,11 +116,13 @@ enum class TestPlatform(val jsonName: String, val targetPlatform: TargetPlatform
 
 object TestProjectModuleParser {
     private const val DEPENDENCIES_FIELD = "dependencies"
+    private const val CONTENT_ROOTS_FIELD = "content_roots"
     private const val REFINEMENT_DEPENDENCIES_FIELD = "refinement_dependencies"
     private const val FRIEND_DEPENDENCIES_FIELD = "friend_dependencies"
     private const val MODULE_NAME_FIELD = "name"
     private const val PLATFORM_FIELD = "platform"
-    private const val SOURCE_SETS_FIELD = "sourceSets"
+    private const val CONTENT_ROOT_PATH_FIELD = "path"
+    private const val CONTENT_ROOT_KIND_FIELD = "kind"
 
     fun parse(json: JsonElement): TestProjectModule {
         require(json is JsonObject)
@@ -131,14 +133,13 @@ object TestProjectModuleParser {
             addAll(parseDependencies(json, REFINEMENT_DEPENDENCIES_FIELD, DependencyKind.REFINEMENT))
             addAll(parseDependencies(json, FRIEND_DEPENDENCIES_FIELD, DependencyKind.FRIEND))
         }
-
-        val sourceSets = json.getAsStringList(SOURCE_SETS_FIELD)?.map { SourceSet.fromString(it) }
+        val contentRoots = json.getAsJsonArray(CONTENT_ROOTS_FIELD)?.let(::parseContentRoots) ?: emptyList()
 
         return TestProjectModule(
             json.getString(MODULE_NAME_FIELD),
             platform,
             dependencies,
-            sourceSets,
+            contentRoots,
         )
     }
 
@@ -164,6 +165,19 @@ object TestProjectModuleParser {
                 else -> error("Unexpected json element type: ${dependency::class.java}")
             }
         }
+
+    private fun parseContentRoots(json: JsonArray): List<TestContentRoot> = json.map(::parseContentRoot)
+
+    private fun parseContentRoot(element: JsonElement): TestContentRoot = when (element) {
+        is JsonObject -> {
+            val path = element.getString(CONTENT_ROOT_PATH_FIELD)
+            val kind = TestContentRootKind.valueOf(element.getString(CONTENT_ROOT_KIND_FIELD).uppercase())
+            TestContentRoot(path, kind)
+        }
+        is JsonPrimitive -> {
+            val kind = TestContentRootKind.valueOf(element.asString.uppercase())
+            TestContentRoot(kind.defaultDirectoryName, kind)
+        }
+        else -> error("Unexpected content root JSON element type: ${element::class.java}")
+    }
 }
-
-

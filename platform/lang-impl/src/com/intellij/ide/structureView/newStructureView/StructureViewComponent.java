@@ -1200,10 +1200,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       this.mainComponent = mainComponent;
       this.isLogical = isLogical;
 
-      floatingToolbar = new StructureViewFloatingToolbar(this, StructureViewComponent.this);
       add(mainComponent, DEFAULT_LAYER);
-      add(floatingToolbar, POPUP_LAYER);
-      mainComponent.getVerticalScrollBar().addAdjustmentListener(event -> floatingToolbar.setScrollingDy(event.getValue()));
+      if (Registry.is("logical.structure.actions.enabled", true)) {
+        floatingToolbar = new StructureViewFloatingToolbar(this, StructureViewComponent.this);
+        add(floatingToolbar, POPUP_LAYER);
+        mainComponent.getVerticalScrollBar().addAdjustmentListener(event -> floatingToolbar.setScrollingDy(event.getValue()));
+      }
+      else {
+        floatingToolbar = null;
+      }
     }
 
     @Override
@@ -1211,14 +1216,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Rectangle bounds = getBounds();
       for (Component component : getComponents()) {
         if (component == mainComponent) {
-          component.setBounds(isLogical ? UIUtil.getTreeFont().getSize() : 0, 0, bounds.width, bounds.height);
+          component.setBounds(isLogical && floatingToolbar != null ? UIUtil.getTreeFont().getSize() : 0, 0, bounds.width, bounds.height);
         }
       }
     }
 
     public void repaintFloatingToolbar(int y) {
-      int scrollDy = mainComponent.getVerticalScrollBar().getValue();
-      floatingToolbar.repaintOnYWithDy(y, scrollDy);
+      if (floatingToolbar != null) {
+        int scrollDy = mainComponent.getVerticalScrollBar().getValue();
+        floatingToolbar.repaintOnYWithDy(y, scrollDy);
+      }
     }
 
     @Override

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -173,7 +174,14 @@ public abstract class JavaHomeFinder {
       eelPath = JavaHomeFinderMac.defaultJavaLocation;
     }
     if (platform instanceof EelPlatform.Linux) {
-      eelPath = "/opt/java";
+      String defaultLinuxPathRepresentation = "/opt/java";
+      Path defaultLinuxPath = eel.getMapper().toNioPath(EelPath.Absolute.parse(defaultLinuxPathRepresentation, platform.pathOs()));
+      if (Files.exists(defaultLinuxPath)) {
+        eelPath = defaultLinuxPathRepresentation;
+      }
+      else {
+        eelPath = eel.getUserInfo().getHome().toString();
+      }
     }
     if (SystemInfo.isSolaris) {
       // todo: Do we need solaris in Eel?

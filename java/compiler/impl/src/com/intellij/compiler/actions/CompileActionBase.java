@@ -31,6 +31,10 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete
     }
     ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
+    doAction(e, project);
+  }
+
+  protected void doAction(@NotNull AnActionEvent e, final Project project) {
     doAction(e.getDataContext(), project);
   }
 

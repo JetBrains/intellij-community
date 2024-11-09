@@ -466,8 +466,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     CompletableFuture<Void> result = new CompletableFuture<>();
     SplashManagerKt.hideSplash();
     try (
-      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
-      AccessToken ignore2 = ThreadContext.resetThreadContext()
+      AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET)
     ) {
       myDialog.show();
     }
@@ -887,7 +886,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         LOG.warn("The dialog wrapper for " + dialogWrapper.getTitle() + " is already disposed");
         return;
       }
-      super.show();
+      try (AccessToken ignore = ThreadContext.resetThreadContext()) {
+        super.show();
+      }
     }
 
     private void logMonitorConfiguration() {

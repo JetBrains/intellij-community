@@ -10,7 +10,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -206,13 +205,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
 
   @Override
   public void setIndexingMode(@NotNull IndexingMode mode) {
-    if (Registry.is("ide.dumb.mode.check.awareness") ||
-        mode != IndexingMode.DUMB_EMPTY_INDEX) {
-      myIndexingMode = mode;
-    }
-    else {
-      myIndexingMode = IndexingMode.DUMB_FULL_INDEX;
-    }
+    myIndexingMode = mode;
   }
 
   @Override

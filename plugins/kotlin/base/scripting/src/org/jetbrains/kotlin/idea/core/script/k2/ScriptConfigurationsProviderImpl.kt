@@ -33,32 +33,36 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
     private val allDependencies = AtomicReference(ScriptDependenciesData())
     private val dependenciesSourceByDefinition = AtomicReference(mapOf<String, ScriptConfigurationsSource<*>>())
 
-    fun notifySourceUpdated() {
-        val sources = SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project)
+    init {
+        notifySourceUpdated()
+    }
 
-        val allSources = mutableSetOf<VirtualFile>()
-        val allClasses = mutableSetOf<VirtualFile>()
-        val allSdks = mutableMapOf<Path, Sdk>()
+    fun notifySourceUpdated() {
+        val configurationSources = SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project)
+
+        val allScriptsSources = mutableSetOf<VirtualFile>()
+        val allScriptClasses = mutableSetOf<VirtualFile>()
+        val allScriptsSdks = mutableMapOf<Path, Sdk>()
 
         val sourceByDefinition = mutableMapOf<String, ScriptConfigurationsSource<*>>()
 
-        sources.forEach { source ->
+        configurationSources.forEach { source ->
             val data = source.data.get()
             val configurations = data.configurations.values.mapNotNull { it.valueOrNull() }
 
             configurations.forEach {
-                allSources.addAll(toVfsRoots(it.dependenciesClassPath))
-                allClasses.addAll(toVfsRoots(it.dependenciesSources))
+                allScriptsSources.addAll(toVfsRoots(it.dependenciesSources))
+                allScriptClasses.addAll(toVfsRoots(it.dependenciesClassPath))
             }
 
-            allSdks.putAll(data.sdks)
+            allScriptsSdks.putAll(data.sdks)
 
             val definitions = source.getScriptDefinitionsSource()?.definitions
             definitions?.forEach { sourceByDefinition.put(it.definitionId, source) }
         }
 
         dependenciesSourceByDefinition.set(sourceByDefinition)
-        allDependencies.set(ScriptDependenciesData(allClasses, allSources))
+        allDependencies.set(ScriptDependenciesData(allScriptClasses, allScriptsSources))
     }
 
     override fun getAllScriptDependenciesSources(): Collection<VirtualFile> =

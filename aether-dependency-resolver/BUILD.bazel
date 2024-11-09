@@ -1,11 +1,12 @@
 ### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 kt_jvm_library(
   name = "java-aetherDependencyResolver",
   module_name = "intellij.java.aetherDependencyResolver",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [
@@ -29,6 +30,18 @@ kt_jvm_library(
     "@libraries//:slf4j-api",
     "@libraries//:slf4j-jdk14",
     "@libraries//:maven-resolver-provider",
+  ]
+)
+
+kt_jvm_test(
+  name = "java-aetherDependencyResolver_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  deps = [
+    ":java-aetherDependencyResolver",
+    "@community//platform/testFramework",
   ]
 )
 ### auto-generated section `build` end

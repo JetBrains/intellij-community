@@ -2193,6 +2193,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("KTIJ-26747.kt")
+            public void testKTIJ_26747() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/KTIJ-26747.kt");
+            }
+
             @TestMetadata("parameterDefaultValue.kt")
             public void testParameterDefaultValue() throws Exception {
                 runTest("../testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
@@ -2652,6 +2657,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("CompanionObjectMembers.kt")
             public void testCompanionObjectMembers() throws Exception {
                 runTest("../testData/basic/common/staticMembers/CompanionObjectMembers.kt");
+            }
+
+            @TestMetadata("EnumRendering.kt")
+            public void testEnumRendering() throws Exception {
+                runTest("../testData/basic/common/staticMembers/EnumRendering.kt");
             }
 
             @TestMetadata("EnumWithoutCompanionObject.kt")
@@ -3379,6 +3389,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/KTIJ20039.kt");
             }
 
+            @TestMetadata("KTIJ-26747.kt")
+            public void testKTIJ_26747() throws Exception {
+                runTest("../testData/basic/common/KTIJ-26747.kt");
+            }
+
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
             public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
@@ -3412,6 +3427,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("LocalMultideclarationValues.kt")
             public void testLocalMultideclarationValues() throws Exception {
                 runTest("../testData/basic/common/LocalMultideclarationValues.kt");
+            }
+
+            @TestMetadata("MapEntry.kt")
+            public void testMapEntry() throws Exception {
+                runTest("../testData/basic/common/MapEntry.kt");
             }
 
             @TestMetadata("NamedObject.kt")

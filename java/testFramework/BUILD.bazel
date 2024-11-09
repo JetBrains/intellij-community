@@ -1,0 +1,55 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "java-testFramework",
+  module_name = "intellij.java.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/openapi:java",
+    "@community//platform/util",
+    "@libraries//:junit",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/lang-api:lang",
+    "@community//platform/lang-impl",
+    "@community//java/compiler/impl:java-compiler-impl",
+    "@community//java/java-impl",
+    "@community//java/execution/impl:java-execution-impl",
+    "@community//platform/editor-ui-ex:editor-ex",
+    "@community//platform/testFramework",
+    "@community//java/idea-ui:java-ui",
+    "@community//java/debugger/impl:java-debugger-impl",
+    "@community//java/execution/openapi:java-execution",
+    "@community//jps/jps-builders:jps-build",
+    "@libraries//:streamex",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui",
+    "@community//platform/code-style-impl:codeStyle-impl",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@libraries//:asm-all",
+    "@libraries//:groovy",
+    "@community//java/java-impl-refactorings",
+    "@community//platform/xdebugger-impl:debugger-impl",
+    "@community//platform/backend/observation:backend-observation",
+  ],
+  exports = [
+    "@community//java/openapi:java",
+    "@community//platform/util",
+    "@community//platform/lang-api:lang",
+    "@community//java/java-impl",
+    "@community//java/execution/impl:java-execution-impl",
+    "@community//platform/testFramework",
+    "@community//xml/relaxng",
+    "@community//java/idea-ui:java-ui",
+    "@community//java/debugger/impl:java-debugger-impl",
+    "@community//java/execution/openapi:java-execution",
+  ],
+  runtime_deps = [
+    "@community//java/plugin:java-plugin",
+    "@community//platform/external-system-impl:externalSystem-impl",
+  ]
+)
+### auto-generated section `build` end

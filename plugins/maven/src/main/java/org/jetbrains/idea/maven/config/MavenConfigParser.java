@@ -11,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,11 +33,11 @@ public final class MavenConfigParser {
       options.addOption(value.toOption());
     }
 
-    File configFile = new File(baseDir, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+    Path configFile = Path.of(baseDir, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
     List<String> configArgs = new ArrayList<>();
     try {
-      if (configFile.isFile()) {
-        for (String arg : Files.readString(configFile.toPath(), Charset.defaultCharset()).split("\\s+")) {
+      if (Files.exists(configFile) && !Files.isDirectory(configFile)) {
+        for (String arg : Files.readString(configFile, Charset.defaultCharset()).split("\\s+")) {
           if (!arg.isEmpty()) {
             configArgs.add(arg);
           }
@@ -49,7 +49,7 @@ public final class MavenConfigParser {
       }
     }
     catch (Exception e) {
-      MavenLog.LOG.error("error read maven config " + configFile.getAbsolutePath(), e);
+      MavenLog.LOG.error("error read maven config " + configFile.toAbsolutePath(), e);
     }
     return null;
   }

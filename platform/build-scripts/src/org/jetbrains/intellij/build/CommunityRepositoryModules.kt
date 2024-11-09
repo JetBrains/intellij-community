@@ -697,7 +697,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
       dirFilter = { !it.endsWith("src") },
       fileFilter = { file ->
         if (file.toString().endsWith(".jar")) {
-          sources.add(ZipSource(file = file, distributionFileEntryProducer = null))
+          sources.add(ZipSource(file = file, distributionFileEntryProducer = null, filter = ::defaultLibrarySourcesNamesFilter))
           false
         }
         else {

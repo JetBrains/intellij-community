@@ -1,11 +1,12 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_javac_options(
@@ -28,7 +29,7 @@ kt_jvm_library(
   name = "ide-impl",
   module_name = "intellij.platform.ide.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = ":custom-javac-options",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
@@ -127,6 +128,7 @@ kt_jvm_library(
     "@community//platform/ui.jcef:ui-jcef",
     "@community//fleet/util/core:fleet-util-core",
     "@community//platform/eelProvider:eel-provider",
+    "@community//platform/platform-impl/ui:ide-ui",
   ],
   exports = [
     "@community//platform/platform-api:ide",
@@ -152,5 +154,20 @@ kt_jvm_library(
     "@community//platform/platform-resources:resources",
     "@community//platform/platform-resources-en:resources-en",
   ]
+)
+
+kt_jvm_test(
+  name = "ide-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    ":ide-impl",
+    "@community//lib:mac",
+    "@libraries//:assertj-core",
+  ],
+  runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

@@ -166,13 +166,14 @@ public class JavaHomeFinderBasic {
     }
 
     if (myCheckConfiguredJdks) {
+      Collection<Path> availableRoots = mySystemInfo.getFsRoots();
       for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
         if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
           continue;
         }
 
         String homePath = jdk.getHomePath();
-        if (homePath == null) {
+        if (homePath == null || ContainerUtil.all(availableRoots, root -> !homePath.startsWith(root.toString()))) {
           continue;
         }
 

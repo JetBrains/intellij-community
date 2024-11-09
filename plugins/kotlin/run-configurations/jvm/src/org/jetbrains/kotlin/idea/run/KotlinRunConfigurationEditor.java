@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
@@ -42,13 +43,13 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfiguration> implements PanelWithAnchor {
-    private JPanel mainPanel;
-    private LabeledComponent<ClassEditorField> mainClass;
+  private JPanel mainPanel;
+  private LabeledComponent<ClassEditorField> mainClass;
 
-    private CommonJavaParametersPanel commonProgramParameters;
-    private LabeledComponent<ModuleDescriptionsComboBox> moduleChooser;
-    private JrePathEditor jrePathEditor;
-    private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
+  private CommonJavaParametersPanel commonProgramParameters;
+  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> moduleChooser;
+  private JrePathEditor jrePathEditor;
+  private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
 
     private JComponent anchor;
 

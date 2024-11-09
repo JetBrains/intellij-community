@@ -21,16 +21,15 @@ import com.intellij.psi.PsiLiteralExpression
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.enableInspectionTools
+import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @CanChangeDocumentDuringHighlighting
 class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    DaemonProgressIndicator.setDebug(true)
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable?>) {
+    DaemonProgressIndicator.runInDebugMode<Exception> { -> super.runTestRunnable(testRunnable) }
   }
 
   fun testLocalInspectionInDumbMode() {
@@ -171,9 +170,11 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     """
     configureByText(JavaFileType.INSTANCE, text)
 
-    // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
-    val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
-    assertDoesntContain(initialDumbInfos, "Redundant suppression")
+    if (Registry.`is`("ide.dumb.mode.check.awareness")) {
+      // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
+      val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
+      assertDoesntContain(initialDumbInfos, "Redundant suppression")
+    }
 
     // smart infos contain a redundant suppression, because suppression is in fact redundant,
     // and redundant suppressor for Java works in smart mode

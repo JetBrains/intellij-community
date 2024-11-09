@@ -1,6 +1,6 @@
 ### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -16,7 +16,7 @@ kt_jvm_library(
   name = "buildScripts",
   module_name = "intellij.platform.buildScripts",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
@@ -36,7 +36,6 @@ kt_jvm_library(
     "@community//platform/testFramework/core:testFramework-core",
     "@community//platform/util-class-loader:util-classLoader",
     "@libraries//:jackson-jr-objects",
-    "@community//plugins/groovy/jps-plugin:groovy-jps",
     "@community//platform/statistics/config:statistics-config",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:gson",
@@ -88,7 +87,6 @@ kt_jvm_library(
   ],
   runtime_deps = [
     "@libraries//:commons-cli",
-    "@community//plugins/groovy/rt:groovy-rt",
     "@community//plugins/devkit/jps-plugin:devkit-jps",
     "@community//plugins/ui-designer/jps-plugin:java-guiForms-jps",
     "@libraries//:jaxb-api",

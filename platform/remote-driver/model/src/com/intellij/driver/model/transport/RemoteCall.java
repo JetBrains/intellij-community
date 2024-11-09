@@ -104,6 +104,7 @@ public abstract class RemoteCall implements Serializable {
            || LocalDateTime.class.isAssignableFrom(clazz)
            || Duration.class.isAssignableFrom(clazz)
            || Point.class.isAssignableFrom(clazz)
+           || Rectangle.class.isAssignableFrom(clazz)
            || PassByValue.class.isAssignableFrom(clazz);
   }
 
@@ -123,6 +124,7 @@ public abstract class RemoteCall implements Serializable {
            || result instanceof LocalDateTime
            || result instanceof Duration
            || result instanceof Point
+           || result instanceof Rectangle
            || result instanceof PassByValue;
   }
 }

@@ -1920,9 +1920,6 @@ com.intellij.openapi.components.SettingsSavingComponent
 f:com.intellij.openapi.concurrency.PromiseUtilKt
 - sf:awaitPromise-8Mi8wO0(org.jetbrains.concurrency.Promise,J,kotlin.coroutines.Continuation):java.lang.Object
 - sf:waitForPromise-HG0u8IE(org.jetbrains.concurrency.Promise,J):java.lang.Object
-com.intellij.openapi.diagnostic.ErrorLogger
-- a:canHandle(com.intellij.openapi.diagnostic.IdeaLoggingEvent):Z
-- a:handle(com.intellij.openapi.diagnostic.IdeaLoggingEvent):V
 a:com.intellij.openapi.diagnostic.ErrorReportSubmitter
 - com.intellij.openapi.extensions.PluginAware
 - <init>():V
@@ -6714,15 +6711,11 @@ a:com.intellij.ui.ListUtil$Updatable
 - pa:update():V
 c:com.intellij.ui.LoadingNode
 - javax.swing.tree.DefaultMutableTreeNode
-- com.intellij.ui.treeStructure.TreeNodeViewModel
 - sf:Companion:com.intellij.ui.LoadingNode$Companion
 - <init>():V
 - <init>(java.lang.String):V
 - b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getChildren():kotlinx.coroutines.flow.Flow
-- getPresentation():kotlinx.coroutines.flow.Flow
 - sf:getText():java.lang.String
-- presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
 f:com.intellij.ui.LoadingNode$Companion
 - f:getText():java.lang.String
 a:com.intellij.ui.MouseDragHelper
@@ -7046,6 +7039,7 @@ f:com.intellij.ui.ScrollPaneFactory
 - s:createScrollPane(java.awt.Component):javax.swing.JScrollPane
 - s:createScrollPane(java.awt.Component,I):javax.swing.JScrollPane
 - s:createScrollPane(java.awt.Component,I,I):javax.swing.JScrollPane
+- s:createScrollPane(java.awt.Component,I,I,Z):javax.swing.JScrollPane
 - s:createScrollPane(java.awt.Component,Z):javax.swing.JScrollPane
 f:com.intellij.ui.ScrollingUtil
 - sf:ROW_PADDING:I
@@ -8897,8 +8891,6 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
-f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
-- sf:stripHorizontalInsets(javax.swing.JComponent):V
 com.intellij.ui.dualView.CellWrapper
 - a:wrap(java.awt.Component,javax.swing.JTable,java.lang.Object,Z,Z,I,I,java.lang.Object):V
 com.intellij.ui.dualView.DualTreeElement
@@ -10356,7 +10348,6 @@ com.intellij.ui.treeStructure.TreeBulkExpansionListener
 - treeBulkCollapseStarted(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
 - treeBulkExpansionEnded(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
 - treeBulkExpansionStarted(com.intellij.ui.treeStructure.TreeBulkExpansionEvent):V
-f:com.intellij.ui.treeStructure.TreeDomainModelKt
 f:com.intellij.ui.treeStructure.TreeSwingModelKt
 f:com.intellij.ui.treeStructure.TreeViewModelKt
 c:com.intellij.ui.treeStructure.WeightBasedComparator

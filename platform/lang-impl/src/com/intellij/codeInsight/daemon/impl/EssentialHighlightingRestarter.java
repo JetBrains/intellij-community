@@ -10,6 +10,7 @@ import com.intellij.ide.SaveAndSyncHandlerListener;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Tells {@link DaemonCodeAnalyzerImpl} to run full set of passes after "Save all" to show all diagnostics
+ * Tells {@link DaemonCodeAnalyzerImpl} to run full set of passes after "Save all" action was invoked, to show all diagnostics
  * if the current selected file configured as "Highlight: Essential only"
  */
 @ApiStatus.Internal
@@ -31,6 +32,9 @@ public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerL
 
   @Override
   public void beforeSave(@NotNull SaveAndSyncHandler.SaveTask task, boolean forceExecuteImmediately) {
+    if (!Registry.is("highlighting.essential.should.restart.in.full.mode.on.save.all")) {
+      return;
+    }
     boolean hasFilesWithEssentialHighlightingConfigured =
       Arrays.stream(FileEditorManager.getInstance(myProject).getOpenFiles())
         .map(vf -> ReadAction.nonBlocking(() -> PsiManagerEx.getInstanceEx(myProject).getFileManager().findFile(vf)).executeSynchronously())
@@ -39,7 +43,7 @@ public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerL
                                                       FileHighlightingSetting.ESSENTIAL).executeSynchronously());
     if (hasFilesWithEssentialHighlightingConfigured) {
       DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      codeAnalyzer.restartToCompleteEssentialHighlighting();
+      codeAnalyzer.requestRestartToCompleteEssentialHighlighting();
     }
   }
 }

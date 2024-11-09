@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -11,7 +12,6 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
@@ -66,7 +66,7 @@ open class GradleScriptConfigurationsSource(override val project: Project) : Scr
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
         project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()
 
-    override fun resolveDependencies(scripts: Iterable<GradleScriptModel>): ScriptConfigurations {
+    override suspend fun resolveDependencies(scripts: Iterable<GradleScriptModel>): ScriptConfigurations {
         val newClasses = mutableSetOf<VirtualFile>()
         val newSources = mutableSetOf<VirtualFile>()
         val sdks = mutableMapOf<Path, Sdk>()
@@ -91,7 +91,7 @@ open class GradleScriptConfigurationsSource(override val project: Project) : Scr
                 ide.dependenciesSources(JvmDependency(script.sourcePath.map { File(it) }))
             }.adjustByDefinition(definition)
 
-            val updatedConfiguration = project.runReadActionInSmartMode {
+            val updatedConfiguration = smartReadAction(project) {
                 refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
             }
             newConfigurations[script.virtualFile] = updatedConfiguration

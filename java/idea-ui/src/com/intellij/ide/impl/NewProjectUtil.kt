@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.serviceAsync
@@ -58,7 +59,7 @@ suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
   val context = wizard.wizardContext
   val time = System.nanoTime()
   NewProjectWizardCollector.logOpen(context)
-  if (!withContext(Dispatchers.EDT) { wizard.showAndGet() }) {
+  if (!withContext(Dispatchers.EDT) { writeIntentReadAction { wizard.showAndGet () } }) {
     NewProjectWizardCollector.logFinish(context, false, TimeoutUtil.getDurationMillis(time))
     return
   }

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.test;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.TestIndexingModeSupporter;
+import com.intellij.util.ArrayUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
@@ -162,11 +163,7 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
             if (indexingMode != null) {
                 TestIndexingModeSupporter.@NotNull IndexingMode[] value = indexingMode.value();
                 if (!Registry.is("ide.dumb.mode.check.awareness")) {
-                    for (int i = 0; i < value.length; i++) {
-                        if (value[i] == TestIndexingModeSupporter.IndexingMode.DUMB_EMPTY_INDEX) {
-                            value[i] = TestIndexingModeSupporter.IndexingMode.DUMB_FULL_INDEX;
-                        }
-                    }
+                    return ArrayUtil.remove(value, TestIndexingModeSupporter.IndexingMode.DUMB_EMPTY_INDEX);
                 }
                 return value;
             }

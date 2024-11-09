@@ -71,5 +71,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="kotlin.searching.k2" />
+    <orderEntry type="module" module-name="kotlin.base.statistics" />
   </component>
 </module>

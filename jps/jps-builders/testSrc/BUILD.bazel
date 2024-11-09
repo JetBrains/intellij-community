@@ -1,0 +1,28 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+kt_jvm_test(
+  name = "jps-build-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//java/testFramework:java-testFramework",
+    "@community//jps/model-serialization/testSrc:jps-model-serialization-tests",
+    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "@community//lib:eclipse",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:asm-all",
+    "@community//jps/model-impl:jps-model-impl",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:gson",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@libraries//:assertj-core",
+    "@libraries//:hash4j",
+    "@libraries//:jqwik",
+    "@libraries//:h2-mvstore",
+    "@libraries//:memoryfilesystem",
+  ]
+)
+### auto-generated section `build` end

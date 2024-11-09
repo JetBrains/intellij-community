@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.server.MavenIndexerWrapper
 import org.jetbrains.idea.maven.server.MavenServerIndexerException
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import java.io.File
+import java.nio.file.Path
 
 class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
                                   private val myIndexId: MavenIndexId,
@@ -40,7 +40,7 @@ class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
     myUpdateTimestamp = System.currentTimeMillis()
   }
 
-  override fun tryAddArtifacts(artifactFiles: Collection<File>): List<AddArtifactResponse> {
+  override fun tryAddArtifacts(artifactFiles: Collection<Path>): List<AddArtifactResponse> {
     try {
       return myNexusIndexer.addArtifacts(myIndexId, artifactFiles)
     }
@@ -50,7 +50,7 @@ class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
     catch (e: Exception) {
       MavenLog.LOG.error("exception adding artifacts into index $myIndexId")
       return artifactFiles.map {
-        AddArtifactResponse(it, null)
+        AddArtifactResponse(it.toFile(), null)
       }
     }
 

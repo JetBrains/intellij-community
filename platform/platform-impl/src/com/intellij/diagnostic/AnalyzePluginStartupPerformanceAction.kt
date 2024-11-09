@@ -123,7 +123,7 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
 
   override fun doOKAction() {
     super.doOKAction()
-    IdeErrorsDialog.confirmDisablePlugins(
+    DisablePluginsDialog.confirmDisablePlugins(
       project,
       pluginsToDisable.asSequence()
         .map(PluginId::getId)

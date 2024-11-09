@@ -11,9 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.ManifestImporter;
 import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -179,12 +180,12 @@ public class ManifestBuilder {
   private Manifest getUserSuppliedManifest(@Nullable Element mavenArchiveConfiguration) {
     String manifestPath = MavenJDOMUtil.findChildValueByPath(mavenArchiveConfiguration, "manifestFile");
     if (manifestPath != null) {
-      File manifestFile = new File(manifestPath);
+      Path manifestFile = Path.of(manifestPath);
       if (!manifestFile.isAbsolute()) {
-        manifestFile = new File(myMavenProject.getDirectory(), manifestPath);
+        manifestFile = Path.of(myMavenProject.getDirectory(), manifestPath);
       }
-      if (manifestFile.isFile()) {
-        try (FileInputStream fis = new FileInputStream(manifestFile)) {
+      if (!Files.isDirectory(manifestFile)) {
+        try (InputStream fis = Files.newInputStream(manifestFile)) {
           return new Manifest(fis);
         }
         catch (IOException ignore) { }

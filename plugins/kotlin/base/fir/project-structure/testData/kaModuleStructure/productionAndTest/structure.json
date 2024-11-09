@@ -1,5 +1,5 @@
 {
     "modules": [
-        { "name": "A", "sourceSets": ["production", "test"] }
+        { "name": "A", "content_roots": ["production", "tests"] }
     ]
 }

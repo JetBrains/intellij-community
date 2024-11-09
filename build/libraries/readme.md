@@ -1,4 +1,4 @@
 Update and re-pin libraries:
 ```shell
-bazelisk run @maven//:pin
+REPIN=1 bazelisk run @community_maven//:pin
 ```

@@ -1,0 +1,29 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "java-impl-refactorings",
+  module_name = "intellij.java.impl.refactorings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/lang-api:lang",
+    "@community//java/java-psi-api:java-psi",
+    "@community//platform/core-impl",
+    "@community//platform/lang-impl",
+    "@community//platform/statistics",
+    "@community//java/openapi:java",
+    "@community//java/java-psi-impl",
+    "@community//java/java-impl",
+    "@community//java/jsp-openapi:jsp",
+    "@libraries//:streamex",
+    "@community//platform/code-style-impl:codeStyle-impl",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/diff-impl",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/core-ui",
+  ]
+)
+### auto-generated section `build` end

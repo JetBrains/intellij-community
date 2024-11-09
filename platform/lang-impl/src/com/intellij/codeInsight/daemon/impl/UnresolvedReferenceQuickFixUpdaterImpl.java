@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -13,6 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -120,6 +122,16 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
       }
       return true;
     });
+    if (!ClientId.isLocal(ClientEditorManager.getClientId(editor))) {
+      // for non-local editor its visible area is unreliable, so ignore all optimizations there
+      // (see IJPL-163871 Intentions sometimes don't appear in Remote Dev and Code With Me)
+      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(), info -> {
+        if (info.isUnresolvedReference()) {
+          unresolvedInfos.add(info);
+        }
+        return true;
+      });
+    }
     for (HighlightInfo info : unresolvedInfos) {
       startUnresolvedRefsJob(info, editor, file, visibleRange);
     }

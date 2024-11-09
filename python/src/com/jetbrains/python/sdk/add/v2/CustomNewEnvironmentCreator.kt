@@ -66,7 +66,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              ProjectJdkTable.getInstance().allJdks.asList(),
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
-                             false)!!
+                             false).getOrElse { return Result.failure(it) }
     newSdk.persist()
     model.addInterpreter(newSdk)
     return Result.success(newSdk)
@@ -136,7 +136,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
 
   internal abstract fun savePathToExecutableToProperties()
 
-  protected abstract fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk?
+  protected abstract suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk>
 
   internal abstract suspend fun detectExecutable()
 }

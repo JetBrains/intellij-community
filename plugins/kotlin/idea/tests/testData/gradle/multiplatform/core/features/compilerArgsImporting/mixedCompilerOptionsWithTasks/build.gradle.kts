@@ -15,7 +15,7 @@ repositories {
 
 kotlin {
     jvm()
-    android()
+    {{androidTargetPlaceholder}}
     ios()
     js(IR) { nodejs() }
 

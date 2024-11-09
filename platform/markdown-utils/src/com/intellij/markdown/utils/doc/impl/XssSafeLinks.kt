@@ -1,15 +1,17 @@
 package com.intellij.markdown.utils.doc.impl
 
+import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.LinkGeneratingProvider
 
 private val UNSAFE_LINK_REGEX = Regex("^(vbscript|javascript|file|data):", RegexOption.IGNORE_CASE)
+private val UNSAFE_LINK_REGEX_IMAGE = Regex("^(vbscript|javascript|data):", RegexOption.IGNORE_CASE)
 /* We need to support svg for documentation rendering */
-private val ALLOWED_DATA_LINK_REGEX = Regex("^data:image/(gif|png|jpeg|webp|svg)(\\+[a-z0-9A-Z]*)?;", RegexOption.IGNORE_CASE)
+private val ALLOWED_DATA_LINK_REGEX = Regex("^data:image/(gif|png|jpeg|webp|svg)[+;=a-z0-9A-Z]*,", RegexOption.IGNORE_CASE)
 
-fun makeXssSafeDestination(s: CharSequence): CharSequence = s.takeIf {
-  !UNSAFE_LINK_REGEX.containsMatchIn(s.trim()) || ALLOWED_DATA_LINK_REGEX.containsMatchIn(s.trim())
+fun makeXssSafeDestination(s: CharSequence, isImage: Boolean): CharSequence = s.takeIf {
+  !(if (isImage) UNSAFE_LINK_REGEX_IMAGE else UNSAFE_LINK_REGEX).containsMatchIn(s.trim()) || ALLOWED_DATA_LINK_REGEX.containsMatchIn(s.trim())
 } ?: "#"
 
 fun LinkGeneratingProvider.makeXssSafe(useSafeLinks: Boolean = true): LinkGeneratingProvider {
@@ -27,7 +29,7 @@ fun LinkGeneratingProvider.makeXssSafe(useSafeLinks: Boolean = true): LinkGenera
 
     override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
       return this@makeXssSafe.getRenderInfo(text, node)?.let {
-        it.copy(destination = makeXssSafeDestination(it.destination))
+        it.copy(destination = makeXssSafeDestination(it.destination, node.type == MarkdownElementTypes.IMAGE))
       }
     }
   }

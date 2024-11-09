@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChangesBuilder.Companion.mer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
@@ -261,8 +262,8 @@ internal class MavenProjectsTreeUpdater(
     return file.timeStamp
   }
 
-  private fun getFileTimestamp(file: File?): Long {
-    return getFileTimestamp(if (file == null) null else LocalFileSystem.getInstance().findFileByIoFile(file))
+  private fun getFileTimestamp(file: Path?): Long {
+    return getFileTimestamp(if (file == null) null else LocalFileSystem.getInstance().findFileByNioFile(file))
   }
 
   @ApiStatus.Internal

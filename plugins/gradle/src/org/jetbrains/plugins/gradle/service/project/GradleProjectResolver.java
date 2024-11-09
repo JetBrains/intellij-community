@@ -46,6 +46,7 @@ import org.gradle.tooling.BuildActionFailureException;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -53,6 +54,7 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.*;
@@ -809,11 +811,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull ProjectResolverContext resolverContext,
     @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
   ) {
+    var modules = ContainerUtil.map2Map(moduleMap.values(), it -> new Pair<>(it.getSecond(), it.getFirst()));
     if (resolverContext.isResolveModulePerSourceSet()) {
-      mergeSourceSetContentRootsInModulePerSourceSetMode(resolverContext, moduleMap);
+      mergeSourceSetContentRootsInModulePerSourceSetMode(resolverContext, modules);
     }
     else {
-      mergeSourceSetContentRootsInModulePerProjectMode(resolverContext, moduleMap);
+      mergeSourceSetContentRootsInModulePerProjectMode(resolverContext, modules);
     }
   }
 
@@ -824,25 +827,27 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
    * For example, it creates content roots src/main for the source set directories src/main/java and src/main/resources.
    * Same for src/test/java and src/test/resources, it creates src/test content root.
    */
-  private static void mergeSourceSetContentRootsInModulePerSourceSetMode(
+  @VisibleForTesting
+  @ApiStatus.Internal
+  static void mergeSourceSetContentRootsInModulePerSourceSetMode(
     @NotNull ProjectResolverContext resolverContext,
-    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
+    @NotNull Map<? extends ProjectModel, DataNode<ModuleData>> moduleMap
   ) {
     var contentRootIndex = new GradleContentRootIndex();
 
-    for (var moduleEntry : moduleMap.values()) {
-      var moduleNode = moduleEntry.first;
+    for (var moduleEntry : moduleMap.entrySet()) {
+      var moduleNode = moduleEntry.getValue();
 
       for (var sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
         contentRootIndex.addSourceRoots(sourceSetNode);
       }
     }
 
-    for (var moduleEntry : moduleMap.values()) {
-      var moduleNode = moduleEntry.first;
-      var ideaModule = moduleEntry.second;
+    for (var moduleEntry : moduleMap.entrySet()) {
+      var projectModel = moduleEntry.getKey();
+      var moduleNode = moduleEntry.getValue();
 
-      var externalProject = resolverContext.getExtraProject(ideaModule, ExternalProject.class);
+      var externalProject = resolverContext.getProjectModel(projectModel, ExternalProject.class);
       if (externalProject == null) continue;
 
       for (var sourceSetNode : findAll(moduleNode, GradleSourceSetData.KEY)) {
@@ -875,13 +880,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static void mergeSourceSetContentRootsInModulePerProjectMode(
     @NotNull ProjectResolverContext resolverContext,
-    @NotNull Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap
+    @NotNull Map<? extends ProjectModel, DataNode<ModuleData>> moduleMap
   ) {
-    for (var moduleEntry : moduleMap.values()) {
-      var moduleNode = moduleEntry.first;
-      var ideaModule = moduleEntry.second;
+    for (var moduleEntry : moduleMap.entrySet()) {
+      var projectModel = moduleEntry.getKey();
+      var moduleNode = moduleEntry.getValue();
 
-      var externalProject = resolverContext.getExtraProject(ideaModule, ExternalProject.class);
+      var externalProject = resolverContext.getProjectModel(projectModel, ExternalProject.class);
       if (externalProject == null) continue;
 
       var projectRootPath = NioPathUtil.toCanonicalPath(externalProject.getProjectDir().toPath());

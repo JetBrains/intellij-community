@@ -7,11 +7,7 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -416,13 +412,28 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
 }
 
 @Internal
-suspend fun attachToProjectAsync(projectToClose: Project, projectDir: Path, callback: ProjectOpenedCallback? = null): Boolean {
+suspend fun attachToProjectAsync(
+  projectToClose: Project,
+  projectDir: Path,
+  processor: ProjectAttachProcessor? = null,
+  callback: ProjectOpenedCallback? = null
+): Boolean {
+  if (processor != null) {
+    return attachImpl(processor, projectToClose, projectDir, callback)
+  }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (runCatching {
-        attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback)
-      }.getOrLogException(LOG) == true) {
-      return true
-    }
+    if (attachImpl(attachProcessor, projectToClose, projectDir, callback)) return true
   }
   return false
+}
+
+private suspend fun attachImpl(
+  attachProcessor: ProjectAttachProcessor,
+  projectToClose: Project,
+  projectDir: Path,
+  callback: ProjectOpenedCallback?,
+): Boolean {
+  return runCatching {
+    attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback)
+  }.getOrLogException(LOG) == true
 }

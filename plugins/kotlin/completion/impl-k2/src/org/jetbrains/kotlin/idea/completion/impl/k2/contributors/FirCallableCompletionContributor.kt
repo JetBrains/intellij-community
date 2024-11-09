@@ -188,9 +188,6 @@ internal open class FirCallableCompletionContributor(
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
-        val implicitReceivers = scopeContext.implicitReceivers
-        val implicitReceiversTypes = implicitReceivers.map { it.type }
-
         val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
             parameters = parameters,
             positionContext = positionContext,
@@ -270,7 +267,7 @@ internal open class FirCallableCompletionContributor(
 
         collectExtensionsFromIndexAndResolveExtensionScope(
             positionContext = positionContext,
-            receiverTypes = implicitReceiversTypes,
+            receiverTypes = scopeContext.implicitReceivers.map { it.type },
             extensionChecker = extensionChecker,
         ).forEach { applicableExtension ->
             val signature = applicableExtension.signature
@@ -351,7 +348,7 @@ internal open class FirCallableCompletionContributor(
         explicitReceiver: KtExpression,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
-        val receiverType = explicitReceiver.expressionType.takeUnless { it is KaErrorType } ?: return@sequence
+        val receiverType = explicitReceiver.expressionType ?: return@sequence
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
             positionContext = positionContext,
             typesOfPossibleReceiver = listOf(receiverType),
@@ -489,14 +486,20 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         explicitReceiverTypes: List<KaType>? = null,
     ): Sequence<Pair<KtCallableSignatureWithContainingScopeKind, CallableInsertionOptions>> {
-        val receiversTypes = explicitReceiverTypes ?: scopeContext.implicitReceivers.map { it.type }
+        val receiverTypes = (explicitReceiverTypes
+            ?: scopeContext.implicitReceivers.map { it.type })
+            .filterNot { it is KaErrorType }
+        if (receiverTypes.isEmpty()) return emptySequence()
 
         return scopeContext.scopes.asSequence().flatMap { scopeWithKind ->
-            collectSuitableExtensions(
+            val suitableExtensions = collectSuitableExtensions(
                 positionContext = positionContext,
                 scope = scopeWithKind.scope,
-                receiverTypes = receiversTypes,
                 hasSuitableExtensionReceiver = extensionChecker,
+            )
+            ShadowedCallablesFilter.sortExtensions(
+                extensions = suitableExtensions.toList(),
+                receiversFromContext = receiverTypes,
             ).map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
         }
     }
@@ -505,15 +508,13 @@ internal open class FirCallableCompletionContributor(
     private fun collectSuitableExtensions(
         positionContext: KotlinNameReferencePositionContext,
         scope: KaScope,
-        receiverTypes: List<KaType>,
         hasSuitableExtensionReceiver: KaCompletionExtensionCandidateChecker?,
-    ): Collection<ApplicableExtension> =
+    ): Sequence<ApplicableExtension> =
         scope.callables(scopeNameFilter)
             .filter { it.canBeUsedAsExtension() }
             .filter { visibilityChecker.isVisible(it, positionContext) }
             .filter { filter(it) }
             .mapNotNull { callable -> checkApplicabilityAndSubstitute(callable, hasSuitableExtensionReceiver) }
-            .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
 
     /**
      * If [callableSymbol] is applicable returns substituted signature and insertion options, otherwise, null.

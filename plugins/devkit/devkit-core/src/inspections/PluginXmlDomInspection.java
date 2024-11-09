@@ -10,12 +10,12 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
-import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
@@ -785,7 +785,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                            Extension extension,
                                            String effectiveQualifiedName,
                                            @Nullable Module module) {
-    if (IdeErrorsDialog.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName)) {
+    if (ErrorReportSubmitter.EP_NAME.getName().equals(effectiveQualifiedName)) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
@@ -1191,6 +1191,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
+  @SuppressWarnings("HttpUrlsUsage")
   private static void checkValidWebsite(@NotNull GenericDomValue<String> domValue,
                                         DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(domValue)) return;

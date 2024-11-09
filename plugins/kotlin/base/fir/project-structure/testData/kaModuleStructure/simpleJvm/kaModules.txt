@@ -11,6 +11,19 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
+  description: Library L2
+  targetPlatform: JVM (1.8)
+  libraryName: L2
+  isSdk: false
+  regularDependencies:
+    KaLibraryModule(L1)
+    KaLibraryModule(L3)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
   description: Library L3
   targetPlatform: JVM (1.8)
   libraryName: L3
@@ -55,7 +68,7 @@ KaSourceModule:
   sourceModuleKind: PRODUCTION
   stableModuleName: <B>
   regularDependencies:
-    KaLibraryModule(L1)
+    KaLibraryModule(L2)
     KaSourceModule(A, production)
   friendDependencies:
     <empty>
@@ -69,7 +82,7 @@ KaSourceModule:
   sourceModuleKind: TEST
   stableModuleName: <B>
   regularDependencies:
-    KaLibraryModule(L1)
+    KaLibraryModule(L2)
     KaSourceModule(A, production)
     KaSourceModule(B, production)
   friendDependencies:

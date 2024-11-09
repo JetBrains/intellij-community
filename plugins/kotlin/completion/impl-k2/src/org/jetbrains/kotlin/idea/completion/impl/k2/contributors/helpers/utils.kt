@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -142,6 +143,7 @@ internal fun collectNonExtensionsForType(
     indexInTower: Int? = null,
     symbolFilter: (KaCallableSymbol) -> Boolean = { true },
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
+    if (receiverType is KaErrorType) return emptySequence()
     val typeScope = receiverType.scope ?: return emptySequence()
 
     val languageVersionSettings = parameters.languageVersionSettings // todo is it possible to reuse WeighingContext?

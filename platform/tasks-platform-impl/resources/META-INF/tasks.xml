@@ -5,7 +5,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.tasks.TaskManager" serviceImplementation="com.intellij.tasks.impl.TaskManagerImpl"/>
-    <postStartupActivity implementation="com.intellij.tasks.impl.TaskManagerImpl$Activity"/>
+    <postStartupActivity implementation="com.intellij.tasks.impl.TaskManagerStartupActivity"/>
 
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>

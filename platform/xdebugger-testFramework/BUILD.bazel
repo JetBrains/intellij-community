@@ -1,0 +1,20 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "debugger-testFramework",
+  module_name = "intellij.platform.debugger.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/testFramework",
+    "@community//platform/xdebugger-impl:debugger-impl",
+    "@community//platform/xdebugger-api:debugger",
+    "@community//platform/testFramework/extensions:testExtensions",
+    "@libraries//:streamex",
+    "@community//platform/core-ui",
+  ]
+)
+### auto-generated section `build` end

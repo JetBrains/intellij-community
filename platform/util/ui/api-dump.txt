@@ -3451,9 +3451,8 @@ f:com.intellij.util.ui.AATextInfo
 - f:aaHint:java.lang.Object
 - f:lcdContrastHint:java.lang.Integer
 - <init>(java.lang.Object,java.lang.Integer):V
-- s:create(java.lang.Object,java.lang.Integer):java.lang.Object
-- s:getClientProperty(javax.swing.JComponent):java.lang.Object
-- s:putClientProperty(java.lang.Object,javax.swing.JComponent):V
+- s:getClientProperty(javax.swing.JComponent):com.intellij.util.ui.AATextInfo
+- s:putClientProperty(com.intellij.util.ui.AATextInfo,javax.swing.JComponent):V
 a:com.intellij.util.ui.AbstractLayoutManager
 - java.awt.LayoutManager2
 - <init>():V
@@ -3706,7 +3705,7 @@ f:com.intellij.util.ui.GraphicsUtil
 - s:applyRenderingHints(java.awt.Graphics2D):V
 - s:charWidth(C,java.awt.Font):I
 - s:charWidth(I,java.awt.Font):I
-- s:createAATextInfo(java.lang.Object):java.lang.Object
+- s:createAATextInfo(java.lang.Object):com.intellij.util.ui.AATextInfo
 - s:disableAAPainting(java.awt.Graphics):com.intellij.openapi.ui.GraphicsConfig
 - s:isRemoteEnvironment():Z
 - s:paintWithAlpha(java.awt.Graphics,F):com.intellij.openapi.ui.GraphicsConfig

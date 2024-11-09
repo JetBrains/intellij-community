@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "util-http",
   module_name = "intellij.platform.util.http",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [

@@ -38,7 +38,7 @@ class NavBarVmImpl(
 
   init {
     cs.launch {
-      contextItems.collectLatest { items ->
+      contextItems.distinctUntilChanged().collectLatest { items ->
         if (items.isNotEmpty()) {
           _items.value = items.mapIndexed(::NavBarItemVmImpl)
           _selectedIndex.value = -1
@@ -89,10 +89,14 @@ class NavBarVmImpl(
     }
   }
 
-  override fun selectTail() {
+  override fun selectTail(withPopupOpen: Boolean) {
+    val shiftToLeft = if (withPopupOpen) 1 else 0
+
     val items = items.value
-    val i = (items.size - 2).coerceAtLeast(0)
+    val i = (items.size - 1 - shiftToLeft).coerceAtLeast(0)
     items[i].select()
+
+    if (withPopupOpen) showPopup()
   }
 
   override fun showPopup() {

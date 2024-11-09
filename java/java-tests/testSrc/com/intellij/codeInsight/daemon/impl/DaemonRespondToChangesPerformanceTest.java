@@ -245,7 +245,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           // wait to engage all highlighting threads
           return;
         }
-        // uncomment to debug what's causing pauses
+        // set DEBUG=true to see what's causing pauses
         AtomicBoolean finished = new AtomicBoolean();
         if (DEBUG) {
           AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {

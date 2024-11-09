@@ -126,7 +126,7 @@ public class GradleExecutionHelper {
 
     setupEnvironment(operation, settings);
 
-    setupJavaHome(operation, settings);
+    setupJavaHome(operation, settings, id);
 
     setupProgressListeners(operation, settings, id, listener, buildEnvironment);
 
@@ -223,9 +223,12 @@ public class GradleExecutionHelper {
 
   private static void setupJavaHome(
     @NotNull LongRunningOperation operation,
-    @NotNull GradleExecutionSettings settings
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskId id
   ) {
-    final String javaHome = settings.getJavaHome();
+    var javaHome = GradleDaemonJvmHelper.isExecutingUpdateDaemonJvmTask(settings)
+                   ? GradleDaemonJvmHelper.getGradleJvmForUpdateDaemonJvmTask(id)
+                   : settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
       LOG.debug("Java home to set for Gradle operation: " + javaHome);
       operation.setJavaHome(new File(javaHome));
@@ -493,10 +496,7 @@ public class GradleExecutionHelper {
           modelBuilder.withCancellationToken(cancellationToken);
         }
         if (settings != null) {
-          final String javaHome = settings.getJavaHome();
-          if (javaHome != null && new File(javaHome).isDirectory()) {
-            modelBuilder.setJavaHome(new File(javaHome));
-          }
+          setupJavaHome(modelBuilder, settings, taskId);
         }
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.

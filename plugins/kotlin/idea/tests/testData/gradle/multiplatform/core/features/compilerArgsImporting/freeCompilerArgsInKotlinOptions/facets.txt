@@ -27,12 +27,12 @@ project.commonTest
 project.iosArm64Main
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -nostdlib -opt-in OptInAnnotation
+    compilerSettings = -nopack -nostdlib -opt-in OptInAnnotation
 
 project.iosArm64Test
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -nostdlib -opt-in OptInAnnotation
+    compilerSettings = -nopack -nostdlib -opt-in OptInAnnotation
 
 project.iosMain
     languageLevel = {{LATEST_STABLE}}
@@ -46,12 +46,12 @@ project.iosTest
 project.iosX64Main
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -nostdlib -opt-in OptInAnnotation
+    compilerSettings = -nopack -nostdlib -opt-in OptInAnnotation
 
 project.iosX64Test
     languageLevel = 1.7
     apiLevel = 1.7
-    compilerSettings = -nostdlib -opt-in OptInAnnotation
+    compilerSettings = -nopack -nostdlib -opt-in OptInAnnotation
 
 project.jsMain
     languageLevel = 1.7

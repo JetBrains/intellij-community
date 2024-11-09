@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -35,7 +36,7 @@ public class TerminalProcessHandler extends SvnProcessHandler {
   private final StringBuilder outputLine = new StringBuilder();
   private final StringBuilder errorLine = new StringBuilder();
 
-  public TerminalProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
+  public TerminalProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, boolean forceUtf8, boolean forceBinary) {
     super(process, commandLine, forceUtf8, forceBinary);
     setHasPty(true);
     setShouldDestroyProcessRecursively(false);

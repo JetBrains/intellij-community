@@ -16,13 +16,6 @@ abstract class AbstractFirSlicerMultiplatformTest: AbstractSlicerMultiplatformTe
     override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
     override fun createSliceProvider(): SliceLanguageSupportProvider = KotlinSliceProvider()
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun doTest(filePath: String) {
-        allowAnalysisOnEdt {
-            super.doTest(filePath)
-        }
-    }
-
     override fun getResultsFile(testRoot: File): File {
         val file = testRoot.resolve("k2.results.txt")
         if (file.exists()) {

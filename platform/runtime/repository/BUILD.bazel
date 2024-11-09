@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "runtime-repository",
   module_name = "intellij.platform.runtime.repository",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = ["@libraries//:annotations"]

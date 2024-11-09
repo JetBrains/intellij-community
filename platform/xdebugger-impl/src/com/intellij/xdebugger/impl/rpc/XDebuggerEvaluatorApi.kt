@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.ui.icons.IconRpc
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
@@ -28,9 +27,7 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerEvaluatorApi {
-      return withKernel {
-        RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerEvaluatorApi>())
-      }
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerEvaluatorApi>())
     }
   }
 }

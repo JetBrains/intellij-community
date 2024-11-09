@@ -81,11 +81,14 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     }
   }
 
-  fun testGotoDefinition(expression: String, checker: (PsiElement) -> Unit) {
+  fun testGotoDefinition(expression: String, checker: (PsiElement) -> Unit) =
+    testGotoDefinition("build.gradle", expression, checker)
+
+  fun testGotoDefinition(relativePath: String, expression: String, checker: (PsiElement) -> Unit) {
     checkCaret(expression)
-    writeTextAndCommit("build.gradle", expression)
+    writeTextAndCommit(relativePath, expression)
     runInEdtAndWait {
-      codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
+      codeInsightFixture.configureFromExistingVirtualFile(getFile(relativePath))
       val elementAtCaret = codeInsightFixture.elementAtCaret
       assertNotNull(elementAtCaret)
       val elem = GotoDeclarationAction.findTargetElement(project, codeInsightFixture.editor, codeInsightFixture.caretOffset)

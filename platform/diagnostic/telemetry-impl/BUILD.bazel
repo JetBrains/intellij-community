@@ -1,11 +1,11 @@
 ### auto-generated section `build` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 create_kotlinc_options(
@@ -18,7 +18,7 @@ kt_jvm_library(
   name = "diagnostic-telemetry-impl",
   module_name = "intellij.platform.diagnostic.telemetry.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],
@@ -40,8 +40,13 @@ kt_jvm_library(
     "@community//platform/diagnostic",
     "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
     "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "@libraries//:guava",
   ],
-  exports = ["@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters"],
+  exports = [
+    "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
+    "@community//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+  ],
   runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

@@ -1,0 +1,57 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+)
+
+kt_jvm_library(
+  name = "java-debugger-impl",
+  module_name = "intellij.java.debugger.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//java/debugger/openapi:java-debugger",
+    "@community//java/openapi:java",
+    "@community//java/execution/openapi:java-execution",
+    "@community//resources:java-resources",
+    "@community//platform/xdebugger-impl:debugger-impl",
+    "@community//platform/lang-api:lang",
+    "@community//java/compiler/openapi:java-compiler",
+    "@community//java/compiler/impl:java-compiler-impl",
+    "@community//java/java-runtime:java-rt",
+    "@community//java/jsp-openapi:jsp",
+    "@community//java/java-impl",
+    "@community//java/java-impl-refactorings",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/util",
+    "@community//jps/jps-builders:jps-build",
+    "@community//java/debugger/memory-agent:java-debugger-memory-agent",
+    "@libraries//:sa-jdwp",
+    "@libraries//:jb-jdi",
+    "@libraries//:streamex",
+    "@community//platform/statistics",
+    "@community//images",
+    "@community//platform/core-ui",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@libraries//:gson",
+    "@libraries//:asm-all",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/build-scripts/downloader:buildScripts-downloader",
+    "@community//platform/feedback",
+    "@libraries//:kotlinx-datetime-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/threadDumpParser",
+  ],
+  exports = ["@community//java/debugger/openapi:java-debugger"],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

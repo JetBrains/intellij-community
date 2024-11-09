@@ -78,7 +78,7 @@ data class BuildRequest(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend () -> ProductProperties): Path {
+internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend (CompilationContext) -> ProductProperties): Path {
   val rootDir = withContext(Dispatchers.IO) {
     val rootDir = request.devRootDir
     // if symlinked to ram disk, use a real path for performance reasons and avoid any issues in ant/other code
@@ -415,18 +415,13 @@ private suspend fun buildPlugins(
 }
 
 private suspend fun createBuildContext(
-  createProductProperties: suspend () -> ProductProperties,
+  createProductProperties: suspend (CompilationContext) -> ProductProperties,
   request: BuildRequest,
   runDir: Path,
   jarCacheDir: Path,
   buildDir: Path,
 ): BuildContext {
   return coroutineScope {
-    // ~1 second
-    val productProperties = async(CoroutineName("create product properties")) {
-      createProductProperties()
-    }
-
     val buildOptionsTemplate = request.buildOptionsTemplate
     val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null || buildOptionsTemplate.useCompiledClassesFromProjectOutput
     val classOutDir = if (useCompiledClassesFromProjectOutput) {
@@ -452,6 +447,7 @@ private suspend fun createBuildContext(
           useCompiledClassesFromProjectOutput = useCompiledClassesFromProjectOutput,
           pathToCompiledClassesArchivesMetadata = buildOptionsTemplate?.pathToCompiledClassesArchivesMetadata?.takeIf { !useCompiledClassesFromProjectOutput },
           pathToCompiledClassesArchive = buildOptionsTemplate?.pathToCompiledClassesArchive?.takeIf { !useCompiledClassesFromProjectOutput },
+          unpackCompiledClassesArchives = buildOptionsTemplate?.unpackCompiledClassesArchives?.takeIf { !useCompiledClassesFromProjectOutput } ?: true,
           classOutDir = classOutDir.toString(),
 
           validateModuleStructure = false,
@@ -496,6 +492,7 @@ private suspend fun createBuildContext(
           options = options,
           customBuildPaths = result,
         )
+        .let { if (options.unpackCompiledClassesArchives) it else ArchivedCompilationContext(it) }
       }
     }
 
@@ -505,6 +502,12 @@ private suspend fun createBuildContext(
     }
 
     val compilationContext = compilationContextDeferred.await()
+
+    // ~1 second
+    val productProperties = async(CoroutineName("create product properties")) {
+      createProductProperties(compilationContext)
+    }
+
     BuildContextImpl(
       compilationContext = compilationContext,
       productProperties = productProperties.await(),
@@ -551,8 +554,10 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
          satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 
-internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
-  val classPathFiles = getBuildModules(productConfiguration).map { request.productionClassOutput.resolve(it) }.toList()
+internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, compilationContext: CompilationContext, request: BuildRequest): ProductProperties {
+  val classPathFiles = coroutineScope {
+     getBuildModules(productConfiguration).map { async { compilationContext.getModuleOutputDir(compilationContext.findRequiredModule(it)) } }.toList()
+  }.awaitAll()
 
   val classLoader = spanBuilder("create product properties classloader").use {
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))

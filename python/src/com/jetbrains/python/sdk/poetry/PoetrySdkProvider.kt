@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.poetry.quickFixes.PoetryInstallQuickFix
@@ -64,9 +63,6 @@ class PoetrySdkProvider : PySdkProvider {
     return PyPoetrySdkAdditionalData.load(element)
   }
 
-  override fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService? {
-    return if (sdk.isPoetry) PyPoetryPackageManagementService(project, sdk) else null
-  }
 }
 
 internal fun validateSdks(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<Sdk> {
@@ -75,7 +71,7 @@ internal fun validateSdks(module: Module?, existingSdks: List<Sdk>, context: Use
              ?: detectSystemWideSdks(module, existingSdks, context)
 
   return if (moduleFile != null) {
-    PyProjectTomlPythonVersionsService.instance.validateSdkVersions(moduleFile, sdks)
+    PoetryPyProjectTomlPythonVersionsService.instance.validateSdkVersions(moduleFile, sdks)
   }
   else {
     sdks

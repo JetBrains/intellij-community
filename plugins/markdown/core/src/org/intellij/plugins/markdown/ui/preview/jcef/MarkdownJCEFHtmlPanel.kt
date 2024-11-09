@@ -135,6 +135,10 @@ class MarkdownJCEFHtmlPanel(
 
   private val panelComponent by lazy { createComponent() }
 
+  private var searchSession: MarkdownPreviewSearchSession? = null
+
+  internal fun showSearchBar() = searchSession?.showSearchBar()
+
   override fun getComponent(): JComponent {
     return panelComponent
   }
@@ -329,6 +333,9 @@ class MarkdownJCEFHtmlPanel(
 
     coroutineScope.async(context = Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       panel.startLoading()
+      val session = MarkdownPreviewSearchSession(project, cefBrowser, previewInnerComponent)
+      previewInnerComponent.add(session.component, BorderLayout.NORTH)
+      searchSession = session
       val viewPort = ViewPort()
       viewPort.add(previewInnerComponent, BorderLayout.CENTER)
       panel.add(viewPort)

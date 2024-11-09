@@ -30,7 +30,7 @@ class CondaNewEnvironmentCreator(model: PythonMutableTargetAddInterpreterModel, 
     with(panel) {
       row(message("sdk.create.python.version")) {
         pythonVersion = propertyGraph.property(condaSupportedLanguages.first())
-        versionComboBox = comboBox(condaSupportedLanguages, textListCellRenderer { it!!.toPythonVersion() })
+        versionComboBox = comboBox(condaSupportedLanguages, textListCellRenderer { it?.toPythonVersion() })
           .bindItem(pythonVersion)
           .component
       }
