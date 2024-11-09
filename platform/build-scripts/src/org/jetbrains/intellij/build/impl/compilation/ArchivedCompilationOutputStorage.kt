@@ -19,12 +19,14 @@ class ArchivedCompilationOutputStorage(
   val archivedOutputDirectory: Path = getArchiveStorage(classesOutputDirectory.parent),
 ) {
   private val unarchivedToArchivedMap = ConcurrentHashMap<Path, Path>()
+  private var archiveIfAbsent = true
 
   internal fun loadMetadataFile(metadataFile: Path) {
     val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
     for (entry in metadata.files) {
       unarchivedToArchivedMap.put(classesOutputDirectory.resolve(entry.key), archivedOutputDirectory.resolve(entry.key).resolve("${entry.value}.jar"))
     }
+    archiveIfAbsent = false
   }
 
   suspend fun getArchived(path: Path): Path {
@@ -34,6 +36,10 @@ class ArchivedCompilationOutputStorage(
 
     unarchivedToArchivedMap.get(path)?.let {
       return it
+    }
+
+    if (!archiveIfAbsent) {
+      return path
     }
 
     val archived = archive(path)
