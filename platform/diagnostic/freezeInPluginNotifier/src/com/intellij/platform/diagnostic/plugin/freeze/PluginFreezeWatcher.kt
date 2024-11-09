@@ -3,7 +3,6 @@ package com.intellij.platform.diagnostic.plugin.freeze
 import com.intellij.diagnostic.ThreadDump
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtilImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -11,6 +10,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.diagnostic.freezeAnalyzer.FreezeAnalyzer
 import com.intellij.threadDumpParser.ThreadState
+import com.intellij.util.application
 
 @Service(Service.Level.APP)
 internal class PluginFreezeWatcher {
@@ -37,8 +37,13 @@ internal class PluginFreezeWatcher {
 
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
 
-    if (pluginDescriptor.isImplementationDetail || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(frozenPlugin)) return null
-    if (pluginDescriptor.isBundled && !ApplicationManager.getApplication().isInternal) return null
+    if (pluginDescriptor.isImplementationDetail || ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(frozenPlugin)) {
+      return null
+    }
+
+    if (pluginDescriptor.isBundled && !application.isInternal && !application.isEAP) {
+      return null
+    }
 
     val freezeStorageService = PluginsFreezesService.getInstance()
     if (freezeStorageService.shouldBeIgnored(frozenPlugin)) return null
