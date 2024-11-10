@@ -26,4 +26,6 @@ class KotlinMapVariable(type: MapType, name: String) : MapVariableBase(type, nam
 
     override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
         KotlinVariableDeclaration(this, false, type.defaultValue)
+
+    override fun entries(): Expression = TextExpression("${toCode()}.entries")
 }

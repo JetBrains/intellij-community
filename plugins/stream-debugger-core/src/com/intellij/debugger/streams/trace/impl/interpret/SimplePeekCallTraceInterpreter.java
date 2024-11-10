@@ -30,7 +30,8 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
     throw new UnexpectedValueException("peek operation trace is wrong format");
   }
 
-  private static @NotNull Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference mapArray) {
+  @NotNull
+  protected static @NotNull Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference mapArray) {
     final Value keys = mapArray.getValue(0);
     final Value values = mapArray.getValue(1);
     if (keys instanceof ArrayReference && values instanceof ArrayReference) {

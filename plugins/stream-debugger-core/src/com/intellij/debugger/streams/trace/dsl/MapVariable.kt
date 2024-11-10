@@ -18,5 +18,7 @@ interface MapVariable : Variable {
 
   fun defaultDeclaration(isMutable: Boolean = true): VariableDeclaration
 
+  fun entries(): Expression
+
   fun convertToArray(dsl: Dsl, arrayName: String): CodeBlock
 }

@@ -26,4 +26,6 @@ class JavaMapVariable(type: MapType, name: String)
 
   override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
     JavaVariableDeclaration(this, false, type.defaultValue)
+
+  override fun entries(): Expression = call("entrySet")
 }

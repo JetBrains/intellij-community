@@ -5,4 +5,6 @@ interface MapType : GenericType {
   val keyType: GenericType
 
   val valueType: GenericType
+
+  val entryType: GenericType
 }

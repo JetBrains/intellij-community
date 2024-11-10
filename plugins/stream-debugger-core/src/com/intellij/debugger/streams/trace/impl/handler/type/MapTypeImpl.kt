@@ -7,5 +7,10 @@ package com.intellij.debugger.streams.trace.impl.handler.type
 class MapTypeImpl(override val keyType: GenericType,
                   override val valueType: GenericType,
                   toName: (String, String) -> String,
-                  defaultValue: String)
+                  defaultValue: String,
+                  toEntryType: (String, String) -> String,
+                  )
   : ClassTypeImpl(toName.invoke(keyType.genericTypeName, valueType.genericTypeName), defaultValue), MapType
+{
+  override val entryType = ClassTypeImpl(toEntryType.invoke(keyType.genericTypeName, valueType.genericTypeName))
+}
