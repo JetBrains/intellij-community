@@ -73,7 +73,6 @@ class KotlinStandaloneScriptRunConfiguration(
             ExecutionBundle.message("run.configuration.configuration.tab.title"),
             KotlinStandaloneScriptRunConfigurationEditor(project)
         )
-        JavaRunConfigurationExtensionManager.instance.appendEditors(this, group)
         return group
     }
 
