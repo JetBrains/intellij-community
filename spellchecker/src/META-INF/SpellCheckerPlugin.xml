@@ -10,6 +10,7 @@
     <extensionPoint name="spellchecker.builtInDictionariesProvider" interface="com.intellij.spellchecker.settings.BuiltInDictionariesProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.dictionaryLayersProvider" interface="com.intellij.spellchecker.DictionaryLayersProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.quickFixFactory" interface="com.intellij.spellchecker.quickfixes.SpellCheckerQuickFixFactory" dynamic="true"/>
+    <extensionPoint name="spellchecker.lifecycle" interface="com.intellij.spellchecker.grazie.SpellcheckerLifecycle" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

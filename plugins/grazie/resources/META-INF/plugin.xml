@@ -80,6 +80,8 @@
 
     <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
     <daemon.statusItemMerger implementation="com.intellij.grazie.ide.TextSeverityMerger"/>
+
+    <spellchecker.lifecycle implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
