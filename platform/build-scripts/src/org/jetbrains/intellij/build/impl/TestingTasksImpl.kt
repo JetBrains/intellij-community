@@ -17,6 +17,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
@@ -36,9 +37,7 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.outputStream
-import kotlin.io.path.readLines
+import kotlin.io.path.*
 
 private const val NO_TESTS_ERROR = 42
 
@@ -706,11 +705,23 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
   private suspend fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
     val root = context.getModuleTestsOutputDir(context.findRequiredModule(mainModule))
-    val testClasses = Files.walk(root).use { stream ->
-      stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
-        filteringPattern.matcher(it).matches()
-      }.toList()
-    } ?: listOf()
+    val testClasses: List<String> = if (root.isRegularFile() && root.extension == "jar") {
+      val classes = ArrayList<String>()
+      val regex = filteringPattern.toRegex()
+      readZipFile(root) { name, _ ->
+        if (FileUtilRt.toSystemIndependentName(name).matches(regex)) {
+          classes.add(name)
+        }
+      }
+      classes
+    }
+    else {
+      Files.walk(root).use { stream ->
+        stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
+          filteringPattern.matcher(it).matches()
+        }.toList()
+      } ?: listOf()
+    }
 
     if (testClasses.isEmpty()) {
       throw RuntimeException("No tests were found in $root with $filteringPattern")
