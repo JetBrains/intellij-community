@@ -1,10 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
@@ -923,19 +919,6 @@ private class CachingKtCompletionExtensionCandidateChecker(
         }
     }
 }
-
-private fun LookupElementBuilder.withExplicitItemText(
-    itemText: String,
-): LookupElementBuilder = withRenderer(object : LookupElementRenderer<LookupElement>() {
-
-    override fun renderElement(
-        element: LookupElement,
-        presentation: LookupElementPresentation,
-    ) {
-        renderElement(presentation)
-        presentation.itemText = itemText
-    }
-})
 
 context(KaSession)
 private fun <T> runCatchingNSEE(
