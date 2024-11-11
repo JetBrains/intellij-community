@@ -112,6 +112,7 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
       try {
         runInterruptible {
           outputStream.write(data.toByteArray())
+          outputStream.flush()
         }
       }
       catch (e: SocketTimeoutException) {
