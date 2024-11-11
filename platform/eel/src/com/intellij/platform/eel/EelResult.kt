@@ -2,11 +2,11 @@
 package com.intellij.platform.eel
 
 sealed interface EelResult<out P, out E> {
-  interface Ok<out P, out E> : EelResult<P, E> {
+  interface Ok<out P> : EelResult<P, Nothing> {
     val value: P
   }
 
-  interface Error<out P, out E> : EelResult<P, E> {
+  interface Error<out E> : EelResult<Nothing, E> {
     val error: E
   }
 }

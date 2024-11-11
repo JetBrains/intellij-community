@@ -9,8 +9,8 @@ import com.intellij.platform.eel.path.EelPath
 
 @Suppress("unused") // Usages are to be implemented later.
 object EelFsResultImpl {
-  data class Ok<T, E : EelFsError>(override val value: T) : EelResult.Ok<T, E>
-  data class Error<T, E : EelFsError>(override val error: E) : EelResult.Error<T, E>
+  data class Ok<T>(override val value: T) : EelResult.Ok<T>
+  data class Error<E : EelFsError>(override val error: E) : EelResult.Error<E>
 
   data class BytesReadImpl(override val bytesRead: Int) : EelOpenedFile.Reader.ReadResult.Bytes
   data object EOFImpl : EelOpenedFile.Reader.ReadResult.EOF

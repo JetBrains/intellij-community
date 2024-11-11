@@ -8,10 +8,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 object EelProcessResultImpl {
-  private data class Ok(override val value: EelProcess) : EelResult.Ok<EelProcess, EelExecApi.ExecuteProcessError>
-  private data class Error(override val error: EelExecApi.ExecuteProcessError) : EelResult.Error<EelProcess, EelExecApi.ExecuteProcessError>
+  private data class Ok(override val value: EelProcess) : EelResult.Ok<EelProcess>
+  private data class Error(override val error: EelExecApi.ExecuteProcessError) : EelResult.Error<EelExecApi.ExecuteProcessError>
   private data class ExecuteProcessError(override val errno: Int, override val message: String) : EelExecApi.ExecuteProcessError
 
-  fun createOkResult(process: EelProcess): EelResult.Ok<EelProcess, EelExecApi.ExecuteProcessError> = Ok(process)
-  fun createErrorResult(errno: Int, message: String): EelResult.Error<EelProcess, EelExecApi.ExecuteProcessError> = Error(ExecuteProcessError(errno, message))
+  fun createOkResult(process: EelProcess): EelResult.Ok<EelProcess> = Ok(process)
+  fun createErrorResult(errno: Int, message: String): EelResult.Error<EelExecApi.ExecuteProcessError> = Error(ExecuteProcessError(errno, message))
 }

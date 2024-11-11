@@ -6,8 +6,8 @@ import com.intellij.platform.eel.EelConnectionError.*
 import com.intellij.platform.eel.EelNetworkError
 import com.intellij.platform.eel.EelResult
 
-data class NetworkOk<out T, E : EelNetworkError>(override val value: T) : EelResult.Ok<T, E>
-data class NetworkError<out T, E : EelNetworkError>(override val error: E) : EelResult.Error<T, E>
+data class NetworkOk<out T>(override val value: T) : EelResult.Ok<T>
+data class NetworkError<E : EelNetworkError>(override val error: E) : EelResult.Error<E>
 
 
 data object PermissionDenied : SocketAllocationError {
