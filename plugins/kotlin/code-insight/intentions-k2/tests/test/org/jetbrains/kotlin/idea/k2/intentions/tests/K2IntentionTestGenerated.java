@@ -10869,6 +10869,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("brokenCode.kt")
+        public void testBrokenCode() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/brokenCode.kt");
+        }
+
         @TestMetadata("caretAfterParameterName.kt")
         public void testCaretAfterParameterName() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/caretAfterParameterName.kt");
@@ -10972,6 +10977,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/topLevelFun.kt");
+        }
+
+        @TestMetadata("unresolvedCode.kt")
+        public void testUnresolvedCode() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/unresolvedCode.kt");
         }
 
         @TestMetadata("vararg.kt")

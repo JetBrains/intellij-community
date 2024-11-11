@@ -23,6 +23,9 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.fir.StandardTypes
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
@@ -78,7 +81,7 @@ internal fun KtPsiFactory.createType(
                     }
 
                     val ktSubstitutor = createSubstitutor(inheritedCallable, baseFunction)
-                    val ktType = createTypeCodeFragment(typeText, baseFunction).getContentElement()?.type
+                    val ktType = createTypeCodeFragment(typeText.ifEmpty { StandardClassIds.Any.asFqNameString() }, baseFunction).getContentElement()?.type
                     if (ktType != null) {
                         val type = ktSubstitutor?.substitute(ktType) ?: ktType
                         val substitutedType = type.render(position = variance)
