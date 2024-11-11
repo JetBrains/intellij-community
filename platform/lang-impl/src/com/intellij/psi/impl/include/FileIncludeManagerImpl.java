@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
@@ -265,7 +266,7 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
     protected abstract @NotNull VirtualFile @NotNull [] computeFiles(@NotNull PsiFile file, boolean compileTimeOnly);
 
     @Override
-    public CachedValueProvider.Result<VirtualFile[]> compute(PsiFile psiFile) {
+    public CachedValueProvider.Result<VirtualFile[]> compute(@NotNull PsiFile psiFile) {
       VirtualFile[] value = computeFiles(psiFile, myRuntimeOnly);
       // todo: we need "url modification tracker" for VirtualFile
       List<Object> deps = new ArrayList<>(value.length +1);
@@ -284,7 +285,9 @@ public final class FileIncludeManagerImpl extends FileIncludeManager implements 
         deps.add(document);
       }
       cache.add(new SoftReference<>(psiFile));
-
+      if (deps.isEmpty()) {
+        deps.add(ProjectRootManager.getInstance(myProject));
+      }
       return CachedValueProvider.Result.create(value, List.copyOf(deps));
     }
   }
