@@ -33,7 +33,7 @@ class DeclarativeInlayHintsPass(
   private val isPreview: Boolean,
   private val isProviderDisabled: Boolean = false
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
-  private lateinit var preprocessedInlayData: PreprocessedInlayData
+  private var preprocessedInlayData: PreprocessedInlayData = PreprocessedInlayData.EMPTY
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val ownCollectors = ArrayList<CollectionInfo<OwnBypassCollector>>()
