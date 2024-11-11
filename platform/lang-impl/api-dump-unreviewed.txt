@@ -12856,7 +12856,7 @@ com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData
 f:com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData$Companion
 - f:getKEY():com.intellij.openapi.util.Key
 - f:getWebTemplateData(com.intellij.ide.wizard.NewProjectWizardStep):com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData
-f:com.intellij.ide.util.projectWizard.WebTemplateProjectWizardStep
+c:com.intellij.ide.util.projectWizard.WebTemplateProjectWizardStep
 - com.intellij.ide.wizard.AbstractNewProjectWizardStep
 - com.intellij.ide.util.projectWizard.WebTemplateProjectWizardData
 - <init>(com.intellij.ide.wizard.NewProjectWizardBaseStep,com.intellij.ide.util.projectWizard.WebProjectTemplate):V
