@@ -350,9 +350,7 @@ private class ChunkCommitMessagePolicy(
 
   override val delayedMessagesProvidersSupport = null
 
-  override fun getInitialMessage() = CommitMessage(vcsConfiguration.tempChunkCommitMessage)
-
-  override fun getNewMessageAfterCommit(): com.intellij.vcs.commit.CommitMessage? = null
+  override fun getNewCommitMessage() = CommitMessage(vcsConfiguration.tempChunkCommitMessage)
 
   override fun cleanupStoredMessage() {
     saveTempChunkCommitMessage("")

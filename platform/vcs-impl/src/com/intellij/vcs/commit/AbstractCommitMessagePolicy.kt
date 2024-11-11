@@ -23,7 +23,7 @@ abstract class AbstractCommitMessagePolicy(
 
   fun init() {
     listenForDelayedProviders(commitMessageUi, this)
-    setCommitMessage(getInitialMessage() ?: CommitMessage.EMPTY)
+    setCommitMessage(getNewCommitMessage() ?: CommitMessage.EMPTY)
   }
 
   /**
@@ -43,10 +43,7 @@ abstract class AbstractCommitMessagePolicy(
       cleanupStoredMessage()
     }
     else {
-      val newMessage = getNewMessageAfterCommit()
-      if (newMessage != null) {
-        setCommitMessage(newMessage)
-      }
+      setCommitMessage(getNewCommitMessage() ?: CommitMessage.EMPTY)
     }
   }
 
@@ -73,14 +70,7 @@ abstract class AbstractCommitMessagePolicy(
 
   protected abstract val delayedMessagesProvidersSupport: DelayedMessageProvidersSupport?
 
-  protected abstract fun getInitialMessage(): CommitMessage?
-
-  /**
-   * Called only if [clearMessageAfterCommit] returned false
-   *
-   * @return null if commit field should remain as is or new value for the commit message otherwise
-   */
-  protected abstract fun getNewMessageAfterCommit(): CommitMessage?
+  protected abstract fun getNewCommitMessage(): CommitMessage?
 
   /**
    * Called if the commit message should be removed from the storage
@@ -95,13 +85,17 @@ abstract class AbstractCommitMessagePolicy(
       val delayedMessageSupport = messagePolicy.delayedMessagesProvidersSupport ?: return
 
       val controller = DelayedMessageController(messagePolicy, delayedMessageSupport)
+      val project = messagePolicy.project
+
       DefaultCommitMessagePolicy.EXTENSION_POINT_NAME.forEachExtensionSafe { extension ->
-        extension.initAsyncMessageUpdate(messagePolicy.project, controller, messagePolicy)
+        if (extension.enabled(project)) {
+          extension.initAsyncMessageUpdate(project, controller, messagePolicy)
+        }
       }
 
       CommitMessageProvider.EXTENSION_POINT_NAME.forEachExtensionSafe { extension ->
         if (extension is DelayedCommitMessageProvider) {
-          extension.init(messagePolicy.project, commitMessageUi, messagePolicy)
+          extension.init(project, commitMessageUi, messagePolicy)
         }
       }
     }
@@ -128,7 +122,9 @@ abstract class AbstractCommitMessagePolicy(
     val delayedMessageSupport: DelayedMessageProvidersSupport,
   ) : DefaultCommitMessagePolicy.CommitMessageController {
     override fun setCommitMessage(message: CommitMessage) {
-      delayedMessageSupport.saveCurrentCommitMessage()
+      if (!messagePolicy.currentMessageIsDisposable) {
+        delayedMessageSupport.saveCurrentCommitMessage()
+      }
       messagePolicy.setCommitMessage(message)
     }
 
@@ -197,8 +193,11 @@ abstract class ChangeListCommitMessagePolicy(
 
   protected fun getCommitMessageForCurrentList(): CommitMessage? {
     val providerMessage = getCommitMessageFromProvider(project, currentChangeList)
-    if (providerMessage != null) return providerMessage
+    return providerMessage
+           ?: getCommitMessageFromChangelistDescription()
+  }
 
+  protected fun getCommitMessageFromChangelistDescription(): CommitMessage? {
     val changeListDescription = currentChangeList.comment
     if (!changeListDescription.isNullOrBlank()) return CommitMessage(changeListDescription)
 

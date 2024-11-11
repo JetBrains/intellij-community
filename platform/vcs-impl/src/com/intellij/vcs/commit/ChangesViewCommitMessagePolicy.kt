@@ -14,10 +14,8 @@ internal class ChangesViewCommitMessagePolicy(
       saveMessageToChangeListDescription()
     }
 
-    override fun restoredCommitMessage(): CommitMessage? = getInitialMessage() // FIXME: why not getNewMessageAfterCommit ?
+    override fun restoredCommitMessage(): CommitMessage? = getCommitMessageFromChangelistDescription()
   }
 
-  override fun getInitialMessage(): CommitMessage? = getCommitMessageForCurrentList()
-
-  override fun getNewMessageAfterCommit(): CommitMessage? = getCommitMessageFromProvider(project, currentChangeList) // FIXME: why is it not the same as initial?
+  override fun getNewCommitMessage(): CommitMessage? = getCommitMessageForCurrentList()
 }

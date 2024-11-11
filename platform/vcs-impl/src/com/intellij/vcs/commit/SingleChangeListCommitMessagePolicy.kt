@@ -12,9 +12,7 @@ internal class SingleChangeListCommitMessagePolicy(
 ) : ChangeListCommitMessagePolicy(project, ui.commitMessageUi, initialChangeList,) {
   override val delayedMessagesProvidersSupport = null
 
-  override fun getInitialMessage(): CommitMessage? {
+  override fun getNewCommitMessage(): CommitMessage? {
     return initialCommitMessage?.let { CommitMessage(it) } ?: getCommitMessageForCurrentList()
   }
-
-  override fun getNewMessageAfterCommit(): CommitMessage? = null
 }

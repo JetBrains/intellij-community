@@ -11,9 +11,8 @@ class GitStageCommitMessagePolicy(
   project: Project,
   commitMessageUi: CommitMessageUi,
 ) : AbstractCommitMessagePolicy(project, commitMessageUi) {
-  override fun getInitialMessage(): CommitMessage? {
-    return getNewMessageAfterCommit()
-           ?: vcsConfiguration.LAST_COMMIT_MESSAGE?.let { CommitMessage(it) }
+  override fun getNewCommitMessage(): CommitMessage? {
+    return getCommitMessageFromProvider() ?: getPersistedCommitMessage()
   }
 
   override val delayedMessagesProvidersSupport = object : DelayedMessageProvidersSupport {
@@ -21,11 +20,10 @@ class GitStageCommitMessagePolicy(
       saveCommitMessage()
     }
 
-    override fun restoredCommitMessage(): CommitMessage? = getInitialMessage() // FIXME: why not getNewMessageAfterCommit ?
+    override fun restoredCommitMessage(): CommitMessage? = getPersistedCommitMessage()
   }
 
-  override fun getNewMessageAfterCommit(): CommitMessage? {
-    // FIXME: why is it not the same as initial?
+  private fun getCommitMessageFromProvider(): CommitMessage? {
     val changeList = ChangeListManager.getInstance(project).defaultChangeList // always blank, required for 'CommitMessageProvider'
     return getCommitMessageFromProvider(project, changeList)
   }
@@ -43,4 +41,6 @@ class GitStageCommitMessagePolicy(
       vcsConfiguration.LAST_COMMIT_MESSAGE = commitMessageUi.text
     }
   }
+
+  private fun getPersistedCommitMessage(): CommitMessage? = vcsConfiguration.LAST_COMMIT_MESSAGE?.let { CommitMessage(it) }
 }
