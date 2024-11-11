@@ -217,8 +217,8 @@ public final class HighlightUtil {
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
       if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {
         HighlightInfo.Builder infoFeature =
-          HighlightUtil.checkFeature(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
-                                     PsiUtil.getLanguageLevel(expression), expression.getContainingFile());
+          checkFeature(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
+                       PsiUtil.getLanguageLevel(expression), expression.getContainingFile());
         if (infoFeature != null) {
           info = infoFeature;
         }
@@ -554,8 +554,8 @@ public final class HighlightUtil {
       PsiType lType = variable.getType();
       if (PsiTypes.nullType().equals(lType) &&
           ExpressionUtils.nonStructuralChildren(initializer).allMatch(ExpressionUtils::isNullLiteral)) {
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
+        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
             .range(typeElement);
         HighlightFixUtil.registerSpecifyVarTypeFix(localVariable, info);
         return info;
@@ -2878,7 +2878,7 @@ public final class HighlightUtil {
     }
 
     // references to private methods from the outer class are not calls to super methods
-    // even if the outer class is the super class
+    // even if the outer class is the superclass
     if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) && referencedClass != parentClass) {
       return null;
     }
@@ -3568,14 +3568,22 @@ public final class HighlightUtil {
         boolean definitelyIncorrect = false;
         if (ref instanceof PsiReferenceExpression expression) {
           PsiExpression qualifierExpression = expression.getQualifierExpression();
-          if (qualifierExpression != null &&
-              qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
-              !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())) {
-            description = JavaErrorBundle.message("cannot.access.member.on.type", qualifierExpression.getText(),
-                                                  primitiveType.getPresentableText(false));
-            definitelyIncorrect = true;
+          if (qualifierExpression != null) {
+            PsiType type = qualifierExpression.getType();
+            if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
+              if (PsiTypes.voidType().equals(primitiveType) &&
+                  PsiUtil.deparenthesizeExpression(qualifierExpression) instanceof PsiReferenceExpression) {
+                return null;
+              }
+              description = JavaErrorBundle.message("cannot.access.member.on.type", primitiveType.getPresentableText(false));
+              definitelyIncorrect = true;
+            }
+            else if (type instanceof PsiClassType t && t.resolve() == null || PsiTypes.nullType().equals(type)) {
+              return null;
+            }
           }
-        } else if (!JavaImplicitClassIndex.getInstance().getElements(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).isEmpty()) {
+        }
+        else if (!JavaImplicitClassIndex.getInstance().getElements(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).isEmpty()) {
           description = JavaErrorBundle.message("implicit.class.can.not.be.referenced", ref.getText());
           definitelyIncorrect = true;
         }

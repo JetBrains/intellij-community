@@ -14,7 +14,7 @@ public class UnnamedVariables {
     Consumer<String> consumer3 = <error descr="Use of '_' as a lambda parameter name is not allowed">_</error> -> System.out.println(_.trim());
     Consumer<String> consumer4 = <error descr="Use of '_' as a lambda parameter name is not allowed">_</error> -> {
       <error descr="Cannot resolve symbol 'var'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">var</error> v = _;
-      System.out.println(v.<error descr="Cannot resolve method 'trim()'" textAttributesKey="WRONG_REFERENCES_ATTRIBUTES">trim</error>());
+      System.out.println(v.trim());
     };
     BiConsumer<String, String> consumer5 = (<error descr="Use of '_' as a lambda parameter name is not allowed"><error descr="Variable '_' is already defined in the scope">_</error></error>,<error descr="Use of '_' as a lambda parameter name is not allowed"><error descr="Variable '_' is already defined in the scope">_</error></error>) -> {};
   }

@@ -909,11 +909,20 @@ public final class HighlightMethodUtil {
       }
       else if (qualifierExpression != null &&
                qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
-               !primitiveType.equals(PsiTypes.nullType()) && !primitiveType.equals(PsiTypes.voidType())) {
-        description =
-          JavaErrorBundle.message("cannot.call.method.on.type", qualifierExpression.getText(), primitiveType.getPresentableText(false));
+               !primitiveType.equals(PsiTypes.nullType())) {
+        if (PsiTypes.voidType().equals(primitiveType) &&
+            PsiUtil.deparenthesizeExpression(qualifierExpression) instanceof PsiReferenceExpression) {
+          return null;
+        }
+        description = JavaErrorBundle.message("cannot.call.method.on.type", primitiveType.getPresentableText(false));
       }
       else {
+        if (qualifierExpression != null) {
+          PsiType type = qualifierExpression.getType();
+          if (type instanceof PsiClassType t && t.resolve() == null || PsiTypes.nullType().equals(type)) {
+            return null;
+          }
+        }
         if (IncompleteModelUtil.isIncompleteModel(file) && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
           return HighlightUtil.getPendingReferenceHighlightInfo(elementToHighlight);
         }
@@ -966,9 +975,10 @@ public final class HighlightMethodUtil {
 
     String description;
     String toolTip;
+    PsiExpression[] expressions = list.getExpressions();
     if (methodCandidate2 != null) {
       if (IncompleteModelUtil.isIncompleteModel(list) &&
-          ContainerUtil.exists(list.getExpressions(), e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
+          ContainerUtil.exists(expressions, e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
         return null;
       }
       PsiMethod element1 = methodCandidate1.getElement();
@@ -1000,7 +1010,10 @@ public final class HighlightMethodUtil {
         return null;
       }
       if (IncompleteModelUtil.isIncompleteModel(list) &&
-          ContainerUtil.exists(list.getExpressions(), IncompleteModelUtil::mayHaveUnknownTypeDueToPendingReference)) {
+          ContainerUtil.exists(expressions, IncompleteModelUtil::mayHaveUnknownTypeDueToPendingReference)) {
+        return null;
+      }
+      if (ContainerUtil.exists(expressions, e -> e.getType() == null)) {
         return null;
       }
       String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list, true);
@@ -1024,7 +1037,7 @@ public final class HighlightMethodUtil {
     CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, builder, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(candidates, methodCall, builder, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, builder, fixRange);
-    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), builder, fixRange);
+    WrapExpressionFix.registerWrapAction(candidates, expressions, builder, fixRange);
     PermuteArgumentsFix.registerFix(builder, methodCall, candidates, fixRange);
     registerChangeParameterClassFix(methodCall, list, builder, fixRange);
     return builder;

@@ -14,13 +14,13 @@ public class LombokDumbModeApplication {
                 .surname("3")
                 .email("4")
                 .name("1")</error><error descr="';' expected">a</error>
-                .<info descr="Not resolved until the project is fully loaded">id</info>(1)
+                .id(1)
                 .<info descr="Not resolved until the project is fully loaded">build</info>();
 
         String name = userDao
                 .nhaame();
         <info descr="Not resolved until the project is fully loaded">UserChain</info> userChain = new <info descr="Not resolved until the project is fully loaded">UserChain</info>();
-        String name1 = userChain.<info descr="Not resolved until the project is fully loaded">getName</info>();
+        String name1 = userChain.getName();
     }
 }
 

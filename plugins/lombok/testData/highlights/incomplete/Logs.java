@@ -4,6 +4,6 @@ import <info descr="Not resolved until the project is fully loaded">lombok</info
 public class Logs {
 
   public static void main(String[] args) {
-    log.<info descr="Not resolved until the project is fully loaded">info</info>("Hello World!");
+    log.info("Hello World!");
   }
 }

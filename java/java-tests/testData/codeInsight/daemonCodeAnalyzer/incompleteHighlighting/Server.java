@@ -87,7 +87,7 @@ public class Server {
   }
 
   protected void initGenerate() throws IOException {
-    <info descr="Not resolved until the project is fully loaded">Reporting</info> reporting = new <info descr="Not resolved until the project is fully loaded">ReportEngineCreator</info>().<info descr="Not resolved until the project is fully loaded">createReportingEngine</info>(propertiesLoader);
+    <info descr="Not resolved until the project is fully loaded">Reporting</info> reporting = new <info descr="Not resolved until the project is fully loaded">ReportEngineCreator</info>().createReportingEngine(propertiesLoader);
 
     <info descr="Not resolved until the project is fully loaded">get</info>("/generate", (req, res) -> {
       try {
@@ -101,15 +101,15 @@ public class Server {
 
         Map<String, Object> params = parseParameters(req, report);
         String templateCode = req.<info descr="Not resolved until the project is fully loaded">queryParams</info>("templateCode");
-        <info descr="Not resolved until the project is fully loaded">RunParams</info> reportParams = new <info descr="Not resolved until the project is fully loaded">RunParams</info>(report).<info descr="Not resolved until the project is fully loaded">params</info>(params);
+        <info descr="Not resolved until the project is fully loaded">RunParams</info> reportParams = new <info descr="Not resolved until the project is fully loaded">RunParams</info>(report).params(params);
         if (<info descr="Not resolved until the project is fully loaded">StringUtils</info>.<info descr="Not resolved until the project is fully loaded">isNotBlank</info>(templateCode)) {
-          reportParams.<info descr="Not resolved until the project is fully loaded">templateCode</info>(templateCode);
+          reportParams.templateCode(templateCode);
         }
-        <info descr="Not resolved until the project is fully loaded">ReportOutputDocument</info> reportOutputDocument = reporting.<info descr="Not resolved until the project is fully loaded">runReport</info>(reportParams);
+        <info descr="Not resolved until the project is fully loaded">ReportOutputDocument</info> reportOutputDocument = reporting.runReport(reportParams);
         writeResult(res, reportOutputDocument);
         return "Ok";
       } catch (Exception e) {
-        logger.<info descr="Not resolved until the project is fully loaded">error</info>(String.format("An error occurred while generating report [%s]", req.<info descr="Not resolved until the project is fully loaded">queryParams</info>("report")), e);
+        logger.error(String.format("An error occurred while generating report [%s]", req.<info descr="Not resolved until the project is fully loaded">queryParams</info>("report")), e);
         throw new RuntimeException(e);
       }
     });
@@ -123,24 +123,24 @@ public class Server {
   }
 
   protected <info descr="Not resolved until the project is fully loaded">Report</info> loadReport(<info descr="Not resolved until the project is fully loaded">Request</info> req) throws IOException {
-    String reportName = req.<info descr="Not resolved until the project is fully loaded">queryParams</info>("report");
+    String reportName = req.queryParams("report");
     if (<info descr="Not resolved until the project is fully loaded">StringUtils</info>.<info descr="Not resolved until the project is fully loaded">isBlank</info>(reportName)) {
       return null;
     } else {
       <info descr="Not resolved until the project is fully loaded">XmlReader</info> xmlReader = new <info descr="Not resolved until the project is fully loaded">DefaultXmlReader</info>();
-      return xmlReader.<info descr="Not resolved until the project is fully loaded">parseXml</info>(<info descr="Not resolved until the project is fully loaded">FileUtils</info>.<info descr="Not resolved until the project is fully loaded">readFileToString</info>(new File(String.format("%s/%s.xml", reportsPath, reportName))));
+      return xmlReader.parseXml(<info descr="Not resolved until the project is fully loaded">FileUtils</info>.<info descr="Not resolved until the project is fully loaded">readFileToString</info>(new File(String.format("%s/%s.xml", reportsPath, reportName))));
     }
   }
 
   protected Map<String, Object> parseParameters(<info descr="Not resolved until the project is fully loaded">Request</info> req, <info descr="Not resolved until the project is fully loaded">Report</info> report) {
-    <info descr="Not resolved until the project is fully loaded">QueryParamsMap</info> queryParams = req.<info descr="Not resolved until the project is fully loaded">queryMap</info>("params");
+    <info descr="Not resolved until the project is fully loaded">QueryParamsMap</info> queryParams = req.queryMap("params");
     Map<String, Object> params = new HashMap<>();
 
-    for (<info descr="Not resolved until the project is fully loaded">ReportParameter</info> reportParameter : report.<info descr="Not resolved until the project is fully loaded">getReportParameters</info>()) {
-      java.lang.String paramValueStr = queryParams.<info descr="Not resolved until the project is fully loaded">value</info>(reportParameter.<info descr="Not resolved until the project is fully loaded">getAlias</info>());
+    for (<info descr="Not resolved until the project is fully loaded">ReportParameter</info> reportParameter : report.getReportParameters()) {
+      java.lang.String paramValueStr = queryParams.value(reportParameter.getAlias());
       if (paramValueStr != null) {
-        params.put(reportParameter.<info descr="Not resolved until the project is fully loaded">getAlias</info>(),
-                   converter.<info descr="Not resolved until the project is fully loaded">convertFromString</info>(reportParameter.<info descr="Not resolved until the project is fully loaded">getParameterClass</info>(), paramValueStr));
+        params.put(reportParameter.getAlias(),
+                   converter.convertFromString(reportParameter.getParameterClass(), paramValueStr));
       }
     }
 
@@ -148,10 +148,10 @@ public class Server {
   }
 
   protected void writeResult(<info descr="Not resolved until the project is fully loaded">Response</info> res, <info descr="Not resolved until the project is fully loaded">ReportOutputDocument</info> reportOutputDocument) throws IOException {
-    <info descr="Not resolved until the project is fully loaded">HttpServletResponse</info> raw = res.<info descr="Not resolved until the project is fully loaded">raw</info>();
-    raw.<info descr="Not resolved until the project is fully loaded">setHeader</info>("Content-Disposition", String.format("attachment; filename=\"%s\"", reportOutputDocument.<info descr="Not resolved until the project is fully loaded">getDocumentName</info>()));
-    raw.<info descr="Not resolved until the project is fully loaded">setContentLength</info>(reportOutputDocument.<info descr="Not resolved until the project is fully loaded">getContent</info>().<info descr="Not resolved until the project is fully loaded">length</info>);
-    raw.<info descr="Not resolved until the project is fully loaded">getOutputStream</info>().<info descr="Not resolved until the project is fully loaded">write</info>(reportOutputDocument.<info descr="Not resolved until the project is fully loaded">getContent</info>());
-    res.<info descr="Not resolved until the project is fully loaded">status</info>(200);
+    <info descr="Not resolved until the project is fully loaded">HttpServletResponse</info> raw = res.raw();
+    raw.setHeader("Content-Disposition", String.format("attachment; filename=\"%s\"", reportOutputDocument.getDocumentName()));
+    raw.setContentLength(reportOutputDocument.getContent().<info descr="Not resolved until the project is fully loaded">length</info>);
+    raw.getOutputStream().<info descr="Not resolved until the project is fully loaded">write</info>(reportOutputDocument.getContent());
+    res.status(200);
   }
 }

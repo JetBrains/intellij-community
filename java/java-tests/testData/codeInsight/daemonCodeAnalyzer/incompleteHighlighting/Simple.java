@@ -12,7 +12,7 @@ import <info descr="Not resolved until the project is fully loaded">my</info>.<i
 
 public class Simple {
   int test() {
-    test().<error descr="Cannot call method because 'test()' has primitive type int">run</error>();
+    test().<error descr="Cannot call methods on 'int' type">run</error>();
     return 0;
   }
 
@@ -45,9 +45,9 @@ public class Simple {
   }
 
   void refsInUnresolvedClass(<info descr="Not resolved until the project is fully loaded">Cls</info> s) {
-    s.<info descr="Not resolved until the project is fully loaded">hashCode</info>();
-    s.<info descr="Not resolved until the project is fully loaded">dream</info>();
-    System.out.println(s.<info descr="Not resolved until the project is fully loaded">field</info>);
+    s.hashCode();
+    s.dream();
+    System.out.println(s.field);
     System.out.println(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">STATIC</info>);
   }
 
@@ -98,11 +98,11 @@ public class Simple {
   
   @<info descr="Not resolved until the project is fully loaded">Anno</info>(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">CONST</info>)
   void testAssign(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
-    u.<info descr="Not resolved until the project is fully loaded">field</info> = 2;
+    u.field = 2;
   }
   
   void callOnArray(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
-    u.<info descr="Not resolved until the project is fully loaded">foo</info>()[0].<info descr="Not resolved until the project is fully loaded">blah</info>();
+    u.foo()[0].<info descr="Not resolved until the project is fully loaded">blah</info>();
   }
   
   void initArray() {
@@ -116,10 +116,10 @@ public class Simple {
   
   void varTest() {
     <info descr="null">var</info> x = <info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">getSomething</info>();
-    x.<info descr="Not resolved until the project is fully loaded">getSomethingElse</info>();
+    x.getSomethingElse();
     <info descr="null">var</info> y = x;
-    <info descr="null">var</info> z = y.<info descr="Not resolved until the project is fully loaded">getSomethingCompletelyDifferent</info>();
-    z.<info descr="Not resolved until the project is fully loaded">getFromZ</info>();
+    <info descr="null">var</info> z = y.getSomethingCompletelyDifferent();
+    z.getFromZ();
     
     <info descr="null">var</info> t = <error descr="Variable 't' might not have been initialized">t</error>;
   }
@@ -135,7 +135,7 @@ public class Simple {
 
   void testThrow(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
     try {
-      cls.<info descr="Not resolved until the project is fully loaded">unknownM</info>();
+      cls.unknownM();
     } catch (<info descr="Not resolved until the project is fully loaded">Cls</info> x) {
 
     } catch (IOException | RuntimeException ex) {
@@ -158,7 +158,7 @@ public class Simple {
   void declaredUnknownException() throws <info descr="Not resolved until the project is fully loaded">Cls</info> {}
   
   void testConcat(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
-    System.out.println("hello " + cls.<info descr="Not resolved until the project is fully loaded">getSomething</info>() + "!!!");
+    System.out.println("hello " + cls.getSomething() + "!!!");
   }
   
   static class Clss implements <info descr="Not resolved until the project is fully loaded">MyInterface</info> {
