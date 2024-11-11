@@ -210,7 +210,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       if (runToCursorService.canRunToCursor(editor, lineNumber)) {
         actions.add(actionManager.getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
-      val extraActions = (actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup).getChildren(actionManager)
+      val extraActions = listOf(actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as ActionGroup)
       actions.addAll(extraActions)
       showHint(editor, lineNumber, firstNonSpacePos, actions, lineY)
     }
