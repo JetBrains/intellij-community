@@ -1,6 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl.views
 
+import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
+import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
+import com.intellij.codeInsight.hints.declarative.InlayPosition
+import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintViewWithMargins
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
@@ -201,4 +205,10 @@ internal class MultipleDeclarativeHintsView(inlayData: List<InlayData>)
     }
     presentationLists = newPresentationLists
   }
+}
+
+private val InlayPosition.priority: Int get() = when(this) {
+  is AboveLineIndentedPosition -> priority
+  is EndOfLinePosition -> priority
+  is InlineInlayPosition -> priority
 }

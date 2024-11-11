@@ -43,14 +43,11 @@ interface InlayTreeSink {
  */
 class InlayPayload(val payloadName: String, val payload: InlayActionPayload)
 
-sealed interface InlayPosition {
-  @get:ApiStatus.Internal
-  val priority: Int
-}
+sealed interface InlayPosition
 
-class InlineInlayPosition(val offset: Int, val relatedToPrevious: Boolean, override val priority: Int = 0) : InlayPosition
+class InlineInlayPosition(val offset: Int, val relatedToPrevious: Boolean, val priority: Int = 0) : InlayPosition
 
-class EndOfLinePosition @JvmOverloads constructor(val line: Int, override val priority: Int = 0) : InlayPosition
+class EndOfLinePosition @JvmOverloads constructor(val line: Int, val priority: Int = 0) : InlayPosition
 
 /**
  * Positions an inlay hint above the line that contains [offset].
@@ -60,4 +57,4 @@ class EndOfLinePosition @JvmOverloads constructor(val line: Int, override val pr
  * @param priority Within a single line, hints are sorted by [priority] in descending order.
  */
 @ApiStatus.Experimental
-class AboveLineIndentedPosition(val offset: Int, val verticalPriority: Int = 0, override val priority: Int = 0) : InlayPosition
+class AboveLineIndentedPosition(val offset: Int, val verticalPriority: Int = 0, val priority: Int = 0) : InlayPosition

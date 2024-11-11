@@ -391,7 +391,7 @@
 - <init>(I,I,I):V
 - b:<init>(I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getOffset():I
-- getPriority():I
+- f:getPriority():I
 - f:getVerticalPriority():I
 *:com.intellij.codeInsight.hints.presentation.InlayPresentation
 - com.intellij.codeInsight.hints.presentation.InputHandler

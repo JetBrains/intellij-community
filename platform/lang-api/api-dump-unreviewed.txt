@@ -859,7 +859,7 @@ f:com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 - <init>(I,I):V
 - b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getLine():I
-- getPriority():I
+- f:getPriority():I
 e:com.intellij.codeInsight.hints.declarative.HintColorKind
 - java.lang.Enum
 - sf:Default:com.intellij.codeInsight.hints.declarative.HintColorKind
@@ -1046,7 +1046,7 @@ f:com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 - <init>(I,Z,I):V
 - b:<init>(I,Z,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getOffset():I
-- getPriority():I
+- f:getPriority():I
 - f:getRelatedToPrevious():Z
 com.intellij.codeInsight.hints.declarative.OwnBypassCollector
 - com.intellij.codeInsight.hints.declarative.InlayHintsCollector
