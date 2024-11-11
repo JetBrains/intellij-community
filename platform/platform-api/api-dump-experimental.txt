@@ -823,11 +823,15 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - a:setIcon(javax.swing.Icon):V
 - a:setMainText(java.lang.String):V
 - a:setToolTipText(java.lang.String):V
+*:com.intellij.ui.treeStructure.TreeNodeState
+- a:getPresentation():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:isExpanded():Z
 *:com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getChildren():kotlinx.coroutines.flow.Flow
 - a:getParent():com.intellij.ui.treeStructure.TreeNodeViewModel
-- a:getPresentation():kotlinx.coroutines.flow.Flow
-- a:presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:getState():kotlinx.coroutines.flow.Flow
+- a:setExpanded(Z):V
+- a:stateSnapshot():com.intellij.ui.treeStructure.TreeNodeState
 *:com.intellij.ui.treeStructure.TreeSwingModel
 - com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
 - com.intellij.ui.treeStructure.BgtAwareTreeModel

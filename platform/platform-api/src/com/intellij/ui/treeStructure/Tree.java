@@ -32,8 +32,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.text.Position;
@@ -41,9 +41,11 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
 
@@ -85,6 +87,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private final @Nullable Tree.ExpandImpl expandImpl;
   private final @NotNull AtomicInteger suspendedExpandAccessibilityAnnouncements = new AtomicInteger();
   private final @NotNull AtomicInteger bulkOperationsInProgress = new AtomicInteger();
+  private final @NotNull AtomicBoolean applyingViewModelChanges = new AtomicBoolean();
   private transient boolean settingUI;
   private transient TreeExpansionListener uiTreeExpansionListener;
 
@@ -1405,16 +1408,24 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     void markPathExpanded(@NotNull TreePath path) {
-      expandedState.put(path, Boolean.TRUE);
-      if (cachedPresentation != null) {
-        cachedPresentation.setExpanded(path, true);
-      }
+      setPathExpandedState(path, true);
     }
 
     void markPathCollapsed(TreePath path) {
-      expandedState.put(path, Boolean.FALSE);
+      setPathExpandedState(path, false);
+    }
+
+    private void setPathExpandedState(@NotNull TreePath path, boolean expanded) {
+      expandedState.put(path, expanded);
       if (cachedPresentation != null) {
-        cachedPresentation.setExpanded(path, false);
+        cachedPresentation.setExpanded(path, expanded);
+      }
+      // If the change came from the view model, we shouldn't translate it back to the view model,
+      // because the change might not be the latest.
+      // E.g., we received expanded=true, but there's another expanded=false update pending.
+      // If we translate expanded=true back to the model, it'll overwrite that expanded=false (which is a newer state!).
+      if (!applyingViewModelChanges.get() && path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+        viewModel.setExpanded(expanded);
       }
     }
 
@@ -1813,7 +1824,26 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     private class TreeModelListenerImpl implements TreeModelListener {
       @Override
-      public void treeNodesChanged(TreeModelEvent e) { }
+      public void treeNodesChanged(TreeModelEvent e) {
+        var path = e.getTreePath();
+        applyViewModelChange(path, viewModel -> {
+          Tree.this.setExpandedState(path, viewModel.stateSnapshot().isExpanded());
+        });
+      }
+
+      private void applyViewModelChange(@NotNull TreePath path, @NotNull Consumer<@NotNull TreeNodeViewModel> viewModelChangeProcessor) {
+        if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+          if (!applyingViewModelChanges.compareAndSet(false, true)) {
+            throw new IllegalStateException("Already applying a view model change, changes should not be recursive, it's a bug");
+          }
+          try {
+            viewModelChangeProcessor.accept(viewModel);
+          }
+          finally {
+            applyingViewModelChanges.set(false);
+          }
+        }
+      }
 
       @Override
       public void treeNodesInserted(TreeModelEvent e) {

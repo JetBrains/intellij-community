@@ -39,7 +39,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (value instanceof TreeNodeViewModel vm) {
-      customizeViewModelRenderer((TreeNodePresentationImpl)vm.presentationSnapshot(), selected, hasFocus);
+      customizeViewModelRenderer((TreeNodePresentationImpl)vm.stateSnapshot().getPresentation(), selected, hasFocus);
     }
     else {
       customizeLegacyRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
