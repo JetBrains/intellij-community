@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.textmate.regex;
+package org.jetbrains.plugins.textmate.regex.joni;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -8,6 +8,8 @@ import kotlinx.coroutines.ExecutorsKt;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.regex.MatchData;
+import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Regex;
@@ -17,9 +19,9 @@ import org.joni.exception.JOniException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
-public final class RegexFacade {
+public final class JoniRegexFacade {
   private static final Regex FAILED_REGEX = new Regex("^$", UTF8Encoding.INSTANCE);
-  private static final LoggerRt LOGGER = LoggerRt.getInstance(RegexFacade.class);
+  private static final LoggerRt LOGGER = LoggerRt.getInstance(JoniRegexFacade.class);
 
   @NotNull
   private final Regex myRegex;
@@ -27,7 +29,7 @@ public final class RegexFacade {
 
   private final ThreadLocal<LastMatch> matchResult = new ThreadLocal<>();
 
-  private RegexFacade(@NotNull String regexString) {
+  private JoniRegexFacade(@NotNull String regexString) {
     byte[] bytes = regexString.getBytes(StandardCharsets.UTF_8);
     Regex regex;
     try {
@@ -95,15 +97,15 @@ public final class RegexFacade {
     }
   }
 
-  private static final Cache<String, RegexFacade> REGEX_CACHE = Caffeine.newBuilder()
+  private static final Cache<String, JoniRegexFacade> REGEX_CACHE = Caffeine.newBuilder()
     .maximumSize(100_000)
     .expireAfterAccess(1, TimeUnit.MINUTES)
     .executor(ExecutorsKt.asExecutor(Dispatchers.getDefault()))
     .build();
 
   @NotNull
-  public static RegexFacade regex(@NotNull String regexString) {
-    return REGEX_CACHE.get(regexString, RegexFacade::new);
+  public static JoniRegexFacade regex(@NotNull String regexString) {
+    return REGEX_CACHE.get(regexString, JoniRegexFacade::new);
   }
 
   private static final class LastMatch {

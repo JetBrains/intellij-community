@@ -15,8 +15,8 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorC
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
+import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFacade;
 import org.jetbrains.plugins.textmate.regex.MatchData;
-import org.jetbrains.plugins.textmate.regex.RegexFacade;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
+import static org.jetbrains.plugins.textmate.regex.joni.JoniRegexFacade.regex;
 
 public final class SyntaxMatchUtils {
   private static final Cache<MatchKey, TextMateLexerState> CACHE = Caffeine.newBuilder()
@@ -141,13 +141,13 @@ public final class SyntaxMatchUtils {
                                                     @NotNull TextMateScope currentScope) {
     CharSequence match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH);
     if (match != null) {
-      RegexFacade regex = regex(match.toString());
+      JoniRegexFacade regex = regex(match.toString());
       MatchData matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, ourCheckCancelledCallback);
       return new TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string);
     }
     CharSequence begin = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.BEGIN);
     if (begin != null) {
-      RegexFacade regex = regex(begin.toString());
+      JoniRegexFacade regex = regex(begin.toString());
       MatchData matchData = regex.match(string, byteOffset, gosOffset, matchBeginOfString, ourCheckCancelledCallback);
       return new TextMateLexerState(syntaxNodeDescriptor, matchData, priority, byteOffset, string);
     }

@@ -4,7 +4,7 @@ import org.jetbrains.plugins.textmate.regex.MatchData;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.junit.Test;
 
-import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
+import static org.jetbrains.plugins.textmate.regex.joni.JoniRegexFacade.regex;
 import static org.junit.Assert.assertEquals;
 
 public class SyntaxMatchUtilsTest {
