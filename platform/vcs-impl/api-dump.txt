@@ -1126,9 +1126,11 @@ c:com.intellij.openapi.vcs.changes.VcsFreezingProcess
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.Runnable):V
 - execute():V
 com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener
+- sf:Companion:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
 - onFreeze():V
 - onUnfreeze():V
+f:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener$Companion
 com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 - com.intellij.openapi.vcs.changes.FileHolder
 - sf:TOPIC:com.intellij.util.messages.Topic
