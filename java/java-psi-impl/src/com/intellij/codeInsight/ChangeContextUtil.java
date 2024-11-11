@@ -207,10 +207,9 @@ public final class ChangeContextUtil {
         PsiClass containingClass = refMember.getContainingClass();
         if (containingClass != null && containingClass.isValid() && refMember.hasModifierProperty(PsiModifier.STATIC)) {
           PsiElement refElement = refExpr.resolve();
-          if (!manager.areElementsEquivalent(refMember, refElement) || containingClass.isInterface()) {
+          if (!manager.areElementsEquivalent(refMember, refElement)) {
             final PsiClass currentClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
-            if (!InheritanceUtil.isInheritorOrSelf(currentClass, containingClass, true) ||
-                containingClass.isInterface() && containingClass != currentClass) {
+            if (!InheritanceUtil.isInheritorOrSelf(currentClass, containingClass, true) || containingClass.isInterface()) {
               refExpr.setQualifierExpression(factory.createReferenceExpression(containingClass));
             }
           }
