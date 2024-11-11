@@ -16,9 +16,14 @@ import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDefinitionSource
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
+import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.concurrent.ConcurrentHashMap
@@ -37,7 +42,7 @@ internal class ReloadDependenciesScriptAction : AnAction() {
             project,
             KotlinBaseScriptingBundle.message("progress.title.loading.script.dependencies")
         ) {
-            MainKtsScriptConfigurationsSource.getInstance(project)?.updateDependenciesAndCreateModules(
+            project.scriptConfigurationsSourceOfType<DependentScriptConfigurationsSource>()?.updateDependenciesAndCreateModules(
                 listOf(BaseScriptModel(file))
             )
 
@@ -63,9 +68,10 @@ internal class ReloadDependenciesScriptAction : AnAction() {
         val project = editor.project ?: return false
         val file = getKotlinScriptFile(editor) ?: return false
 
-        val mainKts = project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()?.definitions?.singleOrNull() ?: return false
-
-        if (!mainKts.isScript(VirtualFileScriptSource(file))) return false
+        val configSource = ScriptConfigurationsProvider.getInstance(project).safeAs<ScriptConfigurationsProviderImpl>()?.getConfigurationsSource(file)
+        if (configSource !is DependentScriptConfigurationsSource) {
+            return false
+        }
 
         val actualAnnotations = PsiManager.getInstance(project).findFile(file)?.safeAs<KtFile>()?.getScriptAnnotationsList() ?: emptyList()
 

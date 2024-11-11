@@ -6,12 +6,14 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import org.jetbrains.kotlin.idea.base.projectStructure.NewKotlinFileHook
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class NewCustomScriptHook : NewKotlinFileHook() {
+class NewKotlinScriptHook : NewKotlinFileHook() {
     override fun postProcess(createdElement: KtFile, module: Module) {
         val virtualFile = createdElement.virtualFile
         val ktFile = createdElement.safeAs<KtFile>() ?: return
@@ -25,9 +27,8 @@ class NewCustomScriptHook : NewKotlinFileHook() {
             project,
             KotlinBaseScriptingBundle.message("progress.title.loading.script.dependencies")
         ) {
-            MainKtsScriptConfigurationsSource.getInstance(project)?.updateDependenciesAndCreateModules(
-                listOf(BaseScriptModel(virtualFile))
-            )
+            project.scriptConfigurationsSourceOfType<BundledScriptConfigurationsSource>()
+                ?.updateDependenciesAndCreateModules(listOf(BaseScriptModel(virtualFile)))
         }
     }
 }

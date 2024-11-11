@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.LazyScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurations
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -68,11 +68,8 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         val psiFile = myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
         if ((myFixture.file as? KtFile)?.isScript() == true) {
-            val dependenciesSource = object : LazyScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
-                override suspend fun updateModules(
-                    dependencies: ScriptConfigurations,
-                    storage: MutableEntityStorage?
-                ) {
+            val dependenciesSource = object : BundledScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
+                override suspend fun updateModules(storage: MutableEntityStorage?) {
                     //do nothing because adding modules is not permitted in light tests
                 }
             }

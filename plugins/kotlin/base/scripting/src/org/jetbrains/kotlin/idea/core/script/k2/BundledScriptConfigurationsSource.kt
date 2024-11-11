@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
 import kotlin.script.experimental.api.ResultWithDiagnostics
@@ -28,17 +27,17 @@ import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
-open class LazyScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) :
+open class BundledScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) :
     ScriptConfigurationsSource<BaseScriptModel>(project) {
 
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
         project.scriptDefinitionsSourceOfType<BundledScriptDefinitionSource>()
 
     override fun getScriptConfigurations(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
-        val currentData = data.get()
+        val currentData = super.getScriptConfigurations(virtualFile)
 
-        if (currentData.configurations.containsKey(virtualFile)) {
-            return currentData.configurations[virtualFile]
+        if (currentData is ResultWithDiagnostics.Success) {
+            return currentData
         }
 
         if (KotlinScriptLazyResolveProhibitionCondition.prohibitLazyResolve(project, virtualFile)) return null
@@ -47,10 +46,10 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
         }
 
-        return data.get().configurations[virtualFile]
+        return super.getScriptConfigurations(virtualFile)
     }
 
-    override suspend fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptConfigurations {
+    override suspend fun updateConfigurations(scripts: Iterable<BaseScriptModel>) {
         val sdk = ProjectRootManager.getInstance(project).projectSdk
 
         val configurations = scripts.associate {
@@ -73,33 +72,27 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
             project.service<ScriptReportSink>().attachReports(script, result.reports)
         }
 
-        return data.get().compose(
-            ScriptConfigurations(
-                configurations,
-                sdks = sdk?.homePath?.let<@NonNls String, Map<Path, Sdk>> { mapOf(Path.of(it) to sdk) } ?: emptyMap()
-            ))
+        val scriptConfigurations = ScriptConfigurations(
+            configurations,
+            sdks = sdk?.homePath?.let<@NonNls String, Map<Path, Sdk>> { mapOf(Path.of(it) to sdk) } ?: emptyMap()
+        )
+
+        data.getAndAccumulate(scriptConfigurations) { left, right -> left + right }
     }
 
-    override suspend fun updateModules(configurationsData: ScriptConfigurations, storage: MutableEntityStorage?) {
+    override suspend fun updateModules(storage: MutableEntityStorage?) {
         val updatedStorage = getUpdatedStorage(
-            project, configurationsData
-        ) { KotlinCustomScriptModuleEntitySource(it) }
+            project, data.get()
+        ) { KotlinBundledScriptModuleEntitySource(it) }
 
         project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
             it.replaceBySource(
-                { source -> source is KotlinCustomScriptModuleEntitySource },
+                { source -> source is KotlinBundledScriptModuleEntitySource },
                 updatedStorage
             )
         }
     }
 
-    companion object {
-        fun getInstance(project: Project): LazyScriptConfigurationsSource? =
-            SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<LazyScriptConfigurationsSource>().firstOrNull()
-                .safeAs<LazyScriptConfigurationsSource>()
-    }
-
-    open class KotlinCustomScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) :
+    open class KotlinBundledScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) :
         KotlinScriptEntitySource(virtualFileUrl)
 }

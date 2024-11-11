@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.LazyScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurations
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
@@ -35,10 +35,8 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val psiFile = files.first()
         if (psiFile is KtFile && psiFile.isScript()) {
-            val dependenciesSource = object : LazyScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
-                override suspend fun updateModules(
-                    dependencies: ScriptConfigurations,
-                    storage: MutableEntityStorage?) {
+            val dependenciesSource = object : BundledScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
+                override suspend fun updateModules(storage: MutableEntityStorage?) {
                     //do nothing because adding modules is not permitted in light tests
                 }
             }

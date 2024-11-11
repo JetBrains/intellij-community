@@ -12,6 +12,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.getValue
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
@@ -35,7 +36,6 @@ import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
-
 class GradleScriptModel(
     override val virtualFile: VirtualFile,
     val classPath: List<String> = listOf(),
@@ -48,9 +48,9 @@ open class GradleScriptConfigurationsSource(override val project: Project) : Scr
     private val gradleEntitySourceFilter: (EntitySource) -> Boolean =
         { entitySource -> entitySource is KotlinGradleScriptModuleEntitySource }
 
-    override suspend fun updateModules(dependencies: ScriptConfigurations, storage: MutableEntityStorage?) {
+    override suspend fun updateModules(storage: MutableEntityStorage?) {
         val storageWithGradleScriptModules = getUpdatedStorage(
-            project, dependencies
+            project, data.get()
         ) { KotlinGradleScriptModuleEntitySource(it) }
 
         if (storage != null) {
@@ -66,7 +66,7 @@ open class GradleScriptConfigurationsSource(override val project: Project) : Scr
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
         project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()
 
-    override suspend fun resolveDependencies(scripts: Iterable<GradleScriptModel>): ScriptConfigurations {
+    override suspend fun updateConfigurations(scripts: Iterable<GradleScriptModel>) {
         val newClasses = mutableSetOf<VirtualFile>()
         val newSources = mutableSetOf<VirtualFile>()
         val sdks = mutableMapOf<Path, Sdk>()
@@ -112,13 +112,7 @@ open class GradleScriptConfigurationsSource(override val project: Project) : Scr
             }
         }
 
-        return ScriptConfigurations(newConfigurations, sdks)
-    }
-
-    companion object {
-        fun getInstance(project: Project): GradleScriptConfigurationsSource? =
-            SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project).filterIsInstance<GradleScriptConfigurationsSource>().firstOrNull()
-                .safeAs<GradleScriptConfigurationsSource>()
+        data.set(ScriptConfigurations(newConfigurations, sdks))
     }
 
     data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) : KotlinScriptEntitySource(virtualFileUrl)

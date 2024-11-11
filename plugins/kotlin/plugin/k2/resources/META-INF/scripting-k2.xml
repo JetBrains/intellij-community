@@ -124,7 +124,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewCustomScriptHook"/>
+    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewKotlinScriptHook"/>
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
     <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
@@ -132,9 +132,9 @@
     <idea.base.projectStructure.moduleInfoProviderExtension
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDefinitionSource"/>
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.LazyScriptConfigurationsSource"/>
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptConfigurationsSource"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDefinitionSource"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 
