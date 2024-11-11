@@ -11129,7 +11129,6 @@ f:com.intellij.util.text.DateFormatUtil
 - s:getDateFormat():com.intellij.util.text.SyncDateFormat
 - s:getDateTimeFormat():com.intellij.util.text.SyncDateFormat
 - s:getDifferenceInDays(java.util.Date,java.util.Date):J
-- s:getIso8601Format():com.intellij.util.text.SyncDateFormat
 - s:getSampleDateTime():java.util.Date
 - s:toZoned(J):java.time.ZonedDateTime
 - s:toZoned(java.util.Date):java.time.ZonedDateTime

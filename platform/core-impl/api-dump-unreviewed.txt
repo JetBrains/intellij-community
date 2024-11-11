@@ -1593,9 +1593,6 @@ com.intellij.openapi.roots.PackageDirectoryCache
 - s:createCache(java.util.List):com.intellij.openapi.roots.PackageDirectoryCache
 - a:getDirectoriesByPackageName(java.lang.String):java.util.List
 - a:getSubpackageNames(java.lang.String,com.intellij.psi.search.GlobalSearchScope):java.util.Set
-a:com.intellij.openapi.vfs.ex.VirtualFileManagerEx
-- com.intellij.openapi.vfs.VirtualFileManager
-- <init>():V
 c:com.intellij.openapi.vfs.impl.LightFilePointer
 - com.intellij.openapi.vfs.pointers.VirtualFilePointer
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
