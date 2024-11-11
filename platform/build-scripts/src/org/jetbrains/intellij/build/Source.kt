@@ -93,7 +93,6 @@ data class DirSource(
   @JvmField val dir: Path,
   @JvmField val excludes: List<PathMatcher> = emptyList(),
   @JvmField val prefix: String = "",
-  @JvmField val removeModuleInfo: Boolean = true,
 ) : Source {
   init {
     assert(!Files.isRegularFile(dir)) { "'$dir' should not be a file" }
@@ -116,7 +115,6 @@ data class DirSource(
     if (dir != other.dir) return false
     if (excludes != other.excludes) return false
     if (prefix != other.prefix) return false
-    if (removeModuleInfo != other.removeModuleInfo) return false
 
     return true
   }
@@ -125,7 +123,6 @@ data class DirSource(
     var result = dir.hashCode()
     result = 31 * result + excludes.hashCode()
     result = 31 * result + prefix.hashCode()
-    result = 31 * result + removeModuleInfo.hashCode()
     return result
   }
 }

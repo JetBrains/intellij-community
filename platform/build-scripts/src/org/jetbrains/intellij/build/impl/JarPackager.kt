@@ -780,6 +780,7 @@ internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().
     // compilation cache on TC
     fs.getPathMatcher("glob:.hash"),
     fs.getPathMatcher("glob:classpath.index"),
+    fs.getPathMatcher("glob:module-info.class"),
   )
 }
 

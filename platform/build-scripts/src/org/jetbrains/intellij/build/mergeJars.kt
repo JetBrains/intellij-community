@@ -106,7 +106,7 @@ private suspend fun writeSource(
           filesToMerge.add(Files.readString(file))
           false
         }
-        else if (uniqueNames.putIfAbsent(name, source.dir) == null && (!source.removeModuleInfo || name != "module-info.class")) {
+        else if (uniqueNames.putIfAbsent(name, source.dir) == null) {
           packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
           true
         }
