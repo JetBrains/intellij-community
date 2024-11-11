@@ -328,12 +328,19 @@ class CodeInliner(
             value == parameter.name()
         }?.map { it.key } ?: return null
 
+        fun markAsUserCode(expression: KtExpression) {
+            // if type arguments were inserted at preprocessing stage, markers are already set
+            if (expression.children.all { it.getCopyableUserData(USER_CODE_KEY) == null }) {
+                expression.putCopyableUserData(USER_CODE_KEY, Unit)
+            }
+        }
+
         if (parameter.isVarArg) {
             return analyze(call) {
                 val single = expressions.singleOrNull()?.parent as? KtValueArgument
                 if (single?.getSpreadElement() != null) {
                     val expression = expressions.first()
-                    expression.putCopyableUserData(USER_CODE_KEY, Unit)
+                    markAsUserCode(expression)
                     return Argument(expression, expression.expressionType, isNamed = single.isNamed())
                 }
                 val parameterType = parameter.returnType
@@ -348,7 +355,7 @@ class CodeInliner(
                             appendFixedText("*")
                         }
                         val argumentExpression = valueArgument.getArgumentExpression()!!
-                        argumentExpression.putCopyableUserData(USER_CODE_KEY, Unit)
+                        markAsUserCode(argumentExpression)
                         appendExpression(argumentExpression)
                     }
                     appendFixedText(")")
@@ -374,7 +381,8 @@ class CodeInliner(
                     }
                 }?.let { functionText -> LambdaToAnonymousFunctionUtil.convertLambdaToFunction(expression, functionText) }
             } ?: expression
-            resultExpression.putCopyableUserData(USER_CODE_KEY, Unit)
+
+            markAsUserCode(resultExpression)
 
             if (expressions.isEmpty() && callableDescriptor is KtFunction) {
                 //encode default value

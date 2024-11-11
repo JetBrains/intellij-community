@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ResolvedImportPath
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.forEachDescendantOfType
@@ -89,8 +90,22 @@ fun fullyExpandCall(
                                 is KtCallElement -> {
                                     if (argumentExpression.typeArguments.isEmpty() && argumentExpression.calleeExpression != null) {
                                         val arguments = getRenderedTypeArguments(argumentExpression)
+
                                         if (arguments != null) {
                                             addTypeArguments(argumentExpression, arguments, usage.project)
+
+                                            fun markAsUserCode() {
+                                                val typeArgumentList = argumentExpression.typeArgumentList
+                                                if (typeArgumentList != null) {
+                                                    argumentExpression.putCopyableUserData(USER_CODE_KEY, null)
+                                                    for (child in argumentExpression.children) {
+                                                        (child as? KtElement)?.putCopyableUserData(USER_CODE_KEY, Unit)
+                                                    }
+                                                    typeArgumentList.putCopyableUserData(USER_CODE_KEY, null)
+                                                }
+                                            }
+
+                                            markAsUserCode()
                                         }
                                     }
                                 }
