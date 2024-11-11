@@ -81,10 +81,10 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
 
   override fun validate(baseDirPath: String): ValidationResult =
     when (val pathOrError = validatePath(baseDirPath)) {
-      is Result.Success<Path, *> -> {
+      is Result.Success -> {
         ValidationResult.OK
       }
-      is Result.Failure<*, @Nls String> -> ValidationResult(pathOrError.error)
+      is Result.Failure-> ValidationResult(pathOrError.error)
     }
 
 

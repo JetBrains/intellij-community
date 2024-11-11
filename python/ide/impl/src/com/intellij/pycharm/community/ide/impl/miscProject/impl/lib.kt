@@ -35,7 +35,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.Result
-import com.jetbrains.python.convertErr
+import com.jetbrains.python.mapResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkToInstallManager
 import com.jetbrains.python.sdk.PythonBinary
@@ -118,7 +118,7 @@ private suspend fun createProjectAndSdk(
   projectPath: Path,
   obtainPythonStrategy: ObtainPythonStrategy,
 ): Result<Pair<Project, Sdk>, LocalizedErrorString> {
-  val projectPathVfs = createProjectDir(projectPath).getOr { return it.convertErr() }
+  val projectPathVfs = createProjectDir(projectPath).getOr { return it }
 
   // First, find the latest python according to strategy
   var pythonBinary = filterLatestPython(

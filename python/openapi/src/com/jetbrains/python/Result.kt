@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.jetbrains.python.Result.Failure
+import com.jetbrains.python.Result.Success
+
 /**
  * Operation result to be used as `Maybe` instead of checked exceptions.
  * Unlike Kotlin `Result`, [ERR] could be anything (See [LocalizedErrorString]).
@@ -26,18 +29,18 @@ package com.jetbrains.python
  * }
  * ```
  *
- * Return from function with same error (see [convertErr])
+ * Return from function with same error
  * ```kotlin
  * fun foo():Result<String, Int> {
  *  // Returns Result<Foo, Int>
- *  getSomeResult().getOr { return it.convertErr()}
+ *  getSomeResult().getOr { return it }
  * }
  * ```
  * See showcase in tests.
  */
-sealed class Result<SUCC, ERR> {
-  data class Failure<SUCC, ERR>(val error: ERR) : Result<SUCC, ERR>()
-  data class Success<SUCC, ERR>(val result: SUCC) : Result<SUCC, ERR>()
+sealed class Result<out SUCC, out ERR> {
+  data class Failure<out ERR>(val error: ERR) : Result<Nothing, ERR>()
+  data class Success<out SUCC>(val result: SUCC) : Result<SUCC, Nothing>()
 
   fun <RES> map(map: (SUCC) -> RES): Result<RES, ERR> =
     when (this) {
@@ -50,26 +53,13 @@ sealed class Result<SUCC, ERR> {
    *  val data = someFun().getOr { return }
    * ```
    */
-  inline fun getOr(onFailure: (err: Failure<*, ERR>) -> Nothing): SUCC {
+  inline fun getOr(onFailure: (err: Failure<ERR>) -> Nothing): SUCC {
     when (this) {
       is Failure -> onFailure(this)
       is Success -> return result
     }
   }
 
-  /**
-   * Maps success result to another one with same error
-   * ```kotlin
-   * val drinkResultOrFirstError = findBeer()
-   * .mapResult{ openBeer(it) }
-   * .mapResult{ drinkIt(it) }
-   * ```
-   */
-  inline fun <NEW_S> mapResult(map: (SUCC) -> Result<NEW_S, ERR>): Result<NEW_S, ERR> =
-    when (this) {
-      is Success -> map(result)
-      is Failure -> Failure(error)
-    }
 
   /**
    * Same as [mapResult] but for different errors
@@ -106,7 +96,15 @@ sealed class Result<SUCC, ERR> {
 }
 
 /**
- * Converts [Result.Failure] to another [Result.Failure] with the same error but different success.
- * See class doc for example
+ * Maps success result to another one with same error
+ * ```kotlin
+ * val drinkResultOrFirstError = findBeer()
+ * .mapResult{ openBeer(it) }
+ * .mapResult{ drinkIt(it) }
+ * ```
  */
-fun <S, E> Result.Failure<*, E>.convertErr(): Result.Failure<S, E> = Result.Failure<S, E>(error)
+fun <SUCC, NEW_S, ERR> Result<SUCC, ERR>.mapResult(map: (SUCC) -> Result<NEW_S, ERR>): Result<NEW_S, ERR> =
+  when (this) {
+    is Success -> map(result)
+    is Failure -> this
+  }
