@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
@@ -26,6 +25,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
 import kotlin.Lazy;
@@ -55,7 +55,7 @@ class RootIndex {
   RootIndex(@NotNull Project project) {
     myProject = project;
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertReadAccess();
     if (project.isDefault()) {
       LOG.error("Directory index may not be queried for default project");
     }
