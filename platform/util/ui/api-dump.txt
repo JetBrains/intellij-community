@@ -1374,6 +1374,10 @@ f:com.intellij.icons.AllIcons$Windows
 - sf:RestoreInactive:javax.swing.Icon
 - sf:RestoreSmall:javax.swing.Icon
 - <init>():V
+f:com.intellij.icons.AllIcons$Windows$Mouse
+- sf:CursorPointingHand:javax.swing.Icon
+- sf:CursorText:javax.swing.Icon
+- <init>():V
 f:com.intellij.icons.AllIcons$Xml
 - sf:Css_class:javax.swing.Icon
 - sf:Html5:javax.swing.Icon

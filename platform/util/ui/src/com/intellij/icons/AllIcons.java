@@ -1468,6 +1468,12 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Minimize = load("expui/windows/minimize.svg", "windows/minimize.svg", -1640245376, 2);
     /** 16x16 */ public static final @NotNull Icon MinimizeInactive = load("expui/windows/minimizeInactive.svg", "windows/minimizeInactive.svg", -319650745, 2);
     /** 16x16 */ public static final @NotNull Icon MinimizeSmall = load("expui/windows/minimizeSmall.svg", "windows/minimizeSmall.svg", -168323289, 2);
+
+    public static final class Mouse {
+      /** 16x16 */ public static final @NotNull Icon CursorPointingHand = load("expui/windows/mouse/cursorPointingHand.svg", 1179133742, 0);
+      /** 16x16 */ public static final @NotNull Icon CursorText = load("expui/windows/mouse/cursorText.svg", 484468598, 0);
+    }
+
     /** 16x16 */ public static final @NotNull Icon Restore = load("expui/windows/restore.svg", "windows/restore.svg", 11845937, 2);
     /** 16x16 */ public static final @NotNull Icon RestoreInactive = load("expui/windows/restoreInactive.svg", "windows/restoreInactive.svg", 191870325, 2);
     /** 16x16 */ public static final @NotNull Icon RestoreSmall = load("expui/windows/restoreSmall.svg", "windows/restoreSmall.svg", 1984923907, 2);
