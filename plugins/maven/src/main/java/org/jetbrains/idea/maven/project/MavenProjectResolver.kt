@@ -119,20 +119,7 @@ class MavenProjectResolver(private val myProject: Project) {
         projectsWithUnresolvedPlugins[baseDir] = projectsWithUnresolvedPluginsChunk
       }
       catch (t: Throwable) {
-        val cause = findParseException(t)
-        if (cause != null) {
-          val buildIssue = getIssue(cause)
-          if (buildIssue != null) {
-            MavenProjectsManager.getInstance(myProject).getSyncConsole().addBuildIssue(buildIssue, MessageEvent.Kind.ERROR)
-          }
-          else {
-            throw t
-          }
-        }
-        else {
-          MavenLog.LOG.warn("Error in maven config parsing", t)
-          throw t
-        }
+        processResolverException(t, true)
       }
       finally {
         embeddersManager.release(embedder)
@@ -144,6 +131,23 @@ class MavenProjectResolver(private val myProject: Project) {
       updateSnapshotsAfterIncrementalSync(tree, pomToDependencyHash, embeddersManager, progressReporter, eventHandler)
     }
     return MavenProjectResolutionResult(projectsWithUnresolvedPlugins)
+  }
+
+  private fun processResolverException(t: Throwable, rethrow: Boolean) {
+    val cause = findParseException(t)
+    if (cause != null) {
+      val buildIssue = getIssue(cause)
+      if (buildIssue != null) {
+        MavenProjectsManager.getInstance(myProject).getSyncConsole().addBuildIssue(buildIssue, MessageEvent.Kind.ERROR)
+      }
+      else {
+        if (rethrow) throw t
+      }
+    }
+    else {
+      MavenLog.LOG.warn("Error in maven config parsing", t)
+      if (rethrow) throw t
+    }
   }
 
   private suspend fun doResolve(
@@ -373,7 +377,7 @@ class MavenProjectResolver(private val myProject: Project) {
       }
     }
     catch (e: Throwable) {
-      MavenLog.LOG.error(e)
+      processResolverException(e, true)
     }
     return Pair.create(resolverResults, readingProblems)
   }
