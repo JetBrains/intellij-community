@@ -676,16 +676,22 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       String selectedFile = file;
 
       UsageAdaptersKt.getUsageInfoAsFuture(adapters, myProject).thenAccept(selectedUsages -> {
-        ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
-          .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
+        record UsagesFileInfo(boolean isOneAndOnlyOnePsiFileInUsages, @Nullable VirtualFile virtualFile) {
+        }
+        ReadAction.nonBlocking(() -> new UsagesFileInfo(
+            UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages),
+            selectedFile != null ? VfsUtil.findFileByIoFile(new File(selectedFile), true) : null
+          ))
+          .finishOnUiThread(ModalityState.nonModal(), usagesFileInfo -> {
             myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));
             FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, myHelper.getModel().clone());
             myUsagePreviewPanel.updateLayout(myProject, selectedUsages);
             myUsagePreviewTitle.clear();
-            if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
+            if (usagesFileInfo.isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
               myUsagePreviewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-              VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(selectedFile), true);
-              String locationPath = virtualFile == null ? null : getPresentablePath(myProject, virtualFile.getParent(), 120);
+              String locationPath = usagesFileInfo.virtualFile == null ? null
+                                                                       : getPresentablePath(myProject,
+                                                                                            usagesFileInfo.virtualFile.getParent(), 120);
               if (locationPath != null) {
                 myUsagePreviewTitle.append(spaceAndThinSpace() + locationPath,
                                            new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
