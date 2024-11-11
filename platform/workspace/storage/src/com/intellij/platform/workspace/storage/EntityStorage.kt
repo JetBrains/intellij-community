@@ -60,6 +60,13 @@ public inline fun <reified E: WorkspaceEntity> EntityStorage.entities(): Sequenc
 }
 
 /**
+ * Kotlin shortcut for `EntityStorage.referrers(id, E::class.java)`.
+ */
+public inline fun <reified E: WorkspaceEntityWithSymbolicId> EntityStorage.referrers(id: SymbolicEntityId<E>): Sequence<E> {
+  return this.referrers(id, E::class.java)
+}
+
+/**
  * An immutable snapshot of the storage state. 
  * It isn't affected by the further modifications of the storage.
  * 
