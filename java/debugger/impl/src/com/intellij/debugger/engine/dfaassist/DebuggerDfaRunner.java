@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -287,7 +288,7 @@ public class DebuggerDfaRunner {
 
   private void addConditions(@NotNull DfaVariableValue var, @Nullable JdiValueInfo valueInfo, @NotNull DfaMemoryState state) {
     if (valueInfo instanceof JdiValueInfo.PrimitiveConstant primitiveConstant) {
-      state.applyCondition(var.eq(primitiveConstant.getDfType()));
+      ((DfaMemoryStateImpl)state).recordVariableType(var, primitiveConstant.getDfType());
     }
     else if (valueInfo instanceof JdiValueInfo.StringConstant stringConstant) {
       TypeConstraint stringType = myProvider.constraintFromJvmClassName(myBody, "java/lang/String");
