@@ -4,15 +4,14 @@ package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.debugger.actions.AsyncStacksToggleAction
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodInvokeUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
-import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.rt.debugger.ExceptionDebugHelper
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -196,25 +195,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         try {
             return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args)
         } catch (e: Exception) {
-            if (e is EvaluateException && e.exceptionFromTargetVM != null) {
-                var exceptionStack = DebuggerUtilsImpl.getExceptionText(context.evaluationContext, e.exceptionFromTargetVM!!)
-                if (exceptionStack != null) {
-                    // drop user frames
-                    val currentStackDepth = (DebuggerUtilsImpl.invokeHelperMethod(
-                        context.evaluationContext,
-                        ExceptionDebugHelper::class.java,
-                        "getCurrentThreadStackDepth",
-                        emptyList()
-                    ) as IntegerValue).value()
-                    val lines = exceptionStack.lines()
-                    if (lines.size > currentStackDepth) {
-                        exceptionStack = lines.subList(0, lines.size - currentStackDepth + 1).joinToString(separator = "\n")
-                    }
-                    DebuggerUtilsImpl.logError(e.message, e, exceptionStack)
-                    return null
-                }
-            }
-            DebuggerUtilsImpl.logError(e) // for now log everything
+            val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
+            DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
+                                       *listOfNotNull(helperExceptionStackTrace).toTypedArray()) // log helper exception if available
         }
         return null
     }

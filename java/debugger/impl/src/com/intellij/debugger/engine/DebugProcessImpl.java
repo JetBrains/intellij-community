@@ -5,7 +5,6 @@ import com.intellij.Patches;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.evaluation.*;
-import com.intellij.debugger.engine.evaluation.expression.BoxingEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.RetryEvaluationException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -63,11 +62,13 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.debugger.MethodInvoker;
 import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -106,6 +107,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+import static com.intellij.debugger.engine.MethodInvokeUtilsKt.tryInvokeWithHelper;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
@@ -1483,85 +1486,26 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     @NotNull List<? extends Value> args,
                                     final int invocationOptions,
                                     boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHelper(method, invocationOptions)) {
-      return invokeWithHelper(method.declaringType(), objRef, method, args, (EvaluationContextImpl)evaluationContext);
+    InvocationResult result =
+      tryInvokeWithHelper(method.declaringType(), objRef, method, args, (EvaluationContextImpl)evaluationContext, invocationOptions, internalEvaluate);
+    if (result.isSuccess()) {
+      return result.getValue();
     }
-    else {
-      return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
-        @Override
-        protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
-          throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Invoking " + objRef.type().name() + "." + method.name());
-          }
-          //noinspection SSBasedInspection
-          return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
+    return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
+      @Override
+      protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Invoking " + objRef.type().name() + "." + method.name());
         }
-      }.start(internalEvaluate);
-    }
-  }
-
-  private static boolean shouldInvokeWithHelper(@NotNull Method method, int invocationOptions) {
-    return Registry.is("debugger.evaluate.method.helper") &&
-           !BitUtil.isSet(invocationOptions, ObjectReference.INVOKE_NONVIRTUAL) && // TODO: support
-           !DebuggerUtils.isPrimitiveType(method.returnTypeName()) &&
-           (!DebuggerUtilsEx.isVoid(method) || method.isConstructor()) &&
-           !"clone".equals(method.name());
-  }
-
-  private static @Nullable Value invokeWithHelper(@NotNull ReferenceType type,
-                                                  @Nullable ObjectReference objRef,
-                                                  @NotNull Method method,
-                                                  @NotNull List<? extends Value> originalArgs,
-                                                  @NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
-    DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
-    ArrayList<Value> invokerArgs = new ArrayList<>();
-
-    ReferenceType lookupClass =
-      debugProcess.findClass(evaluationContext, "java.lang.invoke.MethodHandles$Lookup", evaluationContext.getClassLoader());
-    ObjectReference implLookup = (ObjectReference)lookupClass.getValue(DebuggerUtils.findField(lookupClass, "IMPL_LOOKUP"));
-
-    invokerArgs.add(implLookup); // lookup
-    invokerArgs.add(type.classObject()); // class
-    invokerArgs.add(objRef); // object
-    invokerArgs.add(DebuggerUtilsEx.mirrorOfString(method.name() + ";" + method.signature(),
-                                                   evaluationContext)); // method name and descriptor
-    invokerArgs.add(method.declaringType().classLoader()); // method's declaring type class loader to be able to resolve parameter types
-
-    // argument values
-    List<Value> args = new ArrayList<>(originalArgs);
-    if (method.isVarArgs()) {
-      // If vararg is Object... and an array of Objects is passed, we need to unwrap it or we'll not be able to distinguish what was passed later
-      List<String> argumentTypeNames = method.argumentTypeNames();
-      int lastIndex = argumentTypeNames.size() - 1;
-      if (args.size() == lastIndex + 1 && args.get(lastIndex) instanceof ArrayReference arrayRef &&
-          argumentTypeNames.get(lastIndex).startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
-        args.remove(lastIndex);
-        args.addAll(arrayRef.getValues());
+        //noinspection SSBasedInspection
+        return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
-    }
-
-    List<Value> boxedArgs = new ArrayList<>(args.size());
-    for (Value arg : args) {
-      boxedArgs.add((Value)BoxingEvaluator.box(arg, evaluationContext));
-    }
-
-    if (boxedArgs.size() < 10) {
-      invokerArgs.addAll(boxedArgs); // args
-      return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke" + boxedArgs.size(), invokerArgs, false);
-    }
-    else {
-      ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
-        evaluationContext,
-        CommonClassNames.JAVA_LANG_OBJECT + "[]",
-        evaluationContext.getClassLoader());
-
-      invokerArgs.add(DebuggerUtilsEx.mirrorOfArray(objectArrayClass, boxedArgs, evaluationContext)); // args
-      return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
-    }
+    }.start(internalEvaluate);
   }
 
-  private static ThreadReferenceProxy getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
+  @NotNull
+  static ThreadReferenceProxy getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
     ThreadReferenceProxy fromStackFrame =
       ObjectUtils.doIfNotNull(evaluationContext.getFrameProxy(), stackFrameProxy -> stackFrameProxy.threadProxy());
     SuspendContextImpl suspendContext = (SuspendContextImpl)evaluationContext.getSuspendContext();
@@ -1597,53 +1541,53 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             @NotNull List<? extends Value> args,
                             int extraInvocationOptions,
                             boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHelper(method, extraInvocationOptions)) {
-      return invokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext);
+    InvocationResult result =
+      tryInvokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext, extraInvocationOptions, internalEvaluate);
+    if (result.isSuccess()) {
+      return result.getValue();
     }
-    else {
-      return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
-        @Override
-        protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
-          throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Invoking " + classType.name() + "." + method.name());
-          }
-          //noinspection SSBasedInspection
-          return classType.invokeMethod(thread, method, args, invokePolicy | extraInvocationOptions);
+    return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
+      @Override
+      protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Invoking " + classType.name() + "." + method.name());
         }
-      }.start(internalEvaluate);
-    }
+        //noinspection SSBasedInspection
+        return classType.invokeMethod(thread, method, args, invokePolicy | extraInvocationOptions);
+      }
+    }.start(internalEvaluate);
   }
 
   public Value invokeMethod(EvaluationContext evaluationContext,
                             InterfaceType interfaceType,
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
-    if (shouldInvokeWithHelper(method, 0)) {
-      return invokeWithHelper(interfaceType, null, method, args, (EvaluationContextImpl)evaluationContext);
+    InvocationResult result =
+      tryInvokeWithHelper(interfaceType, null, method, args, (EvaluationContextImpl)evaluationContext, 0, false);
+    if (result.isSuccess()) {
+      return result.getValue();
     }
-    else {
-      return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
-        @Override
-        protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
-          throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Invoking " + interfaceType.name() + "." + method.name());
-          }
-
-          try {
-            //noinspection SSBasedInspection
-            return interfaceType.invokeMethod(thread, method, args, invokePolicy);
-          }
-          catch (LinkageError e) {
-            throw new IllegalStateException("Interface method invocation is not supported in JVM " +
-                                            SystemInfo.JAVA_VERSION +
-                                            ". Use JVM 1.8.0_45 or higher to run " +
-                                            ApplicationNamesInfo.getInstance().getFullProductName());
-          }
+    return new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
+      @Override
+      protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Invoking " + interfaceType.name() + "." + method.name());
         }
-      }.start(false);
-    }
+
+        try {
+          //noinspection SSBasedInspection
+          return interfaceType.invokeMethod(thread, method, args, invokePolicy);
+        }
+        catch (LinkageError e) {
+          throw new IllegalStateException("Interface method invocation is not supported in JVM " +
+                                          SystemInfo.JAVA_VERSION +
+                                          ". Use JVM 1.8.0_45 or higher to run " +
+                                          ApplicationNamesInfo.getInstance().getFullProductName());
+        }
+      }
+    }.start(false);
   }
 
 
@@ -1673,23 +1617,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      @NotNull List<? extends Value> args,
                                      final int invocationOptions,
                                      boolean internalEvaluate) throws EvaluateException {
-    if (!internalEvaluate && shouldInvokeWithHelper(method, invocationOptions)) {
-      return (ObjectReference)invokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext);
+    InvocationResult result =
+      tryInvokeWithHelper(classType, null, method, args, (EvaluationContextImpl)evaluationContext, invocationOptions, internalEvaluate);
+    if (result.isSuccess()) {
+      return (ObjectReference)result.getValue();
     }
-    else {
-      InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
-        @Override
-        protected ObjectReference invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
-          throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("New instance " + classType.name() + "." + method.name());
-          }
-          //noinspection SSBasedInspection
-          return classType.newInstance(thread, method, args, invokePolicy | invocationOptions);
+    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args, (EvaluationContextImpl)evaluationContext) {
+      @Override
+      protected ObjectReference invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("New instance " + classType.name() + "." + method.name());
         }
-      };
-      return invokeCommand.start(internalEvaluate);
-    }
+        //noinspection SSBasedInspection
+        return classType.newInstance(thread, method, args, invokePolicy | invocationOptions);
+      }
+    };
+    return invokeCommand.start(internalEvaluate);
   }
 
   public void clearCashes(@NotNull SuspendContextImpl context) {
