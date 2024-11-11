@@ -108,9 +108,9 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 }
             }
             if (descriptor is KtThisDescriptor) {
-                val pointer = descriptor.classDef.pointer
+                val pointer = descriptor.classDef?.pointer
                 analyze(anchor) {
-                    val symbol = pointer.restoreSymbol()
+                    val symbol = pointer?.restoreSymbol()
                     if (symbol is KaNamedClassSymbol) {
                         val nameString = symbol.classId?.asSingleFqName()
                         if (nameString != null) {
@@ -129,7 +129,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                                     if (signature == jvmName) return thisObject
                                 }
                             }
-                            if (symbol.isInline) {
+                            if (descriptor.isInlineClassReference()) {
                                 // See org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.createStaticReplacement
                                 val thisVar = proxy.visibleVariableByName("arg0")
                                 if (thisVar != null) {

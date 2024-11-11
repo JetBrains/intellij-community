@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KtClassDef.Companion.classDef
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -19,8 +18,10 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 
-class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null) : KtBaseDescriptor {
-    private val dfType = TypeConstraints.exactClass(this@KtThisDescriptor.classDef).instanceOf().asDfType()
+class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: KtClassDef?, val contextName: String? = null)
+    : KtBaseDescriptor {
+    internal constructor(classDef: KtClassDef, contextName: String? = null) : 
+            this(TypeConstraints.exactClass(classDef).instanceOf().asDfType(), classDef, contextName)
 
     override fun isStable(): Boolean = true
 
@@ -40,7 +41,7 @@ class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null
         return "$receiver.this"
     }
 
-    override fun isInlineClassReference(): Boolean = classDef.inline
+    override fun isInlineClassReference(): Boolean = classDef?.inline ?: false
 
     companion object {
         context(KaSession)
@@ -54,11 +55,10 @@ class KtThisDescriptor(val classDef: KtClassDef, val contextName: String? = null
                 if (function != null) {
                     return KtLambdaThisVariableDescriptor(function, declType.toDfType()) to declType
                 } else {
-                    if (declType is KaClassType) {
+                    val dfType = declType.toDfType()
+                    if (dfType != DfType.TOP) {
                         val classDef = declType.expandedSymbol?.classDef()
-                        if (classDef != null) {
-                            return KtThisDescriptor(classDef, symbol.owningCallableSymbol.name?.asString()) to declType
-                        }
+                        return KtThisDescriptor(dfType, classDef, symbol.owningCallableSymbol.name?.asString()) to declType
                     }
                 }
             }

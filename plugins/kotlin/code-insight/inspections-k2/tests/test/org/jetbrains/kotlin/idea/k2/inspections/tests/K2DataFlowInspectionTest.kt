@@ -37,6 +37,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testCallWithSideEffect() = doTest()
     fun testCastArray() = doTest()
     fun testCastGenericMethodReturn() = doTest()
+    fun testCharExtension() = doTest()
     fun testClassRef() = doTest()
     fun testCollectionConstructors() = doTest()
     fun testCompareInLoop() = doTest()
