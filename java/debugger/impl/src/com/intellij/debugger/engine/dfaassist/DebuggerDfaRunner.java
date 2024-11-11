@@ -161,16 +161,15 @@ public class DebuggerDfaRunner {
       Set<VariableDescriptor> descriptors = StreamEx.of(flow.getInstructions()).flatCollection(inst -> inst.getRequiredDescriptors(factory))
         .toSet();
       Map<Value, List<DfaVariableValue>> myMap = new HashMap<>();
-      for (DfaValue dfaValue : factory.getValues().toArray(DfaValue.EMPTY_ARRAY)) {
-        StreamEx<DfaVariableValue> stream = StreamEx.of(descriptors)
-          .map(desc -> desc.createValue(factory, dfaValue))
-          .append(dfaValue)
-          .select(DfaVariableValue.class);
-        for (DfaVariableValue dfaVar : stream) {
-          Value jdiValue = resolveJdiValue(provider, anchor, proxy, dfaVar);
-          if (jdiValue != null) {
-            myMap.computeIfAbsent(jdiValue, v -> new ArrayList<>()).add(dfaVar);
-          }
+      StreamEx<DfaVariableValue> stream =
+        StreamEx.of(factory.getValues().toArray(DfaValue.EMPTY_ARRAY))
+          .flatMap(dfaValue -> StreamEx.of(descriptors).map(desc -> desc.createValue(factory, dfaValue)).append(dfaValue))
+          .select(DfaVariableValue.class)
+          .distinct();
+      for (DfaVariableValue dfaVar : stream) {
+        Value jdiValue = resolveJdiValue(provider, anchor, proxy, dfaVar);
+        if (jdiValue != null) {
+          myMap.computeIfAbsent(jdiValue, v -> new ArrayList<>()).add(dfaVar);
         }
       }
       return myMap;
