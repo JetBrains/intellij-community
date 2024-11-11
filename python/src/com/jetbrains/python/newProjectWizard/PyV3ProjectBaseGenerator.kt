@@ -4,12 +4,14 @@ package com.jetbrains.python.newProjectWizard
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -54,6 +56,13 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
         }
         throw it
       }
+
+      withContext(Dispatchers.EDT) {
+        writeAction {
+          VirtualFileManager.getInstance().syncRefresh()
+        }
+      }
+
       // Project view must be expanded (PY-75909) but it can't be unless it contains some files.
       // Either base settings (which create venv) might generate some or type specific settings (like Django) may.
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
