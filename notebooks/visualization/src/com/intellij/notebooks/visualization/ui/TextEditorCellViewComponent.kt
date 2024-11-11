@@ -76,7 +76,7 @@ class TextEditorCellViewComponent(
       endOffset,
       HighlighterLayer.FIRST - 100,
       TextAttributes(),
-      HighlighterTargetArea.EXACT_RANGE
+      HighlighterTargetArea.LINES_IN_RANGE
     )
 
     highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction)
