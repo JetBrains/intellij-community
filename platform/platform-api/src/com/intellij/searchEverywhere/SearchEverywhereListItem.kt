@@ -2,7 +2,9 @@
 package com.intellij.searchEverywhere
 
 import com.intellij.openapi.actionSystem.DataContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class SearchEverywhereListItem<I, P: SearchEverywhereItemPresentation>(
   val item: I,
   val presentation: P,

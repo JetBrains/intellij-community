@@ -8,11 +8,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SearchEverywherePopupVm(private val coroutineScope: CoroutineScope,
                               private val project: Project,
-                              private val tabs: List<SearchEverywhereTab>,
-                              ) {
+                              private val tabs: List<SearchEverywhereTab>) {
 
   val currentTab: StateFlow<SearchEverywhereTabVm> get() = _currentTab.asStateFlow()
 

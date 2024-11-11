@@ -7,7 +7,9 @@ import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
 import com.intellij.searchEverywhere.SearchEverywhereListItem
 import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DefaultViewItemsProvider<Item, Presentation: SearchEverywhereItemPresentation, Params>(
   private val searchProvider: SearchEverywhereItemsProvider<Item, Params>,
   private val presentationRenderer: (Item) -> Presentation,

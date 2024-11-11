@@ -7,7 +7,9 @@ import com.intellij.searchEverywhere.SearchEverywhereListItem
 import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface SearchEverywhereRequestHandler {
   suspend fun search(providers: Collection<SearchEverywhereViewItemsProvider<*, *, *>>,
                      pattern: String,
@@ -15,6 +17,7 @@ interface SearchEverywhereRequestHandler {
                      alreadyFoundResults: List<SearchEverywhereListItem<*, *>>): SharedFlow<List<SearchEverywhereListItem<*, *>>>
 }
 
+@ApiStatus.Internal
 class DefaultSearchEverywhereRequestHandler: SearchEverywhereRequestHandler {
 
   override suspend fun search(providers: Collection<SearchEverywhereViewItemsProvider<*, *, *>>,

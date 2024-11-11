@@ -9,12 +9,7 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.GotoActionListCellRenderer.calcHit
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.actionSystem.Toggleable
-import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -26,6 +21,7 @@ import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.text.Matcher
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import kotlin.math.max
@@ -33,7 +29,7 @@ import kotlin.math.max
 private const val BONUS_FOR_SPACE_IN_PATTERN = 100
 private const val SETTINGS_PENALTY = 100
 
-
+@ApiStatus.Internal
 object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SearchEverywhereItemPresentation {
   override fun invoke(matchedValue: GotoActionModel.MatchedValue): SearchEverywhereItemPresentation {
     val showIcon = UISettings.getInstance().showIconsInMenus
@@ -93,6 +89,7 @@ object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SearchEvery
   }
 }
 
+@ApiStatus.Internal
 fun getGroupName(@NotNull description: OptionDescription): @Nls @NotNull String {
   if (description is RegistryTextOptionDescriptor) return LangBundle.message("group.registry")
   val groupName: String? = description.groupName

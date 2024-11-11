@@ -2,7 +2,9 @@
 package com.intellij.searchEverywhere
 
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface SearchEverywhereItemsProvider<I, P> {
 
   suspend fun processItems(scope: CoroutineScope, searchParams: P, processor: (I, Int) -> Boolean)

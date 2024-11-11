@@ -8,7 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchEverywhereTabVm(
   private val coroutineScope: CoroutineScope,

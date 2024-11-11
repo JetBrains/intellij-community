@@ -6,14 +6,15 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 
+@ApiStatus.Internal
 class ActionsItemsProvider(project: Project?, contextComponent: Component?, editor: Editor?): SearchEverywhereItemsProvider<MatchedValue, ActionSearchParams> {
 
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
@@ -60,4 +61,5 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
   }
 }
 
+@ApiStatus.Internal
 data class ActionSearchParams(val pattern: String, val includeDisabled: Boolean)
