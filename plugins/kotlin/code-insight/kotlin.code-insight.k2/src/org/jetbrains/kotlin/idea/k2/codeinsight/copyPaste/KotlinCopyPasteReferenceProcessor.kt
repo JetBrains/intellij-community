@@ -4,14 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -152,8 +148,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                 } else targetReferencesToRestore
 
                 // Step 5. Restore references, i.e. add missing imports or qualifiers.
-                // TODO: remove `blockingContext`, see KTIJ-30071
-                val restoredTargetReferences = blockingContext {
+                val restoredTargetReferences = writeIntentReadAction {
                     project.executeCommand(KotlinBundle.message("copy.paste.restore.pasted.references.capitalized")) {
                         buildList {
                             ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
