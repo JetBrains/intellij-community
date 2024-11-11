@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,8 +56,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
@@ -96,7 +97,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(IdeBundle.message("dialog.title.background.image"));
-    myEditorPreview = createEditorPreview();
+    myEditorPreview = createEditorPreview(getDisposable());
     myIdePreview = createFramePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
     UiNotifyConnector.doWhenFirstShown(myRoot, () -> createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
@@ -139,11 +140,12 @@ public class BackgroundImageDialog extends DialogWrapper {
   }
 
   @NotNull
-  private static SimpleEditorPreview createEditorPreview() {
+  private static SimpleEditorPreview createEditorPreview(@NotNull Disposable disposable) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     ColorAndFontOptions options = new ColorAndFontOptions();
     options.reset();
     options.selectScheme(scheme.getName());
+    Disposer.register(disposable, () -> options.disposeUIResources());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     int index;
     int attempt = 0;
