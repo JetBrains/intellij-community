@@ -288,7 +288,11 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
         override fun createTask(indicator: ProgressIndicator): SdkDownloadTask = runBlockingCancellable {
           val jdkInstaller = JdkInstaller.getInstance()
-          val path = homeDir ?: jdkInstaller.defaultInstallDir(item, eel.getValue(), projectWslDistribution)
+          val path = homeDir ?: jdkInstaller.defaultInstallDir(
+            item,
+            if (Registry.`is`("java.home.finder.use.eel")) eel.getValue() else null,
+            projectWslDistribution,
+          )
           val request = jdkInstaller.prepareJdkInstallation(item, path)
           JdkDownloaderBase.newDownloadTask(item, request, project)
         }
