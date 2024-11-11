@@ -48,7 +48,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +58,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
@@ -543,8 +541,11 @@ public class RefManagerImpl extends RefManager {
     if (answer != null) return answer;
 
     answer = getElements();
-    Map<VirtualFile, List<RefElement>> map = StreamEx.of(answer).groupingBy(
-      ref -> ((RefElementImpl)ref).getVirtualFile(), Collectors.toCollection(ArrayList::new));
+    Map<VirtualFile, List<RefElement>> map = new HashMap<>();
+    for (RefElement ref : answer) {
+      VirtualFile file = ((RefElementImpl)ref).getVirtualFile();
+      map.computeIfAbsent(file, k -> new ArrayList<>()).add(ref);
+    }
     for (List<RefElement> elementsInFile : map.values()) {
       if (elementsInFile.size() > 1) {
         ReadAction.run(() -> {
