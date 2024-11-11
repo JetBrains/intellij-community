@@ -2,6 +2,7 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.notebooks.ui.isFoldingEnabledKey
+import com.intellij.notebooks.ui.visualization.NotebookBelowLastCellPanel
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.ui.*
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.*
@@ -23,6 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -47,6 +49,8 @@ class NotebookCellInlayManager private constructor(
   val cells: List<EditorCell> get() = _cells.toList()
 
   val views = mutableMapOf<EditorCell, EditorCellView>()
+
+  private var belowLastCellInlay: Inlay<*>? = null
 
   /**
    * Listens for inlay changes (called after all inlays are updated). Feel free to convert it to the EP if you need another listener
@@ -183,6 +187,7 @@ class NotebookCellInlayManager private constructor(
 
     setupFoldingListener()
     setupSelectionUI()
+    addBelowLastCellInlay()
 
     cellEventListeners.addListener(object : EditorCellEventListener {
       override fun onEditorCellEvents(events: List<EditorCellEvent>) {
@@ -273,6 +278,21 @@ class NotebookCellInlayManager private constructor(
         editor.project?.messageBus?.syncPublisher(JupyterCellSelectionNotifier.TOPIC)?.cellSelected(cell.interval, editor)
       }
     }
+  }
+
+  private fun addBelowLastCellInlay() {  // PY-77218
+    belowLastCellInlay = editor.addComponentInlay(
+      NotebookBelowLastCellPanel(editor),
+      isRelatedToPrecedingText = true,
+      showAbove = false,
+      priority = 0,
+      offset = editor.document.getLineEndOffset((editor.document.lineCount - 1).coerceAtLeast(0))
+    )
+  }
+
+  fun removeBelowLastCellInlay() {
+    belowLastCellInlay?.dispose()
+    belowLastCellInlay = null
   }
 
   private fun setupFoldingListener() {
