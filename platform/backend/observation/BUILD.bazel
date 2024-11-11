@@ -1,29 +1,31 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.backend.observation` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
-  name = "backend-observation",
+jvm_library(
+  name = "observation",
   module_name = "intellij.platform.backend.observation",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
   ]
 )
 
 kt_jvm_test(
-  name = "backend-observation_test",
+  name = "observation_test",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":observation"],
   deps = [
-    ":backend-observation",
-    "@libraries//:junit-jupiter-api",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "@lib//:junit5",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.backend.observation` end

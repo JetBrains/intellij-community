@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "junit5-jimfs",
+  module_name = "intellij.platform.testFramework.junit5.jimfs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "@lib//:jimfs",
+    "//platform/testFramework/junit5",
+  ]
+)
+
+kt_jvm_test(
+  name = "junit5-jimfs_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":junit5-jimfs"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "@lib//:jimfs",
+    "//platform/testFramework/junit5",
+    "//platform/util-ex",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` end

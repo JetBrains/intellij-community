@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.remoteControl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "remoteControl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "remoteControl",
+  module_name = "intellij.remoteControl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:netty-buffer",
+    "@lib//:netty-codec-http",
+    "@lib//:gson",
+  ],
+  runtime_deps = [":remoteControl_resources"]
+)
+
+kt_jvm_test(
+  name = "remoteControl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":remoteControl"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:netty-buffer",
+    "@lib//:netty-codec-http",
+    "@lib//:gson",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test",
+    "//platform/built-in-server:builtInServer-tests_test",
+    "@lib//:assert_j",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+  ],
+  runtime_deps = [":remoteControl_resources"]
+)
+### auto-generated section `build intellij.remoteControl` end

@@ -1,0 +1,80 @@
+### auto-generated section `build intellij.java.i18n` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "java-i18n_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-i18n",
+  module_name = "intellij.java.i18n",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/lang-api:lang",
+    "//java/openapi:java",
+    "//plugins/properties",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//xml/impl",
+    "//spellchecker",
+    "//java/java-impl:impl",
+    "//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-openapi:jsp",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//jvm/jvm-analysis-api:analysis",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "@lib//:icu4j",
+    "@lib//:fastutil-min",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+  ],
+  exports = [
+    "//plugins/properties",
+    "//java/java-impl:impl",
+  ],
+  runtime_deps = [":java-i18n_resources"]
+)
+
+kt_jvm_test(
+  name = "java-i18n_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":java-i18n"],
+  deps = [
+    "//platform/lang-api:lang",
+    "//java/openapi:java",
+    "//plugins/properties",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//xml/impl",
+    "//spellchecker",
+    "//java/java-impl:impl",
+    "//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-openapi:jsp",
+    "//java/testFramework",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//jvm/jvm-analysis-api:analysis",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "@lib//:icu4j",
+    "@lib//:fastutil-min",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ],
+  runtime_deps = [":java-i18n_resources"]
+)
+### auto-generated section `build intellij.java.i18n` end

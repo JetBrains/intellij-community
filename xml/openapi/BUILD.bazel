@@ -1,32 +1,33 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.xml` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "xml_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "xml",
   module_name = "intellij.xml",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/lang-api:lang",
-    "@community//xml/xml-psi-api:xml-psi",
-    "@community//xml/xml-analysis-api:xml-analysis",
-    "@community//xml/xml-structure-view-api:xml-structureView",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util/ui:util-ui",
+    "//platform/lang-api:lang",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-structure-view-api:structureView",
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
   ],
   exports = [
-    "@community//xml/xml-psi-api:xml-psi",
-    "@community//xml/xml-analysis-api:xml-analysis",
-    "@community//xml/xml-structure-view-api:xml-structureView",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
+    "//xml/xml-structure-view-api:structureView",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":xml_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml` end

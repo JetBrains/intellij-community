@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.tools.devLauncher.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tools-devLauncher-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tools-devLauncher-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//tools/devLauncher",
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "@lib//:junit5",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ]
+)
+### auto-generated section `build intellij.tools.devLauncher.tests` end

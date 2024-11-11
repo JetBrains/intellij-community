@@ -1,19 +1,20 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.libraries.microba` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "microba_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "libraries-microba",
+jvm_library(
+  name = "microba",
   module_name = "intellij.libraries.microba",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  runtime_deps = [":resources"]
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  runtime_deps = [":microba_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.libraries.microba` end

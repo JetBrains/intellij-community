@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.platform.externalProcessAuthHelper` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "externalProcessAuthHelper_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "externalProcessAuthHelper",
+  module_name = "intellij.platform.externalProcessAuthHelper",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+  ],
+  exports = [
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+  ],
+  runtime_deps = [":externalProcessAuthHelper_resources"]
+)
+
+kt_jvm_test(
+  name = "externalProcessAuthHelper_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":externalProcessAuthHelper"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "@lib//:junit5",
+  ],
+  runtime_deps = [":externalProcessAuthHelper_resources"]
+)
+### auto-generated section `build intellij.platform.externalProcessAuthHelper` end

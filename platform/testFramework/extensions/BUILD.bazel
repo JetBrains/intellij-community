@@ -1,35 +1,36 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.testExtensions` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "testExtensions_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "testExtensions",
   module_name = "intellij.platform.testExtensions",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util",
-    "@community//platform/testFramework",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:memoryfilesystem",
-    "@libraries//:assertj-core",
-    "@libraries//:snakeyaml",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui",
-    "@libraries//:junit-jupiter-api",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/testFramework",
+    "//platform/util/jdom",
+    "@lib//:memoryfilesystem",
+    "@lib//:assert_j",
+    "@lib//:snakeyaml",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "@lib//:junit5",
   ],
   exports = [
-    "@libraries//:memoryfilesystem",
-    "@libraries//:assertj-core",
+    "@lib//:memoryfilesystem",
+    "@lib//:assert_j",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":testExtensions_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.testExtensions` end

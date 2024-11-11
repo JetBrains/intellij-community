@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.java.structuralSearch` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "structuralSearch_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structuralSearch",
+  module_name = "intellij.java.structuralSearch",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/structuralsearch:structuralSearch",
+    "//platform/lang-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/duplicates-analysis",
+  ],
+  runtime_deps = [":structuralSearch_resources"]
+)
+
+kt_jvm_test(
+  name = "structuralSearch_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":structuralSearch"],
+  deps = [
+    "//platform/structuralsearch:structuralSearch",
+    "//platform/lang-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/duplicates-analysis",
+    "//java/testFramework",
+  ],
+  runtime_deps = [":structuralSearch_resources"]
+)
+### auto-generated section `build intellij.java.structuralSearch` end

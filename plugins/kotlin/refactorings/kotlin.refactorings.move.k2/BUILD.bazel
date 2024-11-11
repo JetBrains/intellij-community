@@ -1,0 +1,96 @@
+### auto-generated section `build kotlin.refactorings.move.k2` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-refactorings-move-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-refactorings-move-k2",
+  module_name = "kotlin.refactorings.move.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//platform/platform-api:ide",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
+  ],
+  runtime_deps = [":kotlin-refactorings-move-k2_resources"]
+)
+
+kt_jvm_test(
+  name = "kotlin-refactorings-move-k2_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  associates = [":kotlin-refactorings-move-k2"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:gson",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//platform/platform-api:ide",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
+  ],
+  runtime_deps = [":kotlin-refactorings-move-k2_resources"]
+)
+### auto-generated section `build kotlin.refactorings.move.k2` end

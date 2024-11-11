@@ -1,55 +1,69 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.smRunner` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "smRunner_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "smRunner",
   module_name = "intellij.platform.smRunner",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/execution-impl",
-    "@community//platform/testRunner",
-    "@community//platform/xdebugger-api:debugger",
-    "@community//platform/platform-impl:ide-impl",
-    "@libraries//:serviceMessages",
-    "@community//platform/lang-api:lang",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui",
-    "@community//platform/ide-core-impl",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/util/jdom:util-jdom",
+    "//platform/execution-impl",
+    "//platform/testRunner",
+    "//platform/xdebugger-api:debugger",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:tc_service_messages",
+    "//platform/lang-api:lang",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
   ],
   exports = [
-    "@community//platform/execution-impl",
-    "@community//platform/testRunner",
-    "@libraries//:serviceMessages",
+    "//platform/execution-impl",
+    "//platform/testRunner",
+    "@lib//:tc_service_messages",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":smRunner_resources"]
 )
 
 kt_jvm_test(
   name = "smRunner_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":smRunner"],
   deps = [
-    ":smRunner",
-    "@libraries//:objenesis",
-    "@libraries//:easymock",
-    "@community//platform/testFramework",
-    "@community//platform/diff-api:diff",
-    "@community//tools/intellij.tools.ide.metrics.benchmark:tools-ide-metrics-benchmark",
+    "//platform/execution-impl",
+    "//platform/testRunner",
+    "//platform/xdebugger-api:debugger",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:tc_service_messages",
+    "@lib//:objenesis",
+    "@lib//:easymock",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/lang-api:lang",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/diff-api:diff",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":smRunner_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.smRunner` end

@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.junit.kotlin.tests.shared` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-tests-shared",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-tests-shared_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/kotlin/plugin/common:kotlin-plugin-common",
+    "//plugins/junit/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/junit/java-tests:java-tests_test",
+  ]
+)
+### auto-generated section `build intellij.junit.kotlin.tests.shared` end

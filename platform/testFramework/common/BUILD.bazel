@@ -1,12 +1,7 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
+### auto-generated section `build intellij.platform.testFramework.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
-)
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -15,35 +10,41 @@ kt_javac_options(
   add_exports = ["java.desktop/sun.awt=ALL-UNNAMED"]
 )
 
-kt_jvm_library(
-  name = "testFramework-common",
+jvm_resources(
+  name = "common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "common",
   module_name = "intellij.platform.testFramework.common",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = ":custom-javac-options",
-  kotlinc_opts = "//:k17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/bootstrap/coroutine:bootstrap-coroutine",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:jbr-api",
-    "@community//platform/boot",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@community//platform/platform-impl/bootstrap:ide-bootstrap",
-    "@community//platform/util",
-    "@community//platform/core-api:core",
-    "@community//platform/ide-core-impl",
-    "@community//platform/analysis-impl",
-    "@community//platform/service-container:serviceContainer",
-    "@community//platform/indexing-api:indexing",
-    "@community//platform/lang-impl",
-    "@community//platform/platform-util-netty:ide-util-netty",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/testFramework/core:testFramework-core",
-    "@community//platform/diagnostic",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@libraries//:annotations",
+    "//platform/bootstrap/coroutine",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jbr-api",
+    "//platform/boot",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/service-container:serviceContainer",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework/core",
+    "//platform/diagnostic",
+    "//platform/diagnostic/telemetry",
+    "@lib//:jetbrains-annotations",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":common_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.testFramework.common` end

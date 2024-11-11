@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.devkit.intelliLang` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "intelliLang_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "intelliLang",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":intelliLang_resources"]
+)
+### auto-generated section `build intellij.devkit.intelliLang` end

@@ -1,0 +1,71 @@
+### auto-generated section `build intellij.platform.images.build` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "images-build",
+  module_name = "intellij.platform.images.build",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/util/diff",
+    "//platform/util-class-loader:util-classLoader",
+    "//jps/model-serialization",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "@lib//:kotlin-stdlib",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/util/xmlDom",
+    "@lib//:okhttp",
+    "//build/tasks",
+    "//platform/util/rt-java8",
+    "@lib//:gson",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:fastutil-min",
+    "//platform/util/zip",
+    "@lib//:platform_images_build_pngencoder",
+    "@lib//:hash4j",
+  ],
+  runtime_deps = ["@lib//:commons-imaging"]
+)
+
+kt_jvm_test(
+  name = "images-build_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":images-build"],
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/util/diff",
+    "//platform/util-class-loader:util-classLoader",
+    "//jps/model-serialization",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:okhttp",
+    "//build/tasks",
+    "//platform/util/rt-java8",
+    "@lib//:gson",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:fastutil-min",
+    "//platform/util/zip",
+    "@lib//:platform_images_build_pngencoder",
+    "@lib//:hash4j",
+  ]
+)
+### auto-generated section `build intellij.platform.images.build` end

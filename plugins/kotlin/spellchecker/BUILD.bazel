@@ -1,0 +1,28 @@
+### auto-generated section `build kotlin.spellchecker` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "spellchecker_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "spellchecker",
+  module_name = "kotlin.spellchecker",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//spellchecker",
+  ],
+  runtime_deps = [":spellchecker_resources"]
+)
+### auto-generated section `build kotlin.spellchecker` end

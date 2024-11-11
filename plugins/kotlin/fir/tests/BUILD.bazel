@@ -1,0 +1,60 @@
+### auto-generated section `build kotlin.fir.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+java_library(
+  name = "kotlin-fir-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-fir-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_low-level-api-fir",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc_analysis-api-platform-interface",
+    "//platform/core-api:core",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
+    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared",
+    "//plugins/kotlin/fir",
+    "//plugins/gradle:gradle-tests",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test",
+    "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
+    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "//plugins/kotlin/jvm-debugger/evaluation:kotlin-jvm-debugger-evaluation",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform",
+    "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-base-fir-analysis-api-platform_test",
+    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
+  ]
+)
+### auto-generated section `build kotlin.fir.tests` end

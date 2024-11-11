@@ -1,0 +1,103 @@
+### auto-generated section `build intellij.java.guiForms.designer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "java-guiForms-designer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-guiForms-designer",
+  module_name = "intellij.java.guiForms.designer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/openapi:java",
+    "//platform/util",
+    "//java/compiler/forms-compiler:java-guiForms-compiler",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//java/compiler/openapi:java-compiler",
+    "//java/execution/impl:java-execution-impl",
+    "//java/execution/openapi:java-execution",
+    "//platform/editor-ui-ex:editor-ex",
+    "//java/compiler/impl:java-compiler-impl",
+    "//platform/icons",
+    "@lib//:jgoodies-forms",
+    "@lib//:asm",
+    "//plugins/java-i18n",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//platform/platform-impl/designer:ide-designer",
+    "//platform/platform-api:ide",
+    "//spellchecker",
+    "//jps/jps-builders:build",
+    "//xml/impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "@lib//:java_compatibility",
+    "@lib//:fastutil-min",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+  ],
+  exports = [
+    "//java/compiler/forms-compiler:java-guiForms-compiler",
+    "//plugins/java-i18n",
+  ],
+  runtime_deps = [":java-guiForms-designer_resources"]
+)
+
+kt_jvm_test(
+  name = "java-guiForms-designer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":java-guiForms-designer"],
+  deps = [
+    "//java/openapi:java",
+    "//platform/util",
+    "//java/compiler/forms-compiler:java-guiForms-compiler",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//java/compiler/openapi:java-compiler",
+    "//java/execution/impl:java-execution-impl",
+    "//java/execution/openapi:java-execution",
+    "//platform/editor-ui-ex:editor-ex",
+    "//java/compiler/impl:java-compiler-impl",
+    "//platform/icons",
+    "@lib//:jgoodies-forms",
+    "@lib//:asm",
+    "//plugins/java-i18n",
+    "//java/idea-ui:ui",
+    "//java/testFramework",
+    "//java/java-impl:impl",
+    "//platform/platform-impl/designer:ide-designer",
+    "//platform/platform-api:ide",
+    "//spellchecker",
+    "//jps/jps-builders:build",
+    "//xml/impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "@lib//:assert_j",
+    "//java/compiler:compiler-tests_test",
+    "@lib//:java_compatibility",
+    "@lib//:fastutil-min",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/xmlDom",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//jps/jps-builders:build-tests_test",
+    "@lib//:caffeine",
+  ],
+  runtime_deps = [":java-guiForms-designer_resources"]
+)
+### auto-generated section `build intellij.java.guiForms.designer` end

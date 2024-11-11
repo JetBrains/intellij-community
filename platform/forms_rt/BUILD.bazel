@@ -1,12 +1,12 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.guiForms.rt` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "java-guiForms-rt",
   module_name = "intellij.java.guiForms.rt",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8"
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8"
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.guiForms.rt` end

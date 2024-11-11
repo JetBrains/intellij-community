@@ -1,23 +1,23 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.wsl.impl` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "wsl-impl",
   module_name = "intellij.platform.wsl.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/execution",
-    "@community//platform/util",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/core-api:core",
-    "@libraries//:lz4-java",
-    "@community//platform/util-ex",
-    "@libraries//:ktor-network-tls-jvm",
+    "@lib//:kotlin-stdlib",
+    "//platform/execution",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/core-api:core",
+    "@lib//:lz4-java",
+    "//platform/util-ex",
+    "@lib//:ktor-network-tls",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.wsl.impl` end

@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.pycharm.community.ide.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "pycharm-community-ide-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pycharm-community-ide-impl",
+  module_name = "intellij.pycharm.community.ide.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//python:python-community-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/diff-api:diff",
+    "@lib//:guava",
+    "@lib//:stream_ex",
+    "//platform/xdebugger-api:debugger",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/vcs-api:vcs",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//python/python-features-trainer:featuresTrainer",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:http-client",
+    "//platform/whatsNew",
+    "//platform/util/coroutines",
+    "//platform/experiment",
+  ],
+  runtime_deps = [
+    ":pycharm-community-ide-impl_resources",
+    "//xml/dom-impl",
+    "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.ide.impl` end

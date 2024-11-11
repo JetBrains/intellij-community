@@ -1,35 +1,35 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.aetherDependencyResolver` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
+jvm_library(
   name = "java-aetherDependencyResolver",
   module_name = "intellij.java.aetherDependencyResolver",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@libraries//:annotations",
-    "@libraries//:httpmime",
-    "@libraries//:commons-logging",
-    "@libraries//:slf4j-api",
-    "@libraries//:slf4j-jdk14",
-    "@libraries//:maven-resolver-provider",
-    "@libraries//:maven-resolver-transport-file",
-    "@libraries//:maven-resolver-transport-http",
-    "@libraries//:maven-resolver-connector-basic",
-    "@libraries//:commons-lang3",
-    "@libraries//:plexus-utils",
-    "@libraries//:commons-codec",
-    "@community//platform/util",
+    "@lib//:jetbrains-annotations",
+    "@lib//:http-client",
+    "@lib//:commons-logging",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:maven-resolver-provider",
+    "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-transport-file",
+    "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-transport-http",
+    "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-connector-basic",
+    "@lib//:commons-lang3",
+    "@lib//:plexus-utils",
+    "@lib//:commons-codec",
+    "//platform/util",
   ],
   exports = [
-    "@libraries//:httpmime",
-    "@libraries//:commons-logging",
-    "@libraries//:slf4j-api",
-    "@libraries//:slf4j-jdk14",
-    "@libraries//:maven-resolver-provider",
+    "@lib//:http-client",
+    "@lib//:commons-logging",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:maven-resolver-provider",
   ]
 )
 
@@ -37,11 +37,25 @@ kt_jvm_test(
   name = "java-aetherDependencyResolver_test",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  associates = [":java-aetherDependencyResolver"],
   deps = [
-    ":java-aetherDependencyResolver",
-    "@community//platform/testFramework",
+    "@lib//:jetbrains-annotations",
+    "@lib//:http-client",
+    "@lib//:commons-logging",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:maven-resolver-provider",
+    "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-transport-file",
+    "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-transport-http",
+    "@lib//:java_aether_dependency_resolver_org_apache_maven_resolver_maven-resolver-connector-basic",
+    "@lib//:commons-lang3",
+    "@lib//:plexus-utils",
+    "@lib//:commons-codec",
+    "//platform/util",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.aetherDependencyResolver` end

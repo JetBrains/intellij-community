@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.libraries.junit4` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "junit4_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "junit4",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":junit4_resources"]
+)
+### auto-generated section `build intellij.libraries.junit4` end

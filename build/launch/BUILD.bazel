@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.idea.tools.launch` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "idea-tools-launch",
+  module_name = "intellij.idea.tools.launch",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/runtime/product",
+    "//platform/util",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/ijent/buildConstants:community-buildConstants",
+  ]
+)
+
+kt_jvm_test(
+  name = "idea-tools-launch_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":idea-tools-launch"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/runtime/product",
+    "//platform/util",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "@lib//:junit5",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//platform/ijent/buildConstants:community-buildConstants",
+  ]
+)
+### auto-generated section `build intellij.idea.tools.launch` end

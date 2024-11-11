@@ -1,28 +1,29 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.builtInServer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "builtInServer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "builtInServer",
   module_name = "intellij.platform.builtInServer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:netty-codec-http2",
-    "@community//platform/util-ex",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/ide-core",
-    "@community//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:netty-codec-http",
+    "//platform/util-ex",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":builtInServer_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.builtInServer` end

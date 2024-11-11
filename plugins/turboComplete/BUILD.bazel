@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.turboComplete` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "turboComplete_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "turboComplete",
+  module_name = "intellij.turboComplete",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/statistics",
+    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//platform/lang-impl",
+    "//platform/ml-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/ml-api:ml",
+  ],
+  runtime_deps = [":turboComplete_resources"]
+)
+### auto-generated section `build intellij.turboComplete` end
+
+### auto-generated section `build intellij.turboComplete.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "turboComplete-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "turboComplete-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:junit5",
+    "//plugins/turboComplete",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test",
+  ]
+)
+### auto-generated section `build intellij.turboComplete.tests` end

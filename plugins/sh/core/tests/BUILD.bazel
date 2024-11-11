@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.sh.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "sh-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "sh-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/sh",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ]
+)
+### auto-generated section `build intellij.sh.tests` end

@@ -1,55 +1,73 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ml.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "ml-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "ml-impl",
   module_name = "intellij.platform.ml.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:ngram-slp",
-    "@community//platform/util",
-    "@community//platform/util-ex",
-    "@community//platform/core-api:core",
-    "@community//platform/projectModel-impl",
-    "@community//platform/analysis-api:analysis",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/platform-impl/internal:ide-internal",
-    "@community//platform/util/text-matching:util-text-matching",
-    "@community//platform/lang-impl",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@community//platform/ml-api:ml",
-    "@community//platform/statistics",
-    "@libraries//:kotlin-reflect",
-    "@libraries//:usage",
+    "@lib//:kotlin-stdlib",
+    "@lib//:ngram-slp",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/util/text-matching",
+    "//platform/lang-impl",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/ml-api:ml",
+    "//platform/statistics",
+    "@lib//:kotlin-reflect",
+    "@lib//:jetbrains_mlapi_usage",
   ],
-  exports = ["@libraries//:usage"],
-  runtime_deps = [":resources"]
+  exports = ["@lib//:jetbrains_mlapi_usage"],
+  runtime_deps = [":ml-impl_resources"]
 )
 
 kt_jvm_test(
   name = "ml-impl_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":ml-impl"],
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    ":ml-impl",
-    "@community//platform/testFramework",
-    "@libraries//:assertj-core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:ngram-slp",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:assert_j",
+    "//platform/util/text-matching",
+    "//platform/lang-impl",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/ml-api:ml",
+    "//platform/statistics",
+    "@lib//:kotlin-reflect",
+    "@lib//:jetbrains_mlapi_usage",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":ml-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ml.impl` end

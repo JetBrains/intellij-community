@@ -1,30 +1,30 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.util.io.storages` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "util-io-storages",
+jvm_library(
+  name = "io-storages",
   module_name = "intellij.platform.util.io.storages",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:annotations",
-    "@community//platform/util-rt",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@community//platform/util/base:util-base",
-    "@community//platform/util",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:opentelemetry-sdk",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util/base",
+    "//platform/util",
+    "@lib//:fastutil-min",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:opentelemetry",
+    "//platform/diagnostic/telemetry",
   ],
   exports = [
-    "@libraries//:annotations",
-    "@community//platform/util-rt",
-    "@community//platform/util/base:util-base",
-    "@community//platform/util",
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util/base",
+    "//platform/util",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util.io.storages` end

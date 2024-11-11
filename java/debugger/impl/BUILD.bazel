@@ -1,57 +1,59 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.debugger.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "java-debugger-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "java-debugger-impl",
   module_name = "intellij.java.debugger.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@community//java/debugger/openapi:java-debugger",
-    "@community//java/openapi:java",
-    "@community//java/execution/openapi:java-execution",
-    "@community//resources:java-resources",
-    "@community//platform/xdebugger-impl:debugger-impl",
-    "@community//platform/lang-api:lang",
-    "@community//java/compiler/openapi:java-compiler",
-    "@community//java/compiler/impl:java-compiler-impl",
-    "@community//java/java-runtime:java-rt",
-    "@community//java/jsp-openapi:jsp",
-    "@community//java/java-impl",
-    "@community//java/java-impl-refactorings",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/util",
-    "@community//jps/jps-builders:jps-build",
-    "@community//java/debugger/memory-agent:java-debugger-memory-agent",
-    "@libraries//:sa-jdwp",
-    "@libraries//:jb-jdi",
-    "@libraries//:streamex",
-    "@community//platform/statistics",
-    "@community//images",
-    "@community//platform/core-ui",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/platform-util-io-impl:ide-util-io-impl",
-    "@libraries//:gson",
-    "@libraries//:asm-all",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/build-scripts/downloader:buildScripts-downloader",
-    "@community//platform/feedback",
-    "@libraries//:kotlinx-datetime-jvm",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//platform/util/coroutines:util-coroutines",
-    "@community//platform/threadDumpParser",
+    "//java/debugger/openapi:java-debugger",
+    "//java/openapi:java",
+    "//java/execution/openapi:java-execution",
+    "//resources:java-resources",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/lang-api:lang",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "//java/java-runtime:rt",
+    "//java/jsp-openapi:jsp",
+    "//java/java-impl:impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util",
+    "//jps/jps-builders:build",
+    "//java/debugger/memory-agent:java-debugger-memory-agent",
+    "@lib//:java_debugger_impl_sa-jdwp",
+    "@lib//:jb-jdi",
+    "@lib//:stream_ex",
+    "//platform/statistics",
+    "//images",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:gson",
+    "@lib//:asm",
+    "//platform/util/jdom",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/feedback",
+    "@lib//:kotlinx-datetime-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/util/coroutines",
+    "//platform/threadDumpParser",
+    "//java/debugger/shared:java-debugger-impl-shared",
   ],
-  exports = ["@community//java/debugger/openapi:java-debugger"],
-  runtime_deps = [":resources"]
+  exports = ["//java/debugger/openapi:java-debugger"],
+  runtime_deps = [":java-debugger-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.debugger.impl` end

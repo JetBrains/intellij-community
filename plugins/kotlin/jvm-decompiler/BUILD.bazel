@@ -1,0 +1,38 @@
+### auto-generated section `build kotlin.jvm-decompiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "jvm-decompiler_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jvm-decompiler",
+  module_name = "kotlin.jvm-decompiler",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/jvm",
+    "//platform/core-ui",
+    "//java/openapi:java",
+    "//java/java-psi-impl:psi-impl",
+    "//plugins/java-decompiler/plugin:java-decompiler",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/analysis-impl",
+  ],
+  runtime_deps = [":jvm-decompiler_resources"]
+)
+### auto-generated section `build kotlin.jvm-decompiler` end

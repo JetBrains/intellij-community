@@ -1,0 +1,45 @@
+### auto-generated section `build kotlin.j2k.k2.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+java_library(
+  name = "kotlin-j2k-k2-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-j2k-k2-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fir",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test",
+    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
+    "//plugins/kotlin/j2k/shared/tests:kotlin-j2k-shared-tests_test",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/tests-common:tests-common_test",
+  ]
+)
+### auto-generated section `build kotlin.j2k.k2.tests` end

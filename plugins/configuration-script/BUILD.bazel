@@ -1,0 +1,98 @@
+### auto-generated section `build intellij.configurationScript` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "configurationScript_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "configurationScript",
+  module_name = "intellij.configurationScript",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/analysis-impl",
+    "//json",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+    "//platform/execution-impl",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/service-container:serviceContainer",
+    "@lib//:snakeyaml-engine",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":configurationScript_resources"]
+)
+
+kt_jvm_test(
+  name = "configurationScript_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":configurationScript"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/analysis-impl",
+    "//json",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+    "//platform/execution-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework/extensions:testExtensions",
+    "//plugins/yaml",
+    "//plugins/yaml:yaml_test",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/object-serializer:objectSerializer",
+    "@lib//:jackson",
+    "//platform/service-container:serviceContainer",
+    "@lib//:snakeyaml-engine",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":configurationScript_resources"]
+)
+### auto-generated section `build intellij.configurationScript` end
+
+### auto-generated section `build intellij.configurationScript.test.java` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "configurationScript-test-java",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "configurationScript-test-java_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testJava/**/*.kt", "testJava/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/configuration-script:configurationScript",
+    "//plugins/configuration-script:configurationScript_test",
+    "//java/execution/impl:java-execution-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:assert_j",
+  ]
+)
+### auto-generated section `build intellij.configurationScript.test.java` end

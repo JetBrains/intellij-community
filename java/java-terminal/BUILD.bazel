@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.java.terminal` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "terminal_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "terminal",
+  module_name = "intellij.java.terminal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib.provided",
+    "//plugins/terminal",
+    "//platform/core-api:core",
+    "//java/execution/impl:java-execution-impl",
+    "//platform/lang-impl",
+  ],
+  exports = ["//plugins/terminal"],
+  runtime_deps = [":terminal_resources"]
+)
+### auto-generated section `build intellij.java.terminal` end
+
+### auto-generated section `build intellij.java.terminal.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "terminal-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "terminal-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/testFramework",
+    "//java/java-terminal:terminal",
+    "//platform/platform-tests:tests_test",
+  ]
+)
+### auto-generated section `build intellij.java.terminal.tests` end

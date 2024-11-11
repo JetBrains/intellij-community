@@ -1,0 +1,41 @@
+### auto-generated section `build kotlin.j2k.k1.old.post-processing` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "kotlin-j2k-k1-old-post-processing_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-j2k-k1-old-post-processing",
+  module_name = "kotlin.j2k.k1.old.post-processing",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//platform/lang-api:lang",
+    "//java/java-psi-impl:psi-impl",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//platform/lang-impl",
+    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
+    "//plugins/kotlin/j2k/k1.old:kotlin-j2k-k1-old",
+  ],
+  runtime_deps = [":kotlin-j2k-k1-old-post-processing_resources"]
+)
+### auto-generated section `build kotlin.j2k.k1.old.post-processing` end

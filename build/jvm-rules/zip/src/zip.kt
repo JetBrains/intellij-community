@@ -7,7 +7,8 @@ import java.nio.file.*
 import java.util.*
 import java.util.zip.Deflater
 
-private val W_OVERWRITE = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
+val W_OVERWRITE: EnumSet<StandardOpenOption> =
+  EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
 
 enum class AddDirEntriesMode {
   NONE,

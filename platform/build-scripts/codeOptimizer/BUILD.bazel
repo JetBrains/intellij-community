@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "buildScripts-codeOptimizer",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "buildScripts-codeOptimizer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:platform_build_scripts_code_optimizer_proguard",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end

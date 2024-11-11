@@ -1,35 +1,35 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.indexing.impl` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "indexing-impl",
   module_name = "intellij.platform.indexing.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-impl",
-    "@community//platform/indexing-api:indexing",
-    "@community//platform/projectModel-impl",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:streamex",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/statistics",
-    "@libraries//:HdrHistogram",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@libraries//:guava",
-    "@community//platform/workspace/jps:workspace-jps",
-    "@community//platform/diagnostic",
-    "@libraries//:caffeine",
-    "@community//platform/util/nanoxml:util-nanoxml",
-    "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:util-xmlDom",
+    "//platform/core-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/projectModel-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "@lib//:hdr_histogram",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:guava",
+    "//platform/workspace/jps",
+    "//platform/diagnostic",
+    "@lib//:caffeine",
+    "//platform/util/nanoxml",
+    "@lib//:aalto-xml",
+    "//platform/util/xmlDom",
   ],
-  exports = ["@community//platform/indexing-api:indexing"]
+  exports = ["//platform/indexing-api:indexing"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.indexing.impl` end

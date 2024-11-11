@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.java.guiForms.jps.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "java-guiForms-jps-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "java-guiForms-jps-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//jps/jps-builders:build-tests_test",
+    "//jps/model-api:model",
+    "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
+    "@lib//:asm",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//jps/model-serialization:model-serialization-tests_test",
+  ]
+)
+### auto-generated section `build intellij.java.guiForms.jps.tests` end

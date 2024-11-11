@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.python.commonTests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "commonTests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "commonTests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:junit4",
+    "//python/python-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//python/python-psi-impl:psi-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:guava",
+    "@lib//:stream_ex",
+    "//platform/analysis-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor",
+  ]
+)
+### auto-generated section `build intellij.python.commonTests` end

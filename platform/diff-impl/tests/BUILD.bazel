@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.diff.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "diff-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "diff-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/diff-impl",
+    "@lib//:mockito",
+    "//platform/editor-ui-ex:editor-ex",
+    "@lib//:kotlin-test",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test",
+    "//platform/platform-tests:tests_test",
+    "//platform/core-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ]
+)
+### auto-generated section `build intellij.platform.diff.tests` end

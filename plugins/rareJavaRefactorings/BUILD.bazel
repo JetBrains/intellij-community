@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.java.rareRefactorings` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "java-rareRefactorings_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-rareRefactorings",
+  module_name = "intellij.java.rareRefactorings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/java-impl:impl",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/openapi:java",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":java-rareRefactorings_resources"]
+)
+
+kt_jvm_test(
+  name = "java-rareRefactorings_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":java-rareRefactorings"],
+  deps = [
+    "//java/java-impl:impl",
+    "//platform/core-ui",
+    "//java/testFramework",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/openapi:java",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":java-rareRefactorings_resources"]
+)
+### auto-generated section `build intellij.java.rareRefactorings` end

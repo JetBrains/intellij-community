@@ -1,0 +1,124 @@
+### auto-generated section `build kotlin.base.scripting` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-base-scripting_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-base-scripting",
+  module_name = "kotlin.base.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_analysis-api-platform-interface",
+    "@lib//:kotlinc_kotlin-script-runtime",
+    "@lib//:kotlinc_kotlin-scripting-common",
+    "@lib//:kotlinc_kotlin-scripting-jvm",
+    "@lib//:kotlinc_kotlin-scripting-compiler-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor",
+    "//platform/lang-impl",
+    "//platform/diff-impl",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//java/openapi:java",
+    "//java/java-indexing-impl:indexing-impl",
+    "//platform/collaboration-tools:collaborationTools",
+    "//java/java-impl:impl",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//platform/workspace/jps",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/idea-ui:ui",
+    "@lib//:kotlinc_kotlin-scripting-dependencies",
+  ],
+  runtime_deps = [":kotlin-base-scripting_resources"]
+)
+
+kt_jvm_test(
+  name = "kotlin-base-scripting_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  associates = [":kotlin-base-scripting"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_analysis-api-platform-interface",
+    "@lib//:kotlinc_kotlin-script-runtime",
+    "@lib//:kotlinc_kotlin-scripting-common",
+    "@lib//:kotlinc_kotlin-scripting-jvm",
+    "@lib//:kotlinc_kotlin-scripting-compiler-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor",
+    "//platform/lang-impl",
+    "//platform/diff-impl",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//java/openapi:java",
+    "//java/java-indexing-impl:indexing-impl",
+    "//platform/collaboration-tools:collaborationTools",
+    "//java/java-impl:impl",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//platform/workspace/jps",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/idea-ui:ui",
+    "@lib//:kotlinc_kotlin-scripting-dependencies",
+  ],
+  runtime_deps = [":kotlin-base-scripting_resources"]
+)
+### auto-generated section `build kotlin.base.scripting` end

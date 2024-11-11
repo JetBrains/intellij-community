@@ -1,0 +1,52 @@
+### auto-generated section `build kotlin.refactorings.tests.k2` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
+)
+
+java_library(
+  name = "kotlin-refactorings-tests-k2",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-refactorings-tests-k2_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common.tests:kotlin-refactorings-common-tests_test",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//java/java-tests:tests_test",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight_test",
+    "//platform/core-api:core",
+    "@lib//:gson",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
+  ]
+)
+### auto-generated section `build kotlin.refactorings.tests.k2` end

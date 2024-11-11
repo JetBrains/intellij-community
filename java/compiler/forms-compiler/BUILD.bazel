@@ -1,35 +1,41 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.guiForms.compiler` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
+jvm_library(
   name = "java-guiForms-compiler",
   module_name = "intellij.java.guiForms.compiler",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
   deps = [
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/forms_rt:java-guiForms-rt",
-    "@libraries//:asm-all",
-    "@libraries//:forms",
-    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
-    "@libraries//:annotations",
+    "//platform/util/jdom",
+    "//platform/forms_rt:java-guiForms-rt",
+    "@lib//:asm",
+    "@lib//:jgoodies-forms",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "@lib//:jetbrains-annotations",
   ],
-  exports = ["@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil"]
+  exports = ["//java/compiler/instrumentation-util:java-compiler-instrumentationUtil"]
 )
 
 kt_jvm_test(
   name = "java-guiForms-compiler_test",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  associates = [":java-guiForms-compiler"],
   deps = [
-    ":java-guiForms-compiler",
-    "@community//platform/util",
-    "@libraries//:junit",
+    "//platform/util/jdom",
+    "//platform/forms_rt:java-guiForms-rt",
+    "@lib//:asm",
+    "@lib//:jgoodies-forms",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit4",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.guiForms.compiler` end

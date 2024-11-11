@@ -1,25 +1,25 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ide.util.io.impl` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "ide-util-io-impl",
   module_name = "intellij.platform.ide.util.io.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
-    "@community//platform/util/base:util-base",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@libraries//:pty4j",
-    "@libraries//:winp",
-    "@libraries//:proxy-vole",
-    "@libraries//:jna-platform",
-    "@libraries//:jackson-core",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util/base",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:pty4j",
+    "@lib//:winp",
+    "@lib//:proxy-vole",
+    "@lib//:jna",
+    "@lib//:jackson",
   ],
-  exports = ["@community//platform/platform-util-io:ide-util-io"],
-  runtime_deps = ["@libraries//:rhino-runtime"]
+  exports = ["//platform/platform-util-io:ide-util-io"],
+  runtime_deps = ["@lib//:rhino"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ide.util.io.impl` end

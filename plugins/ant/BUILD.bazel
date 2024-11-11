@@ -1,0 +1,95 @@
+### auto-generated section `build intellij.ant` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "ant_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ant",
+  module_name = "intellij.ant",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/openapi:java",
+    "//lib/ant/lib:ant-antlr",
+    "//java/compiler/impl:java-compiler-impl",
+    "//java/java-runtime:rt",
+    "//java/execution/impl:java-execution-impl",
+    "//xml/impl",
+    "//plugins/properties",
+    "//java/execution/openapi:java-execution",
+    "//java/idea-ui:ui",
+    "//xml/dom-openapi:dom",
+    "//xml/openapi:xml",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/ant/jps-plugin:jps",
+    "//xml/dom-impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/util/nanoxml",
+    "@lib//:stream_ex",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/external-system-api:externalSystem",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":ant_resources"]
+)
+
+kt_jvm_test(
+  name = "ant_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/src/**/*.kt", "tests/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":ant"],
+  deps = [
+    "//java/openapi:java",
+    "//java/testFramework",
+    "@lib//:junit4",
+    "//lib/ant/lib:ant-antlr",
+    "//java/compiler/impl:java-compiler-impl",
+    "//java/java-runtime:rt",
+    "//java/execution/impl:java-execution-impl",
+    "//xml/impl",
+    "//plugins/properties",
+    "//java/execution/openapi:java-execution",
+    "//java/idea-ui:ui",
+    "//xml/dom-openapi:dom",
+    "//xml/openapi:xml",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/ant/jps-plugin:jps",
+    "//xml/dom-impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/util/nanoxml",
+    "@lib//:stream_ex",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/external-system-api:externalSystem",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ],
+  runtime_deps = [":ant_resources"]
+)
+### auto-generated section `build intellij.ant` end

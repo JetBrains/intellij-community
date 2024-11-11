@@ -1,0 +1,99 @@
+### auto-generated section `build intellij.platform.vcs.log.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "vcs-log-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-log-impl",
+  module_name = "intellij.platform.vcs.log.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/vcs-impl",
+    "@lib//:guava",
+    "//platform/lang-impl",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/util",
+    "@lib//:miglayout-swing",
+    "//platform/diff-impl",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "@lib//:gson",
+    "@lib//:caffeine",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-guava",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/sqlite",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/backend/observation",
+    "//platform/util/coroutines",
+    "//platform/util/storages:io-storages",
+  ],
+  runtime_deps = [":vcs-log-impl_resources"]
+)
+
+kt_jvm_test(
+  name = "vcs-log-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":vcs-log-impl"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/vcs-impl",
+    "@lib//:guava",
+    "@lib//:junit4",
+    "//platform/lang-impl",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/util",
+    "@lib//:assert_j",
+    "@lib//:miglayout-swing",
+    "//platform/diff-impl",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "@lib//:gson",
+    "@lib//:caffeine",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-guava",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/sqlite",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/backend/observation",
+    "//platform/util/coroutines",
+    "//platform/util/storages:io-storages",
+    "@lib//:mockito",
+  ],
+  runtime_deps = [":vcs-log-impl_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.log.impl` end

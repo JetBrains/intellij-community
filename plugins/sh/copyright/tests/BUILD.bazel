@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.sh.copyright.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "sh-copyright-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "sh-copyright-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/sh",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ]
+)
+### auto-generated section `build intellij.sh.copyright.tests` end

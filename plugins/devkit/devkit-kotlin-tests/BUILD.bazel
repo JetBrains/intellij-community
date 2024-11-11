@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.devkit.kotlin.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/devkit/devkit-tests:testFramework",
+    "@lib//:kotlin-stdlib",
+    "//plugins/devkit/devkit-java-tests:java-tests_test",
+    "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test",
+    "//plugins/devkit/intellij.devkit.themes:themes",
+    "//plugins/devkit/intellij.devkit.themes:themes_test",
+    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+    "@lib//:kotlin-test",
+  ]
+)
+### auto-generated section `build intellij.devkit.kotlin.tests` end

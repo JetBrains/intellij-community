@@ -1,18 +1,18 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.idea.community.build.dependencies` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "build-dependencies",
+jvm_library(
+  name = "dependencies",
   module_name = "intellij.idea.community.build.dependencies",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:annotations",
-    "@community//platform/build-scripts/downloader:buildScripts-downloader",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@lib//:jetbrains-annotations",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.idea.community.build.dependencies` end

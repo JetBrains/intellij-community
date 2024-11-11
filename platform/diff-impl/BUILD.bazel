@@ -1,40 +1,41 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.diff.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "diff-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "diff-impl",
   module_name = "intellij.platform.diff.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//platform/diff-api:diff",
-    "@community//platform/execution-impl",
-    "@community//platform/platform-api:ide",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/analysis-impl",
-    "@community//platform/editor-ui-ex:editor-ex",
-    "@community//platform/lang-api:lang",
-    "@libraries//:guava",
-    "@community//platform/ide-core-impl",
-    "@community//platform/statistics",
-    "@community//platform/boot",
-    "@community//platform/core-ui",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/platform-util-io-impl:ide-util-io-impl",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/coroutines:util-coroutines",
-    "@community//platform/util/jdom:util-jdom",
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/execution-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-api:lang",
+    "@lib//:guava",
+    "//platform/ide-core-impl",
+    "//platform/statistics",
+    "//platform/boot",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/coroutines",
+    "//platform/util/jdom",
   ],
-  exports = ["@community//platform/diff-api:diff"],
-  runtime_deps = [":resources"]
+  exports = ["//platform/diff-api:diff"],
+  runtime_deps = [":diff-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.diff.impl` end

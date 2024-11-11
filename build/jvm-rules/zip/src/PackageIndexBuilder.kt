@@ -6,7 +6,8 @@ import com.dynatrace.hash4j.hashing.Hashing
 class PackageIndexBuilder {
   private val dirsToRegister = HashSet<String>()
 
-  @JvmField val indexWriter: IkvIndexBuilder = IkvIndexBuilder()
+  @JvmField
+  val indexWriter: IkvIndexBuilder = IkvIndexBuilder()
 
   fun addFile(name: String, addClassDir: Boolean = false) {
     val i = name.lastIndexOf('/')

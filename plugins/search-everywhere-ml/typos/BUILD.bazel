@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.searchEverywhereMl.typos` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "searchEverywhereMl-typos_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "searchEverywhereMl-typos",
+  module_name = "intellij.searchEverywhereMl.typos",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "//plugins/grazie/src:core",
+    "@lib//:ai_grazie_spell_gec_engine_local",
+    "//platform/statistics",
+    "//plugins/search-everywhere-ml:searchEverywhereMl",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":searchEverywhereMl-typos_resources"]
+)
+
+kt_jvm_test(
+  name = "searchEverywhereMl-typos_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":searchEverywhereMl-typos"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "//plugins/grazie/src:core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:ai_grazie_spell_gec_engine_local",
+    "//platform/statistics",
+    "//plugins/search-everywhere-ml:searchEverywhereMl",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":searchEverywhereMl-typos_resources"]
+)
+### auto-generated section `build intellij.searchEverywhereMl.typos` end

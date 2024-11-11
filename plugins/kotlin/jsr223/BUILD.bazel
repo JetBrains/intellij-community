@@ -1,0 +1,19 @@
+### auto-generated section `build kotlin.jsr223` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "jsr223",
+  module_name = "kotlin.jsr223",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-script-runtime",
+    "@lib//:kotlinc_kotlin-scripting-jvm",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+  ]
+)
+### auto-generated section `build kotlin.jsr223` end

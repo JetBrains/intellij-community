@@ -1,17 +1,28 @@
-### auto-generated section `build` start
+### auto-generated section `build intellij.xml.dom.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
+java_library(
+  name = "dom-tests",
+  visibility = ["//visibility:public"]
+)
+
 kt_jvm_test(
-  name = "xml-dom-tests_test",
+  name = "dom-tests_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//java/java-impl",
-    "@libraries//:assertj-core",
-    "@community//tools/intellij.tools.ide.metrics.benchmark:tools-ide-metrics-benchmark",
-    "@community//platform/libraries/cglib:libraries-cglib",
+    "//xml/dom-impl",
+    "//xml/impl",
+    "//java/testFramework",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-impl:impl",
+    "@lib//:assert_j",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/libraries/cglib",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml.dom.tests` end

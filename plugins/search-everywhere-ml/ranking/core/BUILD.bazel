@@ -1,0 +1,80 @@
+### auto-generated section `build intellij.searchEverywhereMl.ranking.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "searchEverywhereMl-ranking-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "searchEverywhereMl-ranking-core",
+  module_name = "intellij.searchEverywhereMl.ranking.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:caffeine",
+    "//platform/lang-impl",
+    "//platform/statistics",
+    "//platform/ml-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//json",
+    "@lib//:search_everywhere_ml_ranking_core_find-action-model",
+    "@lib//:search_everywhere_ml_ranking_core_find-action-model-experimental",
+    "@lib//:search_everywhere_ml_ranking_core_find-file-model",
+    "@lib//:search_everywhere_ml_ranking_core_find-file-model-experimental",
+    "@lib//:search_everywhere_ml_ranking_core_find-classes-model",
+    "@lib//:search_everywhere_ml_ranking_core_find-classes-model-experimental",
+    "@lib//:search_everywhere_ml_ranking_core_find-all-model-experimental",
+    "//plugins/search-everywhere-ml/ranking/ext:searchEverywhereMl-ranking-ext",
+    "//plugins/search-everywhere-ml:searchEverywhereMl",
+  ],
+  exports = ["//platform/statistics"],
+  runtime_deps = [":searchEverywhereMl-ranking-core_resources"]
+)
+
+kt_jvm_test(
+  name = "searchEverywhereMl-ranking-core_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":searchEverywhereMl-ranking-core"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:caffeine",
+    "//platform/lang-impl",
+    "//platform/statistics",
+    "//platform/ml-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//json",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:search_everywhere_ml_ranking_core_find-action-model",
+    "@lib//:search_everywhere_ml_ranking_core_find-action-model-experimental",
+    "@lib//:search_everywhere_ml_ranking_core_find-file-model",
+    "@lib//:search_everywhere_ml_ranking_core_find-file-model-experimental",
+    "@lib//:search_everywhere_ml_ranking_core_find-classes-model",
+    "@lib//:search_everywhere_ml_ranking_core_find-classes-model-experimental",
+    "@lib//:search_everywhere_ml_ranking_core_find-all-model-experimental",
+    "//plugins/search-everywhere-ml/ranking/ext:searchEverywhereMl-ranking-ext",
+    "//plugins/search-everywhere-ml:searchEverywhereMl",
+  ],
+  runtime_deps = [":searchEverywhereMl-ranking-core_resources"]
+)
+### auto-generated section `build intellij.searchEverywhereMl.ranking.core` end

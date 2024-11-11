@@ -1,9 +1,23 @@
-### auto-generated section `build` start
+### auto-generated section `build intellij.idea.community.customization` start
 load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "customization_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 java_library(
   name = "customization",
   visibility = ["//visibility:public"],
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+  runtime_deps = [
+    ":customization_resources",
+    "//java/ide-resources",
+    "@lib//:idea_community_customization_tips-idea-ce",
+    "//platform/platform-impl:ide-impl",
+    "//idea/customization/base:idea-customization-base",
+    "//platform/experiment",
+  ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.idea.community.customization` end

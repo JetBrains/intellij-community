@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.devkit.testFramework` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "testFramework",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "testFramework_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/devkit/devkit-core:core",
+    "//java/testFramework",
+    "@lib//:assert_j",
+    "//platform/util",
+    "//platform/testFramework",
+    "//xml/dom-tests",
+    "//java/compiler:compiler-tests",
+    "//xml/dom-openapi:dom",
+    "//xml/dom-impl",
+    "//java/compiler/openapi:java-compiler",
+    "//jvm/jvm-analysis-api:analysis",
+    "//xml/xml-analysis-impl:analysis-impl",
+  ]
+)
+### auto-generated section `build intellij.devkit.testFramework` end

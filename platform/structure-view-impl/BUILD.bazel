@@ -1,40 +1,41 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.structureView.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "structureView-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "structureView-impl",
   module_name = "intellij.platform.structureView.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/util",
-    "@community//platform/extensions",
-    "@community//platform/core-api:core",
-    "@community//platform/icons",
-    "@libraries//:automaton",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/platform-api:ide",
-    "@community//platform/core-impl",
-    "@community//platform/util/ui:util-ui",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui",
+    "//platform/editor-ui-api:editor",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/icons",
+    "@lib//:automaton",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/util:util-ui",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
   ],
   exports = [
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/util",
-    "@community//platform/extensions",
-    "@community//platform/core-api:core",
-    "@community//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":structureView-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.structureView.impl` end

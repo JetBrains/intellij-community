@@ -1,12 +1,12 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.groovy.constants.rt` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "groovy-constants-rt",
+jvm_library(
+  name = "constants-rt",
   module_name = "intellij.groovy.constants.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8"
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8"
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.groovy.constants.rt` end

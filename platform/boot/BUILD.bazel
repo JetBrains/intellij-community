@@ -1,17 +1,25 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.boot` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_resources(
+  name = "boot_resources",
+  files = glob(["src/META-INF/services/java.nio.charset.spi.CharsetProvider"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
   name = "boot",
   module_name = "intellij.platform.boot",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@community//platform/util-class-loader:util-classLoader",
-    "@libraries//:annotations",
-    "@community//platform/util/zip:util-zip",
-  ]
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/zip",
+  ],
+  runtime_deps = [":boot_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.boot` end

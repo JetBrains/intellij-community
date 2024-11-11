@@ -1,0 +1,88 @@
+### auto-generated section `build intellij.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "featuresTrainer_resources",
+  files = glob(["res/**/*"]),
+  strip_prefix = "res"
+)
+
+jvm_library(
+  name = "featuresTrainer",
+  module_name = "intellij.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:guava",
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/diff-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/statistics",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/feedback",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/util/jdom",
+    "//platform/lvcs-impl",
+    "//platform/tips-of-the-day:tips",
+    "//platform/diagnostic",
+  ],
+  exports = [
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+
+kt_jvm_test(
+  name = "featuresTrainer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":featuresTrainer"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:guava",
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/diff-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/statistics",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
+    "//platform/feedback",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/util/jdom",
+    "//platform/lvcs-impl",
+    "//platform/tips-of-the-day:tips",
+    "//platform/diagnostic",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+### auto-generated section `build intellij.featuresTrainer` end

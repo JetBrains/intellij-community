@@ -1,49 +1,50 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.projectModel.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "projectModel-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "projectModel-impl",
   module_name = "intellij.platform.projectModel.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/core-impl",
-    "@community//jps/model-api:jps-model",
-    "@community//jps/model-impl:jps-model-impl",
-    "@community//jps/model-serialization:jps-model-serialization",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util-ex",
-    "@community//platform/util/concurrency",
-    "@community//platform/workspace/storage:workspace-storage",
-    "@community//platform/workspace/jps:workspace-jps",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:guava",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:kryo5",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@libraries//:hash4j",
-    "@community//platform/backend/workspace:backend-workspace",
-    "@community//platform/diagnostic",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//jps/model-serialization",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "@lib//:fastutil-min",
+    "@lib//:guava",
+    "//platform/util/jdom",
+    "@lib//:kryo5",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:hash4j",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
   ],
   exports = [
-    "@community//platform/projectModel-api:projectModel",
-    "@community//jps/model-serialization:jps-model-serialization",
-    "@community//platform/util-ex",
-    "@community//platform/util/concurrency",
-    "@community//platform/workspace/storage:workspace-storage",
+    "//platform/projectModel-api:projectModel",
+    "//jps/model-serialization",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/workspace/storage",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":projectModel-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.projectModel.impl` end

@@ -1,0 +1,30 @@
+### auto-generated section `build kotlin.jvm-debugger.sequence.k1` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "kotlin-jvm-debugger-sequence-k1_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-jvm-debugger-sequence-k1",
+  module_name = "kotlin.jvm-debugger.sequence.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/core",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//plugins/stream-debugger:java-debugger-streams",
+  ],
+  runtime_deps = [":kotlin-jvm-debugger-sequence-k1_resources"]
+)
+### auto-generated section `build kotlin.jvm-debugger.sequence.k1` end

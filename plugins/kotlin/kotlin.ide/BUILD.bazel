@@ -1,0 +1,33 @@
+### auto-generated section `build kotlin.ide` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide",
+  module_name = "kotlin.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "//plugins/kotlin/project-configuration",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/openapi:java",
+    "//platform/analysis-impl",
+    "//platform/util/jdom",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+  ],
+  runtime_deps = ["//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic"]
+)
+### auto-generated section `build kotlin.ide` end

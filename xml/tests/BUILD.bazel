@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.xml.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:junit4",
+    "//xml/impl",
+    "//java/testFramework",
+    "@lib//:xerces",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/ant",
+    "//plugins/ant:ant_test",
+    "//plugins/xpath",
+    "//plugins/xpath:xpath_test",
+    "//xml/dom-impl",
+    "//platform/platform-tests:tests_test",
+    "@lib//:xml-resolver",
+    "//platform/util/nanoxml",
+    "//plugins/IntelliLang:langInjection",
+    "//plugins/IntelliLang:java-langInjection",
+    "//xml/xml-analysis-impl:analysis-impl",
+    "//platform/core-ui",
+    "@lib//:assert_j",
+    "@lib//:guava",
+    "@lib//:jackson",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//images/backend.svg:backend-svg",
+  ]
+)
+### auto-generated section `build intellij.xml.tests` end

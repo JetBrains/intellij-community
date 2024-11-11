@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.maven.remoteRun` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "remoteRun",
+  module_name = "intellij.maven.remoteRun",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/maven",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/remote-run:remoteRun",
+    "//platform/ssh-ui",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build intellij.maven.remoteRun` end

@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.devkit.themes` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "themes_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "themes",
+  module_name = "intellij.devkit.themes",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//json",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:guava",
+    "//spellchecker",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/devkit/devkit-core:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":themes_resources"]
+)
+
+kt_jvm_test(
+  name = "themes_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":themes"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//json",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:guava",
+    "//spellchecker",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/devkit/devkit-core:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//java/testFramework",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":themes_resources"]
+)
+### auto-generated section `build intellij.devkit.themes` end

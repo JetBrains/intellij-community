@@ -1,17 +1,59 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "intellij.platform.externalSystem.dependencyUpdater",
+jvm_resources(
+  name = "externalSystem-dependencyUpdater_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "externalSystem-dependencyUpdater",
+  module_name = "intellij.platform.externalSystem.dependencyUpdater",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:intellij.platform.core",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/lang-api:intellij.platform.lang",
-    "@community//platform/platform-api:intellij.platform.ide",
-    "@community//platform/platform-impl:intellij.platform.ide.impl",
-    "@community//platform/util:intellij.platform.util"
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util",
+  ],
+  runtime_deps = [":externalSystem-dependencyUpdater_resources"]
+)
+### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater` end
+
+### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "externalSystem-dependencyUpdater-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "externalSystem-dependencyUpdater-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
+    "//java/openapi:java",
+    "//plugins/groovy/groovy-psi:psi",
+    "//plugins/gradle",
+    "//plugins/gradle/java",
+    "//plugins/gradle:gradle-tests_test",
+    "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
+    "//plugins/maven",
+    "//plugins/maven/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
   ]
 )
+### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` end

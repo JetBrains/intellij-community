@@ -1,51 +1,53 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.spellchecker` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "spellchecker_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-java_library(
-  name = "compatibilityResources",
-  resources = glob(["compatibilityResources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "spellchecker_resources_1",
+  files = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "spellchecker",
   module_name = "intellij.spellchecker",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/lang-api:lang",
-    "@community//platform/analysis-impl",
-    "@community//platform/lang-impl",
-    "@community//platform/platform-api:ide",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/editor-ui-ex:editor-ex",
-    "@community//xml/openapi:xml",
-    "@community//xml/dom-openapi:xml-dom",
-    "@libraries//:guava",
-    "@community//platform/statistics",
-    "@libraries//:gec-spell-engine-local-jvm",
-    "@libraries//:nlp-detect-jvm",
-    "@libraries//:hunspell-en-jvm",
-    "@libraries//:utils-lucene-lt-compatibility",
-    "@libraries//:java-string-similarity",
-    "@libraries//:lucene-core",
-    "@libraries//:lucene-analysis-common",
-    "@community//platform/core-ui",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:caffeine",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//xml/openapi:xml",
+    "//xml/dom-openapi:dom",
+    "@lib//:guava",
+    "//platform/statistics",
+    "@lib//:ai_grazie_spell_gec_engine_local",
+    "@lib//:spellchecker_ai_grazie_nlp_detect",
+    "@lib//:spellchecker_ai_grazie_spell_hunspell_en",
+    "@lib//:spellchecker_ai_grazie_utils_lucene_lt_compatibility",
+    "@lib//:spellchecker_java-string-similarity",
+    "@lib//:lucene-core",
+    "@lib//:lucene-analysis-common",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:caffeine",
   ],
   runtime_deps = [
-    ":resources",
-    ":compatibilityResources",
+    ":spellchecker_resources",
+    ":spellchecker_resources_1",
   ]
 )
 
@@ -53,16 +55,39 @@ kt_jvm_test(
   name = "spellchecker_test",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":spellchecker"],
   deps = [
-    ":spellchecker",
-    "@community//platform/testFramework",
-    "@community//tools/intellij.tools.ide.metrics.benchmark:tools-ide-metrics-benchmark",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//xml/openapi:xml",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//xml/dom-openapi:dom",
+    "@lib//:guava",
+    "//platform/statistics",
+    "@lib//:ai_grazie_spell_gec_engine_local",
+    "@lib//:spellchecker_ai_grazie_nlp_detect",
+    "@lib//:spellchecker_ai_grazie_spell_hunspell_en",
+    "@lib//:spellchecker_ai_grazie_utils_lucene_lt_compatibility",
+    "@lib//:spellchecker_java-string-similarity",
+    "@lib//:lucene-core",
+    "@lib//:lucene-analysis-common",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:caffeine",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
   ],
   runtime_deps = [
-    ":resources",
-    ":compatibilityResources",
+    ":spellchecker_resources",
+    ":spellchecker_resources_1",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.spellchecker` end

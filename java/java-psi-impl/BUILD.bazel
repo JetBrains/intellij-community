@@ -1,32 +1,33 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.psi.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "psi-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "java-psi-impl",
+jvm_library(
+  name = "psi-impl",
   module_name = "intellij.java.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
   deps = [
-    "@community//java/java-psi-api:java-psi",
-    "@community//java/java-frontback-psi-impl",
-    "@community//platform/core-impl",
-    "@libraries//:asm-all",
-    "@libraries//:streamex",
-    "@libraries//:intellij-deps-fastutil",
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+    "@lib//:asm",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
   ],
   exports = [
-    "@community//java/java-psi-api:java-psi",
-    "@community//java/java-frontback-psi-impl",
-    "@community//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":psi-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.psi.impl` end

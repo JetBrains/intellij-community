@@ -1,24 +1,24 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.tools.jps.build.standalone` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "tools-jps-build-standalone",
   module_name = "intellij.tools.jps.build.standalone",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@libraries//:groovy",
-    "@community//jps/jps-builders:jps-build",
-    "@community//jps/model-api:jps-model",
-    "@libraries//:cli-parser",
-    "@community//jps/model-serialization:jps-model-serialization",
-    "@libraries//:protobuf-java",
+    "@lib//:org_codehaus_groovy_groovy",
+    "//jps/jps-builders:build",
+    "//jps/model-api:model",
+    "@lib//:cli-parser",
+    "//jps/model-serialization",
+    "@lib//:protobuf",
   ],
   exports = [
-    "@community//jps/jps-builders:jps-build",
-    "@community//jps/model-serialization:jps-model-serialization",
+    "//jps/jps-builders:build",
+    "//jps/model-serialization",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.tools.jps.build.standalone` end

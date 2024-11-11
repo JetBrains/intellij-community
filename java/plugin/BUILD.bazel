@@ -1,9 +1,40 @@
-### auto-generated section `build` start
+### auto-generated section `build intellij.java.plugin` start
 load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "plugin_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 java_library(
-  name = "java-plugin",
+  name = "plugin",
   visibility = ["//visibility:public"],
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+  runtime_deps = [
+    ":plugin_resources",
+    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/charts:java-compiler-charts",
+    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/shared:java-debugger-impl-shared",
+    "//xml/dom-impl",
+    "//java/debugger/memory-agent:java-debugger-memory-agent",
+    "//java/execution/impl:java-execution-impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/idea-ui:ui",
+    "//java/manifest",
+    "//java/java-impl-inspections:impl-inspections",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//java/jsp-spi",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//java/structuralsearch-java:structuralSearch",
+    "//java/typeMigration",
+    "//resources:java-resources",
+    "//resources-en:java-resources-en",
+    "//plugins/IntelliLang:java-langInjection",
+    "//java/performancePlugin",
+    "//java/vcs",
+  ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.plugin` end

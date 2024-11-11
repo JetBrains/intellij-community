@@ -1,25 +1,23 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.jshell.protocol` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
+jvm_library(
   name = "java-jshell-protocol",
   module_name = "intellij.java.jshell.protocol",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11"
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11"
 )
 
 kt_jvm_test(
   name = "java-jshell-protocol_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
-  deps = [
-    ":java-jshell-protocol",
-    "@libraries//:junit",
-  ]
+  srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  associates = [":java-jshell-protocol"],
+  deps = ["@lib//:junit4"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.jshell.protocol` end

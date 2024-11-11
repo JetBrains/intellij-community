@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.tasks.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/tasks/tasks-api:tasks",
+    "//plugins/tasks/tasks-core:core",
+    "//plugins/tasks/tasks-java:java",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "@lib//:junit4",
+    "//java/testFramework",
+    "//platform/vcs-impl",
+    "@lib//:xml_r_p_c",
+    "//plugins/xslt-debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test",
+    "@lib//:gson",
+    "//plugins/tasks/tasks-core/jira:tasks-jira",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test",
+    "//plugins/hg4idea:vcs-hg",
+    "//plugins/hg4idea:vcs-hg_test",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/tasks-platform-api:tasks",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "@lib//:easymock",
+    "@lib//:objenesis",
+    "@lib//:http-client",
+    "@lib//:assert_j",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+  ]
+)
+### auto-generated section `build intellij.tasks.tests` end

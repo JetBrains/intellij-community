@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.java.ide.customization` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "ide-customization_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-customization",
+  module_name = "intellij.java.ide.customization",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/java-psi-api:psi",
+    "//platform/lang-api:lang",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/util:util-ui",
+    "//java/java-features-trainer:featuresTrainer",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [
+    ":ide-customization_resources",
+    "//platform/lang-impl",
+    "//platform/vcs-impl",
+    "//platform/usageView",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//platform/testRunner",
+    "//notebooks/visualization",
+  ]
+)
+### auto-generated section `build intellij.java.ide.customization` end

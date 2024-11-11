@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.properties.psi.impl` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "psi-impl",
+  module_name = "intellij.properties.psi.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/analysis-api:analysis",
+    "//xml/xml-psi-api:psi",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//platform/util/nanoxml",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+  ],
+  exports = ["//plugins/properties/properties-psi-api:psi"]
+)
+### auto-generated section `build intellij.properties.psi.impl` end

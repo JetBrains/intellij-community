@@ -1,0 +1,351 @@
+### auto-generated section `build intellij.pycharm.community` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "pycharm-community_resources",
+  files = glob(["ide-common/resources/**/*"]),
+  strip_prefix = "ide-common/resources"
+)
+
+jvm_resources(
+  name = "pycharm-community_resources_1",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pycharm-community",
+  module_name = "intellij.pycharm.community",
+  visibility = ["//visibility:public"],
+  srcs = glob(["ide-common/src/**/*.kt", "ide-common/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:guava",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ],
+  runtime_deps = [
+    ":pycharm-community_resources",
+    ":pycharm-community_resources_1",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community` end
+
+### auto-generated section `build intellij.pycharm.community.customization` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "pycharm-community-customization_resources",
+  files = glob(["ide/resources/**/*"]),
+  strip_prefix = "ide/resources"
+)
+
+java_library(
+  name = "pycharm-community-customization",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    ":pycharm-community-customization_resources",
+    "//python/ide/impl:pycharm-community-ide-impl",
+    "@lib//:tips-pycharm-community",
+    "//jupyter/viewOnly",
+    "//python/ide/impl/intellij.pycharm.community.ide.impl.promotion:pycharm-community-ide-impl-promotion",
+    "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.customization` end
+
+### auto-generated section `build intellij.pycharm.community.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "pycharm-community-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//platform/main/intellij.platform.monolith.main:monolith-main",
+    "//platform/bootstrap",
+    "//plugins/hg4idea:vcs-hg",
+    "//plugins/svn4idea:vcs-svn",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+    "//xml/relaxng",
+    "//plugins/github:vcs-github",
+    "//plugins/terminal",
+    "//python:pycharm-community",
+    "//python:pycharm-community-customization",
+    "//python/pluginCore:community-plugin",
+    "//python:python-community-plugin-modules",
+    "//platform/starter",
+    "//plugins/tasks/tasks-core/jira:tasks-jira",
+    "//plugins/settings-repository:settingsRepository",
+    "//plugins/properties",
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/plugin",
+    "//plugins/configuration-script:configurationScript",
+    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/stats-collector:statsCollector",
+    "//plugins/sh",
+    "//plugins/terminal/sh",
+    "//plugins/changeReminder:vcs-changeReminder",
+    "//plugins/IntelliLang:xml-langInjection",
+    "//plugins/textmate",
+    "//plugins/completion-ml-ranking-models:completionMlRankingModels",
+    "//plugins/emojipicker",
+    "//plugins/grazie",
+    "//platform/lvcs-impl",
+    "//plugins/search-everywhere-ml:searchEverywhereMl",
+    "//notebooks/visualization",
+    "//plugins/color-schemes/monokai-color-scheme:color-scheme-monokai",
+    "//plugins/color-schemes/twilight-color-scheme:color-scheme-twilight",
+    "//plugins/color-schemes/warm-neon-color-scheme:color-scheme-warmNeon",
+    "//plugins/color-schemes/github-color-scheme:color-scheme-github",
+    "//plugins/dev:dev-noJava-plugin-main",
+    "//plugins/evaluation-plugin:evaluationPlugin",
+    "//plugins/evaluation-plugin/languages/python:evaluationPlugin-languages-python",
+    "//platform/new-ui-onboarding:ide-newUiOnboarding",
+    "//plugins/github/community:vcs-github-community",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.main` end
+
+### auto-generated section `build intellij.python.community.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "python-community-impl_resources",
+  files = glob(["pluginResources/**/*"]),
+  strip_prefix = "pluginResources"
+)
+
+jvm_library(
+  name = "python-community-impl",
+  module_name = "intellij.python.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "//python/openapi:community",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "@lib//:guava",
+    "//python:python-pydev",
+    "@lib//:xml_r_p_c",
+    "//platform/xdebugger-api:debugger",
+    "//RegExpSupport:regexp",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/testRunner",
+    "//platform/smRunner",
+    "//spellchecker",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//xml/xml-psi-impl:psi-impl",
+    "@lib//:kotlin-reflect",
+    "@lib//:gson",
+    "//xml/openapi:xml",
+    "//platform/vcs-api:vcs",
+    "@lib//:x_stream",
+    "@lib//:libthrift",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:netty-codec-http",
+    "@lib//:jsoup",
+    "@lib//:javax_annotation-api",
+    "//lib/ant/lib:ant-antlr",
+    "//python/python-psi-impl:psi-impl",
+    "//python/python-sdk:sdk",
+    "@lib//:stream_ex",
+    "//platform/statistics",
+    "@lib//:python_community_impl_ml-completion-prev-exprs-models",
+    "//platform/util",
+    "@lib//:netty-buffer",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:fastutil-min",
+    "//plugins/markdown/core:markdown",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jcef",
+    "@lib//:jna",
+    "//plugins/toml",
+    "@lib//:python_community_impl_tuweni-toml",
+    "@lib//:jsr305",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:caffeine",
+    "//platform/util/jdom",
+    "//platform/extensions",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:jackson-dataformat-yaml",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "//python/python-core-impl:community-core-impl",
+    "//platform/core-api:core",
+    "//python/python-psi-api:psi",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "@lib//:python_community_impl_completion-ranking-python-with-full-line",
+    "//platform/backend/observation",
+    "//plugins/terminal",
+    "//platform/ml-impl",
+    "//platform/ml-api:ml",
+    "//platform/util/coroutines",
+    "//python/python-syntax:syntax",
+    "//platform/ui.jcef:ui-jcef",
+    "//libraries/ktor-client",
+    "//libraries/ktor-client-cio",
+    "//platform/util/progress",
+    "//platform/feedback",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/platform-impl/remote:ide-remote",
+    "//platform/platform-impl/ui:ide-ui",
+    "@lib//:jackson-module-kotlin",
+  ],
+  exports = [
+    "//python/openapi:community",
+    "//RegExpSupport:regexp",
+    "//platform/testRunner",
+    "//python/python-psi-impl:psi-impl",
+    "//python/python-sdk:sdk",
+  ],
+  runtime_deps = [
+    ":python-community-impl_resources",
+    "//python:python-helpers",
+    "//commandInterface",
+    "//python/huggingFace:community-impl-huggingFace",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl` end
+
+### auto-generated section `build intellij.python.community.plugin.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "python-community-plugin-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//:main",
+    "//java/openapi:java",
+    "//java/idea-ui:ui",
+    "//python/pluginCore:community-plugin",
+    "//python/pluginJava:community-plugin-java",
+    "//python/pluginMinor:community-plugin-minor",
+    "//python:python-community-plugin-modules",
+  ]
+)
+### auto-generated section `build intellij.python.community.plugin.main` end
+
+### auto-generated section `build intellij.python.community.plugin.modules` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "python-community-plugin-modules",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//python/IntelliLang-python:langInjection",
+    "//python/python-copyright:copyright",
+    "//python/python-terminal:terminal",
+    "//plugins/restructuredtext",
+    "//python/python-grazie:grazie",
+    "//python/python-markdown:markdown",
+  ]
+)
+### auto-generated section `build intellij.python.community.plugin.modules` end
+
+### auto-generated section `build intellij.python.community.plugin.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "python-community-plugin-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "python-community-plugin-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["pluginTestSrc/**/*.kt", "pluginTestSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/testFramework",
+    "//python:python-community-impl",
+    "@lib//:junit4",
+  ]
+)
+### auto-generated section `build intellij.python.community.plugin.tests` end
+
+### auto-generated section `build intellij.python.helpers` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "python-helpers_resources",
+  files = glob(["helpers/**/*"]),
+  strip_prefix = "helpers"
+)
+
+jvm_resources(
+  name = "python-helpers_resources_1",
+  files = glob(["helpers/pydev/**/*"]),
+  strip_prefix = "helpers/pydev"
+)
+
+jvm_resources(
+  name = "python-helpers_resources_2",
+  files = glob(["helpers/third_party/thriftpy/**/*"]),
+  strip_prefix = "helpers/third_party/thriftpy"
+)
+
+java_library(
+  name = "python-helpers",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    ":python-helpers_resources",
+    ":python-helpers_resources_1",
+    ":python-helpers_resources_2",
+  ]
+)
+### auto-generated section `build intellij.python.helpers` end
+
+### auto-generated section `build intellij.python.pydev` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "python-pydev_resources",
+  files = glob(["pydevSrc/resources/**/*"]),
+  strip_prefix = "pydevSrc/resources"
+)
+
+jvm_library(
+  name = "python-pydev",
+  module_name = "intellij.python.pydev",
+  visibility = ["//visibility:public"],
+  srcs = glob(["pydevSrc/src/**/*.kt", "pydevSrc/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/xdebugger-api:debugger",
+    "@lib//:xml_r_p_c",
+    "@lib//:guava",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "@lib//:x_stream",
+    "//platform/util:util-ui",
+    "//python/python-psi-api:psi",
+    "//platform/util/concurrency",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//python/python-syntax-core:syntax-core",
+  ],
+  runtime_deps = [":python-pydev_resources"]
+)
+### auto-generated section `build intellij.python.pydev` end

@@ -1,0 +1,49 @@
+### auto-generated section `build intellij.platform.util.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "@lib//:assert_j",
+    "@lib//:junit4",
+    "@lib//:jna",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "@lib//:jet_check",
+    "@lib//:commons-compress",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:memoryfilesystem",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//platform/util/diff",
+    "@lib//:junit5",
+    "//platform/util/jdom",
+    "//platform/boot",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "@lib//:kotlinx-coroutines-debug",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/util/coroutines",
+    "@lib//:jetbrains_kotlinx_lincheck_jvm",
+    "@lib//:mockito",
+  ]
+)
+### auto-generated section `build intellij.platform.util.tests` end

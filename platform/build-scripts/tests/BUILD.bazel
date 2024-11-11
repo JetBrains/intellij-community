@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.buildScripts.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "buildScripts-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "buildScripts-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/build-scripts:buildScripts",
+    "@lib//:junit4",
+    "@lib//:kotlin-stdlib",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/util",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:assert_j",
+    "@lib//:junit5",
+    "//platform/testFramework/extensions:testExtensions",
+    "//build/tasks",
+    "//build/tasks:tasks_test",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:commons-compress",
+    "//build",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/zip",
+    "//platform/util/jdom",
+    "@rules_jvm//zip:build-zip",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.tests` end

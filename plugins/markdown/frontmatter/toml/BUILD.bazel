@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.markdown.frontmatter.toml` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "markdown-frontmatter-toml_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "markdown-frontmatter-toml",
+  module_name = "intellij.markdown.frontmatter.toml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-api:core",
+    "//plugins/IntelliLang:langInjection",
+    "//plugins/markdown/core:markdown",
+    "//plugins/toml/core",
+    "//platform/monolith",
+  ],
+  runtime_deps = [":markdown-frontmatter-toml_resources"]
+)
+### auto-generated section `build intellij.markdown.frontmatter.toml` end

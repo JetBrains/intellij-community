@@ -1,0 +1,71 @@
+### auto-generated section `build intellij.platform.vcs.dvcs.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "vcs-dvcs-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-dvcs-impl",
+  module_name = "intellij.platform.vcs.dvcs.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-impl",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/lang-impl",
+    "//platform/dvcs-api:vcs-dvcs",
+    "@lib//:miglayout-swing",
+    "@lib//:stream_ex",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/analysis-impl",
+  ],
+  runtime_deps = [":vcs-dvcs-impl_resources"]
+)
+
+kt_jvm_test(
+  name = "vcs-dvcs-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":vcs-dvcs-impl"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-impl",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/lang-impl",
+    "//platform/dvcs-api:vcs-dvcs",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:mockito",
+    "//platform/vcs-tests:vcs-testFramework",
+    "@lib//:miglayout-swing",
+    "@lib//:stream_ex",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/analysis-impl",
+  ],
+  runtime_deps = [":vcs-dvcs-impl_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.dvcs.impl` end

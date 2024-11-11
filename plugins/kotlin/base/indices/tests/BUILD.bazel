@@ -1,0 +1,23 @@
+### auto-generated section `build kotlin.base.indices.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-base-indices-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-base-indices-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+  ]
+)
+### auto-generated section `build kotlin.base.indices.tests` end

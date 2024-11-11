@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.restructuredtext` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "restructuredtext_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "restructuredtext",
+  module_name = "intellij.restructuredtext",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "@lib//:guava",
+    "//platform/core-ui",
+    "@lib//:jsoup",
+    "//platform/util/jdom",
+    "@lib//:jcef",
+    "//spellchecker",
+  ],
+  runtime_deps = [
+    ":restructuredtext_resources",
+    "//python/python-restructuredtext:restructuredtext-python",
+  ]
+)
+### auto-generated section `build intellij.restructuredtext` end

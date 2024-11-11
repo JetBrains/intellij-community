@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.platform.uast.testFramework` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.uast.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//uast/uast-common:uast",
+    "//platform/testFramework",
+    "@lib//:kotlin-stdlib",
+    "//java/testFramework",
+    "//platform/vcs-impl",
+  ],
+  exports = ["//uast/uast-common:uast"]
+)
+### auto-generated section `build intellij.platform.uast.testFramework` end

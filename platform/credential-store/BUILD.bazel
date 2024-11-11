@@ -1,19 +1,19 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.credentialStore` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "credentialStore",
   module_name = "intellij.platform.credentialStore",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/util-ex",
-    "@community//platform/util/base:util-base",
-    "@community//platform/util",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
+    "//platform/util-ex",
+    "//platform/util/base",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.credentialStore` end

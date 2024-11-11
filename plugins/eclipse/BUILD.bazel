@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.eclipse` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "eclipse_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "eclipse",
+  module_name = "intellij.eclipse",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/util/jdom",
+    "//java/openapi:java",
+    "//java/compiler/openapi:java-compiler",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//plugins/eclipse/jps-plugin:jps",
+    "//plugins/eclipse/common-eclipse-util:common",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/workspace/jps",
+    "//platform/statistics",
+    "@lib//:kotlin-reflect",
+    "//platform/backend/workspace",
+  ],
+  runtime_deps = [":eclipse_resources"]
+)
+
+kt_jvm_test(
+  name = "eclipse_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":eclipse"],
+  deps = [
+    "//platform/util/jdom",
+    "//java/openapi:java",
+    "@lib//:junit4",
+    "//java/testFramework",
+    "//java/compiler/openapi:java-compiler",
+    "//java/idea-ui:ui",
+    "//java/java-impl:impl",
+    "//plugins/eclipse/jps-plugin:jps",
+    "//plugins/eclipse/common-eclipse-util:common",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/workspace/jps",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/statistics",
+    "@lib//:junit5",
+    "@lib//:kotlin-reflect",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//platform/backend/workspace",
+  ],
+  runtime_deps = [":eclipse_resources"]
+)
+### auto-generated section `build intellij.eclipse` end

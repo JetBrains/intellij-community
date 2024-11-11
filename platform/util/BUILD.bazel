@@ -1,51 +1,109 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.util` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "util_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "util",
   module_name = "intellij.platform.util",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
-  plugins = ["@libraries//:serialization_plugin"],
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:log4j-over-slf4j",
-    "@libraries//:annotations",
-    "@community//platform/util-rt",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@libraries//:jna-platform",
-    "@libraries//:oro",
-    "@libraries//:lz4-java",
-    "@libraries//:commons-compress",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util/base:util-base",
-    "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:util-xmlDom",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:caffeine",
-    "@community//platform/util/troveCompileOnly:util-troveCompileOnly",
-    "@community//platform/util/coroutines:util-coroutines",
+    "//platform/util/jdom",
+    "@lib//:log4_j",
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:jna",
+    "@lib//:oro_matcher",
+    "@lib//:lz4-java",
+    "@lib//:commons-compress",
+    "@lib//:fastutil-min",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+    "@lib//:aalto-xml",
+    "//platform/util/xmlDom",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:caffeine",
+    "//platform/util/troveCompileOnly",
+    "//platform/util/coroutines",
   ],
   exports = [
-    "@libraries//:annotations",
-    "@community//platform/util-rt",
-    "@community//platform/util/base:util-base",
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util/base",
   ],
   runtime_deps = [
-    ":resources",
-    "@libraries//:commons-io",
-    "@libraries//:commons-codec",
+    ":util_resources",
+    "@lib//:commons-io",
+    "@lib//:commons-codec",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util` end
+
+### auto-generated section `build intellij.platform.util.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = [
+    "java.desktop/sun.font=ALL-UNNAMED",
+    "java.desktop/sun.awt.image=ALL-UNNAMED",
+  ]
+)
+
+jvm_resources(
+  name = "util-ui_resources",
+  files = glob(["ui/resources/**/*"]),
+  strip_prefix = "ui/resources"
+)
+
+jvm_library(
+  name = "util-ui",
+  module_name = "intellij.platform.util.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["ui/src/**/*.kt", "ui/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "//lib:eawtstub",
+    "//platform/util",
+    "@lib//:imgscalr",
+    "@lib//:jna",
+    "@lib//:java_compatibility",
+    "@lib//:kotlin-stdlib",
+    "@lib//:fastutil-min",
+    "//platform/util-ex",
+    "@lib//:netty-buffer",
+    "@lib//:caffeine",
+    "@lib//:aalto-xml",
+    "//platform/util/xmlDom",
+    "//platform/util/zip",
+    "@lib//:jbr-api",
+    "@lib//:jsvg",
+    "//platform/util/rt-java8",
+    "@lib//:hash4j",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-protobuf",
+    "@lib//:mvstore",
+  ],
+  runtime_deps = [":util-ui_resources"]
+)
+### auto-generated section `build intellij.platform.util.ui` end

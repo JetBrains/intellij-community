@@ -1,0 +1,113 @@
+### auto-generated section `build kotlin.base.code-insight` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-base-code-insight_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-base-code-insight",
+  module_name = "kotlin.base.code-insight",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//platform/refactoring",
+    "//platform/external-system-api:externalSystem",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/java-analysis-api:analysis",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+  ],
+  exports = ["//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal"],
+  runtime_deps = [":kotlin-base-code-insight_resources"]
+)
+
+kt_jvm_test(
+  name = "kotlin-base-code-insight_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  associates = [":kotlin-base-code-insight"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "//platform/execution-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//platform/refactoring",
+    "//platform/external-system-api:externalSystem",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/java-analysis-api:analysis",
+    "//platform/backend/workspace",
+    "//plugins/kotlin/formatter",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "@lib//:kotlin-test",
+  ],
+  runtime_deps = [":kotlin-base-code-insight_resources"]
+)
+### auto-generated section `build kotlin.base.code-insight` end

@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.maven.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "maven-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "maven-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["java/**/*.kt", "java/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/maven",
+    "//plugins/maven/testFramework",
+    "//java/testFramework",
+    "//plugins/repository-search",
+    "//plugins/repository-search:repository-search_test",
+    "@lib//:assert_j",
+    "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
+    "//platform/external-system-impl:externalSystem-tests_test",
+    "//plugins/properties/properties-psi-api:psi",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test",
+    "//plugins/groovy/jps-plugin:jps",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-impl",
+    "//platform/workspace/jps",
+    "@lib//:guava",
+    "//plugins/maven/artifact-resolver/common:maven-artifactResolver-common",
+    "@lib//:mockito",
+    "//plugins/maven/jps-plugin:jps",
+    "//plugins/maven/jps-plugin:jps_test",
+    "//plugins/maven/maven3-server-common:server-m3-common",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/external-system-api/testFramework:externalSystem-testFramework",
+    "//platform/backend/workspace",
+    "//java/java-impl:impl",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test",
+    "@lib//:hash4j",
+    "@lib//:kotlin-reflect",
+  ]
+)
+### auto-generated section `build intellij.maven.tests` end

@@ -1,48 +1,60 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "copyright_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "copyright",
   module_name = "intellij.copyright",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//xml/openapi:xml",
-    "@community//platform/lang-api:lang",
-    "@community//platform/lang-impl",
-    "@libraries//:velocity-engine-core",
-    "@community//xml/impl:xml-impl",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/external-system-api:externalSystem",
-    "@community//platform/core-ui",
-    "@community//platform/util/jdom:util-jdom",
+    "//xml/openapi:xml",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:velocity",
+    "//xml/impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/external-system-api:externalSystem",
+    "//platform/core-ui",
+    "//platform/util/jdom",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":copyright_resources"]
 )
 
 kt_jvm_test(
   name = "copyright_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":copyright"],
   deps = [
-    ":copyright",
-    "@community//platform/testFramework/extensions:testExtensions",
-    "@community//platform/testFramework",
-    "@community//platform/configuration-store-impl:configurationStore-impl",
-    "@libraries//:junit-jupiter-api",
+    "//xml/openapi:xml",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:velocity",
+    "//xml/impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/core-ui",
+    "@lib//:junit5",
+    "//platform/util/jdom",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":copyright_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.copyright` end

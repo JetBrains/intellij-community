@@ -1,0 +1,47 @@
+### auto-generated section `build kotlin.injection.k2` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
+)
+
+jvm_resources(
+  name = "kotlin-injection-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-injection-k2",
+  module_name = "kotlin.injection.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "//plugins/kotlin/injection/base:kotlin-base-injection",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/jvm",
+    "//platform/lang-impl",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//plugins/IntelliLang:langInjection",
+    "//java/java-psi-api:psi",
+    "//plugins/IntelliLang:java-langInjection",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+  ],
+  runtime_deps = [":kotlin-injection-k2_resources"]
+)
+### auto-generated section `build kotlin.injection.k2` end

@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.notebooks.visualization` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ]
+)
+
+jvm_resources(
+  name = "visualization_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "visualization",
+  module_name = "intellij.notebooks.visualization",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:gson",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//notebooks/notebook-ui:ui",
+    "//platform/util/coroutines",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [":visualization_resources"]
+)
+
+kt_jvm_test(
+  name = "visualization_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  associates = [":visualization"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:gson",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//notebooks/notebook-ui:ui",
+    "@lib//:assert_j",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/util/coroutines",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [":visualization_resources"]
+)
+### auto-generated section `build intellij.notebooks.visualization` end

@@ -1,50 +1,67 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.webSymbols` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "webSymbols_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "webSymbols",
   module_name = "intellij.platform.webSymbols",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/analysis-api:analysis",
-    "@community//platform/lang-impl",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/core-ui",
-    "@community//platform/editor-ui-ex:editor-ex",
-    "@community//platform/core-api:core",
-    "@libraries//:jackson-databind",
-    "@community//platform/analysis-impl",
-    "@libraries//:jackson-core",
-    "@libraries//:jackson-module-kotlin",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:commons-compress",
-    "@libraries//:markdown-jvm",
-    "@libraries//:gson",
-    "@community//platform/markdown-utils",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-api:core",
+    "@lib//:jackson-databind",
+    "//platform/analysis-impl",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:fastutil-min",
+    "@lib//:commons-compress",
+    "@lib//:jetbrains_markdown",
+    "@lib//:gson",
+    "//platform/markdown-utils",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":webSymbols_resources"]
 )
 
 kt_jvm_test(
   name = "webSymbols_test",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":webSymbols"],
   deps = [
-    ":webSymbols",
-    "@community//platform/testFramework",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-api:core",
+    "@lib//:jackson-databind",
+    "//platform/analysis-impl",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:fastutil-min",
+    "@lib//:commons-compress",
+    "@lib//:jetbrains_markdown",
+    "@lib//:gson",
+    "//platform/markdown-utils",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":webSymbols_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.webSymbols` end

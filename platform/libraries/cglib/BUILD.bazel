@@ -1,23 +1,23 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.libraries.cglib` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "libraries-cglib",
+jvm_library(
+  name = "cglib",
   module_name = "intellij.libraries.cglib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:cglib-nodep",
-    "@community//platform/util/base:util-base",
-    "@community//platform/util-rt",
-    "@community//platform/util",
-    "@community//platform/core-api:core",
-    "@community//platform/core-impl",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/util-class-loader:util-classLoader",
+    "@lib//:libraries_cglib_cglib",
+    "//platform/util/base",
+    "//platform/util-rt",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "@lib//:fastutil-min",
+    "//platform/util-class-loader:util-classLoader",
   ],
-  exports = ["@libraries//:cglib-nodep"]
+  exports = ["@lib//:libraries_cglib_cglib"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.libraries.cglib` end

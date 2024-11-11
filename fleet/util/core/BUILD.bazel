@@ -1,36 +1,34 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build fleet.util.core` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "fleet-util-core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:bifurcan",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:kotlinx-coroutines-slf4j",
-    "@community//fleet/util/logging/api:fleet-util-logging-api",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@community//fleet/reporting/api:fleet-reporting-api",
-    "@community//fleet/preferences:fleet-preferences",
-    "@community//fleet/util/os:fleet-util-os",
-    "@libraries//:slf4j-api",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-coroutines-slf4j",
+    "//fleet/util/logging/api:fleet-util-logging-api",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-collections-immutable",
+    "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/preferences",
+    "//fleet/util/os:fleet-util-os",
+    "@lib//:slf4j-api",
   ],
   exports = [
-    "@libraries//:bifurcan",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//fleet/util/logging/api:fleet-util-logging-api",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-collections-immutable-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//fleet/util/logging/api:fleet-util-logging-api",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-collections-immutable",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build fleet.util.core` end

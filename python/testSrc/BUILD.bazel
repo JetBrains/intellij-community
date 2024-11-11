@@ -1,0 +1,73 @@
+### auto-generated section `build intellij.python.community.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "community-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "community-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/testFramework",
+    "//python/python-psi-api:psi",
+    "//python:python-community-impl",
+    "//platform/xdebugger-api:debugger",
+    "@lib//:guava",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test",
+    "//python:python-pydev",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test",
+    "@lib//:mockito",
+    "@lib//:easymock",
+    "@lib//:objenesis",
+    "//platform/lang-impl:lang-tests_test",
+    "//platform/platform-impl/internal:ide-internal",
+    "@lib//:xml_r_p_c",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:hamcrest",
+    "//platform/platform-tests:tests_test",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test",
+    "//python/python-copyright:copyright",
+    "//python/testFramework:community-testFramework",
+    "//platform/xdebugger-testFramework:debugger-testFramework",
+    "//python/python-psi-impl:psi-impl",
+    "//python/python-common-tests:commonTests_test",
+    "//plugins/restructuredtext",
+    "//python/python-restructuredtext:restructuredtext-python",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "//plugins/stats-collector:statsCollector",
+    "//plugins/grazie/src/test:grazie-tests_test",
+    "//python/python-grazie:grazie",
+    "//platform/util/jdom",
+    "//platform/ml-api:ml",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-test",
+    "//python/python-core-impl:community-core-impl",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test",
+    "@lib//:gson",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//commandInterface",
+    "//python/pluginCore:community-plugin",
+    "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:junit5Params",
+    "//platform/platform-impl/remote:ide-remote",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "@lib//:kotlin-reflect",
+  ]
+)
+### auto-generated section `build intellij.python.community.tests` end

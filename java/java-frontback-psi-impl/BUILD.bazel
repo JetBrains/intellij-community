@@ -1,33 +1,34 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.frontback.psi.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "frontback-psi-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "java-frontback-psi-impl",
+jvm_library(
+  name = "frontback-psi-impl",
   module_name = "intellij.java.frontback.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@community//java/java-frontback-psi-api:java-frontback-psi",
-    "@community//platform/core-impl",
-    "@libraries//:asm-all",
-    "@libraries//:streamex",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-serialization-core-jvm",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//platform/core-impl",
+    "@lib//:asm",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
   ],
   exports = [
-    "@community//java/java-frontback-psi-api:java-frontback-psi",
-    "@community//platform/core-impl",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//platform/core-impl",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":frontback-psi-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.frontback.psi.impl` end

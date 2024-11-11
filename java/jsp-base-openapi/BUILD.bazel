@@ -1,18 +1,18 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.jsp.base` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "jsp-base",
   module_name = "intellij.jsp.base",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/platform-api:ide",
-    "@community//xml/openapi:xml",
-    "@community//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//xml/openapi:xml",
+    "//platform/lang-api:lang",
   ],
-  exports = ["@community//xml/openapi:xml"]
+  exports = ["//xml/openapi:xml"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.jsp.base` end

@@ -1,6 +1,6 @@
-### auto-generated section `build` start
+### auto-generated section `build intellij.platform.ui.jcef` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -12,32 +12,33 @@ kt_javac_options(
   ]
 )
 
-kt_jvm_library(
+jvm_library(
   name = "ui-jcef",
   module_name = "intellij.platform.ui.jcef",
   visibility = ["//visibility:public"],
   srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = ":custom-javac-options",
-  kotlinc_opts = "//:k17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:annotations",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:jcef",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/util",
-    "@community//platform/core-api:core",
-    "@community//platform/core-ui",
-    "@community//platform/util-ex",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/ide-core",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/util/concurrency",
-    "@community//platform/platform-api:ide",
-    "@community//platform/core-impl",
-    "@libraries//:jbr-api",
-    "@community//platform/jbr",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jcef",
+    "//platform/util/jdom",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/util-ex",
+    "//platform/editor-ui-api:editor",
+    "//platform/ide-core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/concurrency",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "@lib//:jbr-api",
+    "//platform/jbr",
+    "@lib//:jna",
   ],
-  exports = ["@libraries//:jcef"]
+  exports = ["@lib//:jcef"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ui.jcef` end

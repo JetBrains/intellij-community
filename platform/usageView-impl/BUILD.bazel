@@ -1,35 +1,35 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.usageView.impl` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "usageView-impl",
   module_name = "intellij.platform.usageView.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:jackson-core",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/statistics",
-    "@community//platform/core-ui",
-    "@community//platform/editor-ui-ex:editor-ex",
-    "@community//platform/ide-core",
-    "@community//platform/ide-core-impl",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/core-api:core",
-    "@community//platform/indexing-api:indexing",
-    "@community//platform/analysis-impl",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/analysis-api:analysis",
-    "@community//platform/core-impl",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/usageView",
-    "@community//platform/lang-api:lang",
-    "@community//platform/util/concurrency",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/util/coroutines:util-coroutines",
+    "@lib//:fastutil-min",
+    "@lib//:jackson",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//platform/analysis-impl",
+    "//platform/util:util-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/usageView",
+    "//platform/lang-api:lang",
+    "//platform/util/concurrency",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/coroutines",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.usageView.impl` end

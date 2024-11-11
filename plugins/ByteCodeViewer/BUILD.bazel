@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.java.byteCodeViewer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "java-byteCodeViewer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-byteCodeViewer",
+  module_name = "intellij.java.byteCodeViewer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:asm",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+    "//java/compiler/impl:java-compiler-impl",
+    "//platform/core-ui",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+  ],
+  runtime_deps = [":java-byteCodeViewer_resources"]
+)
+### auto-generated section `build intellij.java.byteCodeViewer` end

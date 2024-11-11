@@ -1,37 +1,38 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.frontback.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resource",
-  resources = glob(["resource/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "frontback-impl_resources",
+  files = glob(["resource/**/*"]),
+  strip_prefix = "resource"
 )
 
-kt_jvm_library(
-  name = "java-frontback-impl",
+jvm_library(
+  name = "frontback-impl",
   module_name = "intellij.java.frontback.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//java/java-frontback-psi-api:java-frontback-psi",
-    "@community//java/java-frontback-psi-impl",
-    "@community//platform/core-impl",
-    "@community//platform/lang-impl",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/analysis-impl",
-    "@community//platform/core-ui",
-    "@community//xml/xml-frontback",
-    "@community//platform/core-api:core",
-    "@community//platform/util/jdom:util-jdom",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "//xml/xml-frontback:frontback",
+    "//platform/core-api:core",
+    "//platform/util/jdom",
   ],
   exports = [
-    "@community//java/java-frontback-psi-api:java-frontback-psi",
-    "@community//java/java-frontback-psi-impl",
-    "@community//platform/core-impl",
-    "@community//xml/xml-frontback",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+    "//xml/xml-frontback:frontback",
   ],
-  runtime_deps = [":resource"]
+  runtime_deps = [":frontback-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.frontback.impl` end

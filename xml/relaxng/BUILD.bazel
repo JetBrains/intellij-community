@@ -1,45 +1,61 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.relaxng` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "relaxng_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "relaxng",
   module_name = "intellij.relaxng",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/lang-api:lang",
-    "@community//xml/impl:xml-impl",
-    "@community//xml/dom-openapi:xml-dom",
-    "@community//platform/lang-impl",
-    "@libraries//:isorelax",
-    "@libraries//:jing",
-    "@community//platform/util/nanoxml:util-nanoxml",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui",
-    "@community//platform/util/jdom:util-jdom",
+    "//platform/lang-api:lang",
+    "//xml/impl",
+    "//xml/dom-openapi:dom",
+    "//platform/lang-impl",
+    "//xml/relaxng/lib:rngom-20051226-patched",
+    "@lib//:relaxng_isorelax",
+    "//xml/relaxng/lib:trang-core",
+    "@lib//:relaxng_jing",
+    "//platform/util/nanoxml",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/util/jdom",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":relaxng_resources"]
 )
 
 kt_jvm_test(
   name = "relaxng_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":relaxng"],
   deps = [
-    ":relaxng",
-    "@community//platform/testFramework",
+    "//platform/lang-api:lang",
+    "//xml/impl",
+    "//xml/dom-openapi:dom",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//xml/relaxng/lib:rngom-20051226-patched",
+    "@lib//:relaxng_isorelax",
+    "//xml/relaxng/lib:trang-core",
+    "@lib//:relaxng_jing",
+    "//platform/util/nanoxml",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/util/jdom",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":relaxng_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.relaxng` end

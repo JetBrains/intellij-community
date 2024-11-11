@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.terminal.completion` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "completion",
+  module_name = "intellij.terminal.completion",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:terminal_completion_terminal-completion-spec",
+    "//platform/util",
+  ],
+  exports = ["@lib//:terminal_completion_terminal-completion-spec"]
+)
+
+kt_jvm_test(
+  name = "completion_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":completion"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:terminal_completion_terminal-completion-spec",
+    "//platform/util",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ]
+)
+### auto-generated section `build intellij.terminal.completion` end

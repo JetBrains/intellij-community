@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.eelHelper` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "eelHelper_resources",
+  files = glob(["src/META-INF/MANIFEST.MF"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "eelHelper",
+  module_name = "intellij.platform.eelHelper",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:jackson-databind",
+    "@lib//:kotlin-reflect",
+    "//platform/util-rt",
+    "@lib//:jetbrains-annotations",
+    "@lib//:platform_eel_helper_jline_terminal",
+    "@lib//:jline_terminal_jansi",
+    "@lib//:jline_terminal_jna",
+  ],
+  runtime_deps = [":eelHelper_resources"]
+)
+### auto-generated section `build intellij.platform.eelHelper` end

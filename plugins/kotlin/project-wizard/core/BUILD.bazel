@@ -1,0 +1,80 @@
+### auto-generated section `build kotlin.project-wizard.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "kotlin-project-wizard-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-project-wizard-core",
+  module_name = "kotlin.project-wizard.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "generated/**/*.kt", "generated/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:velocity",
+    "@lib//:gson",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/editor-ui-api:editor",
+    "@lib//:slf4j-api",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//plugins/gradle:gradle-common",
+    "//java/idea-ui:ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+  ],
+  runtime_deps = [":kotlin-project-wizard-core_resources"]
+)
+
+kt_jvm_test(
+  name = "kotlin-project-wizard-core_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":kotlin-project-wizard-core"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:velocity",
+    "@lib//:gson",
+    "@lib//:junit4",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/editor-ui-api:editor",
+    "@lib//:slf4j-api",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//plugins/gradle:gradle-common",
+    "//java/idea-ui:ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+  ],
+  runtime_deps = [":kotlin-project-wizard-core_resources"]
+)
+### auto-generated section `build kotlin.project-wizard.core` end

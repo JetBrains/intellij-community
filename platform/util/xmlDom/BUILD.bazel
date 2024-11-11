@@ -1,21 +1,21 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.util.xmlDom` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "util-xmlDom",
+jvm_library(
+  name = "xmlDom",
   module_name = "intellij.platform.util.xmlDom",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
-  plugins = ["@libraries//:serialization_plugin"],
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:aalto-xml",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:annotations",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
+    "@lib//:aalto-xml",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util.xmlDom` end

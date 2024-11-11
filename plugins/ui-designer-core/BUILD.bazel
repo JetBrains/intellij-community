@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.uiDesigner` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "uiDesigner_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "uiDesigner",
+  module_name = "intellij.uiDesigner",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//xml/xml-psi-api:psi",
+    "//platform/util",
+    "//platform/icons",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//spellchecker",
+    "//platform/lang-impl",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//platform/platform-impl/designer:ide-designer",
+  ],
+  exports = ["//platform/lang-impl"],
+  runtime_deps = [":uiDesigner_resources"]
+)
+### auto-generated section `build intellij.uiDesigner` end

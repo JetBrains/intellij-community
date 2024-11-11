@@ -1,29 +1,29 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.rd.community` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "rd-community",
   module_name = "intellij.platform.rd.community",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/platform-api:ide",
-    "@libraries//:rd-core",
-    "@libraries//:rd-framework",
-    "@libraries//:rd-text",
-    "@libraries//:rd-swing",
-    "@community//platform/util/concurrency",
-    "@community//platform/core-api:core",
-    "@community//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/platform-api:ide",
+    "@lib//:rd-core",
+    "@lib//:rd-framework",
+    "@lib//:rd-text",
+    "@lib//:rd-swing",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/core-impl",
   ],
   exports = [
-    "@libraries//:rd-core",
-    "@libraries//:rd-framework",
-    "@libraries//:rd-swing",
+    "@lib//:rd-core",
+    "@lib//:rd-framework",
+    "@lib//:rd-swing",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.rd.community` end

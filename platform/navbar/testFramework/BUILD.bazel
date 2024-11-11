@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.navbar.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "testFramework_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.navbar.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/navbar/backend",
+    "//platform/navbar/frontend",
+  ],
+  runtime_deps = [":testFramework_resources"]
+)
+### auto-generated section `build intellij.platform.navbar.testFramework` end

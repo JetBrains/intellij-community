@@ -1,22 +1,22 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.tools.testsBootstrap` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "tools-testsBootstrap",
   module_name = "intellij.tools.testsBootstrap",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:junit",
-    "@libraries//:junit-platform-launcher.provided",
-    "@libraries//:junit-jupiter-api.provided",
-    "@libraries//:junit-vintage-engine.provided",
-    "@libraries//:serviceMessages",
-    "@libraries//:junit-jupiter-engine.provided",
-    "@libraries//:opentest4j",
+    "@lib//:junit4",
+    "@lib//:junit5Launcher.provided",
+    "@lib//:junit5.provided",
+    "@lib//:junit5Vintage.provided",
+    "@lib//:tc_service_messages",
+    "@lib//:junit5Jupiter.provided",
+    "@lib//:opentest4j",
   ],
-  runtime_deps = ["@community//platform/boot"]
+  runtime_deps = ["//platform/boot"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.tools.testsBootstrap` end

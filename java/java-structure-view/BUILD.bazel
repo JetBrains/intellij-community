@@ -1,25 +1,26 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java.structureView` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "structureView_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "java-structureView",
+jvm_library(
+  name = "structureView",
   module_name = "intellij.java.structureView",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/structure-view-impl:structureView-impl",
-    "@community//java/java-psi-impl",
-    "@community//platform/util/ui:util-ui",
-    "@community//java/java-analysis-impl",
+    "//platform/structure-view-impl:structureView-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util:util-ui",
+    "//java/java-analysis-impl:analysis-impl",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":structureView_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.structureView` end

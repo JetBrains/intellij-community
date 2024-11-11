@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.space.java.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "java-jps_resources",
+  files = glob(["src/META-INF/services/org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "java-jps",
+  module_name = "intellij.space.java.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  deps = ["//jps/jps-builders:build"],
+  runtime_deps = [":java-jps_resources"]
+)
+### auto-generated section `build intellij.space.java.jps` end

@@ -1,18 +1,18 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.xml.structureView` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "xml-structureView",
+jvm_library(
+  name = "structureView",
   module_name = "intellij.xml.structureView",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//xml/xml-psi-api:xml-psi",
-    "@community//platform/editor-ui-api:editor",
+    "//platform/core-api:core",
+    "//xml/xml-psi-api:psi",
+    "//platform/editor-ui-api:editor",
   ],
-  exports = ["@community//xml/xml-psi-api:xml-psi"]
+  exports = ["//xml/xml-psi-api:psi"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml.structureView` end

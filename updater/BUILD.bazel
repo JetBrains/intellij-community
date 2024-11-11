@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.tools.updater` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "tools-updater_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tools-updater",
+  module_name = "intellij.tools.updater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:jna",
+  ],
+  runtime_deps = [":tools-updater_resources"]
+)
+
+kt_jvm_test(
+  name = "tools-updater_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  associates = [":tools-updater"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:jna",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+  ],
+  runtime_deps = [":tools-updater_resources"]
+)
+### auto-generated section `build intellij.tools.updater` end

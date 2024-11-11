@@ -1,61 +1,98 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.jps.build` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "build_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "jps-build",
+jvm_library(
+  name = "build",
   module_name = "intellij.platform.jps.build",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@community//platform/util",
-    "@community//platform/forms_rt:java-guiForms-rt",
-    "@community//java/compiler/forms-compiler:java-guiForms-compiler",
-    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
-    "@community//aether-dependency-resolver:java-aetherDependencyResolver",
-    "@libraries//:asm-all",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util/nanoxml:util-nanoxml",
-    "@libraries//:forms",
-    "@libraries//:protobuf-java",
-    "@community//jps/model-api:jps-model",
-    "@community//jps/model-serialization:jps-model-serialization",
-    "@community//jps/model-impl:jps-model-impl",
-    "@libraries//:netty-codec-http2",
-    "@libraries//:javax.annotation-api",
-    "@libraries//:qdox",
-    "@libraries//:gson",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:jps-javac-extension",
-    "@libraries//:netty-buffer",
-    "@community//jps/jps-builders-6:jps-build-javac-rt",
-    "@community//platform/tracing:tracing-rt",
-    "@community//platform/runtime/repository:runtime-repository",
-    "@community//platform/util/zip:util-zip",
-    "@libraries//:caffeine",
-    "@libraries//:kotlinx-metadata-jvm",
-    "@libraries//:kotlin-stdlib.provided",
-    "@libraries//:hash4j",
-    "@libraries//:netty-codec-protobuf",
-    "@libraries//:annotations",
-    "@libraries//:h2-mvstore",
+    "//platform/util",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//java/compiler/forms-compiler:java-guiForms-compiler",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "@lib//:asm",
+    "//platform/util/jdom",
+    "//platform/util/nanoxml",
+    "@lib//:jgoodies-forms",
+    "@lib//:protobuf",
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//jps/model-impl",
+    "@lib//:netty-codec-http",
+    "@lib//:javax_annotation-api",
+    "@lib//:platform_jps_build_qdox-java-parser",
+    "@lib//:gson",
+    "@lib//:fastutil-min",
+    "@lib//:jps-javac-extension",
+    "@lib//:netty-buffer",
+    "//jps/jps-builders-6:build-javac-rt",
+    "//platform/tracing:tracing-rt",
+    "//platform/runtime/repository",
+    "//platform/util/zip",
+    "@lib//:caffeine",
+    "@lib//:jetbrains_kotlinx_metadata_jvm",
+    "@lib//:kotlin-stdlib.provided",
+    "@lib//:hash4j",
+    "@lib//:netty-codec-protobuf",
+    "@lib//:jetbrains-annotations",
+    "@lib//:mvstore",
   ],
   exports = [
-    "@community//platform/util",
-    "@community//jps/jps-builders-6:jps-build-javac-rt",
-    "@community//platform/tracing:tracing-rt",
+    "//platform/util",
+    "//jps/jps-builders-6:build-javac-rt",
+    "//platform/tracing:tracing-rt",
   ],
   runtime_deps = [
-    ":resources",
-    "@community//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
-    "@community//java/java-runtime:java-rt",
+    ":build_resources",
+    "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
+    "//java/java-runtime:rt",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.jps.build` end
+
+### auto-generated section `build intellij.platform.jps.build.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "build-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "build-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//jps/jps-builders:build",
+    "//java/testFramework",
+    "//jps/model-serialization:model-serialization-tests_test",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//lib:ecj-4_25",
+    "@lib//:kotlin-stdlib",
+    "@lib//:asm",
+    "//jps/model-impl",
+    "@lib//:fastutil-min",
+    "@lib//:gson",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:assert_j",
+    "@lib//:hash4j",
+    "@lib//:platform_jps_build_tests_jqwik",
+    "@lib//:mvstore",
+    "@lib//:memoryfilesystem",
+  ]
+)
+### auto-generated section `build intellij.platform.jps.build.tests` end

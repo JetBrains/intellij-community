@@ -1,20 +1,20 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.uast` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "uast",
   module_name = "intellij.platform.uast",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@community//java/java-psi-api:java-psi",
-    "@community//java/java-psi-impl",
-    "@libraries//:streamex",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "@lib//:stream_ex",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
   ],
-  exports = ["@community//java/java-psi-api:java-psi"]
+  exports = ["//java/java-psi-api:psi"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.uast` end

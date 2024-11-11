@@ -5,5 +5,67 @@ java_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.java"]),
   add_exports = ["java.base/sun.nio.fs"],
-  deps = ["@libraries//:annotations"]
+  deps = ["@lib//:jetbrains-annotations"]
 )
+
+### skip generation section `build intellij.platform.core.nio.fs`
+
+### auto-generated section `build intellij.platform.core.nio.fs.benchmarks` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "core-nio-fs-benchmarks",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "core-nio-fs-benchmarks_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["benchmarks/**/*.kt", "benchmarks/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-nio-fs",
+    "@lib//:jmh-core",
+    "@lib//:jmh-generator-annprocess",
+    "@lib//:mockito",
+  ]
+)
+### auto-generated section `build intellij.platform.core.nio.fs.benchmarks` end
+
+### auto-generated section `build intellij.platform.core.nio.fs.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options", "kt_jvm_test")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = ["java.base/sun.nio.fs=ALL-UNNAMED"]
+)
+
+java_library(
+  name = "core-nio-fs-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "core-nio-fs-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-nio-fs",
+    "//platform/util",
+    "@lib//:io_mockk",
+    "@lib//:io_mockk_jvm",
+    "@lib//:junit5",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:mockito",
+  ]
+)
+### auto-generated section `build intellij.platform.core.nio.fs.tests` end

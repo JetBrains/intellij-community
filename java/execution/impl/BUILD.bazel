@@ -1,54 +1,68 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `local-libs` start
+load("@rules_java//java:defs.bzl", "java_import")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+java_import(
+  name = "jshell-frontend",
+  jars = ["jshell-frontend.jar"],
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `local-libs` end
+
+### auto-generated section `build intellij.java.execution.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "java-execution-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "java-execution-impl",
   module_name = "intellij.java.execution.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//java/openapi:java",
-    "@community//java/execution/openapi:java-execution",
-    "@community//java/java-runtime:java-rt",
-    "@community//java/debugger/impl:java-debugger-impl",
-    "@community//platform/testRunner",
-    "@community//java/compiler/openapi:java-compiler",
-    "@community//java/java-impl",
-    "@community//java/java-indexing-api:java-indexing",
-    "@community//platform/smRunner",
-    "@community//java/execution/jshell-protocol:java-jshell-protocol",
-    "@libraries//:intellij-test-discovery-agent",
-    "@community//lib:jshell-frontend",
-    "@community//platform/external-system-api:externalSystem",
-    "@community//platform/external-system-impl:externalSystem-impl",
-    "@libraries//:gson",
-    "@libraries//:jackson-core",
-    "@libraries//:miglayout-swing",
-    "@community//platform/vcs-impl",
-    "@community//platform/util/nanoxml:util-nanoxml",
-    "@libraries//:jackson-databind",
-    "@community//platform/xdebugger-impl:debugger-impl",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/statistics",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@community//platform/core-ui",
-    "@community//platform/platform-util-io-impl:ide-util-io-impl",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/threadDumpParser",
+    "//java/openapi:java",
+    "//java/execution/openapi:java-execution",
+    "//java/java-runtime:rt",
+    "//java/debugger/impl:java-debugger-impl",
+    "//platform/testRunner",
+    "//java/compiler/openapi:java-compiler",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//platform/smRunner",
+    "//java/execution/jshell-protocol:java-jshell-protocol",
+    "@lib//:intellij-test-discovery",
+    "//java/execution/impl:jshell-frontend",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "@lib//:gson",
+    "@lib//:jackson",
+    "@lib//:miglayout-swing",
+    "//platform/vcs-impl",
+    "//platform/util/nanoxml",
+    "@lib//:jackson-databind",
+    "//platform/xdebugger-impl:debugger-impl",
+    "@lib//:fastutil-min",
+    "//platform/statistics",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/util/jdom",
+    "//platform/threadDumpParser",
+    "//platform/eelProvider:eel-provider",
+    "//platform/eel",
+    "//java/debugger/shared:java-debugger-impl-shared",
   ],
   exports = [
-    "@community//java/execution/openapi:java-execution",
-    "@community//platform/testRunner",
-    "@community//platform/statistics",
+    "//java/execution/openapi:java-execution",
+    "//platform/testRunner",
+    "//platform/statistics",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":java-execution-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java.execution.impl` end

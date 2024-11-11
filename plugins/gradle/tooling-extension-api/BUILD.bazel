@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.gradle.toolingExtension` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "toolingExtension",
+  module_name = "intellij.gradle.toolingExtension",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/external-system-rt:externalSystem-rt",
+    "//platform/util-rt",
+    "@lib//:gradle",
+    "@lib//:org_codehaus_groovy_groovy.provided",
+    "@lib//:org_codehaus_groovy_groovy-ant.provided",
+  ],
+  exports = [
+    "@lib//:gradle",
+    "@lib//:org_codehaus_groovy_groovy.provided",
+    "@lib//:org_codehaus_groovy_groovy-ant.provided",
+  ]
+)
+### auto-generated section `build intellij.gradle.toolingExtension` end

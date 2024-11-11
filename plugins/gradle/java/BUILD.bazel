@@ -1,0 +1,120 @@
+### auto-generated section `build intellij.gradle.java` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "java_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java",
+  module_name = "intellij.gradle.java",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/gradle",
+    "//plugins/gradle:gradle-common",
+    "//plugins/coverage:java-coverage",
+    "//plugins/gradle/jps-plugin:jps",
+    "//java/idea-ui:ui",
+    "//platform/lang-api:lang",
+    "//java/compiler/openapi:java-compiler",
+    "//plugins/groovy",
+    "//plugins/toml",
+    "//java/execution/impl:java-execution-impl",
+    "//platform/lang-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/smRunner",
+    "//lib/ant/lib:ant-antlr",
+    "@lib//:gson",
+    "//jps/jps-builders:build",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:x_stream",
+    "//plugins/groovy/groovy-psi:psi",
+    "//java/execution/openapi:java-execution",
+    "//plugins/maven",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//jps/model-impl",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/debugger/impl:java-debugger-impl",
+    "//platform/util/jdom",
+    "//java/compiler/impl:java-compiler-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/backend/workspace",
+    "//platform/backend/observation",
+    "@lib//:hash4j",
+    "@lib//:fastutil-min",
+    "//platform/platform-impl/ui:ide-ui",
+    "//java/debugger/shared:java-debugger-impl-shared",
+  ],
+  exports = ["//plugins/gradle:gradle-common"],
+  runtime_deps = [":java_resources"]
+)
+### auto-generated section `build intellij.gradle.java` end
+
+### auto-generated section `build intellij.gradle.java.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "java-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "java-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jmock",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//java/testFramework",
+    "//plugins/gradle/java",
+    "//plugins/gradle:gradle-tests_test",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test",
+    "//java/compiler/impl:java-compiler-impl",
+    "//plugins/maven-server-api:maven-server",
+    "@lib//:mockito",
+    "//java/execution/impl:java-execution-impl",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test",
+    "@lib//:assert_j",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer_test",
+    "@lib//:org_codehaus_groovy_groovy-json",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//jps/model-impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "//plugins/toml",
+    "//plugins/gradle/intellij.gradle.analysis:analysis",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/backend/workspace",
+    "//platform/workspace/jps",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test",
+    "//plugins/maven",
+  ]
+)
+### auto-generated section `build intellij.gradle.java.tests` end

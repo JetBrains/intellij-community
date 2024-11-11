@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.junit.groovy.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "groovy-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "groovy-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test",
+    "//plugins/junit/testFramework",
+  ]
+)
+### auto-generated section `build intellij.junit.groovy.tests` end

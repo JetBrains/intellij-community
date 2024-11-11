@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.python.community` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "community",
+  module_name = "intellij.python.community",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//python/python-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jsoup",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+  ],
+  exports = [
+    "//python/python-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+  ]
+)
+### auto-generated section `build intellij.python.community` end

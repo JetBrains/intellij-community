@@ -1,0 +1,91 @@
+### auto-generated section `build intellij.testng` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "testng_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "testng_resources_1",
+  files = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+jvm_library(
+  name = "testng",
+  module_name = "intellij.testng",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/openapi:java",
+    "//java/execution/impl:java-execution-impl",
+    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/testRunner",
+    "//java/java-runtime:rt",
+    "//plugins/testng_rt:testng-rt",
+    "//java/execution/openapi:java-execution",
+    "//java/java-impl:impl",
+    "//java/jsp-openapi:jsp",
+    "@lib//:test_n_g",
+    "//java/java-indexing-api:indexing",
+    "//platform/smRunner",
+    "//java/typeMigration",
+    "//platform/external-system-api:externalSystem",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "@lib//:jgoodies-forms",
+  ],
+  exports = ["//platform/smRunner"],
+  runtime_deps = [
+    ":testng_resources",
+    ":testng_resources_1",
+  ]
+)
+
+kt_jvm_test(
+  name = "testng_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":testng"],
+  deps = [
+    "//java/openapi:java",
+    "//java/execution/impl:java-execution-impl",
+    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/testRunner",
+    "//java/java-runtime:rt",
+    "//plugins/testng_rt:testng-rt",
+    "//java/testFramework",
+    "//java/execution/openapi:java-execution",
+    "//java/java-impl:impl",
+    "//java/jsp-openapi:jsp",
+    "@lib//:test_n_g",
+    "//java/java-indexing-api:indexing",
+    "//xml/impl",
+    "//platform/smRunner",
+    "//java/typeMigration",
+    "//platform/external-system-api:externalSystem",
+    "//platform/core-ui",
+    "@lib//:junit4",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "@lib//:jgoodies-forms",
+  ],
+  runtime_deps = [
+    ":testng_resources",
+    ":testng_resources_1",
+  ]
+)
+### auto-generated section `build intellij.testng` end

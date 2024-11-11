@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.java.dev` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "java-dev_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-dev",
+  module_name = "intellij.java.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//plugins/dev/intellij.dev.psiViewer:psiViewer",
+    "//plugins/dev/intellij.dev.codeInsight:codeInsight",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor",
+    "//platform/core-ui",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util:util-ui",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/debugger/impl:java-debugger-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/compiler/openapi:java-compiler",
+  ],
+  runtime_deps = [":java-dev_resources"]
+)
+### auto-generated section `build intellij.java.dev` end

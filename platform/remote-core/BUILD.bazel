@@ -1,34 +1,35 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.remote.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "remote-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "remote-core",
   module_name = "intellij.platform.remote.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//platform/credential-store:credentialStore",
-    "@community//platform/util-ex",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/projectModel-api:projectModel",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlin-reflect",
-    "@libraries//:guava",
+    "//platform/core-api:core",
+    "//platform/credential-store:credentialStore",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:guava",
   ],
   runtime_deps = [
-    ":resources",
-    "@libraries//:slf4j-api",
-    "@libraries//:slf4j-jdk14",
+    ":remote-core_resources",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.remote.core` end

@@ -1,0 +1,76 @@
+### auto-generated section `build intellij.gradle.toolingExtension.impl` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "1.8",
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "toolingExtension-impl_resources",
+  files = glob(["src/META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService", "src/META-INF/services/org.jetbrains.plugins.gradle.tooling.serialization.SerializationService"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "toolingExtension-impl",
+  module_name = "intellij.gradle.toolingExtension.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/external-system-rt:externalSystem-rt",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "@lib//:gradle",
+    "@lib//:gson",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "@lib//:ion",
+    "//platform/util-rt",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:opentelemetry",
+    "@lib//:kotlin-stdlib",
+    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+  ],
+  exports = [
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+  ],
+  runtime_deps = [":toolingExtension-impl_resources"]
+)
+### auto-generated section `build intellij.gradle.toolingExtension.impl` end
+
+### auto-generated section `build intellij.gradle.toolingExtension.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "toolingExtension-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "toolingExtension-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  deps = [
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//plugins/gradle:gradle-common",
+    "//java/testFramework",
+    "@lib//:assert_j",
+    "@lib//:gradle_tooling_extension_tests_io_github_classgraph_classgraph_4_8_87",
+    "@lib//:gradle_tooling_extension_tests_org_jeasy_easy-random-core_4_2_0",
+    "@lib//:ion",
+    "@lib//:fastutil-min",
+    "//platform/boot",
+    "//plugins/gradle",
+  ]
+)
+### auto-generated section `build intellij.gradle.toolingExtension.tests` end

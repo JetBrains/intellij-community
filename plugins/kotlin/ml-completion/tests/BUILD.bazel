@@ -1,0 +1,23 @@
+### auto-generated section `build kotlin.ml-completion.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-ml-completion-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-ml-completion-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//plugins/kotlin/ml-completion",
+    "//platform/platform-impl/internal:ide-internal",
+  ]
+)
+### auto-generated section `build kotlin.ml-completion.tests` end

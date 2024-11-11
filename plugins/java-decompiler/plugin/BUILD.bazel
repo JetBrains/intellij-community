@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.java.decompiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "java-decompiler_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-decompiler",
+  module_name = "intellij.java.decompiler",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/java-decompiler/engine:java-decompiler-engine",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+  ],
+  exports = ["//plugins/java-decompiler/engine:java-decompiler-engine"],
+  runtime_deps = [":java-decompiler_resources"]
+)
+
+kt_jvm_test(
+  name = "java-decompiler_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":java-decompiler"],
+  deps = [
+    "//plugins/java-decompiler/engine:java-decompiler-engine",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//java/testFramework",
+    "//platform/core-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":java-decompiler_resources"]
+)
+### auto-generated section `build intellij.java.decompiler` end

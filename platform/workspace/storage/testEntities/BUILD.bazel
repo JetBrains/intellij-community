@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.platform.workspace.storage.testEntities` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "workspace-storage-testEntities",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "workspace-storage-testEntities_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/workspace/storage",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:kotlin-reflect",
+  ]
+)
+### auto-generated section `build intellij.platform.workspace.storage.testEntities` end

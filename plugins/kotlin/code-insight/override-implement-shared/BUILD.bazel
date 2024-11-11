@@ -1,0 +1,22 @@
+### auto-generated section `build kotlin.code-insight.override-implement.shared` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-code-insight-override-implement-shared",
+  module_name = "kotlin.code-insight.override-implement.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+  ]
+)
+### auto-generated section `build kotlin.code-insight.override-implement.shared` end

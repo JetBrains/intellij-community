@@ -1,0 +1,65 @@
+### auto-generated section `build intellij.java.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "featuresTrainer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "featuresTrainer",
+  module_name = "intellij.java.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/core-ui",
+    "//java/debugger/impl:java-debugger-impl",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//java/execution/impl:java-execution-impl",
+    "//java/debugger/shared:java-debugger-impl-shared",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+
+kt_jvm_test(
+  name = "featuresTrainer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":featuresTrainer"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/core-ui",
+    "//java/debugger/impl:java-debugger-impl",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//java/execution/impl:java-execution-impl",
+    "//java/debugger/shared:java-debugger-impl-shared",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+### auto-generated section `build intellij.java.featuresTrainer` end

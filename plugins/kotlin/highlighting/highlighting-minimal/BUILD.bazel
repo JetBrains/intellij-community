@@ -1,0 +1,34 @@
+### auto-generated section `build kotlin.highlighting.minimal` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "kotlin-highlighting-minimal_resources",
+  files = glob(["resource/**/*"]),
+  strip_prefix = "resource"
+)
+
+jvm_library(
+  name = "kotlin-highlighting-minimal",
+  module_name = "kotlin.highlighting.minimal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//java/java-frontback-impl:frontback-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [
+    ":kotlin-highlighting-minimal_resources",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+  ]
+)
+### auto-generated section `build kotlin.highlighting.minimal` end

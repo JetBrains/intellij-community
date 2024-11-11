@@ -1,31 +1,31 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.objectSerializer` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
+jvm_library(
   name = "objectSerializer",
   module_name = "intellij.platform.objectSerializer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:ion-java",
-    "@community//platform/util",
-    "@libraries//:kotlin-reflect",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util-ex",
-    "@community//platform/core-api:core",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/object-serializer/annotations:objectSerializer-annotations",
-    "@libraries//:lz4-java",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//platform/util/xmlDom:util-xmlDom",
-    "@community//platform/settings",
+    "@lib//:kotlin-stdlib",
+    "@lib//:ion",
+    "//platform/util",
+    "@lib//:kotlin-reflect",
+    "//platform/util/jdom",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "@lib//:lz4-java",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/util/xmlDom",
+    "//platform/settings",
   ]
 )
 
@@ -33,12 +33,71 @@ kt_jvm_test(
   name = "objectSerializer_test",
   visibility = ["//visibility:public"],
   srcs = glob(["testInternalSrc/**/*.kt", "testInternalSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":objectSerializer"],
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    ":objectSerializer",
-    "@libraries//:assertj-core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:ion",
+    "//platform/util",
+    "@lib//:kotlin-reflect",
+    "//platform/util/jdom",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "@lib//:lz4-java",
+    "@lib//:assert_j",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/util/xmlDom",
+    "//platform/settings",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.objectSerializer` end
+
+### auto-generated section `build intellij.platform.objectSerializer.annotations` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "objectSerializer-annotations",
+  module_name = "intellij.platform.objectSerializer.annotations",
+  visibility = ["//visibility:public"],
+  srcs = glob(["annotations/**/*.kt", "annotations/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8"
+)
+### auto-generated section `build intellij.platform.objectSerializer.annotations` end
+
+### auto-generated section `build intellij.platform.objectSerializer.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "objectSerializer-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "objectSerializer-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:junit4",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer_test",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "@lib//:ion",
+    "@lib//:fastutil-min",
+  ]
+)
+### auto-generated section `build intellij.platform.objectSerializer.tests` end

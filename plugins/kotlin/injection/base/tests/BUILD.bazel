@@ -1,0 +1,34 @@
+### auto-generated section `build kotlin.base.injection.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True
+)
+
+java_library(
+  name = "kotlin-base-injection-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-base-injection-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//platform/editor-ui-ex:editor-ex",
+    "@lib//:kotlinc_analysis-api",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test",
+    "//plugins/IntelliLang:langInjection",
+    "@lib//:kotlinc_kotlin-compiler-common",
+  ]
+)
+### auto-generated section `build kotlin.base.injection.tests` end

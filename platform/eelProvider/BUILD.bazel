@@ -1,28 +1,27 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.eel.provider` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "eel-provider",
   module_name = "intellij.platform.eel.provider",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:annotations",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlin-reflect",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util/base:util-base",
-    "@community//platform/extensions",
-    "@community//platform/util",
-    "@community//platform/eel",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/util/coroutines:util-coroutines",
-    "@community//platform/core-api:core",
-    "@libraries//:jna-platform",
-    "@libraries//:pty4j",
-    "@community//platform/ide-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+    "//platform/extensions",
+    "//platform/util",
+    "//platform/eel",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/coroutines",
+    "//platform/core-api:core",
+    "@lib//:jna",
+    "@lib//:pty4j",
+    "//platform/ide-core",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.eel.provider` end

@@ -1,21 +1,21 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.jsp.spi` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "jsp-spi",
   module_name = "intellij.jsp.spi",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//java/jsp-openapi:jsp",
-    "@community//java/openapi:java",
-    "@community//java/jsp-base-openapi:jsp-base",
+    "//java/jsp-openapi:jsp",
+    "//java/openapi:java",
+    "//java/jsp-base-openapi:jsp-base",
   ],
   exports = [
-    "@community//java/jsp-openapi:jsp",
-    "@community//java/openapi:java",
+    "//java/jsp-openapi:jsp",
+    "//java/openapi:java",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.jsp.spi` end

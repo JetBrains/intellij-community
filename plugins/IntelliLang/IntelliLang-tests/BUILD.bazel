@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.langInjection.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "langInjection-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "langInjection-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/testFramework",
+    "//plugins/IntelliLang:langInjection",
+    "//plugins/IntelliLang:xml-langInjection",
+    "//xml/impl",
+    "//plugins/yaml",
+    "//plugins/IntelliLang:java-langInjection",
+    "//jps/jps-builders:build",
+    "//jps/model-api:model",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "@lib//:assert_j",
+    "//plugins/IntelliLang/intellilang-jps-plugin:java-langInjection-jps",
+    "@lib//:asm",
+    "//platform/util/jdom",
+  ]
+)
+### auto-generated section `build intellij.platform.langInjection.tests` end

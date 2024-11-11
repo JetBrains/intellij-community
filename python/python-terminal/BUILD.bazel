@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.python.terminal` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "terminal_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "terminal",
+  module_name = "intellij.python.terminal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//python:python-community-impl",
+    "//plugins/terminal",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "//platform/lang-api:lang",
+  ],
+  runtime_deps = [":terminal_resources"]
+)
+### auto-generated section `build intellij.python.terminal` end

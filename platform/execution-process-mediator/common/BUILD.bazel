@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.execution.process.mediator.common` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "execution-process-mediator-common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "execution-process-mediator-common",
+  module_name = "intellij.execution.process.mediator.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:guava",
+    "@lib//:protobuf",
+    "@lib//:javax_annotation-api",
+    "//libraries/grpc",
+  ],
+  runtime_deps = [":execution-process-mediator-common_resources"]
+)
+
+kt_jvm_test(
+  name = "execution-process-mediator-common_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":execution-process-mediator-common"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:guava",
+    "@lib//:protobuf",
+    "@lib//:javax_annotation-api",
+    "@lib//:junit5",
+    "@lib//:execution_process_mediator_common_com_willowtreeapps_assertk_assertk-jvm",
+    "//libraries/grpc",
+  ],
+  runtime_deps = [":execution-process-mediator-common_resources"]
+)
+### auto-generated section `build intellij.execution.process.mediator.common` end

@@ -1,61 +1,63 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.java` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "java_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-java_library(
-  name = "compatibilityResources",
-  resources = glob(["compatibilityResources/**/*"], exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "java_resources_1",
+  files = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "java",
   module_name = "intellij.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/util",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/forms_rt:java-guiForms-rt",
-    "@community//platform/extensions",
-    "@community//platform/icons",
-    "@community//xml/openapi:xml",
-    "@community//platform/platform-api:ide",
-    "@community//platform/lang-api:lang",
-    "@community//platform/vcs-api:vcs",
-    "@community//xml/dom-openapi:xml-dom",
-    "@community//resources-en:java-resources-en",
-    "@community//java/java-psi-api:java-psi",
-    "@community//java/java-indexing-api:java-indexing",
-    "@community//java/java-analysis-api:java-analysis",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/core-ui",
-    "@community//platform/external-system-api:externalSystem",
-    "@community//platform/workspace/jps:workspace-jps",
-    "@community//platform/backend/workspace:backend-workspace",
-    "@libraries//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/extensions",
+    "//platform/icons",
+    "//xml/openapi:xml",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/vcs-api:vcs",
+    "//xml/dom-openapi:dom",
+    "//resources-en:java-resources-en",
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "//java/java-analysis-api:analysis",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "@lib//:kotlin-stdlib",
   ],
   exports = [
-    "@community//platform/util",
-    "@community//platform/extensions",
-    "@community//xml/openapi:xml",
-    "@community//platform/platform-api:ide",
-    "@community//platform/lang-api:lang",
-    "@community//platform/vcs-api:vcs",
-    "@community//resources-en:java-resources-en",
-    "@community//java/java-psi-api:java-psi",
-    "@community//java/java-indexing-api:java-indexing",
-    "@community//java/java-analysis-api:java-analysis",
+    "//platform/util",
+    "//platform/extensions",
+    "//xml/openapi:xml",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/vcs-api:vcs",
+    "//resources-en:java-resources-en",
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "//java/java-analysis-api:analysis",
   ],
   runtime_deps = [
-    ":resources",
-    ":compatibilityResources",
+    ":java_resources",
+    ":java_resources_1",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.java` end

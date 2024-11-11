@@ -1,49 +1,94 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.configurationStore.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "configurationStore-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "configurationStore-impl",
   module_name = "intellij.platform.configurationStore.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util",
-    "@community//platform/core-api:core",
-    "@community//platform/platform-api:ide",
-    "@community//platform/projectModel-impl",
-    "@community//platform/workspace/jps:workspace-jps",
-    "@community//platform/platform-impl:ide-impl",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/object-serializer:objectSerializer",
-    "@community//platform/service-container:serviceContainer",
-    "@community//platform/ide-core-impl",
-    "@libraries//:snakeyaml-engine",
-    "@community//platform/statistics",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/diff-api:diff",
-    "@community//platform/core-ui",
-    "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:util-xmlDom",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:hash4j",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@community//platform/backend/workspace:backend-workspace",
-    "@community//platform/settings",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/projectModel-impl",
+    "//platform/workspace/jps",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/service-container:serviceContainer",
+    "//platform/ide-core-impl",
+    "@lib//:snakeyaml-engine",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/diff-api:diff",
+    "//platform/core-ui",
+    "@lib//:aalto-xml",
+    "//platform/util/xmlDom",
+    "//platform/util/jdom",
+    "@lib//:hash4j",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/backend/workspace",
+    "//platform/settings",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":configurationStore-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.configurationStore.impl` end
+
+### auto-generated section `build intellij.platform.configurationStore.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "configurationStore-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "configurationStore-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:assert_j",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer_test",
+    "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "//platform/settings",
+    "//platform/settings-local",
+    "//platform/settings-local:settings-local_test",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//java/java-impl:impl",
+  ]
+)
+### auto-generated section `build intellij.platform.configurationStore.tests` end

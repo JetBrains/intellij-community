@@ -1,37 +1,38 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.testFramework.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
+jvm_resources(
+  name = "core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "testFramework-core",
+jvm_library(
+  name = "core",
   module_name = "intellij.platform.testFramework.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/util",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@community//platform/boot",
-    "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
-    "@libraries//:opentest4j",
-    "@libraries//:junit",
-    "@libraries//:junit-jupiter-api.provided",
-    "@community//java/java-runtime:java-rt",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:jackson-core",
-    "@libraries//:jackson-databind",
-    "@libraries//:jackson-module-kotlin",
-    "@libraries//:httpmime",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@community//platform/testFramework/teamCity:testFramework-teamCity",
+    "//platform/util",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/boot",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "@lib//:opentest4j",
+    "@lib//:junit4",
+    "@lib//:junit5.provided",
+    "//java/java-runtime:rt",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:http-client",
+    "@lib//:kotlinx-collections-immutable",
+    "//platform/testFramework/teamCity",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":core_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.testFramework.core` end

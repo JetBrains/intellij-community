@@ -1,0 +1,92 @@
+### auto-generated section `build intellij.settingsRepository` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "settingsRepository_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "settingsRepository",
+  module_name = "intellij.settingsRepository",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:jetbrains_intellij_deps_eclipse_jgit",
+    "@lib//:settings_repository_eclipse_jgit_ssh_apache_agent",
+    "@lib//:settings_repository_eclipse_jgit_ssh_apache",
+    "//platform/vcs-impl",
+    "//platform/projectModel-impl",
+    "@lib//:jzlib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/credential-store-ui:credentialStore-ui",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "@lib//:caffeine",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/coroutines",
+    "//platform/credential-store-impl:credentialStore-impl",
+    "@lib//:apache_sshd_osgi",
+  ],
+  exports = [
+    "@lib//:jetbrains_intellij_deps_eclipse_jgit",
+    "@lib//:settings_repository_eclipse_jgit_ssh_apache_agent",
+    "@lib//:settings_repository_eclipse_jgit_ssh_apache",
+    "@lib//:jzlib",
+    "@lib//:apache_sshd_osgi",
+  ],
+  runtime_deps = [":settingsRepository_resources"]
+)
+### auto-generated section `build intellij.settingsRepository` end
+
+### auto-generated section `build intellij.settingsRepository.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "settingsRepository-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "settingsRepository-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-impl",
+    "//platform/projectModel-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jna",
+    "@lib//:junit4",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/util/testSrc:tests_test",
+    "//plugins/settings-repository:settingsRepository",
+    "@lib//:assert_j",
+    "//platform/credential-store-ui:credentialStore-ui",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/configuration-store-impl:configurationStore-tests_test",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "//platform/workspace/jps",
+  ]
+)
+### auto-generated section `build intellij.settingsRepository.tests` end

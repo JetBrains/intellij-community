@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.python.community.testFramework` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "community-testFramework",
+  module_name = "intellij.python.community.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/testFramework",
+    "//python:python-community-impl",
+  ]
+)
+### auto-generated section `build intellij.python.community.testFramework` end

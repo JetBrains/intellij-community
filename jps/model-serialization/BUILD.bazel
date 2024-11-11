@@ -1,20 +1,54 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.jps.model.serialization` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "jps-model-serialization",
+jvm_resources(
+  name = "model-serialization_resources",
+  files = glob(["src/META-INF/services/org.jetbrains.jps.model.serialization.JpsSerializationManager", "src/META-INF/services/org.jetbrains.jps.model.serialization.JpsModelSerializerExtension"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "model-serialization",
   module_name = "intellij.platform.jps.model.serialization",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@community//platform/util",
-    "@community//jps/model-api:jps-model",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
+    "//platform/util",
+    "//jps/model-api:model",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+  ],
+  runtime_deps = [":model-serialization_resources"]
+)
+### auto-generated section `build intellij.platform.jps.model.serialization` end
+
+### auto-generated section `build intellij.platform.jps.model.serialization.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "model-serialization-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "model-serialization-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//jps/model-serialization",
+    "//jps/model-impl:model-tests_test",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/util/jdom",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.jps.model.serialization.tests` end

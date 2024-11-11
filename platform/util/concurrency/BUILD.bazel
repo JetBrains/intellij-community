@@ -1,21 +1,21 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.concurrency` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "concurrency",
   module_name = "intellij.platform.concurrency",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util",
-    "@community//platform/core-api:core",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/diagnostic",
-    "@community//platform/util/coroutines:util-coroutines",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "//platform/core-api:core",
+    "@lib//:fastutil-min",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.concurrency` end

@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.ide.ui.inspector` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-ui-inspector",
+  module_name = "intellij.platform.ide.ui.inspector",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "@lib//:miglayout-swing",
+    "@lib//:guava",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.ui.inspector` end

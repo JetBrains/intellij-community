@@ -1,43 +1,44 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
-)
+### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "11",
-  x_optin = ["kotlinx.serialization.ExperimentalSerializationApi"]
+  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
 )
 
-kt_jvm_library(
-  name = "diagnostic-telemetry-exporters",
+jvm_resources(
+  name = "telemetry-exporters_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "telemetry-exporters",
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "//:j11",
+  javac_opts = "@rules_jvm//:j11",
   kotlinc_opts = ":custom",
-  plugins = ["@libraries//:serialization_plugin"],
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:annotations",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@libraries//:opentelemetry-exporter-otlp-common",
-    "@community//platform/util/http:util-http",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util",
-    "@libraries//:jackson-core",
-    "@libraries//:jackson-databind",
-    "@libraries//:jackson-module-kotlin",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-protobuf-jvm",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-exporter-otlp-common",
+    "//platform/util/http",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-protobuf",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":telemetry-exporters_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` end

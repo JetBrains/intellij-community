@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.platform.workspace.jps.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "workspace-jps-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "workspace-jps-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:fastutil-min",
+    "//platform/lang-impl:lang-tests",
+    "//platform/workspace/storage/tests:workspace-storage-tests_test",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "@lib//:commons-lang3",
+    "//platform/util/jdom",
+    "//platform/workspace/storage/testEntities:workspace-storage-testEntities_test",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "@lib//:kotlin-test",
+    "//platform/backend/workspace",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/util/coroutines",
+    "@lib//:kotlinx-collections-immutable",
+    "//java/java-impl:impl",
+  ]
+)
+### auto-generated section `build intellij.platform.workspace.jps.tests` end

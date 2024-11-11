@@ -1,0 +1,28 @@
+### auto-generated section `build kotlin.bundled-compiler-plugins-support` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "bundled-compiler-plugins-support",
+  module_name = "kotlin.bundled-compiler-plugins-support",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "//platform/lang-api:lang",
+    "@lib//:kotlinc_allopen-compiler-plugin",
+    "@lib//:kotlinc_compose-compiler-plugin",
+    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc_sam-with-receiver-compiler-plugin",
+    "@lib//:kotlinc_noarg-compiler-plugin",
+    "@lib//:kotlinc_lombok-compiler-plugin",
+    "@lib//:kotlinc_assignment-compiler-plugin",
+    "@lib//:kotlinc_parcelize-compiler-plugin",
+    "@lib//:kotlinc_scripting-compiler-plugin",
+    "@lib//:kotlinc_js-plain-objects-compiler-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+  ]
+)
+### auto-generated section `build kotlin.bundled-compiler-plugins-support` end
