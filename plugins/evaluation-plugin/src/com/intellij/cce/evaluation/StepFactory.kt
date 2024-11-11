@@ -11,6 +11,7 @@ interface StepFactory {
   fun setupRegistryStep(): EvaluationStep
   fun setupSdkStep(): EvaluationStep?
   fun checkSdkConfiguredStep(): EvaluationStep?
+  fun codeExecutionStep(): EvaluationStep?
   fun finishEvaluationStep(): FinishEvaluationStep
   fun featureSpecificSteps(): List<EvaluationStep>
   fun featureSpecificPreliminarySteps(): List<EvaluationStep>

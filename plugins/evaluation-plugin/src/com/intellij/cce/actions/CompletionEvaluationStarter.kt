@@ -130,6 +130,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       shouldGenerateActions = true
       shouldInterpretActions = true
       shouldGenerateReports = true
+      shouldExecuteCode = true
     }
   }
 

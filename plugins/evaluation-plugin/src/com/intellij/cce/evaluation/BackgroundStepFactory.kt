@@ -45,6 +45,9 @@ class BackgroundStepFactory(
 
   override fun checkSdkConfiguredStep(): EvaluationStep? = environment.checkSdk
 
+  override fun codeExecutionStep(): EvaluationStep? =
+    CodeExecutionStep(config, environment, datasetContext)
+
   override fun finishEvaluationStep(): FinishEvaluationStep = HeadlessFinishEvaluationStep()
 
   override fun featureSpecificSteps(): List<EvaluationStep> = feature.getEvaluationSteps(config)
