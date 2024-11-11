@@ -14,8 +14,8 @@ import kotlinx.coroutines.withContext
 
 class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV3ProjectTypeSpecificSettings {
 
-  override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk) {
-    if (!generateWelcomeScript) return
+  override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): Result<Boolean> {
+    if (!generateWelcomeScript) return Result.success(false)
     val file = writeAction {
       PyWelcome.prepareFile(module.project, baseDir)
     }
@@ -24,6 +24,8 @@ class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV
         file.navigate(true)
       }
     }
+
+    return Result.success(true)
   }
 
   override fun toString(): String {

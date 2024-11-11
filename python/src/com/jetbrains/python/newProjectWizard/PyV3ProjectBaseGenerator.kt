@@ -56,7 +56,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       // Either base settings (which create venv) might generate some or type specific settings (like Django) may.
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
       ensureProjectViewExpanded(project)
-      typeSpecificSettings.generateProject(module, baseDir, sdk)
+      typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure { errorSink.emit(it.localizedMessage) }
       ensureProjectViewExpanded(project)
     }
   }
