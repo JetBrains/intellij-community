@@ -34,6 +34,8 @@ private class TreeViewModelImpl(
     onBufferOverflow = BufferOverflow.DROP_OLDEST,
   )
   private val pendingUpdates = ConcurrentHashMap<TreeNodeViewModelImpl, NodeUpdate>()
+  private val requestedSelection = AtomicReference<Collection<TreeNodeViewModel>>()
+  private val selectionFlow = MutableStateFlow(HashSet<TreeNodeViewModelImpl>())
   private val fakeRoot = TreeNodeViewModelImpl(
     parentImpl = null,
     nodeScope = treeScope,
@@ -45,6 +47,9 @@ private class TreeViewModelImpl(
 
   override val root: Flow<TreeNodeViewModel?>
     get() = fakeRoot.children.map { it.firstOrNull() }
+
+  override val selection: StateFlow<Set<TreeNodeViewModel>>
+    get() = selectionFlow
 
   init {
     treeScope.launch(CoroutineName("Updates of ${this@TreeViewModelImpl}")) {
@@ -70,15 +75,28 @@ private class TreeViewModelImpl(
             node.update(update)
           }
         }
+        val requestedSelection = requestedSelection.getAndSet(null) ?: selectionFlow.value
+        val newSelection = HashSet<TreeNodeViewModelImpl>(requestedSelection.size)
+        for (nodeToSelect in requestedSelection) {
+          if (nodeToSelect is TreeNodeViewModelImpl && nodeToSelect.canSelect()) {
+            newSelection.add(nodeToSelect)
+          }
+        }
+        selectionFlow.emit(newSelection)
         check(completedRequests.tryEmit(epoch))
       }
     }
+    fakeRoot.setExpanded(true)
   }
 
   private fun TreeNodeViewModelImpl.schedule(update: NodeUpdate) {
     val existingUpdate = pendingUpdates.remove(this)
     val newUpdate = existingUpdate.merge(update)
     pendingUpdates[this] = newUpdate
+    requestUpdate()
+  }
+
+  private fun requestUpdate() {
     val newEpoch = updateEpoch.incrementAndGet()
     check(updateRequests.tryEmit(newEpoch))
   }
@@ -104,6 +122,11 @@ private class TreeViewModelImpl(
     else {
       node.invalidate(recursive)
     }
+  }
+
+  override fun setSelection(nodes: Collection<TreeNodeViewModel>) {
+    requestedSelection.set(nodes)
+    requestUpdate()
   }
 
   override suspend fun awaitUpdates() {
@@ -155,6 +178,15 @@ private class TreeNodeViewModelImpl(
   private val childrenLoaded = AtomicBoolean()
   private val childrenFlow = MutableSharedFlow<List<TreeNodeViewModelImpl>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val lastComputedChildren = AtomicReference<List<TreeNodeViewModelImpl>>()
+
+  private val isVisible: Boolean
+    get() =
+      if (parentImpl == null) {
+        true
+      }
+      else {
+        parentImpl.isVisible && parentImpl.lastComputedState.get()?.isExpanded == true
+      }
 
   // We use a fake permanent root here to simplify a lot of code.
   // To the outside world, the 2nd level root is visible as the real root.
@@ -247,6 +279,19 @@ private class TreeNodeViewModelImpl(
       stateFlow.resetReplayCache()
     }
     schedule(NodeUpdate(loadPresentation = reloadPresentation, loadChildren = reloadChildren))
+  }
+
+  suspend fun canSelect(): Boolean {
+    val checkJob = nodeScope.async(CoroutineName("Checking if $this can be selected")) {
+      isVisible
+    }
+    return try {
+      checkJob.await()
+    }
+    catch (e: CancellationException) {
+      currentCoroutineContext().ensureActive() // Has the CALLER been canceled?
+      false // Cannot select a canceled node.
+    }
   }
 
   suspend fun update(update: NodeUpdate) {

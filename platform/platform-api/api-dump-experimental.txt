@@ -836,9 +836,12 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
 - com.intellij.ui.treeStructure.BgtAwareTreeModel
 - javax.swing.tree.TreeModel
+- a:addTreeSelectionListener(javax.swing.event.TreeSelectionListener):V
 - a:getChild(java.lang.Object,I):com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getRoot():com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getShowLoadingNode():Z
+- a:getViewModel():com.intellij.ui.treeStructure.TreeViewModel
+- a:removeTreeSelectionListener(javax.swing.event.TreeSelectionListener):V
 - a:setShowLoadingNode(Z):V
 f:com.intellij.ui.treeStructure.TreeSwingModelKt
 - *sf:TreeSwingModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeViewModel):com.intellij.ui.treeStructure.TreeSwingModel
@@ -846,7 +849,9 @@ f:com.intellij.ui.treeStructure.TreeSwingModelKt
 - a:accept(com.intellij.ui.treeStructure.TreeViewModelVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
 - a:getDomainModel():com.intellij.ui.treeStructure.TreeDomainModel
 - a:getRoot():kotlinx.coroutines.flow.Flow
+- a:getSelection():kotlinx.coroutines.flow.StateFlow
 - a:invalidate(com.intellij.ui.treeStructure.TreeNodeViewModel,Z):V
+- a:setSelection(java.util.Collection):V
 f:com.intellij.ui.treeStructure.TreeViewModelKt
 - *sf:TreeViewModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeDomainModel):com.intellij.ui.treeStructure.TreeViewModel
 *:com.intellij.ui.treeStructure.TreeViewModelVisitor

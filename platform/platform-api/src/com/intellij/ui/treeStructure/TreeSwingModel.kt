@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.ui.tree.TreeVisitor
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreeModel
 
 @ApiStatus.Experimental
@@ -13,7 +14,10 @@ fun TreeSwingModel(coroutineScope: CoroutineScope, viewModel: TreeViewModel): Tr
 
 @ApiStatus.Experimental
 interface TreeSwingModel : TreeModel, TreeVisitor.LoadingAwareAcceptor, BgtAwareTreeModel {
+  val viewModel: TreeViewModel
   var showLoadingNode: Boolean
+  fun addTreeSelectionListener(listener: TreeSelectionListener)
+  fun removeTreeSelectionListener(listener: TreeSelectionListener)
   override fun getRoot(): TreeNodeViewModel?
   override fun getChild(parent: Any?, index: Int): TreeNodeViewModel?
 }

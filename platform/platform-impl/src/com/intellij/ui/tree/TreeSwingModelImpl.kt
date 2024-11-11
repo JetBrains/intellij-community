@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 import javax.swing.event.TreeModelEvent
 import javax.swing.event.TreeModelListener
+import javax.swing.event.TreeSelectionEvent
+import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreePath
 
 internal class TreeSwingModelFactoryImpl : TreeSwingModelFactory {
@@ -30,10 +32,11 @@ internal class TreeSwingModelFactoryImpl : TreeSwingModelFactory {
 
 private class TreeSwingModelImpl(
   parentScope: CoroutineScope,
-  private val viewModel: TreeViewModel,
+  override val viewModel: TreeViewModel,
 ) : TreeSwingModel, CachedTreePresentationSupport {
   private val treeScope = parentScope.childScope("Root of $this", Dispatchers.EDT)
   private val listeners = CopyOnWriteArrayList<TreeModelListener>()
+  private val selectionListeners = CopyOnWriteArrayList<TreeSelectionListener>()
   private var root: Node? = null
   // These things must be thread-safe because of the "cancellation can happen anywhere, anytime" thing.
   private val nodes = ConcurrentHashMap<TreeNodeViewModel, Node>()
@@ -61,6 +64,16 @@ private class TreeSwingModelImpl(
           treeStructureChanged(root)
           if (root != null) {
             markPublished(root)
+          }
+        }
+      }
+    }
+    treeScope.launch(CoroutineName("Selection updates of $this")) {
+      viewModel.selection.collectLatest { selection ->
+        if (selectionListeners.isNotEmpty()) {
+          val event = TreeSelectionEvent(this@TreeSwingModelImpl, selection.map { it.path() }.toTypedArray(), null, null, null)
+          for (listener in selectionListeners) {
+            listener.valueChanged(event)
           }
         }
       }
@@ -278,6 +291,14 @@ private class TreeSwingModelImpl(
 
   override fun removeTreeModelListener(l: TreeModelListener) {
     listeners.remove(l)
+  }
+
+  override fun addTreeSelectionListener(listener: TreeSelectionListener) {
+    selectionListeners.add(0, listener) // Swing assumes the reverse order
+  }
+
+  override fun removeTreeSelectionListener(listener: TreeSelectionListener) {
+    selectionListeners.remove(listener)
   }
 
   override fun toString(): String {

@@ -6,6 +6,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.TreeVisitor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -17,7 +18,9 @@ fun TreeViewModel(coroutineScope: CoroutineScope, domainModel: TreeDomainModel):
 interface TreeViewModel {
   val domainModel: TreeDomainModel
   val root: Flow<TreeNodeViewModel?>
+  val selection: StateFlow<Set<TreeNodeViewModel>>
   fun invalidate(node: TreeNodeViewModel?, recursive: Boolean)
+  fun setSelection(nodes: Collection<TreeNodeViewModel>)
   suspend fun accept(visitor: TreeViewModelVisitor, allowLoading: Boolean): TreeNodeViewModel?
   @ApiStatus.Internal
   suspend fun awaitUpdates()

@@ -45,7 +45,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 import static java.util.Collections.emptyList;
 
@@ -625,6 +624,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     var model = treeModel;
     if (TREE_MODEL_PROPERTY.equals(propertyName)) {
+      if (oldValue instanceof TreeSwingModel swingModel && treeModelListener instanceof TreeSelectionListener selectionListener) {
+        swingModel.removeTreeSelectionListener(selectionListener);
+      }
       if (oldValue instanceof CachedTreePresentationSupport cps) {
         cps.setCachedPresentation(null);
       }
@@ -637,6 +639,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       if (newValue instanceof CachedTreePresentationSupport cps && expandImpl != null) {
         cps.setCachedPresentation(expandImpl.getCachedPresentation());
+      }
+      if (newValue instanceof TreeSwingModel swingModel && treeModelListener instanceof TreeSelectionListener selectionListener) {
+        swingModel.addTreeSelectionListener(selectionListener);
       }
     }
     super.firePropertyChange(propertyName, oldValue, newValue);
@@ -919,31 +924,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   protected TreeModelListener createTreeModelListener() {
     // Can't just create a listener here because this function
     // is called from a base class constructor, so our class isn't initialized yet.
-    return new TreeModelListener() {
-
-      private @NotNull LazyInitializer.LazyValue<@NotNull TreeModelListener> delegate = LazyInitializer.create(() -> {
-        if (expandImpl != null) {
-          return expandImpl.createTreeModelListener();
-        }
-        else {
-          return Tree.super.createTreeModelListener();
-        }
-      });
-
-      private @NotNull TreeModelListener delegate() { return delegate.get();  }
-
-      @Override
-      public void treeNodesChanged(TreeModelEvent e) { delegate().treeNodesChanged(e); }
-
-      @Override
-      public void treeNodesInserted(TreeModelEvent e) { delegate().treeNodesInserted(e); }
-
-      @Override
-      public void treeNodesRemoved(TreeModelEvent e) { delegate().treeNodesRemoved(e); }
-
-      @Override
-      public void treeStructureChanged(TreeModelEvent e) { delegate().treeStructureChanged(e); }
-    };
+    return new MyTreeModelListener();
   }
 
   private void blockAutoScrollFromSource() {
@@ -956,7 +937,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     ClientProperty.remove(this, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 
-  private static class MySelectionModel extends DefaultTreeSelectionModel {
+  private class MySelectionModel extends DefaultTreeSelectionModel {
 
     private TreePath[] myHeldSelection;
 
@@ -965,6 +946,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (myHeldSelection == null) {
         ActivityTracker.getInstance().inc();
         super.fireValueChanged(e);
+        if (!applyingViewModelChanges.get() && treeModel instanceof TreeSwingModel swingModel) {
+          var newSelection = new ArrayList<TreeNodeViewModel>();
+          for (TreePath path : getSelectionPaths()) {
+            if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+              newSelection.add(viewModel);
+            }
+          }
+          swingModel.getViewModel().setSelection(newSelection);
+        }
       }
     }
 
@@ -1822,26 +1812,26 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       return new TreeModelListenerImpl();
     }
 
-    private class TreeModelListenerImpl implements TreeModelListener {
+    private class TreeModelListenerImpl implements TreeModelListener, TreeSelectionListener {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
         var path = e.getTreePath();
-        applyViewModelChange(path, viewModel -> {
-          Tree.this.setExpandedState(path, viewModel.stateSnapshot().isExpanded());
-        });
+        if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+          applyViewModelChange(() -> {
+            Tree.this.setExpandedState(path, viewModel.stateSnapshot().isExpanded());
+          });
+        }
       }
 
-      private void applyViewModelChange(@NotNull TreePath path, @NotNull Consumer<@NotNull TreeNodeViewModel> viewModelChangeProcessor) {
-        if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
-          if (!applyingViewModelChanges.compareAndSet(false, true)) {
-            throw new IllegalStateException("Already applying a view model change, changes should not be recursive, it's a bug");
-          }
-          try {
-            viewModelChangeProcessor.accept(viewModel);
-          }
-          finally {
-            applyingViewModelChanges.set(false);
-          }
+      private void applyViewModelChange(@NotNull Runnable runnable) {
+        if (!applyingViewModelChanges.compareAndSet(false, true)) {
+          throw new IllegalStateException("Already applying a view model change, changes should not be recursive, it's a bug");
+        }
+        try {
+          runnable.run();
+        }
+        finally {
+          applyingViewModelChanges.set(false);
         }
       }
 
@@ -1934,6 +1924,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         }
       }
+
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        applyViewModelChange(() -> {
+          Tree.this.setSelectionPaths(e.getPaths());
+        });
+      }
     }
   }
 
@@ -1982,4 +1979,35 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  private class MyTreeModelListener implements TreeModelListener, TreeSelectionListener {
+    private final @NotNull LazyInitializer.LazyValue<@NotNull TreeModelListener> delegate = LazyInitializer.create(() -> {
+      if (expandImpl != null) {
+        return expandImpl.createTreeModelListener();
+      }
+      else {
+        return Tree.super.createTreeModelListener();
+      }
+    });
+
+    private @NotNull TreeModelListener delegate() { return delegate.get();  }
+
+    @Override
+    public void treeNodesChanged(TreeModelEvent e) { delegate().treeNodesChanged(e); }
+
+    @Override
+    public void treeNodesInserted(TreeModelEvent e) { delegate().treeNodesInserted(e); }
+
+    @Override
+    public void treeNodesRemoved(TreeModelEvent e) { delegate().treeNodesRemoved(e); }
+
+    @Override
+    public void treeStructureChanged(TreeModelEvent e) { delegate().treeStructureChanged(e); }
+
+    @Override
+    public void valueChanged(TreeSelectionEvent e) {
+      if (delegate() instanceof TreeSelectionListener treeSelectionListener) {
+        treeSelectionListener.valueChanged(e);
+      }
+    }
+  }
 }
