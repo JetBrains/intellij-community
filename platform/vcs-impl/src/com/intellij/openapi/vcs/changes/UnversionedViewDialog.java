@@ -1,26 +1,25 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
-public class UnversionedViewDialog extends SpecificFilesViewDialog {
+public class UnversionedViewDialog extends SpecificFilesViewDialog.SpecificFilePathsViewDialog {
   private static final String TOOLBAR_GROUP = "Unversioned.Files.Dialog";
   private static final String POPUP_GROUP = "Unversioned.Files.Dialog.Popup";
 
   public UnversionedViewDialog(@NotNull Project project) {
-    super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
+    super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY,
+          () -> ChangeListManager.getInstance(project).getUnversionedFilesPaths());
   }
 
   @Override
@@ -44,11 +43,5 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
     ActionGroup popupGroup = getUnversionedPopupGroup();
     recursiveRegisterShortcutSet(popupGroup, component, null);
     return popupGroup;
-  }
-
-  @NotNull
-  @Override
-  protected List<FilePath> getFiles() {
-    return ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
   }
 }

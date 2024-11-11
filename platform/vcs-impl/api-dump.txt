@@ -985,7 +985,6 @@ c:com.intellij.openapi.vcs.changes.IgnoredViewDialog
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:getDimensionServiceKey():java.lang.String
-- p:getFiles():java.util.List
 - getPreferredFocusedComponent():javax.swing.JComponent
 f:com.intellij.openapi.vcs.changes.LastUnchangedContentTracker
 - <init>():V
@@ -1078,7 +1077,6 @@ c:com.intellij.openapi.vcs.changes.UnversionedViewDialog
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:getDimensionServiceKey():java.lang.String
-- p:getFiles():java.util.List
 - getPreferredFocusedComponent():javax.swing.JComponent
 - s:getUnversionedPopupGroup():com.intellij.openapi.actionSystem.ActionGroup
 - s:getUnversionedToolbarGroup():com.intellij.openapi.actionSystem.ActionGroup
@@ -2619,11 +2617,17 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 - isShowingLocalChanges():Z
 - setBackgroundInsets(com.intellij.util.ui.JBInsets):V
 - setIcon(com.intellij.openapi.vcs.FilePath,Z):V
-a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilePathsNode
+c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilePathsNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
+- p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
+c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilesNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
+- p:<init>(java.lang.Object,java.util.Collection,I,java.lang.Runnable):V
+a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - pf:myDialogShower:java.lang.Runnable
 - pf:myIsMany:Z
-- p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
+- p:<init>(java.lang.Object,java.util.Collection,I,java.lang.Runnable):V
 - getDirectoryCount():I
 - getFileCount():I
 - isManyFiles():Z
@@ -2692,6 +2696,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - sf:IGNORED_FILE_PATHS_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:LOCALLY_DELETED_CHANGES:com.intellij.openapi.actionSystem.DataKey
 - sf:MISSING_FILES_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:MODIFIED_WITHOUT_EDITING_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:UNVERSIONED_FILE_PATHS_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,Z):V
 - dropSelectionButUnderPoint(java.awt.Point):V

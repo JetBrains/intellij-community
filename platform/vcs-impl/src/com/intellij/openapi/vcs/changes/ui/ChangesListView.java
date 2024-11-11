@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.FileSelectInContext;
@@ -52,6 +52,8 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     = DataKey.create("ChangeListView.ExactlySelectedFiles");
   @NonNls public static final DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY
     = DataKey.create("ChangeListView.IgnoredFiles");
+  @NonNls public static final DataKey<Iterable<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY
+    = DataKey.create("ChangeListView.ModifiedWithoutEditingFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY
     = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES

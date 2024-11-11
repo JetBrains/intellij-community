@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -208,6 +208,18 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
+  private TreeModelBuilder insertSpecificFileNodeToModel(@NotNull List<? extends VirtualFile> specificFiles,
+                                                         @NotNull ChangesBrowserSpecificFilesNode<?> node,
+                                                         @NotNull FileStatus status) {
+    insertSubtreeRoot(node);
+    if (!node.isManyFiles()) {
+      node.markAsHelperNode();
+      insertLocalFileIntoNode(specificFiles, node, status);
+    }
+    return this;
+  }
+
+  @NotNull
   public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists,
                                          boolean skipSingleDefaultChangeList,
                                          @Nullable Function<? super ChangeNodeDecorator, ? extends ChangeNodeDecorator> changeDecoratorProvider) {
@@ -262,7 +274,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
   @NotNull
   public TreeModelBuilder setModifiedWithoutEditing(@NotNull List<? extends VirtualFile> modifiedWithoutEditing) {
-    return setVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
+    assert myProject != null;
+    if (ContainerUtil.isEmpty(modifiedWithoutEditing)) return this;
+    ModifiedWithoutEditingNode node = new ModifiedWithoutEditingNode(myProject, modifiedWithoutEditing);
+    return insertSpecificFileNodeToModel(modifiedWithoutEditing, node, FileStatus.HIJACKED);
   }
 
   @NotNull
@@ -319,6 +334,15 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
     List<FilePath> sortedFilePaths = sorted(files, PATH_COMPARATOR);
     for (FilePath filePath : sortedFilePaths) {
       insertChangeNode(filePath, subtreeRoot, ChangesBrowserNode.createFilePath(filePath, status));
+    }
+  }
+
+  private void insertLocalFileIntoNode(@NotNull Collection<? extends VirtualFile> files,
+                                       @NotNull ChangesBrowserNode<?> subtreeRoot,
+                                       @NotNull FileStatus status) {
+    List<VirtualFile> sortedFiles = sorted(files, FILE_COMPARATOR);
+    for (VirtualFile file : sortedFiles) {
+      insertChangeNode(file, subtreeRoot, ChangesBrowserNode.createFile(myProject, file));
     }
   }
 
