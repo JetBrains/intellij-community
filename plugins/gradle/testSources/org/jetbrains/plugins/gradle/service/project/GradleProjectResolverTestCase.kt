@@ -6,10 +6,14 @@ import com.intellij.build.issue.BuildIssue
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.platform.externalSystem.testFramework.utils.module.ExternalSystemSourceRootAssertion
+import com.intellij.platform.testFramework.treeAssertion.SimpleTree
+import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.treeAssertion.buildTree
 import com.intellij.testFramework.utils.module.assertEqualsUnordered
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.model.BuildIdentifier
@@ -51,13 +55,13 @@ abstract class GradleProjectResolverTestCase {
     return MockProjectResolverContext(models)
   }
 
-  fun createModuleNode(): DataNode<ModuleData> {
-    val moduleData = ModuleData("undefined", GradleConstants.SYSTEM_ID, "undefined", "undefined", "undefined", "undefined")
+  fun createModuleNode(moduleName: String): DataNode<ModuleData> {
+    val moduleData = ModuleData("undefined", GradleConstants.SYSTEM_ID, "undefined", moduleName, "undefined", "undefined")
     return DataNode(ProjectKeys.MODULE, moduleData, null)
   }
 
   fun createSourceSetNode(sourceSetName: String): DataNode<GradleSourceSetData> {
-    val sourceSetData = GradleSourceSetData("undefined", "undefined", "undefined:$sourceSetName", "undefined", "undefined", "undefined")
+    val sourceSetData = GradleSourceSetData("undefined", "undefined", "undefined:$sourceSetName", sourceSetName, "undefined", "undefined")
     return DataNode(GradleSourceSetData.KEY, sourceSetData, null)
   }
 
@@ -66,37 +70,35 @@ abstract class GradleProjectResolverTestCase {
     return DataNode(ProjectKeys.CONTENT_ROOT, contentRoot, null)
   }
 
-  fun assertContentRoots(moduleNode: DataNode<ModuleData>, vararg expectedContentRoots: Path) {
-    val actualContentRoots = getContentRoots(moduleNode)
-    assertEqualsUnordered(expectedContentRoots.toSet(), actualContentRoots.keys)
+  fun assertModuleNodeEquals(expectedModuleNode: DataNode<ModuleData>, actualModuleNode: DataNode<ModuleData>) {
+    val expectedModuleTree = getModuleSimpleTree(expectedModuleNode)
+    val actualModuleTree = getModuleSimpleTree(actualModuleNode)
+    SimpleTreeAssertion.assertUnorderedTreeEquals(expectedModuleTree, actualModuleTree)
   }
 
-  fun assertSourceRoots(
-    moduleNode: DataNode<ModuleData>,
-    contentRootPath: Path,
-    configure: ExternalSystemSourceRootAssertion<Path>.() -> Unit,
-  ) {
-    val contentRoots = getContentRoots(moduleNode)
-    val contentRoot = contentRoots[contentRootPath]
-    Assertions.assertNotNull(contentRoot) {
-      "The content root '$contentRootPath' doesn't exist."
-    }
-    assertSourceRoots(contentRoot!!, configure)
-  }
-
-  private fun assertSourceRoots(contentRoot: ContentRootData, configure: ExternalSystemSourceRootAssertion<Path>.() -> Unit) {
-    ExternalSystemSourceRootAssertion.assertSourceRoots(configure) { type, expectedSourcePaths ->
-      val sourcePaths = contentRoot.getPaths(type).map { Path.of(it.path) }
-      assertEqualsUnordered(expectedSourcePaths, sourcePaths) {
-        "Source root of type $type in $contentRoot"
+  private fun getModuleSimpleTree(moduleNode: DataNode<ModuleData>): SimpleTree<Nothing?> {
+    return buildTree {
+      root(moduleNode.data.internalName, null) {
+        for (sourceSetNode in ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY)) {
+          node(sourceSetNode.data.internalName, null) {
+            for (contentRootNode in ExternalSystemApiUtil.findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
+              node(contentRootNode.data.rootPath, null) {
+                for (sourceRootType in ExternalSystemSourceType.entries) {
+                  val sourceRoots = contentRootNode.getData().getPaths(sourceRootType)
+                  if (sourceRoots.isNotEmpty()) {
+                    node(sourceRootType.name, null) {
+                      for (sourceRoot in sourceRoots) {
+                        node(sourceRoot.path, null)
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
-  }
-
-  private fun getContentRoots(moduleNode: DataNode<ModuleData>): Map<Path, ContentRootData> {
-    return ExternalSystemApiUtil.findAll(moduleNode, GradleSourceSetData.KEY)
-      .flatMap { ExternalSystemApiUtil.findAll(it, ProjectKeys.CONTENT_ROOT) }
-      .associate { Path.of(it.data.rootPath) to it.data }
   }
 
   private class MockProjectResolverContext(private val models: GradleIdeaModelHolder) : ProjectResolverContext {
