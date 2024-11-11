@@ -689,6 +689,7 @@ c:com.intellij.notification.Notification
 - isExpired():Z
 - isImportant():Z
 - isImportantSuggestion():Z
+- isRemoveWhenExpired():Z
 - isSuggestionType():Z
 - notify(com.intellij.openapi.project.Project):V
 - setBalloon(com.intellij.openapi.ui.popup.Balloon):V
@@ -703,6 +704,7 @@ c:com.intellij.notification.Notification
 - setImportantSuggestion(Z):com.intellij.notification.Notification
 - setListener(com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - setRemindLaterHandlerId(java.lang.String):com.intellij.notification.Notification
+- setRemoveWhenExpired(Z):com.intellij.notification.Notification
 - setSubtitle(java.lang.String):com.intellij.notification.Notification
 - setSuggestionType(Z):com.intellij.notification.Notification
 - setTitle(java.lang.String):com.intellij.notification.Notification
