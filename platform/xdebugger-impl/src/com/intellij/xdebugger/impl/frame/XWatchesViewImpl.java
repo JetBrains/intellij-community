@@ -67,8 +67,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
@@ -203,6 +203,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
             toolbar.setReservePlaceAutoPopupIcon(false);
             toolbar.setTargetComponent(tree);
             XDebuggerEmbeddedComboBox<XExpression> comboBox = new XDebuggerEmbeddedComboBox<>(model, width);
+            comboBox.setName("Debugger.EvaluateExpression.combobox");
             comboBox.setExtension(toolbar);
             return comboBox;
           }

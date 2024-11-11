@@ -415,10 +415,6 @@
       <add-to-group group-id="DebuggingActionsGroup"/>
     </action>
 
-    <action id="ShowDemoAltClickPromoter" internal="true" class="com.intellij.debugger.actions.ShowDemoAltClickPromoterAction" icon="AllIcons.General.Gear">
-      <add-to-group group-id="DebuggingActionsGroup"/>
-    </action>
-
     <group id="Internal.Java" popup="true" internal="true" compact="true">
       <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"/>
 
