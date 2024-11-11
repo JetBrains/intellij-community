@@ -162,9 +162,20 @@ abstract class DeprecatedSymbolUsageFixBase(
             val target = element.mainReference.resolve()?.let { it.navigationElement ?: it }
             when (target) {
                 is KtPrimaryConstructor, is KtClassLikeDeclaration -> {
-                    val psiFactory = KtPsiFactory(element.project)
+                    val project = element.project
+                    val psiFactory = KtPsiFactory(project)
                     val typeReference = try {
-                        psiFactory.createType(replaceWith.pattern)
+                        psiFactory.createType(replaceWith.pattern) // check if valid type
+
+                        val codeFragment = KtExpressionCodeFragment(
+                            project,
+                            "fragment.kt",
+                            "_ is ${replaceWith.pattern}",
+                            replaceWith.imports.joinToString().takeIf { it.isNotEmpty() },
+                            retrieveContext(target)
+                        )
+
+                        (codeFragment.getContentElement() as? KtIsExpression)?.typeReference
                     } catch (e: Exception) {
                         if (e is ControlFlowException) throw e
                         val replacement = createReplacement(target as KtDeclaration, element, replaceWith) ?: return null
@@ -172,9 +183,9 @@ abstract class DeprecatedSymbolUsageFixBase(
                         return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
                     }
 
-                    val typeElement = typeReference.typeElement as? KtUserType ?: return null
+                    val typeElement = typeReference?.typeElement as? KtUserType ?: return null
 
-                    return ClassUsageReplacementStrategy(typeElement, null, element.project)
+                    return ClassUsageReplacementStrategy(typeElement, null, project)
                 }
 
                 is KtCallableDeclaration -> {
@@ -192,17 +203,25 @@ abstract class DeprecatedSymbolUsageFixBase(
             element: KtReferenceExpression,
             replaceWith: ReplaceWithData
         ): CodeToInline? {
-            val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression
-            ?: target.valueParameterList?.parameters?.lastOrNull()) else null)
-                ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
-                ?: target
-            val psiFactory = KtPsiFactory(element.project)
-            val expression =
-                psiFactory.createExpressionCodeFragment(replaceWith.pattern, context).getContentElement() ?: return null
+            val context = retrieveContext(target)
+            val project = element.project
+
+            //include imports
+            val codeFragment = KtExpressionCodeFragment(project, "fragment.kt", replaceWith.pattern, replaceWith.imports.joinToString().takeIf { it.isNotEmpty() }, context)
+
+            val expression = codeFragment.getContentElement() ?: return null
 
             return buildCodeToInline(target, expression, false, null, object : CodeToInlineBuilder(original = target) {
                 override fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {}
             })
+        }
+
+        private fun retrieveContext(target: KtDeclaration): KtExpression {
+            val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression
+            ?: target.valueParameterList?.parameters?.lastOrNull()) else null)
+                        ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
+                        ?: target
+            return context
         }
     }
 }
@@ -218,7 +237,7 @@ fun fetchReplaceWithPattern(
         ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value
             ?: return null
     val imports =
-        (replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaAnnotationValue.ArrayValue)?.values?.mapNotNull { ((it as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value }
+        (replaceWithValue.arguments.find { it.name.asString() == "imports" }?.expression as? KaAnnotationValue.ArrayValue)?.values?.mapNotNull { ((it as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value }
             ?: emptyList()
 
     return ReplaceWithData(pattern, imports, true)

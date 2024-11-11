@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isNull
@@ -195,7 +196,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val parent = expression.parent
         if (parent is KtValueArgumentName || parent is KtCallableReferenceExpression) return@forEachDescendantOfType
         val resolve = expression.mainReference.resolve()
-        val target = resolve as? KtNamedDeclaration ?: resolve as? PsiMember
+        val target = (resolve as? KtObjectDeclaration)?.let { if (it.isCompanion()) it.containingClass() else it } ?: resolve as? KtNamedDeclaration ?: resolve as? PsiMember
 
         if (target is KtParameter) {
             fun getParameterName(): Name = if (isAnonymousFunction && target.ownerFunction == originalDeclaration) {

@@ -242,6 +242,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 pattern = pattern,
                 testMethodName = testMethodName,
             )
+            model(
+                "$idea/quickfix/deprecatedSymbolUsage/imports",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
         }
 
         testClass<AbstractHighLevelQuickFixMultiModuleTest> {

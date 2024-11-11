@@ -1112,4 +1112,73 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/wrongTypeMultiple.before.Main.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports")
+    public static class Imports extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("addImportForCompanionObject.before.Main.kt")
+        public void testAddImportForCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject.before.Main.kt");
+        }
+
+        @TestMetadata("addImportForCompanionObject2.before.Main.kt")
+        public void testAddImportForCompanionObject2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject2.before.Main.kt");
+        }
+
+        @TestMetadata("addImportForOperator.before.Main.kt")
+        public void testAddImportForOperator() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportForOperator.before.Main.kt");
+        }
+
+        @TestMetadata("addImportFromSamePackage.before.Main.kt")
+        public void testAddImportFromSamePackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage.before.Main.kt");
+        }
+
+        @TestMetadata("addImportFromSamePackage2.before.Main.kt")
+        public void testAddImportFromSamePackage2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage2.before.Main.kt");
+        }
+
+        @TestMetadata("addImportFromSamePackage3.before.Main.kt")
+        public void testAddImportFromSamePackage3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage3.before.Main.kt");
+        }
+
+        @TestMetadata("addImports.before.Main.kt")
+        public void testAddImports() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImports.before.Main.kt");
+        }
+
+        @TestMetadata("addImportsSimple.before.Main.kt")
+        public void testAddImportsSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportsSimple.before.Main.kt");
+        }
+
+        @TestMetadata("addImportsWithSameName.before.Main.kt")
+        public void testAddImportsWithSameName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportsWithSameName.before.Main.kt");
+        }
+
+        @TestMetadata("changeImports.before.Main.kt")
+        public void testChangeImports() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/changeImports.before.Main.kt");
+        }
+
+        @TestMetadata("rootPackage.before.Main.kt")
+        public void testRootPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/rootPackage.before.Main.kt");
+        }
+    }
 }
