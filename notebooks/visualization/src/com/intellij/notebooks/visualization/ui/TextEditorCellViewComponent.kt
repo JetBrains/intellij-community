@@ -206,10 +206,6 @@ class TextEditorCellViewComponent(
     }
   }
 
-  override fun doViewportChange() {
-    if (gutterIconStickToFirstVisibleLine) updateGutterIcons(cell.gutterAction.get())
-  }
-
   private fun isInlaysBroken(): Boolean {
     val offset = editor.document.getLineEndOffset(interval.lines.last)
     for (inlay in presentationToInlay.values) {
