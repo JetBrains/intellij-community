@@ -580,6 +580,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testAndChainLambdaSingleLine() { doTest(); }
 
   public void testInlineDoubleCall() { doTest(); }
+  public void testInlineNestedCall() { doTest(); }
 
   public void testTernaryBranch() { doTest(); }
   public void testTernaryBranchCollapsible() { doTest(); }

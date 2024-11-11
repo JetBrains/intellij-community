@@ -543,7 +543,11 @@ public final class InlineUtil implements CommonJavaInlineUtil {
         if (!(list.getParent() instanceof PsiCallExpression call)) return false;
         PsiExpression qualifier = call instanceof PsiMethodCallExpression methodCall ? methodCall.getMethodExpression().getQualifierExpression() :
                                   call instanceof PsiNewExpression newExpression ? newExpression.getQualifier() : null;
-        if (qualifier != null && !ExpressionUtils.isSafelyRecomputableExpression(qualifier)) return false;
+        if (qualifier != null &&
+            !(ExpressionUtils.isSafelyRecomputableExpression(qualifier) ||
+              qualifier instanceof PsiReferenceExpression qualifierRef && qualifierRef.resolve() instanceof PsiClass)) {
+          return false;
+        }
         cur = call;
       } else if (parent instanceof PsiAssignmentExpression assign && assign.getRExpression() == cur) {
         PsiExpression lExpression = assign.getLExpression();
