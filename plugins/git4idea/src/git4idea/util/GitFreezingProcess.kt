@@ -11,3 +11,7 @@ import org.jetbrains.annotations.Nls
  */
 class GitFreezingProcess(project: Project, operationTitle: @Nls String, runnable: Runnable) :
   VcsFreezingProcess(project, GitBundle.message("local.changes.freeze.message.git.operation.prefix", operationTitle), runnable)
+
+suspend fun gitFreezingProcess(project: Project, operationTitle: @Nls String, action: suspend () -> Unit) {
+  VcsFreezingProcess.runFreezing(project, GitBundle.message("local.changes.freeze.message.git.operation.prefix", operationTitle), action)
+}

@@ -17,29 +17,34 @@ import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
+import git4idea.util.gitFreezingProcess
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 internal object GitRebaseStagingAreaHelper {
   @JvmStatic
-  fun tryStageChangesInTrackedFilesAndRetryInBackground(repository: GitRepository, showError: () -> Unit) =
-    GitDisposable.getInstance(repository.project).coroutineScope.launch {
-      withBackgroundProgress(repository.project, GitBundle.message("rebase.progress.indicator.continue.title")) {
-        LOG.info("Staging changes and re-trying rebase")
-        val staged = withProgressText(GitBundle.message("stage.add.process")) {
-          tryStageChangesInTrackedFiles(repository)
-        }
-
-        if (staged) {
-          LOG.info("Changes in tracked files were staged")
-          coroutineToIndicator {
-            GitRebaseUtils.continueRebase(repository.project)
+  fun tryStageChangesInTrackedFilesAndRetryInBackground(repository: GitRepository, showError: () -> Unit): Job {
+    val project = repository.project
+    return GitDisposable.getInstance(project).coroutineScope.launch {
+      withBackgroundProgress(project, GitBundle.message("rebase.progress.indicator.continue.title")) {
+        gitFreezingProcess(project, GitBundle.message("rebase.git.operation.name")) {
+          LOG.info("Staging changes and re-trying rebase")
+          val staged = withProgressText(GitBundle.message("stage.add.process")) {
+            tryStageChangesInTrackedFiles(repository)
           }
-        }
-        else {
-          showError()
+          if (staged) {
+            LOG.info("Changes in tracked files were staged")
+            coroutineToIndicator {
+              GitRebaseUtils.continueRebaseWithoutFreezing(project)
+            }
+          }
+          else {
+            showError()
+          }
         }
       }
     }
+  }
 
   /**
    * Makes an attempt to stage changes in tracked files only if these changes affect already staged files.

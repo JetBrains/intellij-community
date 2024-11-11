@@ -124,7 +124,7 @@ public class GitRebaseProcess {
    * <li>For all remaining repositories rebase on which didn't start yet, it calls {@code git rebase <original parameters>}</li>
    * </ul>
    */
-  private void doRebase() {
+  void doRebase() {
     LOG.info("Started rebase");
     LOG.debug("Started rebase with the following spec: " + myRebaseSpec);
 

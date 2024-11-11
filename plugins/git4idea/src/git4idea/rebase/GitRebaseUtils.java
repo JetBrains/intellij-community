@@ -48,9 +48,22 @@ public final class GitRebaseUtils {
   }
 
   public static void continueRebase(@NotNull Project project) {
+    continueRebase(project, true);
+  }
+
+  static void continueRebaseWithoutFreezing(@NotNull Project project) {
+    continueRebase(project, false);
+  }
+
+  private static void continueRebase(@NotNull Project project, boolean freeze) {
     GitRebaseSpec spec = GitUtil.getRepositoryManager(project).getOngoingRebaseSpec();
     if (spec != null) {
-      new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE).rebase();
+      GitRebaseProcess rebaseProcess = new GitRebaseProcess(project, spec, GitRebaseResumeMode.CONTINUE);
+      if (freeze) {
+        rebaseProcess.rebase();
+      } else {
+        rebaseProcess.doRebase();
+      }
     }
     else {
       notifyContinueFailed(project, "continue");
