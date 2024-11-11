@@ -10,11 +10,9 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
-import com.intellij.platform.externalSystem.testFramework.utils.module.ExternalSystemSourceRootAssertion
 import com.intellij.platform.testFramework.treeAssertion.SimpleTree
 import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
 import com.intellij.platform.testFramework.treeAssertion.buildTree
-import com.intellij.testFramework.utils.module.assertEqualsUnordered
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier
 import org.gradle.tooling.model.BuildIdentifier
 import org.gradle.tooling.model.BuildModel
@@ -24,7 +22,6 @@ import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.nio.file.Path
 
