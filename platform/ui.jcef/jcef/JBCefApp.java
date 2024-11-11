@@ -66,7 +66,7 @@ public final class JBCefApp {
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 13;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 17;
 
   private final @Nullable CefDelegate myDelegate;
   private final @Nullable CefApp myCefApp;
