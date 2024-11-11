@@ -84,6 +84,6 @@ suspend fun EelApi.where(exe: String): EelPath.Absolute? {
     return null
   }
   else {
-    return fs.getPath(result.stdout)
+    return fs.getPath(result.stdout.trim())
   }
 }
