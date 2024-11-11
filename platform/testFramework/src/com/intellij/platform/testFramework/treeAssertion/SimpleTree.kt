@@ -1,17 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.treeAssertion
 
-class SimpleTree<T> {
+interface SimpleTree<T> {
 
-  val roots: MutableList<Node<T>> = ArrayList()
+  val roots: List<Node<T>>
 
-  class Node<T>(
-    var name: String,
-    var value: T
-  ) {
+  interface Node<T> {
 
-    val children: MutableList<Node<T>> = ArrayList()
+    val name: String
 
-    override fun toString(): String = name
+    val value: T
+
+    val children: List<Node<T>>
   }
 }

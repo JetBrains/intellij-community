@@ -3,7 +3,7 @@ package com.intellij.platform.testFramework.treeAssertion
 
 class SimpleTreeBuilder<T> {
 
-  val tree = SimpleTree<T>()
+  val tree = SimpleTreeImpl<T>()
 
   fun root(name: String, value: T, configure: Node<T>.() -> Unit = {}) {
     val nodeBuilder = Node(name, value)
@@ -13,7 +13,7 @@ class SimpleTreeBuilder<T> {
 
   class Node<T>(name: String, value: T) {
 
-    val node = SimpleTree.Node(name, value)
+    val node = SimpleTreeImpl.Node(name, value)
 
     fun node(name: String, value: T, configure: Node<T>.() -> Unit = {}) {
       val nodeBuilder = Node(name, value)
