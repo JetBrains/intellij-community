@@ -50,7 +50,16 @@ interface SimpleTreeAssertion<T> {
 
   companion object {
 
-    fun <T> assertTree(actualTree: SimpleTree<T>, isUnordered: Boolean = false, assert: SimpleTreeAssertion<T>.() -> Unit) =
-      SimpleTreeAssertionImpl.assertTree(actualTree, isUnordered, assert)
+    fun <T> assertTree(actualTree: SimpleTree<T>, assert: SimpleTreeAssertion<T>.() -> Unit) =
+      SimpleTreeAssertionImpl.assertTree(actualTree, isUnordered = false, assert)
+
+    fun <T> assertUnorderedTree(actualTree: SimpleTree<T>, assert: SimpleTreeAssertion<T>.() -> Unit) =
+      SimpleTreeAssertionImpl.assertTree(actualTree, isUnordered = true, assert)
+
+    fun <T> assertTreeEquals(expectedTree: SimpleTree<T>, actualTree: SimpleTree<T>) =
+      SimpleTreeAssertionImpl.assertTree(expectedTree, actualTree, isUnordered = false)
+
+    fun <T> assertUnorderedTreeEquals(expectedTree: SimpleTree<T>, actualTree: SimpleTree<T>) =
+      SimpleTreeAssertionImpl.assertTree(expectedTree, actualTree, isUnordered = true)
   }
 }

@@ -98,3 +98,26 @@ fun buildTree(treeString: String): SimpleMutableTree<Nothing?> {
   }
   return tree
 }
+
+fun <T, R> SimpleTree<T>.mapTreeValues(transform: (SimpleTree.Node<T>) -> R): SimpleMutableTree<R> {
+  return mapTree { SimpleTreeImpl.Node(it.name, transform(it)) }
+}
+
+private fun <T, R> SimpleTree<T>.mapTree(transform: (SimpleTree.Node<T>) -> SimpleMutableTree.Node<R>): SimpleMutableTree<R> {
+  val tree = SimpleTreeImpl<R>()
+  val queue = ArrayDeque<Pair<SimpleTree.Node<T>, SimpleMutableTree.Node<R>>>()
+  for (oldRootNode in roots) {
+    val newRootNode = transform(oldRootNode)
+    tree.roots.add(newRootNode)
+    queue.add(oldRootNode to newRootNode)
+  }
+  while (queue.isNotEmpty()) {
+    val (oldNode, newNode) = queue.removeLast()
+    for (oldChildNode in oldNode.children) {
+      val newChildNode = transform(oldChildNode)
+      newNode.children.add(newChildNode)
+      queue.addFirst(oldChildNode to newChildNode)
+    }
+  }
+  return tree
+}

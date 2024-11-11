@@ -120,7 +120,7 @@ class GradleExecutionViewFixture(
     val roots = resultsViewer.root.children
     val tree = buildTree(roots, { name }, { children })
     runReadAction { // all navigation tests requires read action
-      SimpleTreeAssertion.assertTree(tree, isUnordered = true, assert)
+      SimpleTreeAssertion.assertUnorderedTree(tree, assert)
     }
   }
 
