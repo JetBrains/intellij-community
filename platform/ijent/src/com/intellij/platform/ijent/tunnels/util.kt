@@ -81,7 +81,7 @@ private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int
           inputStream.read(buffer, 0, buffer.size)
         }
         LOG.trace("Connection $connectionId; Bytes read: $bytesRead")
-        if (bytesRead > 1) {
+        if (bytesRead >= 0) {
           LOG.trace("Sending message to IJent for $connectionId")
           channelToIJent.send(ByteBuffer.wrap(buffer.copyOf(), 0, bytesRead)) // important to make a copy, we have no guarantees when buffer will be processed
         }
