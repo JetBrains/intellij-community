@@ -2,7 +2,6 @@
 package git4idea.commit
 
 import com.intellij.codeInsight.navigation.LOG
-import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
@@ -10,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.CommitMessage
@@ -17,9 +17,11 @@ import com.intellij.vcs.commit.DefaultCommitMessagePolicy
 import com.intellij.vcs.commit.DefaultCommitMessagePolicy.CommitMessageController
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import git4idea.GitVcs
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryFiles.MERGE_MSG
+import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitRepositoryStateChangeListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -144,4 +146,6 @@ internal class GitMergeCommitMessage(text: String): CommitMessage(text, disposab
 }
 
 private fun getSingleGitRepository(project: Project): GitRepository? =
-  VcsRepositoryManager.getInstance(project).getRepositories().singleOrNull() as? GitRepository
+  if (ProjectLevelVcsManager.getInstance(project).singleVCS is GitVcs)
+    GitRepositoryManager.getInstance(project).repositories.singleOrNull()
+  else null
