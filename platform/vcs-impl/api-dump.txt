@@ -1123,8 +1123,11 @@ f:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager$State
 - f:getOpenInNewWindow():Z
 - f:setOpenInNewWindow(Z):V
 c:com.intellij.openapi.vcs.changes.VcsFreezingProcess
+- sf:Companion:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Companion
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.Runnable):V
 - execute():V
+f:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Companion
+- f:runFreezing(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener
 - sf:Companion:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
