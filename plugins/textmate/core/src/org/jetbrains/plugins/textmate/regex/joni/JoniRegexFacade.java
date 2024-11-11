@@ -1,26 +1,19 @@
 package org.jetbrains.plugins.textmate.regex.joni;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.diagnostic.LoggerRt;
-import kotlinx.coroutines.Dispatchers;
-import kotlinx.coroutines.ExecutorsKt;
-import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.regex.MatchData;
-import org.jetbrains.plugins.textmate.regex.StringWithId;
+import org.jetbrains.plugins.textmate.regex.RegexFacade;
+import org.jetbrains.plugins.textmate.regex.TextMateString;
 import org.joni.Matcher;
 import org.joni.Option;
 import org.joni.Regex;
-import org.joni.WarnCallback;
 import org.joni.exception.JOniException;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
 
-public final class JoniRegexFacade {
-  private static final Regex FAILED_REGEX = new Regex("^$", UTF8Encoding.INSTANCE);
+public final class JoniRegexFacade implements RegexFacade {
   private static final LoggerRt LOGGER = LoggerRt.getInstance(JoniRegexFacade.class);
 
   @NotNull
@@ -29,29 +22,22 @@ public final class JoniRegexFacade {
 
   private final ThreadLocal<LastMatch> matchResult = new ThreadLocal<>();
 
-  private JoniRegexFacade(@NotNull String regexString) {
-    byte[] bytes = regexString.getBytes(StandardCharsets.UTF_8);
-    Regex regex;
-    try {
-      regex = new Regex(bytes, 0, bytes.length, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE);
-    }
-    catch (JOniException e) {
-      LOGGER.info(String.format("Failed to parse textmate regex '%s' with %s: %s", regexString, e.getClass().getName(), e.getMessage()));
-      regex = FAILED_REGEX;
-    }
-    hasGMatch = regexString.contains("\\G");
+  public JoniRegexFacade(@NotNull Regex regex, boolean hasGMatch) {
     myRegex = regex;
+    this.hasGMatch = hasGMatch;
   }
 
-  public MatchData match(StringWithId string, @Nullable Runnable checkCancelledCallback) {
+  @Override
+  public @NotNull MatchData match(@NotNull TextMateString string, @Nullable Runnable checkCancelledCallback) {
     return match(string, 0, 0, true, checkCancelledCallback);
   }
 
-  public MatchData match(@NotNull StringWithId string,
-                         int byteOffset,
-                         int gosOffset,
-                         boolean matchBeginOfString,
-                         @Nullable Runnable checkCancelledCallback) {
+  @Override
+  public @NotNull MatchData match(@NotNull TextMateString string,
+                                  int byteOffset,
+                                  int gosOffset,
+                                  boolean matchBeginOfString,
+                                  @Nullable Runnable checkCancelledCallback) {
     gosOffset = gosOffset != byteOffset ? Integer.MAX_VALUE : byteOffset;
     int options = matchBeginOfString ? Option.NONE : Option.NOTBOS;
 
@@ -89,23 +75,12 @@ public final class JoniRegexFacade {
     }
   }
 
-  private static void checkMatched(MatchData match, StringWithId string) {
+  private static void checkMatched(MatchData match, TextMateString string) {
     if (match.matched() && match.byteOffset().end > string.bytes.length) {
       throw new IllegalStateException(
         "Match data out of bounds: " + match.byteOffset().start + " > " + string.bytes.length + "\n" +
         new String(string.bytes, StandardCharsets.UTF_8));
     }
-  }
-
-  private static final Cache<String, JoniRegexFacade> REGEX_CACHE = Caffeine.newBuilder()
-    .maximumSize(100_000)
-    .expireAfterAccess(1, TimeUnit.MINUTES)
-    .executor(ExecutorsKt.asExecutor(Dispatchers.getDefault()))
-    .build();
-
-  @NotNull
-  public static JoniRegexFacade regex(@NotNull String regexString) {
-    return REGEX_CACHE.get(regexString, JoniRegexFacade::new);
   }
 
   private static final class LastMatch {

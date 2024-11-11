@@ -5,15 +5,15 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public final class StringWithId {
+public final class TextMateString {
   public final Object id = new Object();
   public final byte[] bytes;
 
-  public StringWithId(String string) {
+  public TextMateString(String string) {
     bytes = string.getBytes(StandardCharsets.UTF_8);
   }
 
-  public StringWithId(CharSequence string) {
+  public TextMateString(CharSequence string) {
     ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(string));
     bytes = new byte[byteBuffer.remaining()];
     byteBuffer.get(bytes);
@@ -26,6 +26,6 @@ public final class StringWithId {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof StringWithId && Arrays.equals(bytes, ((StringWithId)obj).bytes);
+    return obj instanceof TextMateString && Arrays.equals(bytes, ((TextMateString)obj).bytes);
   }
 }

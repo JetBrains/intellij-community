@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TestUtilKt;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
+import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,7 +76,8 @@ abstract public class LexerTestCase extends UsefulTestCase {
 
     StringBuilder output = new StringBuilder();
     String text = sourceData.replaceAll("$(\\n+)", "");
-    Lexer lexer = new TextMateHighlightingLexer(new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope)), -1);
+    Lexer lexer = new TextMateHighlightingLexer(new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope)),
+                                                new JoniRegexFactory(),  - 1);
     lexer.start(text);
     while (lexer.getTokenType() != null) {
       final int s = lexer.getTokenStart();

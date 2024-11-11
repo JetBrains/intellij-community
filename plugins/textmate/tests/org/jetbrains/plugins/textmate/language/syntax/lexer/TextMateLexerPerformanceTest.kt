@@ -10,6 +10,7 @@ import org.jetbrains.plugins.textmate.findScopeByFileName
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable
 import org.jetbrains.plugins.textmate.loadBundle
+import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory
 import org.junit.Test
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -25,7 +26,9 @@ class TextMateLexerPerformanceTest : UsefulTestCase() {
     val text = StringUtil.convertLineSeparators(FileUtil.loadFile(myFile, StandardCharsets.UTF_8))
 
     Benchmark.newBenchmark("bench") {
-      val lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName)), -1)
+      val lexer = TextMateHighlightingLexer(TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName)),
+                                            JoniRegexFactory(),
+                                            -1)
       lexer.start(text)
       while (lexer.tokenType != null) {
         lexer.advance()
