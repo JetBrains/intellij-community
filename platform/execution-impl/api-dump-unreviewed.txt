@@ -101,6 +101,7 @@ com.intellij.execution.ConfigurationWithCommandLineShortener
 a:com.intellij.execution.ConsoleFolding
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
+- getNestingPriority():I
 - getPlaceholderText(com.intellij.openapi.project.Project,java.util.List):java.lang.String
 - getPlaceholderText(java.util.List):java.lang.String
 - isEnabledForConsole(com.intellij.execution.ui.ConsoleView):Z

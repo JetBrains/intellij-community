@@ -35,11 +35,19 @@ public abstract class ConsoleFolding {
   }
 
   /**
+   * This value affects how nested foldings behave.
+   * E.g., a border of higher priority folding splits lower priority folding into two foldings.
+   */
+  public int getNestingPriority() {
+    return 0;
+  }
+
+  /**
    * @param project current project
    * @param lines   lines to be folded
    * @return placeholder for lines or {@code null} if these lines should not be folded
    */
-  public @Nullable String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
+  public @Nullable String getPlaceholderText(@NotNull Project project, @NotNull List<@NotNull String> lines) {
     return getPlaceholderText(lines);
   }
 

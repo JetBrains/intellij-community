@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
@@ -28,7 +29,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.Pair as OpenApiPair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
@@ -493,7 +494,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     val crazyProvider = ConsoleInputFilterProvider { project: Project? ->
       arrayOf(InputFilter { text: String?, contentType: ConsoleViewContentType? ->
         registered.add(Pair(text, contentType))
-        listOf(Pair("+!$text-!", contentType))
+        listOf(OpenApiPair("+!$text-!", contentType))
       })
     }
     ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.point.registerExtension(crazyProvider, testRootDisposable)
@@ -529,7 +530,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
         scope: GlobalSearchScope
       ): MutableList<InputFilter?> {
         return mutableListOf(InputFilter { text: String?, contentType: ConsoleViewContentType? ->
-          mutableListOf(Pair("!$text!", contentType))
+          mutableListOf(OpenApiPair("!$text!", contentType))
         })
       }
     }
@@ -727,89 +728,118 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     )
   }
 
-  fun testSubsequentFoldsAreCombined() {
-    ApplicationManager.getApplication().registerExtension(ConsoleFolding.EP_NAME, object : ConsoleFolding() {
-      override fun shouldFoldLine(project: Project, line: String): Boolean {
-        return line.contains("FOO")
-      }
+  fun testSimpleFoldGrows() {
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", false) {})
 
-      override fun getPlaceholderText(project: Project, lines: MutableList<String?>): String {
-        return "folded"
-      }
-    }, console)
+    console.print("0 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+    console.flushDeferredText()
 
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
+    assertEquals("folded (FOO)", region.placeholderText)
+    assertEquals(1 to 3, region.lines)
+  }
+
+  fun testTwoRegions() {
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", false) {})
+
+    console.print("0 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    val regions = consoleEditor.foldingModel.allFoldRegions
+    assertSize(2, regions)
+  }
+
+  fun testEndedFoldKeptAsIs() {
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", false) {})
+
+    console.print("0 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     assertOneElement(consoleEditor.foldingModel.allFoldRegions)
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
-    assertEquals("folded", region.placeholderText)
-    assertEquals(0, consoleEditor.document.getLineNumber(region.startOffset))
-    assertEquals(2, consoleEditor.document.getLineNumber(region.endOffset))
+    assertEquals("folded (FOO)", region.placeholderText)
+    assertEquals(1 to 1, region.lines)
+  }
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+  fun testFoldsAttachingAtTheBeginning() {
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", true) {})
+
+    console.print("0 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
+    assertEquals("folded (FOO)", region.placeholderText)
+    assertEquals(0 to 1, region.lines)
+  }
+
+  fun testSubsequentFoldsAreCombined() {
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", true) {})
+
+    console.print("0 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    assertOneElement(consoleEditor.foldingModel.allFoldRegions)
+
+    console.print("2 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
+    assertEquals("folded (FOO)", region.placeholderText)
+    assertEquals(0 to 2, region.lines)
+
+    console.print("4 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("5 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     assertSize(2, consoleEditor.foldingModel.allFoldRegions)
   }
 
   fun testSubsequentNonAttachedFoldsAreCombined() {
-    ApplicationManager.getApplication().registerExtension(ConsoleFolding.EP_NAME, object : ConsoleFolding() {
-      override fun shouldFoldLine(project: Project, line: String): Boolean {
-        return line.contains("FOO")
-      }
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", false) {})
 
-      override fun getPlaceholderText(project: Project, lines: MutableList<String?>): String {
-        return "folded"
-      }
-
-      override fun shouldBeAttachedToThePreviousLine(): Boolean {
-        return false
-      }
-    }, console)
-
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("0 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     assertOneElement(consoleEditor.foldingModel.allFoldRegions)
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
-    assertEquals("folded", region.placeholderText)
-    assertEquals(1, consoleEditor.document.getLineNumber(region.startOffset))
-    assertEquals(2, consoleEditor.document.getLineNumber(region.endOffset))
+    assertEquals("folded (FOO)", region.placeholderText)
+    assertEquals(1 to 2, region.lines)
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("5 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     assertSize(2, consoleEditor.foldingModel.allFoldRegions)
   }
 
   fun testSubsequentExpandedFoldsAreCombined() {
-    ApplicationManager.getApplication().registerExtension(ConsoleFolding.EP_NAME, object : ConsoleFolding() {
-      override fun shouldFoldLine(project: Project, line: String): Boolean {
-        return line.contains("FOO")
-      }
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", true) {})
 
-      override fun getPlaceholderText(project: Project, lines: MutableList<String?>): String {
-        return "folded"
-      }
-    }, console)
-
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("0 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     assertOneElement(consoleEditor.foldingModel.allFoldRegions)
@@ -819,17 +849,16 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
       firstRegion.setExpanded(true)
     })
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
-    assertEquals("folded", region.placeholderText)
-    assertEquals(0, consoleEditor.document.getLineNumber(region.startOffset))
-    assertEquals(2, consoleEditor.document.getLineNumber(region.endOffset))
+    assertEquals("folded (FOO)", region.placeholderText)
+    assertEquals(0 to 2, region.lines)
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("5 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     val regions = consoleEditor.foldingModel.allFoldRegions
@@ -853,22 +882,10 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   }
 
   fun testSubsequentExpandedNonAttachedFoldsAreCombined() {
-    ApplicationManager.getApplication().registerExtension(ConsoleFolding.EP_NAME, object : ConsoleFolding() {
-      override fun shouldFoldLine(project: Project, line: String): Boolean {
-        return line.contains("FOO")
-      }
+    registerFoldingExtension(object : FakeConsoleFolding("FOO", false) {})
 
-      override fun getPlaceholderText(project: Project, lines: MutableList<String?>): String {
-        return "folded"
-      }
-
-      override fun shouldBeAttachedToThePreviousLine(): Boolean {
-        return false
-      }
-    }, console)
-
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("0 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     assertOneElement(consoleEditor.foldingModel.allFoldRegions)
@@ -878,17 +895,16 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
       firstRegion.setExpanded(true)
     })
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
-    assertEquals("folded", region.placeholderText)
-    assertEquals(1, consoleEditor.document.getLineNumber(region.startOffset))
-    assertEquals(2, consoleEditor.document.getLineNumber(region.endOffset))
+    assertEquals("folded (FOO)", region.placeholderText)
+    assertEquals(1 to 2, region.lines)
 
-    console.print("a FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
-    console.print("a BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 FOO a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("5 BAR a\n", ConsoleViewContentType.NORMAL_OUTPUT)
     console.flushDeferredText()
 
     val regions = consoleEditor.foldingModel.allFoldRegions
@@ -896,6 +912,153 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     assertTrue(regions[0].isExpanded())
     assertFalse(regions[1].isExpanded())
   }
+
+  fun testSimpleNestedFolds() {
+    registerFoldingExtension(object : FakeConsoleFolding("OUTER", false, nestingPriority = 20) {})
+    registerFoldingExtension(object : FakeConsoleFolding("INNER", false, nestingPriority = 10) {})
+
+    console.print("0 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 OUTER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    assertSize(2, consoleEditor.foldingModel.allFoldRegions)
+
+    console.print("3 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 OUTER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("5 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    assertEquals(
+      setOf(
+        (1 to 4) to "folded (OUTER)",
+        (2 to 3) to "folded (INNER)",
+      ),
+      consoleEditor.foldingModel.allFoldRegions
+        .map { it.linesAndPlaceholder }
+        .toSet())
+  }
+
+  fun testBreakingNestedFolds() {
+    registerFoldingExtension(object : FakeConsoleFolding("OUTER", false, nestingPriority = 20) {})
+    registerFoldingExtension(object : FakeConsoleFolding("INNER", false, nestingPriority = 10) {})
+
+    console.print("0 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 OUTER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("5 INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("6 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    assertEquals(
+      setOf(
+        (1 to 1) to "folded (INNER)",
+        (2 to 4) to "folded (OUTER)",
+        (2 to 2) to "folded (INNER)",
+        (4 to 4) to "folded (INNER)",
+        (5 to 5) to "folded (INNER)",
+      ),
+      consoleEditor.foldingModel.allFoldRegions
+        .map { it.linesAndPlaceholder }
+        .toSet())
+  }
+
+  fun testConflictingSingleLineIdenticalFolds() {
+    registerFoldingExtension(object : FakeConsoleFolding("OUTER", false, nestingPriority = 20) {})
+    registerFoldingExtension(object : FakeConsoleFolding("INNER", false, nestingPriority = 10) {})
+
+    console.print("0 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
+    assertEquals("folded (OUTER)", region.placeholderText)
+    assertEquals(1 to 1, region.lines)
+  }
+
+  fun testConflictingSingleLineFoldsReversedExtensionsOrder() {
+    registerFoldingExtension(object : FakeConsoleFolding("INNER", false, nestingPriority = 10) {})
+    registerFoldingExtension(object : FakeConsoleFolding("OUTER", false, nestingPriority = 20) {})
+
+    console.print("0 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    val region = assertOneElement(consoleEditor.foldingModel.allFoldRegions)
+    assertEquals("folded (OUTER)", region.placeholderText)
+    assertEquals(1 to 1, region.lines)
+  }
+
+  fun testConflictingStartOfNestingFolds1() {
+    registerFoldingExtension(object : FakeConsoleFolding("OUTER", attachedToThePreviousLine = false, nestingPriority = 20) {})
+    registerFoldingExtension(object : FakeConsoleFolding("INNER", attachedToThePreviousLine = true, nestingPriority = 10) {})
+
+    console.print("0 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 OUTER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    assertEquals(
+      setOf(
+        (1 to 1) to "folded (INNER)",
+        (1 to 3) to "folded (OUTER)",
+        (2 to 3) to "folded (INNER)",
+      ),
+      consoleEditor.foldingModel.allFoldRegions
+        .map { it.linesAndPlaceholder }
+        .toSet())
+  }
+
+  fun testConflictingStartOfNestingFolds2() {
+    registerFoldingExtension(object : FakeConsoleFolding("OUTER", attachedToThePreviousLine = true, nestingPriority = 20) {})
+    registerFoldingExtension(object : FakeConsoleFolding("INNER", attachedToThePreviousLine = false, nestingPriority = 10) {})
+
+    console.print("0 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("1 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("2 OUTER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("3 OUTER INNER a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("4 a\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+
+    assertEquals(
+      setOf(
+        (1 to 1) to "folded (INNER)",
+        (0 to 3) to "folded (OUTER)",
+        (3 to 3) to "folded (INNER)",
+      ),
+      consoleEditor.foldingModel.allFoldRegions
+        .map { it.linesAndPlaceholder }
+        .toSet())
+  }
+
+  private fun registerFoldingExtension(consoleFolding: FakeConsoleFolding) {
+    ApplicationManager.getApplication().registerExtension(ConsoleFolding.EP_NAME, consoleFolding, console)
+  }
+
+  private abstract class FakeConsoleFolding(private val marker: String, private val attachedToThePreviousLine: Boolean, private val nestingPriority: Int = 0) : ConsoleFolding() {
+    override fun shouldFoldLine(project: Project, line: String) =
+      line.contains(marker)
+    override fun getPlaceholderText(project: Project, lines: MutableList<String>) =
+      "folded ($marker)"
+    override fun shouldBeAttachedToThePreviousLine() =
+      attachedToThePreviousLine
+    override fun getNestingPriority() =
+      nestingPriority
+  }
+
+  private val FoldRegion.lines: Pair<Int, Int>
+    get() =
+      document.getLineNumber(startOffset) to document.getLineNumber(endOffset)
+
+  private val FoldRegion.linesAndPlaceholder: Pair<Pair<Int, Int>, String>
+    get() =
+      lines to placeholderText!!
 
   private val allRangeHighlighters: MutableList<RangeHighlighter>
     get() {
