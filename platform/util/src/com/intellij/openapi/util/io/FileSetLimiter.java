@@ -19,6 +19,8 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.time.Clock;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -70,19 +72,34 @@ public final class FileSetLimiter {
     }
   };
 
-  public static final Consumer<Collection<? extends Path>> DELETE_ASYNC = paths -> {
-    if (!paths.isEmpty()) {
-      ExecutorsKt.asExecutor(Dispatchers.getIO()).execute(() -> {
-        final Thread currentThread = Thread.currentThread();
-        final int priority = currentThread.getPriority();
-        currentThread.setPriority(Thread.MIN_PRIORITY);
+  private static final Executor ASYNC_DELETE_POOL = ExecutorsKt.asExecutor(Dispatchers.getIO());
+  public static final Consumer<Collection<? extends Path>> DELETE_ASYNC = new Consumer<Collection<? extends Path>>() {
+    /**
+     * IJPL-167246: if the path list is very long, and/or IO is very slow, and/or IO pool is very busy -- async requests
+     * could be enqueued faster than processed, hence creating quite a memory pressure.
+     * So: number of async requests is limited by 4 (arbitrary number, just not too big), and the following requests become
+     * synchronous instead of async.
+     */
+    private final Semaphore concurrentRequestsLimiter = new Semaphore(4);
+
+    @Override
+    public void accept(Collection<? extends Path> paths) {
+      if (!paths.isEmpty()) {
         try {
-          DELETE_IMMEDIATELY.accept(paths);
+          concurrentRequestsLimiter.acquire();
+          ASYNC_DELETE_POOL.execute(() -> {
+            try {
+              DELETE_IMMEDIATELY.accept(paths);
+            }
+            finally {
+              concurrentRequestsLimiter.release();
+            }
+          });
         }
-        finally {
-          currentThread.setPriority(priority);
+        catch (InterruptedException e) {
+          LOG.warn("Delete request was interrupted", e);
         }
-      });
+      }
     }
   };
 
@@ -167,6 +184,8 @@ public final class FileSetLimiter {
    * for quite a while (e.g. until JVM exit). If immediate effect required, use {@link #DELETE_IMMEDIATELY}
    */
   public FileSetLimiter removeOlderFiles() throws IOException {
+    //FiXME RC: we call this every time new file is created, but we do not wait until removing completed, which may
+    //          cause a lot of queued removes (IJPL-167246)
     if (!Files.exists(directory) || !Files.isDirectory(directory)) {
       return this; //no house to keep
     }
@@ -285,7 +304,7 @@ public final class FileSetLimiter {
    * E.g.: ('my-file.log','yyyy-MM-dd-HH-mm-ss') -> 'my-file.{0,date,yyyy-MM-dd-HH-mm-ss}.log'
    */
   private static @NotNull String fileNameFormatFromBaseFileNameAndDateFormat(final @NotNull String baseFileName,
-                                                                    final @NotNull String dateFormat) {
+                                                                             final @NotNull String dateFormat) {
     final String extension = FileUtilRt.getExtension(baseFileName);
     String unzippedExtension = "";
     String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(baseFileName);
