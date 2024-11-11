@@ -8,13 +8,6 @@ public final class RegexUtil {
   private RegexUtil() {
   }
 
-  public static int codePointOffsetByByteOffset(byte[] stringBytes, int byteOffset) {
-    if (byteOffset <= 0) {
-      return 0;
-    }
-    return NonStrictUTF8Encoding.INSTANCE.strLength(stringBytes, 0, byteOffset);
-  }
-
   public static int byteOffsetByCharOffset(@NotNull CharSequence charSequence,
                                            int startOffset,
                                            int targetOffset) {
@@ -35,5 +28,12 @@ public final class RegexUtil {
     int startOffset = codePointOffsetByByteOffset(bytes, byteRange.start);
     int endOffset = codePointOffsetByByteOffset(bytes, byteRange.end);
     return new TextMateRange(startOffset, endOffset);
+  }
+
+  private static int codePointOffsetByByteOffset(byte[] stringBytes, int byteOffset) {
+    if (byteOffset <= 0) {
+      return 0;
+    }
+    return NonStrictUTF8Encoding.INSTANCE.strLength(stringBytes, 0, byteOffset);
   }
 }

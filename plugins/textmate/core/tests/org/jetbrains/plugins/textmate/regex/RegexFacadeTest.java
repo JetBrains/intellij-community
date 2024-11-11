@@ -36,20 +36,6 @@ public class RegexFacadeTest {
   }
 
   @Test
-  public void creatingSearcher() {
-    RegexFacade regex = RegexFacade.regex("[0-9]+");
-    byte[] stringBytes = "12:00pm".getBytes(StandardCharsets.UTF_8);
-    Searcher searcher = regex.searcher(stringBytes);
-    List<MatchData> regions = new ArrayList<>();
-    while (searcher.search()) {
-      regions.add(searcher.getCurrentMatchData());
-    }
-    assertEquals(2, regions.size());
-    assertEquals(new TextMateRange(0, 2), regions.get(0).codePointRange(stringBytes));
-    assertEquals(new TextMateRange(3, 5), regions.get(1).codePointRange(stringBytes));
-  }
-
-  @Test
   public void cyrillicMatchingSinceIndex() {
     RegexFacade regex = RegexFacade.regex("мир");
     String text = "привет, мир; привет, мир!";

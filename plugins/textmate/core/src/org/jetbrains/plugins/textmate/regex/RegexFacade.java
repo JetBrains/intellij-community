@@ -95,10 +95,6 @@ public final class RegexFacade {
     }
   }
 
-  public Searcher searcher(byte[] stringBytes) {
-    return new Searcher(stringBytes, myRegex.matcher(stringBytes, 0, stringBytes.length));
-  }
-
   private static final Cache<String, RegexFacade> REGEX_CACHE = Caffeine.newBuilder()
     .maximumSize(100_000)
     .expireAfterAccess(1, TimeUnit.MINUTES)
