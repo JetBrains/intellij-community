@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic
 
-import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
@@ -22,12 +21,9 @@ class IJMapperEventLoggerProvider : StatisticsEventLoggerProvider(
   maxFileSizeInBytes = 1 * 512, // enough to fill a log file with one entry of the state collector
   sendLogsOnIdeClose = true,
   isCharsEscapingRequired = false,
-
+  useDefaultRecorderId = true
 ) {
-  private val actualLogger: StatisticsEventLogger by lazy { createLogger("FUS") }
 
-  override val logger: StatisticsEventLogger
-    get() = if (isLoggingEnabled()) actualLogger else super.logger
   /**
    * Should be in sync with MLEventLoggerProvider.isRecordEnabled()
    */

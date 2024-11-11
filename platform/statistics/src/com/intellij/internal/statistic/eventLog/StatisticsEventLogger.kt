@@ -32,12 +32,16 @@ interface StatisticsEventLogger {
   fun rollOver()
 }
 
+/**
+ * [useDefaultRecorderId] - When enabled, device and machine ids would match FUS(default) recorder. Must NOT be enabled for non-anonymized recorders.
+ */
 abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long,
                                              private val maxFileSizeInBytes: Int,
                                              val sendLogsOnIdeClose: Boolean = false,
-                                             val isCharsEscapingRequired: Boolean = true) {
+                                             val isCharsEscapingRequired: Boolean = true,
+                                             val useDefaultRecorderId: Boolean = false) {
 
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
@@ -117,8 +121,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     return FilteredEventMergeStrategy(emptySet())
   }
 
-  @ApiStatus.Internal
-  protected fun createLogger(alternativeRecorderId: String? = null): StatisticsEventLogger {
+  private fun createLogger(): StatisticsEventLogger {
     val app = ApplicationManager.getApplication()
     val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
@@ -133,7 +136,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
       null
     }
     val eventLogConfiguration = EventLogConfiguration.getInstance()
-    val config = eventLogConfiguration.getOrCreate(recorderId, alternativeRecorderId)
+    val config = eventLogConfiguration.getOrCreate(recorderId, if (useDefaultRecorderId) "FUS" else null)
     val writer = StatisticsEventLogFileWriter(recorderId, this, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
 
     val configService = EventLogConfigOptionsService.getInstance()

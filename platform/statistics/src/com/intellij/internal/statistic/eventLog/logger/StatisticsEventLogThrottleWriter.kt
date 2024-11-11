@@ -14,8 +14,7 @@ import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
+internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
                                                 private val recorderId: String,
                                                 private val recorderVersion: String,
                                                 private val delegate: StatisticsEventLogWriter,
