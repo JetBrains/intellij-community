@@ -220,8 +220,8 @@ public final class TextMateLexer {
       }
 
       if (linePosition != endPosition) {
+        lineByteOffset = linePosition + RegexUtil.byteOffsetByCharOffset(line, linePosition, endPosition);
         linePosition = endPosition;
-        lineByteOffset = RegexUtil.byteOffsetByCharOffset(line, linePosition);
       }
 
       if (myCheckCancelledCallback != null) {

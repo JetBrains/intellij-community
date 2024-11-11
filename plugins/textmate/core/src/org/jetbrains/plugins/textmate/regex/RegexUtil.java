@@ -15,13 +15,15 @@ public final class RegexUtil {
     return NonStrictUTF8Encoding.INSTANCE.strLength(stringBytes, 0, byteOffset);
   }
 
-  public static int byteOffsetByCharOffset(@NotNull CharSequence charSequence, int charOffset) {
-    if (charOffset <= 0) {
+  public static int byteOffsetByCharOffset(@NotNull CharSequence charSequence,
+                                           int startOffset,
+                                           int targetOffset) {
+    if (targetOffset <= 0) {
       return 0;
     }
     int result = 0;
-    int i = 0;
-    while (i < charOffset) {
+    int i = startOffset;
+    while (i < targetOffset) {
       result += UTF8Encoding.INSTANCE.codeToMbcLength(charSequence.charAt(i));
       i++;
     }
