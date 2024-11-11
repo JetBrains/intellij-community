@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.cce">
   <id>com.intellij.completion.evaluation</id>
   <!--suppress PluginXmlValidity -->
   <name>Evaluation Plugin</name>
@@ -8,6 +8,20 @@
   <description><![CDATA[
     <p>The plugin deals with the quality evaluation of IDE features based on artificial queries.</p>
   ]]></description>
+  
+  <content>
+    <module name="intellij.evaluationPlugin.languages.java"/>
+    <module name="intellij.evaluationPlugin.languages.python"/>
+    <module name="intellij.evaluationPlugin.languages.kotlin"/>
+  </content>
+
+  <xi:include href="/META-INF/eval-ultimate.xml">
+    <xi:fallback/>
+  </xi:include>
+
+  <dependencies>
+    <plugin id="com.intellij.completion.ml.ranking"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="ml-evaluate" implementation="com.intellij.cce.actions.CompletionEvaluationStarter"/>
@@ -63,41 +77,4 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <supportsKotlinPluginMode supportsK2="true"/>
   </extensions>
-
-  <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.completion.ml.ranking</depends>
-  <!--
-  The current plugin layout is necessary to keep the plugin open-sourced while also supporting ultimate languages.
-  The plugin defines optional dependencies on languages, rather than the other way around, to separate internal tooling from the production plugins.
-  You can see the plugin layout here: `org.jetbrains.intellij.build.UltimateRepositoryModulesKt.getUltimatePlugins`
-   -->
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-java.xml">com.intellij.modules.java</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-maven.xml">org.jetbrains.idea.maven</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-python.xml">com.intellij.modules.python</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-go.xml">org.jetbrains.plugins.go</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-js.xml">JavaScript</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-php.xml">com.jetbrains.php</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-ruby.xml">org.jetbrains.plugins.ruby</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-kotlin.xml">org.jetbrains.kotlin</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-cpp.xml">com.intellij.cidr.lang</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-csharp.xml">rider.intellij.plugin.appender</depends>
-  <depends optional="true" config-file="evaluationPlugin-statsCollector.xml">com.intellij.stats.completion</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-terraform.xml">org.intellij.terraform</depends>
-  <!-- suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-sql.xml">com.intellij.database</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-fullLine.xml">org.jetbrains.completion.full.line</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="evaluationPlugin-llm.xml">com.intellij.ml.llm</depends>
 </idea-plugin>

@@ -1,0 +1,15 @@
+<idea-plugin package="com.intellij.cce.kotlin">
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.cce">
+    <!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinMultiLineEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCompletionContextEvaluationVisitor"/>
+    <lineCompletionVisitorFactory implementation="com.intellij.cce.kotlin.visitor.KotlinLineCompletionVisitorFactory"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinDocGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinRenameVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCodeGenerationVisitor"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,21 @@
+<idea-plugin package="com.intellij.cce.java">
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.cce">
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaRenameVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCompletionVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaMultiLineEvaluationVisitor"/>
+    <setupSdkStep implementation="com.intellij.cce.java.evaluation.SetupJDKStep"/>
+    <lineCompletionVisitorFactory implementation="com.intellij.cce.java.visitor.JavaLineCompletionVisitorFactory"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaTestGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaDocGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCodeGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaChatCodeGenerationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaCompletionContextEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaFunctionCallingVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSelfIdentificationVisitor"/>
+    <apiCallExtractor implementation="com.intellij.cce.java.chat.JavaApiCallExtractor"/>
+  </extensions>
+</idea-plugin>

@@ -1,7 +1,7 @@
 package com.intellij.cce.visitor
 
 
-import com.intellij.cce.evaluable.chat.extractCalledInternalApiMethods
+import com.intellij.cce.java.chat.extractCalledInternalApiMethods
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiElementFactory

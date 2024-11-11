@@ -10,21 +10,28 @@
     reason: <- intellij.evaluationPlugin.core
   modules:
   - name: intellij.evaluationPlugin
-  - name: intellij.evaluationPlugin.fullLine
-  - name: intellij.evaluationPlugin.llm
-  - name: intellij.evaluationPlugin.languages.go
-  - name: intellij.evaluationPlugin.languages.java
-  - name: intellij.evaluationPlugin.languages.js
-  - name: intellij.evaluationPlugin.languages.kotlin
-  - name: intellij.evaluationPlugin.languages.php
-  - name: intellij.evaluationPlugin.languages.python
-  - name: intellij.evaluationPlugin.languages.ruby
   - name: intellij.evaluationPlugin.languages.cpp
   - name: intellij.evaluationPlugin.languages.csharp
-  - name: intellij.evaluationPlugin.languages.terraform
+  - name: intellij.evaluationPlugin.languages.go
+  - name: intellij.evaluationPlugin.languages.js
+  - name: intellij.evaluationPlugin.languages.php
+  - name: intellij.evaluationPlugin.languages.ruby
   - name: intellij.evaluationPlugin.languages.sql
+  - name: intellij.evaluationPlugin.languages.terraform
+  - name: intellij.evaluationPlugin.fullLine
+  - name: intellij.evaluationPlugin.llm
+  - name: intellij.evaluationPlugin.ultimate
   - name: intellij.tools.ide.metrics.collector
   - name: intellij.evaluationPlugin.languages
     reason: <- intellij.evaluationPlugin
   - name: intellij.evaluationPlugin.core
     reason: <- intellij.evaluationPlugin
+- name: lib/modules/intellij.evaluationPlugin.languages.java.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.java
+- name: lib/modules/intellij.evaluationPlugin.languages.kotlin.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.kotlin
+- name: lib/modules/intellij.evaluationPlugin.languages.python.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.python
