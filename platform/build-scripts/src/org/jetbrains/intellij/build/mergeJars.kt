@@ -101,12 +101,13 @@ private suspend fun writeSource(
   val indexWriter = packageIndexBuilder?.indexWriter
   when (source) {
     is DirSource -> {
+      val includeManifest = sources.size == 1
       val archiver = ZipArchiver(zipCreator = zipCreator, fileAdded = { name, file ->
         if (name == listOfEntitiesFileName) {
           filesToMerge.add(Files.readString(file))
           false
         }
-        else if (uniqueNames.putIfAbsent(name, source.dir) == null) {
+        else if (uniqueNames.putIfAbsent(name, source.dir) == null && (includeManifest || name != "META-INF/MANIFEST.MF")) {
           packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
           true
         }
