@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl
 import com.intellij.openapi.application.EDT
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.frame.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.frame.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.frame.XMixedModeSuspendContext
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -24,7 +25,7 @@ class MixedModeProcessTransitionStateMachine(
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
   object OnlyLowStopped : State
-  object WaitForHighProcessPositionReachLowProcessResumedExceptEventThread : State
+  class WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread(val isStopEventOnMainThread : Boolean) : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
   class ManagedStepStarted(val low: XSuspendContext) : State
   class HighLevelDebuggerResumedForStepOnlyLowStopped(val low: XSuspendContext) : State
@@ -104,7 +105,7 @@ class MixedModeProcessTransitionStateMachine(
         when (currentState) {
           is BothRunning -> {
             withContext(Dispatchers.EDT) {
-              high.pauseMixedModeSession()
+              (high as XMixedModeHighLevelDebugProcess).pauseMixedModeSession()
             }
             state = WaitingForHighProcessPositionReached
             //.await().also { logger.info("High level process has been stopped") }
@@ -115,15 +116,26 @@ class MixedModeProcessTransitionStateMachine(
 
       is HighLevelPositionReached -> {
         when (currentState) {
-          is WaitingForHighProcessPositionReached, WaitForHighProcessPositionReachLowProcessResumedExceptEventThread, BothRunning -> {
+          is WaitingForHighProcessPositionReached, is WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread, BothRunning -> {
             withContext(Dispatchers.EDT) {
-              low.pauseMixedModeSession()
+              val unBlockMainThread = currentState !is WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread || !currentState.isStopEventOnMainThread
+              if (unBlockMainThread) {
+                (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSessionUnBlockMainThread {
+                  (high as XMixedModeHighLevelDebugProcess).triggerBringingManagedThreadsToUnBlockedState()
+                }
+              }
+              else {
+                (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSession()
+              }
             }
+
+            logger.info("Low level process has been stopped")
             state = HighStoppedWaitingForLowProcessToStop(event.suspendContext)
-            //.await().also { logger.info("Low level process has been stopped") }
           }
           is HighLevelDebuggerResumedForStepOnlyLowStopped -> {
-            (low as XMixedModeLowLevelDebugProcess).suspendAllExceptServiceThreads()
+            (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSessionUnBlockMainThread {
+              (high as XMixedModeHighLevelDebugProcess).triggerBringingManagedThreadsToUnBlockedState()
+            }
             state = BothStopped(currentState.low, event.suspendContext)
           }
           else -> throwTransitionIsNotImplemented(event)
@@ -139,12 +151,14 @@ class MixedModeProcessTransitionStateMachine(
           }
           is BothRunning -> {
             withContext(Dispatchers.EDT) {
+              val isStopEventOnMainThread = (low as XMixedModeLowLevelDebugProcess).isStopEventOnMainThread()
               (low as XMixedModeLowLevelDebugProcess).continueAllThreads(exceptEventThread = true)
 
-              high.pauseMixedModeSession()
+              // please keep don't await it, it will break the status change logic
+              (high as XMixedModeHighLevelDebugProcess).pauseMixedModeSession()
 
               withContext(executor.asCoroutineDispatcher()) {
-                state = WaitForHighProcessPositionReachLowProcessResumedExceptEventThread
+                state = WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread(isStopEventOnMainThread)
               }
             }
           }

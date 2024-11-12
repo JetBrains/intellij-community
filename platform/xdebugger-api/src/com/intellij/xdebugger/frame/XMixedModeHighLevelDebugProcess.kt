@@ -3,4 +3,6 @@ package com.intellij.xdebugger.frame
 
 interface XMixedModeHighLevelDebugProcess {
   fun getFramesMatcher(): MixedModeFramesBuilder
+  suspend fun triggerBringingManagedThreadsToUnBlockedState()
+  fun pauseMixedModeSession()
 }
