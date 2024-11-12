@@ -38,7 +38,7 @@ private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
 @OptIn(DelicateCoroutinesApi::class)
 fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress) {
   val serverSocket = ServerSocket()
-  serverSocket.bind(InetSocketAddress("localhost", localPort))
+  serverSocket.bind(InetSocketAddress("localhost", localPort), 1024)
   serverSocket.soTimeout = 2.seconds.toInt(DurationUnit.MILLISECONDS)
   this.coroutineContext.job.invokeOnCompletion {
     serverSocket.close()
