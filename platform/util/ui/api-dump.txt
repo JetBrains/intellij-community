@@ -13,6 +13,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:Annotate:javax.swing.Icon
 - sf:ArrowCollapse:javax.swing.Icon
 - sf:ArrowExpand:javax.swing.Icon
+- sf:Attach:javax.swing.Icon
 - sf:Back:javax.swing.Icon
 - sf:BuildAutoReloadChanges:javax.swing.Icon
 - sf:BuildLoadChanges:javax.swing.Icon

@@ -29,6 +29,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Annotate = load("expui/general/listFiles.svg", "actions/annotate.svg", -264543398, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowCollapse = load("expui/general/chevronLeft.svg", "actions/arrowCollapse.svg", -296923721, 2);
     /** 16x16 */ public static final @NotNull Icon ArrowExpand = load("expui/general/chevronRight.svg", "actions/arrowExpand.svg", 2111993468, 2);
+    /** 16x16 */ public static final @NotNull Icon Attach = load("expui/actions/attach.svg", 312051375, 2);
     /** 16x16 */ public static final @NotNull Icon Back = load("expui/general/left.svg", "actions/back.svg", 1990199139, 2);
     /** 16x16 */ public static final @NotNull Icon BuildAutoReloadChanges = load("expui/actions/buildAutoReloadChanges.svg", "actions/buildAutoReloadChanges.svg", 1799776131, 2);
     /** 16x16 */ public static final @NotNull Icon BuildLoadChanges = load("actions/buildLoadChanges.svg", -2056072706, 2);
