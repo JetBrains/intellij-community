@@ -27,7 +27,8 @@ class CompilationChartsPopup(
 
     val name = module.info["name"] ?: return
     val actions = listOf<CompilationChartsAction>(OpenDirectoryAction(project, name, { close() }),
-                                                  OpenProjectStructureAction(project, name, { close() }),)
+                                                  OpenProjectStructureAction(project, name, { close() }),
+                                                  ShowModuleDependenciesAction(project, name, component, { close() }),)
     this.module = module
     this.popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content(module.info, actions), null)

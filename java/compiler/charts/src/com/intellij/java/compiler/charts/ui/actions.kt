@@ -2,6 +2,7 @@
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.java.compiler.charts.CompilationChartsBundle
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -10,12 +11,16 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.ui.JBUI
 import java.awt.Cursor
+import java.awt.Font
 import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.font.TextAttribute
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 interface CompilationChartsAction {
   fun isAccessible(): Boolean
-  fun actionPerformed()
+  fun actionPerformed(e: MouseEvent)
   fun position(): Position
   fun label(): JLabel
 
@@ -36,7 +41,7 @@ class OpenDirectoryAction(private val project: Project, private val name: String
     addMouseListener(ActionMouseAdapter(this, this@OpenDirectoryAction))
   }
 
-  override fun actionPerformed() {
+  override fun actionPerformed(e: MouseEvent) {
     val module = ModuleManager.getInstance(project).findModuleByName(name) ?: return
     val path = LocalFileSystem.getInstance().findFileByPath(module.moduleFilePath) ?: return
     val directory = path.parent ?: return
@@ -59,7 +64,7 @@ class OpenProjectStructureAction(
     addMouseListener(ActionMouseAdapter(this, this@OpenProjectStructureAction))
   }
 
-  override fun actionPerformed() {
+  override fun actionPerformed(e: MouseEvent) {
     val module = ModuleManager.getInstance(project).findModuleByName(name) ?: return
     val projectStructure = ProjectStructureConfigurable.getInstance(project)
     ShowSettingsUtil.getInstance().editConfigurable(project, projectStructure) {
@@ -69,16 +74,53 @@ class OpenProjectStructureAction(
   }
 }
 
+class ShowModuleDependenciesAction(
+  private val project: Project, private val name: String,
+  private val component: JComponent,
+  private val close: () -> Unit,
+) : CompilationChartsAction {
+  private val action = ActionManager.getInstance().getAction("ShowModulesDependencies")
+
+  override fun isAccessible() = action != null
+
+  override fun actionPerformed(e: MouseEvent) {
+    val context = object : DataContext {
+      val module = ModuleManager.getInstance(project).findModuleByName(name)
+      override fun getData(dataId: String): Any? = when {
+        CommonDataKeys.PROJECT.`is`(dataId) -> project
+        LangDataKeys.MODULE_CONTEXT_ARRAY.`is`(dataId) -> arrayOf(module)
+        PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId) -> component
+        else -> null
+      }
+    }
+
+    close()
+
+    action.actionPerformed(AnActionEvent.createEvent(action, context, null, ActionPlaces.TOOLBAR, ActionUiKind.POPUP, e))
+  }
+
+  override fun position() = CompilationChartsAction.Position.LIST
+
+  override fun label() = JLabel(action?.templateText).apply {
+    foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
+    font = font.deriveFont(Font.PLAIN)
+
+    addMouseListener(ActionMouseAdapter(this, this@ShowModuleDependenciesAction))
+  }
+}
+
 private class ActionMouseAdapter(private val parent: JLabel, private val action: CompilationChartsAction) : MouseAdapter() {
-  override fun mouseClicked(e: java.awt.event.MouseEvent?) {
-    action.actionPerformed()
+  override fun mouseClicked(e: MouseEvent) {
+    action.actionPerformed(e)
   }
 
-  override fun mouseEntered(e: java.awt.event.MouseEvent?) {
+  override fun mouseEntered(e: MouseEvent) {
     parent.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    parent.font = parent.font.deriveFont(mapOf(TextAttribute.UNDERLINE to TextAttribute.UNDERLINE_ON))
   }
 
-  override fun mouseExited(e: java.awt.event.MouseEvent?) {
+  override fun mouseExited(e: MouseEvent) {
     parent.cursor = Cursor.getDefaultCursor()
+    parent.font = parent.font.deriveFont(mapOf(TextAttribute.UNDERLINE to -1))
   }
 }
