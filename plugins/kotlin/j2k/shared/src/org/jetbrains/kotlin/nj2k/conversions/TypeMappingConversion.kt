@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtClass
 
 class TypeMappingConversion(
     context: ConverterContext,
-    inline val filter: (typeElement: JKTypeElement) -> Boolean = { true }
+    val filter: (typeElement: JKTypeElement) -> Boolean = { true }
 ) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
