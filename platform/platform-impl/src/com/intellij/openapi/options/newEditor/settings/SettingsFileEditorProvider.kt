@@ -4,21 +4,25 @@ package com.intellij.openapi.options.newEditor.settings
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 
-class SettingsFileEditorProvider : FileEditorProvider {
+class SettingsFileEditorProvider : FileEditorProvider, DumbAware {
   companion object{
     const val ID = "SettingsFileEditor"
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return file is SettingsFile
+    return file is SettingsVirtualFile
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val settingsFile = file as SettingsFile
-    return SettingsFileEditor(settingsFile.component!!)
+    val settingsFile = file as SettingsVirtualFile
+
+    return SettingsFileEditor(settingsFile)
   }
 
   override fun getEditorTypeId(): String {
@@ -34,6 +38,6 @@ class SettingsFileEditorProvider : FileEditorProvider {
   }
 
   override fun disposeEditor(editor: FileEditor) {
-    //TODO: implement
+    Disposer.dispose(editor as SettingsFileEditor)
   }
 }

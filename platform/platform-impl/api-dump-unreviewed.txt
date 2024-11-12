@@ -10053,6 +10053,7 @@ c:com.intellij.openapi.options.newEditor.SettingsDialog
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.options.Configurable,Z,Z):V
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.options.Configurable,java.lang.String):V
 - <init>(java.awt.Component,java.lang.String,com.intellij.openapi.options.Configurable,Z,Z):V
+- addChildDisposable(com.intellij.openapi.Disposable):V
 - applyAndClose(Z):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
@@ -10104,14 +10105,9 @@ c:com.intellij.openapi.options.newEditor.SettingsTreeView
 pf:com.intellij.openapi.options.newEditor.SettingsTreeView$AccessibleSettingsTreeView
 - javax.swing.JComponent$AccessibleJComponent
 - getAccessibleRole():javax.accessibility.AccessibleRole
-f:com.intellij.openapi.options.newEditor.settings.SettingsFile
-- com.intellij.testFramework.LightVirtualFile
-- <init>(javax.swing.JComponent):V
-- f:getComponent():javax.swing.JComponent
-- isIncludedInEditorHistory(com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditor
 - com.intellij.openapi.fileEditor.FileEditor
-- <init>(javax.swing.JComponent):V
+- <init>(com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder$SettingsVirtualFile):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - dispose():V
 - getComponent():javax.swing.JComponent
@@ -10126,6 +10122,7 @@ f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditor
 - setState(com.intellij.openapi.fileEditor.FileEditorState):V
 f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
+- com.intellij.openapi.project.DumbAware
 - sf:Companion:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider$Companion
 - sf:ID:java.lang.String
 - <init>():V
@@ -10136,6 +10133,18 @@ f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider
 - getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
 - isDumbAware():Z
 f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider$Companion
+f:com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
+- sf:Companion:com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder$Companion
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
+- f:getOrCreate(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
+f:com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder$SettingsVirtualFile
+- com.intellij.testFramework.LightVirtualFile
+- <init>(com.intellij.openapi.options.newEditor.AbstractEditor,com.intellij.openapi.project.Project):V
+- f:getEditor():com.intellij.openapi.options.newEditor.AbstractEditor
+- f:getProject():com.intellij.openapi.project.Project
+- isIncludedInEditorHistory(com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.preview.PreviewProviderId
 c:com.intellij.openapi.progress.BackgroundTaskQueue
 - pf:myProcessor:com.intellij.util.concurrency.QueueProcessor

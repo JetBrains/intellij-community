@@ -5,9 +5,11 @@ import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
-import com.intellij.openapi.options.newEditor.settings.SettingsFile
+import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.TabbedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -19,6 +21,9 @@ import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.project.PROJECT_ID
+import com.intellij.platform.project.ProjectId
 import com.intellij.ui.navigation.Place
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -47,18 +52,23 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
     @JvmStatic
     fun showSettings(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?) {
-      val settingsDialog = createDialogWrapper(project, groups, toSelect) as SettingsDialog
-      showInternal(settingsDialog, project)
+      showInternal(project) {
+        createDialogWrapper(project, groups, toSelect) as SettingsDialog
+      }
     }
 
-    private fun showInternal(settingsDialog: SettingsDialog, project: Project?) {
+    private fun showInternal(project: Project?, settingsDialogInitializer: () -> SettingsDialog) {
       if (AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window")) {
-        val editor = settingsDialog.editor;
-        val settingsFile = SettingsFile(editor.rootPane);
-        FileEditorManager.getInstance(currentOrDefaultProject(project)).openFile(settingsFile, true);
+        val currentOrDefaultProject = currentOrDefaultProject(project)
+        runWithModalProgressBlocking(currentOrDefaultProject, "Opening settings") {
+          val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(settingsDialogInitializer);
+          val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
+          val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true)
+          fileEditorManager.openFile(settingsFile, options);
+        }
       }
       else {
-        settingsDialog.show()
+        settingsDialogInitializer.invoke().show()
       }
     }
 
@@ -103,11 +113,13 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
         .takeIf { !it.configurables.isEmpty() }
       val configurableToSelect = if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, listOf(group))
 
-      val settingsDialog = SettingsDialog(currentOrDefaultProject(project),
-                                          listOf<ConfigurableGroup>(group!!),
-                                          configurableToSelect,
-                                          filter)
-      showInternal(settingsDialog, project)
+      val currentOrDefaultProject = currentOrDefaultProject(project)
+      showInternal(currentOrDefaultProject) {
+        SettingsDialog(currentOrDefaultProject,
+                       listOf<ConfigurableGroup>(group!!),
+                       configurableToSelect,
+                       filter)
+      }
     }
 
     @JvmStatic
