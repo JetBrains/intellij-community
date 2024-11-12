@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.util.io.CorruptedException;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.Unmappable;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
 import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -784,8 +784,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       headerPage = null;
 
       if (currentOwnerPid != NULL_OWNER_PID) {
-        throw new IOException(
-          "Storage is exclusively owned by another process[pid: " + currentOwnerPid + ", our pid: " + ourPid + "]");
+        //important to NOT throw an exception here -- close must be successful regardless of success of ownership acquiring
+        FSRecords.LOG.warn("Storage is exclusively owned by another process[pid: " + currentOwnerPid + ", our pid: " + ourPid + "]");
       }
     }
   }
