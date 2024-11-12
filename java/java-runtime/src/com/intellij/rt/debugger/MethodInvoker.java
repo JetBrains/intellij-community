@@ -24,7 +24,8 @@ public final class MethodInvoker {
                                String nameAndDescriptor,
                                ClassLoader loader,
                                Object arg1) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1});
+    Object[] args = (arg1 == null || arg1 instanceof Object[]) ? (Object[])arg1 : new Object[]{arg1}; // do not wrap Object arrays again
+    return invoke(lookup, cls, obj, nameAndDescriptor, loader, args);
   }
 
   public static Object invoke2(MethodHandles.Lookup lookup,
@@ -182,7 +183,7 @@ public final class MethodInvoker {
       // handle the case where null is passed as the vararg array
       // TODO: handle when vararg is not the only parameter
       int parameterCount = mt.parameterCount();
-      if (parameterCount == 1 && args.length == 1 && args[0] == null && mt.parameterType(0).isArray()) {
+      if (parameterCount == 1 && args == null && mt.parameterType(0).isArray()) {
         result = method.invoke((Object[])null);
       }
       else {

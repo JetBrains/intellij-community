@@ -75,19 +75,7 @@ internal fun tryInvokeWithHelper(
   invokerArgs.add(method.declaringType().classLoader()) // method's declaring type class loader to be able to resolve parameter types
 
   // argument values
-  val args = originalArgs.toMutableList()
-  if (method.isVarArgs) {
-    // If vararg is Object... and an array of Objects is passed, we need to unwrap it or we'll not be able to distinguish what was passed later
-    val argumentTypeNames = method.argumentTypeNames()
-    (args.lastOrNull() as? ArrayReference)?.let {
-      if (args.size == argumentTypeNames.size && argumentTypeNames.last().startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
-        args.removeLast()
-        args.addAll(it.values)
-      }
-    }
-  }
-
-  val boxedArgs = args.map { BoxingEvaluator.box(it, evaluationContext) as Value? }
+  val boxedArgs = originalArgs.map { BoxingEvaluator.box(it, evaluationContext) as Value? }
 
   var helperMethodName = "invoke"
   if (boxedArgs.size > 10) {
