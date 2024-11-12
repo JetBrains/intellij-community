@@ -4,7 +4,9 @@ package com.intellij.java.compiler.charts.ui
 import com.intellij.java.compiler.charts.CompilationChartsBundle
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.ui.JBUI
 import java.awt.Cursor
@@ -14,7 +16,6 @@ import javax.swing.JLabel
 interface CompilationChartsAction {
   fun isAccessible(): Boolean
   fun actionPerformed()
-  fun id(): String
   fun position(): Position
   fun label(): JLabel
 
@@ -25,9 +26,8 @@ interface CompilationChartsAction {
   }
 }
 
-class OpenDirectoryAction(private val project: Project, private val name: String) : CompilationChartsAction {
+class OpenDirectoryAction(private val project: Project, private val name: String, private val close: () -> Unit) : CompilationChartsAction {
   override fun isAccessible() = true
-  override fun id() = "open.module.directory"
   override fun position() = CompilationChartsAction.Position.LEFT
   override fun label(): JLabel = JLabel().apply {
     icon = Settings.Popup.MODULE_IMAGE
@@ -40,14 +40,38 @@ class OpenDirectoryAction(private val project: Project, private val name: String
     val module = ModuleManager.getInstance(project).findModuleByName(name) ?: return
     val path = LocalFileSystem.getInstance().findFileByPath(module.moduleFilePath) ?: return
     val directory = path.parent ?: return
+    close()
     OpenFileDescriptor(project, directory, -1).navigate(true)
+  }
+}
+
+class OpenProjectStructureAction(
+  private val project: Project,
+  private val name: String,
+  private val close: () -> Unit,
+) : CompilationChartsAction {
+  override fun isAccessible() = true
+  override fun position() = CompilationChartsAction.Position.RIGHT
+  override fun label(): JLabel = JLabel().apply {
+    icon = Settings.Popup.EDIT_IMAGE
+    toolTipText = CompilationChartsBundle.message("charts.action.open.project.structure")
+    border = JBUI.Borders.emptyLeft(10)
+    addMouseListener(ActionMouseAdapter(this, this@OpenProjectStructureAction))
+  }
+
+  override fun actionPerformed() {
+    val module = ModuleManager.getInstance(project).findModuleByName(name) ?: return
+    val projectStructure = ProjectStructureConfigurable.getInstance(project)
+    ShowSettingsUtil.getInstance().editConfigurable(project, projectStructure) {
+      close()
+      projectStructure.select(module.name, "Modules", true)
+    }
   }
 }
 
 private class ActionMouseAdapter(private val parent: JLabel, private val action: CompilationChartsAction) : MouseAdapter() {
   override fun mouseClicked(e: java.awt.event.MouseEvent?) {
     action.actionPerformed()
-    //close()
   }
 
   override fun mouseEntered(e: java.awt.event.MouseEvent?) {

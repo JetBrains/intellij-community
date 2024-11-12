@@ -122,7 +122,6 @@ object Settings {
 
   object Popup {
     val MODULE_IMAGE = AllIcons.Actions.ModuleDirectory
+    val EDIT_IMAGE = AllIcons.Actions.EditSource
   }
-
-  //object
 }

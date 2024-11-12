@@ -26,7 +26,8 @@ class CompilationChartsPopup(
     close()
 
     val name = module.info["name"] ?: return
-    val actions = listOf<CompilationChartsAction>(OpenDirectoryAction(project, name))
+    val actions = listOf<CompilationChartsAction>(OpenDirectoryAction(project, name, { close() }),
+                                                  OpenProjectStructureAction(project, name, { close() }),)
     this.module = module
     this.popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content(module.info, actions), null)
@@ -92,8 +93,6 @@ class CompilationChartsPopup(
     }
 
     val right = JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-    }.apply {
       actions.filter { action -> action.isAccessible() }
         .filter { action -> action.position() == RIGHT }
         .forEach { action -> add(action.label()) }
