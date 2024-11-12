@@ -70,6 +70,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     }
     if (PsiUtil.isJvmLocalVariable(myVariable) ||
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
+      if (qualifier != null) return factory.getUnknown();
       return factory.getVarFactory().createVariableValue(this);
     }
     if (qualifier instanceof DfaTypeValue typeValue) {

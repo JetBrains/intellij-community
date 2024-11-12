@@ -5,6 +5,8 @@ import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
+import com.intellij.codeInspection.dataFlow.value.DfaValue
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -41,6 +43,11 @@ class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: Kt
         return "$receiver.this"
     }
 
+    override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
+        if (qualifier != null) return factory.unknown
+        return factory.varFactory.createVariableValue(this)
+    }
+
     override fun isInlineClassReference(): Boolean = classDef?.inline ?: false
 
     companion object {
@@ -56,10 +63,8 @@ class KtThisDescriptor internal constructor(val dfType: DfType, val classDef: Kt
                     return KtLambdaThisVariableDescriptor(function, declType.toDfType()) to declType
                 } else {
                     val dfType = declType.toDfType()
-                    if (dfType != DfType.TOP) {
-                        val classDef = declType.expandedSymbol?.classDef()
-                        return KtThisDescriptor(dfType, classDef, symbol.owningCallableSymbol.name?.asString()) to declType
-                    }
+                    val classDef = declType.expandedSymbol?.classDef()
+                    return KtThisDescriptor(dfType, classDef, symbol.owningCallableSymbol.name?.asString()) to declType
                 }
             }
             else if (symbol is KaClassSymbol && exprType != null) {

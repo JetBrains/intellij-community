@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescriptor
 import com.intellij.codeInspection.dataFlow.types.DfType
+import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.PsiField
@@ -230,4 +231,8 @@ class KtLambdaThisVariableDescriptor(val lambda: KtFunctionLiteral, val type: Df
     override fun equals(other: Any?): Boolean = other is KtLambdaThisVariableDescriptor && other.lambda == lambda
     override fun hashCode(): Int = lambda.hashCode()
     override fun toString(): String = "this@${lambda.name}"
+    override fun createValue(factory: DfaValueFactory, qualifier: DfaValue?): DfaValue {
+        if (qualifier != null) return factory.unknown
+        return factory.varFactory.createVariableValue(this)
+    }
 }

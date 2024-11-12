@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -109,5 +110,11 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   public static DfaVariableValue createThisValue(@NotNull DfaValueFactory factory, @Nullable PsiClass aClass) {
     if (aClass == null) return null;
     return factory.getVarFactory().createVariableValue(new ThisDescriptor(aClass));
+  }
+
+  @Override
+  public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+    if (qualifier != null) return factory.getUnknown();
+    return factory.getVarFactory().createVariableValue(this);
   }
 }
