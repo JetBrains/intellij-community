@@ -166,7 +166,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
 
         expression is PyLiteralExpression -> getPyClass(expression, context)
 
-        expression is PyPrefixExpression && expression.operator == PyTokenTypes.MINUS -> {
+        expression is PyPrefixExpression && (expression.operator == PyTokenTypes.PLUS || expression.operator == PyTokenTypes.MINUS) -> {
           val operand = expression.operand
           if (operand is PyNumericLiteralExpression && operand.isIntegerLiteral) getPyClass(operand, context) else null
         }
