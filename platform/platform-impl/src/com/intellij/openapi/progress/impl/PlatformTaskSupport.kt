@@ -32,7 +32,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
-import com.intellij.platform.ide.progress.suspender.TaskSuspenderListener
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
@@ -164,10 +163,8 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val pipe = cs.createProgressPipe()
     val indicator = coroutineCancellingIndicator(taskJob)
 
-    if (taskSuspender is TaskSuspenderImpl) {
-      // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
-      indicator.markSuspendable(taskSuspender)
-    }
+    // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
+    val suspenderSynchronizer = indicator.markSuspendableIfNeeded(taskSuspender)
 
     val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
 
@@ -180,35 +177,17 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
     finally {
       showIndicatorJob.cancel()
+      suspenderSynchronizer?.stop()
     }
   }
 
-  private fun ProgressIndicatorEx.markSuspendable(taskSuspender: TaskSuspenderImpl): Closeable {
+  private fun ProgressIndicatorEx.markSuspendableIfNeeded(taskSuspender: TaskSuspender?): TaskToProgressSuspenderSynchronizer? {
+    if (taskSuspender !is TaskSuspenderImpl) return null
+
     @Suppress("UsagesOfObsoleteApi")
     val progressSuspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
       { ProgressSuspender.markSuspendable(this, taskSuspender.suspendedText) }, this)
-
-    ProgressSuspenderTracker.getInstance().startTracking(progressSuspender, object : ProgressSuspenderTracker.SuspenderListener {
-      override fun onPause(suspendedText: String) {
-        taskSuspender.pause(suspendedText)
-      }
-
-      override fun onResume() {
-        taskSuspender.resume()
-      }
-    })
-
-    taskSuspender.addListener(object : TaskSuspenderListener {
-      override fun onPause(reason: String?) {
-        progressSuspender.suspendProcess(reason)
-      }
-
-      override fun onResume() {
-        progressSuspender.resumeProcess()
-      }
-    })
-
-    return Closeable { ProgressSuspenderTracker.getInstance().stopTracking(progressSuspender) }
+    return TaskToProgressSuspenderSynchronizer(taskSuspender, progressSuspender)
   }
 
   override suspend fun <T> withModalProgressInternal(
