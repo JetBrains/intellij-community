@@ -105,7 +105,7 @@ class 'pkg/TestTryCatchFinallyMismatched' {
       44      14
       45      14
       46      14
-      47      14
+      47      17
       48      17
       49      17
       4a      17
@@ -135,7 +135,6 @@ class 'pkg/TestTryCatchFinallyMismatched' {
       21      26
       22      26
       23      26
-      24      26
    }
 
    method 'test3 (Ljava/lang/String;)I' {
@@ -185,7 +184,7 @@ class 'pkg/TestTryCatchFinallyMismatched' {
       5c      43
       5d      43
       5e      43
-      5f      43
+      5f      46
       60      46
       61      46
       62      46
@@ -242,7 +241,7 @@ class 'pkg/TestTryCatchFinallyMismatched' {
       5c      58
       5d      58
       5e      58
-      5f      58
+      5f      61
       60      61
       61      61
       62      61

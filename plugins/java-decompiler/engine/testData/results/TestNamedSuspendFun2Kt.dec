@@ -235,8 +235,6 @@ class 'TestNamedSuspendFun2Kt' {
       1c      50
       1d      50
       1e      50
-      1f      50
-      20      50
       21      51
       28      55
       2c      55
@@ -438,8 +436,6 @@ class 'TestNamedSuspendFun2Kt' {
       129      106
       12a      106
       12b      106
-      12c      106
-      12d      106
       133      120
       134      120
       138      120

@@ -84,8 +84,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       4d      8
       4e      8
       4f      8
-      50      8
-      51      8
       59      9
       5a      9
       5b      9
@@ -94,8 +92,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       5e      9
       5f      9
       60      9
-      61      9
-      62      9
       6a      10
       6b      10
       6c      10
@@ -104,8 +100,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       6f      10
       70      10
       71      10
-      72      10
-      73      10
       7a      11
       7b      11
       7c      11
@@ -143,8 +137,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       4d      20
       4e      20
       4f      20
-      50      20
-      51      20
       59      22
       5a      22
       5b      23
@@ -153,8 +145,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       5e      23
       5f      23
       60      23
-      61      23
-      62      23
       6a      25
       6b      25
       6c      26
@@ -163,8 +153,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       6f      26
       70      26
       71      26
-      72      26
-      73      26
       7a      29
       7b      29
       7c      29
@@ -194,8 +182,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       4d      40
       4e      40
       4f      40
-      50      40
-      51      40
       52      41
       59      42
       5a      42
@@ -205,8 +191,6 @@ class 'pkg/TestSwitchGuardedEcj' {
       5e      43
       5f      43
       60      43
-      61      43
-      62      43
       63      44
       6a      45
       6b      45
@@ -216,16 +200,12 @@ class 'pkg/TestSwitchGuardedEcj' {
       6f      46
       70      46
       71      46
-      72      46
-      73      46
       74      47
       7a      49
       7b      49
       7c      49
       7d      49
       7e      49
-      7f      49
-      80      49
       81      50
       84      37
       85      37

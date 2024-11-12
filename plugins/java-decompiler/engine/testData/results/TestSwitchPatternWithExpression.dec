@@ -48,12 +48,12 @@ public class TestSwitchPatternWithExpression {
             var19 = a;// 47
             break;
          case AA(B(String a)):
-            var19 = a;
+            var19 = a;// 48
       }
 
       String aa = var19;
       System.out.println(aa + "1");// 50
-      return;// 48
+      return;
    }
 
    private static String getX4(I i) {
@@ -78,13 +78,13 @@ public class TestSwitchPatternWithExpression {
             var13 = a;// 63
             break;
          case B(String a):
-            var13 = a;
+            var13 = a;// 64
             break;
       }
 
       String string = var13;
       System.out.println(string + "2");// 66
-   }// 64
+   }
 
    private static String getX5(I i) {
       String var13;
@@ -112,9 +112,9 @@ public class TestSwitchPatternWithExpression {
             break;
       }
 
-      String string = var13;
+      String string = var13;// 80
       System.out.println(string + "2");// 82
-   }// 80
+   }
 
    private static String getX3(I i) {
       String var12;
@@ -273,22 +273,6 @@ class 'decompiler/TestSwitchPatternWithExpression' {
       9e      54
       9f      54
       a0      55
-      a1      55
-      a2      55
-      a3      55
-      a4      55
-      a5      55
-      a6      55
-      a7      55
-      a8      55
-      a9      55
-      aa      55
-      ab      55
-      ac      55
-      ad      55
-      ae      55
-      af      55
-      b0      55
    }
 
    method 'getX4 (Ldecompiler/TestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
@@ -326,22 +310,6 @@ class 'decompiler/TestSwitchPatternWithExpression' {
       6a      85
       6b      85
       6c      86
-      6d      86
-      6e      86
-      6f      86
-      70      86
-      71      86
-      72      86
-      73      86
-      74      86
-      75      86
-      76      86
-      77      86
-      78      86
-      79      86
-      7a      86
-      7b      86
-      7c      86
    }
 
    method 'getX5 (Ldecompiler/TestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
@@ -350,10 +318,6 @@ class 'decompiler/TestSwitchPatternWithExpression' {
       43      92
       44      92
       49      92
-      4a      92
-      4b      92
-      4c      92
-      4d      92
       4e      93
       5e      95
       5f      95
@@ -368,10 +332,6 @@ class 'decompiler/TestSwitchPatternWithExpression' {
       43      107
       44      107
       49      107
-      4a      107
-      4b      107
-      4c      107
-      4d      107
       4e      108
       5e      110
       5f      110
@@ -389,22 +349,6 @@ class 'decompiler/TestSwitchPatternWithExpression' {
       6f      115
       70      115
       71      116
-      72      116
-      73      116
-      74      116
-      75      116
-      76      116
-      77      116
-      78      116
-      79      116
-      7a      116
-      7b      116
-      7c      116
-      7d      116
-      7e      116
-      7f      116
-      80      116
-      81      116
    }
 
    method 'getX3 (Ldecompiler/TestSwitchPatternWithExpression$I;)Ljava/lang/String;' {
@@ -584,7 +528,7 @@ Lines mapping:
 41 <-> 38
 46 <-> 46
 47 <-> 48
-48 <-> 56
+48 <-> 51
 50 <-> 55
 54 <-> 61
 55 <-> 63
@@ -592,7 +536,7 @@ Lines mapping:
 58 <-> 71
 62 <-> 76
 63 <-> 78
-64 <-> 87
+64 <-> 81
 66 <-> 86
 70 <-> 91
 71 <-> 93
@@ -600,7 +544,7 @@ Lines mapping:
 74 <-> 101
 78 <-> 106
 79 <-> 108
-80 <-> 117
+80 <-> 115
 82 <-> 116
 86 <-> 121
 87 <-> 123

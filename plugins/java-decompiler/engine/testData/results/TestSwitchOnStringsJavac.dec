@@ -196,8 +196,6 @@ class 'pkg/TestSwitchOnStringsJavac' {
       46      25
       47      25
       48      25
-      49      25
-      4a      25
       4e      26
       4f      26
       50      26
@@ -229,8 +227,6 @@ class 'pkg/TestSwitchOnStringsJavac' {
       62      35
       63      35
       64      35
-      65      35
-      66      35
       6a      36
       6b      36
       6c      36
@@ -264,15 +260,11 @@ class 'pkg/TestSwitchOnStringsJavac' {
       62      45
       63      45
       64      45
-      65      45
-      66      45
       6a      46
       6b      46
       6c      46
       6d      46
       6e      46
-      6f      46
-      70      46
       74      47
       75      47
       76      47
@@ -304,15 +296,11 @@ class 'pkg/TestSwitchOnStringsJavac' {
       7a      56
       7b      56
       7c      56
-      7d      56
-      7e      56
       82      57
       83      57
       84      57
       85      57
       86      57
-      87      57
-      88      57
       8c      58
       8d      58
       8e      58
@@ -346,22 +334,16 @@ class 'pkg/TestSwitchOnStringsJavac' {
       7a      67
       7b      67
       7c      67
-      7d      67
-      7e      67
       82      68
       83      68
       84      68
       85      68
       86      68
-      87      68
-      88      68
       8c      69
       8d      69
       8e      69
       8f      69
       90      69
-      91      69
-      92      69
       96      70
       97      70
       98      70
@@ -411,29 +393,21 @@ class 'pkg/TestSwitchOnStringsJavac' {
       9e      81
       9f      81
       a0      81
-      a1      81
-      a2      81
       a6      82
       a7      82
       a8      82
       a9      82
       aa      82
-      ab      82
-      ac      82
       b0      83
       b1      83
       b2      83
       b3      83
       b4      83
-      b5      83
-      b6      83
       ba      84
       bb      84
       bc      84
       bd      84
       be      84
-      bf      84
-      c0      84
       c4      85
       c5      85
       c6      85
@@ -453,8 +427,6 @@ class 'pkg/TestSwitchOnStringsJavac' {
       d6      88
       d7      89
       d8      89
-      d9      89
-      da      89
       de      93
       df      93
       e0      93
@@ -490,8 +462,6 @@ class 'pkg/TestSwitchOnStringsJavac' {
       185      102
       186      102
       187      102
-      188      102
-      189      102
       18d      106
       18e      106
       18f      106
@@ -530,8 +500,6 @@ class 'pkg/TestSwitchOnStringsJavac' {
       1f3      124
       1f4      124
       1f5      124
-      1f6      124
-      1f7      124
       1fb      125
       1fc      125
       1fd      125
@@ -541,8 +509,6 @@ class 'pkg/TestSwitchOnStringsJavac' {
       201      125
       202      125
       205      128
-      206      128
-      207      128
       20b      131
       20c      131
       20d      131

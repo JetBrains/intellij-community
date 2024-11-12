@@ -60,7 +60,6 @@ class 'pkg/TestTryCatchFinally' {
       2e      12
       2f      12
       30      12
-      31      12
       38      15
    }
 
@@ -103,7 +102,7 @@ class 'pkg/TestTryCatchFinally' {
       36      34
       37      34
       38      34
-      39      34
+      39      37
       3a      37
       3b      37
       3c      37

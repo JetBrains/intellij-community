@@ -111,22 +111,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       3d      12
       3e      12
       3f      13
-      40      13
-      41      13
-      42      13
-      43      13
-      44      13
-      45      13
-      46      13
-      47      13
-      48      13
-      49      13
-      4a      13
-      4b      13
-      4c      13
-      4d      13
-      4e      13
-      4f      13
    }
 
    method 'instanceOfTest2 (Ljava/lang/Object;)V' {
@@ -156,22 +140,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       48      21
       49      21
       4a      22
-      4b      22
-      4c      22
-      4d      22
-      4e      22
-      4f      22
-      50      22
-      51      22
-      52      22
-      53      22
-      54      22
-      55      22
-      56      22
-      57      22
-      58      22
-      59      22
-      5a      22
    }
 
    method 'instanceOfTest3 (Ljava/lang/Object;)V' {
@@ -201,22 +169,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       3d      30
       3e      30
       3f      31
-      40      31
-      41      31
-      42      31
-      43      31
-      44      31
-      45      31
-      46      31
-      47      31
-      48      31
-      49      31
-      4a      31
-      4b      31
-      4c      31
-      4d      31
-      4e      31
-      4f      31
    }
 
    method 'instanceOfTest3_2 (Ljava/lang/Object;)V' {
@@ -246,22 +198,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       3d      39
       3e      39
       3f      40
-      40      40
-      41      40
-      42      40
-      43      40
-      44      40
-      45      40
-      46      40
-      47      40
-      48      40
-      49      40
-      4a      40
-      4b      40
-      4c      40
-      4d      40
-      4e      40
-      4f      40
    }
 
    method 'instanceOfTest4 (Ljava/lang/Object;)V' {
@@ -313,22 +249,6 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac' {
       bd      52
       be      52
       bf      53
-      c0      53
-      c1      53
-      c2      53
-      c3      53
-      c4      53
-      c5      53
-      c6      53
-      c7      53
-      c8      53
-      c9      53
-      ca      53
-      cb      53
-      cc      53
-      cd      53
-      ce      53
-      cf      53
    }
 }
 
