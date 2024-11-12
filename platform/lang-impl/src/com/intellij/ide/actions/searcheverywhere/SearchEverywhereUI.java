@@ -122,10 +122,11 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
+  public static final Topic<PreviewListener> PREVIEW_EVENTS = Topic.create("Search everywhere preview events", PreviewListener.class);
 
   public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
 
-  static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
+  @ApiStatus.Internal public static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
@@ -151,6 +152,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private JComponent myExtendedInfoPanel;
   private @Nullable ExtendedInfoComponent myExtendedInfoComponent;
   private final SearchListener topicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(SEARCH_EVENTS);
+  private final PreviewListener myPreviewTopicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(PREVIEW_EVENTS);
   private @Nullable SearchEverywherePreviewGenerator myPreviewGenerator;
 
   private UsagePreviewPanel myUsagePreviewPanel;
@@ -252,9 +254,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     mySearchField.addKeyListener(mySearchTypingListener);
 
     if (project != null) {
-      myPreviewGenerator = new SearchEverywherePreviewGenerator(project, (List<UsageInfo> usageInfos) -> {
-        myUsagePreviewPanel.updateLayout(project, usageInfos);
-      });
+      myPreviewGenerator = new SearchEverywherePreviewGenerator(
+        project,
+        usageInfos -> myUsagePreviewPanel.updateLayout(project, usageInfos),
+        (selectedItem, duration) -> myPreviewTopicPublisher.onPreviewDataReady(project, selectedItem, duration)
+      );
     }
 
     mySearchPerformanceTracker = new SearchPerformanceTracker(startMoment, () -> myHeader.getSelectedTab().getID());
@@ -671,6 +675,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
             onFocusLost(e);
           }
         });
+
+        myPreviewTopicPublisher.onPreviewEditorCreated(SearchEverywhereUI.this, editor);
       }
     };
     Disposer.register(this, myUsagePreviewPanel);
