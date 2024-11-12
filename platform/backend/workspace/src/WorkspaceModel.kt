@@ -2,6 +2,7 @@
 package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
@@ -129,6 +130,9 @@ public interface WorkspaceModel {
   public fun getVirtualFileUrlManager(): VirtualFileUrlManager
 
   public companion object {
+    /**
+     * In suspend context use [serviceAsync]
+     */
     @JvmStatic
     @RequiresBlockingContext
     public fun getInstance(project: Project): WorkspaceModel = project.service()
