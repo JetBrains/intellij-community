@@ -11,6 +11,11 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 interface TaskSuspender {
 
   /**
+   * Adds a listener to observe task suspension events.
+   */
+  fun addListener(listener: TaskSuspenderListener)
+
+  /**
    * Checks if the tasks assigned to this suspender are currently paused.
    *
    * @return true if the tasks are paused, false otherwise
