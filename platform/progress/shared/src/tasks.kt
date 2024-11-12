@@ -41,6 +41,15 @@ suspend fun <T> withBackgroundProgress(
   return withBackgroundProgress(project, title, cancellation, suspender = null, action)
 }
 
+suspend fun <T> withBackgroundProgress(
+  project: Project,
+  title: @ProgressTitle String,
+  suspender: TaskSuspender,
+  action: suspend CoroutineScope.() -> T
+): T {
+  return withBackgroundProgress(project, title, TaskCancellation.nonCancellable(), suspender, action)
+}
+
 /**
  * Shows a background progress indicator, and runs the specified [action].
  * The action receives [a fresh progress step][com.intellij.platform.util.progress.currentProgressStep] in the coroutine context,
@@ -61,7 +70,7 @@ suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   cancellation: TaskCancellation,
-  suspender: TaskSuspender? = null,
+  suspender: TaskSuspender?,
   action: suspend CoroutineScope.() -> T
 ): T {
   return taskSupport().withBackgroundProgressInternal(project, title, cancellation, suspender, action)

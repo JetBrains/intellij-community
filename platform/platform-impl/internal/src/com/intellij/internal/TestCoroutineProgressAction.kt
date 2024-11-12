@@ -5,10 +5,12 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.progress.*
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.platform.util.coroutines.transformConcurrent
@@ -48,6 +50,9 @@ internal class TestCoroutineProgressAction : AnAction() {
         row {
           button("Cancellable BG Progress") {
             cs.cancellableBGProgress(project)
+          }
+          button("2 Suspendable BG Progresses") {
+            cs.suspendableBGProgress(project)
           }
           button("Non-Cancellable BG Progress") {
             cs.nonCancellableBGProgress(project)
@@ -121,6 +126,21 @@ internal class TestCoroutineProgressAction : AnAction() {
     }
   }
 
+  private fun CoroutineScope.suspendableBGProgress(project: Project) {
+    val suspender = TaskSuspender.suspendable("Task suspended")
+    // Check that both tasks are paused simultaneously as they use the same suspender
+    launch {
+      withBackgroundProgress(project, "Suspendable task title 1", suspender) {
+        doStuff()
+      }
+    }
+    launch {
+      withBackgroundProgress(project, "Suspendable task title 2", suspender) {
+        doStuff()
+      }
+    }
+  }
+
   private fun CoroutineScope.nonCancellableBGProgress(project: Project) {
     launch {
       withBackgroundProgress(project, "Non cancellable task title", cancellable = false) {
@@ -186,6 +206,7 @@ internal class TestCoroutineProgressAction : AnAction() {
     return if (parallel) {
       reportProgress(items.size) { reporter ->
         items.transformConcurrent { item ->
+          checkCanceled()
           reporter.itemStep("Transforming $item") {
             if (Math.random() < 0.5) {
               out(item)
@@ -197,6 +218,7 @@ internal class TestCoroutineProgressAction : AnAction() {
     else {
       buildList {
         items.forEachWithProgress { item ->
+          checkCanceled()
           withProgressText("Transforming $item") {
             if (Math.random() < 0.5) {
               add(item)
@@ -259,6 +281,7 @@ internal class TestCoroutineProgressAction : AnAction() {
   }
 
   private suspend fun randomDelay() {
+    checkCanceled()
     delay(100 + (Math.random() * 1000).toLong())
   }
 }
