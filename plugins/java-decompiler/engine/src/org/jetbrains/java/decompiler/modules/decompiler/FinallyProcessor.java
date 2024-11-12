@@ -924,7 +924,7 @@ public class FinallyProcessor {
       if ((blockType & 1) > 0) { // first
         if (finallyType == 2 || finallyType == 1) { // `AStore` or `Pop`
           seq.removeInstruction(0);
-          instrOldOffsets.remove(0);
+          // don't delete offset, because it is crucial for line-mapping
         }
       }
 

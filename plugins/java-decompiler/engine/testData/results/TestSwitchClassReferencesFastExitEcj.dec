@@ -4,7 +4,7 @@ public class TestSwitchClassReferencesFastExitEcj {
    public static void testObject(Object o) {
       label16:
       while(true) {
-         int i = 0;
+         int i = 0;// 7
 
          while(i < o.hashCode()) {
             switch (o) {// 8
@@ -12,7 +12,7 @@ public class TestSwitchClassReferencesFastExitEcj {
                   System.out.println("s");// 10
                   System.exit(0);// 11
                   ++i;// 12 13 14 15 16 17 18
-                  break;// 7
+                  break;
                case Integer in:
                   System.out.println("ii");
                   continue label16;
@@ -27,7 +27,7 @@ public class TestSwitchClassReferencesFastExitEcj {
    public static void testObject2(Object o) {
       label16:
       while(true) {
-         int i = 0;
+         int i = 0;// 27
 
          while(i < o.hashCode()) {
             switch (o) {// 28
@@ -35,7 +35,7 @@ public class TestSwitchClassReferencesFastExitEcj {
                   System.out.println("s");// 30
                   System.exit(0);// 31
                   ++i;// 32 34 35 36 38 39 40
-                  break;// 27
+                  break;
                case Integer in:
                   System.out.println("ii");
                   continue label16;
@@ -190,7 +190,7 @@ class 'pkg/TestSwitchClassReferencesFastExitEcj' {
 
 Lines mapping:
 6 <-> 21
-7 <-> 15
+7 <-> 7
 8 <-> 10
 9 <-> 11
 10 <-> 12
@@ -203,7 +203,7 @@ Lines mapping:
 17 <-> 14
 18 <-> 14
 26 <-> 44
-27 <-> 38
+27 <-> 30
 28 <-> 33
 29 <-> 34
 30 <-> 35

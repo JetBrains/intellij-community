@@ -188,10 +188,10 @@ public class TestSwitchNestedDeconstructionsJavac {
       } catch (Exception var16) {// 169
          switch (o2) {// 170
             case R2(Number s, String s2):
-               System.out.println("10");// 171 172
+               System.out.println("10");// 171 172 177
                return;// 180
             case R2(String s, Number s2):
-               System.out.println(o);// 174 175 177
+               System.out.println(o);// 174 175
                return;
             default:
                System.out.println(o);
@@ -1022,7 +1022,7 @@ Lines mapping:
 172 <-> 191
 174 <-> 194
 175 <-> 194
-177 <-> 194
+177 <-> 191
 180 <-> 192
 183 <-> 225
 Not mapped:

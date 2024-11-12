@@ -5,12 +5,12 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }// 6
 
    public static void instanceOfTest1(Object o) {
-      if (o instanceof R(Object s1)) {
+      if (o instanceof R(Object s1)) {// 9
          System.out.println(s1);// 10
       }
 
       System.out.println("1");// 12
-   }// 9
+   }
 
    public static void tryInstanceOfTest1(Object o) {
       int a = 1;// 16
@@ -38,7 +38,7 @@ public class TestSimpleInstanceOfRecordPatternJavac {
    }// 30 35
 
    public static void instanceOfTest2(Object o) {
-      if (o instanceof R(String s1)) {
+      if (o instanceof R(String s1)) {// 38
          System.out.println(s1);// 39
          if (s1.hashCode() == 1) {// 40
             System.out.println("1");// 41
@@ -46,10 +46,10 @@ public class TestSimpleInstanceOfRecordPatternJavac {
       }
 
       System.out.println("5");// 44
-   }// 38
+   }
 
    public static void instanceOfTest3(Object o) {
-      if (o instanceof R(String s1)) {
+      if (o instanceof R(String s1)) {// 48
          if (s1.isEmpty()) {// 49
             System.out.println("111");// 50
             System.out.println("111");// 51
@@ -60,10 +60,10 @@ public class TestSimpleInstanceOfRecordPatternJavac {
 
       System.out.println("s222222222222");// 56
       System.out.println("s222222222222");// 57
-   }// 48
+   }
 
    public static void instanceOfTest4(Object o) {
-      if (o.hashCode() == 1 && o instanceof R(String s1)) {// 61
+      if (o.hashCode() == 1 && o instanceof R(String s1)) {// 61 62
          if (o instanceof R(String s2)) {// 63
             if (s1.isEmpty()) {// 64
                System.out.println("111");// 65
@@ -76,31 +76,31 @@ public class TestSimpleInstanceOfRecordPatternJavac {
 
       System.out.println("s222222222222");// 73
       System.out.println("s222222222222");// 74
-   }// 62
+   }
 
    public static void instanceOfTestDouble1(Object o, Object o2) {
       if (o instanceof R(Object s1)) {// 78
          System.out.println(s1);// 79
       }
 
-      if (o2 instanceof R(Object s1)) {
+      if (o2 instanceof R(Object s1)) {// 82
          System.out.println(s1);// 83
       }
 
       System.out.println("s2222222");// 85
-   }// 82
+   }
 
    public static void instanceOfTestDouble2(Object o, Object o2) {
       if (o instanceof R(Object s1)) {// 89
          System.out.println(s1);// 90
       }
 
-      if (o2 instanceof R(String r)) {
+      if (o2 instanceof R(String r)) {// 93
          System.out.println(r);// 94
       }
 
       System.out.println("2222222");// 96
-   }// 93
+   }
 
    public static void instanceOfTestDoubleNegate2(Object o, Object o2) {
       if (o instanceof R(Object s1)) {// 100
@@ -592,7 +592,7 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac$R' {
 
 Lines mapping:
 6 <-> 5
-9 <-> 13
+9 <-> 8
 10 <-> 9
 12 <-> 12
 16 <-> 16
@@ -608,12 +608,12 @@ Lines mapping:
 32 <-> 33
 33 <-> 34
 35 <-> 38
-38 <-> 49
+38 <-> 41
 39 <-> 42
 40 <-> 43
 41 <-> 44
 44 <-> 48
-48 <-> 63
+48 <-> 52
 49 <-> 53
 50 <-> 54
 51 <-> 55
@@ -622,7 +622,7 @@ Lines mapping:
 56 <-> 61
 57 <-> 62
 61 <-> 66
-62 <-> 79
+62 <-> 66
 63 <-> 67
 64 <-> 68
 65 <-> 69
@@ -633,12 +633,12 @@ Lines mapping:
 74 <-> 78
 78 <-> 82
 79 <-> 83
-82 <-> 91
+82 <-> 86
 83 <-> 87
 85 <-> 90
 89 <-> 94
 90 <-> 95
-93 <-> 103
+93 <-> 98
 94 <-> 99
 96 <-> 102
 100 <-> 106

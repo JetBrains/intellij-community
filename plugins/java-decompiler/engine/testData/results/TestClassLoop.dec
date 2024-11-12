@@ -95,12 +95,12 @@ class 'pkg/TestClassLoop' {
       e      14
       f      14
       1a      15
+      26      18
       27      18
       28      18
       29      18
       2a      18
       2b      18
-      2c      18
    }
 
    method 'testFinallyContinue ()V' {
@@ -116,8 +116,8 @@ class 'pkg/TestClassLoop' {
       11      29
       12      29
       13      29
+      25      32
       26      32
-      27      32
       2a      33
       2b      33
       2c      33

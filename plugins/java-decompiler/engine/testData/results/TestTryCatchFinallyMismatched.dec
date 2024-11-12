@@ -1,0 +1,286 @@
+package pkg;
+
+public class TestTryCatchFinallyMismatched {
+   public static void main(String[] args) {
+   }// 6
+
+   public int test(String a) {
+      try {
+         int e = Integer.parseInt(a);// 10
+         return e;
+      } catch (Exception e) {// 11
+         System.out.println("Error" + String.valueOf(e));// 12
+      } finally {
+         System.out.println("Finally");// 14
+         System.out.println("Finally");// 15
+      }
+
+      return -1;// 16 17
+   }
+
+   public int test2(String a) {
+      int var2;
+      try {
+         var2 = Integer.parseInt(a);// 22
+      } finally {
+         System.out.println("Finally");// 24
+         System.out.println("Finally");// 25
+      }
+
+      return var2;
+   }
+
+   public int test3(String a) {
+      int a2 = 1;// 30
+
+      try {
+         int e = Integer.parseInt(a);// 32
+         return e;
+      } catch (Exception e) {// 33
+         System.out.println("Error" + String.valueOf(e));// 34
+      } finally {
+         a2 = 3 + a.length();// 36
+         System.out.println("Finally");// 37
+         System.out.println("Finally");// 38
+      }
+
+      return a2;// 39 40
+   }
+
+   public int test4(String a) {
+      try {
+         int test = Integer.parseInt(a);// 45
+         return test;
+      } catch (Exception e) {// 46
+         System.out.println("Error" + String.valueOf(e));// 47
+      } finally {
+         String test = "test";// 49
+         System.out.println("Finally" + test);// 50
+         System.out.println("Finally");// 51
+      }
+
+      return 1;// 52 53
+   }
+}
+
+class 'pkg/TestTryCatchFinallyMismatched' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+
+   method 'test (Ljava/lang/String;)I' {
+      0      8
+      1      8
+      2      8
+      3      8
+      4      8
+      15      9
+      16      9
+      17      10
+      18      11
+      19      11
+      1a      11
+      1c      11
+      1d      11
+      1e      11
+      1f      11
+      20      11
+      21      11
+      22      11
+      23      11
+      24      11
+      37      17
+      38      17
+      39      17
+      3a      13
+      3b      13
+      3c      13
+      3d      13
+      3e      13
+      3f      13
+      40      14
+      41      14
+      42      14
+      43      14
+      44      14
+      45      14
+      46      14
+      47      14
+      48      17
+      49      17
+      4a      17
+      4b      17
+      4c      17
+      4d      17
+   }
+
+   method 'test2 (Ljava/lang/String;)I' {
+      0      23
+      1      23
+      2      23
+      3      23
+      4      23
+      15      29
+      16      29
+      17      25
+      18      25
+      19      25
+      1a      25
+      1b      25
+      1c      25
+      1d      26
+      1e      26
+      1f      26
+      20      26
+      21      26
+      22      26
+      23      26
+      24      26
+   }
+
+   method 'test3 (Ljava/lang/String;)I' {
+      0      33
+      1      33
+      2      36
+      3      36
+      4      36
+      5      36
+      6      36
+      1e      37
+      1f      37
+      20      38
+      21      39
+      22      39
+      23      39
+      25      39
+      26      39
+      27      39
+      28      39
+      29      39
+      2a      39
+      2b      39
+      2c      39
+      2d      39
+      47      46
+      48      46
+      49      46
+      4a      41
+      4b      41
+      4c      41
+      4d      41
+      4e      41
+      4f      41
+      50      41
+      51      41
+      52      42
+      53      42
+      54      42
+      55      42
+      56      42
+      57      42
+      58      43
+      59      43
+      5a      43
+      5b      43
+      5c      43
+      5d      43
+      5e      43
+      5f      43
+      60      46
+      61      46
+      62      46
+      63      46
+      64      46
+      65      46
+      66      46
+   }
+
+   method 'test4 (Ljava/lang/String;)I' {
+      0      51
+      1      51
+      2      51
+      3      51
+      4      51
+      1c      52
+      1d      52
+      1e      53
+      1f      54
+      20      54
+      21      54
+      23      54
+      24      54
+      25      54
+      26      54
+      27      54
+      28      54
+      29      54
+      2a      54
+      2b      54
+      45      61
+      46      61
+      47      61
+      48      56
+      49      56
+      4a      56
+      4b      56
+      4c      57
+      4d      57
+      4e      57
+      4f      57
+      50      57
+      51      57
+      52      57
+      53      57
+      54      57
+      55      57
+      56      57
+      57      57
+      58      58
+      59      58
+      5a      58
+      5b      58
+      5c      58
+      5d      58
+      5e      58
+      5f      58
+      60      61
+      61      61
+      62      61
+      63      61
+      64      61
+      65      61
+      66      61
+   }
+}
+
+Lines mapping:
+6 <-> 5
+10 <-> 9
+11 <-> 11
+12 <-> 12
+14 <-> 14
+15 <-> 15
+16 <-> 18
+17 <-> 18
+22 <-> 24
+24 <-> 26
+25 <-> 27
+30 <-> 34
+32 <-> 37
+33 <-> 39
+34 <-> 40
+36 <-> 42
+37 <-> 43
+38 <-> 44
+39 <-> 47
+40 <-> 47
+45 <-> 52
+46 <-> 54
+47 <-> 55
+49 <-> 57
+50 <-> 58
+51 <-> 59
+52 <-> 62
+53 <-> 62
+Not mapped:
+26

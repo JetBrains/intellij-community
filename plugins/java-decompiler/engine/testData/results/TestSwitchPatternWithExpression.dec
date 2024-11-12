@@ -7,7 +7,7 @@ public class TestSwitchPatternWithExpression {
 
    private static String getX(I i) {
       String var12;
-      switch (i) {
+      switch (i) {// 21
          case A(String a):
             var12 = a;// 22
             break;
@@ -16,7 +16,7 @@ public class TestSwitchPatternWithExpression {
             break;
       }
 
-      return var12;// 21
+      return var12;
    }
 
    private static String getX8(I i) {
@@ -30,7 +30,7 @@ public class TestSwitchPatternWithExpression {
 
    private static String getX0(AA i) {
       String var18;
-      switch (i) {
+      switch (i) {// 39
          case AA(A(String a)):
             var18 = a;
             break;// 40
@@ -38,7 +38,7 @@ public class TestSwitchPatternWithExpression {
             var18 = a;// 41
       }
 
-      return var18;// 39
+      return var18;
    }
 
    private static void getX11(AA i) {
@@ -118,7 +118,7 @@ public class TestSwitchPatternWithExpression {
 
    private static String getX3(I i) {
       String var12;
-      switch (i) {
+      switch (i) {// 86
          case A(String a):
             System.out.println(a);// 87 88
             var12 = a;
@@ -129,12 +129,12 @@ public class TestSwitchPatternWithExpression {
             break;
       }
 
-      return var12;// 86
+      return var12;
    }
 
    private static String getX6(I i) {
       String var12;
-      switch (i) {
+      switch (i) {// 100
          case A(String a):
             System.out.println(a);// 101 102
             var12 = a;
@@ -145,12 +145,12 @@ public class TestSwitchPatternWithExpression {
             break;
       }
 
-      return var12;// 100
+      return var12;
    }
 
    private static String getX7(I i) {
       String var12;
-      switch (i) {
+      switch (i) {// 113
          case A(String a):
             System.out.println(a);// 114 115
             System.out.println(a);// 116
@@ -163,7 +163,7 @@ public class TestSwitchPatternWithExpression {
             break;
       }
 
-      return var12;// 113
+      return var12;
    }
 
    private static String getX2(I i) {
@@ -571,7 +571,7 @@ Lines mapping:
 13 <-> 206
 17 <-> 5
 18 <-> 6
-21 <-> 19
+21 <-> 10
 22 <-> 12
 23 <-> 15
 28 <-> 23
@@ -579,7 +579,7 @@ Lines mapping:
 30 <-> 25
 32 <-> 27
 33 <-> 27
-39 <-> 41
+39 <-> 33
 40 <-> 36
 41 <-> 38
 46 <-> 46
@@ -602,20 +602,20 @@ Lines mapping:
 79 <-> 108
 80 <-> 117
 82 <-> 116
-86 <-> 132
+86 <-> 121
 87 <-> 123
 88 <-> 123
 89 <-> 125
 91 <-> 127
 92 <-> 127
-100 <-> 148
+100 <-> 137
 101 <-> 139
 102 <-> 139
 103 <-> 141
 105 <-> 143
 106 <-> 143
 107 <-> 144
-113 <-> 166
+113 <-> 153
 114 <-> 155
 115 <-> 155
 116 <-> 156
