@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.*
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
@@ -45,6 +46,16 @@ object DarculaNewUIUtil {
     finally {
       g2.dispose()
     }
+  }
+
+  /**
+   * Will be removed after the next 25.1 release
+   */
+  @ApiStatus.Internal
+  @Deprecated("Use drawRoundedRectangle instead")
+  @ScheduledForRemoval
+  fun paintComponentBorder(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
+    drawRoundedRectangle(g, rect, color, arc, thick)
   }
 
   fun drawRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
