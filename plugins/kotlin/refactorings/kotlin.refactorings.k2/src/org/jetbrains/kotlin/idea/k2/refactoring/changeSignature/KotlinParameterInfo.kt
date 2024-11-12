@@ -212,7 +212,7 @@ class KotlinParameterInfo(
                     }
 
                     if (declarationSymbol.receiverParameter != null &&
-                        (target.containingDeclaration as? KaConstructorSymbol)?.containingDeclaration == declarationSymbol.receiverParameter?.type?.expandedSymbol
+                        (target.containingDeclaration as? KaConstructorSymbol)?.containingDeclaration == declarationSymbol.receiverParameter?.returnType?.expandedSymbol
                     ) {
                         return Int.MAX_VALUE
                     }
