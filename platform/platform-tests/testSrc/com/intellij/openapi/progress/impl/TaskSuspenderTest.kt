@@ -120,6 +120,32 @@ class TaskSuspenderTest : BasePlatformTestCase() {
     task.waitAssertCompletedNormally()
   }
 
+  fun testProgressSuspenderSuspendedByTaskSuspender(): Unit = timeoutRunBlocking {
+    var progressSuspenderDeferred = CompletableDeferred<ProgressSuspender>()
+    application.messageBus.connect().subscribe(ProgressSuspender.TOPIC, object : ProgressSuspender.SuspenderListener {
+      override fun suspendableProgressAppeared(suspender: ProgressSuspender) {
+        progressSuspenderDeferred.complete(suspender)
+      }
+    })
+
+    val mayStop = CompletableDeferred<Unit>()
+
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
+    val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
+
+    val progressSuspender = progressSuspenderDeferred.await()
+    assertFalse(progressSuspender.isSuspended)
+
+    suspendTaskAndRun(taskSuspender) {
+      assertTrue(progressSuspender.isSuspended)
+      assertFalse(task.isCompleted)
+    }
+
+    assertFalse(progressSuspender.isSuspended)
+    mayStop.complete(Unit)
+    task.waitAssertCompletedNormally()
+  }
+
   private suspend fun suspendTaskAndRun(taskSuspender: TaskSuspender, action: suspend () -> Unit) {
     taskSuspender.pause(reason = "Paused by test")
     assertTrue(taskSuspender.isPaused())

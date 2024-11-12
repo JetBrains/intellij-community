@@ -32,6 +32,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
+import com.intellij.platform.ide.progress.suspender.TaskSuspenderListener
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
@@ -163,8 +164,10 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val pipe = cs.createProgressPipe()
     val indicator = coroutineCancellingIndicator(taskJob)
 
-    // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
-    markAsSuspendableIfNeeded(indicator, taskSuspender)
+    if (taskSuspender is TaskSuspenderImpl) {
+      // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
+      indicator.markSuspendable(taskSuspender)
+    }
 
     val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
 
@@ -180,12 +183,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
-  private fun markAsSuspendableIfNeeded(indicator: ProgressIndicator, taskSuspender: TaskSuspender?): Closeable {
-    if (taskSuspender !is TaskSuspenderImpl) return Closeable { }
-
+  private fun ProgressIndicatorEx.markSuspendable(taskSuspender: TaskSuspenderImpl): Closeable {
     @Suppress("UsagesOfObsoleteApi")
     val progressSuspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
-      { ProgressSuspender.markSuspendable(indicator, taskSuspender.suspendedText) }, indicator)
+      { ProgressSuspender.markSuspendable(this, taskSuspender.suspendedText) }, this)
+
     ProgressSuspenderTracker.getInstance().startTracking(progressSuspender, object : ProgressSuspenderTracker.SuspenderListener {
       override fun onPause(suspendedText: String) {
         taskSuspender.pause(suspendedText)
@@ -193,6 +195,16 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
       override fun onResume() {
         taskSuspender.resume()
+      }
+    })
+
+    taskSuspender.addListener(object : TaskSuspenderListener {
+      override fun onPause(reason: String?) {
+        progressSuspender.suspendProcess(reason)
+      }
+
+      override fun onResume() {
+        progressSuspender.resumeProcess()
       }
     })
 
