@@ -78,9 +78,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
@@ -188,7 +189,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void setArranger(LookupArranger arranger) {
+    Predicate<LookupElement> previousMatcher = null;
+    if (myArranger != null) {
+      previousMatcher = myArranger.getAdditionalMatcher();
+    }
     myArranger = arranger;
+    if (previousMatcher != null) {
+      myArranger.registerAdditionalMatcher(previousMatcher, this);
+    }
   }
 
   @ApiStatus.Internal

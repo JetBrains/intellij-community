@@ -251,6 +251,13 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     getActionsToShow(myEditor, myFile, intentionsInfo, -1, myQueryIntentionActions);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
+    CommandCompletionServiceApi completionService = myProject.getService(CommandCompletionServiceApi.class);
+    if (completionService != null) {
+      CachedIntentions intentions =
+        new CachedIntentions(myCachedIntentions.getProject(), myCachedIntentions.getFile(), myCachedIntentions.getEditor());
+      intentions.wrapAndUpdateActions(intentionsInfo, false);
+      completionService.cacheActions(myEditor, myFile, intentions);
+    }
     UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -7,10 +7,12 @@ import com.intellij.codeInsight.completion.LookupElementListPresenter;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * An object holding the items to be shown in a {@link Lookup} and determining their order.
@@ -22,6 +24,8 @@ public abstract class LookupArranger implements WeighingContext {
   private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
   private final List<LookupElement> myInexactPrefixItems = new ArrayList<>();
   private final Key<PrefixMatcher> myMatcherKey = Key.create("LookupArrangerMatcher");
+  @Nullable
+  private volatile Predicate<LookupElement> myAdditionalMatcher;
   private volatile String myAdditionalPrefix = "";
 
   public void addElement(LookupElement item, LookupElementPresentation presentation) {
@@ -46,6 +50,19 @@ public abstract class LookupArranger implements WeighingContext {
     item.putUserData(myMatcherKey, matcher);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public void registerAdditionalMatcher(@NotNull Predicate<LookupElement> matcher, @NotNull Lookup lookup) {
+    myAdditionalMatcher = matcher;
+    prefixChanged(lookup);
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @Nullable Predicate<LookupElement> getAdditionalMatcher() {
+    return myAdditionalMatcher;
+  }
+
   @Override
   public @NotNull String itemPattern(@NotNull LookupElement element) {
     // This method is not synchronized in BaseCompletionLookupArranger.
@@ -67,6 +84,10 @@ public abstract class LookupArranger implements WeighingContext {
 
   private boolean prefixMatches(LookupElement item) {
     PrefixMatcher matcher = itemMatcher(item);
+    Predicate<LookupElement> additionalMatcher = myAdditionalMatcher;
+    if (additionalMatcher != null && !additionalMatcher.test(item)) {
+      return false;
+    }
     if (!myAdditionalPrefix.isEmpty()) {
       matcher = matcher.cloneWithPrefix(matcher.getPrefix() + myAdditionalPrefix);
     }

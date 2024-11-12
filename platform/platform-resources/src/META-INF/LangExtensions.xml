@@ -17,6 +17,8 @@
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge"/>
 
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.CommandCompletionServiceApi"/>
+
     <appStarter id="traverseUI" implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
     <appStarter id="format" implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
     <appStarter id="ideScript" implementation="com.intellij.ide.script.IdeScriptStarter"/>

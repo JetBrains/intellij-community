@@ -366,9 +366,24 @@
 
     <extensionPoint qualifiedName="com.intellij.gotoByName.defaultProvider.ignoreLanguage" dynamic="true"
                     beanClass="com.intellij.ide.util.gotoByName.IgnoreLanguageInDefaultProvider"/>
+
+
+    <!--todo move to main-->
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.factory"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.commands.CommandCompletionFactory"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command"
+                    dynamic="true"
+                    interface="com.intellij.codeInsight.completion.commands.api.Command" />
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.provider"
+                    dynamic="true"
+                    interface="com.intellij.codeInsight.completion.commands.api.CommandProvider" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+
     <notificationGroup id="jps configuration error"
                        toolWindowId="Build"
                        displayType="TOOL_WINDOW"
@@ -1610,6 +1625,13 @@
                             implementationClass="com.intellij.codeInsight.completion.JvmLoggerCompletionContributor"/>
     <completion.contributor language="JAVA" id="jigsaw"
                             implementationClass="com.intellij.codeInsight.completion.JigsawCompletionContributor"/>
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.InlineVariableCommand" />
+    <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.ExtensionPointCommandProvider" />
+    <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.IntentionCommandProvider"  order="first"/>
+    <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.GenerateCommandProvider" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToDeclarationCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.FormatCodeCommand" />
+
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
     <completion.confidence language="JAVA"
@@ -2858,6 +2880,20 @@
       implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
 
     <trigramIndexFilterExcludeExtension implementation="com.intellij.java.impl.find.ngrams.JavaTrigramFilterExcludeExtension"/>
+
+    <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCommandCompletionFactory" />
+    <completion.contributor language="JAVA" id="commands" order="first, after liveTemplates"
+                            implementationClass="com.intellij.codeInsight.completion.commands.core.CommandCompletionContributor"/>
+    <lookup.charFilter implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionCharFilter" order="first" id="commandCompletion"/>
+    <typedHandler implementation="com.intellij.codeInsight.completion.commands.core.CommandTypeHandler" id="commandPreviousCompletion" order="last"/>
+
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.CommandCompletionServiceApi"
+                    serviceImplementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionServiceImpl"
+                    overrides="true"/>
+
+    <registryKey key="java.completion.command.enabled" defaultValue="false"
+                 description="Enable experimental support command completion" restartRequired="true"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -2914,5 +2950,7 @@
               topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
     <listener class="com.intellij.openapi.roots.impl.LanguageLevelChangedListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="com.intellij.codeInsight.completion.commands.core.CommandCompletionListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
 </idea-plugin>
