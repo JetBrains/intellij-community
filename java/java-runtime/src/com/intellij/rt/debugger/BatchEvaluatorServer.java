@@ -8,17 +8,15 @@ package com.intellij.rt.debugger;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 
+@SuppressWarnings("unused")
 public final class BatchEvaluatorServer {
   /**
-   * Serialize result in one String to avoid multiple getValue commands from the resulting array
+   * Serialize the result in one String to avoid multiple getValue commands from the resulting array
    */
-  public static String evaluate(Object[] args) throws IOException {
-    // the last element is always null, it is reserved for the return value (to avoid gc collection)
-    Object[] objects = Arrays.copyOf(args, args.length - 1);
-
+  public static String evaluate(Object[] objects) throws IOException {
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
+    //noinspection IOResourceOpenedButNotSafelyClosed
     DataOutputStream dos = new DataOutputStream(bas);
     for (Object object : objects) {
       String res;
@@ -37,8 +35,65 @@ public final class BatchEvaluatorServer {
       dos.writeBoolean(error);
       dos.writeUTF(res);
     }
-    String result = bas.toString("ISO-8859-1");
-    args[args.length - 1] = result; // store the result as the last array element to avoid it being collected
-    return result;
+    return bas.toString("ISO-8859-1");
+  }
+
+  public static String evaluate1(Object arg1) throws IOException {
+    return evaluate(new Object[]{arg1});
+  }
+
+  public static String evaluate2(Object arg1, Object arg2) throws IOException {
+    return evaluate(new Object[]{arg1, arg2});
+  }
+
+  public static String evaluate3(Object arg1, Object arg2, Object arg3) throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3});
+  }
+
+  public static String evaluate4(Object arg1, Object arg2, Object arg3, Object arg4) throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3, arg4});
+  }
+
+  public static String evaluate5(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5) throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3, arg4, arg5});
+  }
+
+  public static String evaluate6(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6) throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6});
+  }
+
+  public static String evaluate7(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7)
+    throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7});
+  }
+
+  public static String evaluate8(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7, Object arg8)
+    throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8});
+  }
+
+  public static String evaluate9(Object arg1,
+                                 Object arg2,
+                                 Object arg3,
+                                 Object arg4,
+                                 Object arg5,
+                                 Object arg6,
+                                 Object arg7,
+                                 Object arg8,
+                                 Object arg9) throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9});
+  }
+
+  public static String evaluate10(Object arg1,
+                                  Object arg2,
+                                  Object arg3,
+                                  Object arg4,
+                                  Object arg5,
+                                  Object arg6,
+                                  Object arg7,
+                                  Object arg8,
+                                  Object arg9,
+                                  Object arg10) throws IOException {
+    return evaluate(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10});
   }
 }

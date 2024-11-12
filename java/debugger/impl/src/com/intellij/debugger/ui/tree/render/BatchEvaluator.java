@@ -5,7 +5,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,9 +26,6 @@ public final class BatchEvaluator {
   private static final Logger LOG = Logger.getInstance(BatchEvaluator.class);
 
   private final DebugProcess myDebugProcess;
-  private boolean myBatchEvaluatorChecked;
-  private ClassType myBatchEvaluatorClass;
-  private Method myBatchEvaluatorMethod;
 
   private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<>("BatchEvaluator");
   public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<>("is_remote_session_key");
@@ -38,60 +34,18 @@ public final class BatchEvaluator {
 
   private BatchEvaluator(DebugProcess process) {
     myDebugProcess = process;
-    myDebugProcess.addDebugProcessListener(new DebugProcessListener() {
-      @Override
-      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
-        myBatchEvaluatorChecked = false;
-        myBatchEvaluatorClass = null;
-        myBatchEvaluatorMethod = null;
-      }
-    });
-  }
-
-  public boolean hasBatchEvaluator(EvaluationContext evaluationContext) {
-    if (!myBatchEvaluatorChecked) {
-      myBatchEvaluatorChecked = true;
-      if (DebuggerUtilsImpl.isRemote(myDebugProcess)) {
-        // optimization: for remote sessions the BatchEvaluator is not there for sure
-        return false;
-      }
-
-      ThreadReferenceProxy thread = evaluationContext.getSuspendContext().getThread();
-
-      if (thread == null) {
-        return false;
-      }
-
-      ThreadReference threadReference = thread.getThreadReference();
-      if (threadReference == null) {
-        return false;
-      }
-
-      try {
-        myBatchEvaluatorClass = (ClassType)myDebugProcess.findClass(evaluationContext, BatchEvaluatorServer.class.getName(),
-                                                                    evaluationContext.getClassLoader());
-      }
-      catch (EvaluateException ignored) {
-      }
-
-      if (myBatchEvaluatorClass != null) {
-        myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
-      }
-    }
-    return myBatchEvaluatorMethod != null;
   }
 
   public void invoke(ToStringCommand command) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    final EvaluationContext evaluationContext = command.getEvaluationContext();
-    final SuspendContext suspendContext = evaluationContext.getSuspendContext();
-
-    if (!Registry.is("debugger.batch.evaluation.force") &&
-        (!Registry.is("debugger.batch.evaluation") || !hasBatchEvaluator(evaluationContext))) {
+    if (!Registry.is("debugger.batch.evaluation.force") && !Registry.is("debugger.batch.evaluation")) {
       myDebugProcess.getManagerThread().invokeCommand(command);
     }
     else {
+      EvaluationContext evaluationContext = command.getEvaluationContext();
+      SuspendContext suspendContext = evaluationContext.getSuspendContext();
+
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
       if (toStringCommands == null) {
         toStringCommands = new ArrayList<>();
@@ -113,33 +67,38 @@ public final class BatchEvaluator {
     return batchEvaluator;
   }
 
-  private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
+  private static boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
-      if (!hasBatchEvaluator(evaluationContext)) {
-        return false;
-      }
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
       List<Value> values = ContainerUtil.map(requests, ToStringCommand::getValue);
 
-      ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
-        evaluationContext,
-        "java.lang.Object[]",
-        evaluationContext.getClassLoader());
-      if (objectArrayClass == null) {
-        return false;
+      String helperMethodName;
+
+      ArrayReference argArray = null;
+      List<Value> args;
+      if (values.size() > 10) {
+        ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
+          evaluationContext,
+          "java.lang.Object[]",
+          evaluationContext.getClassLoader());
+        argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values, evaluationContext);
+        args = Collections.singletonList(argArray);
+        helperMethodName = "evaluate";
+      }
+      else {
+        args = values;
+        helperMethodName = "evaluate" + values.size();
       }
 
-      // reserve one extra element for the return value to avoid gc collection of the result
-      ArrayReference argArray =
-        DebuggerUtilsEx.mirrorOfArray(objectArrayClass, ContainerUtil.append(values, (Value)null), evaluationContext);
-
-      Value result = ((DebugProcessImpl)debugProcess).invokeMethod(
-        evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
-        MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
-
-      if (result instanceof StringReference stringReference) {
-        byte[] bytes = stringReference.value().getBytes(StandardCharsets.ISO_8859_1);
+      String value = DebuggerUtils.getInstance().processCollectibleValue(
+        () -> DebuggerUtilsImpl.invokeHelperMethod((EvaluationContextImpl)evaluationContext, BatchEvaluatorServer.class, helperMethodName, args, false),
+        result -> result instanceof StringReference ? ((StringReference)result).value() : null,
+        evaluationContext);
+      if (argArray != null) {
         DebuggerUtilsEx.enableCollection(argArray);
+      }
+      if (value != null) {
+        byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
           int count = 0;
           while (dis.available() > 0) {
@@ -165,7 +124,7 @@ public final class BatchEvaluator {
         return true;
       }
     }
-    catch (EvaluateException e) {
+    catch (ObjectCollectedException | EvaluateException e) {
       LOG.error(e);
     }
     return false;
