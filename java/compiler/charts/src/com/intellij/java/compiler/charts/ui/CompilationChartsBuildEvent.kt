@@ -35,7 +35,7 @@ class CompilationChartsBuildEvent(project: Project, val view: BuildViewManager, 
   }
 
   private class CompilationChartsExecutionConsole(project: Project, disposable: Disposable) : ExecutionConsole {
-    val vm: CompilationChartsViewModel = CompilationChartsViewModel(this.createLifetime(), disposable)
+    val vm: CompilationChartsViewModel = CompilationChartsViewModel(project, this.createLifetime(), disposable)
     private val _component: CompilationChartsView by lazy {
       CompilationChartsView(project, vm)
     }

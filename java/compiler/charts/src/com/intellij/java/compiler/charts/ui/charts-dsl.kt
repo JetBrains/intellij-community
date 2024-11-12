@@ -128,7 +128,7 @@ class CompilationChartsModuleInfo(
   private val component: CompilationChartsDiagramsComponent,
 ) : MouseAdapter() {
   private val components = mutableSetOf<ModuleIndex>()
-  private var currentPopup = CompilationChartsPopup(component)
+  private var currentPopup = CompilationChartsPopup(vm.project, component)
 
   override fun mouseClicked(e: MouseEvent) {
     component.setFocus()

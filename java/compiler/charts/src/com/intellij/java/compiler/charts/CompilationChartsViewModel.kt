@@ -3,6 +3,7 @@ package com.intellij.java.compiler.charts
 
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.jetbrains.rd.framework.impl.RdList
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdProperty
@@ -15,7 +16,7 @@ import java.util.function.Predicate
 import kotlin.math.roundToLong
 
 
-class CompilationChartsViewModel(val lifetime: Lifetime, val disposable: Disposable) {
+class CompilationChartsViewModel(val project: Project, val lifetime: Lifetime, val disposable: Disposable) {
   val modules: Modules = Modules(Long.MAX_VALUE, 0, RdMap())
   val statistics: Statistics = Statistics()
   val cpuMemory: RdProperty<CpuMemoryStatisticsType> = RdProperty(CpuMemoryStatisticsType.MEMORY)
