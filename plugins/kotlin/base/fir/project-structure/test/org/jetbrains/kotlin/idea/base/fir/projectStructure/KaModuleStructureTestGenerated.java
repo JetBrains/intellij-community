@@ -19,89 +19,136 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/kaModuleStructure")
-public class KaModuleStructureTestGenerated extends AbstractKaModuleStructureTest {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+public abstract class KaModuleStructureTestGenerated extends AbstractKaModuleStructureTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/kaModuleStructure/scopes")
+    public abstract static class Scopes extends AbstractKaModuleStructureTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/kaModuleStructure/scopes/test")
+        public static class Test extends AbstractKaModuleStructureTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("testProductionOnLibrary")
+            public void testTestProductionOnLibrary() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testProductionOnLibrary/");
+            }
+
+            @TestMetadata("testProductionOnProduction")
+            public void testTestProductionOnProduction() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testProductionOnProduction/");
+            }
+
+            @TestMetadata("testProductionOnTest")
+            public void testTestProductionOnTest() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testProductionOnTest/");
+            }
+
+            @TestMetadata("testProductionOnTestProduction")
+            public void testTestProductionOnTestProduction() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testProductionOnTestProduction/");
+            }
+
+            @TestMetadata("testTestOnTestOnProductionExported")
+            public void testTestTestOnTestOnProductionExported() throws Exception {
+                runTest("testData/kaModuleStructure/scopes/test/testTestOnTestOnProductionExported/");
+            }
+        }
     }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/kaModuleStructure")
+    public static class Uncategorized extends AbstractKaModuleStructureTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
-    @TestMetadata("kmpMultipleTargetsHmpp")
-    public void testKmpMultipleTargetsHmpp() throws Exception {
-        runTest("testData/kaModuleStructure/kmpMultipleTargetsHmpp/");
-    }
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("kmpMultipleTargetsOneCommon")
-    public void testKmpMultipleTargetsOneCommon() throws Exception {
-        runTest("testData/kaModuleStructure/kmpMultipleTargetsOneCommon/");
-    }
+        @TestMetadata("kmpMultipleTargetsHmpp")
+        public void testKmpMultipleTargetsHmpp() throws Exception {
+            runTest("testData/kaModuleStructure/kmpMultipleTargetsHmpp/");
+        }
 
-    @TestMetadata("kmpMultipleTargetsOneCommonProductionAndTest")
-    public void testKmpMultipleTargetsOneCommonProductionAndTest() throws Exception {
-        runTest("testData/kaModuleStructure/kmpMultipleTargetsOneCommonProductionAndTest/");
-    }
+        @TestMetadata("kmpMultipleTargetsOneCommon")
+        public void testKmpMultipleTargetsOneCommon() throws Exception {
+            runTest("testData/kaModuleStructure/kmpMultipleTargetsOneCommon/");
+        }
 
-    @TestMetadata("kmpWithLibraries")
-    public void testKmpWithLibraries() throws Exception {
-        runTest("testData/kaModuleStructure/kmpWithLibraries/");
-    }
+        @TestMetadata("kmpMultipleTargetsOneCommonProductionAndTest")
+        public void testKmpMultipleTargetsOneCommonProductionAndTest() throws Exception {
+            runTest("testData/kaModuleStructure/kmpMultipleTargetsOneCommonProductionAndTest/");
+        }
 
-    @TestMetadata("libraryExportedDependencies")
-    public void testLibraryExportedDependencies() throws Exception {
-        runTest("testData/kaModuleStructure/libraryExportedDependencies/");
-    }
+        @TestMetadata("kmpWithLibraries")
+        public void testKmpWithLibraries() throws Exception {
+            runTest("testData/kaModuleStructure/kmpWithLibraries/");
+        }
 
-    @TestMetadata("libraryProdTestExportedDependencies")
-    public void testLibraryProdTestExportedDependencies() throws Exception {
-        runTest("testData/kaModuleStructure/libraryProdTestExportedDependencies/");
-    }
+        @TestMetadata("libraryExportedDependencies")
+        public void testLibraryExportedDependencies() throws Exception {
+            runTest("testData/kaModuleStructure/libraryExportedDependencies/");
+        }
 
-    @TestMetadata("moduleChainCycle")
-    public void testModuleChainCycle() throws Exception {
-        runTest("testData/kaModuleStructure/moduleChainCycle/");
-    }
+        @TestMetadata("libraryProdTestExportedDependencies")
+        public void testLibraryProdTestExportedDependencies() throws Exception {
+            runTest("testData/kaModuleStructure/libraryProdTestExportedDependencies/");
+        }
 
-    @TestMetadata("moduleExportedDependencies")
-    public void testModuleExportedDependencies() throws Exception {
-        runTest("testData/kaModuleStructure/moduleExportedDependencies/");
-    }
+        @TestMetadata("moduleChainCycle")
+        public void testModuleChainCycle() throws Exception {
+            runTest("testData/kaModuleStructure/moduleChainCycle/");
+        }
 
-    @TestMetadata("moduleExportedDependenciesChain")
-    public void testModuleExportedDependenciesChain() throws Exception {
-        runTest("testData/kaModuleStructure/moduleExportedDependenciesChain/");
-    }
+        @TestMetadata("moduleExportedDependencies")
+        public void testModuleExportedDependencies() throws Exception {
+            runTest("testData/kaModuleStructure/moduleExportedDependencies/");
+        }
 
-    @TestMetadata("moduleExportedDependenciesChainCycle")
-    public void testModuleExportedDependenciesChainCycle() throws Exception {
-        runTest("testData/kaModuleStructure/moduleExportedDependenciesChainCycle/");
-    }
+        @TestMetadata("moduleExportedDependenciesChain")
+        public void testModuleExportedDependenciesChain() throws Exception {
+            runTest("testData/kaModuleStructure/moduleExportedDependenciesChain/");
+        }
 
-    @TestMetadata("moduleExportedDependenciesSingleCycle")
-    public void testModuleExportedDependenciesSingleCycle() throws Exception {
-        runTest("testData/kaModuleStructure/moduleExportedDependenciesSingleCycle/");
-    }
+        @TestMetadata("moduleExportedDependenciesChainCycle")
+        public void testModuleExportedDependenciesChainCycle() throws Exception {
+            runTest("testData/kaModuleStructure/moduleExportedDependenciesChainCycle/");
+        }
 
-    @TestMetadata("moduleProdTestExportedDependencies")
-    public void testModuleProdTestExportedDependencies() throws Exception {
-        runTest("testData/kaModuleStructure/moduleProdTestExportedDependencies/");
-    }
+        @TestMetadata("moduleExportedDependenciesSingleCycle")
+        public void testModuleExportedDependenciesSingleCycle() throws Exception {
+            runTest("testData/kaModuleStructure/moduleExportedDependenciesSingleCycle/");
+        }
 
-    @TestMetadata("moduleSingleCycle")
-    public void testModuleSingleCycle() throws Exception {
-        runTest("testData/kaModuleStructure/moduleSingleCycle/");
-    }
+        @TestMetadata("moduleProdTestExportedDependencies")
+        public void testModuleProdTestExportedDependencies() throws Exception {
+            runTest("testData/kaModuleStructure/moduleProdTestExportedDependencies/");
+        }
 
-    @TestMetadata("productionAndTest")
-    public void testProductionAndTest() throws Exception {
-        runTest("testData/kaModuleStructure/productionAndTest/");
-    }
+        @TestMetadata("moduleSingleCycle")
+        public void testModuleSingleCycle() throws Exception {
+            runTest("testData/kaModuleStructure/moduleSingleCycle/");
+        }
 
-    @TestMetadata("simpleJvm")
-    public void testSimpleJvm() throws Exception {
-        runTest("testData/kaModuleStructure/simpleJvm/");
+        @TestMetadata("productionAndTest")
+        public void testProductionAndTest() throws Exception {
+            runTest("testData/kaModuleStructure/productionAndTest/");
+        }
+
+        @TestMetadata("simpleJvm")
+        public void testSimpleJvm() throws Exception {
+            runTest("testData/kaModuleStructure/simpleJvm/");
+        }
     }
 }

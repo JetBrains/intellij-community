@@ -1,0 +1,7 @@
+{
+    "modules": [
+        { "name": "A", "content_roots": ["tests"], "dependencies": [ {"name": "B", "scope": "TEST"} ] },
+        { "name": "B", "content_roots": ["tests"], "dependencies": [ {"name": "C", "scope": "TEST", "exported": true }] },
+        { "name": "C", "content_roots": ["production"] }
+    ]
+}
