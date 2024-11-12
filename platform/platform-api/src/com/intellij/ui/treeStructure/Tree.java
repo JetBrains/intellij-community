@@ -624,9 +624,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     var model = treeModel;
     if (TREE_MODEL_PROPERTY.equals(propertyName)) {
-      if (oldValue instanceof TreeSwingModel swingModel && treeModelListener instanceof TreeSelectionListener selectionListener) {
-        swingModel.removeTreeSelectionListener(selectionListener);
-      }
       if (oldValue instanceof CachedTreePresentationSupport cps) {
         cps.setCachedPresentation(null);
       }
@@ -639,9 +636,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
       if (newValue instanceof CachedTreePresentationSupport cps && expandImpl != null) {
         cps.setCachedPresentation(expandImpl.getCachedPresentation());
-      }
-      if (newValue instanceof TreeSwingModel swingModel && treeModelListener instanceof TreeSelectionListener selectionListener) {
-        swingModel.addTreeSelectionListener(selectionListener);
       }
     }
     super.firePropertyChange(propertyName, oldValue, newValue);
@@ -1812,7 +1806,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       return new TreeModelListenerImpl();
     }
 
-    private class TreeModelListenerImpl implements TreeModelListener, TreeSelectionListener {
+    private class TreeModelListenerImpl implements TreeSwingModelListener {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
         var path = e.getTreePath();
@@ -1948,9 +1942,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
 
       @Override
-      public void valueChanged(TreeSelectionEvent e) {
+      public void selectionChanged(@NotNull TreeSwingModelSelectionEvent event) {
         applyViewModelChange(() -> {
-          Tree.this.setSelectionPaths(e.getPaths());
+          Tree.this.setSelectionPaths(event.getNewSelection());
         });
       }
     }
@@ -2001,7 +1995,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
-  private class MyTreeModelListener implements TreeModelListener, TreeSelectionListener {
+  private class MyTreeModelListener implements TreeSwingModelListener {
     private final @NotNull LazyInitializer.LazyValue<@NotNull TreeModelListener> delegate = LazyInitializer.create(() -> {
       if (expandImpl != null) {
         return expandImpl.createTreeModelListener();
@@ -2026,9 +2020,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     public void treeStructureChanged(TreeModelEvent e) { delegate().treeStructureChanged(e); }
 
     @Override
-    public void valueChanged(TreeSelectionEvent e) {
-      if (delegate() instanceof TreeSelectionListener treeSelectionListener) {
-        treeSelectionListener.valueChanged(e);
+    public void selectionChanged(@NotNull TreeSwingModelSelectionEvent event) {
+      if (delegate() instanceof TreeSwingModelListener treeSwingModelListener) {
+        treeSwingModelListener.selectionChanged(event);
       }
     }
   }

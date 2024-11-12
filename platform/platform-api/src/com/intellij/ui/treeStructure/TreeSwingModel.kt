@@ -5,8 +5,11 @@ import com.intellij.openapi.components.service
 import com.intellij.ui.tree.TreeVisitor
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.util.EventObject
+import javax.swing.event.TreeModelListener
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreeModel
+import javax.swing.tree.TreePath
 
 @ApiStatus.Experimental
 fun TreeSwingModel(coroutineScope: CoroutineScope, viewModel: TreeViewModel): TreeSwingModel =
@@ -16,8 +19,6 @@ fun TreeSwingModel(coroutineScope: CoroutineScope, viewModel: TreeViewModel): Tr
 interface TreeSwingModel : TreeModel, TreeVisitor.LoadingAwareAcceptor, BgtAwareTreeModel {
   val viewModel: TreeViewModel
   var showLoadingNode: Boolean
-  fun addTreeSelectionListener(listener: TreeSelectionListener)
-  fun removeTreeSelectionListener(listener: TreeSelectionListener)
   override fun getRoot(): TreeNodeViewModel?
   override fun getChild(parent: Any?, index: Int): TreeNodeViewModel?
 }
@@ -26,3 +27,14 @@ interface TreeSwingModel : TreeModel, TreeVisitor.LoadingAwareAcceptor, BgtAware
 interface TreeSwingModelFactory {
   fun createTreeSwingModel(coroutineScope: CoroutineScope, viewModel: TreeViewModel): TreeSwingModel
 }
+
+@ApiStatus.Experimental
+interface TreeSwingModelListener : TreeModelListener {
+  fun selectionChanged(event: TreeSwingModelSelectionEvent)
+}
+
+@ApiStatus.Experimental
+class TreeSwingModelSelectionEvent(
+  source: TreeSwingModel,
+  val newSelection: Array<TreePath>,
+) : EventObject(source)
