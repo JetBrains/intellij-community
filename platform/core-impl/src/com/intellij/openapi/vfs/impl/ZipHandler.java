@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.util.io.FileAccessorCache;
 import com.intellij.util.io.ResourceHandle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -74,7 +75,7 @@ public class ZipHandler extends ZipHandlerBase {
     return myFileStamp;
   }
 
-  // also used in Kotlin
+  @ApiStatus.Internal
   public static void clearFileAccessorCache() {
     ourZipFileFileAccessorCache.clear();
   }

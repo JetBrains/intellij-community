@@ -1638,7 +1638,6 @@ c:com.intellij.openapi.vfs.impl.ZipHandler
 - <init>(java.lang.String):V
 - p:acquireZipHandle():com.intellij.util.io.ResourceHandle
 - clearCaches():V
-- s:clearFileAccessorCache():V
 - p:getEntryFileStamp():J
 a:com.intellij.openapi.vfs.impl.ZipHandlerBase
 - com.intellij.openapi.vfs.impl.ArchiveHandler

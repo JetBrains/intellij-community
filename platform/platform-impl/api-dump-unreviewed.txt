@@ -11156,7 +11156,6 @@ a:com.intellij.openapi.vfs.impl.http.RemoteFileManager
 c:com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 - com.intellij.openapi.vfs.JarFileSystem
 - <init>():V
-- s:cleanupForNextTest():V
 - p:composeRootPath(java.lang.String):java.lang.String
 - p:extractLocalPath(java.lang.String):java.lang.String
 - extractPresentableUrl(java.lang.String):java.lang.String

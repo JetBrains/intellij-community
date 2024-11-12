@@ -62,6 +62,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
+import com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.WindowManagerImpl
@@ -82,6 +83,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
+import com.intellij.util.runSuppressing
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -412,7 +414,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
       fireProjectClosed(project)
       if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
-        ZipHandler.clearFileAccessorCache()
+        runSuppressing(
+          { TimedZipHandler.closeOpenZipReferences() },
+          { ZipHandler.clearFileAccessorCache() }
+        )
       }
       LaterInvocator.purgeExpiredItems()
 

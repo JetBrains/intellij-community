@@ -372,7 +372,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
       var fsRegistration = DynamicPluginsTestUtil.loadExtensionWithText(fsExtText, "com.intellij");
       try {
-        Disposer.register(fsRegistration, ZipHandler::clearFileAccessorCache);
+        Disposer.register(fsRegistration, JarFileSystemImpl::cleanupForNextTest);
 
         CorruptedJarFileSystemTestWrapper.corrupted = true;
         var root = VirtualFileManager.getInstance().refreshAndFindFileByUrl(rootUrl);
