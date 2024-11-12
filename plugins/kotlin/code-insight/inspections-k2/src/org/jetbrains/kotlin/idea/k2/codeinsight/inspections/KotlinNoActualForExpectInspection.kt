@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -23,12 +24,14 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.base.util.module
@@ -152,6 +155,23 @@ private class CreateActualForExpectLocalQuickFix(
 
     override fun startInWriteAction(): Boolean {
         return true
+    }
+
+    // NOTE: Works for IJ (not for Fleet, because Fleet has different logic for preview)
+    // Quick-fix requires a WriteLock to create a new file or find an existing one, so the preview can't be shown by running fix,
+    // because `generatePreview` is called outside the write action.
+    // Instead, a custom preview is displayed.
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+        val actualDeclarationElement = actualDeclaration.element ?: return IntentionPreviewInfo.EMPTY
+        val declarationText = actualDeclarationElement.copied().reformatted().text
+
+        return IntentionPreviewInfo.CustomDiff(
+            KotlinFileType.INSTANCE,
+            sourceSet.name,
+            /* origText = */ "",
+            declarationText,
+            /* lineNumbers = */ true
+        )
     }
 
     override fun getName(): String {
