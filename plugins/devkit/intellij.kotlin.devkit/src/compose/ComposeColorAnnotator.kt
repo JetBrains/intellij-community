@@ -7,20 +7,19 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.ColorChooserService
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.picker.ColorListener
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.ColorIcon
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.*
 import java.awt.Color
 import java.lang.Float
 import java.lang.Long
@@ -29,9 +28,11 @@ import kotlin.Any
 import kotlin.Array
 import kotlin.Boolean
 import kotlin.Exception
+import kotlin.Int
 import kotlin.String
 import kotlin.Suppress
 import kotlin.Unit
+import kotlin.UnsupportedOperationException
 import kotlin.toString
 
 /**
@@ -159,7 +160,69 @@ internal class ComposeColorAnnotator : Annotator, DumbAware {
   }
 
   private fun write(element: KtCallExpression, color: Color) {
-    // XXX
+    val psiFactory = KtPsiFactory(element.project)
+
+    val valueArguments = element.valueArguments
+
+    if (valueArguments.size == 1) {
+      val newValue = "0x" + StringUtil.toUpperCase(Integer.toHexString(color.alpha)) + StringUtil.toUpperCase(ColorUtil.toHex(color))
+      valueArguments[0].getArgumentExpression()!!.replace(psiFactory.createExpression(newValue))
+    }
+    else if (valueArguments[0].getArgumentExpression()!!.node.elementType == KtNodeTypes.INTEGER_CONSTANT) {
+      for ((index, argument) in valueArguments.withIndex()) {
+        val oldValue = Integer.decode(argument.getArgumentExpression()!!.text)
+        val newValue = getIntColorElement(index, argument.getArgumentName()?.asName?.toString(), color)
+        if (oldValue != newValue) {
+          argument.getArgumentExpression()!!.replace(psiFactory.createExpression(newValue.toString()))
+        }
+      }
+    }
+    else {
+      for ((index, argument) in valueArguments.withIndex()) {
+        val oldValue = Float.parseFloat(argument.getArgumentExpression()!!.text)
+        val newValue = getFloatColorElement(index, argument.getArgumentName()?.asName?.toString(), color)
+        if (oldValue != newValue) {
+          argument.getArgumentExpression()!!.replace(psiFactory.createExpression(newValue.toString() + "f"))
+        }
+      }
+    }
+  }
+
+  private fun getIntColorElement(index: Int, name: String?, color: Color): Int {
+    if (name == null) {
+      return when (index) {
+        0 -> color.red
+        1 -> color.green
+        2 -> color.blue
+        3 -> color.alpha
+
+        else -> throw UnsupportedOperationException("$index")
+      }
+    }
+    return when (name) {
+      "red" -> color.red
+      "green" -> color.green
+      "blue" -> color.blue
+      "alpha" -> color.alpha
+
+      else -> throw UnsupportedOperationException(name)
+    }
+  }
+
+  private fun getFloatColorElement(index: Int, name: String?, color: Color): kotlin.Float {
+    val components = color.getColorComponents(null)
+
+    if (name == null) {
+      return components[index]
+    }
+    return when (name) {
+      "red" -> components[0]
+      "green" -> components[1]
+      "blue" -> components[2]
+      "alpha" -> components[3]
+
+      else -> throw UnsupportedOperationException(name)
+    }
   }
 }
 
@@ -181,20 +244,23 @@ private class ColorRenderer(
 
   override fun getClickAction(): AnAction? {
     if (canChooseColor()) {
-      return object : AnAction() {
-
+      return object : AnAction(), ColorListener {
         override fun actionPerformed(e: AnActionEvent) {
-          ColorChooserService.instance.showPopup(element.getProject(), color, object : ColorListener {
+          ColorChooserService.instance.showPopup(element.project, color, this)
+        }
 
-            override fun colorChanged(color: Color, source: Any?) {
-              WriteAction.run(object : ThrowableRunnable<Exception> {
+        override fun colorChanged(newColor: Color, source: Any?) {
+          if (color == newColor) {
+            return
+          }
 
-                override fun run() {
-                  editor.invoke(element, color)
-                }
-              })
+          val runnable = object : ThrowableRunnable<Exception> {
+            override fun run() {
+              editor.invoke(element, newColor)
             }
-          })
+          }
+
+          WriteCommandAction.writeCommandAction(element.project, element.containingFile).run(runnable)
         }
       }
     }
