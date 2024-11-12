@@ -51,7 +51,7 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
 
     override fun doTestWithProjectStructure(testDirectory: String) {
         testProjectStructure.modules.forEach { testProjectModule ->
-            require(testProjectModule.contentRoots.isNotEmpty()) {
+            require(!testProjectModule.contentRoots.isNullOrEmpty()) {
                 "Modules in combined scope tests should have explicitly specified content roots."
             }
         }

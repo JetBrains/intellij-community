@@ -173,7 +173,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         }
 
         val contentRoots =
-            testModule.contentRoots.takeIf { it.isNotEmpty() }
+            testModule.contentRoots
                 ?: listOf(TestContentRoot(null, TestContentRootKind.PRODUCTION))
 
         contentRoots.forEach { testContentRoot ->
@@ -285,6 +285,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
      */
     protected fun TestProjectModule.contentRootVirtualFilesByKind(kind: TestContentRootKind): List<VirtualFile> {
         val module = toModule()
+        val contentRoots = contentRoots ?: return emptyList()
         return contentRoots
             .zip(moduleContentRoots.getValue(module))
             .mapNotNull { (testContentRoot, contentRootFile) ->
@@ -293,7 +294,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
     }
 
     protected fun List<TestProjectModule>.filterByContentRootKind(kind: TestContentRootKind): List<TestProjectModule> =
-        filter { it.contentRoots.any { root -> root.kind == kind } }
+        filter { it.contentRoots?.any { root -> root.kind == kind } == true }
 
     protected fun TestProjectLibrary.toLibrary(): Library = projectLibrariesByName.getValue(name)
 }

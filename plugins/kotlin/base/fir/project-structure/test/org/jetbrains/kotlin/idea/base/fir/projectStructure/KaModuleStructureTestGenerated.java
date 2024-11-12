@@ -21,6 +21,30 @@ import org.junit.runner.RunWith;
 @TestMetadata("testData/kaModuleStructure")
 public abstract class KaModuleStructureTestGenerated extends AbstractKaModuleStructureTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/kaModuleStructure/exported")
+    public static class Exported extends AbstractKaModuleStructureTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("noSourceRootsExportedLibrary")
+        public void testNoSourceRootsExportedLibrary() throws Exception {
+            runTest("testData/kaModuleStructure/exported/noSourceRootsExportedLibrary/");
+        }
+
+        @TestMetadata("noSourceRootsExportedModule")
+        public void testNoSourceRootsExportedModule() throws Exception {
+            runTest("testData/kaModuleStructure/exported/noSourceRootsExportedModule/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kaModuleStructure/scopes")
     public abstract static class Scopes extends AbstractKaModuleStructureTest {
         @RunWith(JUnit3RunnerWithInners.class)

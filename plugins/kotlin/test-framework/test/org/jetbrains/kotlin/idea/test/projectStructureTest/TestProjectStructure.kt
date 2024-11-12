@@ -69,12 +69,13 @@ object TestProjectLibraryParser {
 /**
  * @param contentRoots A list of content roots of the module. Each content root's path is relative to the module's path in the test data. If
  *  no content roots are specified, the whole module content is regarded as a single production source content root.
+ *  If an empty list of project roots is specified, the module will be created without any content roots.
  */
 data class TestProjectModule(
     val name: String,
     val targetPlatform: TargetPlatform,
     val dependencies: List<Dependency>,
-    val contentRoots: List<TestContentRoot>,
+    val contentRoots: List<TestContentRoot>?,
 )
 
 data class Dependency(val name: String, val kind: DependencyKind, val scope: DependencyScope, val isExported: Boolean)
@@ -140,7 +141,7 @@ object TestProjectModuleParser {
             addAll(parseDependencies(json, REFINEMENT_DEPENDENCIES_FIELD, DependencyKind.REFINEMENT))
             addAll(parseDependencies(json, FRIEND_DEPENDENCIES_FIELD, DependencyKind.FRIEND))
         }
-        val contentRoots = json.getAsJsonArray(CONTENT_ROOTS_FIELD)?.let(::parseContentRoots) ?: emptyList()
+        val contentRoots = json.getAsJsonArray(CONTENT_ROOTS_FIELD)?.let(::parseContentRoots)
 
         return TestProjectModule(
             json.getString(MODULE_NAME_FIELD),
