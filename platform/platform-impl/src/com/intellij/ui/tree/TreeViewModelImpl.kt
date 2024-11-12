@@ -125,6 +125,9 @@ private class TreeViewModelImpl(
   }
 
   override fun setSelection(nodes: Collection<TreeNodeViewModel>) {
+    for (node in nodes) {
+      node.makeVisible()
+    }
     requestedSelection.set(nodes)
     requestUpdate()
   }
@@ -165,6 +168,14 @@ private fun NodeUpdate?.merge(other: NodeUpdate): NodeUpdate =
       isExpanded = other.isExpanded ?: isExpanded,
     )
   }
+
+private fun TreeNodeViewModel.makeVisible() {
+  var node: TreeNodeViewModel? = parent
+  while (node != null) {
+    node.setExpanded(true)
+    node = node.parent
+  }
+}
 
 private class TreeNodeViewModelImpl(
   val parentImpl: TreeNodeViewModelImpl?,

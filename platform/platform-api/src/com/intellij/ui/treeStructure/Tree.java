@@ -1846,6 +1846,28 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
             cachedPresentation.updateExpandedNodes(path.pathByAddingChild(model.getChild(parent, i)));
           }
         }
+        for (Object newChild : e.getChildren()) {
+          if (newChild instanceof TreeNodeViewModel viewModel) {
+            applyViewModelChange(() -> {
+              var nodePath = path.pathByAddingChild(newChild);
+              applyNewNodeExpandedState(model, nodePath);
+            });
+          }
+        }
+      }
+
+      private void applyNewNodeExpandedState(@NotNull TreeModel model, @NotNull TreePath path) {
+        var node = (TreeNodeViewModel)path.getLastPathComponent();
+        var isExpanded = node.stateSnapshot().isExpanded();
+        Tree.this.setExpandedState(path, isExpanded);
+        if (isExpanded) {
+          for (int i = 0; i < model.getChildCount(node); i++) {
+            var child = model.getChild(node, i);
+            if (child instanceof TreeNodeViewModel) {
+              applyNewNodeExpandedState(model, path.pathByAddingChild(child));
+            }
+          }
+        }
       }
 
       @Override
