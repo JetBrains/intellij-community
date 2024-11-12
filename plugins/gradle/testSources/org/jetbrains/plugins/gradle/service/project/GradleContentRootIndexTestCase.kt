@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
-import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import java.io.File
 import java.nio.file.Path
@@ -14,17 +13,6 @@ abstract class GradleContentRootIndexTestCase {
 
   fun createExternalProject(projectPath: Path, projectBuildPath: Path): ExternalProject {
     return MockExternalProject(projectPath, projectBuildPath)
-  }
-
-  fun createSources(vararg sources: Path): Map<out IExternalSystemSourceType, Collection<Path>> {
-    return sources.associate { MockSourceType() to listOf(it) }
-  }
-
-  private class MockSourceType : IExternalSystemSourceType {
-    override fun isTest() = throw UnsupportedOperationException()
-    override fun isGenerated() = throw UnsupportedOperationException()
-    override fun isResource() = throw UnsupportedOperationException()
-    override fun isExcluded() = throw UnsupportedOperationException()
   }
 
   private class MockExternalProject(
