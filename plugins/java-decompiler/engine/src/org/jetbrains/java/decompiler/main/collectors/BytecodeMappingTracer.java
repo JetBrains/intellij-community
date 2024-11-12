@@ -83,7 +83,7 @@ public class BytecodeMappingTracer {
       int originalOffset = data[i];
       int originalLine = data[i + 1];
       Integer newLine = mapping.get(originalOffset);
-      if (newLine != null) {
+      if (newLine != null && !res.containsKey(originalLine)) {
         res.put(originalLine, newLine);
       }
       else {

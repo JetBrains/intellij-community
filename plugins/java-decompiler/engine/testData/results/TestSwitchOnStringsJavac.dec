@@ -118,7 +118,7 @@ public class TestSwitchOnStringsJavac {
             }
          } catch (NullPointerException var6) {// 135
             NullPointerException e = var6;
-            int i = 0;
+            int i = 0;// 136
 
             while(i < 10) {
                switch (this.getStr()) {// 137
@@ -126,7 +126,7 @@ public class TestSwitchOnStringsJavac {
                   default -> System.out.println(e.getMessage());// 139
                }
 
-               ++i;// 136
+               ++i;
             }
 
             System.out.println(9);// 142
@@ -631,7 +631,7 @@ Lines mapping:
 131 <-> 117
 133 <-> 112
 135 <-> 119
-136 <-> 129
+136 <-> 121
 137 <-> 124
 138 <-> 125
 139 <-> 126

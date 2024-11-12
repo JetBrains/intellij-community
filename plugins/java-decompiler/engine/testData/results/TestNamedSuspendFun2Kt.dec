@@ -62,7 +62,7 @@ public final class TestNamedSuspendFun2Kt {
       label486: {
          label452: {
             Object var2 = var3.data;
-            var4 = IntrinsicsKt.getCOROUTINE_SUSPENDED();
+            var4 = IntrinsicsKt.getCOROUTINE_SUSPENDED();// 2
             switch (var3.label) {
                case 0:
                   if (var2 instanceof SuccessOrFailure.Failure) {
@@ -104,7 +104,7 @@ public final class TestNamedSuspendFun2Kt {
                      throw ((SuccessOrFailure.Failure)var2).exception;
                   }
 
-                  return 1;// 2 3 8 9 11
+                  return 1;// 3 9 11
                case 3:
                   if (var2 instanceof SuccessOrFailure.Failure) {
                      throw ((SuccessOrFailure.Failure)var2).exception;
@@ -155,7 +155,7 @@ public final class TestNamedSuspendFun2Kt {
 
          var3.I$0 = x;
          var3.label = 2;
-         if (bar(var3) == var4) {
+         if (bar(var3) == var4) {// 8
             return var4;
          }
 
@@ -455,11 +455,11 @@ class 'TestNamedSuspendFun2Kt' {
 }
 
 Lines mapping:
-2 <-> 107
+2 <-> 65
 3 <-> 107
 5 <-> 127
 6 <-> 86
-8 <-> 107
+8 <-> 158
 9 <-> 107
 11 <-> 107
 14 <-> 177

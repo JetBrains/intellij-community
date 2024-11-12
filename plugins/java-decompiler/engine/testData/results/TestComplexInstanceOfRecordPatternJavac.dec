@@ -5,43 +5,43 @@ public class TestComplexInstanceOfRecordPatternJavac {
    }// 6
 
    public static void instanceOfTest1(Object o) {
-      if (o instanceof R(R(Object s1))) {
+      if (o instanceof R(R(Object s1))) {// 9
          System.out.println(s1);// 10
          System.out.println(s1);// 11
       }
 
       System.out.println("1");// 13
-   }// 9
+   }
 
    public static void instanceOfTest2(Object o) {
-      if (o instanceof R(R(String s1))) {
+      if (o instanceof R(R(String s1))) {// 17
          System.out.println(s1);// 18
          System.out.println(s1);// 19
       }
 
       System.out.println("4");// 21
-   }// 17
+   }
 
    public static void instanceOfTest3(Object o) {
-      if (o instanceof R2(String s1, Object var9)) {
+      if (o instanceof R2(String s1, Object var9)) {// 25
          System.out.println(s1);// 26
          System.out.println(s1);// 27
       }
 
       System.out.println("12");// 29
-   }// 25
+   }
 
    public static void instanceOfTest3_2(Object o) {
-      if (o instanceof R2(Object var9, String s1)) {
+      if (o instanceof R2(Object var9, String s1)) {// 33
          System.out.println(s1);// 34
          System.out.println(s1);// 35
       }
 
       System.out.println("3");// 37
-   }// 33
+   }
 
    public static void instanceOfTest4(Object o) {
-      if (o instanceof R2(String s1, R(String s))) {
+      if (o instanceof R2(String s1, R(String s))) {// 41
          System.out.println(s1);// 42
          System.out.println(s);// 43
          if (o instanceof R2(String s2, R(String s3))) {// 45
@@ -51,7 +51,7 @@ public class TestComplexInstanceOfRecordPatternJavac {
       }
 
       System.out.println("1");// 50
-   }// 41
+   }
 
    static record R(Object o) {
       R(Object o) {
@@ -385,23 +385,23 @@ class 'pkg/TestComplexInstanceOfRecordPatternJavac$R2' {
 
 Lines mapping:
 6 <-> 5
-9 <-> 14
+9 <-> 8
 10 <-> 9
 11 <-> 10
 13 <-> 13
-17 <-> 23
+17 <-> 17
 18 <-> 18
 19 <-> 19
 21 <-> 22
-25 <-> 32
+25 <-> 26
 26 <-> 27
 27 <-> 28
 29 <-> 31
-33 <-> 41
+33 <-> 35
 34 <-> 36
 35 <-> 37
 37 <-> 40
-41 <-> 54
+41 <-> 44
 42 <-> 45
 43 <-> 46
 45 <-> 47
