@@ -43,7 +43,7 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   this.coroutineContext.job.invokeOnCompletion {
     serverSocket.close()
   }
-  LOG.info("Accepting a connection within IDE client on port $localPort")
+  LOG.info("Accepting a connection within IDE client on port $localPort; Conections go to remote address $address")
   var connectionCounter = 0
   // DO NOT use Dispatchers.IO here. Sockets live long enough to cause starvation of the IO dispatcher.
   launch(IjentThreadPool.asCoroutineDispatcher() + coroutineNameAppended("Local port forwarding server")) {
@@ -70,6 +70,8 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
         ensureActive() // just checking if it is time to abort the port forwarding
       }
     }
+  }.invokeOnCompletion {
+    LOG.info("Local server on $localPort (was tunneling to $address) is terminated")
   }
   LOG.info("Server on $localPort is terminated")
 }
