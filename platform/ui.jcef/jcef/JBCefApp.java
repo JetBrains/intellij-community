@@ -1,17 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
@@ -125,50 +121,9 @@ public final class JBCefApp {
     else {
       CefSettings settings = Cancellation.forceNonCancellableSectionInClassInitializer(() -> SettingsHelper.loadSettings(config));
 
-      if (SystemInfoRt.isLinux && !settings.no_sandbox) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          if (JBCefAppArmorUtils.areUnprivilegedUserNameSpacesAllowed()) {
-            CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-          }
-          else {
-            Notification notification =
-              getNotificationGroup()
-                .createNotification(
-                  IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.title"),
-                  IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.message"),
-                  NotificationType.WARNING);
-
-            AnAction installProfileAction = JBCefAppArmorUtils.getInstallInstallAppArmorProfileAction(() -> notification.expire());
-            if (installProfileAction != null) {
-              notification.addAction(installProfileAction);
-            }
-
-            notification.addAction(
-              NotificationAction.createSimple(
-                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
-                () -> {
-                  RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
-                  notification.expire();
-                  ApplicationManager.getApplication().restart();
-                })
-            );
-
-            notification.addAction(
-              NotificationAction.createSimple(
-                IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.learn.more"),
-                () -> {
-                  // TODO(kharitonov): move to https://intellij-support.jetbrains.com/hc/en-us/sections/201620045-Troubleshooting
-                  BrowserUtil.browse("https://youtrack.jetbrains.com/articles/JBR-A-11");
-                })
-            );
-
-            Notifications.Bus.notify(notification);
-          }
-        });
-      }
-      else {
+      JBCefHealthMonitor.getInstance().performHealthCheckAsync(settings, () -> {
         CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-      }
+      });
 
       BoolRef trackGPUCrashes = new BoolRef(false);
       String[] args = Cancellation.forceNonCancellableSectionInClassInitializer(() -> SettingsHelper.loadArgs(config, settings, trackGPUCrashes));
@@ -534,6 +489,7 @@ public final class JBCefApp {
           myNotificationShown = true;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> CefApp.getInstance().dispose());
+        JBCefHealthMonitor.getInstance().onGpuProcessFailed();
       }
     }
   }
