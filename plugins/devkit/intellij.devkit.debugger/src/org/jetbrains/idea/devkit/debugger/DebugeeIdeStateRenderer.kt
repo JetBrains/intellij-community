@@ -134,6 +134,8 @@ private fun getReadWriteAccessStateBasedOnCurrentFrame(evaluationContext: Evalua
   val currentXFrame = (evaluationContext.suspendContext as SuspendContextImpl).debugProcess.session.xDebugSession?.currentStackFrame
   if (currentXFrame !is JavaStackFrame) return null
   val currentFrame = currentXFrame.stackFrameProxy
+  // No need to adjust as the first frame is always correct
+  if (currentFrame.frameIndex == 0) return null
 
   val thread = evaluationContext.suspendContext.thread ?: return null
   val frames = List(thread.frameCount()) { thread.frame(it) }
