@@ -432,8 +432,9 @@ class UnindexedFilesScanner @JvmOverloads constructor(
           providers.forEachConcurrent(SCANNING_PARALLELISM) { provider ->
             try {
               scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
-            } catch (t: Throwable) {
-              checkCanceled()
+            }
+            catch (t: Throwable) {
+              if (t is CancellationException) throw t
               if (t is ControlFlowException) {
                 LOG.warn("Unexpected exception during scanning: ${t.message}")
               }
