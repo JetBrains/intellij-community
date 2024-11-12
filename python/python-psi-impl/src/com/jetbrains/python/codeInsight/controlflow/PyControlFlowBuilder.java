@@ -147,7 +147,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (node.isCalleeText(PyNames.ASSERT_IS_INSTANCE)) {
       final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
       node.accept(assertionEvaluator);
-      InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+      addAssertInstructions(assertionEvaluator);
     }
   }
 
@@ -343,7 +343,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression truePart = node.getTruePart();
     final PyExpression falsePart = node.getFalsePart();
     if (truePart != null) {
-      InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+      addAssertInstructions(assertionEvaluator);
       truePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
@@ -405,7 +405,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       final PyStatementList statements = elseBranch.getStatementList();
 
       myBuilder.startConditionalNode(statements, lastCondition, false);
-      InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
+      addAssertInstructions(negativeAssertionEvaluator);
       statements.accept(this);
 
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
@@ -415,8 +415,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
       myBuilder.prevInstruction = null;
 
-      final Instruction instruction =
-        ContainerUtil.getFirstItem(InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator));
+      final Instruction instruction = ContainerUtil.getFirstItem(addAssertInstructions(negativeAssertionEvaluator));
       if (instruction != null) {
         lastBranchingPoints.forEach(p -> myBuilder.addEdge(p.getSecond(), instruction));
       }
@@ -470,7 +469,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyStatementList statements = part.getStatementList();
 
     myBuilder.startConditionalNode(statements, part.getCondition(), true);
-    InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+    addAssertInstructions(assertionEvaluator);
     statements.accept(this);
 
     if (!(node instanceof PyLoopStatement)) { // outcoming edges will be looped
@@ -527,7 +526,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
                                        @Nullable PyTypeAssertionEvaluator assertionEvaluator,
                                        boolean conditionResultToContinue) {
     if (previousAssertionEvaluator != null) {
-      InstructionBuilder.addAssertInstructions(myBuilder, previousAssertionEvaluator);
+      addAssertInstructions(previousAssertionEvaluator);
     }
 
     subExpression.accept(this);
@@ -913,7 +912,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
         condition.accept(this);
         condition.accept(assertionEvaluator);
-        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+        addAssertInstructions(assertionEvaluator);
 
         // Condition is true for nested "for" and "if" constructs, next startNode() should create a conditional node
         prevCondition = condition;
@@ -955,7 +954,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator();
     node.acceptChildren(evaluator);
-    InstructionBuilder.addAssertInstructions(myBuilder, evaluator);
+    addAssertInstructions(evaluator);
   }
 
   @Override
@@ -1025,5 +1024,18 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     return !PsiTreeUtil.instanceOf(instruction.getElement(),
                                    PyStatementList.class);
   }
-}
 
+  @NotNull
+  private List<Instruction> addAssertInstructions(@NotNull PyTypeAssertionEvaluator assertionEvaluator) {
+    final List<Instruction> result = new ArrayList<>();
+    for (PyTypeAssertionEvaluator.Assertion def : assertionEvaluator.getDefinitions()) {
+      final PyReferenceExpression e = def.getElement();
+      final QualifiedName qname = e.asQualifiedName();
+      final String name = qname != null ? qname.toString() : e.getName();
+      ReadWriteInstruction instr = ReadWriteInstruction.assertType(myBuilder, e, name, def.getTypeEvalFunction());
+      myBuilder.addNode(instr);
+      result.add(instr);
+    }
+    return result;
+  }
+}
