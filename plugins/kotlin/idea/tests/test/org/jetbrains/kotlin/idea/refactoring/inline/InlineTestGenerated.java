@@ -2215,6 +2215,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/expect.kt");
             }
 
+            @TestMetadata("explicitThisOnPrivateProperty.kt")
+            public void testExplicitThisOnPrivateProperty() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/explicitThisOnPrivateProperty.kt");
+            }
+
             @TestMetadata("explicitThisWithBothReceivers.kt")
             public void testExplicitThisWithBothReceivers() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/explicitThisWithBothReceivers.kt");
