@@ -8,23 +8,29 @@ import com.intellij.openapi.externalSystem.settings.workspaceModel.getExternalPr
 import com.intellij.openapi.externalSystem.settings.workspaceModel.getExternalProjectsBuildClasspathEntity
 import com.intellij.openapi.externalSystem.settings.workspaceModel.modifyExternalProjectsBuildClasspathEntity
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class ProjectBuildClasspathManager(val project: Project, val coroutineScope: CoroutineScope ) {
+class ProjectBuildClasspathManager(val project: Project, val coroutineScope: CoroutineScope) {
 
-  fun setProjectBuildClasspathAsync(value: Map<String, ExternalProjectBuildClasspathPojo>) {
-    coroutineScope.launch {
+  private fun getAvailableProjectsPaths(): List<String> = ExternalSystemApiUtil.getAllManagers()
+    .map { it.localSettingsProvider.`fun`(project) }
+    .flatMap { it.availableProjects.keys }
+    .map { it.path }
+
+  fun setProjectBuildClasspathSync(value: Map<String, ExternalProjectBuildClasspathPojo>) {
+    runBlockingCancellable {
       setProjectBuildClasspath(value)
     }
   }
+
   suspend fun setProjectBuildClasspath(value: Map<String, ExternalProjectBuildClasspathPojo>) {
       project.workspaceModel
       .update("AbstractExternalSystemLocalSettings update") { storage ->
@@ -42,17 +48,17 @@ class ProjectBuildClasspathManager(val project: Project, val coroutineScope: Cor
   }
 
   fun getProjectBuildClasspath(): Map<String, ExternalProjectBuildClasspathPojo> {
-    val availableProjectsPaths = ExternalSystemApiUtil.getAllManagers()
-      .map { it.localSettingsProvider.`fun`(project) }
-      .flatMap { it.availableProjects.keys }
-      .map { it.path }
-
     return WorkspaceModel.getInstance(project)
-      .currentSnapshot
-      .entities(ExternalProjectsBuildClasspathEntity::class.java)
-      .firstOrNull()
-      ?.let { getExternalProjectBuildClasspathPojo(it) }
-      ?.let { it.filterKeys { availableProjectsPaths.contains(it) }}
-           ?: return Collections.emptyMap()
+             .currentSnapshot
+             .entities(ExternalProjectsBuildClasspathEntity::class.java)
+             .firstOrNull()
+             ?.let { getExternalProjectBuildClasspathPojo(it) }  ?: return Collections.emptyMap()
+  }
+
+  fun removeUnavailableClasspaths() {
+    val availableProjectsPaths = getAvailableProjectsPaths().toSet()
+    val currentClasspath = getProjectBuildClasspath()
+    val updatedClasspath = currentClasspath.filterKeys { it in availableProjectsPaths }
+    setProjectBuildClasspathSync(updatedClasspath)
   }
 }

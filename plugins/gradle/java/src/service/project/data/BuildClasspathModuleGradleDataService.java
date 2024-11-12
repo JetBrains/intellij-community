@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClas
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.settings.ProjectBuildClasspathManager;
@@ -141,9 +142,16 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
       }
     }
 
-    buildClasspathManager.setProjectBuildClasspathAsync(localProjectBuildClasspath);
+    buildClasspathManager.setProjectBuildClasspathSync(localProjectBuildClasspath);
+  }
 
+  @Override
+  public void onSuccessImport(@NotNull Collection<DataNode<BuildScriptClasspathData>> imported,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project,
+                              @NotNull IdeModelsProvider modelsProvider) {
     if (!project.isDisposed()) {
+      project.getService(ProjectBuildClasspathManager.class).removeUnavailableClasspaths();
       GradleBuildClasspathManager.getInstance(project).reload();
     }
   }
