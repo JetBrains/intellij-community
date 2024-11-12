@@ -17,7 +17,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.pip.PipBasedPackageManager
+import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
-class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
-  override val repositoryManager: CondaRepositoryManger = CondaRepositoryManger(project, sdk)
+class CondaPackageManager(project: Project, sdk: Sdk) : PipPythonPackageManager(project, sdk) {
+  override val repositoryManager = CondaRepositoryManger(project, sdk)
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
     if (specification is CondaPackageSpecification) {
@@ -72,7 +72,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> =
     try {
-      val output =runConda("list", emptyList(), message("conda.packaging.list.progress"))
+      val output = runConda("list", emptyList(), message("conda.packaging.list.progress"))
       Result.success(parseCondaPackageList(output))
     }
     catch (ex: ExecutionException) {

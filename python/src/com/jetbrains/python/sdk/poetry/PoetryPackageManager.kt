@@ -5,16 +5,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.pip.PipBasedPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import org.jetbrains.annotations.TestOnly
 import java.util.regex.Pattern
+import org.jetbrains.annotations.TestOnly
 
-class PoetryPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
+class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+  @Volatile
+  override var installedPackages: List<PythonPackage> = emptyList()
+  override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
+
   @Volatile
   private var outdatedPackages: Map<String, PoetryOutdatedVersion> = emptyMap()
-
-  override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
     poetryInstallPackage(sdk, specification.getVersionForPoetry(), options)
@@ -35,7 +37,6 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(
   }
 
   internal fun getOutdatedPackages(): Map<String, PoetryOutdatedVersion> = outdatedPackages
-
 
   /**
    * Updates the list of outdated packages by running the Poetry command

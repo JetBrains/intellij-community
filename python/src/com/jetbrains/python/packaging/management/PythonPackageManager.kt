@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -8,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.common.PackageManagerHolder
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -39,8 +41,19 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return reloadPackages()
   }
 
-  abstract suspend fun reloadPackages(): Result<List<PythonPackage>>
+  open suspend fun reloadPackages(): Result<List<PythonPackage>> {
+    val packages = reloadPackagesCommand().getOrElse {
+      return Result.failure(it)
+    }
 
+    installedPackages = packages
+    ApplicationManager.getApplication().messageBus.apply {
+      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+      syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
+    }
+
+    return Result.success(packages)
+  }
 
   protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String>
   protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String>
