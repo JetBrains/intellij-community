@@ -1359,6 +1359,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-script-runtime"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-common"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler-impl"),
+    jetbrainsLibrary("kotlinc.kotlin-scripting-dependencies"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-jvm"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),
     jetbrainsLibrary("kotlinc.lombok-compiler-plugin"),

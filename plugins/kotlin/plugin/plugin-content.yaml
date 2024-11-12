@@ -66,6 +66,9 @@
   - name: kotlinc.kotlin-scripting-compiler-impl
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2/kotlin-scripting-compiler-impl-2.jar
+  - name: kotlinc.kotlin-scripting-dependencies
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2/kotlin-scripting-dependencies-2.jar
   - name: kotlinc.kotlin-scripting-jvm
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar

@@ -218,6 +218,7 @@ object KotlinPluginBuilder {
     "kotlinc.analysis-api-impl-base",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
+    "kotlinc.kotlin-scripting-dependencies",
     "kotlinc.kotlin-gradle-statistics",
     "kotlinc.analysis-api-k2",
     "kotlinc.kotlin-compiler-fir",
