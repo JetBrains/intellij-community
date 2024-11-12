@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LoggingSimilarMessage")
-
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -100,7 +98,6 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.coroutineContext
 import kotlin.system.measureTimeMillis
 
-@Suppress("OVERRIDE_DEPRECATION")
 @Internal
 open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   companion object {
@@ -199,9 +196,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     Disposer.dispose(defaultProject)
   }
 
-  override fun loadProject(path: Path): Project {
-    return loadProject(path = path, refreshNeeded = true, preloadServices = true)
-  }
+  override fun loadProject(path: Path): Project = loadProject(path = path, refreshNeeded = true, preloadServices = true)
 
   @RequiresBackgroundThread
   fun loadProject(path: Path, refreshNeeded: Boolean, preloadServices: Boolean): ProjectImpl {
@@ -282,19 +277,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  override fun findOpenProjectByHash(locationHash: String?): Project? = openProjectByHash.get(locationHash)
+  override fun findOpenProjectByHash(locationHash: String?): Project? = openProjectByHash[locationHash]
 
   override fun reloadProject(project: Project) {
     StoreReloadManager.getInstance(project).reloadProject()
   }
 
-  override fun closeProject(project: Project): Boolean {
-    return closeProject(project = project, saveProject = true, dispose = false, checkCanClose = true)
-  }
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun closeProject(project: Project): Boolean =
+    closeProject(project = project, saveProject = true, dispose = false, checkCanClose = true)
 
-  override fun forceCloseProject(project: Project, save: Boolean): Boolean {
-    return closeProject(project = project, saveProject = save, checkCanClose = false)
-  }
+  override fun forceCloseProject(project: Project, save: Boolean): Boolean =
+    closeProject(project = project, saveProject = save, checkCanClose = false)
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
     if (save) {
@@ -339,7 +333,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     ThreadingAssertions.assertWriteIntentReadAccess()
     @Suppress("TestOnlyProblems")
     if (isLight(project)) {
-      // if we close the project at the end of the test, just mark it closed;
+      // if we close the project at the end of the test, mark it closed;
       // if we are shutting down the entire test framework, proceed to full dispose
       val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
@@ -426,17 +420,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           Disposer.dispose(project)
         }
       }
-      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(project,
-                                                                projectCloseStartedMs,
-                                                                projectSaveSettingsDurationMs,
-                                                                projectClosingDurationMs,
-                                                                projectDisposeDurationMs)
+      LifecycleUsageTriggerCollector.onProjectClosedAndDisposed(
+        project, projectCloseStartedMs, projectSaveSettingsDurationMs, projectClosingDurationMs, projectDisposeDurationMs
+      )
     }
     return true
   }
 
   override fun closeAndDispose(project: Project): Boolean = closeProject(project, checkCanClose = true)
 
+  @Deprecated("Deprecated in Java")
   @Suppress("removal")
   override fun addProjectManagerListener(listener: ProjectManagerListener) {
     listeners.add(listener)
@@ -446,6 +439,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     listeners.add(listener)
   }
 
+  @Deprecated("Deprecated in Java")
   @Suppress("removal")
   override fun removeProjectManagerListener(listener: ProjectManagerListener) {
     val removed = listeners.remove(listener)
@@ -553,9 +547,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return project
   }
 
-  final override fun loadAndOpenProject(originalFilePath: String): Project? {
-    return openProject(toCanonicalName(originalFilePath), OpenProjectTask())
-  }
+  final override fun loadAndOpenProject(originalFilePath: String): Project? = openProject(toCanonicalName(originalFilePath), OpenProjectTask())
 
   final override fun openProject(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
     @Suppress("DEPRECATION")
@@ -1102,12 +1094,10 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
 private val LOG = logger<ProjectManagerImpl>()
 
 private val LISTENERS_IN_PROJECT_KEY = Key.create<MutableList<ProjectManagerListener>>("LISTENERS_IN_PROJECT_KEY")
-
 private val CLOSE_HANDLER_EP = ExtensionPointName<ProjectCloseHandler>("com.intellij.projectCloseHandler")
 
-private fun getListeners(project: Project): List<ProjectManagerListener> {
-  return project.getUserData(LISTENERS_IN_PROJECT_KEY) ?: return emptyList()
-}
+private fun getListeners(project: Project): List<ProjectManagerListener> =
+  project.getUserData(LISTENERS_IN_PROJECT_KEY) ?: emptyList()
 
 private val publisher: ProjectManagerListener
   get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC)
@@ -1146,7 +1136,7 @@ private fun fireProjectClosed(project: Project) {
 
   // see "why is called after message bus" in the fireProjectOpened
   for (i in projectComponents.indices.reversed()) {
-    val component = projectComponents.get(i)
+    val component = projectComponents[i]
     try {
       component.projectClosed()
     }
@@ -1177,19 +1167,14 @@ private fun ensureCouldCloseIfUnableToSave(project: Project): Boolean {
     }
   }
 
-  @Suppress("HardCodedStringLiteral")
-  return Messages.showYesNoDialog(project, message.toString(),
-                                  IdeUICustomization.getInstance().projectMessage("dialog.title.unsaved.project"),
-                                  Messages.getWarningIcon()) == Messages.YES
+  val title = IdeUICustomization.getInstance().projectMessage("dialog.title.unsaved.project")
+  return Messages.showYesNoDialog(project, message.toString(), title, Messages.getWarningIcon()) == Messages.YES
 }
 
 @Internal
-class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) : Notification("Project Settings",
-                                                                                                         IdeUICustomization.getInstance().projectMessage(
-                                                                                                           "notification.title.cannot.save.project"),
-                                                                                                         IdeBundle.message(
-                                                                                                           "notification.content.unable.to.save.project.files"),
-                                                                                                         NotificationType.ERROR) {
+class UnableToSaveProjectNotification(project: Project, readOnlyFiles: List<VirtualFile>) :
+  Notification("Project Settings", IdeUICustomization.getInstance().projectMessage("notification.title.cannot.save.project"), IdeBundle.message("notification.content.unable.to.save.project.files"), NotificationType.ERROR)
+{
   private var project: Project?
 
   var files: List<VirtualFile>
@@ -1221,11 +1206,8 @@ private fun toCanonicalName(filePath: String): Path {
       return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
     }
   }
-  catch (_: InvalidPathException) {
-  }
-  catch (_: IOException) {
-    // the file does not yet exist, so its canonical path will be equal to its original path
-  }
+  catch (_: InvalidPathException) { }
+  catch (_: IOException) { } // the file does not yet exist, so its canonical path will be equal to its original path
   return file
 }
 
@@ -1433,9 +1415,7 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
   return mode
 }
 
-private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
-  return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message())
-}
+private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? = if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message())
 
 internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
   val id = descriptor.pluginId
