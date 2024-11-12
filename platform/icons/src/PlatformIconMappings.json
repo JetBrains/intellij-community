@@ -540,6 +540,10 @@
         "general/inlineAdd.svg",
         "general/inlineAddHover.svg"
       ],
+      "inlineClose.svg": [
+        "general/inlineClose.svg",
+        "general/inlineCloseHover.svg"
+      ],
       "inlineEdit.svg": [
         "general/inline_edit.svg",
         "general/inline_edit_hovered.svg"

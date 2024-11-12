@@ -35,7 +35,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
   override var shouldHighlightDiffRanges: Boolean by settings::highlightDiffLinesInEditor
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
-    combine(postReviewRanges, fileVm.linesWithComments) { postReviewRanges, linesWithComments ->
+    combine(postReviewRanges, fileVm.linesWithComments, fileVm.newComments) { postReviewRanges, linesWithComments, newComments ->
       if (postReviewRanges != null) {
         val shiftedLinesWithComments = linesWithComments.mapTo(mutableSetOf()) {
           ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it)
@@ -43,7 +43,10 @@ internal class GHPRReviewFileEditorModel internal constructor(
         val shiftedCommentableRanges = ExcludingApproximateChangedRangesShifter.shift(fileVm.commentableRanges, postReviewRanges).map {
           it.getAfterLines()
         }
-        GHPRReviewEditorGutterControlsState(shiftedLinesWithComments, shiftedCommentableRanges)
+        val linesWithNewComments = newComments.mapTo(mutableSetOf()) {
+          ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it.line)
+        }
+        GHPRReviewEditorGutterControlsState(shiftedLinesWithComments, linesWithNewComments, shiftedCommentableRanges)
       }
       else null
     }.stateInNow(cs, null)
@@ -59,6 +62,12 @@ internal class GHPRReviewFileEditorModel internal constructor(
     val ranges = postReviewRanges.value ?: return
     val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
     fileVm.requestNewComment(originalLine, true)
+  }
+
+  override fun cancelNewComment(lineIdx: Int) {
+    val ranges = postReviewRanges.value ?: return
+    val loc = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
+    fileVm.cancelNewComment(loc)
   }
 
   override fun toggleComments(lineIdx: Int) {

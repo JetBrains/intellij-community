@@ -22,10 +22,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -73,8 +73,10 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
       }.cancelOnDispose(viewer)
     }
 
-    private fun CoroutineScope.createRenderer(model: GitLabMergeRequestEditorMappedComponentModel,
-                                              avatarIconsProvider: IconsProvider<GitLabUserDTO>): CodeReviewComponentInlayRenderer =
+    private fun CoroutineScope.createRenderer(
+      model: GitLabMergeRequestEditorMappedComponentModel,
+      avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    ): CodeReviewComponentInlayRenderer =
       when (model) {
         is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
           GitLabMergeRequestDiscussionInlayRenderer(this, project, model.vm, avatarIconsProvider,
@@ -93,7 +95,7 @@ private class DiffEditorModel(
   cs: CoroutineScope,
   private val diffVm: GitLabMergeRequestDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
-  private val lineToLocation: (Int) -> DiffLineLocation?
+  private val lineToLocation: (Int) -> DiffLineLocation?,
 ) : CodeReviewEditorModel<GitLabMergeRequestEditorMappedComponentModel> {
 
   override val inlays: StateFlow<Collection<GitLabMergeRequestEditorMappedComponentModel>> = combine(
@@ -104,15 +106,25 @@ private class DiffEditorModel(
     discussions + drafts + new
   }.stateInNow(cs, emptyList())
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
-    diffVm.locationsWithDiscussions.map {
-      val lines = it.mapNotNullTo(mutableSetOf(), locationToLine)
-      GutterState(lines)
+    combine(
+      diffVm.locationsWithDiscussions,
+      diffVm.locationsWithNewDiscussions
+    ) { locationsWithDiscussions, locationsWithNewDiscussions ->
+      val linesWithDiscussions = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
+      val linesWithNewDiscussions = locationsWithNewDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
+      GutterState(linesWithDiscussions, linesWithNewDiscussions)
     }.stateInNow(cs, null)
 
   override fun requestNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
     diffVm.requestNewDiscussion(loc, true)
+  }
+
+  override fun cancelNewComment(lineIdx: Int) {
+    val loc = lineToLocation(lineIdx) ?: return
+    diffVm.cancelNewDiscussion(loc)
   }
 
   override fun toggleComments(lineIdx: Int) {
@@ -139,7 +151,10 @@ private class DiffEditorModel(
     override fun cancel() = diffVm.cancelNewDiscussion(vm.originalLocation)
   }
 
-  private data class GutterState(override val linesWithComments: Set<Int>) : CodeReviewEditorGutterControlsModel.ControlsState {
+  private data class GutterState(
+    override val linesWithComments: Set<Int>,
+    override val linesWithNewComments: Set<Int>,
+  ) : CodeReviewEditorGutterControlsModel.ControlsState {
     override fun isLineCommentable(lineIdx: Int): Boolean = true
   }
 }

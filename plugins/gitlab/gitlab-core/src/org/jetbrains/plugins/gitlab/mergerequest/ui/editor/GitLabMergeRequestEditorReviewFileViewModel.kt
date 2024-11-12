@@ -20,6 +20,7 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -39,6 +40,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
   val discussions: StateFlow<Collection<GitLabMergeRequestEditorDiscussionViewModel>>
   val draftNotes: StateFlow<Collection<GitLabMergeRequestEditorDraftNoteViewModel>>
   val linesWithDiscussions: StateFlow<Set<Int>>
+  val linesWithNewDiscussions: StateFlow<Set<Int>>
 
   val canComment: StateFlow<Boolean>
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>>
@@ -59,7 +61,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   private val diffData: GitTextFilePatchWithHistory,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
-  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestEditorReviewFileViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -104,6 +106,16 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
         GitLabMergeRequestEditorNewDiscussionViewModel(vm, line, discussionsViewOption)
       }
     }.stateInNow(cs, emptyList())
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val linesWithNewDiscussions: StateFlow<Set<Int>> =
+    discussionsContainer.newDiscussions
+      .map {
+        it.keys.mapNotNullTo(mutableSetOf()) {
+          it.position.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNullTo null
+        }
+      }
+      .stateInNow(cs, emptySet())
 
   override fun requestNewDiscussion(line: Int, focus: Boolean) {
     val position = GitLabMergeRequestNewDiscussionPosition.calcFor(diffData, DiffLineLocation(Side.RIGHT, line)).let {

@@ -506,6 +506,8 @@ f:com.intellij.icons.AllIcons$General
 - sf:InheritedMethod:javax.swing.Icon
 - sf:InlineAdd:javax.swing.Icon
 - sf:InlineAddHover:javax.swing.Icon
+- sf:InlineClose:javax.swing.Icon
+- sf:InlineCloseHover:javax.swing.Icon
 - sf:InlineCopy:javax.swing.Icon
 - sf:InlineCopyHover:javax.swing.Icon
 - sf:InlineRefresh:javax.swing.Icon

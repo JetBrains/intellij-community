@@ -542,6 +542,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Inline_edit_hovered = load("expui/inline/inlineEdit.svg", "general/inline_edit_hovered.svg", -499944757, 0);
     /** 16x16 */ public static final @NotNull Icon InlineAdd = load("expui/inline/inlineAdd.svg", "general/inlineAdd.svg", -1067637940, 0);
     /** 16x16 */ public static final @NotNull Icon InlineAddHover = load("expui/inline/inlineAdd.svg", "general/inlineAddHover.svg", 784751211, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineClose = load("expui/inline/inlineClose.svg", "general/inlineClose.svg", 774702438, 0);
+    /** 16x16 */ public static final @NotNull Icon InlineCloseHover = load("expui/inline/inlineClose.svg", "general/inlineCloseHover.svg", -77817716, 0);
     /** 16x16 */ public static final @NotNull Icon InlineCopy = load("expui/inline/copy.svg", "general/inlineCopy.svg", 782384917, 0);
     /** 16x16 */ public static final @NotNull Icon InlineCopyHover = load("expui/inline/copy.svg", "general/inlineCopyHover.svg", -467328403, 0);
     /** 16x16 */ public static final @NotNull Icon InlineRefresh = load("expui/inline/refresh.svg", "general/inlineRefresh.svg", -425729140, 0);

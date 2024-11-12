@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.awt.Graphics
+import java.awt.MouseInfo
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import kotlin.math.min
@@ -122,7 +123,8 @@ private constructor(private val model: CodeReviewEditorGutterControlsModel,
     } ?: false
     if (hasCommentsInFoldedRegion) return
 
-    val rawIcon = if (lineData.columnHovered) AllIcons.General.InlineAddHover else AllIcons.General.InlineAdd
+    val rawIcon = if (!lineData.hasNewComment) { if (lineData.columnHovered) AllIcons.General.InlineAddHover else AllIcons.General.InlineAdd }
+                  else { if (lineData.columnHovered) AllIcons.General.InlineCloseHover else AllIcons.General.InlineClose }
     val icon = EditorUIUtil.scaleIcon(rawIcon, editor)
     val y = lineData.yRangeWithInlays.first + yShift + (editor.lineHeight - icon.iconHeight) / 2
     icon.paintIcon(null, g, r.x, y)
@@ -151,11 +153,12 @@ private constructor(private val model: CodeReviewEditorGutterControlsModel,
         val hoveredIconIdx = getHoveredIconSlotIndex(lineData.yRangeWithInlays, e.y)
         when (hoveredIconIdx) {
           0 -> unfoldOrToggle(lineData)
-          1 -> unfoldOrRequestNewDiscussion(lineData)
+          1 -> if (lineData.hasNewComment) model.cancelNewComment(lineData.logicalLine) else unfoldOrRequestNewDiscussion(lineData)
           else -> return
         }
       }
       lineData.hasComments -> unfoldOrToggle(lineData)
+      lineData.commentable && lineData.hasNewComment -> model.cancelNewComment(lineData.logicalLine)
       lineData.commentable -> unfoldOrRequestNewDiscussion(lineData)
       else -> return
     }
@@ -306,6 +309,10 @@ private constructor(private val model: CodeReviewEditorGutterControlsModel,
 
       val hasComments: Boolean by lazy {
         state.linesWithComments.contains(logicalLine)
+      }
+
+      val hasNewComment: Boolean by lazy {
+        state.linesWithNewComments.contains(logicalLine)
       }
 
       val commentable: Boolean by lazy {

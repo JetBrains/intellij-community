@@ -26,7 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
@@ -94,9 +94,13 @@ private class DiffEditorModel(
     combineStateIn(cs, threads, newComments, aiComments) { threads, new, ai -> threads + new + ai }
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
-    diffVm.locationsWithDiscussions.map {
-      val lines = it.mapNotNullTo(mutableSetOf(), locationToLine)
-      GHPRReviewEditorGutterControlsState(lines, if (diffVm.canComment) transferRanges(diffVm.commentableRanges) else emptyList())
+    combine(diffVm.locationsWithDiscussions, diffVm.newComments) { locationsWithDiscussions, newComments ->
+      val linesWithComments = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
+      val linesWithNewComments = newComments.mapNotNullTo(mutableSetOf()) { locationToLine(it.location) }
+      GHPRReviewEditorGutterControlsState(
+        linesWithComments, linesWithNewComments,
+        if (diffVm.canComment) transferRanges(diffVm.commentableRanges) else emptyList()
+      )
     }.stateInNow(cs, null)
 
   private fun transferRanges(ranges: List<Range>): List<LineRange> = ranges.mapNotNull {
@@ -140,6 +144,11 @@ private class DiffEditorModel(
   override fun requestNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
     diffVm.requestNewComment(GHPRReviewCommentLocation.SingleLine(loc.first, loc.second), true)
+  }
+
+  override fun cancelNewComment(lineIdx: Int) {
+    val loc = lineToLocation(lineIdx) ?: return
+    diffVm.cancelNewComment(GHPRReviewCommentLocation.SingleLine(loc.first, loc.second))
   }
 
   override fun toggleComments(lineIdx: Int) {

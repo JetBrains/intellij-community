@@ -960,6 +960,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - a:canCreateComment(I):Z
+- cancelNewComment(I):V
 - a:requestNewComment(I):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - f:getKEY():com.intellij.openapi.util.Key
@@ -1002,6 +1003,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:toggleComments(I):V
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$ControlsState
 - a:getLinesWithComments():java.util.Set
+- getLinesWithNewComments():java.util.Set
 - a:isLineCommentable(I):Z
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments

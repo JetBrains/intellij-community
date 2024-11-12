@@ -14,6 +14,7 @@ import com.intellij.diff.util.Range
 import com.intellij.openapi.Disposable
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -26,7 +27,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   private val cs: CoroutineScope,
   private val preferences: GitLabMergeRequestsPreferences,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
-  private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel()
+  private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorInlaysModel<GitLabMergeRequestEditorMappedComponentModel>,
@@ -40,16 +41,23 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
       preferences.highlightDiffLinesInEditor = value
     }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
-    combine(postReviewRanges,
-            fileVm.canComment,
-            fileVm.linesWithDiscussions) { postReviewRanges, canComment, linesWithDiscussions ->
+    combine(
+      postReviewRanges,
+      fileVm.canComment,
+      fileVm.linesWithDiscussions,
+      fileVm.linesWithNewDiscussions
+    ) { postReviewRanges, canComment, linesWithDiscussions, linesWithNewDiscussions ->
       if (postReviewRanges != null) {
         val nonCommentableRanges = postReviewRanges.map(Range::getAfterLines)
         val shiftedLinesWithDiscussions = linesWithDiscussions.mapTo(mutableSetOf()) {
           ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it)
         }
-        GutterState(shiftedLinesWithDiscussions, canComment, nonCommentableRanges)
+        val shiftedLinesWithNewDiscussions = linesWithNewDiscussions.mapTo(mutableSetOf()) {
+          ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it)
+        }
+        GutterState(shiftedLinesWithDiscussions, shiftedLinesWithNewDiscussions, canComment, nonCommentableRanges)
       }
       else null
     }.stateInNow(cs, null)
@@ -66,6 +74,12 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     val ranges = postReviewRanges.value ?: return
     val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
     fileVm.requestNewDiscussion(originalLine, true)
+  }
+
+  override fun cancelNewComment(lineIdx: Int) {
+    val ranges = postReviewRanges.value ?: return
+    val originalLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return
+    fileVm.cancelNewDiscussion(originalLine)
   }
 
   override fun toggleComments(lineIdx: Int) {
@@ -128,8 +142,9 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
 private data class GutterState(
   override val linesWithComments: Set<Int>,
+  override val linesWithNewComments: Set<Int>,
   val canComment: Boolean,
-  val nonCommentableRanges: List<LineRange>
+  val nonCommentableRanges: List<LineRange>,
 ) : CodeReviewEditorGutterControlsModel.ControlsState {
   override fun isLineCommentable(lineIdx: Int): Boolean =
     canComment && nonCommentableRanges.none { lineIdx in it.start until it.end }
