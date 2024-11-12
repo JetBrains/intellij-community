@@ -9,6 +9,7 @@ import com.intellij.platform.eel.component1
 import com.intellij.platform.eel.component2
 import com.intellij.platform.eel.withConnectionToRemotePort
 import com.intellij.platform.ijent.coroutineNameAppended
+import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedSendChannelException
@@ -34,6 +35,7 @@ private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
  *
  * This function returns when the server starts accepting connections.
  */
+@OptIn(DelicateCoroutinesApi::class)
 fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress) {
   val serverSocket = ServerSocket()
   serverSocket.bind(InetSocketAddress("localhost", localPort))
@@ -43,7 +45,8 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   }
   LOG.info("Accepting a connection within IDE client on port $localPort")
   var connectionCounter = 0
-  launch(Dispatchers.IO + coroutineNameAppended("Local port forwarding server")) {
+  // DO NOT use Dispatchers.IO here. Sockets live long enough to cause starvation of the IO dispatcher.
+  launch(IjentThreadPool.asCoroutineDispatcher() + coroutineNameAppended("Local port forwarding server")) {
     while (true) {
       try {
         val socket = runInterruptible {
