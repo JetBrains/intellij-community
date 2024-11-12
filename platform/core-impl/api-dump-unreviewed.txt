@@ -1646,8 +1646,6 @@ a:com.intellij.openapi.vfs.impl.ZipHandlerBase
 - pa:acquireZipHandle():com.intellij.util.io.ResourceHandle
 - contentsToByteArray(java.lang.String):B[]
 - p:createEntriesMap():java.util.Map
-- getArchiveCrcHashes():java.util.Map
-- getEntryCrc(java.lang.String):J
 - pa:getEntryFileStamp():J
 - getInputStream(java.lang.String):java.io.InputStream
 com.intellij.openapi.vfs.impl.http.FileDownloadingListener

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -26,7 +26,7 @@ import java.util.zip.ZipException;
  * access to the internal and external file attributes.
  */
 @SuppressWarnings("OctalInteger")
-public class JBZipEntry implements Cloneable {
+public class JBZipEntry {
   private static final int PLATFORM_UNIX = 3;
   private static final int PLATFORM_FAT = 0;
   private static final int SHORT_MASK = 0xFFFF;
@@ -512,6 +512,7 @@ public class JBZipEntry implements Cloneable {
     myFile.getOutputStream().putNextEntryContent(this, stream);
   }
 
+  @SuppressWarnings("IOStreamConstructor")
   void doSetDataFromFile(File file) throws IOException {
     try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
       myFile.getOutputStream().putNextEntryContent(this, input);

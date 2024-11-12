@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,19 +23,18 @@ public final class JavaZipFileWrapper implements GenericZipFile {
   }
 
   @Override
-  public GenericZipEntry getEntry(String entryName) throws IOException {
+  public GenericZipEntry getEntry(@NotNull String entryName) throws IOException {
     ZipEntry entry = myZipFile.getEntry(entryName);
-    if (entry == null) return null;
-    return new JavaZipFileEntryWrapper(entry, myZipFile);
+    return entry != null ? new EntryWrapper(entry, myZipFile) : null;
   }
 
   @Override
   public @NotNull List<? extends GenericZipEntry> getEntries() {
     Enumeration<? extends ZipEntry> entries = myZipFile.entries();
-    ArrayList<JavaZipFileEntryWrapper> list = new ArrayList<>();
+    List<EntryWrapper> list = new ArrayList<>();
     while (entries.hasMoreElements()) {
       ZipEntry entry = entries.nextElement();
-      list.add(new JavaZipFileEntryWrapper(entry, myZipFile));
+      list.add(new EntryWrapper(entry, myZipFile));
     }
     return list;
   }
@@ -43,39 +43,39 @@ public final class JavaZipFileWrapper implements GenericZipFile {
   public void close() throws IOException {
     myZipFile.close();
   }
-}
 
-class JavaZipFileEntryWrapper implements GenericZipEntry {
-  private final ZipEntry entry;
-  private final ZipFile myFile;
+  private static class EntryWrapper implements GenericZipFile.GenericZipEntry {
+    private final ZipEntry myEntry;
+    private final ZipFile myFile;
 
-  JavaZipFileEntryWrapper(ZipEntry entry, ZipFile file) {
-    this.entry = entry;
-    myFile = file;
-  }
+    EntryWrapper(ZipEntry entry, ZipFile file) {
+      myEntry = entry;
+      myFile = file;
+    }
 
-  @Override
-  public long getSize() {
-    return entry.getSize();
-  }
+    @Override
+    public long getSize() {
+      return myEntry.getSize();
+    }
 
-  @Override
-  public String getName() {
-    return entry.getName();
-  }
+    @Override
+    public @NotNull String getName() {
+      return myEntry.getName();
+    }
 
-  @Override
-  public long getCrc() {
-    return entry.getCrc();
-  }
+    @Override
+    public long getCrc() {
+      return myEntry.getCrc();
+    }
 
-  @Override
-  public boolean isDirectory() {
-    return entry.isDirectory();
-  }
+    @Override
+    public boolean isDirectory() {
+      return myEntry.isDirectory();
+    }
 
-  @Override
-  public InputStream getInputStream() throws IOException {
-    return myFile.getInputStream(entry);
+    @Override
+    public @Nullable InputStream getInputStream() throws IOException {
+      return myFile.getInputStream(myEntry);
+    }
   }
 }

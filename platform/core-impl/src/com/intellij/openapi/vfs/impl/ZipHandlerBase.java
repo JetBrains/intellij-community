@@ -1,17 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
-import com.intellij.openapi.util.io.FileTooBigException;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.vfs.impl.GenericZipFile.GenericZipEntry;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.io.ResourceHandle;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,22 +21,40 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
   private static final Logger LOG = Logger.getInstance(ZipHandlerBase.class);
-
-  public @NotNull Map<String, Long> getArchiveCrcHashes() throws IOException {
-    try (@NotNull ResourceHandle<GenericZipFile> handle = acquireZipHandle()) {
-      GenericZipFile file = handle.get();
-      List<? extends GenericZipEntry> entries = file.getEntries();
-      Map<String, Long> result = new Object2LongOpenHashMap<>();
-      for (GenericZipEntry entry : entries) {
-        result.put(normalizeName(entry.getName()), entry.getCrc());
-      }
-      return result;
-    }
-  }
+  private static final boolean USE_NIO_HANDLER = Boolean.getBoolean("zip.handler.use.nio");
 
   @ApiStatus.Internal
   public static boolean getUseCrcInsteadOfTimestampPropertyValue() {
     return Boolean.getBoolean("zip.handler.uses.crc.instead.of.timestamp");
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull GenericZipFile getZipFileWrapper(@NotNull File file) throws IOException {
+    GenericZipFile wrapper;
+    if (USE_NIO_HANDLER) {
+      wrapper = new JavaNioZipFileWrapper(file.toPath());
+    }
+    else if (isFileLikelyLocal(file)) {
+      wrapper = new JavaZipFileWrapper(file);
+    }
+    else {
+      wrapper = new JBZipFileWrapper(file);
+    }
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Using " + wrapper.getClass().getName() + " to open " + file);
+    }
+    return wrapper;
+  }
+
+  private static boolean isFileLikelyLocal(File file) {
+    if (SystemInfo.isWindows) {
+      // WSL is locally reachable from Windows, hence we want to detect if the file resides completely at Windows side
+      return OSAgnosticPathUtil.startsWithWindowsDrive(file.getPath());
+    }
+    else {
+      // we intentionally use java.io here, as we need to ask the local file system if it recognizes the path
+      return file.exists();
+    }
   }
 
   public ZipHandlerBase(@NotNull String path) {
@@ -46,34 +64,19 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   @Override
   protected @NotNull Map<String, EntryInfo> createEntriesMap() throws IOException {
     try (ResourceHandle<GenericZipFile> zipRef = acquireZipHandle()) {
-      return buildEntryMapForZipFile(zipRef.get());
-    }
-  }
+      List<? extends GenericZipEntry> entries = zipRef.get().getEntries();
+      Map<String, EntryInfo> result = new ZipEntryMap(entries.size());
+      boolean crcAsTimestamp = getUseCrcInsteadOfTimestampPropertyValue();
 
-  private @NotNull Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull GenericZipFile zip) {
-    Map<String, EntryInfo> map = new ZipEntryMap(zip.getEntries().size());
-
-    List<? extends GenericZipEntry> entries = zip.getEntries();
-    for (GenericZipEntry ze : entries) {
-      processEntry(map, LOG, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
-        long fileStamp = getUseCrcInsteadOfTimestampPropertyValue() ? ze.getCrc() : getEntryFileStamp();
-        return new EntryInfo(name, false, ze.getSize(), fileStamp, parent);
-      });
-    }
-
-    return map;
-  }
-
-  public long getEntryCrc(@NotNull String relativePath) throws IOException {
-    try (ResourceHandle<GenericZipFile> zipRef = acquireZipHandle()) {
-      GenericZipFile zip = zipRef.get();
-      GenericZipEntry entry = zip.getEntry(relativePath);
-      if (entry != null) {
-        return entry.getCrc();
+      for (GenericZipEntry ze : entries) {
+        processEntry(result, LOG, ze.getName(), ze.isDirectory() ? null : (parent, name) -> {
+          long fileStamp = crcAsTimestamp ? ze.getCrc() : getEntryFileStamp();
+          return new EntryInfo(name, false, ze.getSize(), fileStamp, parent);
+        });
       }
-    }
 
-    throw new FileNotFoundException(getFile() + "!/" + relativePath);
+      return result;
+    }
   }
 
   @Override
@@ -89,7 +92,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
         try (InputStream stream = entry.getInputStream()) {
           if (stream != null) {
             // ZipFile.c#Java_java_util_zip_ZipFile_read reads data in 8K (stack allocated) blocks - no sense to create BufferedInputStream
-            return FileUtil.loadBytes(stream, (int)length);
+            return StreamUtil.readBytes(stream, (int)length);
           }
         }
       }
@@ -111,7 +114,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
           long length = entry.getSize();
           if (!FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
             try {
-              return new BufferExposingByteArrayInputStream(FileUtil.loadBytes(stream, (int)length));
+              return new BufferExposingByteArrayInputStream(StreamUtil.readBytes(stream, (int)length));
             }
             finally {
               stream.close();
@@ -129,6 +132,18 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     }
 
     throw new FileNotFoundException(getFile() + "!/" + relativePath);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Map<String, Long> getArchiveCrcHashes() throws IOException {
+    try (ResourceHandle<GenericZipFile> handle = acquireZipHandle()) {
+      GenericZipFile file = handle.get();
+      Map<String, Long> result = new Object2LongOpenHashMap<>();
+      for (GenericZipEntry entry : file.getEntries()) {
+        result.put(normalizeName(entry.getName()), entry.getCrc());
+      }
+      return result;
+    }
   }
 
   protected abstract long getEntryFileStamp();

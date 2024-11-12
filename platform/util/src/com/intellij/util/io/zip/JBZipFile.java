@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
 import com.intellij.util.ArrayUtilRt;
@@ -178,16 +178,11 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(@NotNull File f,
-                   @NotNull Charset encoding,
-                   boolean readonly) throws IOException {
+  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly) throws IOException {
     this(f, encoding, readonly, ThreeState.NO);
   }
 
-  public JBZipFile(@NotNull File f,
-                   @NotNull Charset encoding,
-                   boolean readonly,
-                   @NotNull ThreeState isZip64) throws IOException {
+  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
     this(getFileChannel(f, readonly), encoding, readonly, isZip64);
   }
 
@@ -199,10 +194,7 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(SeekableByteChannel channel,
-                    @NotNull Charset encoding,
-                    boolean readonly,
-                    @NotNull ThreeState isZip64) throws IOException {
+  public JBZipFile(@NotNull SeekableByteChannel channel, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
     myEncoding = encoding;
     myIsReadonly = readonly;
     myArchive = channel;
@@ -221,7 +213,7 @@ public class JBZipFile implements Closeable {
         myArchive.close();
       }
       catch (IOException e2) {
-        // swallow, throw the original exception instead
+        e.addSuppressed(e2);
       }
       throw e;
     }
@@ -234,9 +226,7 @@ public class JBZipFile implements Closeable {
 
   @Override
   public String toString() {
-    return "JBZipFile{" +
-           "readonly=" + myIsReadonly +
-           '}';
+    return "JBZipFile{readonly=" + myIsReadonly + '}';
   }
 
   /**

@@ -5266,7 +5266,6 @@ f:com.intellij.util.io.zip.DosTime
 - s:dosToJavaTime(J):J
 - s:javaToDosTime(J):J
 c:com.intellij.util.io.zip.JBZipEntry
-- java.lang.Cloneable
 - p:<init>(com.intellij.util.io.zip.JBZipFile):V
 - p:<init>(java.lang.String,com.intellij.util.io.zip.JBZipFile):V
 - addExtra(com.intellij.util.io.zip.JBZipExtraField):V
