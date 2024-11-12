@@ -61,10 +61,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
 
-  private void startConditionalNodeAndCheckGuards(@NotNull PsiElement element, @Nullable PyExpression condition, boolean result) {
-    myBuilder.startConditionalNode(element, condition, result);
-  }
-
   @Override
   public void visitPyFunction(final @NotNull PyFunction node) {
     // Create node and stop here
@@ -390,7 +386,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         }
         myBuilder.prevInstruction = null;
 
-        startConditionalNodeAndCheckGuards(part, lastCondition, false);
+        myBuilder.startConditionalNode(part, lastCondition, false);
       }
 
       final Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> currentPartResults = visitPyConditionalPart(part, node);
@@ -416,7 +412,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
       final PyStatementList statements = elseBranch.getStatementList();
 
-      startConditionalNodeAndCheckGuards(statements, lastCondition, false);
+      myBuilder.startConditionalNode(statements, lastCondition, false);
       InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
       statements.accept(this);
 
@@ -481,7 +477,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
                                                 @NotNull PyStatement node) {
     final PyStatementList statements = part.getStatementList();
 
-    startConditionalNodeAndCheckGuards(statements, part.getCondition(), true);
+    myBuilder.startConditionalNode(statements, part.getCondition(), true);
     InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
     statements.accept(this);
 
@@ -891,7 +887,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         final PyExpression iteratedList = c.getIteratedList();
         final PyExpression iteratorVariable = c.getIteratorVariable();
         if (prevCondition != null) {
-          startConditionalNodeAndCheckGuards(iteratedList, prevCondition, true);
+          myBuilder.startConditionalNode(iteratedList, prevCondition, true);
           prevCondition = null;
         }
         else {
@@ -917,7 +913,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
           continue;
         }
         if (prevCondition != null) {
-          startConditionalNodeAndCheckGuards(condition, prevCondition, true);
+          myBuilder.startConditionalNode(condition, prevCondition, true);
         }
         else {
           myBuilder.startNode(condition);
@@ -941,7 +937,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression result = node.getResultExpression();
     if (result != null) {
       if (prevCondition != null) {
-        startConditionalNodeAndCheckGuards(result, prevCondition, true);
+        myBuilder.startConditionalNode(result, prevCondition, true);
       }
       else {
         myBuilder.startNode(result);
