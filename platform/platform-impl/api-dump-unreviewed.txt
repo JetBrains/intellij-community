@@ -1983,7 +1983,6 @@ f:com.intellij.ide.IdeEventQueue
 - f:doPostEvent(java.awt.AWTEvent):Z
 - f:doWhenReady(java.lang.Runnable):V
 - f:executeInProductionModeEvenThoughWeAreInTests(java.lang.Runnable):V
-- f:executeWhenAllFocusEventsLeftTheQueue(java.lang.Runnable):V
 - f:flushDelayedKeyEvents():V
 - f:flushNativeEventQueue():V
 - f:getEventCount():I

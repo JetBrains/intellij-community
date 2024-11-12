@@ -30,7 +30,10 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
 import com.intellij.openapi.keymap.impl.KeyState
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
@@ -44,7 +47,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.unwrapContextRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
@@ -62,7 +64,6 @@ import java.awt.event.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -123,8 +124,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   private var winMetaPressed = false
   private var inputMethodLock = 0
   private val postEventListeners = ContainerUtil.createLockFreeCopyOnWriteList<PostEventHook>()
-  private val runnablesWaitingFocusChange = HashMap<AWTEvent, MutableList<Runnable>>()
-  private val focusEventList = ConcurrentLinkedQueue<AWTEvent>()
 
   @Internal
   @JvmField
@@ -176,49 +175,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   internal fun setIdleTracker(value: () -> Unit) {
     EDT.assertIsEdt()
     idleTracker = value
-  }
-
-  /**
-   * Executes given `runnable` after all focus activities are finished.
-   *
-   * @apiNote be careful with this method. It may run `runnable` synchronously in the context of the current thread, or may queue
-   * runnable until the focus events queue is empty. In the latter case, runnable is going to be run while processing the last focus
-   * event from the queue, without any context, e.g., outside the write-safe context. Consider using safer [IdeFocusManager.doWhenFocusSettlesDown]
-   */
-  fun executeWhenAllFocusEventsLeftTheQueue(runnable: Runnable) {
-    ifFocusEventsInTheQueue(
-      yes = { e ->
-        var runnables = runnablesWaitingFocusChange.get(e)
-        if (runnables == null) {
-          runnables = mutableListOf()
-          runnables.add(runnable)
-          runnablesWaitingFocusChange.put(e, runnables)
-        }
-        else {
-          Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "We have already had a runnable for the event: $e" }
-          runnables.add(runnable)
-        }
-      },
-      no = runnable,
-    )
-  }
-
-  private fun runnablesWaitingForFocusChangeState(): String =
-    focusEventList.joinToString(separator = ", ") { event -> "[${event.id}; ${event.source.javaClass.name}]" }
-
-  private inline fun ifFocusEventsInTheQueue(yes: (AWTEvent) -> Unit, no: Runnable) {
-    val lastFocusGainedEvent = focusEventList.lastOrNull { it.id == FocusEvent.FOCUS_GAINED }
-    if (lastFocusGainedEvent == null) {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
-      EdtInvocationManager.invokeLaterIfNeeded(no)
-    }
-    else {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug {
-        "Focus event list (trying to execute runnable): ${runnablesWaitingForFocusChangeState()}\n" +
-        "runnable saved for : [${lastFocusGainedEvent.id}; ${lastFocusGainedEvent.source}] -> ${no.javaClass.name}"
-      }
-      yes(lastFocusGainedEvent)
-    }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -377,9 +333,6 @@ class IdeEventQueue private constructor() : EventQueue() {
                                          runnableClass)
             }
           }
-          if (isFocusEvent(finalEvent)) {
-            onFocusEvent(finalEvent)
-          }
         }
       }
 
@@ -423,33 +376,6 @@ class IdeEventQueue private constructor() : EventQueue() {
         SequencedEventNestedFieldHolder.invokeDispose(sequenceEventToDispose)
       }
       currentSequencedEvent = e
-    }
-  }
-
-  private fun onFocusEvent(event: AWTEvent) {
-    Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState() }
-    val events = mutableListOf<AWTEvent>()
-    @Suppress("UsePropertyAccessSyntax")
-    while (!focusEventList.isEmpty()) {
-      val f = focusEventList.poll()
-      events.add(f)
-      if (f == event) {
-        break
-      }
-    }
-
-    for (entry in events) {
-      val runnables = runnablesWaitingFocusChange.remove(entry) ?: continue
-      for (r in runnables) {
-        if (r !is ExpirableRunnable || !r.isExpired) {
-          try {
-            r.run()
-          }
-          catch (e: Throwable) {
-            processException(e)
-          }
-        }
-      }
     }
   }
 
@@ -824,9 +750,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (event is KeyEvent) {
       keyboardEventPosted.incrementAndGet()
     }
-    if (isFocusEvent(event)) {
-      focusEventList.add(event)
-    }
+
     super.postEvent(event)
     return true
   }
@@ -939,9 +863,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 private object Logs {
   @JvmField
   val LOG: Logger = logger<IdeEventQueue>()
-
-  @JvmField
-  val FOCUS_AWARE_RUNNABLES_LOG: Logger = Logger.getInstance(IdeEventQueue::class.java.name + ".runnables")
 }
 
 /**
@@ -1109,15 +1030,6 @@ private fun processAppActivationEvent(event: WindowEvent) {
       }
     }
   }
-}
-
-private fun isFocusEvent(e: AWTEvent): Boolean {
-  return e.id == FocusEvent.FOCUS_GAINED ||
-         e.id == FocusEvent.FOCUS_LOST ||
-         e.id == WindowEvent.WINDOW_ACTIVATED ||
-         e.id == WindowEvent.WINDOW_DEACTIVATED ||
-         e.id == WindowEvent.WINDOW_LOST_FOCUS ||
-         e.id == WindowEvent.WINDOW_GAINED_FOCUS
 }
 
 private fun isKeyboardEvent(event: AWTEvent): Boolean = event is KeyEvent

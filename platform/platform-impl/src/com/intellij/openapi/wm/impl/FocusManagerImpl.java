@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.concurrency.ContextAwareRunnable;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,6 +24,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,7 +170,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     // Immediate check is buggy.
     // JVM can run "postponed" code on other thread before this thread set `immediate` to `false`
     AtomicBoolean immediate = new AtomicBoolean(true);
-    IdeEventQueue.getInstance().executeWhenAllFocusEventsLeftTheQueue((ContextAwareRunnable) () -> {
+    EdtInvocationManager.invokeLaterIfNeeded((ContextAwareRunnable) () -> {
       if (immediate.get()) {
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
