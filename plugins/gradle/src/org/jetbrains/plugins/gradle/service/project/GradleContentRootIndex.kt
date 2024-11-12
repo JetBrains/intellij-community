@@ -51,8 +51,8 @@ class GradleContentRootIndex {
 
   fun resolveContentRoots(externalProject: ExternalProject, sourceSetNode: DataNode<GradleSourceSetData>): Set<String> {
     val sourceRoots = getSourceRoots(sourceSetNode)
-    val contentRoots = resolveContentRoots(externalProject, sourceRoots)
-    return contentRoots.mapTo(HashSet()) { it.toCanonicalPath() }
+    return resolveContentRoots(externalProject, sourceRoots)
+      .mapTo(HashSet()) { it.toCanonicalPath() }
   }
 
   @VisibleForTesting
@@ -70,9 +70,6 @@ class GradleContentRootIndex {
   }
 
   private fun resolveContentRoot(projectRootPath: Path, buildRootPath: Path, sourceRootPath: Path): Path {
-    if (!sourceRootPath.startsWith(projectRootPath)) {
-      return sourceRootPath
-    }
     if (sourceRootPath.startsWith(buildRootPath)) {
       return sourceRootPath
     }

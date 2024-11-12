@@ -116,6 +116,52 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
   }
 
   @Test
+  fun `test content root resolution for incomplete external sources`() {
+    val rootPath = Path.of("path/to/root")
+    val externalProject = createExternalProject(rootPath.resolve("externalRoot"))
+
+    run {
+      val mainSources = listOf(
+        rootPath.resolve("externalRoot/src/main/java")
+      )
+      val testSources = listOf(
+        rootPath.resolve("externalRoot/src/test/java")
+      )
+
+      val contentRootIndex = GradleContentRootIndex()
+      contentRootIndex.addSourceRoots(mainSources)
+      contentRootIndex.addSourceRoots(testSources)
+
+      Assertions.assertThat(
+        contentRootIndex.resolveContentRoots(externalProject, mainSources)
+      ).containsExactlyInAnyOrder(
+        rootPath.resolve("externalRoot/src/main"),
+      )
+
+      Assertions.assertThat(
+        contentRootIndex.resolveContentRoots(externalProject, testSources)
+      ).containsExactlyInAnyOrder(
+        rootPath.resolve("externalRoot/src/test"),
+      )
+    }
+
+    run {
+      val mainSources = listOf(
+        rootPath.resolve("externalRoot/src/main/java")
+      )
+
+      val contentRootIndex = GradleContentRootIndex()
+      contentRootIndex.addSourceRoots(mainSources)
+
+      Assertions.assertThat(
+        contentRootIndex.resolveContentRoots(externalProject, mainSources)
+      ).containsExactlyInAnyOrder(
+        rootPath.resolve("externalRoot/src/main"),
+      )
+    }
+  }
+
+  @Test
   fun `test content root resolution for flatten sources`() {
     val projectPath = Path.of("path/to/project")
     val externalProject = createExternalProject(projectPath)
@@ -186,22 +232,21 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
 
   @Test
   fun `test content root resolution for external sources`() {
-    val projectPath = Path.of("path/to/project")
-    val externalPath = Path.of("path/to/external")
-    val projectBuildPath = projectPath.resolve("build")
-    val externalProject = createExternalProject(projectPath, projectBuildPath)
+    val rootPath = Path.of("path/to/root")
+    val projectBuildPath = rootPath.resolve("projectRoot/build")
+    val externalProject = createExternalProject(rootPath.resolve("projectRoot"), projectBuildPath)
 
     val mainSources = listOf(
-      projectPath.resolve("src/main/java"),
-      projectPath.resolve("src/main/resources"),
-      externalPath.resolve("src/main/java"),
-      externalPath.resolve("src/main/resources")
+      rootPath.resolve("projectRoot/src/main/java"),
+      rootPath.resolve("projectRoot/src/main/resources"),
+      rootPath.resolve("externalRoot/src/main/java"),
+      rootPath.resolve("externalRoot/src/main/resources")
     )
     val testSources = listOf(
-      projectPath.resolve("src/test/java"),
-      projectPath.resolve("src/test/resources"),
-      externalPath.resolve("src/test/java"),
-      externalPath.resolve("src/test/resources")
+      rootPath.resolve("projectRoot/src/test/java"),
+      rootPath.resolve("projectRoot/src/test/resources"),
+      rootPath.resolve("externalRoot/src/test/java"),
+      rootPath.resolve("externalRoot/src/test/resources")
     )
 
     val contentRootIndex = GradleContentRootIndex()
@@ -211,19 +256,15 @@ class GradleContentRootIndexTest : GradleContentRootIndexTestCase() {
     Assertions.assertThat(
       contentRootIndex.resolveContentRoots(externalProject, mainSources)
     ).containsExactlyInAnyOrder(
-      projectPath.resolve("src/main"),
-
-      externalPath.resolve("src/main/java"),
-      externalPath.resolve("src/main/resources"),
+      rootPath.resolve("projectRoot/src/main"),
+      rootPath.resolve("externalRoot/src/main")
     )
 
     Assertions.assertThat(
       contentRootIndex.resolveContentRoots(externalProject, testSources)
     ).containsExactlyInAnyOrder(
-      projectPath.resolve("src/test"),
-
-      externalPath.resolve("src/test/java"),
-      externalPath.resolve("src/test/resources"),
+      rootPath.resolve("projectRoot/src/test"),
+      rootPath.resolve("externalRoot/src/test"),
     )
   }
 

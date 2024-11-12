@@ -162,6 +162,68 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
   }
 
   @Test
+  fun `test content root merging for incomplete external sources`() {
+    val rootPath = Path.of("path/to/root")
+    val projectModel = createProjectModel(rootPath.resolve("projectRoot"), ":")
+    val externalProject = createExternalProject(rootPath.resolve("projectRoot"))
+    val resolverContext = createResolveContext(projectModel to externalProject)
+
+    run {
+      val expectedModuleNode = createModuleNode("project").apply {
+        addChild(createSourceSetNode("main").apply {
+          addChild(createContentRoot(rootPath.resolve("externalRoot/src/main")).apply {
+            data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("externalRoot/src/main/java").toString())
+          })
+        })
+        addChild(createSourceSetNode("test").apply {
+          addChild(createContentRoot(rootPath.resolve("externalRoot/src/test")).apply {
+            data.storePath(ExternalSystemSourceType.TEST, rootPath.resolve("externalRoot/src/test/java").toString())
+          })
+        })
+      }
+
+      val actualModuleNode = createModuleNode("project").apply {
+        addChild(createSourceSetNode("main").apply {
+          addChild(createContentRoot(rootPath.resolve("externalRoot/src/main/java")).apply {
+            data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("externalRoot/src/main/java").toString())
+          })
+        })
+        addChild(createSourceSetNode("test").apply {
+          addChild(createContentRoot(rootPath.resolve("externalRoot/src/test/java")).apply {
+            data.storePath(ExternalSystemSourceType.TEST, rootPath.resolve("externalRoot/src/test/java").toString())
+          })
+        })
+      }
+
+      GradleProjectResolver.mergeSourceSetContentRootsInModulePerSourceSetMode(resolverContext, mapOf(projectModel to actualModuleNode))
+
+      assertModuleNodeEquals(expectedModuleNode, actualModuleNode)
+    }
+
+    run {
+      val expectedModuleNode = createModuleNode("project").apply {
+        addChild(createSourceSetNode("main").apply {
+          addChild(createContentRoot(rootPath.resolve("externalRoot/src/main")).apply {
+            data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("externalRoot/src/main/java").toString())
+          })
+        })
+      }
+
+      val actualModuleNode = createModuleNode("project").apply {
+        addChild(createSourceSetNode("main").apply {
+          addChild(createContentRoot(rootPath.resolve("externalRoot/src/main/java")).apply {
+            data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("externalRoot/src/main/java").toString())
+          })
+        })
+      }
+
+      GradleProjectResolver.mergeSourceSetContentRootsInModulePerSourceSetMode(resolverContext, mapOf(projectModel to actualModuleNode))
+
+      assertModuleNodeEquals(expectedModuleNode, actualModuleNode)
+    }
+  }
+
+  @Test
   fun `test content root merging for flatten sources`() {
     val projectPath = Path.of("path/to/project")
     val projectModel = createProjectModel(projectPath, ":")
@@ -272,66 +334,61 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
 
   @Test
   fun `test content root merging for external sources`() {
-    val projectPath = Path.of("path/to/project")
-    val externalPath = Path.of("path/to/external")
-    val projectModel = createProjectModel(projectPath, ":")
-    val externalProject = createExternalProject(projectPath)
+    val rootPath = Path.of("path/to/root")
+    val projectModel = createProjectModel(rootPath.resolve("projectRoot"), ":")
+    val externalProject = createExternalProject(rootPath.resolve("projectRoot"))
     val resolverContext = createResolveContext(projectModel to externalProject)
 
     val expectedModuleNode = createModuleNode("project").apply {
       addChild(createSourceSetNode("main").apply {
-        addChild(createContentRoot(projectPath.resolve("src/main")).apply {
-          data.storePath(ExternalSystemSourceType.SOURCE, projectPath.resolve("src/main/java").toString())
-          data.storePath(ExternalSystemSourceType.RESOURCE, projectPath.resolve("src/main/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("projectRoot/src/main")).apply {
+          data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("projectRoot/src/main/java").toString())
+          data.storePath(ExternalSystemSourceType.RESOURCE, rootPath.resolve("projectRoot/src/main/resources").toString())
         })
-        addChild(createContentRoot(externalPath.resolve("src/main/java")).apply {
-          data.storePath(ExternalSystemSourceType.SOURCE, externalPath.resolve("src/main/java").toString())
-        })
-        addChild(createContentRoot(externalPath.resolve("src/main/resources")).apply {
-          data.storePath(ExternalSystemSourceType.RESOURCE, externalPath.resolve("src/main/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("externalRoot/src/main")).apply {
+          data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("externalRoot/src/main/java").toString())
+          data.storePath(ExternalSystemSourceType.RESOURCE, rootPath.resolve("externalRoot/src/main/resources").toString())
         })
       })
       addChild(createSourceSetNode("test").apply {
-        addChild(createContentRoot(projectPath.resolve("src/test")).apply {
-          data.storePath(ExternalSystemSourceType.TEST, projectPath.resolve("src/test/java").toString())
-          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, projectPath.resolve("src/test/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("projectRoot/src/test")).apply {
+          data.storePath(ExternalSystemSourceType.TEST, rootPath.resolve("projectRoot/src/test/java").toString())
+          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, rootPath.resolve("projectRoot/src/test/resources").toString())
         })
-        addChild(createContentRoot(externalPath.resolve("src/test/java")).apply {
-          data.storePath(ExternalSystemSourceType.TEST, externalPath.resolve("src/test/java").toString())
-        })
-        addChild(createContentRoot(externalPath.resolve("src/test/resources")).apply {
-          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, externalPath.resolve("src/test/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("externalRoot/src/test")).apply {
+          data.storePath(ExternalSystemSourceType.TEST, rootPath.resolve("externalRoot/src/test/java").toString())
+          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, rootPath.resolve("externalRoot/src/test/resources").toString())
         })
       })
     }
 
     val actualModuleNode = createModuleNode("project").apply {
       addChild(createSourceSetNode("main").apply {
-        addChild(createContentRoot(projectPath.resolve("src/main/java")).apply {
-          data.storePath(ExternalSystemSourceType.SOURCE, projectPath.resolve("src/main/java").toString())
+        addChild(createContentRoot(rootPath.resolve("projectRoot/src/main/java")).apply {
+          data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("projectRoot/src/main/java").toString())
         })
-        addChild(createContentRoot(projectPath.resolve("src/main/resources")).apply {
-          data.storePath(ExternalSystemSourceType.RESOURCE, projectPath.resolve("src/main/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("projectRoot/src/main/resources")).apply {
+          data.storePath(ExternalSystemSourceType.RESOURCE, rootPath.resolve("projectRoot/src/main/resources").toString())
         })
-        addChild(createContentRoot(externalPath.resolve("src/main/java")).apply {
-          data.storePath(ExternalSystemSourceType.SOURCE, externalPath.resolve("src/main/java").toString())
+        addChild(createContentRoot(rootPath.resolve("externalRoot/src/main/java")).apply {
+          data.storePath(ExternalSystemSourceType.SOURCE, rootPath.resolve("externalRoot/src/main/java").toString())
         })
-        addChild(createContentRoot(externalPath.resolve("src/main/resources")).apply {
-          data.storePath(ExternalSystemSourceType.RESOURCE, externalPath.resolve("src/main/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("externalRoot/src/main/resources")).apply {
+          data.storePath(ExternalSystemSourceType.RESOURCE, rootPath.resolve("externalRoot/src/main/resources").toString())
         })
       })
       addChild(createSourceSetNode("test").apply {
-        addChild(createContentRoot(projectPath.resolve("src/test/java")).apply {
-          data.storePath(ExternalSystemSourceType.TEST, projectPath.resolve("src/test/java").toString())
+        addChild(createContentRoot(rootPath.resolve("projectRoot/src/test/java")).apply {
+          data.storePath(ExternalSystemSourceType.TEST, rootPath.resolve("projectRoot/src/test/java").toString())
         })
-        addChild(createContentRoot(projectPath.resolve("src/test/resources")).apply {
-          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, projectPath.resolve("src/test/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("projectRoot/src/test/resources")).apply {
+          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, rootPath.resolve("projectRoot/src/test/resources").toString())
         })
-        addChild(createContentRoot(externalPath.resolve("src/test/java")).apply {
-          data.storePath(ExternalSystemSourceType.TEST, externalPath.resolve("src/test/java").toString())
+        addChild(createContentRoot(rootPath.resolve("externalRoot/src/test/java")).apply {
+          data.storePath(ExternalSystemSourceType.TEST, rootPath.resolve("externalRoot/src/test/java").toString())
         })
-        addChild(createContentRoot(externalPath.resolve("src/test/resources")).apply {
-          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, externalPath.resolve("src/test/resources").toString())
+        addChild(createContentRoot(rootPath.resolve("externalRoot/src/test/resources")).apply {
+          data.storePath(ExternalSystemSourceType.TEST_RESOURCE, rootPath.resolve("externalRoot/src/test/resources").toString())
         })
       })
     }

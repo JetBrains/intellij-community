@@ -931,9 +931,8 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertContentRoots("project.main",
                        path("src/main"),
-                       path("../outer1/src/main/java"),
-                       path("../outer1/src/main/kotlin"),
-                       path("../outer2/src/main/java"),
+                       path("../outer1/src/main"),
+                       path("../outer2/src/main"),
                        path("../outer3")
     );
     assertSourceRoots("project.main", it -> it
@@ -952,7 +951,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertContentRoots("project.generated",
                        path("src/generated"),
                        path("build/generated"),
-                       path("../outer4/generated")
+                       path("../outer4")
     );
     assertSourceRoots("project.generated", it -> it
       .sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED,

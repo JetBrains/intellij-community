@@ -393,7 +393,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           contentRootContributorAssertion.trace {
             assertModules(storage, "project", "project.main", "project.test")
             assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src"))
+            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
             assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
           }
         }
@@ -405,7 +405,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       createBuildFile {
         withJavaPlugin()
         addPostfix("""
-          |sourceSets.main.java.srcDirs += "${externalProjectRoot.resolve("src")}"
+          |sourceSets.main.java.srcDirs += "${externalProjectRoot.resolve("src/main/java")}"
         """.trimMargin())
       }
 
@@ -413,7 +413,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       assertModules(project, "project", "project.main", "project.test")
       assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src"))
+      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
       assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()
