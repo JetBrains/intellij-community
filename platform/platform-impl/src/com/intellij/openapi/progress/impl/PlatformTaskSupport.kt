@@ -180,11 +180,23 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
-  private fun markAsSuspendableIfNeeded(indicator: ProgressIndicator, suspender: TaskSuspender?) {
-    if (suspender is TaskSuspenderImpl) {
-      @Suppress("UsagesOfObsoleteApi")
-      ProgressManager.getInstance().runProcess({ ProgressSuspender.markSuspendable(indicator, suspender.suspendedText) }, indicator)
-    }
+  private fun markAsSuspendableIfNeeded(indicator: ProgressIndicator, taskSuspender: TaskSuspender?): Closeable {
+    if (taskSuspender !is TaskSuspenderImpl) return Closeable { }
+
+    @Suppress("UsagesOfObsoleteApi")
+    val progressSuspender = ProgressManager.getInstance().runProcess<ProgressSuspender>(
+      { ProgressSuspender.markSuspendable(indicator, taskSuspender.suspendedText) }, indicator)
+    ProgressSuspenderTracker.getInstance().startTracking(progressSuspender, object : ProgressSuspenderTracker.SuspenderListener {
+      override fun onPause(suspendedText: String) {
+        taskSuspender.pause(suspendedText)
+      }
+
+      override fun onResume() {
+        taskSuspender.resume()
+      }
+    })
+
+    return Closeable { ProgressSuspenderTracker.getInstance().stopTracking(progressSuspender) }
   }
 
   override suspend fun <T> withModalProgressInternal(

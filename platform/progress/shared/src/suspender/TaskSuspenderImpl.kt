@@ -12,6 +12,8 @@ class TaskSuspenderImpl internal constructor(@NlsContexts.ProgressText val suspe
   private val coroutineSuspender = CoroutineSuspenderElement(active = true)
   private val listeners = CopyOnWriteArrayList<TaskSuspenderListener>()
 
+  private val stateChangeMutex = Any()
+
   override fun addListener(listener: TaskSuspenderListener) {
     listeners.add(listener)
   }
@@ -21,13 +23,19 @@ class TaskSuspenderImpl internal constructor(@NlsContexts.ProgressText val suspe
   }
 
   override fun pause(@NlsContexts.ProgressText reason: String?) {
-    coroutineSuspender.pause()
-    listeners.forEachLoggingErrors(LOG) { it.onPause(reason) }
+    synchronized(stateChangeMutex) {
+      if (isPaused()) return
+      coroutineSuspender.pause()
+      listeners.forEachLoggingErrors(LOG) { it.onPause(reason) }
+    }
   }
 
   override fun resume() {
-    coroutineSuspender.resume()
-    listeners.forEachLoggingErrors(LOG) { it.onResume() }
+    synchronized(stateChangeMutex) {
+      if (!isPaused()) return
+      coroutineSuspender.resume()
+      listeners.forEachLoggingErrors(LOG) { it.onResume() }
+    }
   }
 
   fun getCoroutineContext(): CoroutineContext.Element {

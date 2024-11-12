@@ -2,7 +2,6 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.waitAssertCompletedNormally
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
@@ -10,6 +9,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.application
 import kotlinx.coroutines.*
 
 class TaskSuspenderTest : BasePlatformTestCase() {
@@ -27,7 +27,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       assertFalse(task.isCompleted)
     }
 
-    waitAssertCompletedNormally(task)
+    task.waitAssertCompletedNormally()
   }
 
   fun testInnerTaskIsSuspended(): Unit = timeoutRunBlocking {
@@ -48,7 +48,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       assertFalse(task.isCompleted)
     }
 
-    waitAssertCompletedNormally(task)
+    task.waitAssertCompletedNormally()
   }
 
   fun testInnerTaskWithCustomSuspenderIsNotSuspended(): Unit = timeoutRunBlocking {
@@ -86,8 +86,38 @@ class TaskSuspenderTest : BasePlatformTestCase() {
       assertFalse(task2.isCompleted)
     }
 
-    waitAssertCompletedNormally(task1)
-    waitAssertCompletedNormally(task2)
+    task1.waitAssertCompletedNormally()
+    task2.waitAssertCompletedNormally()
+  }
+
+  fun testTaskSuspendedByProgressSuspender(): Unit = timeoutRunBlocking {
+    var progressSuspenderDeferred = CompletableDeferred<ProgressSuspender>()
+    application.messageBus.connect().subscribe(ProgressSuspender.TOPIC, object : ProgressSuspender.SuspenderListener {
+      override fun suspendableProgressAppeared(suspender: ProgressSuspender) {
+        progressSuspenderDeferred.complete(suspender)
+      }
+    })
+
+    val mayStop = CompletableDeferred<Unit>()
+
+    val taskSuspender = TaskSuspender.suspendable("Paused by test")
+    val task = startBackgroundTask(taskSuspender) { workUntilStopped(mayStop) }
+
+    val progressSuspender = progressSuspenderDeferred.await()
+
+    progressSuspender.suspendProcess("Paused by ProgressSuspender")
+    assertTrue(taskSuspender.isPaused())
+    letBackgroundThreadsSuspend()
+
+    mayStop.complete(Unit)
+    letBackgroundThreadsSuspend()
+
+    assertFalse(task.isCompleted)
+
+    progressSuspender.resumeProcess()
+    assertFalse(taskSuspender.isPaused())
+
+    task.waitAssertCompletedNormally()
   }
 
   private suspend fun suspendTaskAndRun(taskSuspender: TaskSuspender, action: suspend () -> Unit) {
@@ -129,4 +159,9 @@ class TaskSuspenderTest : BasePlatformTestCase() {
   }
 
   private suspend fun letBackgroundThreadsSuspend(): Unit = delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)
+
+  private suspend fun Job.waitAssertCompletedNormally() {
+    join()
+    assertFalse(isCancelled)
+  }
 }
