@@ -75,7 +75,19 @@ internal fun tryInvokeWithHelper(
   invokerArgs.add(method.declaringType().classLoader()) // method's declaring type class loader to be able to resolve parameter types
 
   // argument values
-  val boxedArgs = originalArgs.map { BoxingEvaluator.box(it, evaluationContext) as Value? }
+  val args = originalArgs.toMutableList()
+  if (method.isVarArgs) {
+    // If vararg is of a primitive type and an array is passed, we need to unwrap it (and box later)
+    (args.lastOrNull() as? ArrayReference)?.let {
+      val argumentTypeNames = method.argumentTypeNames()
+      if (args.size == argumentTypeNames.size && isPrimitiveType(argumentTypeNames.last().removeSuffix("[]"))) {
+        args.removeLast()
+        args.addAll(it.values)
+      }
+    }
+  }
+
+  val boxedArgs = args.map { BoxingEvaluator.box(it, evaluationContext) as Value? }
 
   var helperMethodName = "invoke"
   if (boxedArgs.size > 10) {
