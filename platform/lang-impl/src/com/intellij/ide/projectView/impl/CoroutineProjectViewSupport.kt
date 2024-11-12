@@ -150,24 +150,29 @@ internal class CoroutineProjectViewSupport(
   }
 
   private fun selectNodes(requestedSelection: SmartList<TreeNodeViewModel>): Boolean {
-    if (requestedSelection.isEmpty()) {
-      selectLogger.debug("Nothing to select")
-      return false
-    }
     val actualSelection = if (requestedSelection.size > 1 && isMultiSelectionEnabled) {
       val adjustedNodes = ProjectViewPaneSelectionHelper.getAdjustedNodes(requestedSelection)
       selectLogger.debug("Adjusted to ${adjustedNodes.size} nodes for multi-selection: $adjustedNodes")
+      if (adjustedNodes.isEmpty()) {
+        selectLogger.debug("Nothing to select after adjustment")
+        return false
+      }
       adjustedNodes
     }
-    else {
+    else if (requestedSelection.isNotEmpty()) {
       val onlyPath = listOf(requestedSelection.first())
       selectLogger.debug("Selecting only the first path: $onlyPath")
       onlyPath
+    }
+    else {
+      selectLogger.debug("Nothing to select")
+      return false
     }
     for (node in actualSelection) {
       node.setExpanded(true)
     }
     viewModel.setSelection(actualSelection)
+    viewModel.scrollTo(actualSelection.first())
     return true
   }
 

@@ -19,8 +19,10 @@ interface TreeViewModel {
   val domainModel: TreeDomainModel
   val root: Flow<TreeNodeViewModel?>
   val selection: StateFlow<Set<TreeNodeViewModel>>
+  val scrollEvents: Flow<TreeNodeViewModel>
   fun invalidate(node: TreeNodeViewModel?, recursive: Boolean)
   fun setSelection(nodes: Collection<TreeNodeViewModel>)
+  fun scrollTo(node: TreeNodeViewModel)
   suspend fun accept(visitor: TreeViewModelVisitor, allowLoading: Boolean): TreeNodeViewModel?
   @ApiStatus.Internal
   suspend fun awaitUpdates()

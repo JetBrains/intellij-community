@@ -31,10 +31,25 @@ interface TreeSwingModelFactory {
 @ApiStatus.Experimental
 interface TreeSwingModelListener : TreeModelListener {
   fun selectionChanged(event: TreeSwingModelSelectionEvent)
+  fun scrollRequested(event: TreeSwingModelScrollEvent)
 }
 
 @ApiStatus.Experimental
 class TreeSwingModelSelectionEvent(
   source: TreeSwingModel,
   val newSelection: Array<TreePath>,
-) : EventObject(source)
+) : EventObject(source) {
+  override fun toString(): String {
+    return "TreeSwingModelSelectionEvent(newSelection=${newSelection.contentToString()}) ${super.toString()}"
+  }
+}
+
+@ApiStatus.Experimental
+class TreeSwingModelScrollEvent(
+  source: TreeSwingModel,
+  val scrollTo: TreePath,
+) : EventObject(source) {
+  override fun toString(): String {
+    return "TreeSwingModelScrollEvent(scrollTo=$scrollTo) ${super.toString()}"
+  }
+}

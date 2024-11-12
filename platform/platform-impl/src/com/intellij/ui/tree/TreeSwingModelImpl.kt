@@ -21,8 +21,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
 import javax.swing.event.TreeModelEvent
 import javax.swing.event.TreeModelListener
-import javax.swing.event.TreeSelectionEvent
-import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreePath
 
 internal class TreeSwingModelFactoryImpl : TreeSwingModelFactory {
@@ -40,6 +38,7 @@ private class TreeSwingModelImpl(
   // These things must be thread-safe because of the "cancellation can happen anywhere, anytime" thing.
   private val nodes = ConcurrentHashMap<TreeNodeViewModel, Node>()
   private val nodeLoadedListeners = CopyOnWriteArrayList<NodeLoadedListener>()
+  private var scrollRequest: TreeNodeViewModel? = null
   private var cachedPresentation: CachedTreePresentation? = null
 
   override var showLoadingNode: Boolean = true
@@ -75,6 +74,23 @@ private class TreeSwingModelImpl(
         }
       }
     }
+    treeScope.launch(CoroutineName("Scroll requests of $this")) {
+      viewModel.scrollEvents.collectLatest { node ->
+        scrollRequest = node
+        tryToScroll()
+      }
+    }
+  }
+
+  private fun tryToScroll() {
+    val nodeViewModel = scrollRequest ?: return
+    val node = nodes[nodeViewModel] ?: return
+    if (node.lifecycle != NodeLifecycle.PUBLISHED) return
+    val event = TreeSwingModelScrollEvent(this@TreeSwingModelImpl, nodeViewModel.path())
+    fireSwingTreeModelEvent {
+      scrollRequested(event)
+    }
+    scrollRequest = null
   }
 
   override fun getRoot(): TreeNodeViewModel? = root?.viewModel
@@ -179,6 +195,7 @@ private class TreeSwingModelImpl(
     }
     node.lifecycle = NodeLifecycle.PUBLISHED
     nodeLoadedListeners.forEach { it.nodePublished(node) }
+    tryToScroll() // in case when we were asked to scroll to this node before it was published
   }
 
   override fun accept(visitor: TreeVisitor, allowLoading: Boolean): Promise<TreePath?> {
@@ -209,7 +226,7 @@ private class TreeSwingModelImpl(
       // In both cases, it's very important that it isn't just created, but actually reported to the tree and its UI!
       // Otherwise, Swing can be in an inconsistent state: the node exists, but, for example, can't be expanded.
       // So here it's very important to wait until it's fully loaded and reported via the listeners.
-      // The view model invokes this whole thing under the node view mode's scope,
+      // The view model invokes this whole thing under the node view model's scope,
       // so we can be sure we won't wait forever:
       // if the node still exists, it'll make its way here sooner or later,
       // otherwise its scope will be canceled along with our waiting.

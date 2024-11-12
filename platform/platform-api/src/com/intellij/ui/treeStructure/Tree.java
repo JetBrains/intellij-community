@@ -1947,6 +1947,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           Tree.this.setSelectionPaths(event.getNewSelection());
         });
       }
+
+      @Override
+      public void scrollRequested(@NotNull TreeSwingModelScrollEvent event) {
+        applyViewModelChange(() -> {
+          TreeUtil.scrollToVisible(Tree.this, event.getScrollTo(), Registry.is("ide.tree.autoscrollToVCenter", false));
+        });
+      }
     }
   }
 
@@ -2023,6 +2030,13 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     public void selectionChanged(@NotNull TreeSwingModelSelectionEvent event) {
       if (delegate() instanceof TreeSwingModelListener treeSwingModelListener) {
         treeSwingModelListener.selectionChanged(event);
+      }
+    }
+
+    @Override
+    public void scrollRequested(@NotNull TreeSwingModelScrollEvent event) {
+      if (delegate() instanceof TreeSwingModelListener treeSwingModelListener) {
+        treeSwingModelListener.scrollRequested(event);
       }
     }
   }

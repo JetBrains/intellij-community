@@ -35,7 +35,12 @@ private class TreeViewModelImpl(
   )
   private val pendingUpdates = ConcurrentHashMap<TreeNodeViewModelImpl, NodeUpdate>()
   private val requestedSelection = AtomicReference<Collection<TreeNodeViewModel>>()
+  private val requestedScroll = AtomicReference<TreeNodeViewModel>()
   private val selectionFlow = MutableStateFlow(HashSet<TreeNodeViewModelImpl>())
+  private val scrollFlow = MutableSharedFlow<TreeNodeViewModelImpl>(
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+  )
   private val fakeRoot = TreeNodeViewModelImpl(
     parentImpl = null,
     nodeScope = treeScope,
@@ -50,6 +55,9 @@ private class TreeViewModelImpl(
 
   override val selection: StateFlow<Set<TreeNodeViewModel>>
     get() = selectionFlow
+
+  override val scrollEvents: Flow<TreeNodeViewModel>
+    get() = scrollFlow
 
   init {
     treeScope.launch(CoroutineName("Updates of ${this@TreeViewModelImpl}")) {
@@ -78,11 +86,15 @@ private class TreeViewModelImpl(
         val requestedSelection = requestedSelection.getAndSet(null) ?: selectionFlow.value
         val newSelection = HashSet<TreeNodeViewModelImpl>(requestedSelection.size)
         for (nodeToSelect in requestedSelection) {
-          if (nodeToSelect is TreeNodeViewModelImpl && nodeToSelect.canSelect()) {
+          if (nodeToSelect is TreeNodeViewModelImpl && nodeToSelect.canSelectOrScroll()) {
             newSelection.add(nodeToSelect)
           }
         }
         selectionFlow.emit(newSelection)
+        val requestedScroll = requestedScroll.getAndSet(null)
+        if (requestedScroll is TreeNodeViewModelImpl && requestedScroll.canSelectOrScroll()) {
+          scrollFlow.emit(requestedScroll)
+        }
         check(completedRequests.tryEmit(epoch))
       }
     }
@@ -129,6 +141,11 @@ private class TreeViewModelImpl(
       node.makeVisible()
     }
     requestedSelection.set(nodes)
+    requestUpdate()
+  }
+
+  override fun scrollTo(node: TreeNodeViewModel) {
+    requestedScroll.set(node)
     requestUpdate()
   }
 
@@ -292,14 +309,14 @@ private class TreeNodeViewModelImpl(
     schedule(NodeUpdate(loadPresentation = reloadPresentation, loadChildren = reloadChildren))
   }
 
-  suspend fun canSelect(): Boolean {
-    val checkJob = nodeScope.async(CoroutineName("Checking if $this can be selected")) {
+  suspend fun canSelectOrScroll(): Boolean {
+    val checkJob = nodeScope.async(CoroutineName("Checking if $this can be selected or scrolled to")) {
       isVisible
     }
     return try {
       checkJob.await()
     }
-    catch (e: CancellationException) {
+    catch (_: CancellationException) {
       currentCoroutineContext().ensureActive() // Has the CALLER been canceled?
       false // Cannot select a canceled node.
     }
