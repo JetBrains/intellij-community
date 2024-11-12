@@ -28,6 +28,9 @@ fun IdeaFrameUI.terminalToolWindow(action: UiComponent.() -> Unit = {}): UiCompo
 fun IdeaFrameUI.problemsToolWindow(action: UiComponent.() -> Unit = {}): UiComponent =
   x { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Problems")) }.apply(action)
 
+fun IdeaFrameUI.jupyterToolWindow(action: UiComponent.() -> Unit = {}): UiComponent =
+  x { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byAccessibleName("Jupyter")) }.apply(action)
+
 fun IdeaFrameUI.vcsToolWindow(action: UiComponent.() -> Unit = {}): UiComponent =
   x("//div[contains(@class, 'InternalDecorator') and (contains(@accessiblename, 'Branches') " +
     "or contains(@accessiblename, 'Log') or contains(@accessiblename, 'Version Control') " +

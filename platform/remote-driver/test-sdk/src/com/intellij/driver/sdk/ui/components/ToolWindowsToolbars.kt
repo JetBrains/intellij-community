@@ -17,6 +17,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : UiComponent(data) {
   val servicesButton = stripeButton { byAccessibleName("Services") }
   val terminalButton = stripeButton { byAccessibleName("Terminal") }
   val problemsButton = stripeButton { byAccessibleName("Problems") }
+  val jupyterButton = stripeButton { byAccessibleName("Jupyter") }
   val moreButton = stripeButton { byAccessibleName("More") }
   val debugButton = stripeButton { byAccessibleName("Debug") }
   val findButton = stripeButton { byAccessibleName("Find") }
