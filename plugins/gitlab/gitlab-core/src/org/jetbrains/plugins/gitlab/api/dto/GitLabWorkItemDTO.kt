@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
-import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.GitLabWidgetDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.GitLabWidgetDTO.*
 
 @SinceGitLab("14.8")

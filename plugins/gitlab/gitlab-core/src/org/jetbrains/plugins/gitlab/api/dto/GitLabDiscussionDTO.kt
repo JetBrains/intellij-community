@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.GitLabGid
 import org.jetbrains.plugins.gitlab.api.GitLabGidData
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.util.*
 
 @SinceGitLab("12.0")

@@ -2,13 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.api.request
 
 import com.intellij.collaboration.api.graphql.loadResponse
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQuery
-import org.jetbrains.plugins.gitlab.api.SinceGitLab
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.gitLabQuery
-import org.jetbrains.plugins.gitlab.api.withErrorStats
 import java.net.http.HttpResponse
 
 @SinceGitLab("13.2")

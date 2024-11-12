@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.authentication.accounts
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.exception.GitLabHttpStatusErrorAction
 import javax.swing.Action

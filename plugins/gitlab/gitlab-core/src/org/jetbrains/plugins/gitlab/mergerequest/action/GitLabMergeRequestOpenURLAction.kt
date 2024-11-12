@@ -2,10 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 
 class GitLabMergeRequestOpenURLAction : GitLabMergeRequestURLAction() {
   override fun handleURL(mergeRequestUrl: String) = BrowserUtil.browse(mergeRequestUrl)

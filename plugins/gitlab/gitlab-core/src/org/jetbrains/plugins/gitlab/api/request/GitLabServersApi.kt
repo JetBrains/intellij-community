@@ -10,7 +10,6 @@ import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Community
 import org.jetbrains.plugins.gitlab.api.GitLabEdition.Enterprise
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerMetadataDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabServerVersionDTO
 import org.jsoup.Jsoup
