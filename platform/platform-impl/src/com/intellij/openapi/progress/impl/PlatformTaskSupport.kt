@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
+import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
@@ -89,7 +90,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
     if (!isRhizomeProgressEnabled) {
-      return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, action)
+      return@coroutineScope withBackgroundProgressInternalOld(project, title, cancellation, suspender, action)
     }
 
     LOG.trace { "Task received: title=$title, project=$project" }
@@ -155,18 +156,30 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     project: Project,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
+    taskSuspender: TaskSuspender?,
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
     val taskJob = coroutineContext.job
     val pipe = cs.createProgressPipe()
     val indicator = coroutineCancellingIndicator(taskJob)
-    val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
+
+    val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates()) {
+      markAsSuspendableIfNeeded(it, taskSuspender)
+    }
+
     try {
       progressStarted(title, cancellation, pipe.progressUpdates())
       pipe.collectProgressUpdates(action)
     }
     finally {
       showIndicatorJob.cancel()
+    }
+  }
+
+  private fun markAsSuspendableIfNeeded(indicator: ProgressIndicator, suspender: TaskSuspender?) {
+    if (suspender is TaskSuspenderImpl) {
+      @Suppress("UsagesOfObsoleteApi")
+      ProgressManager.getInstance().runProcess({ ProgressSuspender.markSuspendable(indicator, suspender.suspendedText) }, indicator)
     }
   }
 
@@ -276,6 +289,7 @@ internal fun CoroutineScope.showIndicator(
   indicator: ProgressIndicatorEx,
   taskInfo: TaskInfo,
   stateFlow: Flow<ProgressState>,
+  onIndicatorStarted: (ProgressIndicatorEx) -> Unit = {},
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
@@ -285,6 +299,7 @@ internal fun CoroutineScope.showIndicator(
         val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
         try {
           indicator.start() // must be after showIndicatorInUI
+          onIndicatorStarted(indicator)
           try {
             if (indicatorAdded) {
               withContext(Dispatchers.Default) {
