@@ -109,6 +109,17 @@ class K2DfaAssistProvider : DfaAssistProvider {
             }
             if (descriptor is KtThisDescriptor) {
                 val pointer = descriptor.classDef?.pointer
+                val contextName = descriptor.contextName
+                if (contextName != null) {
+                    var thisName = "\$this\$${contextName}"
+                    if (inlined) {
+                        thisName += KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                    }
+                    val thisVar = proxy.visibleVariableByName(thisName)
+                    if (thisVar != null) {
+                        return postprocess(proxy.getVariableValue(thisVar))
+                    }
+                }
                 analyze(anchor) {
                     val symbol = pointer?.restoreSymbol()
                     if (symbol is KaNamedClassSymbol) {
@@ -132,17 +143,6 @@ class K2DfaAssistProvider : DfaAssistProvider {
                             if (descriptor.isInlineClassReference()) {
                                 // See org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.createStaticReplacement
                                 val thisVar = proxy.visibleVariableByName("arg0")
-                                if (thisVar != null) {
-                                    return postprocess(proxy.getVariableValue(thisVar))
-                                }
-                            }
-                            val contextName = descriptor.contextName
-                            if (contextName != null) {
-                                var thisName = "\$this\$${contextName}"
-                                if (inlined) {
-                                    thisName += KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
-                                }
-                                val thisVar = proxy.visibleVariableByName(thisName)
                                 if (thisVar != null) {
                                     return postprocess(proxy.getVariableValue(thisVar))
                                 }

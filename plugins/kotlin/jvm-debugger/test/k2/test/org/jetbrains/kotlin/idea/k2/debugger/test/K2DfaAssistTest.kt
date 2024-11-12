@@ -616,6 +616,21 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
             frame.addVariable("clazz", MockValue.createValue("foo", String::class.java, vm))
         }
     }
+    
+    fun testGenericExtensionMethod() {
+        val text = """
+            fun <T> T.check() {
+                <caret>val b = this is String/*TRUE*/
+            }
+
+            fun main() {
+                "foo".check()
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$check", MockValue.createValue("foo", String::class.java, vm))
+        }
+    }
 
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
