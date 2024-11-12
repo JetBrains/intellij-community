@@ -10903,6 +10903,7 @@ pc:com.intellij.ide.projectView.impl.ProjectViewPane$ProjectViewPaneTreeStructur
 - isUseFileNestingRules():Z
 a:com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper
 - <init>():V
+- pa:computeAdjustedNodes(java.util.List):java.util.List
 - pa:computeAdjustedPaths(com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper$SelectionDescriptor):java.util.List
 f:com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper$SelectionDescriptor
 - java.lang.Record
