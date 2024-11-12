@@ -11,9 +11,9 @@
     <kotlin.version>1.9.25</kotlin.version>
     <gradle.intellij.version>1.17.4</gradle.intellij.version>
 
-    <intellij.version>2023.2.8</intellij.version>
-    <intellij.since.build>232</intellij.since.build>
-    <intellij.until.build>242.*</intellij.until.build>
+    <intellij.version>2024.1.7</intellij.version>
+    <intellij.since.build>241</intellij.since.build>
+    <intellij.until.build>243.*</intellij.until.build>
   </properties>
 
   <dependencyManagement>
