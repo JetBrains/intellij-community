@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * An archive handler which able to copy unpacked data to temporary file
+ * An archive handler which is able to copy unpacked data to a temporary file.
  */
 public abstract class TempCopyArchiveHandler extends ArchiveHandler {
   protected TempCopyArchiveHandler(@NotNull String path) {
