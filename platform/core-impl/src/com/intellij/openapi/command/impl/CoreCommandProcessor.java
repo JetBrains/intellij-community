@@ -197,7 +197,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
                               boolean shouldRecordCommandForActiveDocument,
                               @Nullable Document document) {
     Application application = ApplicationManager.getApplication();
-    application.assertWriteIntentLockAcquired();
+    application.assertIsDispatchThread();
 
     if (CommandLog.LOG.isDebugEnabled()) {
       String currentCommandName;
@@ -214,29 +214,32 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (myCurrentCommand != null) {
-      command.run();
+      application.runWriteIntentReadAction(() -> { command.run(); return null; });
       return;
     }
-    Throwable throwable = null;
     CommandDescriptor descriptor = new CommandDescriptor(command, project, name, groupId, undoConfirmationPolicy,
                                                          shouldRecordCommandForActiveDocument, document);
-    try {
-      myCurrentCommand = descriptor;
-      fireCommandStarted();
-      command.run();
-    }
-    catch (Throwable th) {
-      throwable = th;
-    }
-    finally {
-      Throwable finalThrowable = throwable;
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        finishCommand(descriptor, finalThrowable);
-      });
-      if (finalThrowable instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)finalThrowable;
+    myCurrentCommand = descriptor;
+    application.runWriteIntentReadAction(() -> {
+      Throwable throwable = null;
+      try {
+        fireCommandStarted();
+        command.run();
       }
-    }
+      catch (Throwable th) {
+        throwable = th;
+      }
+      finally {
+        Throwable finalThrowable = throwable;
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          finishCommand(descriptor, finalThrowable);
+        });
+        if (finalThrowable instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)finalThrowable;
+        }
+      }
+      return null;
+    });
   }
 
   @Override
