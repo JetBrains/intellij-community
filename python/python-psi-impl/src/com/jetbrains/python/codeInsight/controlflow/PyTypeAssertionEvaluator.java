@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -143,15 +144,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     // non-strict type guard
     if (!isStrict) return Ref.create((positive) ? suggested : initial);
     if (positive) {
-      if (!(initial instanceof PyUnionType) &&
-          !(initial instanceof PyStructuralType) &&
-          !PyTypeChecker.isUnknown(initial, context) &&
-          PyTypeChecker.match(suggested, initial, context)) {
+      if (!(initial instanceof PyUnionType) && match(suggested, initial, context)) {
         return Ref.create(initial);
       }
       if (initial instanceof PyUnionType unionType) {
         if (!unionType.isWeak()) {
-          var matched = unionType.getMembers().stream().filter((member) -> match(member, suggested, context)).toList();
+          var matched = ContainerUtil.filter(unionType.getMembers(), (member) -> match(suggested, member, context));
           if (!matched.isEmpty()) {
             return Ref.create(PyUnionType.union(matched));
           }
@@ -159,19 +157,19 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
       return Ref.create(suggested);
     }
-    else if (initial instanceof PyUnionType) {
-      return Ref.create(((PyUnionType)initial).exclude(suggested, context));
+    else if (initial instanceof PyUnionType unionType) {
+      return Ref.create(unionType.exclude(suggested, context));
     }
-    else if (match(initial, suggested, context)) {
+    else if (match(suggested, initial, context)) {
       return null;
     }
     return Ref.create(initial);
   }
 
-  private static boolean match(@Nullable PyType initial, PyType transformedType, @NotNull TypeEvalContext context) {
-    return !(initial instanceof PyStructuralType) &&
-           !PyTypeChecker.isUnknown(initial, context) &&
-           PyTypeChecker.match(transformedType, initial, context);
+  private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
+    return !(actual instanceof PyStructuralType) &&
+           !PyTypeChecker.isUnknown(actual, context) &&
+           PyTypeChecker.match(expected, actual, context);
   }
 
   @Nullable
