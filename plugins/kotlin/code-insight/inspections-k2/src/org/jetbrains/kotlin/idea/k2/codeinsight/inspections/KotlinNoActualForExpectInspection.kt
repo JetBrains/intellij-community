@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.vfs.VfsUtil
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
-import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.base.util.module
@@ -240,15 +238,6 @@ private class CreateActualForExpectLocalQuickFix(
     private fun findOrCreateActualDeclarationDirectory(project: Project, module: Module, expectRelativePackagePath: String): PsiDirectory? {
         val actualSourceRoot = sourceSet.findOrCreateMostSuitableKotlinSourceRoot() ?: return null
 
-        val modifiableModel = module.rootManager.modifiableModel
-        val contentEntry = modifiableModel.contentEntries.find { contentEntry ->
-            contentEntry.file?.let { contentEntryFile -> VfsUtil.isAncestor(contentEntryFile, actualSourceRoot, false) } ?: false
-        } ?: return null
-
-        if (contentEntry.sourceFolders.none { it.file == actualSourceRoot }) {
-            contentEntry.addSourceFolder(actualSourceRoot, module.isTestModule)
-        }
-        modifiableModel.commit()
         val actualDirectory = expectRelativePackagePath
             .split(VfsUtil.VFS_SEPARATOR)
             .fold(actualSourceRoot) { acc, segment -> acc.findOrCreateDirectory(segment) }
