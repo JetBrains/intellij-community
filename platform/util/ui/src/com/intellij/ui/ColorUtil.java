@@ -125,6 +125,10 @@ public final class ColorUtil {
     return wrap(c, func);
   }
 
+  public static @NotNull Color withAlpha(@NotNull int rgba, double a) {
+    return withAlpha(new Color(rgba, true), a);
+  }
+
   public static @NotNull Color withAlpha(@NotNull Color c, double a) {
     return toAlpha(c, (int)(255 * a));
   }

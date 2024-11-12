@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.fileEditor.impl.DesignProcessor
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
@@ -122,6 +123,14 @@ internal class MacToolbarFrameHeader(
     }
   }
 
+  override fun getComponentGraphics(graphics: Graphics?): Graphics? {
+    return DesignProcessor.getInstance().transformGraphics(this, super.getComponentGraphics(graphics))
+  }
+
+  override fun getBackground(): Color? {
+    return DesignProcessor.getInstance().frameHeaderBackgroundConverter(super.getBackground())
+  }
+
   private fun isCompactHeaderFast(): Boolean {
     return isAlwaysCompact || CustomWindowHeaderUtil.isCompactHeader()
   }
@@ -158,7 +167,9 @@ internal class MacToolbarFrameHeader(
     super.updateUI()
 
     customTitleBar?.let {
-      updateWinControlsTheme(background = background, customTitleBar = it)
+      background?.let { background ->
+        updateWinControlsTheme(background = background, customTitleBar = it)
+      }
     }
 
     if (parent != null) {

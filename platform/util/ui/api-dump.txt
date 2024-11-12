@@ -1794,6 +1794,7 @@ f:com.intellij.ui.ColorUtil
 - s:tuneHue(java.awt.Color,I,F):java.awt.Color
 - s:tuneSaturation(java.awt.Color,I,F):java.awt.Color
 - s:tuneSaturationEspeciallyGrey(java.awt.Color,I,F):java.awt.Color
+- s:withAlpha(I,D):java.awt.Color
 - s:withAlpha(java.awt.Color,D):java.awt.Color
 - s:withPreAlpha(java.awt.Color,D):java.awt.Color
 - s:worstContrastColor(java.awt.Color,java.awt.Color):java.awt.Color

@@ -76,7 +76,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var hideToolStripes: Boolean
-    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe
+    get() = state.hideToolStripes || notRoamableOptions.experimentalSingleStripe || notRoamableOptions.xNextStripe
     set(value) {
       state.hideToolStripes = value
       if (!value) notRoamableOptions.experimentalSingleStripe = false
@@ -209,7 +209,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showStatusBar: Boolean
-    get() = state.showStatusBar
+    get() = state.showStatusBar && !notRoamableOptions.xNextStripe
     set(value) {
       state.showStatusBar = value
     }
