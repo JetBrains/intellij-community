@@ -998,7 +998,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                                         boolean includeFixRange,
                                                         boolean highestPriorityOnly,
                                                         @NotNull HighlightSeverity minSeverity) {
-    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly);
+    return findHighlightsByOffset(document, offset, includeFixRange, highestPriorityOnly, minSeverity, true);
+  }
+  @ApiStatus.Internal
+  public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
+                                                        int offset,
+                                                        boolean includeFixRange,
+                                                        boolean highestPriorityOnly,
+                                                        @NotNull HighlightSeverity minSeverity,
+                                                        boolean includeFileLevel) {
+    HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly, includeFileLevel);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
     return processor.getResult();
   }
@@ -1035,14 +1044,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   static final class HighlightByOffsetProcessor implements Processor<HighlightInfo> {
     private final List<HighlightInfo> foundInfoList = new SmartList<>();
     private final boolean highestPriorityOnly;
+    private final boolean myIncludeFileLevel;
 
-    HighlightByOffsetProcessor(boolean highestPriorityOnly) {
+    HighlightByOffsetProcessor(boolean highestPriorityOnly, boolean includeFileLevel) {
       this.highestPriorityOnly = highestPriorityOnly;
+      myIncludeFileLevel = includeFileLevel;
     }
 
     @Override
     public boolean process(@NotNull HighlightInfo info) {
-      if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY || info.type == HighlightInfoType.TODO) {
+      if (info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY
+          || info.type == HighlightInfoType.TODO
+          || !myIncludeFileLevel && info.isFileLevelAnnotation()
+      ) {
         return true;
       }
 
