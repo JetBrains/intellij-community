@@ -1,0 +1,17 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.php.PhpEnvCompletionContributor"/>
+        <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.php.PhpEnvCompletionContributor"/>
+
+        <completion.contributor language="XML" implementationClass="ru.adelf.idea.dotenv.php.PhpunitEnvCompletionContributor"/>
+        <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.php.PhpunitEnvCompletionContributor"/>
+
+        <!--suppress PluginXmlValidity -->
+        <fileTypeOverrider implementation="ru.adelf.idea.dotenv.php.PhpFileTypeOverrider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+        <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.php.PhpEnvironmentVariablesUsagesProvider"/>
+        <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.php.PhpunitEnvironmentVariablesUsagesProvider"/>
+    </extensions>
+</idea-plugin>

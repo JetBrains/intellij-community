@@ -1,0 +1,139 @@
+<idea-plugin>
+    <id>ru.adelf.idea.dotenv</id>
+    <name>.env files support</name>
+    <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel F</vendor>
+
+    <description><![CDATA[
+    <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
+    <br/>
+    <b>Sponsor:</b>
+    <br/>
+    <br/>
+    <a href="https://laravel-idea.com/?utm_source=idea&utm_campaign=env&utm_medium=banner" title="Laravel Idea" target="_blank">
+      <img src="https://laravel-idea.com/img/big_logo.png" alt="Laravel Idea" border=0></a>
+    <br/>
+    The most productive Laravel development environment. <a href="https://laravel-idea.com/?utm_source=idea&utm_campaign=env&utm_medium=banner" target="_blank">Learn more</a>.
+
+    <br/>
+    <br/>
+    Features
+    <ul>
+        <li>Environment variables completion based on .env, Dockerfile and docker-compose.yml files.</li>
+        <li>Go to declaration(in .env file) and usages(in code), by Ctrl(Cmd)+click or hot key(Ctrl(Cmd)-B, etc.)</li>
+        <li>.env file syntax highlighter</li>
+    </ul>
+    ]]></description>
+
+    <extensionPoints>
+        <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"
+                        name="environmentVariablesProvider"/>
+        <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider"
+                        name="environmentVariablesUsagesProvider"/>
+    </extensionPoints>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <depends optional="true" config-file="java.xml">com.intellij.java</depends>
+    <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
+    <depends optional="true" config-file="ruby.xml">com.intellij.modules.ruby</depends>
+    <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
+    <!--<depends optional="true" config-file="js.xml">JavaScript</depends>-->
+    <depends optional="true" config-file="go.xml">org.jetbrains.plugins.go</depends>
+
+    <depends optional="true" config-file="docker.xml">Docker</depends>
+    <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>
+        <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
+
+        <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
+
+        <fileType name=".env file" extensions="env" fileNames=".env" patterns=".env.*" fieldName="INSTANCE" language="DotEnv"
+                  implementationClass="ru.adelf.idea.dotenv.DotEnvFileType"/>
+        <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
+        <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
+
+        <lang.foldingBuilder language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvValuesHiding"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvDuplicateKeyInspection"
+                         displayName="Duplicate keys"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvSpaceInsideNonQuotedInspection"
+                         displayName="Space inside non-quoted value"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvExtraBlankLineInspection"
+                         displayName="Extra blank line"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.ExtraBlankLineInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvIncorrectDelimiterInspection"
+                         displayName="Incorrect delimiter"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.IncorrectDelimiterInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvLeadingCharacterInspection"
+                         displayName="Invalid leading character"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.LeadingCharacterInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvLowercaseKeyInspection"
+                         displayName="Key uses lowercase chars"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.LowercaseKeyInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvTrailingWhitespaceInspection"
+                         displayName="Value has trailing whitespace"
+                         enabledByDefault="true"
+                         level="WARNING" implementationClass="ru.adelf.idea.dotenv.inspections.TrailingWhitespaceInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupName="DotEnv"
+                         shortName="DotEnvSpaceAroundSeparatorInspection"
+                         displayName="Extra spaces surrounding '='"
+                         enabledByDefault="true" 
+                         implementationClass="ru.adelf.idea.dotenv.inspections.SpaceAroundSeparatorInspection"/>
+        
+        <lang.syntaxHighlighterFactory language="DotEnv"
+                                       implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
+
+        <applicationConfigurable instance="ru.adelf.idea.dotenv.ui.DotEnvSettingsConfigurable"
+                             id="DotEnv.SettingsForm"
+                             displayName="DotEnv"
+                             groupId="language"
+        />
+    </extensions>
+
+    <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+        <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
+    </extensions>
+
+    <actions>
+    </actions>
+
+</idea-plugin>
