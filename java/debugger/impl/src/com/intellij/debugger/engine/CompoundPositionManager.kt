@@ -1,278 +1,247 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.engine;
+package com.intellij.debugger.engine
 
-import com.intellij.debugger.MultiRequestPositionManager;
-import com.intellij.debugger.NoDataException;
-import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.execution.filters.LineNumbersMapping;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.ThreeState;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.sun.jdi.Location;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.request.ClassPrepareRequest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.debugger.MultiRequestPositionManager
+import com.intellij.debugger.NoDataException
+import com.intellij.debugger.PositionManager
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl.Companion.assertIsManagerThread
+import com.intellij.debugger.engine.evaluation.EvaluationContext
+import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
+import com.intellij.execution.filters.LineNumbersMapping
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.ThreeState
+import com.intellij.xdebugger.frame.XStackFrame
+import com.sun.jdi.Location
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.request.ClassPrepareRequest
+import java.util.*
+import java.util.concurrent.CompletableFuture
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
+class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiRequestPositionManager, PositionManagerAsync {
+  private val myPositionManagers = mutableListOf<PositionManager>()
+  private val mySourcePositionCache: MutableMap<Location?, SourcePosition?> = WeakHashMap<Location?, SourcePosition?>()
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.CompletableFuture.failedFuture;
-
-public class CompoundPositionManager implements PositionManagerWithConditionEvaluation, MultiRequestPositionManager, PositionManagerAsync {
-  public static final CompoundPositionManager EMPTY = new CompoundPositionManager();
-
-  private final ArrayList<PositionManager> myPositionManagers = new ArrayList<>();
-
-  @SuppressWarnings("UnusedDeclaration")
-  public CompoundPositionManager() {
+  constructor(manager: PositionManager) : this() {
+    appendPositionManager(manager)
   }
 
-  public CompoundPositionManager(PositionManager manager) {
-    appendPositionManager(manager);
+  fun appendPositionManager(manager: PositionManager) {
+    myPositionManagers.remove(manager)
+    myPositionManagers.add(0, manager)
+    clearCache()
   }
 
-  public void appendPositionManager(PositionManager manager) {
-    myPositionManagers.remove(manager);
-    myPositionManagers.add(0, manager);
-    clearCache();
+  fun removePositionManager(manager: PositionManager) {
+    myPositionManagers.remove(manager)
+    clearCache()
   }
 
-  void removePositionManager(PositionManager manager) {
-    myPositionManagers.remove(manager);
-    clearCache();
+  fun clearCache() {
+    assertIsManagerThread()
+    mySourcePositionCache.clear()
   }
 
-  public void clearCache() {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    mySourcePositionCache.clear();
+  private fun <T> iterate(position: SourcePosition, defaultValue: T?, processor: (PositionManager) -> T?): T? {
+    val fileType = position.getFile().getFileType()
+    return iterate<T>(defaultValue, fileType, true, processor)
   }
 
-  private final Map<Location, SourcePosition> mySourcePositionCache = new WeakHashMap<>();
-
-  private interface Producer<T> {
-    T produce(PositionManager positionManager) throws NoDataException;
-  }
-
-  private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable SourcePosition position) {
-    FileType fileType = position != null ? position.getFile().getFileType() : null;
-    return iterate(processor, defaultValue, fileType, true);
-  }
-
-  private static boolean acceptsFileType(@NotNull PositionManager positionManager, @Nullable FileType fileType) {
-    if (fileType != null && fileType != UnknownFileType.INSTANCE) {
-      Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
-      if (types != null && !types.contains(fileType)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable FileType fileType, boolean ignorePCE) {
-    for (PositionManager positionManager : myPositionManagers) {
-      if (acceptsFileType(positionManager, fileType)) {
-        try {
-          if (!ignorePCE) {
-            ProgressManager.checkCanceled();
-          }
-          return DebuggerUtilsImpl.suppressExceptions(() -> processor.produce(positionManager), defaultValue, ignorePCE,
-                                                      NoDataException.class);
-        }
-        catch (NoDataException ignored) {
-        }
-      }
-    }
-    return defaultValue;
-  }
-
-  private <T> CompletableFuture<T> iterateAsync(Function<PositionManager, CompletableFuture<T>> processor,
-                                                @Nullable FileType fileType,
-                                                boolean ignorePCE) {
-    CompletableFuture<T> res = failedFuture(NoDataException.INSTANCE);
-    for (PositionManager positionManager : myPositionManagers) {
-      if (acceptsFileType(positionManager, fileType)) {
-        res = res.exceptionallyCompose(e -> {
-          Throwable unwrap = DebuggerUtilsAsync.unwrap(e);
-          if (unwrap instanceof NoDataException) {
-            if (!ignorePCE) {
-              ProgressManager.checkCanceled();
-            }
-            return processor.apply(positionManager);
-          }
-          return failedFuture(unwrap);
-        });
-      }
-    }
-    return res;
-  }
-
-  private static CompletableFuture<SourcePosition> getSourcePositionAsync(PositionManager positionManager, Location location) {
-    if (positionManager instanceof PositionManagerAsync positionManagerAsync) {
-      return positionManagerAsync.getSourcePositionAsync(location);
-    }
-    else {
+  private fun <T> iterate(defaultValue: T?, fileType: FileType?, ignorePCE: Boolean, processor: (PositionManager) -> T?): T? {
+    for (positionManager in myPositionManagers) {
+      if (!acceptsFileType(positionManager, fileType)) continue
       try {
-        return completedFuture(ReadAction.nonBlocking(() -> positionManager.getSourcePosition(location)).executeSynchronously());
+        if (!ignorePCE) {
+          ProgressManager.checkCanceled()
+        }
+        return DebuggerUtilsImpl.suppressExceptions<T?, NoDataException?>(
+          { processor(positionManager) },
+          defaultValue, ignorePCE, NoDataException::class.java)
       }
-      catch (Exception e) {
-        return failedFuture(DebuggerUtilsAsync.unwrap(e));
+      catch (_: NoDataException) {
       }
     }
+    return defaultValue
   }
 
-  @Override
-  public @NotNull CompletableFuture<SourcePosition> getSourcePositionAsync(final Location location) {
-    return getCachedSourcePosition(location, (fileType) -> iterateAsync(positionManager -> getSourcePositionAsync(positionManager, location), fileType, false));
+  private fun <T> iterateAsync(
+    fileType: FileType?,
+    ignorePCE: Boolean,
+    processor: (PositionManager) -> CompletableFuture<T?>,
+  ): CompletableFuture<T?> {
+    var res = CompletableFuture.failedFuture<T?>(NoDataException.INSTANCE)
+    for (positionManager in myPositionManagers) {
+      if (!acceptsFileType(positionManager, fileType)) continue
+      res = res.exceptionallyCompose { e: Throwable ->
+        val unwrap = DebuggerUtilsAsync.unwrap(e)
+        if (unwrap is NoDataException) {
+          if (!ignorePCE) {
+            ProgressManager.checkCanceled()
+          }
+          return@exceptionallyCompose processor(positionManager)
+        }
+        CompletableFuture.failedFuture<T?>(unwrap)
+      }
+    }
+    return res
   }
 
-  private CompletableFuture<SourcePosition> getCachedSourcePosition(Location location, Function<FileType, CompletableFuture<SourcePosition>> producer) {
-    if (location == null) return completedFuture(null);
-    SourcePosition res = null;
+  override fun getSourcePositionAsync(location: Location?): CompletableFuture<SourcePosition?> =
+    getCachedSourcePosition(location) { fileType: FileType? ->
+      iterateAsync<SourcePosition?>(fileType, false) { getSourcePositionAsync(it, location) }
+    }
+
+  private fun getCachedSourcePosition(
+    location: Location?,
+    producer: (FileType?) -> CompletableFuture<SourcePosition?>,
+  ): CompletableFuture<SourcePosition?> {
+    if (location == null) return CompletableFuture.completedFuture<SourcePosition?>(null)
+    var res: SourcePosition? = null
     try {
-      res = mySourcePositionCache.get(location);
+      res = mySourcePositionCache[location]
     }
-    catch (IllegalArgumentException ignored) { // Invalid method id
+    catch (_: IllegalArgumentException) { // Invalid method id
     }
-    if (checkCacheEntry(res, location)) return completedFuture(res);
+    if (checkCacheEntry(res, location)) return CompletableFuture.completedFuture<SourcePosition?>(res)
 
-    FileType fileType = ReadAction.compute(() -> {
-      String sourceName = DebuggerUtilsEx.getSourceName(location, (String)null);
-      return sourceName != null ? FileTypeManager.getInstance().getFileTypeByFileName(sourceName) : null;
-    });
-    return producer.apply(fileType)
-      .thenApply(p -> {
+    val fileType = runReadAction {
+      val sourceName = DebuggerUtilsEx.getSourceName(location, null)
+      if (sourceName != null) FileTypeManager.getInstance().getFileTypeByFileName(sourceName) else null
+    }
+    return producer(fileType)
+      .thenApply<SourcePosition?> { p: SourcePosition? ->
         try {
-          mySourcePositionCache.put(location, p);
+          mySourcePositionCache.put(location, p)
         }
-        catch (IllegalArgumentException ignored) { // Invalid method id
+        catch (_: IllegalArgumentException) { // Invalid method id
         }
-        return p;
-      });
+        p
+      }
   }
 
-  @Nullable
-  @Override
-  public SourcePosition getSourcePosition(final Location location) {
-    return getCachedSourcePosition(location, fileType -> {
-      return completedFuture(ReadAction.nonBlocking(() -> {
-        return iterate(positionManager -> positionManager.getSourcePosition(location), null, fileType, false);
-      }).executeSynchronously());
-    }).getNow(null);
+  override fun getSourcePosition(location: Location?): SourcePosition? {
+    return getCachedSourcePosition(location) { fileType: FileType? ->
+      val sourcePosition = ReadAction.nonBlocking<SourcePosition?> {
+        iterate<SourcePosition?>(null, fileType, false) { it.getSourcePosition(location) }
+      }.executeSynchronously()
+      CompletableFuture.completedFuture<SourcePosition?>(sourcePosition)
+    }.getNow(null)
   }
 
-  private static boolean checkCacheEntry(@Nullable SourcePosition position, @NotNull Location location) {
-    return ReadAction.compute(() -> {
-      if (position == null) return false;
-      PsiFile psiFile = position.getFile();
-      if (!psiFile.isValid()) return false;
-      String url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), psiFile.getProject());
-      if (url == null) return true;
-      VirtualFile file = psiFile.getVirtualFile();
-      return file != null && url.equals(file.getUrl());
-    });
-  }
+  override fun getAllClasses(classPosition: SourcePosition): MutableList<ReferenceType?> =
+    iterate(classPosition, mutableListOf<ReferenceType?>()) { it.getAllClasses(classPosition) }!!
 
-  @Override
-  @NotNull
-  public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) {
-    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.emptyList(), classPosition);
-  }
-
-  @Override
-  @NotNull
-  public List<Location> locationsOfLine(@NotNull final ReferenceType type, @NotNull SourcePosition position) {
-    VirtualFile file = position.getFile().getVirtualFile();
+  override fun locationsOfLine(type: ReferenceType, position: SourcePosition): MutableList<Location> {
+    var position = position
+    val file = position.getFile().getVirtualFile()
     if (file != null) {
-      LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
+      val mapping = file.getUserData<LineNumbersMapping?>(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)
       if (mapping != null) {
-        int line = mapping.sourceToBytecode(position.getLine() + 1);
+        val line = mapping.sourceToBytecode(position.getLine() + 1)
         if (line > -1) {
-          position = SourcePosition.createFromLine(position.getFile(), line - 1);
+          position = SourcePosition.createFromLine(position.getFile(), line - 1)
         }
       }
     }
 
-    final SourcePosition finalPosition = position;
-    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.emptyList(), position);
+    val finalPosition = position
+    return iterate(position, mutableListOf<Location>()) { it.locationsOfLine(type, finalPosition) }!!
   }
 
-  @Override
-  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(positionManager -> positionManager.createPrepareRequest(requestor, position), null, position);
-  }
+  override fun createPrepareRequest(requestor: ClassPrepareRequestor, position: SourcePosition): ClassPrepareRequest? =
+    iterate(position, null) { it.createPrepareRequest(requestor, position) }
 
-  @NotNull
-  @Override
-  public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(positionManager -> {
-      if (positionManager instanceof MultiRequestPositionManager) {
-        return ((MultiRequestPositionManager)positionManager).createPrepareRequests(requestor, position);
+  override fun createPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): MutableList<ClassPrepareRequest?> =
+    iterate(position, mutableListOf<ClassPrepareRequest?>()) {
+      if (it is MultiRequestPositionManager) {
+        it.createPrepareRequests(requestor, position)
       }
       else {
-        ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
-        if (prepareRequest == null) {
-          return Collections.emptyList();
-        }
-        return Collections.singletonList(prepareRequest);
+        val prepareRequest = it.createPrepareRequest(requestor, position) ?: return@iterate mutableListOf()
+        mutableListOf(prepareRequest)
       }
-    }, Collections.emptyList(), position);
-  }
+    }!!
 
-  @Nullable
-  public List<XStackFrame> createStackFrames(@NotNull StackFrameDescriptorImpl descriptor) {
-    return iterate(positionManager -> {
-      if (positionManager instanceof PositionManagerWithMultipleStackFrames positionManagerWithMultipleStackFrames) {
-        List<XStackFrame> stackFrames = positionManagerWithMultipleStackFrames.createStackFrames(descriptor);
+  fun createStackFrames(descriptor: StackFrameDescriptorImpl): MutableList<XStackFrame>? =
+    iterate(null, null, false) {
+      if (it is PositionManagerWithMultipleStackFrames) {
+        val stackFrames = it.createStackFrames(descriptor)
         if (stackFrames != null) {
-          return stackFrames;
+          return@iterate stackFrames
         }
       }
-      else if (positionManager instanceof PositionManagerEx positionManagerEx) {
-        XStackFrame xStackFrame = positionManagerEx.createStackFrame(descriptor);
+      else if (it is PositionManagerEx) {
+        val xStackFrame = it.createStackFrame(descriptor)
         if (xStackFrame != null) {
-          return Collections.singletonList(xStackFrame);
+          return@iterate mutableListOf(xStackFrame)
         }
       }
-      throw NoDataException.INSTANCE;
-    }, null, null, false);
-  }
+      throw NoDataException.INSTANCE
+    }
 
-  @Override
-  public ThreeState evaluateCondition(@NotNull EvaluationContext context,
-                                      @NotNull StackFrameProxyImpl frame,
-                                      @NotNull Location location,
-                                      @NotNull String expression) {
-    for (PositionManager positionManager : myPositionManagers) {
-      if (positionManager instanceof PositionManagerWithConditionEvaluation) {
-        try {
-          PositionManagerWithConditionEvaluation manager = (PositionManagerWithConditionEvaluation)positionManager;
-          ThreeState result = manager.evaluateCondition(context, frame, location, expression);
-          if (result != ThreeState.UNSURE) {
-            return result;
-          }
+  override fun evaluateCondition(
+    context: EvaluationContext,
+    frame: StackFrameProxyImpl,
+    location: Location,
+    expression: String,
+  ): ThreeState? {
+    for (positionManager in myPositionManagers) {
+      if (positionManager !is PositionManagerWithConditionEvaluation) continue
+      try {
+        val result = positionManager.evaluateCondition(context, frame, location, expression)
+        if (result != ThreeState.UNSURE) {
+          return result
         }
-        catch (Throwable e) {
-          DebuggerUtilsImpl.logError(e);
-        }
+      }
+      catch (e: Throwable) {
+        DebuggerUtilsImpl.logError(e)
       }
     }
-    return ThreeState.UNSURE;
+    return ThreeState.UNSURE
+  }
+
+  companion object {
+    @JvmField
+    val EMPTY: CompoundPositionManager = CompoundPositionManager()
+  }
+}
+
+private fun acceptsFileType(positionManager: PositionManager, fileType: FileType?): Boolean {
+  if (fileType == null || fileType === UnknownFileType.INSTANCE) return true
+  val types = positionManager.acceptedFileTypes ?: return true
+  return types.contains(fileType)
+}
+
+private fun getSourcePositionAsync(positionManager: PositionManager, location: Location?): CompletableFuture<SourcePosition?> {
+  if (positionManager is PositionManagerAsync) {
+    return positionManager.getSourcePositionAsync(location)
+  }
+  try {
+    val sourcePosition = ReadAction.nonBlocking<SourcePosition?> { positionManager.getSourcePosition(location) }.executeSynchronously()
+    return CompletableFuture.completedFuture<SourcePosition?>(sourcePosition)
+  }
+  catch (e: Exception) {
+    return CompletableFuture.failedFuture<SourcePosition?>(DebuggerUtilsAsync.unwrap(e))
+  }
+}
+
+private fun checkCacheEntry(position: SourcePosition?, location: Location): Boolean {
+  if (position == null) return false
+  return runReadAction {
+    val psiFile = position.getFile()
+    if (!psiFile.isValid()) return@runReadAction false
+    val url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), psiFile.getProject()) ?: return@runReadAction true
+    val file = psiFile.getVirtualFile()
+    file != null && url == file.url
   }
 }
