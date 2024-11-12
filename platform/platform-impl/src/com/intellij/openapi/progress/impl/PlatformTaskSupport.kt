@@ -163,9 +163,10 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val pipe = cs.createProgressPipe()
     val indicator = coroutineCancellingIndicator(taskJob)
 
-    val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates()) {
-      markAsSuspendableIfNeeded(it, taskSuspender)
-    }
+    // has to be called before showIndicator to avoid the indicator being stopped by ProgressManager.runProcess
+    markAsSuspendableIfNeeded(indicator, taskSuspender)
+
+    val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
 
     try {
       progressStarted(title, cancellation, pipe.progressUpdates())
@@ -289,7 +290,6 @@ internal fun CoroutineScope.showIndicator(
   indicator: ProgressIndicatorEx,
   taskInfo: TaskInfo,
   stateFlow: Flow<ProgressState>,
-  onIndicatorStarted: (ProgressIndicatorEx) -> Unit = {},
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
@@ -299,7 +299,6 @@ internal fun CoroutineScope.showIndicator(
         val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
         try {
           indicator.start() // must be after showIndicatorInUI
-          onIndicatorStarted(indicator)
           try {
             if (indicatorAdded) {
               withContext(Dispatchers.Default) {
