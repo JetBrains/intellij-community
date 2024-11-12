@@ -15,13 +15,6 @@ set SCRIPT_DIR=%~dp0
 
 set /a EXITCODE=0
 
-@echo "Building WinLauncher"
-call %SCRIPT_DIR%build-win-launcher.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
-if errorlevel 1 (
-  set /A EXITCODE=EXITCODE+1
-)
-@echo native_win.cmd time: %time%
-
 @echo "Building WinFsNotifier"
 call %SCRIPT_DIR%build-win-fsnotifier.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
 if errorlevel 1 (
@@ -53,25 +46,27 @@ if errorlevel 1 (
 @echo "Building runnerw.exe"
 call %SCRIPT_DIR%build-win-runnerw.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
 if errorlevel 1 (
-@rem TODO b/342419219
-@rem restarter windows build is WIP
-@rem  set /A EXITCODE=EXITCODE+1
-)
-@echo native_win.cmd time: %time%
-
-@echo "Building restarter.exe"
-call %SCRIPT_DIR%build-win-restarter.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
-if errorlevel 1 (
   set /A EXITCODE=EXITCODE+1
 )
 @echo native_win.cmd time: %time%
 
-@echo "Building xplat-launcher.exe"
-call %SCRIPT_DIR%build-win-xplat-launcher.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
-if errorlevel 1 (
-  set /A EXITCODE=EXITCODE+1
-)
-@echo native_win.cmd time: %time%
+:: b/369255957
+:: x86_64-pc-windows-gnu toolchain is broken in prebuilts\rust
+:: we will be cross-compiling launcher and restarter on Linux for now (b/363795669)
+::
+:: @echo "Building restarter.exe"
+:: call %SCRIPT_DIR%build-win-restarter.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
+:: if errorlevel 1 (
+::   set /A EXITCODE=EXITCODE+1
+:: )
+:: @echo native_win.cmd time: %time%
+
+:: @echo "Building xplat-launcher.exe"
+:: call %SCRIPT_DIR%build-win-xplat-launcher.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
+:: if errorlevel 1 (
+::   set /A EXITCODE=EXITCODE+1
+:: )
+:: @echo native_win.cmd time: %time%
 
 @echo "All Done!"
 exit /b %EXITCODE%
