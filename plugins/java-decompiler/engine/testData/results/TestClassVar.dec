@@ -53,8 +53,6 @@ class 'pkg/TestClassVar' {
       1e      11
       1f      11
       20      11
-      21      11
-      22      11
       26      12
       27      12
       28      12
@@ -89,8 +87,6 @@ class 'pkg/TestClassVar' {
       10      29
       11      29
       14      29
-      15      29
-      16      29
       1a      32
       1b      32
       1c      32

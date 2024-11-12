@@ -927,8 +927,6 @@ class 'java/lang/Integer' {
       d      139
       e      139
       f      136
-      10      136
-      11      136
    }
 
    method 'parseInt (Ljava/lang/String;I)I' {
@@ -1390,8 +1388,6 @@ class 'java/lang/Integer' {
       7      299
       a      299
       b      299
-      c      299
-      d      299
       11      299
       12      299
    }
@@ -1448,8 +1444,6 @@ class 'java/lang/Integer' {
       26      329
       27      329
       28      330
-      29      330
-      2a      330
       2e      331
       2f      331
       30      331
@@ -1553,8 +1547,6 @@ class 'java/lang/Integer' {
       b3      352
       b4      352
       b5      352
-      b6      352
-      b7      352
       bb      352
       bd      352
       be      352
@@ -1568,8 +1560,6 @@ class 'java/lang/Integer' {
       d7      354
       d8      354
       dc      354
-      dd      354
-      de      354
       e2      354
       e3      354
       e4      354
@@ -2111,8 +2101,6 @@ class 'java/lang/Integer$IntegerCache' {
       5e      532
       62      532
       63      531
-      64      531
-      65      531
       6f      535
       70      535
       71      535

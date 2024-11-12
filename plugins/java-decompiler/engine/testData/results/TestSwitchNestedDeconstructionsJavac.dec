@@ -45,7 +45,7 @@ public class TestSwitchNestedDeconstructionsJavac {
    public static void testStringString(Object o) {
       switch (o) {// 45
          case R2(String s1, String s2):
-            if (s2.isEmpty()) {// 47
+            if (s2.isEmpty()) {// 46 47
                System.out.println("3");// 48
             }
             break;
@@ -55,7 +55,7 @@ public class TestSwitchNestedDeconstructionsJavac {
       }
 
       System.out.println("1");// 53
-   }// 46
+   }
 
    public static void testNestedLevel2(Object o) {
       switch (o) {// 57
@@ -107,11 +107,11 @@ public class TestSwitchNestedDeconstructionsJavac {
       switch (o) {// 94
          case R1(R1(String s)) when s.hashCode() == 5 -> System.out.println("123456789");// 95 96
          case R1(String s) when s.hashCode() == 3 -> System.out.println("3");// 98 99
-         default -> System.out.println("3");
+         default -> System.out.println("3");// 101
       }
 
       System.out.println("1");// 103
-   }// 101
+   }
 
    public static void testDoubleLongCase(Object o) {
       switch (o) {// 107
@@ -255,8 +255,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       b6      10
       b7      10
       b8      10
-      b9      10
-      ba      10
       c5      14
       c6      14
       c7      14
@@ -276,8 +274,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       df      16
       e0      16
       e1      16
-      e2      16
-      e3      16
       eb      20
       ec      20
       ed      20
@@ -298,8 +294,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       106      22
       107      22
       108      22
-      109      22
-      10a      22
       114      26
       115      26
       124      26
@@ -318,8 +312,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       13d      28
       13e      28
       13f      28
-      140      28
-      141      28
       157      33
       158      33
       168      33
@@ -332,15 +324,11 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       171      34
       172      34
       173      34
-      174      34
-      175      34
       17c      39
       17d      39
       17e      39
       17f      39
       180      39
-      181      39
-      182      39
       197      13
    }
 
@@ -358,24 +346,18 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       5b      47
       5c      47
       5d      47
-      5e      47
-      5f      47
       63      48
       64      48
       65      48
       66      48
       67      48
       68      48
-      69      48
-      6a      48
       6e      52
       6f      52
       70      52
       71      52
       72      52
       73      52
-      74      52
-      75      52
       76      53
       79      56
       7a      56
@@ -386,22 +368,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       7f      56
       80      56
       81      57
-      82      57
-      83      57
-      84      57
-      85      57
-      86      57
-      87      57
-      88      57
-      89      57
-      8a      57
-      8b      57
-      8c      57
-      8d      57
-      8e      57
-      8f      57
-      90      57
-      91      57
    }
 
    method 'testNestedLevel2 (Ljava/lang/Object;)V' {
@@ -428,8 +394,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       8c      63
       8d      63
       8e      63
-      8f      63
-      90      63
       94      68
       95      68
       c3      67
@@ -450,15 +414,11 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       de      69
       df      69
       e0      69
-      e1      69
-      e2      69
       ee      74
       ef      74
       f0      74
       f1      74
       f2      74
-      f3      74
-      f4      74
       109      66
    }
 
@@ -486,8 +446,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       90      83
       91      83
       92      83
-      93      83
-      94      83
       b4      87
       b5      87
       b6      87
@@ -509,8 +467,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       d0      89
       d1      89
       d2      89
-      d3      89
-      d4      89
       e9      93
       ea      93
       eb      93
@@ -531,15 +487,11 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       104      95
       105      95
       106      95
-      107      95
-      108      95
       114      100
       115      100
       116      100
       117      100
       118      100
-      119      100
-      11a      100
       12f      86
    }
 
@@ -559,8 +511,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       83      107
       84      107
       85      107
-      86      107
-      87      107
       92      108
       93      108
       94      108
@@ -574,16 +524,12 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       a4      108
       a5      108
       a6      108
-      a7      108
-      a8      108
       b1      109
       b2      109
       b3      109
       b4      109
       b5      109
       b6      109
-      b7      109
-      b8      109
       bc      112
       bd      112
       be      112
@@ -593,22 +539,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       c2      112
       c3      112
       c4      113
-      c5      113
-      c6      113
-      c7      113
-      c8      113
-      c9      113
-      ca      113
-      cb      113
-      cc      113
-      cd      113
-      ce      113
-      cf      113
-      d0      113
-      d1      113
-      d2      113
-      d3      113
-      d4      113
    }
 
    method 'testDoubleLongCase (Ljava/lang/Object;)V' {
@@ -633,8 +563,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       b5      119
       b6      119
       b7      119
-      b8      119
-      b9      119
       c4      122
       c5      122
       c6      122
@@ -654,8 +582,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       de      124
       df      124
       e0      124
-      e1      124
-      e2      124
       ea      127
       eb      127
       ec      127
@@ -675,8 +601,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       104      129
       105      129
       106      129
-      107      129
-      108      129
       112      132
       113      132
       122      132
@@ -694,8 +618,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       13a      134
       13b      134
       13c      134
-      13d      134
-      13e      134
       154      138
       155      138
       165      138
@@ -708,15 +630,11 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       16e      139
       16f      139
       170      139
-      171      139
-      172      139
       179      143
       17a      143
       17b      143
       17c      143
       17d      143
-      17e      143
-      17f      143
       180      144
       183      147
       193      147
@@ -739,8 +657,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       235      150
       236      150
       237      150
-      238      150
-      239      150
       244      154
       245      154
       246      154
@@ -760,8 +676,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       25e      156
       25f      156
       260      156
-      261      156
-      262      156
       26a      160
       26b      160
       26c      160
@@ -781,8 +695,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       284      162
       285      162
       286      162
-      287      162
-      288      162
       292      166
       293      166
       2a2      166
@@ -800,8 +712,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       2ba      168
       2bb      168
       2bc      168
-      2bd      168
-      2be      168
       2d4      173
       2d5      173
       2e5      173
@@ -814,15 +724,11 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       2ee      174
       2ef      174
       2f0      174
-      2f1      174
-      2f2      174
       2f9      179
       2fa      179
       2fb      179
       2fc      179
       2fd      179
-      2fe      179
-      2ff      179
       314      153
    }
 
@@ -849,7 +755,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       8b      190
       8c      190
       8d      190
-      8e      190
       b2      193
       b3      193
       b4      193
@@ -868,8 +773,6 @@ class 'pkg/TestSwitchNestedDeconstructionsJavac' {
       d0      196
       d1      196
       d2      196
-      d3      196
-      d4      196
       e9      191
    }
 }
@@ -947,7 +850,7 @@ Lines mapping:
 40 <-> 40
 42 <-> 14
 45 <-> 46
-46 <-> 58
+46 <-> 48
 47 <-> 48
 48 <-> 49
 51 <-> 53
@@ -978,7 +881,7 @@ Lines mapping:
 96 <-> 108
 98 <-> 109
 99 <-> 109
-101 <-> 114
+101 <-> 110
 103 <-> 113
 107 <-> 117
 108 <-> 118

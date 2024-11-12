@@ -67,16 +67,12 @@ class 'pkg/TestSwitchRules' {
       5b      11
       5c      11
       5d      11
-      5e      11
-      5f      11
       63      12
       64      12
       65      12
       66      12
       67      12
       68      12
-      69      12
-      6a      12
       6e      13
       6f      13
       70      13
@@ -95,8 +91,6 @@ class 'pkg/TestSwitchRules' {
       5e      22
       5f      22
       60      22
-      61      22
-      62      22
       66      21
       67      21
       68      21
@@ -115,8 +109,6 @@ class 'pkg/TestSwitchRules' {
       5b      31
       5c      31
       5d      31
-      5e      31
-      5f      31
       60      32
       63      34
       64      34

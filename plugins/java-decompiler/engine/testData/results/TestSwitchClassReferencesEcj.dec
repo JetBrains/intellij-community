@@ -51,8 +51,6 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       34      5
       35      5
       36      5
-      37      5
-      38      5
       40      6
       41      6
       42      6
@@ -61,8 +59,6 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       45      6
       46      6
       47      6
-      48      6
-      49      6
       50      7
       51      7
       52      7
@@ -80,8 +76,6 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       30      15
       31      15
       32      15
-      33      15
-      34      15
       3c      16
       3d      16
       3e      16
@@ -90,14 +84,10 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       41      16
       42      16
       43      16
-      44      16
-      45      16
       4c      17
       4d      17
       4e      17
       50      17
-      51      17
-      52      17
       56      14
       57      14
       58      14
@@ -117,8 +107,6 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       2c      25
       2d      25
       2e      25
-      2f      25
-      30      25
       38      26
       39      26
       3a      26
@@ -127,16 +115,12 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       3d      26
       3e      26
       3f      26
-      40      26
-      41      26
       45      24
       46      24
       47      24
       48      24
       49      24
       4a      24
-      4b      24
-      4c      24
       50      27
       51      27
       52      27
@@ -156,8 +140,6 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       30      34
       31      34
       32      34
-      33      34
-      34      34
       3c      35
       3d      35
       3e      35
@@ -166,8 +148,6 @@ class 'pkg/TestSwitchClassReferencesEcj' {
       41      35
       42      35
       43      35
-      44      35
-      45      35
       49      36
       4a      36
       4b      36

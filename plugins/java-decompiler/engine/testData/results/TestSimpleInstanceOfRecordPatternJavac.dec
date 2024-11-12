@@ -150,22 +150,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       20      11
       21      11
       22      12
-      23      12
-      24      12
-      25      12
-      26      12
-      27      12
-      28      12
-      29      12
-      2a      12
-      2b      12
-      2c      12
-      2d      12
-      2e      12
-      2f      12
-      30      12
-      31      12
-      32      12
    }
 
    method 'tryInstanceOfTest1 (Ljava/lang/Object;)V' {
@@ -249,22 +233,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       3a      47
       3b      47
       3c      48
-      3d      48
-      3e      48
-      3f      48
-      40      48
-      41      48
-      42      48
-      43      48
-      44      48
-      45      48
-      46      48
-      47      48
-      48      48
-      49      48
-      4a      48
-      4b      48
-      4c      48
    }
 
    method 'instanceOfTest3 (Ljava/lang/Object;)V' {
@@ -325,22 +293,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       52      61
       53      61
       54      62
-      55      62
-      56      62
-      57      62
-      58      62
-      59      62
-      5a      62
-      5b      62
-      5c      62
-      5d      62
-      5e      62
-      5f      62
-      60      62
-      61      62
-      62      62
-      63      62
-      64      62
    }
 
    method 'instanceOfTest4 (Ljava/lang/Object;)V' {
@@ -412,22 +364,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       7b      77
       7c      77
       7d      78
-      7e      78
-      7f      78
-      80      78
-      81      78
-      82      78
-      83      78
-      84      78
-      85      78
-      86      78
-      87      78
-      88      78
-      89      78
-      8a      78
-      8b      78
-      8c      78
-      8d      78
    }
 
    method 'instanceOfTestDouble1 (Ljava/lang/Object;Ljava/lang/Object;)V' {
@@ -462,22 +398,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       3e      89
       3f      89
       40      90
-      41      90
-      42      90
-      43      90
-      44      90
-      45      90
-      46      90
-      47      90
-      48      90
-      49      90
-      4a      90
-      4b      90
-      4c      90
-      4d      90
-      4e      90
-      4f      90
-      50      90
    }
 
    method 'instanceOfTestDouble2 (Ljava/lang/Object;Ljava/lang/Object;)V' {
@@ -511,22 +431,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       49      101
       4a      101
       4b      102
-      4c      102
-      4d      102
-      4e      102
-      4f      102
-      50      102
-      51      102
-      52      102
-      53      102
-      54      102
-      55      102
-      56      102
-      57      102
-      58      102
-      59      102
-      5a      102
-      5b      102
    }
 
    method 'instanceOfTestDoubleNegate2 (Ljava/lang/Object;Ljava/lang/Object;)V' {
@@ -547,8 +451,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       1f      107
       20      107
       21      107
-      22      107
-      23      107
       42      108
       43      108
       44      108
@@ -566,8 +468,6 @@ class 'pkg/TestSimpleInstanceOfRecordPatternJavac' {
       50      109
       51      109
       52      110
-      53      110
-      54      110
    }
 }
 

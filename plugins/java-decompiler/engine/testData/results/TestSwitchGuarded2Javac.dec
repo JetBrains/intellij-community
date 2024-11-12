@@ -189,7 +189,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       5c      17
       5d      17
       5e      17
-      5f      17
       6e      20
       6f      21
       70      21
@@ -203,7 +202,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       85      23
       86      23
       87      23
-      88      23
       8f      18
    }
 
@@ -249,8 +247,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       5f      38
       60      38
       61      38
-      62      38
-      63      38
       64      39
       6b      40
       6c      40
@@ -274,8 +270,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       87      42
       88      42
       89      42
-      8a      42
-      8b      42
       93      45
       94      45
       95      45
@@ -291,16 +285,12 @@ class 'pkg/TestSwitchGuarded2Javac' {
       a6      46
       a7      46
       a8      46
-      a9      46
-      aa      46
       ab      47
       b1      49
       b2      49
       b3      49
       b4      49
       b5      49
-      b6      49
-      b7      49
       b8      50
       bb      53
       bc      53
@@ -351,8 +341,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       11f      63
       120      63
       121      63
-      122      63
-      123      63
       124      64
       12b      65
       12c      65
@@ -376,8 +364,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       147      67
       148      67
       149      67
-      14a      67
-      14b      67
       153      70
       154      70
       155      70
@@ -393,16 +379,12 @@ class 'pkg/TestSwitchGuarded2Javac' {
       166      71
       167      71
       168      71
-      169      71
-      16a      71
       16b      72
       171      74
       172      74
       173      74
       174      74
       175      74
-      176      74
-      177      74
       178      75
       17b      78
       17c      78
@@ -443,8 +425,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       42      89
       43      89
       44      89
-      45      89
-      46      89
       47      90
       4d      92
       4e      92
@@ -485,8 +465,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       9e      103
       9f      103
       a0      103
-      a1      103
-      a2      103
       a3      104
       a9      106
       aa      106
@@ -545,8 +523,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       5f      122
       60      122
       61      122
-      62      122
-      63      122
       64      123
       6b      124
       6c      124
@@ -570,8 +546,6 @@ class 'pkg/TestSwitchGuarded2Javac' {
       87      126
       88      126
       89      126
-      8a      126
-      8b      126
       93      129
       94      129
       95      129
@@ -587,16 +561,12 @@ class 'pkg/TestSwitchGuarded2Javac' {
       a6      130
       a7      130
       a8      130
-      a9      130
-      aa      130
       ab      131
       b1      133
       b2      133
       b3      133
       b4      133
       b5      133
-      b6      133
-      b7      133
       b8      134
       bb      137
       bc      137
