@@ -30,6 +30,7 @@ private val IGNORED_INSPECTIONS = listOf(
   PyPep8Inspection::class.java,
   PyInterpreterInspection::class.java,
   PyRedeclarationInspection::class.java,
+  PyStatementEffectInspection::class.java,
 ).map { it.name }
 
 @Ignore
