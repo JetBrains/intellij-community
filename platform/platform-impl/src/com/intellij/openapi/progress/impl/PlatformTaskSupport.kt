@@ -169,8 +169,11 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val showIndicatorJob = cs.showIndicator(project, indicator, taskInfo(title, cancellation), pipe.progressUpdates())
 
     try {
+      val suspenderImpl = taskSuspender as? TaskSuspenderImpl
       progressStarted(title, cancellation, pipe.progressUpdates())
-      pipe.collectProgressUpdates(action)
+      withContext(suspenderImpl?.getCoroutineContext() ?: EmptyCoroutineContext) {
+        pipe.collectProgressUpdates(action)
+      }
     }
     finally {
       showIndicatorJob.cancel()

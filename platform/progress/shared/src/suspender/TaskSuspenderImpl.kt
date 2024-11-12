@@ -6,9 +6,10 @@ import com.intellij.openapi.progress.CoroutineSuspenderElement
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.containers.forEachLoggingErrors
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.coroutines.CoroutineContext
 
 class TaskSuspenderImpl internal constructor(@NlsContexts.ProgressText val suspendedText: String) : TaskSuspender {
-  private val coroutineSuspenderImpl = CoroutineSuspenderElement(active = true)
+  private val coroutineSuspender = CoroutineSuspenderElement(active = true)
   private val listeners = CopyOnWriteArrayList<TaskSuspenderListener>()
 
   override fun addListener(listener: TaskSuspenderListener) {
@@ -16,17 +17,21 @@ class TaskSuspenderImpl internal constructor(@NlsContexts.ProgressText val suspe
   }
 
   override fun isPaused(): Boolean {
-    return coroutineSuspenderImpl.isPaused()
+    return coroutineSuspender.isPaused()
   }
 
   override fun pause(@NlsContexts.ProgressText reason: String?) {
-    coroutineSuspenderImpl.pause()
+    coroutineSuspender.pause()
     listeners.forEachLoggingErrors(LOG) { it.onPause(reason) }
   }
 
   override fun resume() {
-    coroutineSuspenderImpl.resume()
+    coroutineSuspender.resume()
     listeners.forEachLoggingErrors(LOG) { it.onResume() }
+  }
+
+  fun getCoroutineContext(): CoroutineContext.Element {
+    return coroutineSuspender
   }
 
   companion object {
