@@ -6,7 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtilRt;
@@ -97,7 +101,7 @@ public class TargetOptionsComponent extends JPanel {
   private static ComboBox<String> createTargetOptionsCombo() {
     ComboBox<String> combo = new ComboBox<>(KNOWN_TARGETS);
     combo.insertItemAt(null, 0);
-    combo.setRenderer(SimpleListCellRenderer.create(JavaCompilerBundle.message("settings.same.as.language.level"), String::toString));
+    combo.setRenderer(BuilderKt.textListCellRenderer(JavaCompilerBundle.message("settings.same.as.language.level"), String::toString));
     return combo;
   }
 

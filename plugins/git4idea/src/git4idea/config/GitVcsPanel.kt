@@ -186,6 +186,8 @@ internal class GitVcsPanel(private val project: Project) :
   }
 
   override fun createPanel(): DialogPanel = panel {
+    useNewComboBoxRenderer()
+
     createGitExecutableSelectorRow(project, disposable!!)
 
     row {
