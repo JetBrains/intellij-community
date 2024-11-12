@@ -48,7 +48,7 @@ enum class RemoteLangDescriptor(
   ASTURIAN(listOf("Asturian"), "1 MB", LanguageISO.AST, AST_CHECKSUM),
   BELARUSIAN(listOf("Belarusian"), "1 MB", LanguageISO.BE, BE_CHECKSUM),
   BRETON(listOf("Breton"), "2 MB", LanguageISO.BR, BR_CHECKSUM),
-  CATALAN(listOf("Catalan", "ValencianCatalan"), "4 MB", LanguageISO.CA, CA_CHECKSUM),
+  CATALAN(listOf("Catalan", "ValencianCatalan", "BalearicCatalan"), "4 MB", LanguageISO.CA, CA_CHECKSUM),
   DANISH(listOf("Danish"), "1 MB", LanguageISO.DA, DA_CHECKSUM),
   GERMAN(listOf("GermanyGerman", "AustrianGerman", "SwissGerman"), "20 MB", LanguageISO.DE, DE_CHECKSUM),
   GREEK(listOf("Greek"), "1 MB", LanguageISO.EL, EL_CHECKSUM),
