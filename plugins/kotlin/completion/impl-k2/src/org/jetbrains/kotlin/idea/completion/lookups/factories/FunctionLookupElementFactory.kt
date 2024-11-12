@@ -246,7 +246,7 @@ object FunctionInsertionHelper {
         }
 
 
-        symbol.receiverParameter?.type?.let { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = true) }
+        symbol.receiverParameter?.returnType?.let { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = true) }
         symbol.valueParameters.forEach { collectPotentiallyInferredTypes(it.returnType, onlyCollectReturnTypeOfFunctionalType = true) }
 
         // check that there is an expected type and the return value of the function can potentially match it

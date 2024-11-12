@@ -64,7 +64,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                     }
 
                     return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.containingDeclaration as? KaClassSymbol) ||
-                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedSymbol)
+                            searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.returnType?.expandedSymbol)
                 }
             }
         }

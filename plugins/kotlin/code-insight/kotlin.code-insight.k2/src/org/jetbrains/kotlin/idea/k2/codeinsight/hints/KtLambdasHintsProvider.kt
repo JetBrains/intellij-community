@@ -93,7 +93,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
                 anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
                     sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
                         text("this: ")
-                        printKtType(receiverSymbol.type)
+                        printKtType(receiverSymbol.returnType)
                     }
                 }
 

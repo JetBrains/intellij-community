@@ -12,11 +12,6 @@ import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.descriptors.Visibilities.Private
-import org.jetbrains.kotlin.descriptors.Visibilities.Protected
-import org.jetbrains.kotlin.descriptors.Visibilities.Public
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.ClassId
