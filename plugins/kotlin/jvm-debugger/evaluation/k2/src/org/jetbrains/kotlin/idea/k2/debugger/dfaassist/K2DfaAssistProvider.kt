@@ -20,8 +20,8 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentsOfType
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.sun.jdi.Location
@@ -29,10 +29,9 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.PrimitiveType
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
@@ -90,6 +89,29 @@ class K2DfaAssistProvider : DfaAssistProvider {
         if ((dfaVar.descriptor as? KtBaseDescriptor)?.isInlineClassReference() == true) return null
         return getJdiValueInner(proxy, dfaVar, anchor)
     }
+    
+    private fun KtElement.getScope(): KtFunction? {
+        var current = this
+        while(true) {
+            val function = current.parentOfType<KtFunction>()
+            if (function != null) {
+                val lambda = function.parent as? KtLambdaExpression
+                val arg = lambda?.parent as? KtLambdaArgument
+                val call = arg?.parent as? KtCallExpression
+                if (call != null) {
+                    val inline = analyze(call) {
+                        val functionCall = call.resolveToCall()?.singleFunctionCallOrNull()
+                        (functionCall?.partiallyAppliedSymbol?.symbol as? KaNamedFunctionSymbol)?.isInline == true
+                    }
+                    if (inline) {
+                        current = call
+                        continue
+                    }
+                }
+            }
+            return function
+        }
+    }
 
     private fun getJdiValueInner(
         proxy: StackFrameProxyEx,
@@ -98,7 +120,8 @@ class K2DfaAssistProvider : DfaAssistProvider {
     ): Value? {
         val qualifier = dfaVar.qualifier
         val descriptor = dfaVar.descriptor
-        val inlined = anchor.parentsOfType<KtNamedFunction>().any { it.hasInlineModifier() }
+        val scope = anchor.getScope()
+        val inlined = (scope as? KtNamedFunction)?.hasInlineModifier() ?: false
         if (qualifier == null) {
             if (descriptor is KtLambdaThisVariableDescriptor) {
                 val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
@@ -191,6 +214,18 @@ class K2DfaAssistProvider : DfaAssistProvider {
                                 }
                             }
                             return value
+                        }
+                        val psi = symbol.psi
+                        if (psi != null && scope != null && psi.containingFile == scope.containingFile && !scope.isAncestor(psi)) {
+                            // Maybe captured variable
+                            val thisObject = proxy.thisObject()
+                            val thisType = thisObject?.referenceType()
+                            if (thisType != null) {
+                                val capturedField = thisType.fieldByName(KotlinDebuggerConstants.CAPTURED_PREFIX + name)
+                                if (capturedField != null) {
+                                    return postprocess(thisObject.getValue(capturedField))
+                                }
+                            }
                         }
                     }
                 }

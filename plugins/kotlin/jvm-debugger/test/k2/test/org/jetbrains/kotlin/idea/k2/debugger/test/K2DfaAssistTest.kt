@@ -679,6 +679,29 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testLambdaCapture() {
+        val text = """
+            fun compareUsingLambda(a: Int, b: Int) {
+                val lam = { it: Int ->
+                    <caret>if (it > a) println("bigger")
+                }
+                lam(b)
+            }
+
+            fun main() {
+                compareUsingLambda(1, 2)
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            fun compareUsingLambda(a: Int, @Suppress("UNUSED_PARAMETER") b: Int) = { it: Int ->
+                if (it > a) println("bigger")
+            }
+            val lambda = compareUsingLambda(1, 2)
+            frame.addVariable("it", MockIntegerValue(vm, 2))
+            frame.setThisValue(MockObjectReference.createObjectReference(lambda, lambda.javaClass, vm))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }
