@@ -2100,6 +2100,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/apply.kt");
             }
 
+            @TestMetadata("bothReceivers.kt")
+            public void testBothReceivers() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/bothReceivers.kt");
+            }
+
             @TestMetadata("callableReference.kt")
             public void testCallableReference() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/callableReference.kt");
@@ -2208,6 +2213,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             @TestMetadata("expect.kt")
             public void testExpect() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/expect.kt");
+            }
+
+            @TestMetadata("explicitThisWithBothReceivers.kt")
+            public void testExplicitThisWithBothReceivers() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/explicitThisWithBothReceivers.kt");
             }
 
             @TestMetadata("ExtensionAndDispatchReceivers.kt")

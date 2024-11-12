@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
@@ -285,7 +285,8 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 
                 val value =
                     (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue
-                val originalSymbol = ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol
+                val originalSymbol =
+                    ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol
                 val originalSymbolReceiverType = originalSymbol?.receiverType
                 val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
                 if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
@@ -293,8 +294,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                     val receiverToDelete = originalSymbolReceiverType != null
                             && (partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
                             && (partiallyAppliedSymbol.dispatchReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
-                    val isSameReceiverType = originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
-                            originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType)
+                    val isSameReceiverType =
+                        originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
+                                originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType)
                     Triple(
                         getThisQualifier(value),
                         isSameReceiverType,
@@ -330,6 +332,16 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                     if (deleteReceiver) {
                         thisExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
                     }
+                }
+            }
+        } else if (receiverExpression is KtThisExpression) {
+            analyze(expression) {
+                val originalCallableSymbol = originalDeclaration.symbol as? KaCallableSymbol
+                val originalDispatchReceiverType = originalCallableSymbol?.dispatchReceiverType
+                if (originalDispatchReceiverType != null &&
+                    originalCallableSymbol.receiverType != null &&
+                    receiverExpression.expressionType?.semanticallyEquals(originalDispatchReceiverType) == true) {
+                    receiverExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
                 }
             }
         }

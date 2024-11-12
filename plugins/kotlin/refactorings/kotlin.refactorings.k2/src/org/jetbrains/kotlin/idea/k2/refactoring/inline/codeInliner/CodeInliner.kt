@@ -164,7 +164,7 @@ class CodeInliner(
                     (instanceExpression.parent as? KtDotQualifiedExpression)?.let {
                         val selectorExpression = it.selectorExpression
                         if (selectorExpression != null) {
-                            it.replace(selectorExpression)
+                            codeToInline.replaceExpression(it, selectorExpression)
                         }
                     }
                 } else if (instanceExpression.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null) {
