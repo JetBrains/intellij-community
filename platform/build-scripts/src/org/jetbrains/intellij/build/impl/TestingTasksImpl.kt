@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -574,6 +575,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         systemProperties.putIfAbsent(k, v)
       }
     }
+
+    systemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG] = options.bucketIndex.toString()
+    systemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG] = options.bucketsCount.toString()
 
     System.getProperties().forEach { key, value ->
       key as String
