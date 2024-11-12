@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-scripting-dependencies">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.1.255-dev-255/kotlin-scripting-dependencies-2.1.255-dev-255.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.1.255-dev-255/kotlin-scripting-dependencies-2.1.255-dev-255-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

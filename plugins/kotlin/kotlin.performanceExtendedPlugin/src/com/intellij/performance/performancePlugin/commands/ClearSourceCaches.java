@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService;
-import org.jetbrains.kotlin.idea.caches.trackers.IDEKotlinModificationTrackerService;
+import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderService;
 
 public class ClearSourceCaches extends AbstractCommand {
 
@@ -29,7 +29,7 @@ public class ClearSourceCaches extends AbstractCommand {
             Project project = context.getProject();
             PsiManager.getInstance(project).dropResolveCaches();
             PsiManager.getInstance(project).dropPsiCaches();
-            IDEKotlinModificationTrackerService.Companion.invalidateCaches(project);
+            ProjectStructureProviderService.Companion.getInstance(project).incOutOfBlockModificationCount();
             if (System.getProperty("idea.kotlin.plugin.use.k2", "false").equals("true")) {
                 KotlinGlobalModificationService.Companion.getInstance(project).publishGlobalSourceModuleStateModification();
             }

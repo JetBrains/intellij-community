@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator
 
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeSteppingTest
+import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.*
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.*
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
+import org.jetbrains.kotlin.idea.parcelize.k2.debugger.test.cases.AbstractK2ParcelizeDebuggerEvaluationTest
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
@@ -159,10 +160,18 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
     }
 }
 
-internal fun MutableTWorkspace.generateK2ComposeDebuggerTests() {
+internal fun MutableTWorkspace.generateK2DebuggerTestsWithCompilerPlugins() {
     testGroup("jvm-debugger/test/compose", testDataPath = "../testData", category = DEBUGGER) {
         testClass<AbstractK2ComposeSteppingTest> {
             model("stepping/compose")
+        }
+        testClass<AbstractK2ComposeDebuggerEvaluationTest> {
+            model("evaluation/compose")
+        }
+    }
+    testGroup("jvm-debugger/test/parcelize", testDataPath = "../testData", category = DEBUGGER) {
+        testClass<AbstractK2ParcelizeDebuggerEvaluationTest> {
+            model("evaluation/parcelize")
         }
     }
 }

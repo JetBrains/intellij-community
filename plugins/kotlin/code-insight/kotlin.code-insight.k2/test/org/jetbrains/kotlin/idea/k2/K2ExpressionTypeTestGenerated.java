@@ -215,6 +215,11 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
         runTest("../../idea/tests/testData/codeInsight/expressionType/typeOfLambda.kt");
     }
 
+    @TestMetadata("TypealiasedConstructorCall_implicitTypeArguments.kt")
+    public void testTypealiasedConstructorCall_implicitTypeArguments() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/TypealiasedConstructorCall_implicitTypeArguments.kt");
+    }
+
     @TestMetadata("VariableDeclaration.kt")
     public void testVariableDeclaration() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/VariableDeclaration.kt");

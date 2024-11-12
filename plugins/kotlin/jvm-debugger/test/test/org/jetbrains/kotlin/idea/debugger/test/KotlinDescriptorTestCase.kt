@@ -188,8 +188,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
             .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
 
-        updateIdeCompilerSettingsForEvaluator(languageVersion, enabledLanguageFeatures)
-
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
             TestCompileConfiguration(
@@ -199,6 +197,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
                 useInlineScopes
             )
         )
+
+        updateIdeCompilerSettingsForEvaluator(languageVersion, enabledLanguageFeatures, compilerFacility.getCompilerPlugins())
 
         compileLibrariesAndTestSources(preferences, compilerFacility)
 
@@ -410,11 +410,18 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         }
     }
 
-    private fun updateIdeCompilerSettingsForEvaluator(languageVersion: LanguageVersion?, enabledLanguageFeatures: List<LanguageFeature>) {
+    private fun updateIdeCompilerSettingsForEvaluator(
+        languageVersion: LanguageVersion?,
+        enabledLanguageFeatures: List<LanguageFeature>,
+        compilerPlugins: List<String>,
+    ) {
         if (languageVersion != null) {
             KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
                 this.languageVersion = languageVersion.versionString
             }
+        }
+        KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+            this.pluginClasspaths = compilerPlugins.toTypedArray()
         }
         KotlinCompilerSettings.getInstance(project).update {
             this.additionalArguments = enabledLanguageFeatures.joinToString(" ") { "-XXLanguage:+${it.name}" }

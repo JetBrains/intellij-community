@@ -215,6 +215,11 @@ public class K1ExpressionTypeTestGenerated extends AbstractK1ExpressionTypeTest 
         runTest("testData/codeInsight/expressionType/typeOfLambda.kt");
     }
 
+    @TestMetadata("TypealiasedConstructorCall_implicitTypeArguments.kt")
+    public void testTypealiasedConstructorCall_implicitTypeArguments() throws Exception {
+        runTest("testData/codeInsight/expressionType/TypealiasedConstructorCall_implicitTypeArguments.kt");
+    }
+
     @TestMetadata("VariableDeclaration.kt")
     public void testVariableDeclaration() throws Exception {
         runTest("testData/codeInsight/expressionType/VariableDeclaration.kt");

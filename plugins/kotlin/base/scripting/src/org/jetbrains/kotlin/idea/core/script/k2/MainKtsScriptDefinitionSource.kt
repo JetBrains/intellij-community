@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
@@ -11,6 +12,7 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.dependencies.withTransformedResolvers
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
@@ -30,11 +32,15 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 ::loggingReporter
             ).definitions
 
+            val dependencyResolutionService = project.service<DependencyResolutionService>()
+
             return discoveredDefinitions.map {
                 ScriptDefinition.FromConfigurations(
                     it.compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
                         ?: baseHostConfiguration,
-                    it.compilationConfiguration,
+                    it.compilationConfiguration.withTransformedResolvers { resolver ->
+                        ReportingExternalDependenciesResolver(resolver, dependencyResolutionService)
+                    },
                     it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default
                 ).apply {
                     order = Int.MIN_VALUE

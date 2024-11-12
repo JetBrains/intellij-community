@@ -4079,6 +4079,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeAddition/publicValWithoutReturnTypeCaretOnPublic.kt");
         }
 
+        @TestMetadata("typealiasedConstructorCallWithImplicitTypeArguments.kt")
+        public void testTypealiasedConstructorCallWithImplicitTypeArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeAddition/typealiasedConstructorCallWithImplicitTypeArguments.kt");
+        }
+
         @TestMetadata("wrongGetterParameterType.kt")
         public void testWrongGetterParameterType() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeAddition/wrongGetterParameterType.kt");
