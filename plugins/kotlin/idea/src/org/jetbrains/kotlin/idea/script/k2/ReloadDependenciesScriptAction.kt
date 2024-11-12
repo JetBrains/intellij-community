@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.k2.DependencyResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType

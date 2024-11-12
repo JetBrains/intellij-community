@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.script.k2
+package org.jetbrains.kotlin.idea.core.script.k2
 
-import org.jetbrains.kotlin.idea.KotlinIdeaBundle
+import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
@@ -10,8 +10,8 @@ import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 class ReportingExternalDependenciesResolver(
-    private val delegate: ExternalDependenciesResolver,
-    private val dependenciesResolutionService: DependencyResolutionService,
+  private val delegate: ExternalDependenciesResolver,
+  private val dependenciesResolutionService: DependencyResolutionService,
 ) : ExternalDependenciesResolver {
 
     override fun acceptsArtifact(artifactCoordinates: String): Boolean =
@@ -32,7 +32,7 @@ class ReportingExternalDependenciesResolver(
         options: ExternalDependenciesResolver.Options,
         sourceCodeLocation: SourceCode.LocationWithId?
     ): ResultWithDiagnostics<List<File>> {
-        dependenciesResolutionService.reporter?.indeterminateStep(KotlinIdeaBundle.message("progress.text.resolving", artifactCoordinates))
+        dependenciesResolutionService.reporter?.indeterminateStep(KotlinBaseScriptingBundle.message("progress.text.resolving", artifactCoordinates))
         return super.resolve(artifactCoordinates, options, sourceCodeLocation)
     }
 
