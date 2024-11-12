@@ -2,16 +2,17 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyTypeVarType
+import com.jetbrains.python.psi.types.PySelfType
+import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyClassVarInspection : PyInspection() {
@@ -24,21 +25,71 @@ class PyClassVarInspection : PyInspection() {
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
-      super.visitPyTargetExpression(node)
-      if (node.hasAssignedValue()) {
-        if (node.isQualified) {
-          checkClassVarReassignment(node)
-        }
-        else {
-          checkClassVarDeclaration(node)
-        }
-      }
-      if (node.isClassVar()) {
-        val typeExpression = node.typeCommentAnnotation?.let { toExpression(it, node) }
-                             ?: node.annotation?.value
+        checkClassVarReassignment(node)
+        checkClassVarDeclaration(node)
+    }
 
-        if (typeExpression != null) {
-          checkDoesNotIncludeTypeVars(typeExpression, node.typeComment)
+    override fun visitPyReferenceExpression(node: PyReferenceExpression) {
+      if (!PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) return
+      if (!resolvesToClassVar(node)) return
+
+      var classVar: PyExpression = node
+      val classVarParent = classVar.parent
+      // promote analyzing ClassVar to the subscription expression wrapping it
+      if (classVarParent is PySubscriptionExpression && classVarParent.operand == classVar) {
+        classVar = classVarParent
+        checkClassVarParameterization(classVar)
+      }
+
+      val parent = classVar.parent
+
+      if (parent is PyAssignmentStatement) {
+        registerProblem(classVar, PyPsiBundle.message("INSP.class.var.is.not.allowed.here"))
+        return
+      }
+
+      val reportNestedClassVar = when (parent) {
+        is PyAnnotation -> false
+        is PyExpressionStatement -> parent.parent !is PyTypeHintFile // type comment
+        is PyTupleExpression -> !isWrappedWithTypingAnnotated(parent)
+        else -> true
+      }
+
+      if (reportNestedClassVar) {
+        registerProblem(classVar,
+                        PyPsiBundle.message("INSP.class.var.can.not.be.nested"))
+      }
+    }
+
+    private fun isWrappedWithTypingAnnotated(tupleExpression: PyTupleExpression): Boolean {
+      val parentOfTuple = tupleExpression.parent
+      return (parentOfTuple is PySubscriptionExpression
+              && PyTypingTypeProvider.resolveToQualifiedNames(parentOfTuple.operand, myTypeEvalContext)
+                .any { it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT })
+    }
+
+    private fun checkClassVarParameterization(node: PySubscriptionExpression) {
+      val operand = node.operand
+      if (resolvesToClassVar(operand)) {
+        val indexExpression = node.indexExpression
+        if (indexExpression != null) {
+          if (indexExpression is PyTupleExpression && indexExpression.elements.size > 1) {
+            registerProblem(indexExpression, PyPsiBundle.message("INSP.class.var.can.only.be.parameterized.with.one.type"))
+          }
+          else {
+            val typeRef = PyTypingTypeProvider.getType(indexExpression, myTypeEvalContext)
+            if (typeRef == null) {
+              registerProblem(indexExpression, PyPsiBundle.message("INSP.class.var.not.a.valid.type"))
+            }
+            val references = PsiTreeUtil.findChildrenOfAnyType(indexExpression, false, PyReferenceExpression::class.java)
+            references.forEach { reference ->
+              val referenceType = Ref.deref(PyTypingTypeProvider.getType(reference, myTypeEvalContext))
+              if (referenceType is PyTypeParameterType && referenceType !is PySelfType) {
+                registerProblem(reference,
+                                PyPsiBundle.message("INSP.class.var.can.not.include.type.variables"))
+              }
+            }
+          }
         }
       }
     }
@@ -62,21 +113,14 @@ class PyClassVarInspection : PyInspection() {
     }
 
     private fun checkClassVarDeclaration(target: PyTargetExpression) {
-      when (val scopeOwner = ScopeUtil.getScopeOwner(target)) {
-        is PyFile -> {
-          if (PyUtil.isTopLevel(target) && target.isClassVar()) {
-            registerProblem(target.typeComment ?: target.annotation?.value,
-                            PyPsiBundle.message("INSP.class.var.can.be.used.only.in.class.body"))
-          }
-        }
-        is PyFunction -> {
-          if (target.isClassVar()) {
-            registerProblem(target.typeComment ?: target.annotation?.value,
-                            PyPsiBundle.message("INSP.class.var.can.not.be.used.in.function.body"))
-          }
-        }
-        is PyClass -> {
-          checkInheritedClassClassVarReassignmentOnClassLevel(target, scopeOwner)
+      val scopeOwner = ScopeUtil.getScopeOwner(target)
+      if (scopeOwner is PyClass) {
+        checkInheritedClassClassVarReassignmentOnClassLevel(target, scopeOwner)
+      }
+      else {
+        if (target.isClassVar()) {
+          registerProblem(target.typeComment ?: target.annotation?.value,
+                          PyPsiBundle.message("INSP.class.var.can.be.used.only.in.class.body"))
         }
       }
     }
@@ -114,39 +158,6 @@ class PyClassVarInspection : PyInspection() {
           return
         }
       }
-    }
-
-    private fun checkDoesNotIncludeTypeVars(expression: PyExpression?, typeComment: PsiComment?): Boolean {
-      var element = expression
-
-      while (element is PySubscriptionExpression) {
-        element = element.indexExpression
-      }
-
-      when (element) {
-        is PyTupleExpression -> {
-          element.forEach { tupleElement ->
-            val reported = checkDoesNotIncludeTypeVars(tupleElement, typeComment)
-            if (reported && typeComment != null) {
-              return true
-            }
-          }
-        }
-        is PyReferenceExpression -> {
-          val type = PyTypingTypeProvider.getType(element, myTypeEvalContext)?.get()
-          if (type is PyTypeVarType) {
-            registerProblem(typeComment ?: element,
-                            PyPsiBundle.message("INSP.class.var.can.not.include.type.variables"))
-            return true
-          }
-        }
-      }
-      return false
-    }
-
-    private fun toExpression(contents: String, anchor: PsiElement): PyExpression? {
-      val file = FileContextUtil.getContextFile(anchor) ?: return null
-      return PyUtil.createExpressionFromFragment(contents, file)
     }
 
     private fun PyTargetExpression.hasExplicitType(): Boolean =
