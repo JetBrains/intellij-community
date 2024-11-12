@@ -53,6 +53,7 @@ open class DialogUiComponent(data: ComponentData) : UiComponent(data) {
     driver.cast(component, Window::class)
   }
   val okButton = x { byAccessibleName("OK") }
+  val cancelButton = x { byAccessibleName("Cancel") }
 
   fun setBounds(bounds: Rectangle) = windowComponent.setBounds(bounds.x, bounds.y, bounds.width, bounds.height)
 
