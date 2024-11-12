@@ -21,6 +21,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentsOfType
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.sun.jdi.Location
@@ -97,11 +98,13 @@ class K2DfaAssistProvider : DfaAssistProvider {
     ): Value? {
         val qualifier = dfaVar.qualifier
         val descriptor = dfaVar.descriptor
-        val inlined = (anchor.parentOfType<KtFunction>() as? KtNamedFunction)?.hasInlineModifier() == true
+        val inlined = anchor.parentsOfType<KtNamedFunction>().any { it.hasInlineModifier() }
         if (qualifier == null) {
             if (descriptor is KtLambdaThisVariableDescriptor) {
                 val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
-                val regex = Regex("\\\$this\\\$${scopeName?.let(Regex::escape) ?: ".+"}_u\\d+lambda_u\\d+")
+                val scopePart = scopeName?.let(Regex::escape) ?: ".+"
+                val inlinedPart = if (inlined) Regex.escape(KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX) else ""
+                val regex = Regex("\\\$this\\\$${scopePart}_u\\d+lambda_u\\d+$inlinedPart")
                 val lambdaThis = proxy.stackFrame.visibleVariables().filter { it.name().matches(regex) }
                 if (lambdaThis.size == 1) {
                     return postprocess(proxy.stackFrame.getValue(lambdaThis.first()))
@@ -120,33 +123,28 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         return postprocess(proxy.getVariableValue(thisVar))
                     }
                 }
-                analyze(anchor) {
-                    val symbol = pointer?.restoreSymbol()
-                    if (symbol is KaNamedClassSymbol) {
-                        val nameString = symbol.classId?.asSingleFqName()
-                        if (nameString != null) {
-                            if (inlined) {
-                                val thisName =
-                                    KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
-                                val thisVar = proxy.visibleVariableByName(thisName)
-                                if (thisVar != null) {
-                                    return postprocess(proxy.getVariableValue(thisVar))
-                                }
-                            } else {
-                                val thisObject = proxy.thisObject()
-                                if (thisObject != null) {
-                                    val signature = AsmType.getType(thisObject.type().signature()).className
-                                    val jvmName = KotlinPsiHeuristics.getJvmName(nameString)
-                                    if (signature == jvmName) return thisObject
-                                }
-                            }
-                            if (descriptor.isInlineClassReference()) {
-                                // See org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.createStaticReplacement
-                                val thisVar = proxy.visibleVariableByName("arg0")
-                                if (thisVar != null) {
-                                    return postprocess(proxy.getVariableValue(thisVar))
-                                }
-                            }
+                val nameString = analyze(anchor) { (pointer?.restoreSymbol() as? KaNamedClassSymbol)?.classId?.asSingleFqName() }
+                if (nameString != null) {
+                    if (inlined) {
+                        val thisName =
+                            KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                        val thisVar = proxy.visibleVariableByName(thisName)
+                        if (thisVar != null) {
+                            return postprocess(proxy.getVariableValue(thisVar))
+                        }
+                    } else {
+                        val thisObject = proxy.thisObject()
+                        if (thisObject != null) {
+                            val signature = AsmType.getType(thisObject.type().signature()).className
+                            val jvmName = KotlinPsiHeuristics.getJvmName(nameString)
+                            if (signature == jvmName) return thisObject
+                        }
+                    }
+                    if (descriptor.isInlineClassReference()) {
+                        // See org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.createStaticReplacement
+                        val thisVar = proxy.visibleVariableByName("arg0")
+                        if (thisVar != null) {
+                            return postprocess(proxy.getVariableValue(thisVar))
                         }
                     }
                 }

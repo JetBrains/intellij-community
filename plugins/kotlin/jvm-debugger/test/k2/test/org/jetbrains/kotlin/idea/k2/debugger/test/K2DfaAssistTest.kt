@@ -564,6 +564,25 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
             frame.addVariable("\$this\$useClazz_u24lambda_u240", MockValue.createValue(Nested(1), vm))
         }
     }
+    
+    fun testLambdaInsideInlineFunction() {
+        val text = """
+            inline fun useClazz(clazz: Any) {
+                with(clazz) {
+                    <caret>if (this is String/*TRUE*/) {
+                        println("String")
+                    }
+                }
+            }
+
+            fun main() {
+                useClazz("foo")
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$useClazz_u24lambda_u240\$iv", MockValue.createValue("foo", String::class.java, vm))
+        }
+    }
 
     fun testJavaStaticField() {
         val text = """
