@@ -10,7 +10,7 @@ class PyCharmWhatsNewInVisionContentProvider : WhatsNewInVisionContentProvider()
 
   override fun getResource(): ContentSource {
     // return a vision file for the current version
-    val resourceName = if (isCommunityEdition()) "whatsNew/pycharmCE2024.2.json" else "whatsNew/pycharm2024.2.json"
+    val resourceName = if (isCommunityEdition()) "whatsNew/pycharmCE2024.3.json" else "whatsNew/pycharm2024.3.json"
     val resourceContentSource = ResourceContentSource(PyCharmWhatsNewInVisionContentProvider::class.java.classLoader, resourceName)
     return resourceContentSource
   }
