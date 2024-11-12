@@ -10,9 +10,24 @@ import org.jetbrains.annotations.Nullable;
 public class SimpleContentRevision implements ContentRevision {
   private final String myContent;
   private final FilePath myNewFilePath;
-  @NotNull private final String myRevision;
+  @NotNull private final VcsRevisionNumber myRevision;
 
   public SimpleContentRevision(final String content, final FilePath newFilePath, @NotNull final String revision) {
+    this(content, newFilePath, new VcsRevisionNumber() {
+      @NotNull
+      @Override
+      public String asString() {
+        return revision;
+      }
+
+      @Override
+      public int compareTo(final VcsRevisionNumber o) {
+        return 0;
+      }
+    });
+  }
+
+  public SimpleContentRevision(final String content, final FilePath newFilePath, @NotNull final VcsRevisionNumber revision) {
     myContent = content;
     myNewFilePath = newFilePath;
     myRevision = revision;
@@ -33,17 +48,6 @@ public class SimpleContentRevision implements ContentRevision {
   @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
-    return new VcsRevisionNumber() {
-      @NotNull
-      @Override
-      public String asString() {
-        return myRevision;
-      }
-
-      @Override
-      public int compareTo(final VcsRevisionNumber o) {
-        return 0;
-      }
-    };
+    return myRevision;
   }
 }

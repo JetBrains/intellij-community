@@ -1056,6 +1056,7 @@ c:com.intellij.openapi.vcs.changes.RunnableBackgroundableWrapper
 - run(com.intellij.openapi.progress.ProgressIndicator):V
 c:com.intellij.openapi.vcs.changes.SimpleContentRevision
 - com.intellij.openapi.vcs.changes.ContentRevision
+- <init>(java.lang.String,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber):V
 - <init>(java.lang.String,com.intellij.openapi.vcs.FilePath,java.lang.String):V
 - getContent():java.lang.String
 - getFile():com.intellij.openapi.vcs.FilePath

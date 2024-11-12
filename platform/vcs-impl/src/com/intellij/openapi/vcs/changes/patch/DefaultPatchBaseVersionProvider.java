@@ -37,10 +37,6 @@ import static com.intellij.openapi.vcs.VcsBundle.message;
 @ApiStatus.Internal
 public final class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance(DefaultPatchBaseVersionProvider.class);
-  /**
-   * @see com.intellij.openapi.diff.impl.patch.TextPatchBuilder
-   */
-  private static final Pattern ourTsPattern = Pattern.compile("\\(date ([0-9]+)\\)"); // NON-NLS
   private static final String ourRevisionPatternTemplate = "\\(revision (%s)\\)"; // NON-NLS
 
   @CalledInAny
@@ -95,7 +91,7 @@ public final class DefaultPatchBaseVersionProvider {
                                                  @NotNull VirtualFile file,
                                                  @NotNull FilePath pathBeforeRename,
                                                  @NotNull AbstractVcs vcs) throws VcsException {
-    Date versionDate = parseVersionAsDate(versionId);
+    Date versionDate = PatchDateParser.parseVersionAsDate(versionId);
     String vcsRevisionString = parseVersionAsRevision(versionId, vcs);
     VcsRevisionNumber revision = vcsRevisionString != null ? vcs.parseRevisionNumber(vcsRevisionString, pathBeforeRename) : null;
 
@@ -151,23 +147,6 @@ public final class DefaultPatchBaseVersionProvider {
       }
     }
     return null;
-  }
-
-  @Nullable
-  private static Date parseVersionAsDate(@NotNull String versionId) {
-    try {
-      Matcher tsMatcher = ourTsPattern.matcher(versionId);
-      if (tsMatcher.find()) {
-        long fromTsPattern = Long.parseLong(tsMatcher.group(1));
-        return new Date(fromTsPattern);
-      }
-      else {
-        return new Date(versionId);
-      }
-    }
-    catch (IllegalArgumentException e) {
-      return null;
-    }
   }
 
   private static void runWithModalProgressIfNeeded(@Nullable Project project,
