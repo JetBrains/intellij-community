@@ -11111,6 +11111,7 @@ c:com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode
 - s:addLibraryChildren(com.intellij.openapi.roots.LibraryOrderEntry,java.util.List,com.intellij.openapi.project.Project,com.intellij.ide.projectView.ProjectViewNode):V
 - contains(com.intellij.openapi.vfs.VirtualFile):Z
 - getChildren():java.util.Collection
+- p:getChildren(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module[]):java.util.List
 - getSortOrder(com.intellij.ide.projectView.NodeSortSettings):com.intellij.ide.projectView.NodeSortOrder
 - isAlwaysShowPlus():Z
 - isIncludedInExpandAll():Z
