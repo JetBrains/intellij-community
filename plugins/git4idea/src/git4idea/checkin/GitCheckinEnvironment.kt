@@ -14,7 +14,10 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
@@ -64,11 +67,11 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
-import kotlin.Pair
 
 @Service(Service.Level.PROJECT)
 class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment, AmendCommitAware {
@@ -100,7 +103,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
         if (!mergeMsg.exists() && !squashMsg.exists()) {
           continue
         }
-        val encoding = GitConfigUtil.getCommitEncoding(myProject, repository.root)
+        val encoding = GitConfigUtil.getCommitEncodingCharset(myProject, repository.root)
         if (mergeMsg.exists()) {
           messages.add(loadMessage(mergeMsg, encoding))
         }
@@ -118,7 +121,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   @Throws(IOException::class)
-  private fun loadMessage(messageFile: File, encoding: @NonNls String): String {
+  private fun loadMessage(messageFile: File, encoding: Charset): String {
     return FileUtil.loadFile(messageFile, encoding)
   }
 
@@ -961,7 +964,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       @Suppress("SSBasedInspection")
       file.deleteOnExit()
 
-      val encoding: @NonNls String = GitConfigUtil.getCommitEncoding(project, root)
+      val encoding = GitConfigUtil.getCommitEncodingCharset(project, root)
       OutputStreamWriter(FileOutputStream(file), encoding).use { out ->
         out.write(message)
       }

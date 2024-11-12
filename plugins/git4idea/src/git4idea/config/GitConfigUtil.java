@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
@@ -17,12 +17,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Git utilities for working with configuration
  */
 public final class GitConfigUtil {
+  private static final Logger LOG = Logger.getInstance(GitConfigUtil.class);
+  private static final Set<String> REPORTED_CUSTOM_ENCODINGS = new CopyOnWriteArraySet<>();
 
   public static final @NlsSafe String USER_NAME = "user.name";
   public static final @NlsSafe String USER_EMAIL = "user.email";
@@ -108,31 +114,65 @@ public final class GitConfigUtil {
   }
 
   /**
+   * @deprecated Use {@link #getCommitEncodingCharset(Project, VirtualFile)}
+   */
+  @Deprecated
+  public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
+    return getCommitEncodingCharset(project, root).name();
+  }
+
+  /**
+   * @deprecated Use {@link #getLogEncodingCharset(Project, VirtualFile)}
+   */
+  @Deprecated
+  public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
+    return getLogEncodingCharset(project, root).name();
+  }
+
+  /**
    * Get commit encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
-  public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    String encoding = null;
+  public static @NotNull Charset getCommitEncodingCharset(@NotNull Project project, @NotNull VirtualFile root) {
     try {
-      encoding = getValue(project, root, COMMIT_ENCODING);
+      String encoding = getValue(project, root, COMMIT_ENCODING);
+      Charset charset = tryParseEncoding(encoding);
+      if (charset != null) return charset;
     }
-    catch (VcsException e) {
-      // ignore exception
+    catch (VcsException ignore) {
     }
-    return StringUtil.isEmpty(encoding) ? CharsetToolkit.UTF8 : encoding;
+    return StandardCharsets.UTF_8;
   }
 
   /**
    * Get log output encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
-  public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
-    String encoding = null;
+  public static @NotNull Charset getLogEncodingCharset(@NotNull Project project, @NotNull VirtualFile root) {
     try {
-      encoding = getValue(project, root, LOG_OUTPUT_ENCODING);
+      String encoding = getValue(project, root, LOG_OUTPUT_ENCODING);
+      Charset charset = tryParseEncoding(encoding);
+      if (charset != null) return charset;
     }
-    catch (VcsException e) {
-      // ignore exception
+    catch (VcsException ignore) {
     }
-    return StringUtil.isEmpty(encoding) ? getCommitEncoding(project, root) : encoding;
+    return getCommitEncodingCharset(project, root);
+  }
+
+  private static @Nullable Charset tryParseEncoding(@Nullable String encodingName) {
+    if (StringUtil.isEmpty(encodingName)) return null;
+
+    try {
+      Charset charset = Charset.forName(encodingName);
+      if (REPORTED_CUSTOM_ENCODINGS.add(encodingName)) {
+        LOG.info("Using a custom encoding " + encodingName);
+      }
+      return charset;
+    }
+    catch (IllegalArgumentException ignore) {
+      if (REPORTED_CUSTOM_ENCODINGS.add(encodingName)) {
+        LOG.warn("Custom encoding " + encodingName + " is not supported, using UTF-8 instead");
+      }
+      return null;
+    }
   }
 
   public static void setValue(@NotNull Project project,

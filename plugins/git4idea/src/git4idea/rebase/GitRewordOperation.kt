@@ -95,7 +95,7 @@ internal class GitRewordOperation(
       return newMessage
     }
     else {
-      LOG.error("Unexpected editor content. Charset: ${GitConfigUtil.getCommitEncoding(project, commit.root)}",
+      LOG.error("Unexpected editor content. Charset: ${GitConfigUtil.getCommitEncodingCharset(project, commit.root)}",
                 Attachment("actual.txt", editorText), Attachment("expected.txt", commit.fullMessage))
       throw IllegalStateException("Unexpected editor content")
     }

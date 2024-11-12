@@ -41,10 +41,10 @@ internal class GitAutomaticRebaseEditor(private val project: Project,
         rebaseFile.save(entriesEditor(entries))
       }
       else {
-        val encoding = GitConfigUtil.getCommitEncoding(project, root)
+        val encoding = GitConfigUtil.getCommitEncodingCharset(project, root)
         val originalMessage = FileUtil.loadFile(file, encoding)
         val modifiedMessage = plainTextEditor(originalMessage)
-        FileUtil.writeToFile(file, modifiedMessage.toByteArray(charset(encoding)))
+        FileUtil.writeToFile(file, modifiedMessage.toByteArray(encoding))
       }
       return 0
     }
