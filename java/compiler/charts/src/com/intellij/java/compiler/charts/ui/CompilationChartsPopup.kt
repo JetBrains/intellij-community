@@ -28,7 +28,8 @@ class CompilationChartsPopup(
     val name = module.info["name"] ?: return
     val actions = listOf<CompilationChartsAction>(OpenDirectoryAction(project, name, { close() }),
                                                   OpenProjectStructureAction(project, name, { close() }),
-                                                  ShowModuleDependenciesAction(project, name, component, { close() }),)
+                                                  ShowModuleDependenciesAction(project, name, component, { close() }),
+                                                  ShowMatrixDependenciesAction(project, name, component, { close() }),)
     this.module = module
     this.popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content(module.info, actions), null)
@@ -60,7 +61,7 @@ class CompilationChartsPopup(
   }
 
   private fun content(info: Map<String, String>, actions: List<CompilationChartsAction>): JComponent {
-    val panel = JPanel(BorderLayout()).apply {
+    val panel = JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
       alignmentY = JPanel.TOP_ALIGNMENT
       alignmentX = JPanel.LEFT_ALIGNMENT
@@ -76,7 +77,9 @@ class CompilationChartsPopup(
     }
 
     val footer = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+      layout = BoxLayout(this, BoxLayout.Y_AXIS)
       border = JBUI.Borders.emptyTop(5)
+      alignmentX = JPanel.LEFT_ALIGNMENT
     }
 
     val title = JLabel(info["name"]).apply {
@@ -100,11 +103,13 @@ class CompilationChartsPopup(
     }
 
     val list = JPanel().apply {
+      layout = BoxLayout(this, BoxLayout.Y_AXIS)
+      alignmentX = JPanel.LEFT_ALIGNMENT
       border = JBUI.Borders.emptyTop(10)
     }.apply {
       actions.filter { action -> action.isAccessible() }
         .filter { action -> action.position() == LIST }
-        .forEach { action -> add(action.label()) }
+        .forEach { action -> add(action.label().apply {alignmentX = JPanel.LEFT_ALIGNMENT}) }
     }
 
     return panel.apply {
@@ -122,7 +127,7 @@ class CompilationChartsPopup(
         add(duration, BorderLayout.WEST)
       })
       add(footer.apply {
-        add(list, BorderLayout.WEST)
+        add(list)
       })
     }
   }

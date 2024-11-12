@@ -96,7 +96,7 @@ class ShowModuleDependenciesAction(
 
     close()
 
-    action.actionPerformed(AnActionEvent.createEvent(action, context, null, ActionPlaces.TOOLBAR, ActionUiKind.POPUP, e))
+    action.actionPerformed(AnActionEvent.createEvent(action, context, null, ActionPlaces.POPUP, ActionUiKind.TOOLBAR, e))
   }
 
   override fun position() = CompilationChartsAction.Position.LIST
@@ -108,6 +108,42 @@ class ShowModuleDependenciesAction(
     addMouseListener(ActionMouseAdapter(this, this@ShowModuleDependenciesAction))
   }
 }
+
+class ShowMatrixDependenciesAction(
+  private val project: Project, private val name: String,
+  private val component: JComponent,
+  private val close: () -> Unit,
+) : CompilationChartsAction {
+  private val action = ActionManager.getInstance().getAction("DSM.Analyze")
+
+  override fun isAccessible() = action != null
+
+  override fun actionPerformed(e: MouseEvent) {
+    val context = object : DataContext {
+      val module = ModuleManager.getInstance(project).findModuleByName(name)
+      override fun getData(dataId: String): Any? = when {
+        CommonDataKeys.PROJECT.`is`(dataId) -> project
+        LangDataKeys.MODULE.`is`(dataId) -> module
+        PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId) -> component
+        else -> null
+      }
+    }
+
+    close()
+
+    action.actionPerformed(AnActionEvent.createEvent(action, context, null, ActionPlaces.POPUP, ActionUiKind.TOOLBAR, e))
+  }
+
+  override fun position() = CompilationChartsAction.Position.LIST
+
+  override fun label() = JLabel(action?.templateText).apply {
+    foreground = JBUI.CurrentTheme.Link.Foreground.ENABLED
+    font = font.deriveFont(Font.PLAIN)
+
+    addMouseListener(ActionMouseAdapter(this, this@ShowMatrixDependenciesAction))
+  }
+}
+
 
 private class ActionMouseAdapter(private val parent: JLabel, private val action: CompilationChartsAction) : MouseAdapter() {
   override fun mouseClicked(e: MouseEvent) {
