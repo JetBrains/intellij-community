@@ -9,6 +9,9 @@ import com.intellij.debugger.engine.evaluation.expression.BoxingEvaluator
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsEx.isVoid
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -105,14 +108,21 @@ internal fun tryInvokeWithHelper(
   }
   catch (e: Exception) {
     val helperExceptionStackTrace = getHelperExceptionStackTrace(evaluationContext, e)
-    if (helperExceptionStackTrace?.contains(method.name() + "(") == true) {
+    val methodCallString = method.name() + "("
+    if (helperExceptionStackTrace?.lineSequence()?.filterNot(::isHelperFrame)?.any { it.contains(methodCallString) } == true) {
       throw e
     }
-    DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
-                               *listOfNotNull(helperExceptionStackTrace).toTypedArray())  // log helper exception if available
+    if (ApplicationManager.getApplication().isInternal) {
+      val attachments = listOfNotNull(helperExceptionStackTrace?.let { Attachment("helper_stack.txt", it).apply { isIncluded = true } }).toTypedArray()
+      DebuggerUtilsImpl.logError("Exception from helper (while evaluating ${method.declaringType().name() + "." + method.name()}): ${e.message}",
+                                 RuntimeExceptionWithAttachments(e, *attachments)) // log helper exception if available
+    }
     return InvocationResult(false, null)
   }
 }
+
+private val HELPER_FRAMES = setOf(MethodInvoker::class.qualifiedName + ".invoke", "java.lang.invoke.MethodHandle.invoke")
+private fun isHelperFrame(frame: String): Boolean = HELPER_FRAMES.any { frame.contains(it) }
 
 internal data class InvocationResult(@get:JvmName("isSuccess") val success: Boolean, val value: Value?)
 
