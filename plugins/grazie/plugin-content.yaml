@@ -1,5 +1,9 @@
 - name: lib/grazie.jar
   projectLibraries:
+  - name: ai.grazie.nlp.langs
+    files:
+    - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
+    reason: <- intellij.grazie.core
   - name: commons-text
     files:
     - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
@@ -60,8 +64,6 @@
       - name: $MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar
       ai.grazie.utils.lucene.lt.compatibility:
       - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-lucene-lt-compatibility/0/utils-lucene-lt-compatibility-0.jar
-      ai.grazie.nlp.langs:
-      - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
       ai.grazie.nlp.detect:
       - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
       - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
