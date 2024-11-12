@@ -21,7 +21,7 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
   private val service by lazy { project.service<GitLabSnippetService>() }
 
   override fun getTestDataPath(): String {
-    val path = getGitLabTestDataPath("community/plugins/gitlab/testResources")?.absolutePathString()
+    val path = getGitLabTestDataPath("community/plugins/gitlab/gitlab-core/testResources")?.absolutePathString()
     requireNotNull(path)
     return path
   }
