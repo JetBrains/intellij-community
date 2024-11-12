@@ -133,11 +133,16 @@ class K2DfaAssistProvider : DfaAssistProvider {
                             return postprocess(proxy.getVariableValue(thisVar))
                         }
                     } else {
-                        val thisObject = proxy.thisObject()
-                        if (thisObject != null) {
-                            val signature = AsmType.getType(thisObject.type().signature()).className
+                        var thisObject = proxy.thisObject()
+                        while (thisObject != null) {
+                            val thisType = thisObject.referenceType()
+                            val signature = AsmType.getType(thisType.signature()).className
                             val jvmName = KotlinPsiHeuristics.getJvmName(nameString)
                             if (signature == jvmName) return thisObject
+                            thisObject = when (val outerClassField = DebuggerUtils.findField(thisType, "this$0")) {
+                              null -> null
+                              else -> thisObject.getValue(outerClassField) as? ObjectReference
+                            }
                         }
                     }
                     if (descriptor.isInlineClassReference()) {
@@ -190,7 +195,6 @@ class K2DfaAssistProvider : DfaAssistProvider {
                     }
                 }
             }
-            // TODO: support `this` references for outer types, etc.
         } else {
             val jdiQualifier = getJdiValueInner(proxy, qualifier, anchor)
             if (descriptor is KtVariableDescriptor) {

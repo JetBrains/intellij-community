@@ -651,6 +651,34 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    class Outer(@Suppress("unused") val outerName: String) {
+        inner class Middle {
+            inner class Inner
+        }
+    }
+
+    fun testInnerClass() {
+        val text = """
+            package org.jetbrains.kotlin.idea.k2.debugger.test
+            class K2DfaAssistTest {
+                class Outer(val outerName: String) {
+                    inner class Middle {
+                        inner class Inner {
+                            fun innerFun() {
+                                <caret>if (outerName == ""/*FALSE*/) /*unreachable_start*/println("outerName is empty")/*unreachable_end*/
+                                if (outerName == "foo"/*TRUE*/) println("outerName is foo")
+                            }
+                        }
+                    }
+                }
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            val o = Outer("foo").Middle().Inner()
+            frame.setThisValue(MockObjectReference.createObjectReference(o, o.javaClass, vm))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }
