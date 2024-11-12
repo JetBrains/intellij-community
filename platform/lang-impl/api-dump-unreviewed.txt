@@ -13423,7 +13423,6 @@ c:com.intellij.openapi.editor.EditorMouseHoverPopupManager
 - com.intellij.openapi.Disposable
 - sf:MAX_QUICK_DOC_CHARACTERS:I
 - pf:myAlarm:com.intellij.util.Alarm
-- p:myContext:com.intellij.openapi.editor.EditorMouseHoverPopupManager$Context
 - <init>():V
 - p:cancelProcessingAndCloseHint():V
 - ps:createHint(javax.swing.JComponent,com.intellij.openapi.editor.PopupBridge,Z):com.intellij.ui.popup.AbstractPopup
@@ -13432,7 +13431,6 @@ c:com.intellij.openapi.editor.EditorMouseHoverPopupManager
 - s:getInstance():com.intellij.openapi.editor.EditorMouseHoverPopupManager
 - p:handleMouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - showInfoTooltip(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.daemon.impl.HighlightInfo,I,Z,Z):V
-- showInfoTooltip(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.daemon.impl.HighlightInfo,I,Z,Z,Z):V
 - showInfoTooltip(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.daemon.impl.HighlightInfo,I,Z,Z,Z,Z):V
 - showInfoTooltip(com.intellij.openapi.editor.event.EditorMouseEvent):V
 f:com.intellij.openapi.editor.actions.FlipCommaIntention

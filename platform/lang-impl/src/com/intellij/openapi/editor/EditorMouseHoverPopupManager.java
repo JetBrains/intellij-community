@@ -75,7 +75,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
   private boolean myKeepPopupOnMouseMove;
   private Reference<Editor> myCurrentEditor;
   private Reference<AbstractPopup> myPopupReference;
-  protected Context myContext;
+  private Context myContext;
   private ProgressIndicator myCurrentProgress;
   private CancellablePromise<Context> myPreparationTask;
   private boolean mySkipNextMovement;
@@ -88,7 +88,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
       public void caretPositionChanged(@NotNull CaretEvent event) {
         Editor editor = event.getEditor();
         if (editor == SoftReference.dereference(myCurrentEditor)) {
-          //noinspection deprecation
           DocumentationManager.getInstance(Objects.requireNonNull(editor.getProject())).setAllowContentUpdateFromContext(true);
         }
       }
@@ -338,8 +337,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
   private static @Nullable Context createContext(@NotNull Editor editor,
                                                  int offset,
                                                  long startTimestamp,
-                                                 boolean showImmediately,
-                                                 boolean showDocumentation) {
+                                                 boolean showImmediately) {
     Project project = Objects.requireNonNull(editor.getProject());
 
     HighlightInfo info = null;
@@ -353,7 +351,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
     PsiElement elementForQuickDoc = findElementForQuickDoc(editor, offset, project);
     return info == null && elementForQuickDoc == null
            ? null
-           : new Context(startTimestamp, offset, info, elementForQuickDoc, showImmediately, showDocumentation, false);
+           : new Context(startTimestamp, offset, info, elementForQuickDoc, showImmediately, true, false);
   }
 
   private static @Nullable PsiElement findElementForQuickDoc(@NotNull Editor editor, int offset, @NotNull Project project) {
@@ -423,7 +421,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       closeHint();
       return;
     }
-    myPreparationTask = ReadAction.nonBlocking(() -> createContext(editor, targetOffset, startTimestamp, showImmediately, true))
+    myPreparationTask = ReadAction.nonBlocking(() -> createContext(editor, targetOffset, startTimestamp, showImmediately))
       .coalesceBy(this)
       .withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
       .expireWhen(() -> editor.isDisposed())
@@ -445,7 +443,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  public void showInfoTooltip(EditorMouseEvent e) {
+  public void showInfoTooltip(@NotNull EditorMouseEvent e) {
     showInfoTooltip(e, true);
   }
 
@@ -455,15 +453,6 @@ public class EditorMouseHoverPopupManager implements Disposable {
                               boolean requestFocus,
                               boolean showImmediately) {
     showInfoTooltip(editor, info, offset, requestFocus, showImmediately, false, false);
-  }
-
-  public void showInfoTooltip(@NotNull Editor editor,
-                              @NotNull HighlightInfo info,
-                              int offset,
-                              boolean requestFocus,
-                              boolean showImmediately,
-                              boolean showDocumentation) {
-    showInfoTooltip(editor, info, offset, requestFocus, showImmediately, showDocumentation, false);
   }
 
   public void showInfoTooltip(@NotNull Editor editor,
@@ -485,8 +474,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
     private final boolean showDocumentation;
     private final boolean keepPopupOnMouseMove;
     private final int targetOffset;
-    private final WeakReference<HighlightInfo> highlightInfo;
-    private final WeakReference<PsiElement> elementForQuickDoc;
+    private final Reference<HighlightInfo> highlightInfo;
+    private final Reference<PsiElement> elementForQuickDoc;
 
     protected Context(long startTimestamp,
                       int targetOffset,
