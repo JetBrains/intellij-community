@@ -10,16 +10,20 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.suppressExceptions
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
@@ -52,21 +56,23 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
     mySourcePositionCache.clear()
   }
 
-  private fun <T> iterate(position: SourcePosition, defaultValue: T?, processor: (PositionManager) -> T?): T? {
+  private inline fun <T> iterate(position: SourcePosition, defaultValue: T?, processor: (PositionManager) -> T?): T? {
     val fileType = position.getFile().getFileType()
-    return iterate<T>(defaultValue, fileType, true, processor)
+    return iterate<T>(defaultValue, fileType, true, ProgressManager::checkCanceled, processor)
   }
 
-  private fun <T> iterate(defaultValue: T?, fileType: FileType?, ignorePCE: Boolean, processor: (PositionManager) -> T?): T? {
+  private inline fun <T> iterate(
+    defaultValue: T?, fileType: FileType?, ignorePCE: Boolean,
+    cancellationCheck: () -> Unit,
+    processor: (PositionManager) -> T?,
+  ): T? {
     for (positionManager in myPositionManagers) {
       if (!acceptsFileType(positionManager, fileType)) continue
       try {
         if (!ignorePCE) {
-          ProgressManager.checkCanceled()
+          cancellationCheck()
         }
-        return DebuggerUtilsImpl.suppressExceptions<T?, NoDataException?>(
-          { processor(positionManager) },
-          defaultValue, ignorePCE, NoDataException::class.java)
+        return suppressExceptions(defaultValue, ignorePCE, NoDataException::class.java) { processor(positionManager) }
       }
       catch (_: NoDataException) {
       }
@@ -74,68 +80,50 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
     return defaultValue
   }
 
-  private fun <T> iterateAsync(
-    fileType: FileType?,
-    ignorePCE: Boolean,
-    processor: (PositionManager) -> CompletableFuture<T?>,
-  ): CompletableFuture<T?> {
-    var res = CompletableFuture.failedFuture<T?>(NoDataException.INSTANCE)
-    for (positionManager in myPositionManagers) {
-      if (!acceptsFileType(positionManager, fileType)) continue
-      res = res.exceptionallyCompose { e: Throwable ->
-        val unwrap = DebuggerUtilsAsync.unwrap(e)
-        if (unwrap is NoDataException) {
-          if (!ignorePCE) {
-            ProgressManager.checkCanceled()
-          }
-          return@exceptionallyCompose processor(positionManager)
-        }
-        CompletableFuture.failedFuture<T?>(unwrap)
-      }
-    }
-    return res
+  fun getSourcePositionFuture(location: Location?): CompletableFuture<SourcePosition?> = invokeCommandAsCompletableFuture {
+    getSourcePositionAsync(location)
   }
 
-  override fun getSourcePositionAsync(location: Location?): CompletableFuture<SourcePosition?> =
-    getCachedSourcePosition(location) { fileType: FileType? ->
-      iterateAsync<SourcePosition?>(fileType, false) { getSourcePositionAsync(it, location) }
+  override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? =
+    getCachedSourcePosition(location, { action -> readAction(action) }) { fileType: FileType? ->
+      iterate<SourcePosition?>(null, fileType, false, { checkCanceled() }) { getSourcePositionAsync(it, location) }
     }
 
-  private fun getCachedSourcePosition(
+  override fun getSourcePosition(location: Location?): SourcePosition? =
+    getCachedSourcePosition(location, { action -> runReadAction(action) }) { fileType: FileType? ->
+      ReadAction.nonBlocking<SourcePosition?> {
+        iterate<SourcePosition?>(null, fileType, false, ProgressManager::checkCanceled) { it.getSourcePosition(location) }
+      }.executeSynchronously()
+    }
+
+  private inline fun getCachedSourcePosition(
     location: Location?,
-    producer: (FileType?) -> CompletableFuture<SourcePosition?>,
-  ): CompletableFuture<SourcePosition?> {
-    if (location == null) return CompletableFuture.completedFuture<SourcePosition?>(null)
-    var res: SourcePosition? = null
+    insideReadAction: (() -> Unit) -> Unit,
+    producer: (FileType?) -> SourcePosition?,
+  ): SourcePosition? {
+    if (location == null) return null
     try {
-      res = mySourcePositionCache[location]
+      val position = mySourcePositionCache[location]
+      if (position != null && checkCacheEntry(position, location.declaringType().name(), insideReadAction)) {
+        return position
+      }
     }
     catch (_: IllegalArgumentException) { // Invalid method id
     }
-    if (checkCacheEntry(res, location)) return CompletableFuture.completedFuture<SourcePosition?>(res)
 
-    val fileType = runReadAction {
-      val sourceName = DebuggerUtilsEx.getSourceName(location, null)
-      if (sourceName != null) FileTypeManager.getInstance().getFileTypeByFileName(sourceName) else null
+    val sourceName = DebuggerUtilsEx.getSourceName(location, null)
+    val fileType = if (sourceName != null)
+      callInReadAction(insideReadAction) { FileTypeManager.getInstance().getFileTypeByFileName(sourceName) }
+    else
+      null
+
+    val position = producer(fileType)
+    try {
+      mySourcePositionCache.put(location, position)
     }
-    return producer(fileType)
-      .thenApply<SourcePosition?> { p: SourcePosition? ->
-        try {
-          mySourcePositionCache.put(location, p)
-        }
-        catch (_: IllegalArgumentException) { // Invalid method id
-        }
-        p
-      }
-  }
-
-  override fun getSourcePosition(location: Location?): SourcePosition? {
-    return getCachedSourcePosition(location) { fileType: FileType? ->
-      val sourcePosition = ReadAction.nonBlocking<SourcePosition?> {
-        iterate<SourcePosition?>(null, fileType, false) { it.getSourcePosition(location) }
-      }.executeSynchronously()
-      CompletableFuture.completedFuture<SourcePosition?>(sourcePosition)
-    }.getNow(null)
+    catch (_: IllegalArgumentException) { // Invalid method id
+    }
+    return position
   }
 
   override fun getAllClasses(classPosition: SourcePosition): MutableList<ReferenceType?> =
@@ -173,7 +161,7 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
     }!!
 
   fun createStackFrames(descriptor: StackFrameDescriptorImpl): MutableList<XStackFrame>? =
-    iterate(null, null, false) {
+    iterate(null, null, false, ProgressManager::checkCanceled) {
       if (it is PositionManagerWithMultipleStackFrames) {
         val stackFrames = it.createStackFrames(descriptor)
         if (stackFrames != null) {
@@ -222,26 +210,32 @@ private fun acceptsFileType(positionManager: PositionManager, fileType: FileType
   return types.contains(fileType)
 }
 
-private fun getSourcePositionAsync(positionManager: PositionManager, location: Location?): CompletableFuture<SourcePosition?> {
+private suspend fun getSourcePositionAsync(positionManager: PositionManager, location: Location?): SourcePosition? {
   if (positionManager is PositionManagerAsync) {
     return positionManager.getSourcePositionAsync(location)
   }
   try {
-    val sourcePosition = ReadAction.nonBlocking<SourcePosition?> { positionManager.getSourcePosition(location) }.executeSynchronously()
-    return CompletableFuture.completedFuture<SourcePosition?>(sourcePosition)
+    return blockingContext {
+      ReadAction.nonBlocking<SourcePosition?> { positionManager.getSourcePosition(location) }.executeSynchronously()
+    }
   }
   catch (e: Exception) {
-    return CompletableFuture.failedFuture<SourcePosition?>(DebuggerUtilsAsync.unwrap(e))
+    throw DebuggerUtilsAsync.unwrap(e)
   }
 }
 
-private fun checkCacheEntry(position: SourcePosition?, location: Location): Boolean {
-  if (position == null) return false
-  return runReadAction {
+private inline fun checkCacheEntry(position: SourcePosition, className: String, insideReadAction: (() -> Unit) -> Unit): Boolean =
+  callInReadAction(insideReadAction) {
     val psiFile = position.getFile()
-    if (!psiFile.isValid()) return@runReadAction false
-    val url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), psiFile.getProject()) ?: return@runReadAction true
+    if (!psiFile.isValid()) return@callInReadAction false
+    val url = DebuggerUtilsEx.getAlternativeSourceUrl(className, psiFile.getProject()) ?: return@callInReadAction true
     val file = psiFile.getVirtualFile()
     file != null && url == file.url
-  }
+}
+
+@Suppress("UNCHECKED_CAST")
+private inline fun <T : Any?> callInReadAction(insideReadAction: (() -> Unit) -> Unit, crossinline action: () -> T): T {
+  var result: T? = null
+  insideReadAction { result = action() }
+  return result as T
 }

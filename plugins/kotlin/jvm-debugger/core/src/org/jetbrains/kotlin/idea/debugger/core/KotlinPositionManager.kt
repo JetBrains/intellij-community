@@ -17,12 +17,10 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -125,23 +123,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return listOf(KotlinStackFrame(descriptor, visibleVariables))
     }
 
-    override fun getSourcePositionAsync(location: Location?): CompletableFuture<SourcePosition?> =
-        invokeCommandAsCompletableFuture {
-            getSourcePositionInternal(location)
-        }
-
-    override fun getSourcePosition(location: Location?): SourcePosition? {
-        if (ApplicationManager.getApplication().isInternal
-            && ApplicationManager.getApplication().isReadAccessAllowed
-            && !ProgressManager.getInstance().hasProgressIndicator()) {
-            LOG.error("Call runBlocking from read action without indicator")
-        }
-        return runBlockingMaybeCancellable {
-            getSourcePositionInternal(location)
-        }
-    }
-
-    private suspend fun getSourcePositionInternal(location: Location?): SourcePosition? {
+    override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         if (location == null) throw NoDataException.INSTANCE
 

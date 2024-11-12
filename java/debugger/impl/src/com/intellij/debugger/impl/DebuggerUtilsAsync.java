@@ -530,7 +530,12 @@ public final class DebuggerUtilsAsync {
   }
 
   public static Throwable unwrap(@Nullable Throwable throwable) {
-    return throwable instanceof CompletionException || throwable instanceof ExecutionException ? throwable.getCause() : throwable;
+    while (throwable instanceof CompletionException || throwable instanceof ExecutionException) {
+      Throwable cause = throwable.getCause();
+      if (cause == throwable) break;
+      throwable = cause;
+    }
+    return throwable;
   }
 
   public static <T> T logError(@NotNull Throwable throwable) {

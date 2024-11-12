@@ -6,6 +6,7 @@ import com.intellij.debugger.NoDataException
 import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
+import com.intellij.debugger.engine.PositionManagerAsync
 import com.intellij.debugger.engine.evaluation.AbsentInformationEvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -15,6 +16,7 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.sun.jdi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_STRATA_NAME
@@ -136,11 +138,21 @@ fun ValueDescriptorImpl.safeCalcValue(context: EvaluationContextImpl): Value? {
     return wrapEvaluateException { calcValue(context) }
 }
 
+@RequiresBlockingContext
 @ApiStatus.Internal
 fun PositionManager.safeGetSourcePosition(location: Location): SourcePosition? {
     return try {
         getSourcePosition(location)
-    } catch (ex: NoDataException) {
+    } catch (_: NoDataException) {
+        null
+    }
+}
+
+@ApiStatus.Internal
+suspend fun PositionManagerAsync.safeGetSourcePositionAsync(location: Location): SourcePosition? {
+    return try {
+        getSourcePositionAsync(location)
+    } catch (_: NoDataException) {
         null
     }
 }

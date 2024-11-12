@@ -17,6 +17,7 @@ package com.intellij.debugger;
 
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -41,6 +42,7 @@ public interface PositionManager {
    * @throws NoDataException if the location is not in the code managed by this {@code PositionManager}
    */
   @Nullable
+  @RequiresBlockingContext
   SourcePosition getSourcePosition(@Nullable Location location) throws NoDataException;
 
   /**
