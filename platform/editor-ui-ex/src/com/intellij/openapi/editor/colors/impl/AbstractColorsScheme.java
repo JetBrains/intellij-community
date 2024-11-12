@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.BundleBase;
@@ -27,8 +27,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -744,10 +744,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     String rgb = "";
     if (color != NULL_COLOR_MARKER) {
-      rgb = Integer.toString(0xFFFFFF & color.getRGB(), 16);
+      rgb = String.format("%06X", 0xFFFFFF & color.getRGB());
       int alpha = 0xFF & color.getAlpha();
       if (alpha != 0xFF) {
-        rgb += Integer.toString(alpha, 16);
+        rgb += String.format("%02X", alpha);
       }
     }
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);

@@ -408,6 +408,35 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
+  public void testTransparencyHexPadding() {
+    // IJPL-26971: Opacity gets stored in color schemes without padding.
+    var testColor = new Color(0x88, 0x99, 0xAA, 0x01);
+    ensureColorRoundTrips(testColor);
+  }
+
+  public void testColorZeroPadding() {
+    // Another consequence of IJPL-26971: the color components also lose paddings, which would break if the opacity component is not FF.
+    var testColor = new Color(0x00, 0x99, 0xAA, 0x00);
+    ensureColorRoundTrips(testColor);
+  }
+
+  private static void ensureColorRoundTrips(Color color) {
+    var defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    var parentScheme = (EditorColorsScheme)defaultScheme.clone();
+    var editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
+    editorColorsScheme.setName("testEditorColorsScheme");
+
+    var testColorKey = ColorKey.createColorKey("testColorKey");
+    editorColorsScheme.setColor(testColorKey, color);
+
+    var root = new Element("scheme");
+    editorColorsScheme.writeExternal(root);
+    var targetScheme = new EditorColorsSchemeImpl(parentScheme);
+    targetScheme.readExternal(root);
+    var targetColor = targetScheme.getColor(testColorKey);
+    assertEquals(color, targetColor);
+  }
+
   public void testWriteDefaultSemanticHighlighting() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
