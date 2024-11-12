@@ -296,12 +296,14 @@ class IdeEventQueue private constructor() : EventQueue() {
       val finalEvent = event
       val runnable = InvocationUtil.extractRunnable(event)?.unwrapContextRunnable()
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
+      @Suppress("TestOnlyProblems")
+      val nakedRunnable = runnable is NakedRunnable
       val processEventRunnable = Runnable {
         withAttachedClientId(finalEvent).use {
           val progressManager = ProgressManager.getInstanceOrNull()
           try {
             runCustomProcessors(finalEvent, preProcessors)
-            performActivity(finalEvent, isCoroutineWILEnabled && !threadingSupport.isInsideUnlockedWriteIntentLock()) {
+            performActivity(finalEvent, !nakedRunnable && isCoroutineWILEnabled && !threadingSupport.isInsideUnlockedWriteIntentLock()) {
               if (progressManager == null) {
                 _dispatchEvent(finalEvent)
               }
@@ -1176,6 +1178,10 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
 interface ClientIdAwareEvent {
   val clientId: ClientId?
 }
+
+@TestOnly
+@Internal
+interface NakedRunnable: Runnable
 
 private class ComponentEventWithClientId(source: Component, id: Int, override val clientId: ClientId?) : ComponentEvent(source, id), ClientIdAwareEvent
 
