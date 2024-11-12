@@ -3109,11 +3109,11 @@ a:com.intellij.openapi.vfs.impl.ArchiveHandler
 - p:getEntryInfo(java.lang.String):com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
 - getFile():java.io.File
 - getInputStream(java.lang.String):java.io.InputStream
+- getPath():java.nio.file.Path
 - list(java.lang.String):java.lang.String[]
 - p:normalizeName(java.lang.String):java.lang.String
 - pf:processEntry(java.util.Map,com.intellij.openapi.diagnostic.Logger,java.lang.String,java.util.function.BiFunction):V
 - pf:processEntry(java.util.Map,java.lang.String,java.util.function.BiFunction):V
-- p:setFile(java.io.File):V
 pc:com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
 - f:isDirectory:Z
 - f:length:J
@@ -3133,7 +3133,7 @@ a:com.intellij.openapi.vfs.impl.TempCopyArchiveHandler
 - com.intellij.openapi.vfs.impl.ArchiveHandler
 - p:<init>(java.lang.String):V
 - clearCaches():V
-- p:getTempCopy(com.intellij.util.ThrowableConsumer):java.io.File
+- p:getTempCopy(com.intellij.openapi.util.ThrowableComputable):java.nio.file.Path
 - pa:getTempDir():java.lang.String
 com.intellij.openapi.vfs.newvfs.BulkFileListener
 - after(java.util.List):V

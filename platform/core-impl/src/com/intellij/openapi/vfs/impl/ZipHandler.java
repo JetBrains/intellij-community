@@ -6,17 +6,17 @@ import com.intellij.util.io.ResourceHandle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class ZipHandler extends ZipHandlerBase {
   private static final FileAccessorCache<ZipHandler, GenericZipFile> ourZipFileFileAccessorCache = new FileAccessorCache<ZipHandler, GenericZipFile>(20, 10) {
     @Override
     protected @NotNull GenericZipFile createAccessor(ZipHandler handler) throws IOException {
-      File file = handler.getFile();
-      BasicFileAttributes attrs = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+      Path file = handler.getPath();
+      BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
       handler.myFileStamp = attrs.lastModifiedTime().toMillis();
       handler.myFileLength = attrs.size();
       return getZipFileWrapper(file);
@@ -46,8 +46,8 @@ public class ZipHandler extends ZipHandlerBase {
       FileAccessorCache.Handle<GenericZipFile> handle = ourZipFileFileAccessorCache.get(this);
 
       // IDEA-148458, JDK-4425695 (JVM crashes on accessing an open ZipFile after it was modified)
-      File file = getFile();
-      BasicFileAttributes attrs = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+      Path file = getPath();
+      BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
       if (attrs.lastModifiedTime().toMillis() != myFileStamp || attrs.size() != myFileLength) {
         // Note that zip_util.c#ZIP_Get_From_Cache will allow us to have duplicated ZipFile instances without a problem
         clearCaches();

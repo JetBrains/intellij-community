@@ -86,8 +86,8 @@ public final class TimedZipHandler extends ZipHandlerBase {
           myInvalidationRequest = null;
         }
         if (myFile == null) {
-          var file = getFile();
-          myFileStamp = Files.getLastModifiedTime(file.toPath()).toMillis();
+          var file = getPath();
+          myFileStamp = Files.getLastModifiedTime(file).toMillis();
           myFile = getZipFileWrapper(file);
         }
       }

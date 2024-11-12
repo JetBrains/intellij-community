@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ThrowableConsumer;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.NioFiles;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * An archive handler which able to copy unpacked data to temporary file
@@ -27,23 +29,28 @@ public abstract class TempCopyArchiveHandler extends ArchiveHandler {
   }
 
   private void removeTempCopy() {
-    FileUtil.delete(getTempFile());
+    try {
+      NioFiles.deleteRecursively(getTempFile());
+    }
+    catch (IOException e) {
+      Logger.getInstance(getClass()).error("Failed to delete temp archive " + getTempFile(), e);
+    }
   }
 
-  protected @NotNull File getTempCopy(@NotNull ThrowableConsumer<? super File, ? extends IOException> initializer) throws IOException {
-    File file = getFile();
-    File copy = getTempFile();
-    if (!copy.exists() || copy.lastModified() != file.lastModified()) {
-      FileUtil.createParentDirs(copy);
-      initializer.consume(copy);
-      Files.setLastModifiedTime(copy.toPath(), Files.getLastModifiedTime(file.toPath()));
+  @SuppressWarnings("BoundedWildcard")
+  protected @NotNull Path getTempCopy(@NotNull ThrowableComputable<InputStream, IOException> input) throws IOException {
+    Path file = getPath(), copy = getTempFile();
+    if (!Files.exists(copy) || Files.getLastModifiedTime(copy).toMillis() != Files.getLastModifiedTime(file).toMillis()) {
+      NioFiles.createParentDirectories(copy);
+      Files.copy(input.compute(), copy);
+      Files.setLastModifiedTime(copy, Files.getLastModifiedTime(file));
     }
     return copy;
   }
 
-  private @NotNull File getTempFile() {
-    File file = getFile();
-    String hash = Integer.toHexString(file.getPath().hashCode());
-    return new File(PathManager.getSystemPath() + '/' + getTempDir() + '/' + file.getName() + '_' + hash);
+  private Path getTempFile() {
+    Path file = getPath();
+    String hash = Integer.toHexString(file.toString().hashCode());
+    return PathManager.getSystemDir().resolve(getTempDir()).resolve(file.getFileName() + "_" + hash);
   }
 }

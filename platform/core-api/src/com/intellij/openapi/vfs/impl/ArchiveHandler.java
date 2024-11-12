@@ -65,8 +65,14 @@ public abstract class ArchiveHandler {
     myPath = Paths.get(path);
   }
 
+  public @NotNull Path getPath() {
+    return myPath;
+  }
+
+  /** @deprecated please use {@link #getPath} instead */
+  @Deprecated
   public @NotNull File getFile() {
-    return myPath.toFile();
+    return getPath().toFile();
   }
 
   public @Nullable FileAttributes getAttributes(@NotNull String relativePath) {
@@ -121,7 +127,7 @@ public abstract class ArchiveHandler {
             }
             catch (Exception e) {
               myCorrupted = true;
-              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getFile(), e);
+              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getPath(), e);
               map = new AddonlyKeylessHash<>(ourKeyValueMapper);
             }
           }
@@ -186,7 +192,7 @@ public abstract class ArchiveHandler {
             }
             catch (Exception e) {
               myCorrupted = true;
-              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getFile(), e);
+              Logger.getInstance(getClass()).warn(e.getMessage() + ": " + getPath(), e);
               map = Collections.emptyMap();
             }
           }
@@ -227,7 +233,7 @@ public abstract class ArchiveHandler {
                                     @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun) {
     String normalizedName = normalizeName(entryName);
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
-      if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);
+      if (logger != null) logger.trace("invalid entry: " + getPath() + "!/" + entryName);
       return;
     }
 
@@ -238,7 +244,7 @@ public abstract class ArchiveHandler {
 
     EntryInfo existing = map.get(normalizedName);
     if (existing != null) {
-      if (logger != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null) logger.trace("duplicate entry: " + getPath() + "!/" + normalizedName);
       return;
     }
 
@@ -254,7 +260,7 @@ public abstract class ArchiveHandler {
   private EntryInfo directoryEntry(Map<String, EntryInfo> map, @Nullable Logger logger, String normalizedName) {
     EntryInfo entry = map.get(normalizedName);
     if (entry == null || !entry.isDirectory) {
-      if (logger != null && entry != null) logger.trace("duplicate entry: " + getFile() + "!/" + normalizedName);
+      if (logger != null && entry != null) logger.trace("duplicate entry: " + getPath() + "!/" + normalizedName);
       if (normalizedName.isEmpty()) {
         entry = createRootEntry();
       }

@@ -11,10 +11,10 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,16 +29,16 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   @ApiStatus.Internal
-  public static @NotNull GenericZipFile getZipFileWrapper(@NotNull File file) throws IOException {
+  public static @NotNull GenericZipFile getZipFileWrapper(@NotNull Path file) throws IOException {
     GenericZipFile wrapper;
     if (USE_NIO_HANDLER) {
-      wrapper = new JavaNioZipFileWrapper(file.toPath());
+      wrapper = new JavaNioZipFileWrapper(file);
     }
     else if (isFileLikelyLocal(file)) {
-      wrapper = new JavaZipFileWrapper(file);
+      wrapper = new JavaZipFileWrapper(file.toFile());
     }
     else {
-      wrapper = new JBZipFileWrapper(file);
+      wrapper = new JBZipFileWrapper(file.toFile());
     }
     if (LOG.isTraceEnabled()) {
       LOG.trace("Using " + wrapper.getClass().getName() + " to open " + file);
@@ -46,14 +46,14 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     return wrapper;
   }
 
-  private static boolean isFileLikelyLocal(File file) {
+  private static boolean isFileLikelyLocal(Path file) {
     if (SystemInfo.isWindows) {
       // WSL is locally reachable from Windows, hence we want to detect if the file resides completely at Windows side
-      return OSAgnosticPathUtil.startsWithWindowsDrive(file.getPath());
+      return OSAgnosticPathUtil.startsWithWindowsDrive(file.toString());
     }
     else {
       // we intentionally use java.io here, as we need to ask the local file system if it recognizes the path
-      return file.exists();
+      return file.toFile().exists();
     }
   }
 
@@ -87,7 +87,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       if (entry != null) {
         long length = entry.getSize();
         if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(entry.getName()))) {
-          throw new FileTooBigException(getFile() + "!/" + relativePath);
+          throw new FileTooBigException(getPath() + "!/" + relativePath);
         }
         try (InputStream stream = entry.getInputStream()) {
           if (stream != null) {
@@ -98,7 +98,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       }
     }
 
-    throw new FileNotFoundException(getFile() + "!/" + relativePath);
+    throw new FileNotFoundException(getPath() + "!/" + relativePath);
   }
 
   @Override
@@ -131,7 +131,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
       if (release) zipRef.close();
     }
 
-    throw new FileNotFoundException(getFile() + "!/" + relativePath);
+    throw new FileNotFoundException(getPath() + "!/" + relativePath);
   }
 
   @ApiStatus.Internal
