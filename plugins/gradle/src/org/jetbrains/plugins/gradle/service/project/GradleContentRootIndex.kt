@@ -28,7 +28,8 @@ class GradleContentRootIndex {
 
   fun addSourceRoots(sourceSetNode: DataNode<GradleSourceSetData>) {
     val sourceRoots = getSourceRoots(sourceSetNode)
-    addSourceRoots(sourceRoots)
+    val contentRoots = getContentRoots(sourceSetNode)
+    addSourceRoots(sourceRoots + contentRoots)
   }
 
   @VisibleForTesting
@@ -51,7 +52,8 @@ class GradleContentRootIndex {
 
   fun resolveContentRoots(externalProject: ExternalProject, sourceSetNode: DataNode<GradleSourceSetData>): Set<String> {
     val sourceRoots = getSourceRoots(sourceSetNode)
-    return resolveContentRoots(externalProject, sourceRoots)
+    val contentRoots = getContentRoots(sourceSetNode)
+    return resolveContentRoots(externalProject, sourceRoots + contentRoots)
       .mapTo(HashSet()) { it.toCanonicalPath() }
   }
 
@@ -108,5 +110,10 @@ class GradleContentRootIndex {
     return sourceRoots.map { sourceRoot ->
       Path.of(FileUtil.toSystemDependentName(sourceRoot.path))
     }
+  }
+
+  private fun getContentRoots(sourceSetNode: DataNode<GradleSourceSetData>): Collection<Path> {
+    return ExternalSystemApiUtil.findAll(sourceSetNode, CONTENT_ROOT)
+      .map { Path.of(FileUtil.toSystemDependentName(it.data.rootPath)) }
   }
 }
