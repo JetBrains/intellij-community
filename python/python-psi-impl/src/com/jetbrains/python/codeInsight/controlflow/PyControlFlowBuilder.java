@@ -76,8 +76,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.addNodeAndCheckPending(instruction);
   }
 
   @Override
@@ -120,8 +119,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     visitDecorators(node.getDecoratorList());
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.addNodeAndCheckPending(instruction);
   }
 
   @Override
@@ -178,24 +176,21 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
                                                ? ReadWriteInstruction.ACCESS.READWRITE
                                                : ReadWriteInstruction.ACCESS.READ;
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
-    myBuilder.addNode(readWriteInstruction);
-    myBuilder.checkPending(readWriteInstruction);
+    myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
   @Override
   public void visitPyBoolLiteralExpression(@NotNull PyBoolLiteralExpression node) {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
                                                                                           ReadWriteInstruction.ACCESS.READ);
-    myBuilder.addNode(readWriteInstruction);
-    myBuilder.checkPending(readWriteInstruction);
+    myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
   @Override
   public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
                                                                                           ReadWriteInstruction.ACCESS.READ);
-    myBuilder.addNode(readWriteInstruction);
-    myBuilder.checkPending(readWriteInstruction);
+    myBuilder.addNodeAndCheckPending(readWriteInstruction);
   }
 
   @Override
@@ -257,8 +252,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (qName != null) {
       final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, qName.toString(),
                                                                                    ReadWriteInstruction.ACCESS.WRITE);
-      myBuilder.addNode(instruction);
-      myBuilder.checkPending(instruction);
+      myBuilder.addNodeAndCheckPending(instruction);
     }
 
     final PyExpression qualifier = node.getQualifier();
@@ -274,8 +268,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       annotation.accept(this);
     }
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.addNodeAndCheckPending(instruction);
   }
 
   @Override
@@ -313,8 +306,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     for (PyImportElement importElement : node.getImportElements()) {
       final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, importElement, importElement.getVisibleName());
-      myBuilder.addNode(instruction);
-      myBuilder.checkPending(instruction);
+      myBuilder.addNodeAndCheckPending(instruction);
     }
   }
 
@@ -1009,8 +1001,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
 
     final ReadWriteInstruction instruction = ReadWriteInstruction.write(myBuilder, node, node.getName());
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    myBuilder.addNodeAndCheckPending(instruction);
   }
 
   private void abruptFlow(final PsiElement node) {
