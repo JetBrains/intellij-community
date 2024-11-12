@@ -288,7 +288,7 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
         return myStorage.read(key);
       }
       finally {
-        IndexDebugProperties.DEBUG_INDEX_ID.set(null);
+        IndexDebugProperties.DEBUG_INDEX_ID.remove();
       }
     });
   }

@@ -98,7 +98,7 @@ public final class ScriptSupportUtil {
       }
     }
     finally {
-      ProcessingDeclarationsFlag.set(null);
+      ProcessingDeclarationsFlag.remove();
     }
 
     return true;

@@ -124,7 +124,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
       return stub;
     }
     finally {
-      ourRootStubSerializer.set(null);
+      ourRootStubSerializer.remove();
     }
   }
 

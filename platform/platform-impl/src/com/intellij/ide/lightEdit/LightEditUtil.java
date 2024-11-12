@@ -239,7 +239,7 @@ public final class LightEditUtil {
 
   public static @NotNull AutoCloseable computeWithCommandLineOptions(boolean shouldWait, boolean lightEditMode) {
     ourCommandLineOptions.set(new LightEditCommandLineOptions(shouldWait, lightEditMode));
-    return () -> ourCommandLineOptions.set(null);
+    return () -> ourCommandLineOptions.remove();
   }
 
   public static void useCommandLineOptions(boolean shouldWait,
@@ -249,7 +249,7 @@ public final class LightEditUtil {
     Disposer.register(disposable, new Disposable() {
       @Override
       public void dispose() {
-        ourCommandLineOptions.set(null);
+        ourCommandLineOptions.remove();
       }
     });
   }

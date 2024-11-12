@@ -186,7 +186,7 @@ public final class IdempotenceChecker {
     }
     finally {
       if (outermost) {
-        ourLog.set(null);
+        ourLog.remove();
       }
     }
   }

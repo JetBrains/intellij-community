@@ -383,7 +383,7 @@ public final class ClassPath {
       return;
     }
 
-    doingTiming.set(null);
+    doingTiming.remove();
 
     long time = System.nanoTime() - started;
     long totalTime = ourTotalTime.addAndGet(time);

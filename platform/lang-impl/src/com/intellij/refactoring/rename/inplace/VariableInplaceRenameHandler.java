@@ -135,7 +135,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
         elementToRename.getContainingFile(), dataContext
       );
     } finally {
-      ourPreventInlineRenameFlag.set(null);
+      ourPreventInlineRenameFlag.remove();
     }
   }
   

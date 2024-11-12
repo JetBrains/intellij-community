@@ -207,7 +207,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
       facade = mySupport.acquire(this, id);
     }
     finally {
-      myTargetExternalSystemId.set(null);
+      myTargetExternalSystemId.remove();
     }
     if (facade == null) {
       return null;

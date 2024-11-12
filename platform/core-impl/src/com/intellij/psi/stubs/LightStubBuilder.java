@@ -48,7 +48,7 @@ public class LightStubBuilder implements StubBuilder {
       tree = node.getElementType() instanceof ILightStubFileElementType ? node.getLighterAST() : new TreeBackedLighterAST(node);
     }
     else {
-      FORCED_AST.set(null);
+      FORCED_AST.remove();
     }
 
     StubElement<?> rootStub = createStubForFile(file, tree);
