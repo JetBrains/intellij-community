@@ -484,12 +484,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                  var firstArgument = arguments.get(0);
                  PyType type = narrowedType.getNarrowedType();
                  if (firstArgument instanceof PyReferenceExpression && type != null) {
-                   return PyTypeAssertionEvaluator.createAssertionType(
-                     context.getType(firstArgument),
-                     type,
-                     conditionalInstruction.getResult() ^ narrowedType.getNegated(),
-                     narrowedType.getTypeIs(),
-                     context);
+                   @Nullable PyType initial = context.getType(firstArgument);
+                   boolean positive = conditionalInstruction.getResult() ^ narrowedType.getNegated();
+                   if (narrowedType.getTypeIs()) {
+                     return PyTypeAssertionEvaluator.createAssertionType(initial, type, positive, context);
+                   }
+                   return Ref.create((positive) ? type : initial);
                  }
                }
              }

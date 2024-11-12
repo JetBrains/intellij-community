@@ -131,18 +131,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     super.visitPyBinaryExpression(node);
   }
 
-  /**
-   * @param isStrict is false means that a type guard makes the assertion
-   */
-  @Nullable
   @ApiStatus.Internal
-  public static Ref<PyType> createAssertionType(@Nullable PyType initial,
-                                                @Nullable PyType suggested,
-                                                boolean positive,
-                                                boolean isStrict,
-                                                @NotNull TypeEvalContext context) {
-    // non-strict type guard
-    if (!isStrict) return Ref.create((positive) ? suggested : initial);
+  public static @Nullable Ref<PyType> createAssertionType(@Nullable PyType initial,
+                                                          @Nullable PyType suggested,
+                                                          boolean positive,
+                                                          @NotNull TypeEvalContext context) {
     if (positive) {
       if (!(initial instanceof PyUnionType) && match(suggested, initial, context)) {
         return Ref.create(initial);
@@ -230,7 +223,6 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         return createAssertionType(context.getType(target),
                                    transformTypeFromAssertion(suggestedType.apply(context), transformToDefinition, context, typeElement),
                                    positive,
-                                   /*isStrict*/ true,
                                    context);
       }
     };
