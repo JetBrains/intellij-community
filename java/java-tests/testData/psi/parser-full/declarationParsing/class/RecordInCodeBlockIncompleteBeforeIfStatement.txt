@@ -1,0 +1,72 @@
+PsiJavaFile:RecordInCodeBlockIncompleteBeforeIfStatement.java
+  PsiImportList
+    <empty list>
+  PsiClass:A
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:A('A')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiMethod:test
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:void
+        PsiKeyword:void('void')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:test('test')
+      PsiParameterList:(int x)
+        PsiJavaToken:LPARENTH('(')
+        PsiParameter:x
+          PsiModifierList:
+            <empty list>
+          PsiTypeElement:int
+            PsiKeyword:int('int')
+          PsiWhiteSpace(' ')
+          PsiIdentifier:x('x')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace('\n    ')
+        PsiDeclarationStatement
+          PsiKeyword:record('record')
+          PsiErrorElement:Identifier expected
+            <empty list>
+        PsiWhiteSpace('\n    ')
+        PsiIfStatement
+          PsiKeyword:if('if')
+          PsiWhiteSpace(' ')
+          PsiJavaToken:LPARENTH('(')
+          PsiBinaryExpression:x > 0
+            PsiReferenceExpression:x
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:x('x')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:GT('>')
+            PsiWhiteSpace(' ')
+            PsiLiteralExpression:0
+              PsiJavaToken:INTEGER_LITERAL('0')
+          PsiJavaToken:RPARENTH(')')
+          PsiWhiteSpace(' ')
+          PsiBlockStatement
+            PsiCodeBlock
+              PsiJavaToken:LBRACE('{')
+              PsiJavaToken:RBRACE('}')
+        PsiWhiteSpace('\n  ')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

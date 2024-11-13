@@ -1,4 +1,4 @@
-PsiJavaFile:LocalRecordWithoutParens.java
+PsiJavaFile:RecordInCodeBlockIncompleteBeforeDeclaration.java
   PsiImportList
     <empty list>
   PsiClass:A
@@ -38,15 +38,23 @@ PsiJavaFile:LocalRecordWithoutParens.java
           PsiModifierList:
             <empty list>
           PsiKeyword:record('record')
-          PsiWhiteSpace(' ')
-          PsiIdentifier:R('R')
+          PsiWhiteSpace('\n    ')
+          PsiIdentifier:String('String')
           PsiErrorElement:'<' or '(' expected
             <empty list>
         PsiWhiteSpace(' ')
-        PsiBlockStatement
-          PsiCodeBlock
-            PsiJavaToken:LBRACE('{')
-            PsiJavaToken:RBRACE('}')
+        PsiExpressionStatement
+          PsiAssignmentExpression:string = "hello"
+            PsiReferenceExpression:string
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:string('string')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:EQ('=')
+            PsiWhiteSpace(' ')
+            PsiLiteralExpression:"hello"
+              PsiJavaToken:STRING_LITERAL('"hello"')
+          PsiJavaToken:SEMICOLON(';')
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')

@@ -43,10 +43,18 @@ java.FILE
           ERROR_ELEMENT
             <empty list>
         WHITE_SPACE
-        BLOCK_STATEMENT
-          CODE_BLOCK
-            LBRACE
-            RBRACE
+        EXPRESSION_STATEMENT
+          ASSIGNMENT_EXPRESSION
+            REFERENCE_EXPRESSION
+              REFERENCE_PARAMETER_LIST
+                <empty list>
+              IDENTIFIER
+            WHITE_SPACE
+            EQ
+            WHITE_SPACE
+            LITERAL_EXPRESSION
+              STRING_LITERAL
+          SEMICOLON
         WHITE_SPACE
         RBRACE
     WHITE_SPACE

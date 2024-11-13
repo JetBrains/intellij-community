@@ -1,12 +1,12 @@
-PsiJavaFile:LocalRecordWithoutParens.java
+PsiJavaFile:VarIncomplete.java
   PsiImportList
     <empty list>
-  PsiClass:A
+  PsiClass:X
     PsiModifierList:
       <empty list>
     PsiKeyword:class('class')
     PsiWhiteSpace(' ')
-    PsiIdentifier:A('A')
+    PsiIdentifier:X('X')
     PsiTypeParameterList
       <empty list>
     PsiReferenceList
@@ -16,7 +16,7 @@ PsiJavaFile:LocalRecordWithoutParens.java
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n  ')
-    PsiMethod:test
+    PsiMethod:foo
       PsiModifierList:
         <empty list>
       PsiTypeParameterList
@@ -24,7 +24,7 @@ PsiJavaFile:LocalRecordWithoutParens.java
       PsiTypeElement:void
         PsiKeyword:void('void')
       PsiWhiteSpace(' ')
-      PsiIdentifier:test('test')
+      PsiIdentifier:foo('foo')
       PsiParameterList:()
         PsiJavaToken:LPARENTH('(')
         PsiJavaToken:RPARENTH(')')
@@ -35,18 +35,9 @@ PsiJavaFile:LocalRecordWithoutParens.java
         PsiJavaToken:LBRACE('{')
         PsiWhiteSpace('\n    ')
         PsiDeclarationStatement
-          PsiModifierList:
+          PsiKeyword:var('var')
+          PsiErrorElement:Identifier expected
             <empty list>
-          PsiKeyword:record('record')
-          PsiWhiteSpace(' ')
-          PsiIdentifier:R('R')
-          PsiErrorElement:'<' or '(' expected
-            <empty list>
-        PsiWhiteSpace(' ')
-        PsiBlockStatement
-          PsiCodeBlock
-            PsiJavaToken:LBRACE('{')
-            PsiJavaToken:RBRACE('}')
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')

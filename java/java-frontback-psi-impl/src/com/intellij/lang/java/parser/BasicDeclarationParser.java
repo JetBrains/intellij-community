@@ -82,7 +82,10 @@ public class BasicDeclarationParser {
     IElementType keywordTokenType = builder.getTokenType();
     final boolean isRecord = isRecordToken(builder, keywordTokenType);
     if (isRecord) {
+      builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
       if (builder.lookAhead(1) != JavaTokenType.IDENTIFIER) {
+        builder.advanceLexer();
+        error(builder, JavaPsiBundle.message("expected.identifier"));
         declaration.drop();
         return null;
       }
@@ -96,7 +99,6 @@ public class BasicDeclarationParser {
         declaration.drop();
         return null;
       }
-      builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
       keywordTokenType = JavaTokenType.RECORD_KEYWORD;
     }
     assert BASIC_CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
@@ -414,11 +416,17 @@ public class BasicDeclarationParser {
     return parseFieldOrLocalVariable(builder, declaration, declarationStart, context);
   }
 
-  static boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
-    if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
-        builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
-      LanguageLevel level = getLanguageLevel(builder);
-      return JavaFeature.RECORDS.isSufficient(level);
+  boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
+    if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText())) {
+      IElementType nextToken = builder.lookAhead(1);
+      if (nextToken == JavaTokenType.IDENTIFIER || 
+          // The following tokens cannot be part of a valid record declaration, 
+          // but we assume it to be a malformed record, rather than a malformed type.
+          BASIC_MODIFIER_BIT_SET.contains(nextToken) || BASIC_CLASS_KEYWORD_BIT_SET.contains(nextToken) || TYPE_START.contains(nextToken) ||
+          nextToken == JavaTokenType.AT || nextToken == JavaTokenType.LBRACE || nextToken == JavaTokenType.RBRACE) {
+        LanguageLevel level = getLanguageLevel(builder);
+        return JavaFeature.RECORDS.isSufficient(level);
+      }
     }
     return false;
   }

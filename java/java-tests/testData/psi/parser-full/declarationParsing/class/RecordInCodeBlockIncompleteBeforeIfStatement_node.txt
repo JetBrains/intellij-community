@@ -27,6 +27,13 @@ java.FILE
       IDENTIFIER
       PARAMETER_LIST
         LPARENTH
+        PARAMETER
+          MODIFIER_LIST
+            <empty list>
+          TYPE
+            INT_KEYWORD
+          WHITE_SPACE
+          IDENTIFIER
         RPARENTH
       THROWS_LIST
         <empty list>
@@ -35,18 +42,30 @@ java.FILE
         LBRACE
         WHITE_SPACE
         DECLARATION_STATEMENT
-          MODIFIER_LIST
-            <empty list>
           RECORD
-          WHITE_SPACE
-          IDENTIFIER
           ERROR_ELEMENT
             <empty list>
         WHITE_SPACE
-        BLOCK_STATEMENT
-          CODE_BLOCK
-            LBRACE
-            RBRACE
+        IF_STATEMENT
+          IF_KEYWORD
+          WHITE_SPACE
+          LPARENTH
+          BINARY_EXPRESSION
+            REFERENCE_EXPRESSION
+              REFERENCE_PARAMETER_LIST
+                <empty list>
+              IDENTIFIER
+            WHITE_SPACE
+            GT
+            WHITE_SPACE
+            LITERAL_EXPRESSION
+              INTEGER_LITERAL
+          RPARENTH
+          WHITE_SPACE
+          BLOCK_STATEMENT
+            CODE_BLOCK
+              LBRACE
+              RBRACE
         WHITE_SPACE
         RBRACE
     WHITE_SPACE

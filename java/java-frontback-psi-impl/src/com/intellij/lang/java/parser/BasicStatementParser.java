@@ -213,6 +213,7 @@ public class BasicStatementParser {
 
     PsiBuilder.Marker pos = builder.mark();
     PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
+    IElementType incompleteDeclarationRestrictedTokenType = null;
 
     if (expr != null) {
       int count = 1;
@@ -242,7 +243,17 @@ public class BasicStatementParser {
         done(statement, myJavaElementTypeContainer.EXPRESSION_STATEMENT, myWhiteSpaceAndCommentSetHolder);
         return statement;
       }
+      boolean singleToken = expr.getEndIndex() - expr.getStartIndex() == 1;
       pos.rollbackTo();
+      if (singleToken && builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+        String text = builder.getTokenText();
+        if (PsiKeyword.RECORD.equals(text) && JavaFeature.RECORDS.isSufficient(getLanguageLevel(builder))) {
+          incompleteDeclarationRestrictedTokenType = JavaTokenType.RECORD_KEYWORD;
+        }
+        if (PsiKeyword.VAR.equals(text) && JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
+          incompleteDeclarationRestrictedTokenType = JavaTokenType.VAR_KEYWORD;
+        }
+      }
     }
     else {
       pos.drop();
@@ -265,9 +276,18 @@ public class BasicStatementParser {
 
     if (expr != null) {
       PsiBuilder.Marker statement = builder.mark();
-      myParser.getExpressionParser().parse(builder);
-      semicolon(builder);
-      done(statement, myJavaElementTypeContainer.EXPRESSION_STATEMENT, myWhiteSpaceAndCommentSetHolder);
+      IElementType statementType;
+      if (incompleteDeclarationRestrictedTokenType != null) {
+        builder.remapCurrentToken(incompleteDeclarationRestrictedTokenType);
+        builder.advanceLexer();
+        error(builder, JavaPsiBundle.message("expected.identifier"));
+        statementType = myJavaElementTypeContainer.DECLARATION_STATEMENT;
+      } else {
+        myParser.getExpressionParser().parse(builder);
+        statementType = myJavaElementTypeContainer.EXPRESSION_STATEMENT;
+        semicolon(builder);
+      }
+      done(statement, statementType, myWhiteSpaceAndCommentSetHolder);
       return statement;
     }
 
