@@ -87,7 +87,7 @@ sealed class Result<out SUCC, out ERR> {
   /**
    * Like Rust `unwrap`: returns result or throws exception. Use when error is unexpected
    */
-  fun orThrow(onError: (ERR) -> Throwable = { e -> AssertionError(e) }): SUCC {
+  fun orThrow(onError: (ERR) -> Throwable = { e -> if (e is Throwable) e else  AssertionError(e) }): SUCC {
     when (this) {
       is Success -> return result
       is Failure -> throw onError(this.error)
