@@ -25,10 +25,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerWSL.unpa
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
@@ -167,6 +164,13 @@ class JdkInstaller : JdkInstallerBase() {
     }
 
   private fun defaultInstallDir(eel: EelApi): Path {
+    if (eel is LocalEelApi) {
+      val explicitHome = System.getProperty("jdk.downloader.home")
+      if (explicitHome != null) {
+        return Paths.get(explicitHome)
+      }
+    }
+
     val userHome = eel.fs.user.home
 
     val relativePath = EelPath.Relative.parse(
