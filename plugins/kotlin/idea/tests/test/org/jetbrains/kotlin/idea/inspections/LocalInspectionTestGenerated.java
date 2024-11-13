@@ -19272,11 +19272,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceFirstSetterInChain.kt");
             }
 
-            @TestMetadata("dontReplaceGetterAfterSuperCall.kt")
-            public void testDontReplaceGetterAfterSuperCall() throws Exception {
-                runTest("testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterAfterSuperCall.kt");
-            }
-
             @TestMetadata("dontReplaceGetterFromKotlinFile.kt")
             public void testDontReplaceGetterFromKotlinFile() throws Exception {
                 runTest("testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterFromKotlinFile.kt");

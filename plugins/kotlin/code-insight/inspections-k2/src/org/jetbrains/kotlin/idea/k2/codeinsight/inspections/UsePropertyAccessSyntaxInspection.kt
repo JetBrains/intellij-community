@@ -164,10 +164,8 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             return
         }
 
-        if (expressionParent is KtDotQualifiedExpression) {
-            if (expressionParent.receiverExpression is KtSuperExpression) {
+        if (callExpression.getQualifiedExpressionForSelector()?.receiverExpression is KtSuperExpression) {
                 return // Shouldn't suggest property accessors on "super"
-            }
         }
 
         if (propertyAccessorKind is PropertyAccessorKind.Setter) {

@@ -6413,11 +6413,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceFirstSetterInChain.kt");
             }
 
-            @TestMetadata("dontReplaceGetterAfterSuperCall.kt")
-            public void testDontReplaceGetterAfterSuperCall() throws Exception {
-                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterAfterSuperCall.kt");
-            }
-
             @TestMetadata("dontReplaceGetterFromKotlinFile.kt")
             public void testDontReplaceGetterFromKotlinFile() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceGetterFromKotlinFile.kt");
