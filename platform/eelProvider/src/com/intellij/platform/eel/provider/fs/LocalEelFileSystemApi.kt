@@ -15,9 +15,8 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
-import java.nio.file.attribute.DosFileAttributes
-import java.nio.file.attribute.PosixFileAttributes
-import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.*
+import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.io.path.exists
@@ -197,7 +196,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       if (targetNioPath.exists() && replaceExisting == EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE) {
         return EelFsResultImpl.Error(EelFsResultImpl.TargetAlreadyExists(target, "Target already exists"))
       }
-      EelPathUtils.walkingTransfer(sourceNioPath, targetNioPath, true)
+      EelPathUtils.walkingTransfer(sourceNioPath, targetNioPath, removeSource = true, copyAttributes = true)
     }
   }
 
@@ -358,8 +357,26 @@ abstract class PosixNioBasedEelFileSystemApi(
     options: EelFileSystemApi.ChangeAttributesOptions,
   ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
     wrapIntoEelResult {
-      TODO("Not yet implemented")
-      //Files.setAttribute(path.toNioPath(), )
+      val permissions = options.permissions as EelPosixFileInfo.Permissions?
+
+      val view = Files.getFileAttributeView(path.toNioPath(), PosixFileAttributeView::class.java, LinkOption.NOFOLLOW_LINKS)
+      check(view != null) { path.toString() }
+      val oldAttrs = view.readAttributes()
+      copyTimes(oldAttrs, options, view)
+
+      if (permissions != null) {
+        view.setPermissions(setOfNotNull(
+          if (permissions.ownerCanRead) PosixFilePermission.OWNER_READ else null,
+          if (permissions.ownerCanWrite) PosixFilePermission.OWNER_WRITE else null,
+          if (permissions.ownerCanExecute) PosixFilePermission.OWNER_EXECUTE else null,
+          if (permissions.groupCanRead) PosixFilePermission.GROUP_READ else null,
+          if (permissions.groupCanWrite) PosixFilePermission.GROUP_WRITE else null,
+          if (permissions.groupCanExecute) PosixFilePermission.GROUP_EXECUTE else null,
+          if (permissions.otherCanRead) PosixFilePermission.OTHERS_READ else null,
+          if (permissions.otherCanWrite) PosixFilePermission.OTHERS_WRITE else null,
+          if (permissions.otherCanExecute) PosixFilePermission.OTHERS_EXECUTE else null,
+        ))
+      }
     }
 
   override suspend fun createSymbolicLink(
@@ -397,10 +414,28 @@ abstract class WindowsNioBasedEelFileSystemApi(
     options: EelFileSystemApi.ChangeAttributesOptions,
   ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
     wrapIntoEelResult {
-      TODO("Not yet implemented")
-      //Files.setAttribute(path.toNioPath(), )
+      val view = Files.getFileAttributeView(path.toNioPath(), DosFileAttributeView::class.java, LinkOption.NOFOLLOW_LINKS)
+      check(view != null) { path.toString() }
+      val oldAttrs = view.readAttributes()
+      copyTimes(oldAttrs, options, view)
+
+      // TODO File permissions for windows.
     }
 }
+
+private fun copyTimes(
+  oldAttrs: BasicFileAttributes,
+  options: EelFileSystemApi.ChangeAttributesOptions,
+  view: BasicFileAttributeView,
+) {
+  val ctime = oldAttrs.creationTime()  // TODO ctime in Eel
+  val mtime = options.modificationTime?.toFileTime() ?: oldAttrs.lastModifiedTime()
+  val atime = options.accessTime?.toFileTime() ?: oldAttrs.lastAccessTime()
+  view.setTimes(ctime, mtime, atime)
+}
+
+private fun EelFileSystemApi.TimeSinceEpoch.toFileTime(): FileTime =
+  FileTime.from(Instant.ofEpochSecond(seconds.toLong(), nanoseconds.toLong()))
 
 private fun getFileAttributes(child: Path, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelFileInfo =
   if (SystemInfoRt.isWindows) {

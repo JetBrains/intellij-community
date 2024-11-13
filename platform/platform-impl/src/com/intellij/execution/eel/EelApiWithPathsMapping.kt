@@ -57,7 +57,7 @@ private class EelEphemeralRootAwareMapper(
     val tmpDir = eelApi.fs.createTemporaryDirectory(options).getOrThrow()
     val referencedPath = tmpDir.resolve(EelPath.Relative.parse(path.name))
 
-    EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), false)
+    EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), removeSource = false, copyAttributes = true)
 
     scope.awaitCancellationAndInvoke {
       when (val result = eelApi.fs.delete(tmpDir, true)) {

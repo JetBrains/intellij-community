@@ -47,16 +47,25 @@ internal class IjentNioPosixFileAttributeView(api: IjentFileSystemApi, path: Eel
     nioPath.nioFs.provider().setAttribute(nioPath, "posix:permissions", perms)
   }
 
-  override fun setGroup(group: GroupPrincipal?) {
-    TODO("Not yet implemented")
+  override fun setGroup(group: GroupPrincipal) {
+    if (group is EelPosixGroupPrincipal) {
+      nioPath.nioFs.provider().setAttribute(nioPath, "posix:group", group)
+    }
+    else {
+      throw UnsupportedOperationException("Unsupported group principal: $group")
+    }
   }
 
   override fun getOwner(): UserPrincipal? {
     return posixAttributes.owner()
   }
 
-  override fun setOwner(owner: UserPrincipal?) {
-    TODO("Not yet implemented")
+  override fun setOwner(owner: UserPrincipal) {
+    if (owner is EelPosixUserPrincipal) {
+      nioPath.nioFs.provider().setAttribute(nioPath, "posix:owner", owner)
+    }
+    else {
+      throw UnsupportedOperationException("Unsupported user principal: $owner")
+    }
   }
-
 }

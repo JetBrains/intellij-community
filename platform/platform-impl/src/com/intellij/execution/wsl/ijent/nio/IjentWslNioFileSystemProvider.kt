@@ -210,7 +210,7 @@ class IjentWslNioFileSystemProvider(
   }
 
   @OptIn(ExperimentalPathApi::class)
-  override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
+  override fun copy(source: Path, target: Path, vararg options: CopyOption) {
     val sourceWsl = WslPath.parseWindowsUncPath(source.root.toString())
     val targetWsl = WslPath.parseWindowsUncPath(target.root.toString())
     when {
@@ -224,12 +224,12 @@ class IjentWslNioFileSystemProvider(
       }
 
       else -> {
-        EelPathUtils.walkingTransfer(source, target, removeSource = false)
+        EelPathUtils.walkingTransfer(source, target, removeSource = false, copyAttributes = StandardCopyOption.COPY_ATTRIBUTES in options)
       }
     }
   }
 
-  override fun move(source: Path, target: Path, vararg options: CopyOption?) {
+  override fun move(source: Path, target: Path, vararg options: CopyOption) {
     val sourceWsl = WslPath.parseWindowsUncPath(source.root.toString())
     val targetWsl = WslPath.parseWindowsUncPath(target.root.toString())
     when {
@@ -243,7 +243,7 @@ class IjentWslNioFileSystemProvider(
       }
 
       else -> {
-        EelPathUtils.walkingTransfer(source, target, removeSource = true)
+        EelPathUtils.walkingTransfer(source, target, removeSource = true, copyAttributes = StandardCopyOption.COPY_ATTRIBUTES in options)
       }
     }
   }

@@ -489,7 +489,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
   }
 
-  override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption?) {
+  override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption) {
     val (viewName, requestedAttributes) = parseAttributesParameter(attribute)
     val nioFs = ensureIjentNioPath(path).nioFs
     val eelPath = ensurePathIsAbsolute(path.eelPath)
@@ -501,14 +501,39 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         "creationTime" -> value as FileTime // intentionally no-op, like in Java; but we need to throw CCE just in case
         else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
       }
-      "posix" -> when (requestedAttributes.singleOrNull()) {
-        "permissions" -> {
-          value as Set<*> // ClassCastException is expected
-          @Suppress("UNCHECKED_CAST") val mask = PosixFilePermissionsUtil.toUnixMode(value as Set<PosixFilePermission>)
-          val permissions = EelPosixFileInfoImpl.Permissions(0, 0, mask)
-          builder.permissions(permissions)
-        }
-        else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
+      "posix" -> {
+        val oldPermissions =
+          (readAttributes(path, PosixFileAttributes::class.java, *options) as IjentNioPosixFileAttributes).fileInfo.permissions
+        builder.permissions(when (requestedAttributes.singleOrNull()) {
+          "permissions" -> {
+            value as Set<*> // ClassCastException is expected
+            @Suppress("UNCHECKED_CAST") val mask = PosixFilePermissionsUtil.toUnixMode(value as Set<PosixFilePermission>)
+            EelPosixFileInfoImpl.Permissions(oldPermissions.owner, oldPermissions.group, mask)
+          }
+          "owner" -> {
+            if (value is EelPosixUserPrincipal) {
+              if (value.uid != oldPermissions.owner) {
+                TODO("Changing uid is not supported yet")
+              }
+              oldPermissions
+            }
+            else {
+              throw UnsupportedOperationException("Unsupported owner principal: $value")
+            }
+          }
+          "group" -> {
+            if (value is EelPosixGroupPrincipal) {
+              if (value.gid != oldPermissions.group) {
+                TODO("Changing gid is not supported yet")
+              }
+              oldPermissions
+            }
+            else {
+              throw java.lang.UnsupportedOperationException("Unsupported group principal: $value")
+            }
+          }
+          else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
+        })
       }
       else -> throw java.lang.IllegalArgumentException("Unrecognized attribute: $attribute")
     }
