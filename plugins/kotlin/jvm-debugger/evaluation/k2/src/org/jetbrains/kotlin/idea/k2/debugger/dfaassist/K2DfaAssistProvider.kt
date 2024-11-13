@@ -201,33 +201,44 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         if (inlined) {
                             name += KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
                         }
-                        val variable = proxy.visibleVariableByName(name)
-                        if (variable != null) {
-                            val value = postprocess(proxy.getVariableValue(variable))
+                        var variable = proxy.visibleVariableByName(name)
+                        var value: Value? = null
+                        if (variable == null) {
+                            val psi = symbol.psi
+                            if (psi != null && scope != null && psi.containingFile == scope.containingFile && !scope.isAncestor(psi)) {
+                                // Captured variable
+                                val capturedName = AsmUtil.CAPTURED_PREFIX + name
+                                variable = proxy.visibleVariableByName(capturedName)
+                                if (variable == null) {
+                                    // Captured variable in Kotlin 1.x
+                                    val thisObject = proxy.thisObject()
+                                    val thisType = thisObject?.referenceType()
+                                    if (thisType != null) {
+                                        val capturedField = DebuggerUtils.findField(thisType, capturedName)
+                                        if (capturedField != null) {
+                                            value = postprocess(thisObject.getValue(capturedField))
+                                        }
+                                    }
+                                } else {
+                                    value = postprocess(proxy.getVariableValue(variable))
+                                }
+                            }
+                        } else {
+                            value = postprocess(proxy.getVariableValue(variable))
+                        }
+                        if (value != null) {
                             val expectedType = symbol.returnType
                             if (inlined && value.type() is PrimitiveType && !(expectedType.isPrimitive && !expectedType.canBeNull)) {
                                 val typeKind = JvmPrimitiveTypeKind.getKindByName(value.type().name())
                                 if (typeKind != null) {
                                     val referenceType = proxy.virtualMachine.classesByName(typeKind.boxedFqn).firstOrNull()
                                     if (referenceType != null) {
-                                        return DfaAssistProvider.BoxedValue(value, referenceType)
+                                        value = DfaAssistProvider.BoxedValue(value, referenceType)
                                     }
                                 }
                             }
-                            return value
                         }
-                        val psi = symbol.psi
-                        if (psi != null && scope != null && psi.containingFile == scope.containingFile && !scope.isAncestor(psi)) {
-                            // Maybe captured variable
-                            val thisObject = proxy.thisObject()
-                            val thisType = thisObject?.referenceType()
-                            if (thisType != null) {
-                                val capturedField = thisType.fieldByName(AsmUtil.CAPTURED_PREFIX + name)
-                                if (capturedField != null) {
-                                    return postprocess(thisObject.getValue(capturedField))
-                                }
-                            }
-                        }
+                        return value
                     }
                 }
             }

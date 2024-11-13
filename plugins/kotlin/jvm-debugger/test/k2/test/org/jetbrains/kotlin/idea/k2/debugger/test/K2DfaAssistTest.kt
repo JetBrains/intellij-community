@@ -684,7 +684,7 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         val text = """
             fun compareUsingLambda(a: Int, b: Int) {
                 val lam = { it: Int ->
-                    <caret>if (it > a) println("bigger")
+                    <caret>if (it > a/*TRUE*/) println("bigger")
                 }
                 lam(b)
             }
@@ -693,13 +693,11 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
                 compareUsingLambda(1, 2)
             }
         """.trimIndent()
+        // This test is for Kotlin code compiled for K2 only
+        // While K1-compiled code should also be supported, we have no test for it
         doTest(text) { vm, frame ->
-            fun compareUsingLambda(a: Int, @Suppress("UNUSED_PARAMETER") b: Int) = { it: Int ->
-                if (it > a) println("bigger")
-            }
-            val lambda = compareUsingLambda(1, 2)
             frame.addVariable("it", MockIntegerValue(vm, 2))
-            frame.setThisValue(MockObjectReference.createObjectReference(lambda, lambda.javaClass, vm))
+            frame.addVariable("\$a", MockIntegerValue(vm,  1))
         }
     }
 
