@@ -1862,16 +1862,17 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         var path = getPath(e);
         if (model == null || path == null) return;
         var parent = path.getLastPathComponent();
-        if (cachedPresentation != null) {
-          for (int i : e.getChildIndices()) {
-            cachedPresentation.updateExpandedNodes(path.pathByAddingChild(model.getChild(parent, i)));
+        var childCount = model.getChildCount(parent);
+        for (int i : e.getChildIndices()) {
+          if (i < 0 || i >= childCount) continue; // Sanity check. This actually happens with some models.
+          var newChild = model.getChild(parent, i);
+          var childPath = path.pathByAddingChild(newChild);
+          if (cachedPresentation != null) {
+            cachedPresentation.updateExpandedNodes(childPath);
           }
-        }
-        for (Object newChild : e.getChildren()) {
           if (newChild instanceof TreeNodeViewModel) {
             applyViewModelChange(() -> {
-              var nodePath = path.pathByAddingChild(newChild);
-              applyNewNodeExpandedState(model, nodePath);
+              applyNewNodeExpandedState(model, childPath);
             });
           }
         }
@@ -1882,7 +1883,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         var isExpanded = node.stateSnapshot().isExpanded();
         expandImpl.setExpandedStateFromViewModel(path, isExpanded);
         if (isExpanded) {
-          for (int i = 0; i < model.getChildCount(node); i++) {
+          var childCount = model.getChildCount(node);
+          for (int i = 0; i < childCount; i++) {
             var child = model.getChild(node, i);
             if (child instanceof TreeNodeViewModel) {
               applyNewNodeExpandedState(model, path.pathByAddingChild(child));
