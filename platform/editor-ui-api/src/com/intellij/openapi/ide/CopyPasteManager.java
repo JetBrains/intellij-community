@@ -16,6 +16,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.EventListener;
 
+@ApiStatus.NonExtendable
 public abstract class CopyPasteManager {
   private static final Logger LOG = Logger.getInstance(CopyPasteManager.class);
 
