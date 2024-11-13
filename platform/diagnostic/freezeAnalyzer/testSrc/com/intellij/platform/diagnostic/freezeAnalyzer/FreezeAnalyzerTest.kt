@@ -122,6 +122,12 @@ class FreezeAnalyzerTest {
   }
 
   @Test
+  fun testNoFreeze2() {
+    val threadDump = File(this::class.java.classLoader.getResource("freezes/noFreeze/lowMemory2.txt")!!.path).toPath().readText().replace("2.", ".")
+    FreezeAnalyzer.analyzeFreeze(threadDump, testName = "kotlin/testCase").shouldBe(null)
+  }
+
+  @Test
   fun testNoFreezeOutsideOfTest() {
     val threadDump = File(this::class.java.classLoader.getResource("freezes/noFreeze/lowMemory.txt")!!.path).toPath().readText().replace("2.", ".")
     FreezeAnalyzer.analyzeFreeze(threadDump, testName = null)?.shouldBe(null)
