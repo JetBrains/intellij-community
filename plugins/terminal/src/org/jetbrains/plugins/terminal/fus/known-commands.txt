@@ -1,70 +1,305 @@
+a2enmod
+a2ensite
+a2query
+aapt
+ab
+abduco
+abigen
+abrt-cli
+abrt-harvest-vmcore
+abrt-retrace-client
+abrt-watch-log
+abrt-action-analyze-backtrace
+abrt-action-analyze-c
+abrt-action-analyze-ccpp
+abrt-action-analyze-oops
+abrt-action-analyze-python
+abrt-action-analyze-vmcore
+abrt-action-analyze-xorg
+abrt-action-generate-core-backtrace
+abrt-action-notify
+abrt-action-save-package-data
+abrt-action-trim-files
+abrt-applet
+abrt-cli
+abrt-harvest-vmcore
+abrt-server
+abrt-watch-log
+abrt-xorg
+ac
+ack
 act
 adb
+add-apt-repository
+adduser
+addr2line
 adr
 afplay
 aftman
 ag
+agave
+age
+agent
+aggregate
+aglio
 agrippa
+aircrack-ng
 airflow
+airspec
+airstrike
+airtime-analyzer
+aisleriot
+ajenti
+akamai
+akonadictl
+alacritty
 alias
 aliases
+aliyun-cli
+alpine
+amass
+amazon-efs-utils
+amazon-ssm-agent
+ammonite
 amplify
+anchore
+android
+android-tools
+angband
+angular
+angular-cli
 ansible
 ansible-config
 ansible-doc
 ansible-galaxy
+ansible-inventory
 ansible-lint
 ansible-playbook
+ansible-pull
+ansible-vault
 ant
 appwrite
+antlr
+antibody
+anyenv
+apachectl
+apk
+apktool
+apollo
+app-builder
+appium
+appium-doctor
+appium-inspector
+appman
+apport-cli
+apport-unpack
+appscale
+appstreamcli
 apt
+apt-add-repository
 apt-cache
+apt-cdrom
 apt-get
+apt-key
+apt-mark
+aptitude
+aptly
+ar
+arangosh
+arc
 arch
+arduino
+arduino-cli
 argo
+asr
+argocd
+argo-rollouts
+argo-workflows
+argoproj
+argus
+aria2c
+ark
+arkade
+arm-linux-gnueabihf-gcc
+arm-none-eabi-gcc
+arm-none-eabi-objcopy
+arm-none-eabi-size
+arp
+arp-scan
+artillery
+as
 asar
 asciinema
+asciidoctor
 asdf
 asr
+asm2wasm
+asmc
+aspell
 assimp
 assoc
+astronomer
 astro
+astyle
+asyncapi
+asymptote
+at
+atc
+atlantis
 atlas
+atomicparsley
+atop
 attrib
+audacity
+augeas
+aurora
 authchanger
+autoexpect
 autojump
+automake
+automysqlbackup
+autopoint
+autorest
+autossh
+autotune
+autovenv
+awk
 aws
+aws-okta
 aws-vault
+awscli
 awsume
 az
+azcopy
 babel
+babel-node
+babel-plugin
+babel-traverse
+babl
+backstop
+backup
+backupninja
+badblocks
+bake
+balena
 banner
 base32
 base64
 basename
 basenc
 bash
+bash-completion
+bash-it
+bashdb
+bashrc
 bat
+batctl
 bazel
+bcd
 bc
 bcd
 black
+br
+build-storybook
+bun
+bce
+bce-command
+bch
+bcmath
+bcp
+bdf2psf
+be
+beadm
+beanstalkd
+beep
+berks
+berkshelf
+bettercap
+bfg
+bfgminer
+bg
+bicep
+bibtex
+bibtool
+bikeshed
+binwalk
+bison
+bit
+bitrise
+bitwarden
+bjarne
+blade
+blade-cli
+bless
 blitz
+blkid
+blockdev
+bloaty
+bmon
+bochs
+bokeh
+bolt
 bosh
+bower
+box
+bpytop
 br
 brew
+brew cask
+brew services
+bridgecrew
+brigade
+brightnessctl
+brotli
 broot
 browser-sync
+browserify
+browsertime
+brunch
+bsdtar
+bshed
+bt
+bt-monitor
 btop
 build-storybook
 bun
+buildctl
+buildkite-agent
+buildozer
+buildah
+bulk-extractor
 bundle
+bundler
+bunyan
+bup
+bwa
 bw
+byobu
+bzip2
 c++
+cabal
+cabal-install
+cacert
+cadvisor
+caesarcipher
 caffeinate
+caffeine
+cairo-dock
 cal
+calc
+calibre
+calicoctl
+callgrind
+calm
+camo
+camp
+can-utils
 cap
 capacitor
+capistrano
+caprover
+captain
+car
 cargo
 cargo add
 cargo bench
@@ -98,36 +333,125 @@ cargo vendor
 cargo verify-project
 cargo version
 cat
+catalina
+catimg
+cavif
+cbconsole
+ccls
+cc
+ccache
+ccal
+ccat
+ccrypt
+ccze
 cd
+cdargs
+cdb
+cdbs
+cdf
 cdk
 cdk8s
+cdktf
+celery
+celestia-node
+certbot
+cipher
+clilol
 cf
+cfssl
+cftp
+cfn-lint
+cfn-nag
+cfn-tail
+cfn-validate
+cfn_nag
+cfngin
+chage
 charm
+chartmuseum
+check
+checkinstall
 checkov
+cheerio
 chezmoi
+chef
+chef-client
+chef-run
+chisel
 chkdsk
 chmod
+choosenim
+choco
 chown
+chruby
 chsh
+ci
 cicada
 cipher
 circleci
+circuitbreaker
+cisco
+civicrm
+clair
+clairctl
+clamscan
 clang
 clang++
+clangd
+class-dump
+claudia
+claws-mail
+clay
+clean
+clean-css
 clear
+clerk
+clif
 cliff-jumper
+clinfo
 clilol
+clion
+clj
+cloc
+clockdiff
 clojure
+clojurescript
+cloud-nuke
+cloudctl
 cloudflared
+cloudflare
+cloudfoundry
+cloudmonkey
+cloudsql-proxy
+clp
 cls
 cmake
+cmatrix
 cmd
+cmdtest
+cmocka
+cmus
+cni
 coda
+cobalt
+cobaltstrike
+cocoapods
 code
 code-insiders
+codeceptjs
 codesign
+coffee
+coffeescript
+cog
+col
+collectd
+colordiff
+column
+combinepdf
 command
+coda
 compact
+comms
 composer
 composer audit
 composer bump
@@ -159,15 +483,41 @@ composer status
 composer suggests
 composer update
 composer validate
+conan
+concurrency
+concourse
 conda
+connect
+connect-proxy
+consul
+consul-template
+containerd
+containerd-shim
+convert
+cookiecutter
+coq
 copilot
 copy
 copyfile
 copypath
 cordova
+corepack
+coreutils
+corkscrew
+corral
 cosign
+cosmic-ray
 cot
 cp
+cpanm
+cpio
+cppcheck
+cpphs
+cprehash
+cproto
+cqlsh
+cradle
+crane
 create-next-app
 create-nx-workspace
 create-react-app
@@ -176,332 +526,1313 @@ create-remix
 create-t3-app
 create-video
 create-web3-frontend
+credo
+crictl
+cripple
+critical
+cron
 croc
 crontab
+crow
+crush
+cry
+cryfs
+cryptsetup
+crypttool
+cscope
 csdx
+csh
+csso
+cssnano
+cssmin
+csvkit
+csvsql
+ctags
+ctop
+ctrlp
+ctrun
+cucumber
 curl
+curl ifconfig.me
+curl -I
+curl -sL | grep
+curl --data
 cut
+cv
+cvm
+cvs
+cvs2git
+cwebp
+cxxtestgen
+cygpath
+cypher-shell
 cypress
+cython
+d++
+daemon
+daemonize
+dagit
+dapr
+darkstat
 dart
 date
+dart pub get
+dart run
+dart test
+dash
+dash-cli
+datafusion
+datadog
+datadog-agent
+datamash
+dataplane
 dateseq
 datree
 dbt
+dc
 dcli
+dcat
+dcd
+dconf
+dctl
 dd
+ddclient
+ddd
 ddev
 ddosify
+debug
+debugfs
+decipher
+debootstrap
 defaultbrowser
 defaults
+dehydrated
+deja-dup
 degit
 del
+deltacopy
+delta
 deno
+deno bundle
+deno cache
+deno compile
+deno doc
+deno fmt
+deno info
+deno install
+deno lint
+deno run
+deno test
+deno upgrade
 deployctl
+depstar
+derek
 deta
+devd
+devspace
+dex
 df
+dfu-programmer
+dfu-util
+dhclient
+dhcpdump
+dhcping
+dhcpstarv
 diff
+diff-so-fancy
+diff3
+diffpdf
 dig
+dig mx
+dig any
+dig +short
+digiKam
 dir
+dirb
+dirbsearch
+dircolors
 direnv
 dirname
+dirs
 ditto
+dive
 django-admin
+django-admin collectstatic
+django-admin createsuperuser
+django-admin makemigrations
+django-admin migrate
+django-admin runserver
+django-admin startapp
+django-admin startproject
+dmesg
+dmidecode
+dmitool
+dnf
+dnscrypt-proxy
+dnsmasq
+dnstracer
 do
 do-release-upgrade
 docker
+docker build
 docker compose
 docker-compose
+docker-compose down
+docker-compose up
+docker exec
+docker images
+docker info
+docker inspect
+docker login
+docker logs
+docker ps
+docker pull
+docker push
+docker run
+docker stop
+docker swarm
+dockerd
+dockerd-rootless
+dockle
 doctl
 dog
+dolphin
+dompdf
+done
+doorkeeper
+dopewars
 doppler
 dos2unix
+doskey
 dotenv
 dotenv-vault
 dotnet
+dotnet build
+dotnet clean
+dotnet ef database update
+dotnet ef migrations add
+dotnet new blazorserver
+dotnet new console
+dotnet new mvc
+dotnet new webapi
+dotnet publish
+dotnet restore
+dotnet run
+dotnet test
+dotnet tool install
+dotnet tool update
+dotnet watch run
 dotslash
+doxygen
 dprint
+dracut
+drag
+drain
+drawio
+drone
+dropbox
 drush
 dscacheutil
 dscl
 dtm
 du
+duck
+dumpcap
+duplicity
 dust
+dvips
+dwm
+dx
+dy
+dynatrace
+e2fsck
 eas
 eb
+ebtables
 echo
+ecj
+eclim
+ecryptfs
+ecryptfs-migrate-home
+ecryptfs-recover-private
+ecspresso
+ed
+edb
+edge
+editcap
+editorconfig
 egrep
 electron
 eleventy
 elif
+eiffel
+eject
+elasticsearch
 elixir
+elixir iex -S mix
+elixir mix
+elixir mix deps.get
+elixir mix dialyzer
+elixir mix ecto.migrate
+elixir mix phx.new
+elixir mix phx.server
+elixir mix test
 elm
 elm-format
 elm-json
+elm make
+elm reactor
 elm-review
+elm test
 else
 emacs
 encore
+emcc
+emctl
+emerge
+emulator
+emoji
+emojify
+emulator
+enable
+encfs
+encode
+encrypt
+encscript
+enlighter
+entr
 env
 envchain
+envoy
+envsubst
+epmd
+epubcheck
+erb
+erlang
+erlc
 esbuild
+esbuild build
+esbuild bundle
+esbuild serve
+esbuild watch
 eslint
+eslint --cache
+eslint --debug
+eslint --ext .js,.jsx,.ts,.tsx
+eslint --fix
+eslint --ignore-path
+espeak
+espanso
+espctl
+esptool
+etcd
+ethtool
+ettercap
+eval
+eventcreate
+ex
 exa
+exabgp
 exec
+exiftool
 exercism
 exit
 expand
+expect
+explorer
 expo
 expo-cli
+expo build:android
+expo build:ios
+expo eject
+expo init
+expo install
+expo prebuild
+expo publish
+expo run:android
+expo run:ios
+expo start
+expo update
+expo upgrade
 export
+expr
+exuberant-ctags
+fabric
+faas-cli
+faas-cli deploy
+faas-cli invoke
+faas-cli remove
+faas-cli up
+faas-idler
+factor
+facter
+fail2ban
+fakeroot
+fast
+fastapi
+fastboot
 fastlane
+fastqc
+fasttext
+fastx-toolkit
 fastly
+fasd
+fbi
+fbset
 fd
 fdisk
 ffmpeg
+ffplay
+ffprobe
+fg
 fgrep
+fig
+figlet
 file
+filebeat
+filezilla
 fin
 find
+findmnt
+firecracker
 firebase
+firebase database:get
+firebase deploy
+firebase emulators:start
+firebase firestore:indexes
+firebase functions:log
+firebase hosting:disable
+firebase init
+firebase login
+firebase logout
+firebase serve
 firefox
+firewall-cmd
 fish
+fish_config
 fisher
+flac
+flake8
+flatpak
+flatcar-installer
+fleet
+flex
+flickity
+flightplan
+flink
+flips
+float
+floor
+flow
 flutter
+flutter analyze
+flutter build
+flutter create
+flutter doctor
+flutter format
+flutter install
+flutter pub get
+flutter run
+flutter test
+flutter upgrade
+flux
+flux bootstrap
+flux create source
+flux export
+flux get hr
+flux get ks
+flux get sources
+flux get sources git
+flux install
+flux logs
+flux reconcile
+flux suspend
 fly
 flyctl
+flyctl apps list
+flyctl deploy
+flyctl launch
+flyctl logs
+flyctl monitor
+flyctl scale
+flyctl secrets
+flyctl status
+flyway
+flyway baseline
+flyway clean
+flyway info
+flyway migrate
+flyway repair
+flyway validate
 fmt
 fnm
 fold
 for
+forego
+foreman
 forge
 format
+fortio
+fortune
+fping
 free
+fsck
+fsharp
+fsharp dotnet fsi
+fsharp dotnet new
+fsharp dotnet run
+fsharp fsi
+fswatch
+ftrace
+ftp
+fuser
+fuse
+fuzz
 fvm
 fzf
 fzf-tmux
 g++
+g++-multilib
+gadmin-samba
+gai.conf
+galen
+galera_new_cluster
 ganache-cli
+ganglia
+gap
+garden
+gatling
+gauge
+gawk
 gatsby
 gcc
 gcloud
+gcloud-sdk
+gcp
+gcsfuse
 gdb
+gdbserver
+gdc
+geckodriver
+gedit
 gem
+gem build
+gem install
+gem list
+gem push
+gem uninstall
+gem update
+genkernel
+genymotion
+geoiplookup
+geoserver
 gh
+gh actions
+ghc
+ghci
+ghcup
+gh issue close
+gh issue create
+gh issue list
+gh issue status
+ghk
+gh pr create
+gh pr list
+gh pr merge
+gh pr status
 ghq
+ghost
+ghostscript
+gh pr status
+gh repo clone
+gh repo create
+gh repo fork
+gh repo view
+ghz
 gibo
+gifsicle
 git
 git add
 git apply
+git add -p
+git add .
+git add -A
+git am
+git annotate
+git archive
 git bisect
+git blame
 git branch
+git branch -a
+git branch -d
+git branch --merged
+git bundle
 git checkout
+git checkout -b
+git cherry
 git cherry-pick
 git clean
 git clone
 git commit
+git commit -m
+git commit --amend
 git config
+git config --global
+git describe
 git diff
+git diff --staged
 git difftool
 git fetch
+git fetch --all
+git filter-branch
+git format-patch
+git fsck
 git gc
 git grep
+git gui
 git help
 git init
+gitk
 git log
+git log --oneline
+git log --graph
+git lfs
+git ls-files
+git ls-remote
+git ls-tree
 git merge
 git mergetool
 git mv
 git prune
 git pull
+git pull --rebase
 git push
+git push --force
+git push --tags
 git rebase
+git rebase -i
+git reflog
+git remote
+git remote -v
+git remote add
+git remote remove
+git remote rename
+git remote show
 git repack
+git replace
+git request-pull
 git reset
+git reset --hard
+git reset HEAD~1
 git restore
 git revert
 git rm
+git shortlog
 git show
+git show-ref
 git stash
+git stash list
+git stash apply
+git stash pop
+git stash drop
 git status
 git submodule
+git submodule add
+git submodule init
+git submodule update
+git submodule sync
+git submodule foreach
+git svn
 git switch
 git tag
+git tag -a
+git tag -d
+git tag -l
 git version
+git whatchanged
+git worktree
+git-annex
+git-crypt
+git-extras
 git-cliff
+git-profile
 git-flow
 git-profile
+git-lfs
+git-secret
+git-subrepo
+git-tfs
+git-svn
+gitea
 github
 gitk
 glow
 gltfjsx
+github-cli
+github-desktop
+gitleaks
+gitlab-runner
+gjs
+gkrellm
+glances
+gleam
+glib-compile-schemas
+glib-genmarshal
+global
+globus
+glslangValidator
+glTF-SDK
+glusterfs
+gmailctl
+gmic
+gmusicbrowser
+gnuplot
 go
+go build
+go clean
+go doc
+go env
+go fix
+go fmt
+go generate
+go get
 goctl
 googler
+goimports
+golangci-lint
+goleft
+golint
+gomobile
+gometalinter
+gometalinter.v2
+gomplate
+gopherjs
+gopls
+goproxy
 goreleaser
+go run
+go sum
+go test
+go tool
+go vet
+go version
 goto
+goimports
 gource
+gparted
 gpg
+gpg-agent
+gpgconf
+gpg-connect-agent
+gpgkey2ssh
+gphoto2
+gprof
 gradle
+gradle assemble
+gradle bootRun
+gradle build
+gradle buildship
+gradle check
+gradle clean
+gradle dependencies
+gradle eclipse
+gradle init
+gradle install
+gradle run
+gradle tasks
+gradle test
+gradle wrapper
+gradle --daemon
+grafana
+graph
 graphcdn
+graphviz
 grep
+grep -i
+grep -r
+grep --color
+grip
+gron
+groff
+groot
+groovy
+growingio
+grpcui
 grex
 grunt
+grunt build
+grunt clean
+grunt install
+grunt run
+grunt test
+gs
+gsettings
+gtable
+gtk-launch
+gtop
+guake
+guard
 gt
 gulp
+gulp build
+gulp clean
+gulp compress
+gulp debug
+gulp deploy
+gulp lint
+gulp serve
+gulp test
+gulp watch
+gunicorn
+gvm
+gw
+gyb
+gzip
+hadoop
+haproxy
 gum
 hardhat
+hardhat accounts
+hardhat compile
+hardhat debug
+hardhat deploy
+hardhat node
+hardhat run
+hardhat test
+hardhat verify
+harfbuzz
+hashcat
+hashicorp-vault
+hashpump
 hasura
+hbase
 hb-service
 head
 helm
 helmfile
+helm install
+helm repo add
+helm repo update
+helm uninstall
+helm upgrade
 help
 heroku
+heroku-cli
 hexo
 hg
+highlight
 history
+homebrew
 homey
 hop
 hostname
+host
 htop
 http
+httpd
+httpie
 https
+httpstat
 httpy
 hub
 hugo
+hwinfo
 hx
 hyper
 hyperfine
+hyperspace
+i3
+i3blocks
+i3status
+ibmcloud
 ibus
 iconv
 id
+idevicesyslog
 iex
 if
 ifconfig
+ifconfig eth0 down
+ifconfig eth0 up
+ifconfig | grep inet
+iftop
 ignite-cli
+iio
+imagemagick
+imapfilter
+imgur-screenshot
+imgur-uploader
+import
+inotifywait
+info
+inflect
+ingress-nginx
 index
 install
+install-name-tool
+install-sh
+intellij
+ionice
 ionic
 ip
+ip6tables
+ipadm
 ipatool
 ipconfig
+ipconfig /all
+ipconfig /flushdns
+ipconfig /release
+ipconfig /renew
+iperf
+iperf3
+ipfs
+ipmi
+ipmitool
+ipod
+iptables
+iptraf
+iputils
+irb
+irssi
+iso
+iso-mount
+istioctl
+iterm
+itk
 j
+jabba
+jackd
+jad
+jake
+jarsigner
 java
 javac
+javadoc
+javap
+jcmd
+jconsole
+jdb
 jenv
+jflex
+jfsck
+jhat
+jinfo
+jjs
+jlink
+jmap
+jmc
 jest
 jmeter
+jobs
 join
+jolokia
 jq
+jruby
+js
+js-beautify
+jsdoc
+jshint
+json-server
+json_pp
+jsonlint
+jspm
+jsrun
+jshell
+jsp
+jstack
+jstat
+jstatd
+juju
 julia
 jupyter
+jupyter notebook
 just
 k3d
+k3s
 k6
 k9s
+kafkacat
 kafkactl
+kale
+kali
 karma
+kawa
+kcadm
+kcadm.sh
+kclean
+kctl
+kustomize
 kdoctor
+keda
+keybase
+keycloak
 keytool
+kex
 kill
 killall
 kind
+kindctl
+kinit
+kitchen
+kitten
 kitty
 klist
+km
+knife
+kn
+knative
+knot-resolver
+knox
+kns
+kops
+kotlin
+kpt
+krb5
+kris
+ksh
+kswitch
+ksync
+ks
+kubebuilder
 knex
 kool
 kubecolor
 kubectl
+kubectl apply
+kubectl create
+kubectl delete
+kubectl describe
+kubectl exec
+kubectl get
+kubectl get pods
+kubectl logs
+kubectl port-forward
+kubectl scale
+kubectl top
+kubectl version
 kubectx
 kubens
+kubescape
+kubesec
+kubeseal
+kubeshark
+kubetail
+kubevela
+kubeverify
+kubevirt
+kudo
+kustomize
+kwok
+l
+lame
+languagetool
 laravel
+last
+lastpass
 launchctl
+lazydocker
+lazygit
+lbzip2
+lcc
+lctl
+lctl list_param
+lctl set_param
+lctl set_trace
+lctl help
+ldapadd
+ldapdelete
+ldapmodify
+ldapsearch
 ldd
 leaf
+leanote
+ledger
 lerna
 less
+lesspipe
+let
+lf
+lftp
+lg
+libguestfs
+libinput
+librarian
+libtool
+libuv
+light
+lightning-cli
+lighttpd
 lima
 limactl
+linkerd
+linkerd-top
+linkerd-viz
+linklint
+linode-cli
+linuxbrew
+linuxdeploy
+linuxdeployqt
+liquidctl
+liquibase
+litecli
+llvm-ar
+llvm-nm
+llvm-objdump
+llvm-strings
 ll
 ln
+locate
 locust
+log
+logcat
+logrotate
+logstash
 login
+logoff
+logout
+loki
+lolcat
 lp
 lpass
+lparstat
+lpstat
+lrun
 ls
 lsblk
+lscpu
 lsd
 lsof
+lstat
+ltsp
+ltrace
+lttng
+lualatex
+lua
 luz
+lvm
+lynx
+lz4
 m
+macchanger
 mackup
+macpass
 magento
 maigret
+mail
+mailx
 mailsy
 make
+makecert
 mamba
 man
+man-db
+manpath
+map
+markdown
 mas
 mask
+masscan
+matplotlib
+maven
+mavproxy
+mavintegration
+mblaze
+mbuffer
 mc
+mcedit
+md5sum
+mdadm
+mdbook
 md
 mdfind
 mdls
+mdocml
+mdoclint
+mdp
+mdspell
+mdv
+medusa
+megacli
+meld
+memcached
+memtester
+mercurial
+mergemachine
+mergerfs
+mermaid
+meson
+mesosphere
 meroxa
 meteor
+metasploit
+mftrace
+mftutil
+mg
 mgnl
 micro
+microk8s
+microk8s enable
+microk8s disable
+microk8s status
+microk8s kubectl
+microk8s start
+microk8s stop
+microstack
+midnight-commander
+midori
+migrate
 mikro-orm
+milpa
+minicom
 minectl
+minetest
+minicom
 minikube
+minikube addons enable
+minikube dashboard
+minikube delete
+minikube service
+minio
+mint
+mintty
+minu
 mix
 mkdir
 mkdocs
 mkfifo
+mkfs
 mkinitcpio
+mkisofs
 mknod
+mlflow
+mlocate
+mlr
+mlton
+mmc
+mmls
+mmv
 mob
+mock
 mocha
+modprobe
 mode
+mojo
 molecule
+monit
+mongo
 mongocli
+mongoexport
 mongoimport
+mongorestore
 mongosh
 more
 mosh
+mosquitto_pub
+mosquitto_sub
 mount
 move
+mpack
+mpc
+mpd
+mpeg123
+mpg123
+mpstat
 msbuild
+msfconsole
+msgfmt
+msmtp
+mt
+multitail
+multivault
 multipass
+munin
 mv
 mvn
 mysql
+mysqladmin
+mysqlimport
+mysqlpump
 n
 nano
+nala
+nativefier
+nats
+nats-server
+nats-streaming-server
+ncat
+ncdu
+ncl
+ncm
+ncmatrix
 nativescript
 nc
+nccopy
+nces
+nco
+ncpdp
+ncrack
+ncurses
+ndisasm
+ndk-build
+ne
+near
+neat
 ncal
 ncu
 neofetch
+neon
+neovim
 nest
 net
+netcat
+netcat-traditional
+netctl
+netdata
 netlify
+netlify-cli
+netplan
 netsh
+netsh advfirewall
+netsh int ip reset
+netsh wlan show
 netstat
+netstat -an
+netstat -i
+netstat -s
 networkQuality
+networkctl
+networkmanager
 newman
 next
 nextflow
 ng
 nginx
+nginx-debug
 ngrok
+nickle
+ninja
+nix
+nix-env
+nix-shell
+nixos-rebuild
+nixops
+nmap
+nmcli
+nmon
 nhost
 ni
 nl
 nocorrect
 node
 nodejs
+nodemon
 noglob
+nohup
+nomad
+nopaste
+notepad
+nova
+now
 northflank
 np
 npm
@@ -509,56 +1840,174 @@ npm install
 npm run
 npm test
 npx
+nsenter
 nr
 nrm
 ns
 nslookup
+nslookup set
+nssm
+ntop
 nu
+nuget
+nuke
+numfmt
+nvcc
+nvidia-docker
+nvidia-smi
 nuxi
 nuxt
 nvim
 nvm
 nx
+nyc
+nym
 nylas
+oath-toolkit
+obfsproxy
+obs
+obs-cli
+obxprop
+oc
+ocaml
+ocamlc
+ocamlopt
+oclock
+ocrmypdf
+octave
+oculus
+oculus-debug-tool
 od
+odin
 oh-my-posh
+oh-my-zsh
 okta
 okteto
+omf
 omz
 onboardbase
+onefetch
 op
 opa
+opa-envoy
 open
+open-vm-tools
+openapi-generator-cli
+openapi
+opencpu
+openconnect
+openfaas-cli
+openfortivpn
+openhab-cli
+openid-connect
+openjdk
+openjdk-java
+openjdk-jre
+openldap
+opennebula-cli
+openresty
+openscad
+openshift
+openshift-install
+openssl
+ops
+opkg
+opkg-cl
+opkg-install
+opkg-key
+opkg-update
+ops-manager
+ora2pg
+orbit
+orc
+orc-tools
+os-prober
 osascript
+osc
+osc-cli
 osqueryi
+osslsigncode
+otool
+ovs-dpctl
+ovs-vsctl
+ovftool
+p10k
+pacaur
 pacman
+packer
+packer build
+packer validate
+packer fix
+packer inspect
+pacman-key
+pagekite
 pageres
 palera1n
 pandoc
 paper
+parallel
+parquet-tools
+parted
 pass
 passwd
 paste
 pathchk
 pathping
+pax
+pbench
+pbcopy
+pbpaste
+pdb
+pdfgrep
+pdfinfo
+pdfjam
 pause
 pdfunite
+pdftk
+peg
+perl
+perlbrew
+perltidy
 pg_dump
+pg_restore
+pgbench
 pgcli
+pgrep
 php
+php-fpm
 phpunit
 phpunit-watcher
+pick
+picocom
+pidcat
+pidgin
+pigz
 ping
+ping -c
+ping -n
+ping -t
 pip
 pip3
 pipenv
 pipx
+pkg
 pkg-config
 pkgutil
 pkill
+plantuml
+platformio
+play
+plenv
+plex
+plink
+plop
+plug
+pluto
+ply
 playwright
 pm2
 pmset
+pngcrush
 pnpm
 pnpm install
 pnpm run
@@ -566,123 +2015,348 @@ pnpm test
 pnpx
 pocketbase
 pod
+podman
+podman-compose
+podman-remote
 poetry
+polarion
+popd
+port
+portainer
+porter
+postcss
+postgres
+postman
+postman-cli
+pow
+poweroff
+powerman
 powershell
+powertop
+pp
+pprof
 pre-commit
 preset
 prettier
+prezto
+prince
 prisma
 pro
+procs
+proj
 projj
+prometheus
+promtool
 prompt
+proof-general
+prop-types
+protoc
+protofmt
+prowl
 ps
 pscale
 psql
+pssh
 publish
 pulumi
+puppet
+puppetserver
 pushd
 pwd
 pwsh
+py
+pycodestyle
 pyenv
+pylint
+pymol
+pypy
 pytest
 python
 python3
+q
+qemu
+qmake
 qodana
+qrcode
+qri
+qtcreator
 quasar
+quick
 quickmail
+quilt
+qutebrowser
 r
+rack
+rackspace-cli
 rails
+rails new
+rails s
+rails c
+rails db:migrate
 railway
+rain
 rake
 rancher
+rancher-desktop
+ranger
 rbenv
 rclone
 rd
+react
 react-native
+readelf
 readlink
+realpath
+rebar
+redis
+redis-cli
+redis-server
+redshift
+reflex
 redwood
 reg
+regex
+regtest
 remix
 remotion
+renice
 repeat
+repo
+rest
+restic
+resty
 rg
 rgrep
+riak
 rich
+rick
+rkt
+rlwrap
 rm
 rmdir
+rncli
 robot
 rojo
 rollup
 rome
+rootlesskit
+ros
+ros2
+rosbag
+rosbuild
+rosdep
+rosrun
 route
+rpm
+rpmbuild
+rs
+rsnapshot
+rspec
 rscript
 rsync
+rsync -avz
+rsync --delete
+rsync -e ssh
+rtorrent
 ruby
 ruff
+run
+run-parts
 rush
 rushx
 rustc
+rustdoc
+rustfmt
 rustup
 rvm
+s3cmd
+s4cmd
+s6-svscan
+s6-svstat
+s6-supervise
+s6-tcpserver
 sam
+samtools
 sanity
 sapphire
+saron
+sass
+sassc
+savelogs
+saw
+sbcl
 sc
+scala
+scaffold
+scan
+scantailor
+scdl
 scc
+sceptre
 scp
+scp -P
+scp -r
 screen
+screenshot
+script
+scriptreplay
+scrollphat
+scrot
+scrub
+scully
+scw
+sd
+sdb
+sdiff
 sed
+sed -i
+seesaw
+selecta
+selenium
+semver
+sencha
+sendmail
 seq
 sequelize
 serve
 serverless
 service
+service --status-all
+service restart
+service start
+service stop
+service status
 set
 sfdx
 sftp
+sg
 sh
 sha1sum
+sha256sum
+sha512sum
+shasum
+sharp
+shellcheck
+shellenv
+shellexpand
+shfmt
+shift
+shopt
 shortcuts
 shred
 shutdown
 sidekiq
+sigil
+signify
 simctl
+simplehttp2server
 sips
+sitecake
+six
+sk
+skaffold
+skaffold-debug
+skaffold-run
+sketch
 sl
+slack
+slapd
+sleep
+slim
+sln
+slurm
+slush
+smbclient
+smee
+smimesign
+smit
+smtpd
+snakemake
+snap
+snapcraft
 sls
 snaplet
+socat
+soap
+socat
+sockit
+softu2f
 softwareupdate
+solana
+solc
+solidity
+solr
+sonar-scanner
+sonobuoy
 sort
 source
 space
+spacevim
+spark
+spark-shell
+spark-submit
+spectrum
 speedtest
 speedtest-cli
+sphinx
+splunk
 splash
 split
 spotify
 spring
+spring-boot
 sqlfluff
 sqlite3
 src
 ssh
+ssh-add
+ssh-agent
+ssh -i
 ssh-keygen
+ssh-keyscan
+ssh -p
+ssh -t
+sshd
+sshfs
+ss
+sstp-client
 st2
+stack
+staff
+stardog
 sta
 start
 start-storybook
 stat
 steadybit
 stencil
+step
+step-ca
 stepzen
+stern
+steward
+stf
+stivale
+stl
 stow
+strace
+strace -f
+strace -p
 streamlit
+stress
 stripe
+stty
 su
 subl
+sublist3r
 subst
 sudo
+suexec
 suitecloud
+supervisorctl
+supervisord
 supabase
+svc
 surreal
 svn
 svn checkout
@@ -692,13 +2366,31 @@ svn update
 svokit
 svtplay-dl
 sw_vers
+swagger
+swagger-cli
 swagger-typescript-api
 swc
 swift
+swiftc
+swiftlint
+swt
 symfony
+symfony console
+symfony new
+syncthing
+syncthing-cli
+sysbench
 sysctl
+sysctl -a
+sysctl -w
 systemctl
+systemctl enable
+systemctl restart
+systemctl start
+systemctl status
+systemd
 systeminfo
+t
 tac
 tail
 tailscale
@@ -706,36 +2398,80 @@ tailwindcss
 tangram
 taplo
 tar
+tar -cvf
+tar -tvf
+tar -xvf
 task
+taskctl
 taskkill
 tasklist
 taskmgr
+tazpkg
 tb
 tccutil
 tee
 telnet
+template
 terraform
+terraform apply
+terraform destroy
+terraform fmt
+terraform graph
+terraform init
+terraform-lsp
+terraform plan
+terraform providers
+terraform state
+terraform validate
 terragrunt
+terragrunt-infra
+terramate
+test
+tetragon
+tesseract
 tfenv
+tflint
+tfmigrate
+tfnotify
 tfsec
+theia
 then
+thin
+think
+three
+ticktick
+tig
 time
+timeout
+timidity
 title
+tizonia
 tkn
 tldr
 tmutil
 tmux
 tmuxinator
+tmutil
 tns
+toilet
 tokei
 top
+torch
+tornado
+tor
+torsocks
 touch
+tp
 tr
+tracepath
 traceroute
 tracert
+trackball
 trap
 trash
+trash-cli
 tree
+trellis
 trex
 trivy
 truffle
@@ -746,54 +2482,109 @@ tsc
 tsh
 tsuru
 tsx
+ttfautohint
+tty
+ttyrec
 tuist
+tuna
+tunnel
+tunnelblick
 turbo
+turbot
 twiggy
 twilio
+twine
+twint
+twofactor
+tx
 type
 typeorm
 typos
 ua
 ubuntu-advantage
+ufw
+uget
+ulimit
+umount
 unalias
 uname
+unarchiver
+unbound
+uncrustify
+unexpand
 uniq
+unison
+unison-fsmonitor
+unittest
+unrar
+unshare
 unix2dos
 unset
 until
 unzip
+update-alternatives
+updatedb
+uptime
+urxvt
+usermod
+users
+uuidgen
 v
 vagrant
+vagrant_cloud
 vale
 valet
 valgrind
+vampire
 vapor
 vault
+vcpkg
 vela
+venv
 ver
 vercel
+verif
 vi
 vim
+vimdiff
 vimr
+virtualbox
+virtctl
+virt-manager
+virsh
 visudo
 vite
 vitest
+vmstat
+vmware
 volta
+vpnc
+vpnkit
+vroom
 vr
 vsce
+vscode
 vtex
 vue
+vue-cli
 vultr-cli
 w
+wakeonlan
+waf
+wait
+wall
+watch
 wasm-bindgen
 wasm-pack
 watchman
 watson
 wc
 wd
+weave
 webpack
 wezterm
 wget
+what
 whatis
 whence
 where
@@ -801,17 +2592,34 @@ whereis
 which
 while
 who
+whoami
 whois
 wifi-password
+wifi-menu
+wifi
 wing
+winlogbeat
+winrm
+wireguard-tools
+wmctrl
 wp
 wrangler
 wrk
+wsdd
 wscat
+wt
+wt.exe
+wuzz
+x11vnc
 xargs
+xattr
+xauth
+xbacklight
 xc
+xclip
 xcode-select
 xcodebuild
+xcodegen
 xcodeproj
 xcodes
 xcopy
@@ -819,24 +2627,57 @@ xcrun
 xdg-mime
 xdg-open
 xed
+xenserver
+xev
+xfs_repair
+xfsdump
+xfsprogs
+xinput
+xkill
+xml_grep
+xmlstarlet
+xmodmap
+xorriso
+xprop
+xrandr
+xsel
+xsltproc
+xterm
+xvfb
 xxd
+xz
+yadm
 yalc
 yank
+yapf
+yard
 yarn
 yarn install
 yarn run
 yarn test
+yarnpkg
+yat
+yed
 ykman
 yo
+yolo
 yomo
-youtube-dl
 yum
 z
 zapier
 zed
 zellij
+zenity
 zig
 zip
 zipcloak
+zlib
 zoxide
+zpool
 zsh
+zsh-autosuggestions
+zsh-completions
+zsh-history-substring-search
+zsh-syntax-highlighting
+zshrc
+zulip

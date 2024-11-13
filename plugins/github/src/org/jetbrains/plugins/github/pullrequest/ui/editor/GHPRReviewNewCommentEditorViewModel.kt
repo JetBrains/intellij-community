@@ -59,7 +59,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
   private val reviewDataProvider = dataProvider.reviewData
   private val changesState: StateFlow<ComputedResult<GitBranchComparisonResult>> =
-    dataProvider.changesData.changesComputationState.stateInNow(cs, ComputedResult.loading())
+    dataProvider.changesData.changesComputationState().stateInNow(cs, ComputedResult.loading())
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
     reviewDataProvider.pendingReviewComputationFlow.stateInNow(cs, ComputedResult.loading())

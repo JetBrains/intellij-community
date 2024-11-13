@@ -689,6 +689,10 @@
                  description="Show logical structure in Structure View"
                  defaultValue="true"
                  restartRequired="false"/>
+    <registryKey key="logical.structure.actions.enabled"
+                 description="Show action icons for logical structure nodes"
+                 defaultValue="false"
+                 restartRequired="false"/>
 
     <idIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
     <todoIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>

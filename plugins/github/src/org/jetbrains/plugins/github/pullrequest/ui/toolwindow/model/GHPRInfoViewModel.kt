@@ -23,9 +23,9 @@ class GHPRInfoViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider
+  private val dataProvider: GHPRDataProvider,
 ) : GHPRDetailsLoadingViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(javaClass.name)
 
   val pullRequest: GHPRIdentifier = dataProvider.id
   var pullRequestUrl: String? = null

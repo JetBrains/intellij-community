@@ -7,7 +7,7 @@ import com.intellij.collaboration.ui.icon.CachingIconsProvider
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.IconUtil
@@ -27,21 +27,23 @@ import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import java.awt.Image
-import java.awt.Toolkit
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
+import kotlin.Throws
 
 @Service(Service.Level.PROJECT)
 internal class GHPRDataContextRepository(private val project: Project, parentCs: CoroutineScope) {
 
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val cache = ConcurrentHashMap<GHRepositoryCoordinates, GHPRDataContext>()
   private val cacheGuard = Mutex()
 
-  suspend fun getContext(repository: GHRepositoryCoordinates, remote: GitRemoteUrlCoordinates,
-                         account: GithubAccount, requestExecutor: GithubApiRequestExecutor): GHPRDataContext =
+  suspend fun getContext(
+    repository: GHRepositoryCoordinates, remote: GitRemoteUrlCoordinates,
+    account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
+  ): GHPRDataContext =
     withContext(cs.coroutineContext) {
       cacheGuard.withLock {
         val existing = cache[repository]
@@ -68,10 +70,12 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
   }
 
   @Throws(IOException::class)
-  private fun CoroutineScope.getContextAsync(account: GithubAccount,
-                                             requestExecutor: GithubApiRequestExecutor,
-                                             parsedRepositoryCoordinates: GHRepositoryCoordinates,
-                                             remoteCoordinates: GitRemoteUrlCoordinates)
+  private fun CoroutineScope.getContextAsync(
+    account: GithubAccount,
+    requestExecutor: GithubApiRequestExecutor,
+    parsedRepositoryCoordinates: GHRepositoryCoordinates,
+    remoteCoordinates: GitRemoteUrlCoordinates,
+  )
     : Deferred<GHPRDataContext> {
     val cs = this
     return async {
@@ -114,7 +118,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                     ghostUserDetails,
                                                     account, currentUser,
                                                     repositoryInfo)
-      val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), project, securityService,
+      val detailsService = GHPRDetailsServiceImpl(project, securityService,
                                                   requestExecutor, apiRepositoryCoordinates)
       val commentService = GHPRCommentServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val changesService = GHPRChangesServiceImpl(cs, project, requestExecutor,
@@ -147,7 +151,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val creationService = GHPRCreationServiceImpl(requestExecutor, repoDataService)
       ensureActive()
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
-                      securityService, repoDataService, creationService, detailsService, changesService, reactionsService,
+                      securityService, repoDataService, creationService, detailsService, reactionsService,
                       imageLoader, avatarIconsProvider, reactionIconsProvider,
                       filesManager, interactionState)
     }

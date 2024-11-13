@@ -37,7 +37,7 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
   private val settings: GithubPullRequestsProjectUISettings,
-  dataContext: GHPRDataContext,
+  private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   private val sharedBranchVm: GHPRReviewBranchStateSharedViewModel,
   private val threadsVms: GHPRThreadsViewModels,
@@ -47,7 +47,7 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
 
   private val changesComputationState =
-    dataProvider.changesData.changesComputationState.onEach {
+    dataProvider.changesData.changesComputationState().onEach {
       it.onFailure {
         LOG.warn("Couldn't load changes for PR ${dataProvider.id.number}", it)
       }
@@ -118,7 +118,7 @@ internal class GHPRReviewInEditorViewModelImpl(
 
   private fun CoroutineScope.createFileVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory)
     : GHPRReviewFileEditorViewModelImpl =
-    GHPRReviewFileEditorViewModelImpl(project, this, dataProvider, change, diffData, threadsVms, discussionsViewOption, ::showDiff)
+    GHPRReviewFileEditorViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption, ::showDiff)
 }
 
 private fun GitBranchComparisonResult.createSelection(change: RefComparisonChange, lineIdx: Int?): ChangesSelection? {

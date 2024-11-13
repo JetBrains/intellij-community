@@ -85,8 +85,8 @@ public final class GradleModelId implements Serializable {
 
   public static @NotNull String createBuildId(@NotNull BuildIdentifier buildIdentifier) {
     String path = buildIdentifier.getRootDir().getPath();
-    int pathHash = FileUtilRt.pathHashCode(path);
-    return String.valueOf(pathHash);
+    String systemIndependentName = FileUtilRt.toSystemIndependentName(path);
+    return String.valueOf(systemIndependentName.hashCode());
   }
 
   private static @NotNull ProjectIdentifier getProjectIdentifier(@NotNull ProjectModel project) {

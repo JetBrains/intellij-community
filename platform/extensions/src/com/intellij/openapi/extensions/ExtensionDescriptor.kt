@@ -5,17 +5,19 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.xml.dom.XmlElement
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class ExtensionDescriptor(@JvmField val implementation: String?,
-                          @JvmField val os: Os?,
-                          @JvmField val orderId: String?,
-                          @JvmField val order: LoadingOrder,
-                          @JvmField val element: XmlElement?,
-                          @JvmField val hasExtraAttributes: Boolean) {
+class ExtensionDescriptor @ApiStatus.Internal constructor(
+  @ApiStatus.Internal @JvmField val implementation: String?,
+  @ApiStatus.Internal @JvmField val os: Os?,
+  @ApiStatus.Internal @JvmField val orderId: String?,
+  @ApiStatus.Internal @JvmField val order: LoadingOrder,
+  @ApiStatus.Internal @JvmField val element: XmlElement?,
+  @ApiStatus.Internal @JvmField val hasExtraAttributes: Boolean,
+) {
   @Suppress("EnumEntryName")
   enum class Os {
     mac, linux, windows, unix, freebsd;
 
+    @ApiStatus.Internal
     fun isSuitableForOs(): Boolean {
       return when (this) {
         mac -> SystemInfoRt.isMac

@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.api.data.GHReaction
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.executeSuspend
 
-interface GHReactionsService {
+internal interface GHReactionsService {
   suspend fun addReaction(subjectId: String, reaction: GHReactionContent): GHReaction
   suspend fun removeReaction(subjectId: String, reaction: GHReactionContent): GHReaction
 }

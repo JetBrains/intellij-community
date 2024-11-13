@@ -10,15 +10,16 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Range
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
+import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
@@ -37,6 +38,7 @@ interface GHPRDiffChangeViewModel {
 
   val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>>
   val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>>
+  val aiComments: StateFlow<Collection<GHPRAICommentViewModel>>
 
   val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>>
 
@@ -47,13 +49,14 @@ interface GHPRDiffChangeViewModel {
 }
 
 internal class GHPRDiffChangeViewModelImpl(
+  project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   private val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val threadsVms: GHPRThreadsViewModels,
-  private val discussionsViewOption: StateFlow<DiscussionsViewOption>
+  private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
 ) : GHPRDiffChangeViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -88,6 +91,12 @@ internal class GHPRDiffChangeViewModelImpl(
     }
   override val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>> =
     newCommentsContainer.mappingState.mapState { it.values }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val aiComments: StateFlow<Collection<GHPRAICommentViewModel>> =
+    GHPRAIReviewExtension.singleFlow
+      .flatMapLatest { it?.provideCommentVms(project, dataProvider, change, diffData) ?: flowOf(listOf()) }
+      .stateIn(cs, SharingStarted.Eagerly, emptyList())
 
   init {
     cs.launchNow {

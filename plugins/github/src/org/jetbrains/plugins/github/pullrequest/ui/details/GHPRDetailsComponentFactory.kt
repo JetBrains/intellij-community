@@ -49,11 +49,7 @@ internal object GHPRDetailsComponentFactory {
       })
       add(CodeReviewDetailsBranchComponentFactory.create(scope, detailsVm.branchesVm))
     }
-    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project,
-                                                               detailsVm.statusVm,
-                                                               detailsVm.reviewFlowVm,
-                                                               detailsVm.securityService,
-                                                               detailsVm.avatarIconsProvider)
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, detailsVm)
     val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm)
 
     return JPanel(MigLayout(

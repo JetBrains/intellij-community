@@ -2,9 +2,14 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
+import com.intellij.collaboration.ui.util.bindContent
+import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
+import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
+import javax.swing.Icon
 
 @ApiStatus.Internal
 class GHPRReviewThreadEditorInlayRenderer internal constructor(cs: CoroutineScope, vm: GHPRCompactReviewThreadViewModel)
@@ -17,3 +22,11 @@ class GHPRNewCommentEditorInlayRenderer internal constructor(cs: CoroutineScope,
   : CodeReviewComponentInlayRenderer(
   GHPRReviewEditorComponentsFactory.createNewCommentIn(cs, vm)
 )
+
+internal class GHPRAICommentEditorInlayRenderer internal constructor(userIcon: Icon, vm: GHPRAICommentViewModel)
+  : CodeReviewComponentInlayRenderer(Wrapper().apply {
+  bindContent("${javaClass.name}.bindContent", GHPRAIReviewExtension.singleFlow) { extension ->
+    if (extension == null) return@bindContent null
+    extension.createAIThread(userIcon, vm)
+  }
+})

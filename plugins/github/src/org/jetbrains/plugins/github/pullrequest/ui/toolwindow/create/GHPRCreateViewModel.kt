@@ -118,7 +118,7 @@ internal class GHPRCreateViewModelImpl(
   private val dataContext: GHPRDataContext,
   private val projectVm: GHPRToolWindowProjectViewModel,
 ) : GHPRCreateViewModel, Disposable {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
   private val repoData = dataContext.repositoryDataService
 

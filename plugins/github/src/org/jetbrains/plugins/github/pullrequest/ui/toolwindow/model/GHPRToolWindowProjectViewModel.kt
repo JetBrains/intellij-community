@@ -26,6 +26,8 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModel
+import org.jetbrains.plugins.github.ai.GHPRAISummaryViewModel
 import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -34,6 +36,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewInEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRBranchWidgetViewModel
@@ -53,7 +56,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
   private val twVm: GHPRToolWindowViewModel,
-  connection: GHRepositoryConnection
+  connection: GHRepositoryConnection,
 ) : ReviewToolwindowProjectViewModel<GHPRToolWindowTab, GHPRToolWindowTabViewModel> {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -73,7 +76,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
     DisposalCountingHolder {
-      GHPRViewModelContainer(project, cs, dataContext, this, id, it)
+      GHPRViewModelContainerImpl(project, cs, dataContext, this, id, it)
     }
   }
 
@@ -155,6 +158,12 @@ class GHPRToolWindowProjectViewModel internal constructor(
       dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
     }
   }
+
+  fun acquireAIReviewViewModel(id: GHPRIdentifier, disposable: Disposable): StateFlow<GHPRAIReviewViewModel?> =
+    pullRequestsVms[id].acquireValue(disposable).aiReviewVm
+
+  fun acquireAISummaryViewModel(id: GHPRIdentifier, disposable: Disposable): StateFlow<GHPRAISummaryViewModel?> =
+    pullRequestsVms[id].acquireValue(disposable).aiSummaryVm
 
   fun acquireInfoViewModel(id: GHPRIdentifier, disposable: Disposable): GHPRInfoViewModel =
     pullRequestsVms[id].acquireValue(disposable).infoVm

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ResultUtil.processErrorAndGet
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.progress.reportProgress
 import org.jetbrains.plugins.github.api.*
@@ -19,12 +18,12 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityStateBuilder
 
-class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
-                             private val project: Project,
-                             private val securityService: GHPRSecurityService,
-                             private val requestExecutor: GithubApiRequestExecutor,
-                             private val repository: GHRepositoryCoordinates) : GHPRDetailsService {
-
+internal class GHPRDetailsServiceImpl(
+  private val project: Project,
+  private val securityService: GHPRSecurityService,
+  private val requestExecutor: GithubApiRequestExecutor,
+  private val repository: GHRepositoryCoordinates,
+) : GHPRDetailsService {
   private val serverPath = repository.serverPath
   private val repoPath = repository.repositoryPath
 

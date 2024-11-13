@@ -3,7 +3,9 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.registry.Registry
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -13,7 +15,7 @@ import java.util.*
 
 @Service(Service.Level.PROJECT)
 @State(name = "GitHubPullRequestState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPRPersistentInteractionState.State>(State(listOf())) {
+internal class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPRPersistentInteractionState.State>(State(listOf())) {
   companion object {
     private const val CLEAR_AFTER_DAYS_KEY = "github.clear.last.seen.state.days"
     private const val MARGIN_MILLIS_KEY = "github.last.seen.state.margin.millis"
@@ -22,7 +24,7 @@ class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPR
   @Serializable
   data class PRState(
     val id: GHPRIdentifier,
-    val lastSeen: Long? = null
+    val lastSeen: Long? = null,
   )
 
   @Serializable

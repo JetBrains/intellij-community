@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.components.ActionLink
@@ -37,6 +38,7 @@ import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Insets
@@ -64,7 +66,10 @@ object CodeReviewCommentUIUtil {
     return JBInsets(top, 0, bottom, 0)
   }
 
-  fun createEditorInlayPanel(component: JComponent): JPanel {
+  fun createEditorInlayPanel(component: JComponent): JPanel = createEditorInlayPanel(component, null)
+
+  @ApiStatus.Internal
+  fun createEditorInlayPanel(component: JComponent, tint: Color? = null): JPanel {
     val borderColor = JBColor.lazy {
       val scheme = EditorColorsManager.getInstance().globalScheme
       scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
@@ -72,7 +77,7 @@ object CodeReviewCommentUIUtil {
     val roundedPanel = ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC, borderColor, BorderLayout()).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
-        scheme.defaultBackground
+        tint?.let { ColorUtil.blendColorsInRgb(scheme.defaultBackground, it, 0.1) } ?: scheme.defaultBackground
       }
       add(UiDataProvider.wrapComponent(component) { sink ->
         suppressOuterEditorData(sink)

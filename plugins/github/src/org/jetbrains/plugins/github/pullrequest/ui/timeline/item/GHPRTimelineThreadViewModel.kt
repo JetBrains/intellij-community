@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -131,7 +130,7 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
   private val _repliesFolded = MutableStateFlow(true)
   override val repliesFolded: StateFlow<Boolean> = _repliesFolded.asStateFlow()
 
-  private val currentChanges = dataProvider.changesData.changesComputationState
+  private val currentChanges = dataProvider.changesData.changesComputationState()
     .mapNotNull { it.getOrNull() }
     .stateIn(cs, SharingStarted.Eagerly, null)
 

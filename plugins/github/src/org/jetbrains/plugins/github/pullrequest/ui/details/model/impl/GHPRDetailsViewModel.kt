@@ -16,6 +16,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
@@ -25,6 +26,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWind
 
 @ApiStatus.Experimental
 interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
+  val prId: GHPRIdentifier
+
   val securityService: GHPRSecurityService
   val avatarIconsProvider: IconsProvider<String>
 
@@ -39,15 +42,17 @@ interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
 }
 
 internal class GHPRDetailsViewModelImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
-  details: GHPullRequest
+  details: GHPullRequest,
 ) : GHPRDetailsViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val detailsState = MutableStateFlow(details)
+
+  override val prId: GHPRIdentifier = detailsState.value.prId
 
   override val number: String = "#${detailsState.value.number}"
   override val url: String = detailsState.value.url

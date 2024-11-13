@@ -7,6 +7,7 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
 import java.util.concurrent.CompletableFuture
 
@@ -28,5 +29,6 @@ interface GHPRChangesDataProvider {
   fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>>
 }
 
-internal val GHPRChangesDataProvider.changesComputationState: Flow<ComputedResult<GitBranchComparisonResult>>
-  get() = computationStateFlow(changesNeedReloadSignal.withInitial(Unit)) { loadChanges() }
+@ApiStatus.Internal
+fun GHPRChangesDataProvider.changesComputationState(): Flow<ComputedResult<GitBranchComparisonResult>> =
+  computationStateFlow(changesNeedReloadSignal.withInitial(Unit)) { loadChanges() }

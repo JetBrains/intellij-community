@@ -7,8 +7,10 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexpReference
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.UnixUtil.getGlibcVersion
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -36,16 +38,21 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon",
     "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 16)
+  private val GROUP = EventLogGroup("system.os", 18)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexpReference("time_zone", "time_zone")
   private val OS_SHELL = String("shell", SHELLS)
+  private val DISTRO = String("distro", DISTROS)
+  private val RELEASE = StringValidatedByRegexpReference("release", "version")
+  private val UNDER_WSL = EventFields.Boolean("wsl")
+  private val GLIBC = StringValidatedByRegexpReference("glibc", "version")
+
   private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
   @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi", "ScheduledForRemovalWithVersion")
   private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexpReference("value", "time_zone"))  // backward compatibility
-  private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexpReference("release", "version"), EventFields.Boolean("wsl"))
+  private val LINUX = GROUP.registerVarargEvent("linux", DISTRO, RELEASE, UNDER_WSL, GLIBC)
   private val WINDOWS = GROUP.registerEvent("windows", EventFields.Long("build"))
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -59,7 +66,12 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
       SystemInfo.isLinux -> {
         val (distro, release) = getReleaseData()
         val isUnderWsl = detectIsUnderWsl()
-        metrics += LINUX.metric(distro, release, isUnderWsl)
+        val glibcVersion = getGlibcVersion()
+        val linuxMetrics = mutableListOf<EventPair<*>>(DISTRO.with(distro), RELEASE.with(release), UNDER_WSL.with(isUnderWsl))
+        if (glibcVersion != null) {
+          linuxMetrics.add(GLIBC.with(glibcVersion.toString()))
+        }
+        metrics += LINUX.metric(*linuxMetrics.toTypedArray())
       }
       SystemInfo.isWin10OrNewer -> {
         metrics += WINDOWS.metric(SystemInfo.getWinBuildNumber() ?: -1)  // `-1` is unknown

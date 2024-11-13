@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope

@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
-interface GHPRCreationService {
+internal interface GHPRCreationService {
   suspend fun createPullRequest(baseBranch: GitRemoteBranch,
                                 headRepo: GHGitRepositoryMapping,
                                 headBranch: GitRemoteBranch,

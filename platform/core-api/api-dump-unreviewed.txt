@@ -1528,6 +1528,14 @@ f:com.intellij.openapi.components.ServiceBean
 - getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - s:loadServicesFromBeans(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Class):java.util.List
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+f:com.intellij.openapi.components.ServiceDescriptor
+- f:client:com.intellij.openapi.client.ClientKind
+- f:headlessImplementation:java.lang.String
+- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- f:overrides:Z
+- f:serviceImplementation:java.lang.String
+- f:serviceInterface:java.lang.String
+- f:testServiceImplementation:java.lang.String
 f:com.intellij.openapi.components.ServiceManager
 - s:createLazyKey(java.lang.Class):com.intellij.openapi.util.NotNullLazyKey
 - s:getService(com.intellij.openapi.project.Project,java.lang.Class):java.lang.Object

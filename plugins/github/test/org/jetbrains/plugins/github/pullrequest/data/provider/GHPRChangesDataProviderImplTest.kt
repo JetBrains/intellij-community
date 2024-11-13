@@ -6,7 +6,9 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.FlowTestUtil.assertEmits
 import com.intellij.collaboration.util.MainDispatcherRule
 import git4idea.changes.GitBranchComparisonResult
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
@@ -80,7 +82,7 @@ class GHPRChangesDataProviderImplTest {
       }
     }
     val inst = createProvider(refs)
-    inst.changesComputationState.assertEmits(ComputedResult.loading(),
+    inst.changesComputationState().assertEmits(ComputedResult.loading(),
                                              ComputedResult.failure(EXCEPTION),
                                              ComputedResult.loading(),
                                              ComputedResult.success(result)) {

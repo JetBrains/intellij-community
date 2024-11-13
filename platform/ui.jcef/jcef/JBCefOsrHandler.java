@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.Gray;
+import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
@@ -35,6 +36,9 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
+  final private @NotNull JComponent myComponent;
+  final private @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
+
   protected volatile @Nullable JBHiDPIScaledImage myImage;
 
   protected volatile @Nullable JBHiDPIScaledImage myPopupImage;
@@ -51,6 +55,11 @@ class JBCefOsrHandler implements CefRenderHandler {
   private volatile double myScaleFactor = 1;
 
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
+
+  JBCefOsrHandler(@NotNull JComponent component, @NotNull Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
+    myComponent = component;
+    myScreenBoundsProvider = screenBoundsProvider;
+  }
 
   @Override
   public void onPopupShow(CefBrowser browser, boolean show) {
@@ -176,7 +185,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public boolean getScreenInfo(CefBrowser browser, CefScreenInfo screenInfo) {
-    Rectangle rect = getScreenBoundaries(browser.getUIComponent());
+    Rectangle rect = myScreenBoundsProvider.fun(myComponent);
     double scale = myScaleFactor * myPixelDensity;
     screenInfo.Set(scale, 32, 4, false, rect, rect);
     return true;
@@ -187,7 +196,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     Point pt = viewPoint.getLocation();
     Point loc = myLocationOnScreenRef.get();
     if (OS.isMacintosh()) {
-      Rectangle rect = getScreenBoundaries(browser.getUIComponent());
+      Rectangle rect = myScreenBoundsProvider.fun(myComponent);
       pt.setLocation(loc.x + pt.x, rect.height - loc.y - pt.y);
     }
     else {
@@ -303,19 +312,5 @@ class JBCefOsrHandler implements CefRenderHandler {
 
     drawVolatileImage(image);
     return image;
-  }
-
-  private static Rectangle getScreenBoundaries(Component component) {
-    if (component != null && !GraphicsEnvironment.isHeadless()) {
-      try {
-        return component.isShowing() ?
-               component.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds() :
-               GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
-      }
-      catch (Exception ignored) {
-      }
-    }
-
-    return new Rectangle(0, 0, 0, 0);
   }
 }

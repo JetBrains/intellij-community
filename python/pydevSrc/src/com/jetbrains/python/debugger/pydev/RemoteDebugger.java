@@ -90,8 +90,8 @@ public class RemoteDebugger implements ProcessDebugger {
   private final long myHandshakeTimeout;
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
-    int connectRetryTimeout = Registry.intValue("python.debugger.remote.connect.retry.timeout.ms", 500);
-    int connectMaxAttempts = Registry.intValue("python.debugger.remote.connect.max.attempts", 20);
+    int connectRetryTimeout = Registry.intValue("python.debugger.remote.connect.retry.timeout.ms", 1000);
+    int connectMaxAttempts = Registry.intValue("python.debugger.remote.connect.max.attempts", 30);
 
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port, Duration.ofMillis(connectRetryTimeout), connectMaxAttempts);

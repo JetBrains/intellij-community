@@ -7,8 +7,11 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+
+import java.util.ArrayList;
 
 
 @State(name = "MavenImportPreferences", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -35,16 +38,30 @@ public final class MavenWorkspaceSettingsComponent implements PersistentStateCom
   @NotNull
   public MavenWorkspacePersistedSettings getState() {
     MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
-    mySettings.setEnabledProfiles(profiles.getEnabledProfiles());
-    mySettings.setDisabledProfiles(profiles.getDisabledProfiles());
+    mySettings.explicitlyEnabledProfiles = StringUtil.nullize(StringUtil.join(profiles.getEnabledProfiles(), ","));
+    mySettings.explicitlyDisabledProfiles = StringUtil.nullize(StringUtil.join(profiles.getDisabledProfiles(), ","));
+    mySettings.getRealSettings().enabledProfiles = new ArrayList<>(profiles.getEnabledProfiles());
+    mySettings.getRealSettings().disabledProfiles = new ArrayList<>(profiles.getDisabledProfiles());
     return mySettings;
   }
 
   @Override
   public void loadState(@NotNull MavenWorkspacePersistedSettings state) {
     mySettings = state;
+    applyProfiles(mySettings);
     applyDefaults(mySettings.getRealSettings());
     migrateSettings(mySettings.getRealSettings());
+  }
+
+  private static void applyProfiles(MavenWorkspacePersistedSettings settings) {
+    var wrappee = settings.getRealSettings();
+    if (settings.explicitlyEnabledProfiles != null) {
+      settings.getRealSettings().setEnabledProfiles(StringUtil.split(settings.explicitlyEnabledProfiles, ","));
+    }
+
+    if (settings.explicitlyDisabledProfiles != null) {
+      settings.getRealSettings().setDisabledProfiles(StringUtil.split(settings.explicitlyDisabledProfiles, ","));
+    }
   }
 
   public MavenWorkspaceSettings getSettings() {

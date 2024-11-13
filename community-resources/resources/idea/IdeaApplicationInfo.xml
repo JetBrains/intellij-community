@@ -1,5 +1,5 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info">
-  <version major="2024" minor="3" suffix="RC"/>
+  <version major="2024" minor="3"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20241112"/>
   <logo url="/idea_community_logo.png"/>

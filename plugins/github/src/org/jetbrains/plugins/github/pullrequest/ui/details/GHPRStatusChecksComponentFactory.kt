@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
@@ -23,15 +24,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.GHPRRemoveReviewerAction
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRResolveConflictsLocallyError.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -40,13 +41,17 @@ internal object GHPRStatusChecksComponentFactory {
   fun create(
     parentScope: CoroutineScope,
     project: Project,
-    reviewStatusVm: GHPRStatusViewModel,
-    reviewFlowVm: GHPRReviewFlowViewModel,
-    securityService: GHPRSecurityService,
-    avatarIconsProvider: GHAvatarIconsProvider,
+    detailsVm: GHPRDetailsViewModel,
   ): JComponent {
     val scope = parentScope.childScope(Dispatchers.Main.immediate)
+
+    val reviewStatusVm = detailsVm.statusVm
+    val reviewFlowVm = detailsVm.reviewFlowVm
+    val securityService = detailsVm.securityService
+    val avatarIconsProvider = detailsVm.avatarIconsProvider
+
     val loadingPanel = createLoadingComponent(scope, reviewStatusVm, securityService)
+
     val statusesPanel = VerticalListPanel().apply {
       add(createAccessDeniedLabel(scope, reviewStatusVm, securityService))
       add(CodeReviewDetailsStatusComponentFactory.createCiComponent(scope, reviewStatusVm))
@@ -72,6 +77,10 @@ internal object GHPRStatusChecksComponentFactory {
           )
         }
       ))
+      bindChildIn(scope, GHPRAIReviewExtension.singleFlow) { extension ->
+        if (extension == null) return@bindChildIn null
+        extension.createAIReviewAction(project, detailsVm.prId)
+      }
     }
     val scrollableStatusesPanel = ScrollPaneFactory.createScrollPane(statusesPanel, true).apply {
       isOpaque = false

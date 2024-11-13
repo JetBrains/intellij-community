@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
@@ -12,18 +13,18 @@ import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 
-class GHPRListETagUpdateChecker(private val progressManager: ProgressManager,
-                                private val requestExecutor: GithubApiRequestExecutor,
-                                private val serverPath: GithubServerPath,
-                                private val repoPath: GHRepositoryPath) : GHPRListUpdatesChecker {
-
+internal class GHPRListETagUpdateChecker(
+  private val progressManager: ProgressManager,
+  private val requestExecutor: GithubApiRequestExecutor,
+  private val serverPath: GithubServerPath,
+  private val repoPath: GHRepositoryPath,
+) : GHPRListUpdatesChecker {
   private val outdatedEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   override var outdated by observableField(false, outdatedEventDispatcher)
     private set

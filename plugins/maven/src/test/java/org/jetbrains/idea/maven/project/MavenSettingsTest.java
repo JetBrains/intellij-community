@@ -39,7 +39,11 @@ public class MavenSettingsTest extends MavenTestCase {
   }
 
   public void testImportingSettings() {
-    allowAccessToDirsIfExists(System.getenv("JAVA_HOME"));
+    var javaHome = System.getenv("JAVA_HOME");
+    if (javaHome != null) {
+      allowAccessToDirsIfExists(System.getenv("JAVA_HOME"));
+    }
+
     assertEquals(new MavenImportingSettings(), new MavenImportingSettings());
     MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(getProject());
     importingConfigurable.reset();

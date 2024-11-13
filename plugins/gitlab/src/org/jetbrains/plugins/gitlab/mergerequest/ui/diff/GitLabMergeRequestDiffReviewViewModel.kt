@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.diff
 
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
