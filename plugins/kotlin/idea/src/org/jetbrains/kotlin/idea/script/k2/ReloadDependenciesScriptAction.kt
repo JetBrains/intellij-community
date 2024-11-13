@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
@@ -17,14 +17,11 @@ import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource
-import org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDefinitionSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
-import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.concurrent.ConcurrentHashMap
 
@@ -68,7 +65,8 @@ internal class ReloadDependenciesScriptAction : AnAction() {
         val project = editor.project ?: return false
         val file = getKotlinScriptFile(editor) ?: return false
 
-        val configSource = ScriptConfigurationsProvider.getInstance(project).safeAs<ScriptConfigurationsProviderImpl>()?.getConfigurationsSource(file)
+        val configSource =
+            ScriptConfigurationsProvider.getInstance(project).safeAs<ScriptConfigurationsProviderImpl>()?.getConfigurationsSource(file)
         if (configSource !is DependentScriptConfigurationsSource) {
             return false
         }
@@ -80,10 +78,13 @@ internal class ReloadDependenciesScriptAction : AnAction() {
     }
 }
 
-private fun getKotlinScriptFile(editor: Editor): VirtualFile? = FileDocumentManager.getInstance()
-    .getFile(editor.document)
-    ?.takeIf {
+private fun getKotlinScriptFile(editor: Editor): VirtualFile? {
+    val virtualFile = editor.virtualFile ?: return null
+    val ktFile = editor.project?.let { virtualFile.findPsiFile(it) as? KtFile } ?: return null
+
+    return virtualFile.takeIf {
         it !is LightVirtualFileBase
                 && it.isValid
-                && it.isKotlinFileType()
+                && ktFile.isScript()
     }
+}
