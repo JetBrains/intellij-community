@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentImpl
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
 
 object ABExperimentCountCollector : CounterUsagesCollector() {
@@ -32,12 +33,12 @@ object ABExperimentCountCollector : CounterUsagesCollector() {
       return
     }
 
-    if (userOptionId == ABExperiment.OPTION_ID_FREE_GROUP) {
+    if (userOptionId == ABExperimentImpl.OPTION_ID_FREE_GROUP) {
       AB_EXPERIMENT_OPTION_USED.log(userOptionId.value, userGroupNumber, userBucketNumber)
       return
     }
 
-    val option = ABExperiment.getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
+    val option = ABExperimentImpl.getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
     if (option != null) {
       AB_EXPERIMENT_OPTION_USED.log(option.id.value, userGroupNumber, userBucketNumber)
       return
