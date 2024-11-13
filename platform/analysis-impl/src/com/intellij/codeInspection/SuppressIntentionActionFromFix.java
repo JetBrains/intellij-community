@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,8 @@ public final class SuppressIntentionActionFromFix extends SuppressIntentionActio
     return myFix.isSuppressAll();
   }
 
-  private int getFixPriority() {
+  @ApiStatus.Internal
+  public int getFixPriority() {
     return myFix.getPriority();
   }
 
