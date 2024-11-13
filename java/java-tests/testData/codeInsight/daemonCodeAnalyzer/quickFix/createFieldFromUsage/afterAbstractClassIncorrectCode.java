@@ -2,8 +2,10 @@
 
 abstract public class SampleClass {
 
-  void bar(int t) {
-    this.<caret>x = 1;
+    private int x;
+
+    void bar(int t) {
+    this.x = 1;
   }
 
   abstract void foo();
