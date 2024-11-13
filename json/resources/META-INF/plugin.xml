@@ -133,6 +133,7 @@
     <lang.floatingToolbar language="JSON" minimal="true"/>
 
     <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonFeatureUsageCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">
