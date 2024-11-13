@@ -100,7 +100,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
           }
           LookupElementBuilder element = LookupElementBuilder.create(name);
           if (descriptor instanceof PsiPresentableMetaData presentableMetaData) {
-            if (descriptor instanceof PsiPresentableMetaDataRenderStrategy renderStrategy && renderStrategy.isExpensiveRender()) {
+            if (descriptor instanceof PsiPresentableMetaDataRenderStrategy renderStrategy && renderStrategy.isRenderExpensive()) {
               element = element.withExpensiveRenderer(new LookupElementRenderer<>() {
                 @Override
                 public void renderElement(LookupElement element, LookupElementPresentation presentation) {
