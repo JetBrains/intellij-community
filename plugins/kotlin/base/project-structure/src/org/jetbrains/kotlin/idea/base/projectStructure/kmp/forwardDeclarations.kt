@@ -11,10 +11,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.projectStructure.forcedKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileOwnerTracker
 import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.kotlinForwardDeclarationsWorkspaceEntity
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.psi.KtFile
 
 
 @ApiStatus.Internal
@@ -22,11 +20,11 @@ fun createForwardDeclarationScope(libraryId: LibraryId, owner: KaModule, project
     val rootDirectories = getGeneratedForwardDeclarationRoots(libraryId, project)
     if (rootDirectories.isEmpty()) return null
 
+    val forwardDeclarationsOwnerTracker = KotlinForwardDeclarationsFileOwnerTracker.getInstance(project)
     val files = rootDirectories.flatMap { directory ->
         directory.children.filter { it.fileType == KotlinFileType.INSTANCE }
     }.onEach { file ->
-        val ktFile = file.toPsiFile(project) as KtFile?
-        ktFile?.forcedKaModule = owner
+        forwardDeclarationsOwnerTracker.registerFileOwner(file, owner)
     }
 
     return GlobalSearchScope.filesScope(project, files)

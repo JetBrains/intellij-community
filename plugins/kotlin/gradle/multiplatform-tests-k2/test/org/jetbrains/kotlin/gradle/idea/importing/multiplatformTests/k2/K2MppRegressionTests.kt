@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.high
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.test.TestMetadata
-import org.junit.Ignore
 import kotlin.test.Test
 
 /**
@@ -35,7 +34,6 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
      * The referenced declaration is `platform.UIKit.UIApplicationMeta#new` from the UIKit library of the K/N distribution.
      */
     @Test
-    @Ignore //TODO: KTIJ-32103
     fun testObjCMethodNoExceptionsInDecompiledFiles() {
         doTest {
             onlyCheckers(HighlightingChecker, ReferenceTargetChecker)
