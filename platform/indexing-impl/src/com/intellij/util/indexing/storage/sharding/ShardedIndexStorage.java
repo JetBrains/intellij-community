@@ -6,7 +6,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
-import com.intellij.util.indexing.impl.IndexStorageLock;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
@@ -51,19 +50,6 @@ class ShardedIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
       }
       throw e;
     }
-  }
-
-  //Sharded storage doesn't have a single global lock => locking methods should NOT be used on sharded storages
-  //In general: locking methods on storage is NOT for external use, they are made public only for a transition
-  // period
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForRead() {
-    throw new UnsupportedOperationException("Method is not implemented yet");
-  }
-
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForWrite() {
-    throw new UnsupportedOperationException("Method is not implemented yet");
   }
 
   @Override

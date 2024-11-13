@@ -54,16 +54,6 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     inMemoryStorage = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(extension.getKeyDescriptor()));
   }
 
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForRead() {
-    return underlyingStorage.lockForRead();
-  }
-
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForWrite() {
-    return underlyingStorage.lockForWrite();
-  }
-
   public void addBufferingStateListener(@NotNull BufferingStateListener listener) {
     bufferingStateListeners.add(listener);
   }

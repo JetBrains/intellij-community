@@ -10,7 +10,7 @@ import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
-import com.intellij.util.indexing.impl.IndexStorageLock;
+import com.intellij.util.indexing.impl.IndexStorageLockingBase;
 import com.intellij.util.indexing.impl.IndexStorageUtil;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.ValueContainerProcessor;
@@ -20,32 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Internal
-public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
+public final class InMemoryIndexStorage<K, V> extends IndexStorageLockingBase implements VfsAwareIndexStorage<K, V> {
   private final Map<K, ValueContainerImpl<V>> inMemoryStorage;
-
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   private volatile boolean closed = false;
 
   public InMemoryIndexStorage(@NotNull KeyDescriptor<K> keyDescriptor) {
     inMemoryStorage = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(keyDescriptor));
-  }
-
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForRead() {
-    ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-    readLock.lock();
-    return readLock::unlock;
-  }
-
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForWrite() {
-    ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
-    writeLock.lock();
-    return writeLock::unlock;
   }
 
   @Override
@@ -75,6 +58,14 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   }
 
   @Override
+  public void updateValue(K key, int inputId, V newValue) throws StorageException {
+    withWriteLock(() -> {
+      removeAllValues(key, inputId);
+      addValue(key, inputId, newValue);
+    });
+  }
+
+  @Override
   public void clear() {
     inMemoryStorage.clear();
   }
@@ -86,7 +77,7 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
 
   @Override
   public <E extends Exception> boolean read(K key, @NotNull ValueContainerProcessor<V, E> processor) throws StorageException, E {
-    try (LockStamp stamp = lockForRead()) {
+    try (LockStamp ignored = lockForRead()) {
       ValueContainerImpl<V> container = inMemoryStorage.get(key);
       if (container == null) {
         //TODO RC: EmptyValueContainer.INSTANCE
@@ -99,7 +90,6 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
 
   @Override
   public void clearCaches() {
-
   }
 
   @Override

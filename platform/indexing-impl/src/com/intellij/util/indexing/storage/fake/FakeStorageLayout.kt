@@ -8,7 +8,6 @@ import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.ValueContainer
 import com.intellij.util.indexing.VfsAwareIndexStorage
 import com.intellij.util.indexing.impl.IndexStorage
-import com.intellij.util.indexing.impl.IndexStorageLock
 import com.intellij.util.indexing.impl.ValueContainerImpl
 import com.intellij.util.indexing.impl.ValueContainerProcessor
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex
@@ -70,15 +69,7 @@ internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
     //TODO RC: EmptyValueContainer.INSTANCE
     return processor.process(ValueContainerImpl.createNewValueContainer())
   }
-
-  override fun lockForRead(): IndexStorageLock.LockStamp {
-    return IndexStorageLock.LockStamp { /*nothing*/ }
-  }
-
-  override fun lockForWrite(): IndexStorageLock.LockStamp {
-    return IndexStorageLock.LockStamp { /*nothing*/ }
-  }
-
+  
   override fun flush() = Unit
 
   override fun close() = Unit
@@ -86,6 +77,8 @@ internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
   override fun addValue(key: K, inputId: Int, value: V) = Unit
 
   override fun removeAllValues(key: K & Any, inputId: Int) = Unit
+
+  override fun updateValue(key: K, inputId: Int, newValue: V) = Unit
 
   override fun clear() = Unit
 

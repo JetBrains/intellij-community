@@ -4294,9 +4294,9 @@ com.intellij.util.indexing.impl.IndexStorage
 - a:flush():V
 - a:isDirty():Z
 - a:read(java.lang.Object):com.intellij.util.indexing.ValueContainer
-- read(java.lang.Object,com.intellij.util.indexing.impl.ValueContainerProcessor):Z
+- a:read(java.lang.Object,com.intellij.util.indexing.impl.ValueContainerProcessor):Z
 - a:removeAllValues(java.lang.Object,I):V
-- updateValue(java.lang.Object,I,java.lang.Object):V
+- a:updateValue(java.lang.Object,I,java.lang.Object):V
 f:com.intellij.util.indexing.impl.IndexStorageUtil
 - <init>():V
 - s:adaptKeyDescriptorToStrategy(com.intellij.util.io.KeyDescriptor):com.intellij.util.containers.HashingStrategy

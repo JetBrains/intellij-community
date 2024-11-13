@@ -17,19 +17,14 @@ import java.io.IOException;
  *
  * @author Eugene Zhuravlev
  */
-public interface IndexStorage<Key, Value> extends IndexStorageLock, Flushable, Closeable {
+public interface IndexStorage<Key, Value> extends Flushable, Closeable {
 
   void addValue(Key key, int inputId, Value value) throws StorageException;
 
   //RC: why remove_All_Values? Shouldn't it be <=1 value for a (inputId, key)
   void removeAllValues(@NotNull Key key, int inputId) throws StorageException;
 
-  default void updateValue(Key key, int inputId, Value newValue) throws StorageException {
-    withWriteLock(() -> {
-      removeAllValues(key, inputId);
-      addValue(key, inputId, newValue);
-    });
-  }
+  void updateValue(Key key, int inputId, Value newValue) throws StorageException;
 
   void clear() throws StorageException;
 
@@ -53,12 +48,8 @@ public interface IndexStorage<Key, Value> extends IndexStorageLock, Flushable, C
    * @return true if all data was processed, false if processing was stopped prematurely because
    * processor returns false at some point
    */
-  default <E extends Exception> boolean read(Key key,
-                                             @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
-    try (LockStamp ignored = lockForRead()) {
-      return processor.process(read(key));
-    }
-  }
+  <E extends Exception> boolean read(Key key,
+                                     @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E;
 
   /**
    * Drops (some of) cached data, without touching data that is modified and needs to be persisted.

@@ -17,12 +17,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @Internal
-public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
+public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   private static final boolean ENABLE_WAL = getBooleanProperty("idea.index.enable.wal", false);
 
@@ -33,8 +32,6 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
-
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final DataExternalizer<Value> myDataExternalizer;
   /** {@link FileBasedIndexExtension#keyIsUniqueForIndexedFile} and {@link SingleEntryFileBasedIndexExtension} */
@@ -88,20 +85,6 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
       );
       myMap = map;
     });
-  }
-
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForRead() {
-    ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-    readLock.lock();
-    return readLock::unlock;
-  }
-
-  @Override
-  public @NotNull IndexStorageLock.LockStamp lockForWrite() {
-    ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
-    writeLock.lock();
-    return writeLock::unlock;
   }
 
   private void onDropFromCache(Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
@@ -184,7 +167,8 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
           updateSingleValueDirectly(key, inputId, newValue);
         }
         else {
-          IndexStorage.super.updateValue(key, inputId, newValue);
+          removeAllValues(key, inputId);
+          addValue(key, inputId, newValue);
         }
       }
       catch (IOException e) {
