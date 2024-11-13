@@ -11294,6 +11294,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/replaceThis.kt");
         }
 
+        @TestMetadata("smartCasts.kt")
+        public void testSmartCasts() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/smartCasts.kt");
+        }
+
         @TestMetadata("thisCall.kt")
         public void testThisCall() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/thisCall.kt");
