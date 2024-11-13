@@ -28,13 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ReadWriteInstruction extends InstructionImpl {
-  final InstructionTypeCallback EXPR_TYPE = new InstructionTypeCallback() {
-    @Nullable
-    @Override
-    public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-      return Ref.create(myElement instanceof PyExpression ? context.getType((PyExpression)myElement) : null);
-    }
-  };
+  private static InstructionTypeCallback instructionTypeCallback(@Nullable PsiElement element) {
+    return element instanceof PyExpression expression
+           ? (context, anchor) -> Ref.create(context.getType(expression))
+           : (context, anchor) -> Ref.create(null);
+  }
 
   public enum ACCESS {
     READ(true, false, false, false),
@@ -91,7 +89,7 @@ public final class ReadWriteInstruction extends InstructionImpl {
     super(builder, element);
     myName = name;
     myAccess = access;
-    myGetType = getType != null ? getType : EXPR_TYPE;
+    myGetType = getType != null ? getType : instructionTypeCallback(element);
   }
 
   public String getName() {
