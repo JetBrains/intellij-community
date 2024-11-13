@@ -407,9 +407,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         propertyName: String
     ): Boolean {
         val allOverriddenSymbols = symbol.allOverriddenSymbolsWithSelf.toList()
-        // allOverriddenSymbolsWithSelf is a sequence, and if the last element in the list it forms is not a Java symbol,
-        // then it means it's not for our inspection. This list can't be empty because it contains the `symbol` itself
-        if (!allOverriddenSymbols.last().origin.isJavaSourceOrLibrary()) return false
+        if (!functionOriginateFromJava(allOverriddenSymbols)) return false
         if (functionOrItsAncestorIsInNotPropertiesList(allOverriddenSymbols, callExpression)) return false
 
         // Check that the receiver or its ancestors don't have public fields with the same name as the probable synthetic property
@@ -571,6 +569,20 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             val symbolUnsafeName = overriddenSymbol.callableId?.asSingleFqName()?.toUnsafe()
                 ?: continue
             if (symbolUnsafeName in notProperties) return true
+        }
+        return false
+    }
+
+    context(KaSession)
+    private fun functionOriginateFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
+        // Calling `.reversed()` – small optimization because the last Java symbol in the list more probable doesn't have overrides
+        val javaSymbols = allOverriddenSymbols.filter { it.origin.isJavaSourceOrLibrary() }.reversed()
+        if (javaSymbols.isEmpty()) return false
+        for (javaSymbol in javaSymbols) {
+            if (javaSymbol.allOverriddenSymbols.toList().isEmpty()) {
+                // Nothing overrides it, true Java origin
+                return true
+            }
         }
         return false
     }
