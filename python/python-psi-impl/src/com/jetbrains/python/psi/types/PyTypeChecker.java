@@ -124,6 +124,10 @@ public final class PyTypeChecker {
       }
     }
 
+    if (actual instanceof PyNarrowedType actualNarrowedType && expected instanceof PyNarrowedType expectedNarrowedType) {
+      return match(expectedNarrowedType, actualNarrowedType, context);
+    }
+
     if (actual instanceof PyTypeVarTupleType typeVarTupleType && context.reversedSubstitutions) {
       return Optional.of(match(typeVarTupleType, expected, context));
     }
@@ -205,6 +209,12 @@ public final class PyTypeChecker {
     }
 
     return Optional.of(matchNumericTypes(expected, actual));
+  }
+
+  private static @NotNull Optional<Boolean> match(PyNarrowedType expectedNarrowedType,
+                                                  PyNarrowedType actualNarrowedType,
+                                                  @NotNull MatchContext context) {
+    return match(expectedNarrowedType.getNarrowedType(), actualNarrowedType.getNarrowedType(), context);
   }
 
   /**
@@ -1049,6 +1059,9 @@ public final class PyTypeChecker {
         collectGenerics(elementType, context, generics, visited);
       }
     }
+    else if (type instanceof PyNarrowedType narrowedType) {
+      collectGenerics(narrowedType.getNarrowedType(), context, generics, visited);
+    }
   }
 
   public static @NotNull List<@Nullable PyType> substituteExpand(@Nullable PyType type,
@@ -1194,8 +1207,7 @@ public final class PyTypeChecker {
           return PyTypedDictType.Companion.createFromKeysToValueTypes(typedDictType.myClass, substitutedTDFields, false);
         }
         else if (type instanceof PyNarrowedType pyNarrowedType) {
-          return pyNarrowedType.substitute(ContainerUtil.flatMap(pyNarrowedType.getElementTypes(),
-                                                                 t -> substituteExpand(t, substitutions, context, substituting)));
+          return pyNarrowedType.substitute(substitute(pyNarrowedType.getNarrowedType(), substitutions, context, substituting));
         }
         else if (type instanceof final PyCollectionTypeImpl collection) {
           return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(),

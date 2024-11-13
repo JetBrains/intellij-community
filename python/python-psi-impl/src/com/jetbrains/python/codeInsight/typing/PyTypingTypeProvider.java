@@ -936,6 +936,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (typeAliasType != null) {
         return typeAliasType;
       }
+      final Ref<PyType> narrowedType = getNarrowedType(resolved, context);
+      if (narrowedType != null) {
+        return narrowedType;
+      }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
@@ -984,10 +988,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (selfType != null) {
         return selfType;
       }
-      final Ref<PyType> narrowedType = getNarrowedType(resolved, context.getTypeContext());
-      if (narrowedType != null) {
-        return narrowedType;
-      }
       return null;
     }
     finally {
@@ -997,13 +997,19 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
   }
 
-  private static Ref<PyType> getNarrowedType(@NotNull PsiElement resolved, @NotNull TypeEvalContext context) {
-    if (resolved instanceof PyExpression expression) {
-      Collection<String> names = resolveToQualifiedNames(expression, context);
+  private static @Nullable Ref<PyType> getNarrowedType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression subscriptionExpr) {
+      Collection<String> names = resolveToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext());
       var isTypeIs = names.contains(TYPE_IS) || names.contains(TYPE_IS_EXT);
       var isTypeGuard = names.contains(TYPE_GUARD) || names.contains(TYPE_GUARD_EXT);
       if (isTypeIs || isTypeGuard) {
-        return Ref.create(PyNarrowedType.Companion.create(expression, isTypeIs));
+        List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
+        if (indexTypes.size() == 1) {
+          PyNarrowedType narrowedType = PyNarrowedType.Companion.create(subscriptionExpr, isTypeIs, indexTypes.get(0));
+          if (narrowedType != null) {
+            return Ref.create(narrowedType);
+          }
+        }
       }
     }
     return null;
