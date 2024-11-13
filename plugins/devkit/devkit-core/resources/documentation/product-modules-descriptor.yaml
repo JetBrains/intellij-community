@@ -1,0 +1,70 @@
+#file: noinspection MarkdownUnresolvedHeaderReference,RequiredAttributes,MarkdownUnresolvedFileReference
+
+elements:
+  - element:
+      name: product-modules
+      requirement:
+        required: yes
+      #language=Markdown
+      description: The <path>[product-modules.xml](https://youtrack.jetbrains.com/articles/IJPL-A-306/Product-Modules-Descriptor)</path> file root element.
+      children:
+        - element:
+            name: include
+            #language=Markdown
+            description: |
+              Allows reusing data from another <path>product-modules.xml</path> located in the module specified by [`<from-module>`](#element:product-modules__include__from-module) and [`<without-module>`](#element:product-modules__include__without-module) elements.
+            requirement:
+              required: no
+            children:
+              - element:
+                  name: from-module
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: Specifies the name of the module where <path>product-modules.xml</path> to be included is located.
+              - element:
+                  name: without-module
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: Allows skipping the inclusion of some main root modules and bundled plugins.
+        - element:
+            name: main-root-modules
+            #language=Markdown
+            description: Specifies root modules for the main module group.
+            requirement:
+              required: no
+            children:
+              - element:
+                  name: module
+                  requirement:
+                    required: no
+                  description: Specifies a module to be included in the main module group.
+                  attributes:
+                    - attribute:
+                        name: loading
+                        requirement:
+                          required: yes
+                        #language=Markdown
+                        description: |
+                          Defines how the module should be processed:
+                          - `required` - module with all its dependencies is added to the main module group.
+                            If some of its dependencies aren't available in the module repository, the product fails to start.
+                          - `optional` - module with all its dependencies is added to the main module group if all of its dependencies are available, otherwise it's skipped.
+                          - `on-demand` - module is used by some plugins only, but it isn't included in the plugin's layout, so it needs to be added to the main module group.
+                            In the current implementation, `on-demand` modules are treated the same way as `required`, but in the future they will be loaded only if other modules which depend on them are loaded.
+        - element:
+            name: bundled-plugins
+            #language=Markdown
+            description: |
+              Specifies main modules of bundled plugins.
+              The main module must contain <path>META-INF/plugin.xml</path> describing a plugin in [v2](https://youtrack.jetbrains.com/articles/IJPL-A-31) format.
+              Additional modules defined in the `<content>` element are added to the plugin module group.
+            requirement:
+              required: no
+            children:
+              - element:
+                  name: module
+                  requirement:
+                    required: no
+                  description: Specifies a bundled plugin's main module.
