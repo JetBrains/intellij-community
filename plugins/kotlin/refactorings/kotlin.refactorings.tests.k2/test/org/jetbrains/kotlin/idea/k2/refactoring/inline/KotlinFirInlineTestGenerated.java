@@ -2570,6 +2570,31 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/singleArgumentVarargs.kt");
             }
 
+            @TestMetadata("thisAsArgument.kt")
+            public void testThisAsArgument() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisAsArgument.kt");
+            }
+
+            @TestMetadata("thisAsCallee.kt")
+            public void testThisAsCallee() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisAsCallee.kt");
+            }
+
+            @TestMetadata("thisAsCalleeLabeled.kt")
+            public void testThisAsCalleeLabeled() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisAsCalleeLabeled.kt");
+            }
+
+            @TestMetadata("thisAsStatement.kt")
+            public void testThisAsStatement() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisAsStatement.kt");
+            }
+
+            @TestMetadata("thisWithOperator.kt")
+            public void testThisWithOperator() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisWithOperator.kt");
+            }
+
             @TestMetadata("throwAsBody.kt")
             public void testThrowAsBody() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/throwAsBody.kt");

@@ -161,11 +161,14 @@ class CodeInliner(
                 it is KtThisExpression
             }) {
                 if (instanceExpression.getCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY) != null) {
-                    (instanceExpression.parent as? KtDotQualifiedExpression)?.let {
-                        val selectorExpression = it.selectorExpression
+                    val parent = instanceExpression.parent
+                    if (parent is KtDotQualifiedExpression) {
+                        val selectorExpression = parent.selectorExpression
                         if (selectorExpression != null) {
-                            codeToInline.replaceExpression(it, selectorExpression)
+                            codeToInline.replaceExpression(parent, selectorExpression)
                         }
+                    } else if (!parent.isPhysical) {
+                        codeToInline.replaceExpression(instanceExpression, instanceExpression.instanceReference)
                     }
                 } else if (instanceExpression.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null) {
                     codeToInline.replaceExpression(instanceExpression, r)
