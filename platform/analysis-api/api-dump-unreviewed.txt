@@ -22,7 +22,9 @@ c:com.intellij.analysis.AnalysisScope
 - <init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,java.util.Collection):V
 - <init>(com.intellij.psi.PsiDirectory):V
+- <init>(com.intellij.psi.PsiDirectory,com.intellij.openapi.module.Module):V
 - <init>(com.intellij.psi.PsiFile):V
+- <init>(com.intellij.psi.PsiFile,com.intellij.openapi.module.Module):V
 - <init>(com.intellij.psi.search.SearchScope,com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.module.Module[]):V
 - p:accept(com.intellij.psi.PsiDirectory,com.intellij.util.Processor):Z

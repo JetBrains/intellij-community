@@ -336,8 +336,10 @@ f:com.intellij.openapi.project.ProjectTypeService
 - s:getProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
 - s:setProjectType(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectType):V
 f:com.intellij.openapi.project.ProjectUtilCore
+- sf:appendModuleName(com.intellij.openapi.module.Module,java.lang.String,Z):java.lang.String
 - sf:appendModuleName(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z):java.lang.String
 - sf:decorateWithLibraryName(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String):java.lang.String
+- sf:displayFilePath(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - sf:displayUrlRelativeToProject(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.project.Project,Z,Z):java.lang.String
 - sf:doNotEnableExternalStorageByDefaultInTests(kotlin.jvm.functions.Function0):V
 - sf:isExternalStorageEnabled(com.intellij.openapi.project.Project):Z

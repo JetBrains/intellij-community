@@ -135,13 +135,13 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
 
       AnalysisScope analysisScope = null;
       if (psiFile != null) {
-        analysisScope = new AnalysisScope(psiFile);
+        analysisScope = new AnalysisScope(psiFile, module);
       }
       else {
         if (virtualFiles.length == 1 && virtualFiles[0].isDirectory()) {
           final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFiles[0]);
           if (psiDirectory != null) {
-            analysisScope = new AnalysisScope(psiDirectory);
+            analysisScope = new AnalysisScope(psiDirectory, module);
           }
         }
         if (analysisScope == null && virtualFiles.length != 0) {
