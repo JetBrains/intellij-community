@@ -30,8 +30,8 @@ public class TestSwitchNestedDeconstructionsJavac {
             }
 
             return;
-         case R2(Object ob, Object var30):
-            if (ob.hashCode() == 2) {// 35 36
+         case R2(Object s, Object var30):
+            if (s.hashCode() == 2) {// 35 36
                System.out.println(o);// 37
             }
 
@@ -65,8 +65,8 @@ public class TestSwitchNestedDeconstructionsJavac {
             }
 
             return;// 70
-         case R2(Object ob, R1(String s2)) when s2.length() > 7:
-            if (ob.hashCode() == 2) {// 63 64
+         case R2(Object s, R1(String s2)) when s2.length() > 7:
+            if (s.hashCode() == 2) {// 63 64
                System.out.println(o);// 65
             }
 
@@ -135,8 +135,8 @@ public class TestSwitchNestedDeconstructionsJavac {
                System.out.println(o);// 125
             }
             break;
-         case R2(Object ob, Object var55):
-            if (ob.hashCode() == 2) {// 128 129
+         case R2(Object s, Object var55):
+            if (s.hashCode() == 2) {// 128 129
                System.out.println(o);// 130
             }
             break;

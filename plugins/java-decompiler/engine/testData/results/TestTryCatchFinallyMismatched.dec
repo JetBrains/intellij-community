@@ -6,8 +6,8 @@ public class TestTryCatchFinallyMismatched {
 
    public int test(String a) {
       try {
-         int e = Integer.parseInt(a);// 10
-         return e;
+         int var2 = Integer.parseInt(a);// 10
+         return var2;
       } catch (Exception e) {// 11
          System.out.println("Error" + String.valueOf(e));// 12
       } finally {
@@ -34,8 +34,8 @@ public class TestTryCatchFinallyMismatched {
       int a2 = 1;// 30
 
       try {
-         int e = Integer.parseInt(a);// 32
-         return e;
+         int var3 = Integer.parseInt(a);// 32
+         return var3;
       } catch (Exception e) {// 33
          System.out.println("Error" + String.valueOf(e));// 34
       } finally {
@@ -49,8 +49,8 @@ public class TestTryCatchFinallyMismatched {
 
    public int test4(String a) {
       try {
-         int test = Integer.parseInt(a);// 45
-         return test;
+         int var2 = Integer.parseInt(a);// 45
+         return var2;
       } catch (Exception e) {// 46
          System.out.println("Error" + String.valueOf(e));// 47
       } finally {

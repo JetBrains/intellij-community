@@ -5,7 +5,9 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.struct.StructClass;
@@ -13,6 +15,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.util.StatementIterator;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
@@ -40,6 +43,7 @@ public class VarProcessor {
   private final BitSet finalParameters = new BitSet();
   private final int firstParameterVarIndex;
   private final int firstParameterPosition;
+  private final Set<VarVersion> hasNotInsideLVT = new HashSet<>();
 
   public VarProcessor(StructClass cl, StructMethod mt, MethodDescriptor md) {
     method = mt;
@@ -59,6 +63,37 @@ public class VarProcessor {
   public void setVarDefinitions(Statement root) {
     mapVarNames = new HashMap<>();
     new VarDefinitionHelper(root, method, this).setVarDefinitions();
+    fillVariablesOutsideLVT(root);
+  }
+
+  private void fillVariablesOutsideLVT(Statement root) {
+    Set<VarVersion> definitions = new HashSet<>();
+    Set<Integer> insideVariables = new HashSet<>();
+    Set<VarVersion> needToRefresh = new HashSet<>();
+
+    StatementIterator.iterate(root, new DirectGraph.ExprentIterator() {
+      @Override
+      public int processExprent(Exprent exprent) {
+        if (exprent.type == Exprent.EXPRENT_VAR) {
+          VarExprent var = (VarExprent)exprent;
+          if (var.isDefinition()) {
+            definitions.add(new VarVersion(var.getVarVersion().var, 0));
+          }
+          VarVersion version = var.getVarVersion();
+          boolean lvt = var.isInsideLVT();
+          if (lvt) {
+            insideVariables.add(version.var);
+            needToRefresh.remove(new VarVersion(version.var, 0) );
+          }
+          else if (!insideVariables.contains(version.var)) {
+            needToRefresh.add(new VarVersion(version.var, 0));
+          }
+        }
+        return 0;
+      }
+    });
+    needToRefresh.retainAll(definitions);
+    hasNotInsideLVT.addAll(needToRefresh);
   }
 
   public void setDebugVarNames(Map<VarVersion, String> mapDebugVarNames) {
@@ -79,7 +114,7 @@ public class VarProcessor {
 
       boolean lvtName = false;
       VarVersion key = mapOriginalVarIndices.get(pair.var);
-      if (key != null) {
+      if (key != null && !hasNotInsideLVT.contains(pair)) {
         String debugName = mapDebugVarNames.get(key);
         if (debugName != null && TextUtil.isValidIdentifier(debugName, method.getBytecodeVersion())) {
           name = debugName;
@@ -192,11 +227,18 @@ public class VarProcessor {
   }
 
   public void findLVT(VarExprent exprent, int start) {
-    if (!hasLVT())
+    if (!hasLVT()) {
       return;
+    }
 
     method.getLocalVariableAttr().getVariables()
       .filter(v -> v.getVersion().var == exprent.getIndex() && v.getStart() == start).findFirst().ifPresent(exprent::setLVTEntry);
+
+    if (exprent.getIndex() >= firstParameterPosition + methodDescriptor.params.length) {
+      method.getLocalVariableAttr().getVariables()
+        .filter(v -> v.getVersion().var == exprent.getIndex() && v.getStart() <= start).findFirst()
+        .ifPresent(ignore -> exprent.setInsideLVT(true));
+    }
   }
 
   public boolean hasLVT() {

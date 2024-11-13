@@ -51,6 +51,7 @@ public class VarExprent extends Exprent {
   private LocalVariable lvtEntry = null;
   @Nullable
   private VarType inferredType = null;
+  private boolean insideLVT = false;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
     this(index, varType, processor, null);
@@ -103,6 +104,7 @@ public class VarExprent extends Exprent {
     var.setClassDef(classDef);
     var.setStack(stack);
     var.setLVTEntry(lvtEntry);
+    var.setInsideLVT(insideLVT);
     return var;
   }
 
@@ -229,6 +231,14 @@ public class VarExprent extends Exprent {
 
   public void setIndex(int index) {
     this.index = index;
+  }
+
+  public boolean isInsideLVT() {
+    return insideLVT;
+  }
+
+  public void setInsideLVT(boolean insideLVT) {
+    this.insideLVT = insideLVT;
   }
 
   public VarType getVarType() {

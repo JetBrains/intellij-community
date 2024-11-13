@@ -3,7 +3,7 @@ import java.util.Random;
 public class TestEmptyBlocks {
    public static void foo() {
       try {
-         boolean i = false;// 22
+         boolean var0 = false;// 22
       } catch (Exception var1) {// 23
       }
 
