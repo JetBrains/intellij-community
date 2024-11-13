@@ -3,6 +3,8 @@ package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.MergedJsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectMerger
@@ -15,6 +17,7 @@ internal object LightweightJsonSchemaObjectMerger : JsonSchemaObjectMerger {
     if (base === other) {
       return base
     }
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.SchemaMerged)
     return MergedJsonSchemaObjectView(base, other, pointTo)
   }
 }

@@ -3,6 +3,8 @@ package com.jetbrains.jsonSchema.impl.tree;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.SchemaResolveState;
@@ -25,6 +27,7 @@ public final class ProcessDefinitionsOperation extends Operation {
 
   @Override
   public void map(final @NotNull Set<JsonSchemaObject> visited) {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.DefinitionsExpanded);
     var current = mySourceNode;
     while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
       ProgressManager.checkCanceled();

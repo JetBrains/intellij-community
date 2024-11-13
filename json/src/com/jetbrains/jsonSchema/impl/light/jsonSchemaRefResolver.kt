@@ -4,6 +4,8 @@ package com.jetbrains.jsonSchema.impl.light
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
@@ -32,13 +34,16 @@ internal data object RemoteSchemaReferenceResolver : JsonSchemaReferenceResolver
     referenceOwner: JsonSchemaObjectBackedByJacksonBase,
     service: JsonSchemaService,
   ): JsonSchemaObject? {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().run {
+      reportSchemaUsageFeature(JsonSchemaFusCountedFeature.RemoteUrlResolveRequest)
+      reportUniqueUrlDownloadRequestUsage(reference)
+    }
     // leave tests with default behaviour to not accidentally miss even more bugs
     if (!ApplicationManager.getApplication().isUnitTestMode && !Registry.`is`("json.schema.object.v2.enable.nested.remote.schema.resolve")) {
       return null
     }
 
-    val resolvedRemoteSchema = resolveRemoteSchemaByUrl(reference, referenceOwner, service) ?: return null
-    return resolvedRemoteSchema
+    return resolveRemoteSchemaByUrl(reference, referenceOwner, service)
   }
 }
 
@@ -57,6 +62,7 @@ internal fun resolveLocalSchemaNode(
   maybeEmptyReference: String,
   currentSchemaNode: JsonSchemaObjectBackedByJacksonBase,
 ): JsonSchemaObject? {
+  JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.LocalReferenceResolveRequest)
   return when {
     maybeEmptyReference.startsWith("#/") -> resolveReference(maybeEmptyReference, currentSchemaNode)
     maybeEmptyReference.startsWith("/") -> resolveReference(maybeEmptyReference, currentSchemaNode)

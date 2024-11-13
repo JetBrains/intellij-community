@@ -6,12 +6,15 @@ import com.jetbrains.jsonSchema.extension.JsonErrorPriority
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
 import com.jetbrains.jsonSchema.extension.JsonValidationHost
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector
 import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 
-internal object ConstantSchemaValidation: JsonSchemaValidation {
+internal object ConstantSchemaValidation : JsonSchemaValidation {
   override fun validate(propValue: JsonValueAdapter, schema: JsonSchemaObject, schemaType: JsonSchemaType?, consumer: JsonValidationHost, options: JsonComplianceCheckerOptions): Boolean {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.ConstantNodeValidation)
     if (schema.constantSchema == false) {
       consumer.error(JsonBundle.message("schema.validation.constant.schema"), propValue.delegate.parent, JsonErrorPriority.LOW_PRIORITY)
       return false
