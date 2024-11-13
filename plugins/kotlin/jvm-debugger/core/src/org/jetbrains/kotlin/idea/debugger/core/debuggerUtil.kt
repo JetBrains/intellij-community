@@ -488,23 +488,23 @@ fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Location
     return resumedMethod.locationOfCodeIndex(visitor.nextCallOffset.toLong())
 }
 
-fun isOneLineMethod(location: Location): Boolean {
-    val method = location.safeMethod() ?: return false
+internal fun hasUserCodeOnFirstLine(method: Method?): Boolean {
+    if (method == null) return false
     val allLineLocations = method.safeAllLineLocations()
     if (allLineLocations.isEmpty()) return false
-    if (allLineLocations.size == 1) return true
+    val nonFakeLocations = allLineLocations.filter { !isKotlinFakeLineNumber(it) }
+    val firstLine = nonFakeLocations.firstOrNull()?.lineNumber() ?: return false
+    if (firstLine < 0) return false
+    // This is a single line function
+    if (nonFakeLocations.all { it.lineNumber() == firstLine }) return true
+    val firstLineLocations = nonFakeLocations.takeWhile { it.lineNumber() == firstLine }
+    if (firstLineLocations.isEmpty()) return false
 
     val inlineFunctionBorders = method.getInlineFunctionAndArgumentVariablesToBordersMap().values
-    return allLineLocations
-        .mapNotNull { loc ->
-            if (!isKotlinFakeLineNumber(loc) &&
-                !inlineFunctionBorders.any { loc in it })
-                loc.lineNumber()
-            else
-                null
-        }
-        .toHashSet()
-        .size == 1
+    val validLocations = firstLineLocations
+        .count { loc -> !inlineFunctionBorders.any { loc in it } }
+    // Coroutine label switch has its own location
+    return validLocations > 1
 }
 
 fun findElementAtLine(file: KtFile, line: Int): PsiElement? {

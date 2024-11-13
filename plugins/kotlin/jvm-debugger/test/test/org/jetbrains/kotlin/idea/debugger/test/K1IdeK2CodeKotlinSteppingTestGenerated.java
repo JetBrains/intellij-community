@@ -1523,6 +1523,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/idea335263.kt");
         }
 
+        @TestMetadata("idea362864.kt")
+        public void testIdea362864() throws Exception {
+            runTest("testData/stepping/custom/idea362864.kt");
+        }
+
         @TestMetadata("initBlocks.kt")
         public void testInitBlocks() throws Exception {
             runTest("testData/stepping/custom/initBlocks.kt");

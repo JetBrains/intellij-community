@@ -301,7 +301,7 @@ private fun needTechnicalStepInto(context: SuspendContextImpl): Boolean {
         return true
     }
 
-    if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !isOneLineMethod(location)) {
+    if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !hasUserCodeOnFirstLine(location.safeMethod())) {
         return true
     }
 
