@@ -4675,6 +4675,30 @@ public class PyTypeTest extends PyTestCase {
     doTest("int", "((expr)) = 42");
   }
 
+  public void testElif() {
+    doTest("float",
+           """
+             def foo(a: int | str | float):
+                 if isinstance(a, int):
+                     pass
+                 elif isinstance(a, str):
+                     pass
+                 else:
+                     expr = a
+             """);
+  }
+
+  public void testElif2() {
+    doTest("float",
+           """
+             def foo(a: int | str | float):
+                 if isinstance(a, int):
+                     pass
+                 elif not isinstance(a, str):
+                     expr = a
+             """);
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

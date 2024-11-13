@@ -367,10 +367,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     List<Pair<PsiElement, Instruction>> lastBranchingPoints = Collections.emptyList(); // outcoming negative edges from the last condition
     final List<Boolean> conditionResults = new ArrayList<>(); // visited conditions results
 
-    final PyIfPart firstIfPart = node.getIfPart();
+    PyIfPart prevIfPart = null;
 
-    for (PyIfPart part : StreamEx.of(firstIfPart).append(node.getElifParts())) {
-      if (part != firstIfPart) {
+    for (PyIfPart part : StreamEx.of(node.getIfPart()).append(node.getElifParts())) {
+      if (prevIfPart != null) {
         // first `if` could not be considered as some `if` inheritor
         if (!ContainerUtil.exists(conditionResults, Boolean.TRUE::equals)) {
           // edges to `if` would be created below if there were no conditions evaluated to `True` earlier
@@ -379,7 +379,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.prevInstruction = null;
 
         myBuilder.startConditionalNode(part, lastCondition, false);
+        addAssertInstructions(getNegativeTypeAssertions(prevIfPart));
       }
+      prevIfPart = part;
 
       final Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> currentPartResults = visitPyConditionalPart(part, node);
       lastCondition = currentPartResults.getFirst();
@@ -387,12 +389,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       conditionResults.add(currentPartResults.getThird());
     }
 
-    final PyTypeAssertionEvaluator negativeAssertionEvaluator = new PyTypeAssertionEvaluator(false);
-    final PyExpression firstIfPartCondition = firstIfPart.getCondition();
-    // TODO: Add support for 'elif'
-    if (firstIfPartCondition != null) {
-      firstIfPartCondition.accept(negativeAssertionEvaluator);
-    }
+    assert prevIfPart != null;
+    final PyTypeAssertionEvaluator negativeAssertionEvaluator = getNegativeTypeAssertions(prevIfPart);
 
     final PyElsePart elseBranch = node.getElsePart();
     if (elseBranch != null) {
@@ -425,6 +423,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
+  }
+
+  private static @NotNull PyTypeAssertionEvaluator getNegativeTypeAssertions(@NotNull PyIfPart ifPart) {
+    final PyTypeAssertionEvaluator negativeAssertionEvaluator = new PyTypeAssertionEvaluator(false);
+    final PyExpression firstIfPartCondition = ifPart.getCondition();
+    if (firstIfPartCondition != null) {
+      firstIfPartCondition.accept(negativeAssertionEvaluator);
+    }
+    return negativeAssertionEvaluator;
   }
 
   @NotNull
