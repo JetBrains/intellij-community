@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,16 @@ import java.awt.*;
  */
 @ApiStatus.Experimental
 public interface CustomFoldRegion extends FoldRegion {
+  /**
+   * Marker key for the folding regions, that are created to for a special, hidden or unmodifiable for user, regions,
+   * for example - for notebook-files cell separators. Marked regions will be properly synchronized in Gateway.
+   * Example of setting the key:
+   * <br/>
+   * {@code foldingRegion.putUserData(FrontendEditorFoldingModelAdapter.FRONTEND_FOLD_REGION, true)}
+   */
+  @ApiStatus.Internal
+  Key<Boolean> IMMUTABLE_FOLD_REGION = Key.create("IMMUTABLE_FOLD_REGION");
+
   /**
    * Renderer for this fold region (specified at creation time).
    */
