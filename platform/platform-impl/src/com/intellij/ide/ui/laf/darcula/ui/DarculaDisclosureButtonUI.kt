@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.DisclosureButton
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.height
 import com.intellij.ui.util.width
@@ -25,6 +26,10 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
 
   companion object {
 
+    @Suppress("UNUSED_PARAMETER")
+    @JvmStatic
+    fun createUI(c: JComponent): DarculaDisclosureButtonUI = DarculaDisclosureButtonUI()
+
     internal val ARC = JBValue.UIInteger("DisclosureButton.arc", 16)
     internal val TEXT_RIGHT_ICON_GAP = JBValue.UIInteger("DisclosureButton.textRightIconGap", 8)
     internal val DEFAULT_BACKGROUND = JBColor.namedColor("DisclosureButton.defaultBackground")
@@ -42,7 +47,7 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
   }
 
   override fun paint(g: Graphics?, c: JComponent?) {
-    if (c !is DarculaDisclosureButton || g == null) {
+    if (c !is DisclosureButton || g == null) {
       super.paint(g, c)
       return
     }
@@ -71,7 +76,7 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
       return
     }
 
-    if (c !is DarculaDisclosureButton) {
+    if (c !is DisclosureButton) {
       super.paintText(g, c, textRect, text)
       return
     }
@@ -94,7 +99,7 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
   override fun getPreferredSize(c: JComponent?): Dimension {
     val result = super.getPreferredSize(c)
 
-    if (c is DarculaDisclosureButton) {
+    if (c is DisclosureButton) {
       val insets = c.getInsets()
       val minimumSize = getMinimumSize(c)
       val extraSize = getExtraIconsSize(c)
@@ -111,7 +116,7 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
     return JBDimension(72, 34)
   }
 
-  private fun paintBackground(g: Graphics, c: DarculaDisclosureButton) {
+  private fun paintBackground(g: Graphics, c: DisclosureButton) {
     val r = Rectangle(0, 0, c.width, c.height)
     JBInsets.removeFrom(r, c.insets)
     DarculaNewUIUtil.fillRoundedRectangle(g, r, c.buttonBackground ?: DEFAULT_BACKGROUND, arc = ARC.float)
@@ -126,7 +131,7 @@ class DarculaDisclosureButtonUI : BasicButtonUI() {
     DarculaNewUIUtil.fillRoundedRectangle(g, r, overlay, ARC.float)
   }
 
-  private fun getExtraIconsSize(b: DarculaDisclosureButton): Dimension {
+  private fun getExtraIconsSize(b: DisclosureButton): Dimension {
     val result = Dimension()
     b.rightIcon?.let {
       result.width += TEXT_RIGHT_ICON_GAP.get() + it.iconWidth

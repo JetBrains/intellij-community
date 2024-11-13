@@ -1,15 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.ui.laf.darcula.ui
+package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.Icon
 import javax.swing.JButton
 
+private const val disclosureButtonID = "DisclosureButtonUI"
+
 @ApiStatus.Internal
-class DarculaDisclosureButton : JButton() {
+class DisclosureButton(@NlsContexts.Button text: String? = null) : JButton(text) {
 
   var rightIcon: Icon? = null
     set(value) {
@@ -39,13 +42,12 @@ class DarculaDisclosureButton : JButton() {
     }
 
   init {
-    setUI(DarculaDisclosureButtonUI())
     horizontalAlignment = LEFT
     iconTextGap = JBUIScale.scale(12)
     isRolloverEnabled = true
   }
 
-  override fun updateUI() {
-    setUI(DarculaDisclosureButtonUI())
+  override fun getUIClassID(): String {
+    return disclosureButtonID
   }
 }

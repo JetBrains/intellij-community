@@ -240,7 +240,8 @@
     "DisclosureButton": {
       "defaultBackground": "#FFFFFF12",
       "hoverOverlay": "#FFFFFF0D",
-      "pressedOverlay": "#FFFFFF1A"
+      "pressedOverlay": "#FFFFFF1A",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaDisclosureButtonUI"
     },
 
     "Editor": {

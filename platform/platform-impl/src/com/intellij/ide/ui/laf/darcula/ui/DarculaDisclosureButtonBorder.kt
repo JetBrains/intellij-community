@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ui.components.DisclosureButton
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -14,7 +15,7 @@ import javax.swing.plaf.UIResource
 class DarculaDisclosureButtonBorder : Border, UIResource {
 
   override fun paintBorder(c: Component?, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {
-    if (g == null || c !is DarculaDisclosureButton) {
+    if (g == null || c !is DisclosureButton) {
       return
     }
 
