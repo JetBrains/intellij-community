@@ -1324,6 +1324,7 @@
           <action id="ShowGotItDemo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction"/>
           <action id="ShowInlineBanner" internal="true" class="com.intellij.internal.ui.InlineBannerTestAction"/>
           <action id="ToolbarDemo" internal="true" class="com.intellij.internal.ToolbarDemoAction"/>
+          <action id="TreeViewModelDemo" internal="true" class="com.intellij.internal.ui.TreeViewModelDemoAction"/>
         </group>
         <group id="Internal.UI.Animation" popup="true">
           <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>
