@@ -3,6 +3,7 @@ package com.intellij.platform.diagnostic.telemetry.impl.agent
 
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import org.jetbrains.annotations.ApiStatus
+import java.net.URI
 import java.nio.file.Path
 import java.util.*
 import kotlin.time.Duration
@@ -10,7 +11,7 @@ import kotlin.time.Duration
 @ApiStatus.Internal
 data class AgentConfiguration(
   val serviceName: String,
-  val traceEndpoint: String,
+  val traceEndpoint: URI,
   val settings: Settings,
   val context: TelemetryContext,
   val agentLocation: Path,
@@ -21,18 +22,18 @@ data class AgentConfiguration(
     val rmiEnabled: Boolean,
     val debug: Boolean,
     val commonMetricsEnabled: Boolean,
-    val metricExportInterval: Duration,
+    val metricExportInterval: Duration?,
   ) {
     companion object {
       @JvmStatic
-      fun default(debug: Boolean, metricExportInterval: Duration): Settings {
+      fun withoutMetrics(): Settings {
         return Settings(
           enabled = true,
           openTelemetryApiEnabled = true,
           rmiEnabled = true,
-          debug = debug,
-          commonMetricsEnabled = true,
-          metricExportInterval = metricExportInterval
+          debug = false,
+          commonMetricsEnabled = false,
+          metricExportInterval = null
         )
       }
     }
@@ -43,7 +44,7 @@ data class AgentConfiguration(
     fun forService(
       serviceName: String,
       context: TelemetryContext,
-      traceEndpoint: String,
+      traceEndpoint: URI,
       agentLocation: Path,
       settings: Settings,
     ): AgentConfiguration {
@@ -60,10 +61,9 @@ data class AgentConfiguration(
   fun toJavaAgentSettings(): Properties {
     return Properties().apply {
       put("otel.traces.exporter", "otlp")
-      put("otel.exporter.otlp.endpoint", traceEndpoint)
+      put("otel.exporter.otlp.endpoint", traceEndpoint.getHostFqdn())
 
       put("otel.service.name", serviceName)
-      put("otel.metric.export.interval", settings.metricExportInterval.inWholeMilliseconds.toString())
 
       if (settings.enabled) {
         put("otel.javaagent.enabled", "true")
@@ -83,7 +83,14 @@ data class AgentConfiguration(
         put("otel.instrumentation.jvm.metrics.enabled", "true")
         put("otel.instrumentation.executors.enabled", "true")
         put("otel.instrumentation.jmx-metrics.enabled", "true")
+        if (settings.metricExportInterval != null) {
+          put("otel.metric.export.interval", settings.metricExportInterval.inWholeMilliseconds.toString())
+        }
       }
     }
+  }
+
+  private fun URI.getHostFqdn(): String {
+    return "$scheme://$host:$port"
   }
 }
