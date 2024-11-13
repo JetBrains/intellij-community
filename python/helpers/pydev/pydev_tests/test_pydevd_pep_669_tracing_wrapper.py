@@ -1,5 +1,9 @@
 import sys
-from importlib import reload
+
+if sys.version_info[0] >= 3:
+    from importlib import reload
+else:
+    from imp import reload
 
 import pytest
 
