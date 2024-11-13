@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
+import com.intellij.execution.ExecutionException
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -39,7 +40,9 @@ import com.jetbrains.python.mapResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkToInstallManager
 import com.jetbrains.python.sdk.PythonBinary
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.createSdk
+import com.jetbrains.python.sdk.add.v2.createVirtualenv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.*
@@ -119,16 +122,73 @@ private suspend fun createProjectAndSdk(
   obtainPythonStrategy: ObtainPythonStrategy,
 ): Result<Pair<Project, Sdk>, LocalizedErrorString> {
   val projectPathVfs = createProjectDir(projectPath).getOr { return it }
+  val venvDirPath = projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
+  // Find venv in project
+  var venvPython: PythonBinary? = findExistingVenv(venvDirPath)
+
+  if (venvPython == null) {
+    // No venv found -- find system python to create venv
+    val systemPythonBinary = getSystemPython(obtainPythonStrategy).getOr { return it }
+    logger.info("no venv in $venvDirPath, using system python $systemPythonBinary to create venv")
+    // create venv using this system python
+    createVenv(systemPythonBinary, venvDirPath = venvDirPath, projectPath = projectPath).getOr { return it }
+    // try to find venv again
+    venvPython = findExistingVenv(venvDirPath)
+    if (venvPython == null) {
+      // No venv even after venv installation
+      return Result.failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", "", venvDirPath)))
+    }
+  }
+
+  logger.info("using venv python $venvPython")
+  val project = openProject(projectPath)
+  val sdk = getSdk(venvPython, project)
+  val module = project.modules.first()
+  ensureModuleHasRoot(module, projectPathVfs)
+  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+  return Result.Success(Pair(project, sdk))
+}
+
+/**
+ * Search for existing venv in [venvDirPath] and make sure it is usable.
+ * `null` means no venv or venv is broken (it doesn't report its version)
+ */
+private suspend fun findExistingVenv(
+  venvDirPath: Path,
+): PythonBinary? = withContext(Dispatchers.IO) {
+  val pythonPath = VirtualEnvReader.Instance.findPythonInPythonRoot(venvDirPath) ?: return@withContext null
+  val flavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(pythonPath.toString())
+  if (flavor == null) {
+    logger.warn("No flavor found for $pythonPath")
+    return@withContext null
+  }
+  if (flavor.getVersionString(pythonPath.toString()) == null) {
+    logger.warn("No version string. python seems to be broken: $pythonPath")
+    return@withContext null
+  }
+  return@withContext pythonPath
+}
+
+private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, projectPath: Path): Result<Unit, LocalizedErrorString> =
+  try {
+    createVirtualenv(systemPython, venvDirPath, projectPath)
+    Result.success(Unit)
+  }
+  catch (e: ExecutionException) {
+    Result.failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", e.toString(), venvDirPath)))
+  }
+
+private suspend fun getSystemPython(obtainPythonStrategy: ObtainPythonStrategy): Result<PythonBinary, LocalizedErrorString> {
   // First, find the latest python according to strategy
-  var pythonBinary = filterLatestPython(
+  var systemPythonBinary = filterLatestPython(
     when (obtainPythonStrategy) {
       is UseThesePythons -> obtainPythonStrategy.pythons
       is FindOnSystem -> findPythonsOnSystem()
     })
 
   // No python found?
-  if (pythonBinary == null) {
+  if (systemPythonBinary == null) {
     // Only install if pythons weren't provided explicitly, see fun doc
     when (obtainPythonStrategy) {
       is UseThesePythons -> Unit
@@ -140,25 +200,22 @@ private suspend fun createProjectAndSdk(
             // Failed to install python?
             logger.warn("Python installation failed", exception)
             return Result.Failure(LocalizedErrorString(
-              PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", exception.localizedMessage)))
+              PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", exception.toString())))
           }
         }
       }
     }
-    // Find latest python again
-    pythonBinary = filterLatestPython(findPythonsOnSystem())
+    // Find latest python again, after installation
+    systemPythonBinary = filterLatestPython(findPythonsOnSystem())
+    logger.warn("No python found even after installation")
   }
 
-  if (pythonBinary == null) {
-    return Result.Failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.all.pythons.bad")))
+  return if (systemPythonBinary == null) {
+    Result.Failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.all.pythons.bad")))
   }
-  logger.info("using python $pythonBinary")
-  val project = openProject(projectPath)
-  val sdk = getSdk(pythonBinary, project)
-  val module = project.modules.first()
-  ensureModuleHasRoot(module, projectPathVfs)
-  ModuleRootModificationUtil.setModuleSdk(module, sdk)
-  return Result.Success(Pair(project, sdk))
+  else {
+    Result.Success(systemPythonBinary)
+  }
 }
 
 private suspend fun openProject(projectPath: Path): Project {
