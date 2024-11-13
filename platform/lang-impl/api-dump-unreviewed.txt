@@ -3918,12 +3918,6 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFacto
 - f:getSuitableToFileProviders(com.intellij.psi.PsiFile):java.util.List
 - f:scheduleRecompute(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):V
 - f:updateModificationStamp(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-f:com.intellij.codeInsight.hints.declarative.impl.InlayTreeSinkImpl
-- com.intellij.codeInsight.hints.declarative.InlayTreeSink
-- <init>(java.lang.String,java.util.Map,Z,Z,java.lang.Class,java.lang.String):V
-- addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,kotlin.jvm.functions.Function1):V
-- f:finish():java.util.List
-- whenOptionEnabled(java.lang.String,kotlin.jvm.functions.Function0):V
 f:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree$Companion
 - <init>(B,java.lang.Object):V
@@ -3931,9 +3925,12 @@ f:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 - f:getBytePayload(B):B
 - f:getDataPayload(B):java.lang.Object
 - f:getSize():I
+- f:isSameAs(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2):Z
+- bs:isSameAs$default(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function2,I,java.lang.Object):Z
 - f:processChildren(B,kotlin.jvm.functions.Function1):V
 - f:reverseChildren():V
 - f:setBytePayload(B,B):V
+- f:setDataPayload(java.lang.Object,B):V
 - f:syncProcessChildren(B,B,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,kotlin.jvm.functions.Function2):V
 f:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree$Companion
 a:com.intellij.codeInsight.hints.declarative.impl.util.TinyTree$Externalizer

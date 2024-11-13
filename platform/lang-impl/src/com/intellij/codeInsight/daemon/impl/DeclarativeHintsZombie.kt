@@ -49,6 +49,7 @@ private object NecromancyPresentationTreeExternalizer : PresentationTreeExternal
       is SymbolPointerInlayActionPayload -> {
         writeINT(output, 2)
       }
+      else -> { /* do nothing */ }
     }
   }
 

@@ -28,7 +28,6 @@ open class DeclarativeInlayActionService {
 
     val inlayMenu: AnAction = ActionManager.getInstance().getAction("InlayMenu")
     val inlayMenuActionGroup = inlayMenu as ActionGroup
-    //val popupMenu = ActionManager.getInstance().createActionPopupMenu("InlayMenuPopup", inlayMenuActionGroup)
     val dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(CommonDataKeys.PSI_FILE, psiFile)
@@ -37,11 +36,6 @@ open class DeclarativeInlayActionService {
       .add(InlayHintsProvider.PROVIDER_NAME, providerName)
       .add(InlayHintsProvider.INLAY_PAYLOADS, hintData.payloads?.associate { it.payloadName to it.payload })
       .build()
-    //popupMenu.setDataContext {
-    //  dataContext
-    //}
-    //
-    //JBPopupMenu.showByEvent(e.mouseEvent, popupMenu.component)
 
     val popupMenu = JBPopupFactory.getInstance().createActionGroupPopup(null, inlayMenuActionGroup, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
     popupMenu.show(relativePoint)

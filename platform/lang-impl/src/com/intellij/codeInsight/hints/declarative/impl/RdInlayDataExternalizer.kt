@@ -14,6 +14,8 @@ import java.io.DataOutput
 
 @ApiStatus.Internal
 object RdInlayDataExternalizer : InlayDataExternalizer(RdPresentationTreeExternalizer) {
+  const val RD_INLAY_DATA_SOURCE_ID: String = "rd.deserialized.inlay.data"
+
   override fun writeProviderClass(output: DataOutput, providerClass: Class<*>) {
     // do nothing
   }
@@ -66,5 +68,3 @@ private object RdDummyInlayProvider : InlayHintsProvider {
     error("Dummy provider must not be called")
   }
 }
-
-const val RD_INLAY_DATA_SOURCE_ID: String = "rd.deserialized.inlay.data"

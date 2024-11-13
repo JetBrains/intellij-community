@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.LightweightHint
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
@@ -84,7 +85,7 @@ class InlayPresentationList(
     pointInsideInlay: Point,
     fontMetricsStorage: InlayTextMetricsStorage,
   ) {
-    service<DeclarativeInlayActionService>().invokeInlayMenu(model, e)
+    service<DeclarativeInlayActionService>().invokeInlayMenu(model, e, RelativePoint(e.mouseEvent.locationOnScreen))
   }
 
   private val marginAndPadding: Pair<Int, Int> get() = MARGIN_PADDING_BY_FORMAT[model.hintFormat.horizontalMarginPadding]!!
