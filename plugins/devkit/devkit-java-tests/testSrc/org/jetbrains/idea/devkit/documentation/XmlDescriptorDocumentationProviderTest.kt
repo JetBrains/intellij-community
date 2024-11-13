@@ -113,7 +113,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<h5>Children</h5>" +
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__firstLevelChild2__second-level-child-1\"><code>&lt;second-level-child-1&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a> <i>required</i></li>" +
+      "<li><a href=\"psi_element://#element:root__firstLevelChild2__second-level-child\"><code>&lt;second-level-child&gt;</code></a> <i>required</i></li>" +
       "<li><code>&lt;firstLevelChild2&gt;</code></li>" +
       "</ul>" +
       "<h5>Example</h5>" +
@@ -161,7 +161,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<h5>Children</h5>" +
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__firstLevelChild2__second-level-child-1\"><code>&lt;second-level-child-1&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a> <i>required</i></li>" +
+      "<li><a href=\"psi_element://#element:root__firstLevelChild2__second-level-child\"><code>&lt;second-level-child&gt;</code></a> <i>required</i></li>" +
       "<li><code>&lt;firstLevelChild2&gt;</code></li>" +
       "</ul>" +
       "<h5>Example</h5>" +

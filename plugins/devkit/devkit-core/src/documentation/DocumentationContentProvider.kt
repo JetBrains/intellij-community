@@ -63,10 +63,48 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
   private fun fillMissingData(content: DocumentationContent) {
     for (elementWrapper in content.elements) {
       val element = elementWrapper.element ?: continue
+      copyReusedObjectsExceptContainingItself(elementWrapper, null, mutableListOf())
       fillElementPathsRecursively(element, emptyList())
       fillSelfContainingElementsRecursively(elementWrapper)
     }
   }
+
+  /**
+   * This is needed for being able to set separate paths for elements that can appear
+   * under multiple parents.
+   * For example, in plugin.xml, the `<action>` can be located as:
+   * - `<idea-plugin>` / `<actions>` / `<action>`
+   * - `<idea-plugin>` / `<actions>` / `<group>` / `<action>`
+   *
+   * We use YAML aliases to avoid data duplication, and SnakeYAML reflects this behavior in
+   * parsed objects, so it shares the same instance when it was referenced via anchor in YAML.
+   * So in the example case, there would be a single `<action>` element object, and we couldn't
+   * set a separate path for each case. For this reason, we copy such elements.
+   * We don't copy self-containing elements (for example, `<group>`) as they would be
+   * copied infinitely.
+   */
+  private fun copyReusedObjectsExceptContainingItself(
+    elementWrapper: ElementWrapper,
+    parentWrapper: ElementWrapper?,
+    alreadyUsedElements: MutableList<ElementWrapper>
+  ) {
+    val element = elementWrapper.element ?: return
+    val parent = parentWrapper?.element
+    if (parentWrapper != null && parent != null && alreadyUsedElements.contains(elementWrapper) && element.containsItself == false) {
+      val elementCopy = element.copy()
+      val wrapperCopy = ElementWrapper(elementCopy)
+      parent.children = parent.children.replace(elementWrapper, wrapperCopy)
+    }
+    alreadyUsedElements.add(elementWrapper)
+    for (child in element.children) {
+      copyReusedObjectsExceptContainingItself(child, elementWrapper, alreadyUsedElements)
+    }
+  }
+
+  private fun <E> List<E>.replace(old: E, new: E): List<E> {
+    return map { if (it === old) new else it }
+  }
+
 
   private fun fillElementPathsRecursively(element: Element, parentPath: List<String>) {
     val elementPath = parentPath + element.name!!

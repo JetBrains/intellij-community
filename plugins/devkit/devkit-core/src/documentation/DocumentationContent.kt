@@ -50,12 +50,20 @@ internal data class Element(
   var defaultValue: String? = null,
   var examples: List<String> = emptyList(),
   var path: List<String> = emptyList(),
-)
+) {
+  fun copy(): Element {
+    return this.copy(attributes = this.attributes.map { it.copy() })
+  }
+}
 
 // allows for referencing attributes by anchors in YAML
 internal data class AttributeWrapper(
   var attribute: Attribute? = null,
-)
+) {
+  fun copy(): AttributeWrapper {
+    return this.copy(attribute = this.attribute?.copy())
+  }
+}
 
 internal data class Attribute(
   var name: String? = null,
