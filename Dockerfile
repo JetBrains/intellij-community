@@ -17,16 +17,16 @@ VOLUME /root/.m2
 # Community sources root
 VOLUME /community
 WORKDIR /community
-ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["./installers.cmd"]
+ENTRYPOINT ["/bin/sh", "./installers.cmd"]
 
 FROM build_env AS build_env_with_docker
-LABEL Description="Community Build Environment with Docker (required to build additional tools like Repair utility)"
+LABEL Description="Community Build Environment with Docker (required to build Snapcraft distributions)"
 RUN apt-get update && \
     apt-get install -y docker.io \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=docker/buildx-bin:latest /buildx /usr/libexec/docker/cli-plugins/docker-buildx
 RUN docker buildx version
-# Docker socket
+# Docker daemon socket is expected to be mounted with --volume /var/run/docker.sock:/var/run/docker.sock
+# and the container should be run as the root user to be able to connect to the socket
 VOLUME /var/run/docker.sock
 CMD ["docker system info && ./installers.cmd"]
