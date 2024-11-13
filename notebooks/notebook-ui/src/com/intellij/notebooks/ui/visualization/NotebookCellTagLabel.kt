@@ -12,7 +12,7 @@ import java.awt.RenderingHints
 import javax.swing.BorderFactory
 import javax.swing.JLabel
 
-class NotebookCellTagLabel(@NlsSafe val tag: String, val cellNum: Int) : JLabel(tag) {  // PY-72712
+class NotebookCellTagLabel(@NlsSafe val tag: String, val cellIndex: Int) : JLabel(tag) {  // PY-72712
   init {
     font = JBFont.small()
     foreground = JBColor.BLACK
