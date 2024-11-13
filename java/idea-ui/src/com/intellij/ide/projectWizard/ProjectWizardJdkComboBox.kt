@@ -267,8 +267,8 @@ class ProjectWizardJdkComboBox(
   var isLoadingExistingJdks: Boolean = true
   val progressIcon: JBLabel = JBLabel(AnimatedIcon.Default.INSTANCE)
   val coroutineScope = application.service<ProjectWizardJdkComboBoxService>().childScope("ProjectWizardJdkComboBox")
-  var downloadOpenJdkJob: Job? = null
-  var addExistingJdkJob: Job? = null
+  private var downloadOpenJdkJob: Job? = null
+  private var addExistingJdkJob: Job? = null
 
   // todo: remote nullability from EelApiKey here we enable Eel by default in JDK detection
   var currentEelKey: EelApiKey? = guardEelKey { LocalEelKey }

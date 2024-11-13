@@ -183,10 +183,6 @@ public abstract class JavaHomeFinder {
         eelPath = eel.getUserInfo().getHome().toString();
       }
     }
-    if (SystemInfo.isSolaris) {
-      // todo: Do we need solaris in Eel?
-      eelPath = "/usr/jdk";
-    }
     if (eelPath != null) {
       EelPath.Absolute absoluteLocation = EelPath.Absolute.parse(eelPath, platform.pathOs());
       return eel.getMapper().toNioPath(absoluteLocation);

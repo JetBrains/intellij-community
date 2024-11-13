@@ -304,6 +304,10 @@ public final class SdkConfigurationUtil {
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !nameList.contains(o));
   }
 
+  /**
+   * @deprecated Please use {@link SdkConfigurationUtil#selectSdkHome(SdkType, Component, Path, Consumer)}
+   */
+  @Deprecated
   public static void selectSdkHome(final @NotNull SdkType sdkType, final @NotNull Consumer<? super String> consumer) {
     selectSdkHome(sdkType, null, Path.of(System.getProperty("user.home")), consumer);
   }

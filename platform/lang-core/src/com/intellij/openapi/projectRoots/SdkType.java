@@ -61,8 +61,8 @@ public abstract class SdkType implements SdkTypeId {
    * for more advanced scenarios
    *
    * @param path Any path which belongs to the file system where the search for SDK should occur.
-   *             It can be any local path, but when JDK should be searched for in a container,
-   *             then it should be a path pointing to somewhere within a container.
+   *             It can be any local path, but when JDK should be searched for in a containerized environment,
+   *             then it should be a path pointing to somewhere within that environment.
    * @see #suggestHomePaths()
    */
   public @Nullable String suggestHomePath(@NotNull Path path) {
