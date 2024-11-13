@@ -3,14 +3,18 @@ package git4idea.scope
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.psi.search.SearchScopeProvider
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.search.GitIgnoreSearchScope
 import git4idea.search.GitSearchScopeProvider
 import git4idea.search.GitTrackedSearchScope
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 class GitSearchScopeTest : GitSingleRepoTest() {
   fun `test no scope is provided if no git repo registered`() {
@@ -28,5 +32,14 @@ class GitSearchScopeTest : GitSingleRepoTest() {
 
 internal fun GitSingleRepoTest.awaitEvents() {
   AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
-  VcsIgnoreManagerImpl.getInstanceImpl(project).ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.SECONDS)
+  repo.untrackedFilesHolder.apply {
+    invalidate()
+    createWaiter().waitFor()
+  }
+
+  runBlocking {
+    waitUntil("Untracked and ignored holders initialized", timeout = 5.seconds, condition = {
+      repo.untrackedFilesHolder.isInitialized && repo.ignoredFilesHolder.initialized
+    })
+  }
 }
