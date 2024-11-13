@@ -16,6 +16,8 @@ class Main {
         var zz = <error descr="Variable 'zz' might not have been initialized">zz</error>;
         zz.hashCode();
         System.out.println(zz.zz);
+        var v =<error descr="Expression expected"> </error>;
+        var w =<EOLError descr="Expression expected"></EOLError>
     }
 
     static int baz(Object o) {return 42;}

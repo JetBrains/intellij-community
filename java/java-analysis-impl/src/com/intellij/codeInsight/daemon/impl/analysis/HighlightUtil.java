@@ -533,6 +533,7 @@ public final class HighlightUtil {
     if (variable instanceof PsiLocalVariable localVariable) {
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null) {
+        if (PsiUtilCore.hasErrorElementChild(variable)) return null;
         String message = JavaErrorBundle.message("lvti.no.initializer");
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
