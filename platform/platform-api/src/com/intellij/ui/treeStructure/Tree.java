@@ -1400,6 +1400,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     private void setPathExpandedState(@NotNull TreePath path, boolean expanded) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable((expanded ? "Expanding" : "Collapsing") + " " + path));
+      }
+      else if (LOG.isDebugEnabled()) {
+        LOG.trace((expanded ? "Expanding" : "Collapsing") + " " + path);
+      }
       expandedState.put(path, expanded);
       if (cachedPresentation != null) {
         cachedPresentation.setExpanded(path, expanded);
@@ -1408,8 +1414,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       // because the change might not be the latest.
       // E.g., we received expanded=true, but there's another expanded=false update pending.
       // If we translate expanded=true back to the model, it'll overwrite that expanded=false (which is a newer state!).
-      if (!applyingViewModelChanges.get() && path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
-        viewModel.setExpanded(expanded);
+      if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+        if (applyingViewModelChanges.get()) {
+          LOG.debug("Not forwarding the new state to the view model because it came from the model itself");
+        }
+        else {
+          LOG.debug("Forwarding the new state to the view model");
+          viewModel.setExpanded(expanded);
+        }
       }
     }
 

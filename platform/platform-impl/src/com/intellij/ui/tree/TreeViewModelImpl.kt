@@ -3,6 +3,9 @@
 
 package com.intellij.ui.tree
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.*
@@ -69,6 +72,7 @@ private class TreeViewModelImpl(
       // schedules ANOTHER update of THE SAME node,
       // it's guaranteed that it'll be performed even if the node is being updated right now.
       updateRequests.collect { epoch ->
+        LOG.debug { "Processing update requests for epoch $epoch" }
         while (pendingUpdates.isNotEmpty()) {
           for ((key, value) in pendingUpdates) {
             // First, go up the hierarchy and see if some ancestor needs to update its children.
@@ -90,11 +94,14 @@ private class TreeViewModelImpl(
             newSelection.add(nodeToSelect)
           }
         }
+        LOG.debug { "Updated selection $newSelection" }
         selectionFlow.emit(newSelection)
         val requestedScroll = requestedScroll.getAndSet(null)
         if (requestedScroll is TreeNodeViewModelImpl && requestedScroll.canSelectOrScroll()) {
+          LOG.debug { "Requesting scroll to $requestedScroll" }
           scrollFlow.emit(requestedScroll)
         }
+        LOG.debug { "Processed update requests for epoch $epoch" }
         check(completedRequests.tryEmit(epoch))
       }
     }
@@ -110,6 +117,7 @@ private class TreeViewModelImpl(
 
   private fun requestUpdate() {
     val newEpoch = updateEpoch.incrementAndGet()
+    LOG.debug { "Scheduling updates for epoch $newEpoch" }
     check(updateRequests.tryEmit(newEpoch))
   }
 
@@ -137,6 +145,7 @@ private class TreeViewModelImpl(
   }
 
   override fun setSelection(nodes: Collection<TreeNodeViewModel>) {
+    debugWithTrace { "Scheduling selection of $nodes" }
     for (node in nodes) {
       node.makeVisible()
     }
@@ -145,6 +154,7 @@ private class TreeViewModelImpl(
   }
 
   override fun scrollTo(node: TreeNodeViewModel) {
+    debugWithTrace { "Scheduling scrolling to $node" }
     requestedScroll.set(node)
     requestUpdate()
   }
@@ -240,6 +250,7 @@ private class TreeNodeViewModelImpl(
   }
 
   override fun setExpanded(isExpanded: Boolean) {
+    debugWithTrace { "Scheduling ${if (isExpanded) "expanding" else "collapsing"} of $this" }
     schedule(NodeUpdate(isExpanded = isExpanded))
   }
 
@@ -311,19 +322,25 @@ private class TreeNodeViewModelImpl(
 
   suspend fun canSelectOrScroll(): Boolean {
     val checkJob = nodeScope.async(CoroutineName("Checking if $this can be selected or scrolled to")) {
-      isVisible
+      val result = isVisible
+      if (!result) {
+        LOG.trace { "Can't select or scroll to $this because it's not visible" }
+      }
+      result
     }
     return try {
       checkJob.await()
     }
     catch (_: CancellationException) {
       currentCoroutineContext().ensureActive() // Has the CALLER been canceled?
+      LOG.trace { "Can't select or scroll to $this because it was canceled" }
       false // Cannot select a canceled node.
     }
   }
 
   suspend fun update(update: NodeUpdate) {
     val updateJob = nodeScope.launch(CoroutineName("Updating $this")) {
+      LOG.debug { "Applying update $update to $this" }
       if (update.loadPresentation) {
         reloadState(update.isExpanded)
       }
@@ -503,3 +520,14 @@ internal class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePr
     return builder.toString()
   }
 }
+
+private inline fun debugWithTrace(message: () -> String) {
+  if (LOG.isTraceEnabled) {
+    LOG.trace(Throwable(message()))
+  }
+  else {
+    LOG.debug(message())
+  }
+}
+
+private val LOG = logger<TreeViewModelImpl>()
