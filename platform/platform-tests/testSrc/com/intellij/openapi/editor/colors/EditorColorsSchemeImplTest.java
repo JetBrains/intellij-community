@@ -408,12 +408,14 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
+  @TestFor(issues = "IJPL-26971")
   public void testTransparencyHexPadding() {
-    // IJPL-26971: Opacity gets stored in color schemes without padding.
+    // Opacity gets stored in color schemes without padding.
     var testColor = new Color(0x88, 0x99, 0xAA, 0x01);
     ensureColorRoundTrips(testColor);
   }
 
+  @TestFor(issues = "IJPL-26971")
   public void testColorZeroPadding() {
     // Another consequence of IJPL-26971: the color components also lose paddings, which would break if the opacity component is not FF.
     var testColor = new Color(0x00, 0x99, 0xAA, 0x00);
