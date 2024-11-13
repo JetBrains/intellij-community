@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.Command
-import com.intellij.codeInsight.completion.commands.core.CommandCompletionService
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
+import com.intellij.codeInsight.completion.commands.core.CommandCompletionService
 import com.intellij.codeInsight.completion.commands.core.HighlightingContainer
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix
 import com.intellij.codeInsight.intention.EmptyIntentionAction
@@ -23,9 +23,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-//todo registry
 //todo new points
 
+//find usages
+//comment/uncomment
 class IntentionCommandProvider : CommandProvider {
   override fun getCommands(
     project: Project,
@@ -35,7 +36,7 @@ class IntentionCommandProvider : CommandProvider {
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
-  ): List<Command> {
+  ): List<CompletionCommand> {
 
     // Obtain available intentions for the context
     return getAvailableIntentions(originalEditor, originalFile, offset, editor, psiFile)
@@ -52,7 +53,7 @@ class IntentionCommandProvider : CommandProvider {
     offset: Int,
     editor: Editor,
     psiFile: PsiFile,
-  ): List<IntentionCommand> {
+  ): List<IntentionCompletionCommand> {
     val container: HighlightingContainer = getPreviousHighlighters(originalEditor, psiFile.fileDocument, offset) ?: return emptyList()
 
     val intentions = mutableListOf<IntentionActionWithTextCaching>()
@@ -62,7 +63,7 @@ class IntentionCommandProvider : CommandProvider {
     intentions.addAll(inspectionFixes)
     intentions.addAll(container.cachedIntentions.intentions.map { it })
 
-    val result: MutableList<IntentionCommand> = ArrayList()
+    val result: MutableList<IntentionCompletionCommand> = ArrayList()
     for (intention in intentions) {
       if (intention.action is EmptyIntentionAction) continue
       if (intention.action.asModCommandAction() == null &&
@@ -87,8 +88,8 @@ class IntentionCommandProvider : CommandProvider {
           icon = AllIcons.Actions.IntentionBulbGrey
         }
       }
-      result.add(IntentionCommand(intention, priority, icon,
-                                  attributesKey?.let {
+      result.add(IntentionCompletionCommand(intention, priority, icon,
+                                            attributesKey?.let {
                                     highlighting?.let {
                                       ModHighlight.HighlightInfo(TextRange(it.startOffset, it.endOffset),
                                                                  attributesKey, false)

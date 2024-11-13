@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.OldCommand
+import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
 
-class GenerateCommand(private val action: BaseGenerateAction) : OldCommand() {
+class GenerateCompletionCommand(private val action: BaseGenerateAction) : OldCompletionCommand() {
   override val name: String
     get() = "Generate \"" + action.templateText + "\""
   override val icon: Icon?

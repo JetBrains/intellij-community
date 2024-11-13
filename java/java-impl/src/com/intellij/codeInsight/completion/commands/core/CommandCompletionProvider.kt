@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion.commands.core
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.commands.api.Command
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.api.CommandCompletionFactory
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
@@ -25,6 +25,7 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
@@ -152,7 +153,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     originalEditor: Editor,
     originalOffset: Int,
     originalFile: PsiFile,
-    processor: Processor<in Collection<Command>>,
+    processor: Processor<in Collection<CompletionCommand>>,
   ) {
     val element = copyFile.findElementAt(offset - 1)
     if (element == null) return
@@ -176,16 +177,16 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
   private data class AdjustedCompletionParameters(val copyFile: PsiFile, val offset: Int)
 
   private fun adjustParameters(parameters: CompletionParameters, commandCompletionType: InvocationCommandType): AdjustedCompletionParameters? {
-    val file = parameters.originalFile.copy() as PsiFile
-    val document = file.viewProvider.document
-    val offset = parameters.offset
+    val originalFile = parameters.originalFile
+    val originalDocument = parameters.editor.document
 
     // Get the document text up to the start of the command (before dots and command text)
+    val offset = parameters.offset
     val adjustedOffset = offset - commandCompletionType.suffix.length - commandCompletionType.pattern.length
     if (adjustedOffset <= 0) return null
-    val adjustedText = document.getText(TextRange(0, adjustedOffset)) + document.getText(TextRange(offset, document.textLength))
-    document.setText(adjustedText)
-    PsiDocumentManager.getInstance(file.project).commitDocument(document)
+    val adjustedText = originalDocument.getText(TextRange(0, adjustedOffset)) + originalDocument.getText(TextRange(offset, originalDocument.textLength))
+
+    val file = PsiFileFactory.getInstance(parameters.editor.project).createFileFromText(originalFile.getName(), originalFile.getLanguage(), adjustedText, true, true)
     return AdjustedCompletionParameters(file, adjustedOffset)
   }
 }

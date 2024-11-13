@@ -376,7 +376,7 @@
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command"
                     dynamic="true"
-                    interface="com.intellij.codeInsight.completion.commands.api.Command" />
+                    interface="com.intellij.codeInsight.completion.commands.api.CompletionCommand" />
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.provider"
                     dynamic="true"
                     interface="com.intellij.codeInsight.completion.commands.api.CommandProvider" />
@@ -1625,12 +1625,19 @@
                             implementationClass="com.intellij.codeInsight.completion.JvmLoggerCompletionContributor"/>
     <completion.contributor language="JAVA" id="jigsaw"
                             implementationClass="com.intellij.codeInsight.completion.JigsawCompletionContributor"/>
-    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.InlineVariableCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.InlineVariableCompletionCommand" />
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.ExtensionPointCommandProvider" />
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.IntentionCommandProvider"  order="first"/>
     <codeInsight.completion.command.provider implementation="com.intellij.codeInsight.completion.commands.impl.GenerateCommandProvider" />
-    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToDeclarationCommand" />
-    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.FormatCodeCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToDeclarationCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.RenameActionCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.OptimizeImportCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.FormatCodeCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.RefactorThisCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.RecentFilesCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.ProjectViewCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GoToDeclarationUsagesCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.CommentCompletionCommand" />
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 

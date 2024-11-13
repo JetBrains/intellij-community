@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion.commands.core
 
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.completion.commands.api.Command
-import com.intellij.codeInsight.completion.commands.api.OldCommand
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
+import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.Document
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-internal class CommandInsertHandler(private val command: Command) : InsertHandler<LookupElement?> {
+internal class CommandInsertHandler(private val completionCommand: CompletionCommand) : InsertHandler<LookupElement?> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     // Remove the dots and command text from the document
     val startOffset = removeCommandText(context)
@@ -21,13 +21,13 @@ internal class CommandInsertHandler(private val command: Command) : InsertHandle
     // Execute the command
     ApplicationManager.getApplication().invokeLater {
       CommandProcessor.getInstance().executeCommand(context.project, {
-        if (command is OldCommand) {
-          command.execute(startOffset, context.file, context.editor)
+        if (completionCommand is OldCompletionCommand) {
+          completionCommand.execute(startOffset, context.file, context.editor)
         }
         else {
-          command.execute(startOffset, context.file)
+          completionCommand.execute(startOffset, context.file)
         }
-      }, command.name, command)
+      }, completionCommand.name, completionCommand)
     }
   }
 

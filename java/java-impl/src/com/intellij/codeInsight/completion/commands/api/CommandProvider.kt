@@ -17,7 +17,7 @@ interface CommandProvider {
    * must be applicable!
    */
   fun getCommands(project: Project, editor: Editor, offset: Int, psiFile: PsiFile,
-                  originalEditor: Editor, originalOffset: Int, originalFile: PsiFile): List<Command>
+                  originalEditor: Editor, originalOffset: Int, originalFile: PsiFile): List<CompletionCommand>
 
   fun getId(): String
 }

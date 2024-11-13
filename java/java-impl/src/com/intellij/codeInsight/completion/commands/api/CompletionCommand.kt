@@ -10,9 +10,9 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Experimental
-abstract class Command {
+abstract class CompletionCommand {
   companion object {
-    val EP_NAME = ExtensionPointName<Command>("com.intellij.codeInsight.completion.command")
+    val EP_NAME = ExtensionPointName<CompletionCommand>("com.intellij.codeInsight.completion.command")
   }
 
   abstract val name: String
@@ -28,7 +28,7 @@ abstract class Command {
 }
 
 @Deprecated(message = "Used only to adapt old style actions", level = DeprecationLevel.WARNING)
-abstract class OldCommand : Command() {
+abstract class OldCompletionCommand : CompletionCommand() {
   abstract fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean
   abstract fun execute(offset: Int, psiFile: PsiFile, editor: Editor?)
 

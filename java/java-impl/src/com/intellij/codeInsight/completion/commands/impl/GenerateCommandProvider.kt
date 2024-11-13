@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.Command
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
 import com.intellij.openapi.actionSystem.*
@@ -20,7 +20,7 @@ class GenerateCommandProvider : CommandProvider {
                            psiFile: PsiFile,
                            originalEditor: Editor,
                            originalOffset: Int,
-                           originalFile: PsiFile): List<Command> {
+                           originalFile: PsiFile): List<CompletionCommand> {
     val element = psiFile.findElementAt(offset)
     val dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
@@ -38,7 +38,7 @@ class GenerateCommandProvider : CommandProvider {
         generateActions.add(action)
       }
     }
-    return generateActions.map { GenerateCommand(it) }
+    return generateActions.map { GenerateCompletionCommand(it) }
   }
 
   override fun getId(): String {

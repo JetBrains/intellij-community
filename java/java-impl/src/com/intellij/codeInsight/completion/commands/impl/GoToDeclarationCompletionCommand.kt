@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.Command
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.psi.PsiElement
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
 import javax.swing.Icon
 
-class GoToDeclarationCommand : Command() {
+class GoToDeclarationCompletionCommand : CompletionCommand() {
   override val name: String
     get() = "goToDeclaration"
 

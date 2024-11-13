@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.core.CommandCompletionService
-import com.intellij.codeInsight.completion.commands.api.OldCommand
+import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
 import com.intellij.codeInsight.completion.commands.core.PREVIOUS_HIGHLIGHT_CACHED_CONTAINER_INFO_CONTAINER_KEY
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.daemon.impl.quickfix.ExpensivePsiIntentionAction
@@ -18,12 +18,12 @@ import com.intellij.psi.PsiFile
 import kotlinx.coroutines.launch
 import javax.swing.Icon
 
-class IntentionCommand(
+class IntentionCompletionCommand(
   private val intentionAction: IntentionActionWithTextCaching,
   override val priority: Int?,
   override val icon: Icon?,
   override val highlightInfo: ModHighlight.HighlightInfo?,
-) : OldCommand() {
+) : OldCompletionCommand() {
 
   override val name: String
     get() = intentionAction.text

@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.codeInsight.completion.commands.api.Command
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiFile
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiStatement
 import com.intellij.psi.util.parents
 import javax.swing.Icon
 
-class FormatCodeCommand : Command() {
+class FormatCodeCompletionCommand : CompletionCommand() {
   override val name: String
     get() = "format"
 
