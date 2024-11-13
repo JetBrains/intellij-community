@@ -127,7 +127,7 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
 
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
 
-    record AnalysisScopeInfo(@Nullable Module module, @NotNull AnalysisScope scope) {
+    record BaseAnalysisActionDialogInfo(@NotNull AnalysisScope analysisScope, @NotNull List<ModelScopeItem> items) {
     }
 
     ReadAction.nonBlocking(() -> {
@@ -151,19 +151,19 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
           analysisScope = new AnalysisScope(project);
         }
       }
-      return new AnalysisScopeInfo(module, analysisScope);
+      List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, analysisScope, module, psiElement);
+      return new BaseAnalysisActionDialogInfo(analysisScope, items);
     }).finishOnUiThread(ModalityState.nonModal(), info -> {
       final AnalysisUIOptions options = AnalysisUIOptions.getInstance(project);
       final FileFilterPanel fileFilterPanel = new FileFilterPanel();
       fileFilterPanel.init(options);
 
-      final AnalysisScope initialAnalysisScope = info.scope;
-      List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, info.scope, info.module, psiElement);
+      final AnalysisScope initialAnalysisScope = info.analysisScope;
       final BaseAnalysisActionDialog dialog =
         new BaseAnalysisActionDialog(IdeBundle.message("goto.inspection.action.dialog.title", toolWrapper.getDisplayName()),
                                      CodeInsightBundle.message("analysis.scope.title", InspectionsBundle
                                        .message("inspection.action.noun")), project,
-                                     items, options, true) {
+                                     info.items, options, true) {
 
           private InspectionToolWrapper<?, ?> myUpdatedSettingsToolWrapper;
 
