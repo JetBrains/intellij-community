@@ -230,16 +230,6 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   }
 
   @Override
-  public @NotNull ValueContainer<Value> read(Key key) throws StorageException {
-    ValueContainer<Value> valueContainer = inMemoryStorage.get(key);
-    if (valueContainer != null) {
-      return valueContainer;
-    }
-
-    return underlyingStorage.read(key);
-  }
-
-  @Override
   public <E extends Exception> boolean read(Key key,
                                             @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
     ValueContainer<Value> valueContainer = inMemoryStorage.get(key);

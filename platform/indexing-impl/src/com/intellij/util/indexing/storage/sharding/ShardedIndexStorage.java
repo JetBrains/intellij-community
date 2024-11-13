@@ -4,9 +4,11 @@ package com.intellij.util.indexing.storage.sharding;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexStorage;
-import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.io.IOUtil;
@@ -74,24 +76,6 @@ class ShardedIndexStorage<K, V> implements VfsAwareIndexStorage<K, V> {
     ShardableIndexExtension shardable = (ShardableIndexExtension)extension;
     int shardNo = shardable.shardNo(inputId);
     return shards[shardNo];
-  }
-
-  @Override
-  public @NotNull ValueContainer<V> read(K key) throws StorageException {
-    //it is ineffective, which is one of the reasons why this method is deprecated
-    ValueContainerImpl<V> mergedData = ValueContainerImpl.createNewValueContainer();
-    for (IndexStorage<K, V> shard : shards) {
-      shard.read(
-        key,
-        shardContainer -> shardContainer.forEach(
-          (id, value) -> {
-            mergedData.addValue(id, value);
-            return true;
-          }
-        )
-      );
-    }
-    return mergedData;
   }
 
   @Override

@@ -4293,7 +4293,7 @@ com.intellij.util.indexing.impl.IndexStorage
 - a:close():V
 - a:flush():V
 - a:isDirty():Z
-- a:read(java.lang.Object):com.intellij.util.indexing.ValueContainer
+- read(java.lang.Object):com.intellij.util.indexing.ValueContainer
 - a:read(java.lang.Object,com.intellij.util.indexing.impl.ValueContainerProcessor):Z
 - a:removeAllValues(java.lang.Object,I):V
 - a:updateValue(java.lang.Object,I,java.lang.Object):V

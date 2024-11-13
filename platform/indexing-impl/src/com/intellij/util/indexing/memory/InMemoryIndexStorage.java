@@ -3,12 +3,10 @@ package com.intellij.util.indexing.memory;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexStorageLockingBase;
 import com.intellij.util.indexing.impl.IndexStorageUtil;
@@ -71,16 +69,13 @@ public final class InMemoryIndexStorage<K, V> extends IndexStorageLockingBase im
   }
 
   @Override
-  public @NotNull ValueContainer<V> read(K k) throws StorageException {
-    return ObjectUtils.notNull(inMemoryStorage.get(k), ValueContainerImpl.createNewValueContainer());
-  }
-
-  @Override
-  public <E extends Exception> boolean read(K key, @NotNull ValueContainerProcessor<V, E> processor) throws StorageException, E {
+  public <E extends Exception> boolean read(K key,
+                                            @NotNull ValueContainerProcessor<V, E> processor) throws StorageException, E {
     try (LockStamp ignored = lockForRead()) {
       ValueContainerImpl<V> container = inMemoryStorage.get(key);
       if (container == null) {
-        //TODO RC: EmptyValueContainer.INSTANCE
+        //TODO RC: better use EmptyValueContainer.INSTANCE, but needs additional dependency
+        //TODO RC: move EmptyContainer to ValueContainer?
         return processor.process(ValueContainerImpl.createNewValueContainer());
       }
 

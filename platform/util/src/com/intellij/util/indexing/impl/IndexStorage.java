@@ -29,10 +29,39 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
   void clear() throws StorageException;
 
 
-  //TODO RC: this method better replaced with read(key, lambda), because otherwise it is hard to ensure thread-safety
-  //         (i.e. use-site must be wrapped in read lock)
+  /**
+   * @deprecated use {@linkplain #read(Object, ValueContainerProcessor)} version instead.
+   * This method forces to return a copy of underlying container, otherwise it is impossible to guarantee thread-safety -- which is
+   * why it was deprecated.
+   */
   @Deprecated
-  @NotNull ValueContainer<Value> read(Key key) throws StorageException;
+  default @NotNull ValueContainer<Value> read(Key key) throws StorageException {
+    //it is ineffective, which is one of the reasons why this method is deprecated
+    //MAYBE RC: non-sharded implementation could implement container copy faster (just clone it), but I don't think it makes
+    //          a difference since this read(key) method shouldn't be used at all, yet alone in performance-critical code.
+    ValueContainerImpl<Value> defensiveCopy = ValueContainerImpl.createNewValueContainer();
+    read(
+      key,
+      shardContainer -> {
+        shardContainer.forEach(
+          (id, value) -> {
+            defensiveCopy.addValue(id, value);
+            return true;
+          }
+        );
+        //copy a .needsCompacting value from the original container(s):
+        if (shardContainer instanceof UpdatableValueContainer) {
+          UpdatableValueContainer<Value> container = (UpdatableValueContainer<Value>)shardContainer;
+          if(container.needsCompacting()){
+            defensiveCopy.setNeedsCompacting(true);
+          }
+        }
+        return true;
+      }
+    );
+
+    return defensiveCopy;
+  }
 
 
   /**

@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -52,6 +53,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 @TestApplication//SingleEntry indexes need application
 public abstract class IndexStorageLayoutProviderTestBase {
   private static boolean wasInStressTest;
+
   protected final int inputsCountToTestWith;
 
   protected final @NotNull FileBasedIndexLayoutProvider storageLayoutProviderToTest;
@@ -95,11 +97,17 @@ public abstract class IndexStorageLayoutProviderTestBase {
         for (Map.Entry<K, V> e : inputData.entrySet()) {
           K expectedKey = e.getKey();
           V expectedValue = e.getValue();
-          ValueContainer<V> container = indexStorage.read(expectedKey);
-          if (!contains(container, expectedValue, expectedInputId)) {
+          boolean[] foundRef = {false};
+          indexStorage.read(expectedKey, container -> {
+            if (contains(container, expectedValue, expectedInputId)) {
+              foundRef[0] = true;
+              return false;
+            }
+            return true;
+          });
+          if (!foundRef[0]) {
             inconsistencies.add(
-              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + "), " +
-              "but " + dump(container)
+              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + ")"
             );
           }
         }
@@ -151,12 +159,16 @@ public abstract class IndexStorageLayoutProviderTestBase {
         for (Map.Entry<K, V> e : inputData.entrySet()) {
           K expectedKey = e.getKey();
           V expectedValue = e.getValue();
-          ValueContainer<V> container = indexStorage.read(expectedKey);
-          if (!contains(container, expectedValue, expectedInputId)) {
-            inconsistencies.add(
-              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + "), " +
-              "but " + dump(container)
-            );
+          boolean[] foundRef = {false};
+          indexStorage.read(expectedKey, container -> {
+            if (contains(container, expectedValue, expectedInputId)) {
+              foundRef[0] = true;
+              return false;
+            }
+            return true;
+          });
+          if (!foundRef[0]) {
+            inconsistencies.add("container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + ")");
           }
         }
       }
@@ -213,10 +225,12 @@ public abstract class IndexStorageLayoutProviderTestBase {
         var input = inputDataGenerator.unpackSubstrate(substrate);
         for (Map.Entry<K, V> e : input.inputData.entrySet()) {
           K key = e.getKey();
-          ValueContainer<V> container = indexStorage.read(key);
-          if (container.size() > 0) {
-            inconsistencies.add("It must be no entries in container(" + key + "), but: " + dump(container));
-          }
+          indexStorage.read(key, container -> {
+            if (container.size() > 0) {
+              inconsistencies.add("It must be no entries in container(" + key + "), but: " + dump(container));
+            }
+            return true;
+          });
         }
       }
 

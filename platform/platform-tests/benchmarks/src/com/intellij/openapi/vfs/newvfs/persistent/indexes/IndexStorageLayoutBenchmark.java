@@ -194,14 +194,16 @@ public class IndexStorageLayoutBenchmark {
   }
 
   @Benchmark
-  public int indexStorage_readContainer(InputContext inputContext,
+  public boolean indexStorage_readContainer(InputContext inputContext,
                                         StorageContext storageContext,
                                         ReadContext readContext) throws StorageException {
     IndexStorage<Integer, Integer> indexStorage = storageContext.indexStorage;
 
     Integer key = readContext.nextKey();
-    //.size() forces load/merge data:
-    return indexStorage.read(key).size();
+    return indexStorage.read(key, container -> {
+      container.size();//.size() forces load/merge data:
+      return true;
+    });
   }
 
   private static final GlobalSearchScope SCOPE_EVERYTHING = new GlobalSearchScope() {

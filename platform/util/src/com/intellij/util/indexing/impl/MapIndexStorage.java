@@ -190,7 +190,7 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
           putSingleValueDirectly(key, inputId, value);
         }
         else {
-          read(key).addValue(inputId, value);
+          myCache.read(key).addValue(inputId, value);
         }
       }
       catch (IOException e) {
@@ -213,7 +213,7 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
         }
         else {
           // important: assuming the key exists in the index
-          read(key).removeAssociatedValue(inputId);
+          myCache.read(key).removeAssociatedValue(inputId);
         }
       }
       catch (IOException e) {
@@ -297,21 +297,10 @@ public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase impleme
   }
 
   @Override
-  public @NotNull ChangeTrackingValueContainer<Value> read(Key key) throws StorageException {
-    try {
-      return myCache.read(key);
-    }
-    catch (RuntimeException e) {
-      throw unwrapCauseAndRethrow(e);
-    }
-  }
-
-  @Override
   public <E extends Exception> boolean read(Key key,
                                             @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
     try (LockStamp ignored = lockForRead()) {
       try {
-        //TODO RC: do we need a separate lock inside the cache, if we have the lock outside?
         ChangeTrackingValueContainer<Value> result = myCache.read(key);
         return processor.process(result);
       }

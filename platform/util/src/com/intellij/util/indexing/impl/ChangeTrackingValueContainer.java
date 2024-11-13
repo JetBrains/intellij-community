@@ -41,7 +41,9 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
    * This object is always created by {@link #myInitializer}, hence if initializer is null -- it must also be null
    */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
-  //RC: why is it Nullable? It seems quite NPE-prone
+
+  //TODO RC: the only reason to use UpdatableValueContainer instead of plain ValueContainer (unmodifiable) is to access
+  //         .needsCompaction() method -- which is strictly speaking should be in a ValueContainer
   private final @NotNull Computable<? extends UpdatableValueContainer<Value>> myInitializer;
 
   public ChangeTrackingValueContainer(@NotNull Computable<? extends UpdatableValueContainer<Value>> initializer) {
