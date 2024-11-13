@@ -338,6 +338,10 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * Like {@link #getStub()}, but can return a non-null value after the element has been switched to AST. Can be used
    * to retrieve the information which is cheaper to get from a stub than by tree traversal.
+   * <p>
+   * Implementation note: green stub is erased in the files that are changed after they had been switched to AST mode.
+   * So it is recommended to cache long computations performed in AST mode.
+   *
    * @see PsiFileImpl#getGreenStub()
    */
   public final @Nullable T getGreenStub() {

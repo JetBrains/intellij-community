@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -618,6 +618,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    * A green stub is a stub object that can co-exist with tree (AST). So, contrary to {@link #getStub()}, can be non-null
    * even if the AST has been loaded in this file. It can be used in cases when retrieving information from a stub is cheaper
    * than from AST.
+   * <p>
+   * Implementation note: green stub is erased in the files that are changed after they had been switched to AST mode.
+   * So it is recommended to cache long computations performed in AST mode.
    *
    * @return a stub object corresponding to the file's content, or null if it's not available (e.g. has been garbage-collected)
    * @see #getStub()
@@ -645,15 +648,20 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return getStubTreeOrFileElement().first;
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * @see #getGreenStub() documentation
+   */
   public final <T> T withGreenStubOrAst(
     Function<PsiFileStub<?>, T> stubProcessor,
     Function<FileElement, T> astProcessor
   ) {
-    //noinspection rawtypes
+    //noinspection rawtypes,unchecked
     return withGreenStubOrAst((Class<PsiFileStub<?>>)(Class)PsiFileStub.class, stubProcessor, astProcessor);
   }
 
+  /**
+   * @see #getGreenStub() documentation
+   */
   public final <T, S extends PsiFileStub<?>> T withGreenStubOrAst(
     Class<S> stubClass,
     Function<S, T> stubProcessor,
