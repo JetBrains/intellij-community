@@ -76,7 +76,6 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         )
         return JvmIrCodegenFactory(
             configuration = compilerConfiguration,
-            phaseConfig = null,
             externalMangler = mangler,
             externalSymbolTable = FragmentCompilerSymbolTableDecorator(
                 JvmIdSignatureDescriptor(mangler),
