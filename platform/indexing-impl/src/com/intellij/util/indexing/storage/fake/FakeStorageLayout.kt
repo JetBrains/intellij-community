@@ -5,9 +5,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.ValueContainer
 import com.intellij.util.indexing.VfsAwareIndexStorage
 import com.intellij.util.indexing.impl.IndexStorage
-import com.intellij.util.indexing.impl.ValueContainerImpl
 import com.intellij.util.indexing.impl.ValueContainerProcessor
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndex
@@ -63,9 +63,7 @@ internal class FakeIndexStorage<K, V> : VfsAwareIndexStorage<K, V> {
   override fun processKeys(processor: Processor<in K>, scope: GlobalSearchScope?, idFilter: IdFilter?): Boolean = true
 
   override fun <E : Exception?> read(key: K?, processor: ValueContainerProcessor<V?, E?>): Boolean {
-    //TODO RC: better use EmptyValueContainer.INSTANCE, but needs additional dependency
-    //TODO RC: move EmptyContainer to ValueContainer?
-    return processor.process(ValueContainerImpl.createNewValueContainer())
+    return processor.process(ValueContainer.emptyContainer())
   }
   
   override fun flush() = Unit

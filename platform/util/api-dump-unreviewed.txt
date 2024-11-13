@@ -4250,6 +4250,7 @@ com.intellij.util.indexing.StorageUpdate
 - a:update():Z
 a:com.intellij.util.indexing.ValueContainer
 - <init>():V
+- s:emptyContainer():com.intellij.util.indexing.ValueContainer
 - f:forEach(com.intellij.util.indexing.ValueContainer$ContainerAction):Z
 - a:getValueIterator():com.intellij.util.indexing.ValueContainer$ValueIterator
 - f:process(com.intellij.util.indexing.ValueContainer$ThrowableContainerProcessor):Z

@@ -19211,11 +19211,6 @@ f:com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 - f:isSupportedFileSystem(com.intellij.openapi.vfs.VirtualFile):Z
 f:com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePathsKt
 - sf:hasPresentablePathMatching(com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath,java.lang.String):Z
-f:com.intellij.util.indexing.snapshot.EmptyValueContainer
-- com.intellij.util.indexing.ValueContainer
-- sf:INSTANCE:com.intellij.util.indexing.snapshot.EmptyValueContainer
-- getValueIterator():com.intellij.util.indexing.ValueContainer$ValueIterator
-- size():I
 com.intellij.util.text.MatcherHolder
 - s:associateMatcher(javax.swing.JComponent,com.intellij.util.text.Matcher):V
 - s:getAssociatedMatcher(javax.swing.JComponent):com.intellij.util.text.Matcher

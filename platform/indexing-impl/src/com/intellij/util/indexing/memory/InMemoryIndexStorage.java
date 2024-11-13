@@ -7,6 +7,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexStorageLockingBase;
 import com.intellij.util.indexing.impl.IndexStorageUtil;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 
 @ApiStatus.Internal
 public final class InMemoryIndexStorage<K, V> extends IndexStorageLockingBase implements VfsAwareIndexStorage<K, V> {
@@ -73,13 +75,13 @@ public final class InMemoryIndexStorage<K, V> extends IndexStorageLockingBase im
                                             @NotNull ValueContainerProcessor<V, E> processor) throws StorageException, E {
     try (LockStamp ignored = lockForRead()) {
       ValueContainerImpl<V> container = inMemoryStorage.get(key);
-      if (container == null) {
-        //TODO RC: better use EmptyValueContainer.INSTANCE, but needs additional dependency
-        //TODO RC: move EmptyContainer to ValueContainer?
-        return processor.process(ValueContainerImpl.createNewValueContainer());
-      }
 
-      return processor.process(container);
+      return processor.process(
+        Objects.requireNonNullElse(
+          container,
+          ValueContainer.emptyContainer()
+        )
+      );
     }
   }
 
