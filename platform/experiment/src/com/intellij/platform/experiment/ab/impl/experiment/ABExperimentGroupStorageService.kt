@@ -6,8 +6,8 @@ import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.Companion.OPTION_ID_FREE_GROUP
-import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.Companion.TOTAL_NUMBER_OF_GROUPS
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentImpl.Companion.OPTION_ID_FREE_GROUP
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentImpl.Companion.TOTAL_NUMBER_OF_GROUPS
 
 /**
  * This storage is used to ensure that option groups are assigned properly.
@@ -65,7 +65,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
     val groupNumberToExperimentOptionId = myState.groupNumberToExperimentOptionId
     LOG.debug { "State BEFORE update is: $groupNumberToExperimentOptionId" }
 
-    val optionBeans = ABExperiment.getJbABExperimentOptionBeanList()
+    val optionBeans = ABExperimentImpl.getJbABExperimentOptionBeanList()
     val usedOptionIds = groupNumberToExperimentOptionId.values.toSet()
     val newOptionBeans = optionBeans.filter { it.instance.id.value !in usedOptionIds }
 
@@ -73,7 +73,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
       return
     }
 
-    val isPopularIDE = ABExperiment.isPopularIDE()
+    val isPopularIDE = ABExperimentImpl.isPopularIDE()
 
     for (newOptionBean in newOptionBeans) {
       val newOption = newOptionBean.instance
@@ -102,8 +102,8 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
       OPTION_ID_FREE_GROUP.value
     }).toMutableMap()
 
-    val isPopularIDE = ABExperiment.isPopularIDE()
-    val options = ABExperiment.getJbABExperimentOptionList().sortedBy { it.id.value }
+    val isPopularIDE = ABExperimentImpl.isPopularIDE()
+    val options = ABExperimentImpl.getJbABExperimentOptionList().sortedBy { it.id.value }
 
     var counter = 0
 
