@@ -10,20 +10,16 @@ import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.representer.Representer
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.ConcurrentHashMap
 
 @Service(Level.APP)
 internal class DocumentationContentProvider {
 
-  private val cachedContent = AtomicReference<DocumentationContent?>(null)
+  private val contentCache = ConcurrentHashMap<DocumentationDataCoordinates, DocumentationContent?>()
 
   fun getContent(coordinates: DocumentationDataCoordinates): DocumentationContent? {
     // TODO: downloading from coordinates.url
-    cachedContent.get()?.let { return it }
-    synchronized(this) {
-      cachedContent.get()?.let { return it }
-      return cachedContent.updateAndGet { loadContentFromResources(coordinates.localPath) }
-    }
+    return contentCache.computeIfAbsent(coordinates) { loadContentFromResources(coordinates.localPath) }
   }
 
   private fun loadContentFromResources(localPath: String): DocumentationContent? {
