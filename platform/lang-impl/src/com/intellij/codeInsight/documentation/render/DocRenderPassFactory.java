@@ -92,9 +92,14 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   }
 
   static boolean isValidRange(@NotNull Document document, @NotNull TextRange range) {
-    CharSequence text = document.getImmutableCharSequence();
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
+    int textLength = document.getTextLength();
+    if (startOffset >= textLength || endOffset >= textLength) {
+      return false;
+    }
+
+    CharSequence text = document.getImmutableCharSequence();
     int startLine = document.getLineNumber(startOffset);
     int endLine = document.getLineNumber(endOffset);
     if (!CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(document.getLineStartOffset(startLine), startOffset)) ||
