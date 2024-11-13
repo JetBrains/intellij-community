@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
+import org.jetbrains.plugins.gradle.config.isGradleFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 class GroovyPluginDslStructureInspectionVisitor(val holder: ProblemsHolder) : GroovyElementVisitor() {
   override fun visitFile(file: GroovyFileBase) {
+    if (!file.isGradleFile()) return
     val statements = file.statements
     val lastPluginsStatement = statements.indexOfFirst { it is GrMethodCall && it.invokedExpression.text == "plugins" }
     if (lastPluginsStatement == -1) {
