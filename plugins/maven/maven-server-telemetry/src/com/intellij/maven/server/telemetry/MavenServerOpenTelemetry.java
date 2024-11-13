@@ -18,42 +18,19 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public interface MavenServerOpenTelemetry {
-  <T> T callWithSpan(@NotNull String spanName, @NotNull Supplier<T> fn);
-
-  <T, R> List<R> execute(boolean inParallel, @NotNull Collection<T> collection, @NotNull Function<T, R> method);
-
-  <T, R> List<R> executeWithSpan(@NotNull String spanName,
-                                 boolean inParallel,
-                                 @NotNull Collection<T> collection,
-                                 @NotNull Function<T, R> method);
-
-  void shutdown();
-
-  static @NotNull MavenServerOpenTelemetry from(@NotNull TelemetryContext context) {
-    return new MavenServerOpenTelemetryImpl(context);
-  }
-}
-
-final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
-
+public final class MavenServerOpenTelemetry {
   private static final String INSTRUMENTATION_NAME = "MavenServer";
 
-  private final @NotNull OpenTelemetry myOpenTelemetry = GlobalOpenTelemetry.get();
   private final @NotNull Tracer tracer;
   private final @NotNull Scope myScope;
 
-  MavenServerOpenTelemetryImpl(@NotNull TelemetryContext remoteContext) {
-    Context context = remoteContext.extract(myOpenTelemetry.getPropagators().getTextMapPropagator());
+  private MavenServerOpenTelemetry(@NotNull TelemetryContext remoteContext) {
+    OpenTelemetry telemetry = GlobalOpenTelemetry.get();
+    Context context = remoteContext.extract(telemetry.getPropagators().getTextMapPropagator());
     myScope = context.makeCurrent();
-    tracer = myOpenTelemetry.getTracer(INSTRUMENTATION_NAME);
+    tracer = telemetry.getTracer(INSTRUMENTATION_NAME);
   }
 
-  public @NotNull OpenTelemetry getTelemetry() {
-    return myOpenTelemetry;
-  }
-
-  @Override
   public <T> T callWithSpan(@NotNull String spanName, @NotNull Supplier<T> fn) {
     SpanBuilder spanBuilder = tracer.spanBuilder(spanName);
     Span span = spanBuilder.startSpan();
@@ -70,7 +47,6 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
     }
   }
 
-  @Override
   public <T, R> List<R> execute(boolean inParallel, @NotNull Collection<T> collection, @NotNull Function<T, R> method) {
     Context context = Context.current();
 
@@ -80,7 +56,6 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
     return ParallelRunnerForServer.execute(inParallel, collection, context.wrapFunction(method));
   }
 
-  @Override
   public <T, R> List<R> executeWithSpan(@NotNull String spanName,
                                         boolean inParallel,
                                         @NotNull Collection<T> collection,
@@ -90,9 +65,11 @@ final class MavenServerOpenTelemetryImpl implements MavenServerOpenTelemetry {
     );
   }
 
-  @Override
   public void shutdown() {
     myScope.close();
   }
-}
 
+  public static @NotNull MavenServerOpenTelemetry from(@NotNull TelemetryContext context) {
+    return new MavenServerOpenTelemetry(context);
+  }
+}
