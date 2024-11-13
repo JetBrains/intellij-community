@@ -11,6 +11,8 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -57,7 +59,9 @@ private class EelEphemeralRootAwareMapper(
     val tmpDir = eelApi.fs.createTemporaryDirectory(options).getOrThrow()
     val referencedPath = tmpDir.resolve(EelPath.Relative.parse(path.name))
 
-    EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), removeSource = false, copyAttributes = true)
+    withContext(Dispatchers.IO) {
+      EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), removeSource = false, copyAttributes = true)
+    }
 
     scope.awaitCancellationAndInvoke {
       when (val result = eelApi.fs.delete(tmpDir, true)) {
