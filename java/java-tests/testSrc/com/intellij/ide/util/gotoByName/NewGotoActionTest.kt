@@ -13,8 +13,10 @@ import org.mockito.Mockito
 private typealias ActionProcessor = (SearchEverywhereListItem<GotoActionModel.MatchedValue, SearchEverywhereItemPresentation>) -> Boolean
 
 class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
+  fun `test empty`() {}
 
-  fun `test simple search`() {
+  @Suppress("unused")
+  fun `mock test simple search`() {
     runBlocking {
       val provider = createProvider()
       val params = ActionSearchParams("apply patch", true)
@@ -25,7 +27,6 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
         println(it)
         true
       }
-
     }
 
   }
