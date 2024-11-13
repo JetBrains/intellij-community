@@ -141,7 +141,8 @@ private fun UsageReplacementStrategy.processUsages(
                 continue
             }
 
-            createReplacer(usage)?.invoke()?.parent?.parent?.parent?.reformatted(true)
+            val element = createReplacer(usage)?.invoke()
+            element?.parent?.reformatted(true)
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
             LOG.error(e)

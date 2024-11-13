@@ -1,4 +1,4 @@
-fun newFun(p1: String, p2: IntArray) {}
+fun newFun(p1: String, p2: IntArray){}
 
 fun foo(array: IntArray) {
     newFun("a", array)
