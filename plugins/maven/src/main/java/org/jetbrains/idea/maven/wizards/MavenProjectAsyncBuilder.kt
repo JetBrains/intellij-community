@@ -50,9 +50,6 @@ class MavenProjectAsyncBuilder {
       }
     }
     else {
-      runBlockingMaybeCancellable {
-        LOG.warn("Hello Motherfucker")
-      }
       return runBlockingMaybeCancellable {
         commit(project, projectFile, modelsProvider, true)
       }
