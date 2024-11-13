@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
 import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
@@ -150,7 +151,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 if (nameString != null) {
                     if (inlined) {
                         val thisName =
-                            KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                            AsmUtil.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
                         val thisVar = proxy.visibleVariableByName(thisName)
                         if (thisVar != null) {
                             return postprocess(proxy.getVariableValue(thisVar))
@@ -221,7 +222,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                             val thisObject = proxy.thisObject()
                             val thisType = thisObject?.referenceType()
                             if (thisType != null) {
-                                val capturedField = thisType.fieldByName(KotlinDebuggerConstants.CAPTURED_PREFIX + name)
+                                val capturedField = thisType.fieldByName(AsmUtil.CAPTURED_PREFIX + name)
                                 if (capturedField != null) {
                                     return postprocess(thisObject.getValue(capturedField))
                                 }

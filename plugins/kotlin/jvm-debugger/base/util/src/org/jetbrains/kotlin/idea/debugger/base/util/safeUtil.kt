@@ -19,7 +19,7 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.sun.jdi.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_STRATA_NAME
+import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 
 fun StackFrameProxyImpl.safeVisibleVariables(): List<LocalVariableProxyImpl> {
     return wrapEvaluateException { visibleVariables() } ?: emptyList()

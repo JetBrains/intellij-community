@@ -10,6 +10,7 @@ import com.intellij.debugger.mockJDI.values.MockIntegerValue
 import com.intellij.debugger.mockJDI.values.MockObjectReference
 import com.intellij.debugger.mockJDI.values.MockValue
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
@@ -396,7 +397,7 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         """
         doTest(text) { vm, frame ->
             frame.addVariable(
-                KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
+                AsmUtil.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
                 MockValue.createValue(Nested(-1), vm))
         }
     }
