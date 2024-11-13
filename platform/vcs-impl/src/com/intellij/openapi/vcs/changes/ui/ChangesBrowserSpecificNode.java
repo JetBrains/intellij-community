@@ -1,17 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import static com.intellij.util.containers.ContainerUtil.count;
 
-public abstract class ChangesBrowserSpecificNode<T> extends ChangesBrowserNode<T> {
+public abstract class ChangesBrowserSpecificNode<T, F> extends ChangesBrowserNode<T> {
   protected final boolean myIsMany;
   @NotNull protected final Runnable myDialogShower;
   private final int myManyFileCount;
@@ -19,10 +17,10 @@ public abstract class ChangesBrowserSpecificNode<T> extends ChangesBrowserNode<T
 
   private SimpleTextAttributes myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
-  protected ChangesBrowserSpecificFilePathsNode(T userObject, @NotNull Collection<FilePath> files, @NotNull Runnable shower) {
+  protected ChangesBrowserSpecificNode(@NotNull T userObject, @NotNull Collection<F> files, int manyDirectoryCount, @NotNull Runnable shower) {
     super(userObject);
     // if files presented in the same view recalculate number of dirs and files -> provide -1; otherwise use from model
-    myManyDirectoryCount = count(files, it -> it.isDirectory());
+    myManyDirectoryCount = manyDirectoryCount;
     myManyFileCount = files.size() - myManyDirectoryCount;
     myIsMany = isManyFiles(files);
     myDialogShower = shower;
