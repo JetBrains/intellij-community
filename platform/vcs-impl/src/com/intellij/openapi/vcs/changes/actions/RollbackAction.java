@@ -167,12 +167,13 @@ public final class RollbackAction extends DumbAwareAction {
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final Set<? extends VirtualFile> modifiedWithoutEditing) {
-    final String operationName = StringUtil.decapitalize(removeMnemonic(getRollbackOperationName(project)));
+    String operationName = removeMnemonic(getRollbackOperationName(project));
+    String decapitalizedOperationName = StringUtil.decapitalize(operationName);
     String message = (modifiedWithoutEditing.size() == 1)
                      ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
-                                         operationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
+                                         decapitalizedOperationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
                      : VcsBundle.message("rollback.modified.without.editing.confirm.multiple",
-                                         operationName, modifiedWithoutEditing.size());
+                                         decapitalizedOperationName, modifiedWithoutEditing.size());
     int rc = showYesNoDialog(project, message, VcsBundle.message("changes.action.rollback.title", operationName), getQuestionIcon());
     if (rc != Messages.YES) {
       return;
