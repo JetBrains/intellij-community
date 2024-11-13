@@ -3,33 +3,39 @@ package com.intellij.java.codeInsight.completion.commands
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.util.registry.Registry
+import java.util.Arrays
 
 class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
-  fun testInline() {
+  fun testFormat() {
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
           int y = 10;
-          int x = y.<caret>;
+          int x =                           y.<caret>;
         } 
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    // TODO make sure the text is correct
-    selectItem(elements[0])
+    selectItem(elements.first { element -> element.lookupString.contains("format", ignoreCase = true) })
     myFixture.checkResult("""
-            class A { 
-              void foo() {
-              } 
-            }
+      class A { 
+        void foo() {
+          int y = 10;
+            int x = y;
+        } 
+      }
     """.trimIndent())
   }
 
-  fun testCommandsOnly() {
+  fun testCommandsOnlyGoToDeclaration() {
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         void foo() {
-          int y = new B();
+          int y = 1;
           int x = y..<caret>;
         }
         
@@ -37,13 +43,39 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    // TODO make sure the text is correct
-    selectItem(elements[0])
+    selectItem(elements.first { element -> element.lookupString.contains("goToDec", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult("""
-            class A { 
-              void foo() {
-              } 
-            }
+      class A { 
+        void foo() {
+          int <caret>y = 1;
+          int x = y;
+        }
+        
+        class B {}
+      }
+    """.trimIndent())
+  }
+
+  fun testRedCode() {
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          int y = 10L<caret>
+        } 
+      }
+      """.trimIndent())
+    myFixture.doHighlighting()
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Convert literal to", ignoreCase = true) })
+    myFixture.checkResult("""
+      class A { 
+        void foo() {
+          int y = 10
+        } 
+      }
     """.trimIndent())
   }
 }
