@@ -11,7 +11,7 @@ import java.util.Collection;
 
 import static com.intellij.util.containers.ContainerUtil.count;
 
-public abstract class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrowserNode<T> {
+public abstract class ChangesBrowserSpecificNode<T> extends ChangesBrowserNode<T> {
   protected final boolean myIsMany;
   @NotNull protected final Runnable myDialogShower;
   private final int myManyFileCount;
