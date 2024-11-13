@@ -2,8 +2,7 @@
 package com.intellij.xdebugger.frame
 
 interface XMixedModeLowLevelDebugProcess {
-  suspend fun isStopEventOnMainThread() : Boolean
   suspend fun continueAllThreads(exceptEventThread: Boolean)
-  suspend fun pauseMixedModeSessionUnBlockMainThread(triggerBlockedByManagedDebuggerThreadSpin : (suspend () -> Unit))
-  suspend fun pauseMixedModeSession()
+  suspend fun pauseMixedModeSessionUnBlockStopEventThread(stopEventThreadId: Long, triggerBlockedByManagedDebuggerThreadSpin: (suspend () -> Unit))
+  suspend fun pauseMixedModeSession(stopEventThreadId : Long)
 }

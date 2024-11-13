@@ -25,7 +25,7 @@ class MixedModeProcessTransitionStateMachine(
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
   object OnlyLowStopped : State
-  class WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread(val isStopEventOnMainThread : Boolean) : State
+  class WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
   class ManagedStepStarted(val low: XSuspendContext) : State
   class HighLevelDebuggerResumedForStepOnlyLowStopped(val low: XSuspendContext) : State
@@ -116,16 +116,17 @@ class MixedModeProcessTransitionStateMachine(
 
       is HighLevelPositionReached -> {
         when (currentState) {
-          is WaitingForHighProcessPositionReached, is WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread, BothRunning -> {
+          is WaitingForHighProcessPositionReached, is WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread, BothRunning -> {
             withContext(Dispatchers.EDT) {
-              val unBlockMainThread = currentState !is WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread || !currentState.isStopEventOnMainThread
-              if (unBlockMainThread) {
-                (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSessionUnBlockMainThread {
-                  (high as XMixedModeHighLevelDebugProcess).triggerBringingManagedThreadsToUnBlockedState()
-                }
+              val stopThreadId = high.getStoppedThreadId(event.suspendContext)
+              if (currentState is WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread) {
+                // Low level breakpoint has been triggered on the stopped thread, so this thread is not blocked
+                (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSession(stopThreadId)
               }
               else {
-                (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSession()
+                (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSessionUnBlockStopEventThread(stopThreadId) {
+                  (high as XMixedModeHighLevelDebugProcess).triggerBringingManagedThreadsToUnBlockedState()
+                }
               }
             }
 
@@ -133,7 +134,8 @@ class MixedModeProcessTransitionStateMachine(
             state = HighStoppedWaitingForLowProcessToStop(event.suspendContext)
           }
           is HighLevelDebuggerResumedForStepOnlyLowStopped -> {
-            (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSessionUnBlockMainThread {
+            val stopThreadId = high.getStoppedThreadId(event.suspendContext)
+            (low as XMixedModeLowLevelDebugProcess).pauseMixedModeSessionUnBlockStopEventThread(stopThreadId) {
               (high as XMixedModeHighLevelDebugProcess).triggerBringingManagedThreadsToUnBlockedState()
             }
             state = BothStopped(currentState.low, event.suspendContext)
@@ -151,14 +153,13 @@ class MixedModeProcessTransitionStateMachine(
           }
           is BothRunning -> {
             withContext(Dispatchers.EDT) {
-              val isStopEventOnMainThread = (low as XMixedModeLowLevelDebugProcess).isStopEventOnMainThread()
               (low as XMixedModeLowLevelDebugProcess).continueAllThreads(exceptEventThread = true)
 
               // please keep don't await it, it will break the status change logic
               (high as XMixedModeHighLevelDebugProcess).pauseMixedModeSession()
 
               withContext(executor.asCoroutineDispatcher()) {
-                state = WaitForHighProcessPositionReachLowProcessResumedExceptStoppedThread(isStopEventOnMainThread)
+                state = WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread()
               }
             }
           }
