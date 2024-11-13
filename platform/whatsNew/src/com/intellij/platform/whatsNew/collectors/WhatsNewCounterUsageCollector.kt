@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 
 internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
   private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 2)
-  private val visionActionId = EventFields.String("vision.action.id", listOf("whatsnew.vision.zoom", "whatsnew.vision.gif"))
+  private val visionActionId = EventFields.String("vision_action_id", listOf("whatsnew.vision.zoom", "whatsnew.vision.gif"))
 
   private val opened = eventLogGroup.registerEvent("tab_opened", EventFields.Enum(("type"), OpenedType::class.java))
   private val closed = eventLogGroup.registerEvent("tab_closed")
