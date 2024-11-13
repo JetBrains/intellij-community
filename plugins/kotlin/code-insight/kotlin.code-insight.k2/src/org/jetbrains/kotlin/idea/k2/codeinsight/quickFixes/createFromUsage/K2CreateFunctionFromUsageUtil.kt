@@ -68,7 +68,8 @@ object K2CreateFunctionFromUsageUtil {
 
     context (KaSession)
     fun KtExpression.resolveExpression(): KaSymbol? {
-        mainReference?.resolveToSymbol()?.let { return it }
+        val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference
+        reference?.resolveToSymbol()?.let { return it }
         val call = resolveToCall()?.calls?.singleOrNull() ?: return null
         return if (call is KaCallableMemberCall<*, *>) call.symbol else null
     }
@@ -139,7 +140,11 @@ object K2CreateFunctionFromUsageUtil {
             e=e.parent
         }
         if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
-            return e.expectedType ?: withValidityAssertion { useSiteSession.builtinTypes.any }
+            // workaround of the bug when KtFunction.expectedType is always null
+            val expectedType = e.expectedType ?:
+                e.returnType.let { if (it is KaErrorType) null else it } ?:
+                withValidityAssertion { useSiteSession.builtinTypes.any }
+            return expectedType
         }
         return null
     }
@@ -156,15 +161,16 @@ object K2CreateFunctionFromUsageUtil {
     }?.psi
 
     context (KaSession)
-    internal fun ValueArgument.getExpectedParameterInfo(defaultParameterName: ()->String): ExpectedParameter {
+    internal fun ValueArgument.getExpectedParameterInfo(defaultParameterName: String, isTheOnlyAnnotationParameter:Boolean): ExpectedParameter {
         val parameterNameAsString = getArgumentName()?.asName?.asString()
         val argumentExpression = getArgumentExpression()
         val expectedArgumentType = argumentExpression?.expressionType
         val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
         val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
         val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType(expectedArgumentType, jvmParameterType)
-        val names = parameterNames?.toList()?.toTypedArray() ?: arrayOf(defaultParameterName.invoke())
-        return expectedParameter(expectedType, *names)
+        val names = parameterNames?.toList() ?: listOf(defaultParameterName)
+        val nameArray = (if (isTheOnlyAnnotationParameter && parameterNameAsString==null) listOf("value") + names else names).toTypedArray()
+        return expectedParameter(expectedType, *nameArray)
     }
 
     context (KaSession)
@@ -344,9 +350,9 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context(KaSession)
-    fun computeExpectedParams(call: KtCallElement): List<ExpectedParameter> {
+    fun computeExpectedParams(call: KtCallElement, isAnnotation:Boolean=false): List<ExpectedParameter> {
         return call.valueArguments.mapIndexed { index, valueArgument ->
-            valueArgument.getExpectedParameterInfo { "p$index" }
+            valueArgument.getExpectedParameterInfo("p$index", isAnnotation && call.valueArguments.size == 1)
         }
     }
 }

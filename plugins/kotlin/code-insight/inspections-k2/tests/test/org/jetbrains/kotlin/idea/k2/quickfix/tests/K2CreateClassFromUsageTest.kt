@@ -10,7 +10,7 @@ abstract class K2CreateClassFromUsageTest : K2AbstractCreateFromUsageTest("creat
      * E.g. test class [ReferenceExpression] will find all test files inside `/idea/tests/testData/quickfix/createFromUsage/createClass/referenceExpression` and execute corresponding tests on them
      */
     //class AnnotationEntry : K2CreateClassFromUsageTest()
-    //class CallExpression : K2CreateClassFromUsageTest()
+    class CallExpression : K2CreateClassFromUsageTest()
     class DelegationSpecifier : K2CreateClassFromUsageTest()
     class ImportDirective : K2CreateClassFromUsageTest() {
         //class Kt21515: K2CreateClassFromUsageTest()

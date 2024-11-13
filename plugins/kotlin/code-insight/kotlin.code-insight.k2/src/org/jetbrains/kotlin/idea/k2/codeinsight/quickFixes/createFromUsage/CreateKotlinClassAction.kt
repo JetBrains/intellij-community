@@ -21,14 +21,16 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal class CreateKotlinClassAction(
     private val elementPointer: SmartPsiElementPointer<KtElement>,
-    val kind: ClassKind,
+    private val kind: ClassKind,
     private val applicableParents: List<SmartPsiElementPointer<PsiElement>>,
-    val inner: Boolean,
-    val open: Boolean,
-    val name: String,
+    private val inner: Boolean,
+    private val open: Boolean,
+    private val name: String,
     private val superClassName: String?,
-    private val paramList: Pair<String?, List<CreateKotlinCallableAction.ParamCandidate>>,
-    private val returnTypeString: String
+    private val paramList: String,
+    private val parameterCandidates: List<CreateKotlinCallableAction.ParamCandidate>,
+    private val returnTypeString: String,
+    private val primaryConstructorVisibilityModifier: String?,
 ) : IntentionAction {
     override fun getText(): String = KotlinBundle.message("create.0.1", kind.description, name)
     override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
@@ -56,16 +58,7 @@ internal class CreateKotlinClassAction(
         val element = elementPointer.element ?: return
         val applicableParentElements = applicableParents.mapNotNull { it.element }
         CreateClassUtil.chooseAndCreateClass(project, editor, file, element, kind, applicableParentElements, name, text) { targetParent ->
-            runCreateClassBuilder(
-                file,
-                element,
-                targetParent,
-                name,
-                superClassName,
-                paramList,
-                returnTypeString,
-                applicableParentElements
-            )
+            runCreateClassBuilder(file, element, targetParent, applicableParentElements)
         }
     }
 
@@ -73,28 +66,25 @@ internal class CreateKotlinClassAction(
         file: KtFile,
         element: KtElement,
         targetParent: PsiElement,
-        className: String,
-        superClassName: String?,
-        paramList: Pair<String?, List<CreateKotlinCallableAction.ParamCandidate>>,
-        returnTypeString: String,
         applicableParents: List<PsiElement>
     ) {
         val declaration = CreateClassUtil.createClassDeclaration(
             file.project,
-            paramList.first!!,
+            paramList,
             returnTypeString,
             kind,
-            className,
+            name,
             applicableParents,
             open,
             inner,
-            isInsideInnerOrLocalClass(targetParent), null
+            isInsideInnerOrLocalClass(targetParent),
+            primaryConstructorVisibilityModifier
         )
         val callableInfo = NewCallableInfo(
             definitionAsString = "",
-            parameterCandidates = paramList.second,
+            parameterCandidates = parameterCandidates,
             candidatesOfRenderedReturnType = listOf(),   //todo
-            containerClassFqName = FqName(className),
+            containerClassFqName = FqName(name),
             isForCompanion = false,
             typeParameterCandidates = listOf(), //todo
             superClassCandidates = listOfNotNull(superClassName)

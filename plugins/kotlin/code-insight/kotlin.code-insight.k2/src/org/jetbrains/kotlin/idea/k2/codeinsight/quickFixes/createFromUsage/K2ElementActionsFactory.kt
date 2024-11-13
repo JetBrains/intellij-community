@@ -44,40 +44,22 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         if (targetClass is PsiElement && !BaseIntentionAction.canModify(targetClass)) return emptyList()
         var container = targetClass.toKtClassOrFile() ?: return emptyList()
 
-        return when (request) {
-            is CreateMethodFromKotlinUsageRequest -> {
-                if (request.isExtension) {
-                    container = container.containingKtFile
-                }
-                val actionText = CreateKotlinCallableActionTextBuilder.build(
-                    KotlinBundle.message("text.function"), request
-                )
-                listOf(
-                    CreateKotlinCallableAction(
-                        request = request,
-                        targetClass = targetClass,
-                        abstract = container.isAbstractClass(),
-                        needFunctionBody = !request.isAbstractClassOrInterface,
-                        myText = actionText,
-                        pointerToContainer = container.createSmartPointer(),
-                    )
-                )
-            }
-
-            else -> {
-                val isContainerAbstract = container.isAbstractClass()
-                listOf(
-                    CreateKotlinCallableAction(
-                        request = request,
-                        targetClass = targetClass,
-                        abstract = isContainerAbstract,
-                        needFunctionBody = !isContainerAbstract && !container.isInterfaceClass(),
-                        myText = KotlinBundle.message("add.method.0.to.1", request.methodName, targetClass.name.toString()),
-                        pointerToContainer = container.createSmartPointer(),
-                    )
-                )
-            }
+        val ktRequest = request as? CreateMethodFromKotlinUsageRequest
+        if (ktRequest?.isExtension == true) {
+            container = container.containingKtFile
         }
+        val actionText = if (ktRequest == null)
+            KotlinBundle.message("add.method.0.to.1", request.methodName, targetClass.name.toString()) else CreateKotlinCallableActionTextBuilder.build(
+            KotlinBundle.message("text.function"), request
+        )
+        val isContainerAbstract = container.isAbstractClass()
+        val needFunctionBody = if (ktRequest == null) !isContainerAbstract && !container.isInterfaceClass() else !request.isAbstractClassOrInterface
+
+        return listOf(
+            CreateKotlinCallableAction(
+                request, targetClass, isContainerAbstract, needFunctionBody, actionText, container.createSmartPointer()
+            )
+        )
     }
 
     override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {

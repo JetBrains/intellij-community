@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.isDotReceiver
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.SmartList
 
 enum class ClassKind(@NonNls val keyword: String, @Nls val description: String) {
     PLAIN_CLASS("class", KotlinBundle.message("text.class")),
@@ -55,7 +54,7 @@ object CreateClassUtil {
         open: Boolean,
         inner: Boolean,
         isInsideInnerOrLocalClass: Boolean,
-        primaryConstructorName: String?
+        primaryConstructorVisibilityModifier: String?
     ): KtClassOrObject {
         val psiFactory = KtPsiFactory(project)
         val classBody = when (kind) {
@@ -81,7 +80,7 @@ object CreateClassUtil {
                     ClassKind.PLAIN_CLASS, ClassKind.INTERFACE -> "<>"
                     else -> ""
                 }
-                val ctor = primaryConstructorName?.let { " $it constructor" } ?: ""
+                val ctor = primaryConstructorVisibilityModifier?.let { " $it constructor" } ?: ""
                 psiFactory.createDeclaration(
                     "$openMod$innerMod${kind.keyword} $safeName$typeParamList$ctor$paramList$returnTypeString $classBody"
                 )
@@ -100,7 +99,7 @@ object CreateClassUtil {
         commandName: String,
         runCreateClassBuilder: (PsiElement) -> Unit
     ) {
-        val applicableParents = SmartList<PsiElement>()
+        val applicableParents = mutableListOf<PsiElement>()
         initialApplicableParents.filterNotTo(applicableParents) { element ->
             element is KtClassOrObject && element.superTypeListEntries.any {
                 when (it) {

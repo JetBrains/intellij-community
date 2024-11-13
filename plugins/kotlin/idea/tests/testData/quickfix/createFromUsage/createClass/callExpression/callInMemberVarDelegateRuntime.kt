@@ -1,6 +1,6 @@
 // "Create class 'Foo'" "true"
 // DISABLE-ERRORS
-
+// IGNORE_K2
 open class B
 
 class A<T>(val t: T) {
