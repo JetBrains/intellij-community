@@ -31,9 +31,11 @@ internal class JavaFxModuleTemplateGroup : FileTemplateGroupDescriptorFactory {
 
   companion object {
     const val JAVAFX_BUILD_GRADLE = "javafx-build.gradle"
+    const val JAVAFX_BUILD_GRADLE_KTS = "javafx-build.gradle.kts"
     const val JAVAFX_POM_XML = "javafx-pom.xml"
     const val JAVAFX_MVNW_PROPERTIES = "javafx-maven-wrapper.properties"
     const val JAVAFX_SETTINGS_GRADLE = "javafx-settings.gradle"
+    const val JAVAFX_SETTINGS_GRADLE_KTS = "javafx-settings.gradle.kts"
     const val JAVAFX_GRADLEW_PROPERTIES = "javafx-gradle-wrapper.properties"
 
     const val JAVAFX_HELLO_VIEW_FXML = "javafx-hello-view.fxml"

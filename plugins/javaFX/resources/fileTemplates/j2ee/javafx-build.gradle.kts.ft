@@ -1,0 +1,105 @@
+#set ($D = '$')
+plugins {
+  java
+  application
+#if ($context.hasLanguage("kotlin"))
+  id("org.jetbrains.kotlin.jvm" version "${context.getVersion("org.jetbrains.kotlin", "kotlin-gradle-plugin")}"
+#end
+  id("org.javamodularity.moduleplugin") version "${context.getBomProperty("javamodularity.version")}"
+  id("org.openjfx.javafxplugin") version "${context.getVersion("org.openjfx", "javafxplugin")}"
+  id("org.beryx.jlink") version "${context.getVersion("org.beryx", "badass-jlink-plugin")}"
+}
+
+group = "${context.group}"
+version = "${context.version}"
+
+repositories {
+  mavenCentral()
+}
+
+#if ($context.testRunnerId == "junit")
+val junitVersion = "${context.getVersion("org.junit.jupiter", "junit-jupiter-engine")}"
+#end
+
+#if ($context.sdkFeatureVersion > 0 && !$context.hasLanguage("kotlin"))
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(${context.sdkFeatureVersion})
+  }
+}
+#end
+
+tasks.withType<JavaCompile> {
+  options.encoding = "UTF-8"
+}
+
+application {
+  mainModule.set("${context.rootPackage}")
+  mainClass.set("${context.rootPackage}.HelloApplication")
+}
+#if ($context.hasLanguage("kotlin"))
+kotlin {
+  jvmToolchain(#if ($context.sdkFeatureVersion < 17) 11 #else 17 #end)
+}
+#end
+
+javafx {
+  version = "${context.getProperty("javafx.version")}"
+  modules = listOf("javafx.controls", "javafx.fxml"#if ($context.hasLibrary("tilesfx")), "javafx.web", "javafx.swing" #end#if ($context.hasLibrary("fxgl")), "javafx.media"#end)
+}
+
+dependencies {
+#if ($context.hasLanguage("groovy"))
+  implementation("org.apache.groovy:groovy:${context.getVersion("org.apache.groovy", "groovy")}")
+#end
+#if ($context.hasLibrary("controlsfx"))
+  implementation("org.controlsfx:controlsfx:${context.getVersion("org.controlsfx", "controlsfx")}")
+#end
+#if ($context.hasLibrary("formsfx"))
+  implementation("com.dlsc.formsfx:formsfx-core:${context.getVersion("com.dlsc.formsfx", "formsfx-core")}") {
+    exclude(group = "org.openjfx")
+  }
+#end
+#if ($context.hasLibrary("validatorfx"))
+  implementation("net.synedra:validatorfx:${context.getVersion("net.synedra", "validatorfx")}") {
+    exclude(group = "org.openjfx")
+  }
+#end
+#if ($context.hasLibrary("ikonli"))
+  implementation("org.kordamp.ikonli:ikonli-javafx:${context.getVersion("org.kordamp.ikonli", "ikonli-javafx")}")
+#end
+#if ($context.hasLibrary("bootstrapfx"))
+  implementation("org.kordamp.bootstrapfx:bootstrapfx-core:${context.getVersion("org.kordamp.bootstrapfx", "bootstrapfx-core")}")
+#end
+#if ($context.hasLibrary("tilesfx"))
+  implementation("eu.hansolo:tilesfx:${context.getVersion("eu.hansolo", "tilesfx")}") {
+    exclude(group = "org.openjfx")
+  }
+#end
+#if ($context.hasLibrary("fxgl"))
+  implementation("com.github.almasb:fxgl:#if ($context.sdkFeatureVersion >= 17)${context.getBomProperty("fxgl17.version")}#else${context.getBomProperty("fxgl11.version")}#end") {
+    exclude(group = "org.openjfx")
+    exclude(group = "org.jetbrains.kotlin")
+  }
+#end
+
+#if ($context.testRunnerId == "junit")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:${context.asPlaceholder("junitVersion")}")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${context.asPlaceholder("junitVersion")}")
+#end
+#if ($context.testRunnerId == "testng")
+  testImplementation("org.testng:testng:${context.getVersion("org.testng", "testng")}")
+#end
+}
+tasks.withType<Test> {
+    #if ($context.testRunnerId == "junit")useJUnitPlatform()#end
+    #if ($context.testRunnerId == "testng")useTestNG()#end
+}
+
+jlink {
+  imageZip.set(layout.buildDirectory.file("/distributions/app-${D}{javafx.platform.classifier}.zip"))
+  options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+  launcher {
+    name = "app"
+  }
+}

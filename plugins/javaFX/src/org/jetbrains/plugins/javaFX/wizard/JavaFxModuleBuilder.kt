@@ -79,7 +79,11 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
       files.add("pom.xml")
     }
     else if (starterContext.projectType == GRADLE_PROJECT) {
-      files.add("build.gradle")
+      if(starterContext.language.id == "groovy") {
+        files.add("build.gradle")
+      } else {
+        files.add("build.gradle.kts")
+      }
     }
 
     val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
@@ -126,8 +130,13 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
 
     val assets = mutableListOf<GeneratorAsset>()
     if (starterContext.projectType == GRADLE_PROJECT) {
-      assets.add(GeneratorTemplateFile("build.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_BUILD_GRADLE)))
-      assets.add(GeneratorTemplateFile("settings.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_SETTINGS_GRADLE)))
+      if(starterContext.language.id == "groovy") {
+        assets.add(GeneratorTemplateFile("build.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_BUILD_GRADLE)))
+        assets.add(GeneratorTemplateFile("settings.gradle", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_SETTINGS_GRADLE)))
+      } else {
+        assets.add(GeneratorTemplateFile("build.gradle.kts", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_BUILD_GRADLE_KTS)))
+        assets.add(GeneratorTemplateFile("settings.gradle.kts", ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_SETTINGS_GRADLE_KTS)))
+      }
       assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
                                        ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_GRADLEW_PROPERTIES)))
       assets.addAll(standardAssetsProvider.getGradlewAssets())

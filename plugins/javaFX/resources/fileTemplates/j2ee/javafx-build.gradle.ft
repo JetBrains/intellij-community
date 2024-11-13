@@ -95,8 +95,12 @@ dependencies {
 }
 
 test {
-  #if ($context.testRunnerId == "junit")useJUnitPlatform()#end
-  #if ($context.testRunnerId == "testng")useTestNG()#end
+#if ($context.testRunnerId == "junit")
+  useJUnitPlatform()
+#end
+#if($context.testRunnerId == "testng")
+  useTestNG()
+#end
 }
 
 jlink {
