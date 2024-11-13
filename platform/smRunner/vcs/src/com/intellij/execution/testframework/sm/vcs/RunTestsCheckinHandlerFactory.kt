@@ -25,6 +25,7 @@ import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.testframework.sm.vcs.RunTestsBeforeCheckinHandler.Companion.showFailedTests
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -330,12 +331,11 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
           addedSeparator = true
         }
 
-        var target = result
-        if (folder != null) {
-          target = DefaultActionGroup(folder, true)
-          result.add(target)
+        val target = if (folder != null) DefaultActionGroup(folder, true).apply {
+          templatePresentation.icon = AllIcons.Nodes.Folder
+          result.add(this)
         }
-
+        else result
 
         localConfigurations
           .forEach { configuration: RunConfiguration ->
