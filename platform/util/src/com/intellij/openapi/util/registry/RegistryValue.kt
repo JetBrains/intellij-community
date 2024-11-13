@@ -245,7 +245,7 @@ open class RegistryValue @Internal constructor(
     }
     resetCache()
     registry.getStoredProperties().put(key, ValueWithSource(value, source))
-    LOG.info("Registry value '$key' has changed to '$value'")
+    LOG.info("Registry value '$key' has changed to '$value' by ${source.name}")
 
     globalValueChangeListener.afterValueChanged(this)
     for (listener in listeners) {
