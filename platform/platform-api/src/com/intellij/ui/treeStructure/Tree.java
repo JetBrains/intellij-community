@@ -1383,21 +1383,27 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     void markPathExpanded(@NotNull TreePath path) {
-      setPathExpandedState(path, true);
+      markPathExpandedState(path, true);
     }
 
     void markPathCollapsed(TreePath path) {
-      setPathExpandedState(path, false);
+      markPathExpandedState(path, false);
     }
 
-    private void setPathExpandedState(@NotNull TreePath path, boolean expanded) {
+    private void markPathExpandedState(@NotNull TreePath path, boolean expanded) {
       if (LOG.isTraceEnabled()) {
         LOG.trace(new Throwable((expanded ? "Expanding" : "Collapsing") + " " + path));
       }
       else if (LOG.isDebugEnabled()) {
         LOG.trace((expanded ? "Expanding" : "Collapsing") + " " + path);
       }
-      expandedState.put(path, expanded);
+      var model = getModel();
+      if (!expanded && model != null && model.isLeaf(path.getLastPathComponent())) {
+        expandedState.remove(path); // save memory on leafs
+      }
+      else {
+        expandedState.put(path, expanded);
+      }
       if (cachedPresentation != null) {
         cachedPresentation.setExpanded(path, expanded);
       }
@@ -1703,6 +1709,24 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
 
+    /**
+     * Applies the expanded state from the view model
+     * <p>
+     *   Unlike the regular {@link #setExpandedState(TreePath, boolean)}, does not expand parent paths
+     *   if the node is invisible.
+     * </p>
+     * @param path the path to the node (must be leading to a {@link TreeNodeViewModel})
+     * @param state the new expanded state
+     */
+    void setExpandedStateFromViewModel(@NotNull TreePath path, boolean state) {
+      if (isVisible(path)) {
+        setExpandedState(path, state);
+      }
+      else {
+        markPathExpandedState(path, state);
+      }
+    }
+
     private boolean expandParentPaths(@NotNull TreePath path) {
       Deque<TreePath> stack = null;
       TreePath parentPath = path.getParentPath();
@@ -1815,7 +1839,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         var path = e.getTreePath();
         if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
           applyViewModelChange(() -> {
-            Tree.this.setExpandedState(path, viewModel.stateSnapshot().isExpanded());
+            expandImpl.setExpandedStateFromViewModel(path, viewModel.stateSnapshot().isExpanded());
           });
         }
       }
@@ -1844,7 +1868,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         }
         for (Object newChild : e.getChildren()) {
-          if (newChild instanceof TreeNodeViewModel viewModel) {
+          if (newChild instanceof TreeNodeViewModel) {
             applyViewModelChange(() -> {
               var nodePath = path.pathByAddingChild(newChild);
               applyNewNodeExpandedState(model, nodePath);
@@ -1856,7 +1880,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       private void applyNewNodeExpandedState(@NotNull TreeModel model, @NotNull TreePath path) {
         var node = (TreeNodeViewModel)path.getLastPathComponent();
         var isExpanded = node.stateSnapshot().isExpanded();
-        Tree.this.setExpandedState(path, isExpanded);
+        expandImpl.setExpandedStateFromViewModel(path, isExpanded);
         if (isExpanded) {
           for (int i = 0; i < model.getChildCount(node); i++) {
             var child = model.getChild(node, i);
