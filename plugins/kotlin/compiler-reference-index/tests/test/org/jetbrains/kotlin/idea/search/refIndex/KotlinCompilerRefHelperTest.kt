@@ -6,16 +6,20 @@ import com.intellij.java.compiler.CompilerReferencesTestBase
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.testFramework.SkipSlowTestLocally
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtEnumEntry
 
 @SkipSlowTestLocally
-open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase() {
-    protected open val isFir: Boolean = false
+open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun setUp() {
-        super.setUp()
-        if (isFir) {
+        setUpWithKotlinPlugin { super.setUp() }
+        if (pluginMode == KotlinPluginMode.K2) {
             project.enableK2Compiler()
         } else {
             project.enableK1Compiler()
