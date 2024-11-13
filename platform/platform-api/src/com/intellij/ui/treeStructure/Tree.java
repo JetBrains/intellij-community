@@ -96,7 +96,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @ApiStatus.Internal
   public static boolean isBulkExpandCollapseSupported() {
-    return Registry.is("ide.tree.bulk.expand.api", true);
+    return true;
   }
 
   @ApiStatus.Internal
@@ -114,12 +114,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public Tree(TreeModel treemodel) {
     super(treemodel);
-    if (isBulkExpandCollapseSupported()) {
-      expandImpl = new ExpandImpl();
-    }
-    else {
-      expandImpl = null;
-    }
+    expandImpl = new ExpandImpl();
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
@@ -1321,10 +1316,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     } else {
       return supply.getInputMethodRequests();
     }
-  }
-
-  private @Nullable CachedTreePresentation getCachedPresentation() {
-    return expandImpl != null ? expandImpl.getCachedPresentation() : null;
   }
 
   @ApiStatus.Internal
