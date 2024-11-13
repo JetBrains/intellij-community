@@ -130,7 +130,7 @@ open class MavenServerConnectorImpl(project: Project,
           if (!Thread.currentThread().isInterrupted) {
             myDownloadConnectFailedCount.incrementAndGet()
           }
-          MavenLog.LOG.warn("Maven pulling download listener stopped")
+          MavenLog.LOG.warn("Maven pulling download listener stopped", e)
           myPullingDownloadFuture!!.cancel(true)
         }
       },
@@ -161,7 +161,7 @@ open class MavenServerConnectorImpl(project: Project,
           if (!Thread.currentThread().isInterrupted) {
             myLoggerConnectFailedCount.incrementAndGet()
           }
-          MavenLog.LOG.warn("Maven pulling logger stopped")
+          MavenLog.LOG.warn("Maven pulling logger stopped", e)
           myPullingLoggerFuture!!.cancel(true)
         }
       },

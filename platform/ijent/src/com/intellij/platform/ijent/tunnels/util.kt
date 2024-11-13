@@ -41,6 +41,7 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   serverSocket.bind(InetSocketAddress("localhost", localPort), 1024)
   serverSocket.soTimeout = 2.seconds.toInt(DurationUnit.MILLISECONDS)
   this.coroutineContext.job.invokeOnCompletion {
+    LOG.debug("Closing connection to server socket")
     serverSocket.close()
   }
   LOG.info("Accepting a connection within IDE client on port $localPort; Conections go to remote address $address")
@@ -49,6 +50,7 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   launch(IjentThreadPool.asCoroutineDispatcher() + coroutineNameAppended("Local port forwarding server")) {
     while (true) {
       try {
+        LOG.debug("Accepting a coroutine on server socket")
         val socket = runInterruptible {
           serverSocket.accept()
         }
@@ -58,7 +60,7 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
         launch {
           socket.use {
             tunnels.withConnectionToRemotePort(address, {
-              LOG.error("Failed to connect to remote port: $it")
+              LOG.error("Failed to connect to remote port $localPort - $address: $it")
             }) { (channelTo, channelFrom) ->
               redirectClientConnectionDataToIJent(currentConnection, socket, channelTo)
               redirectIJentDataToClientConnection(currentConnection, socket, channelFrom)
@@ -73,7 +75,6 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   }.invokeOnCompletion {
     LOG.info("Local server on $localPort (was tunneling to $address) is terminated")
   }
-  LOG.info("Server on $localPort is terminated")
 }
 
 private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: SendChannel<ByteBuffer>) = launch(coroutineNameAppended("Reader for connection $connectionId")) {
@@ -114,6 +115,7 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
   val outputStream = socket.getOutputStream()
   try {
     for (data in backChannel) {
+      LOG.debug("IJent port forwarding: $connectionId; Received ${data.remaining()} bytes from IJent; sending them back to client connection")
       try {
         runInterruptible {
           outputStream.write(data.toByteArray())
