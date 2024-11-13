@@ -7946,6 +7946,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/complexExpressionUsedTwice6Runtime.kt");
             }
 
+            @TestMetadata("propertyConstantInitializer.kt")
+            public void testPropertyConstantInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/propertyConstantInitializer.kt");
+            }
+
+            @TestMetadata("propertyInitializer.kt")
+            public void testPropertyInitializer() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/propertyInitializer.kt");
+            }
+
             @TestMetadata("simpleExpressionNotUsed.kt")
             public void testSimpleExpressionNotUsed() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/simpleExpressionNotUsed.kt");

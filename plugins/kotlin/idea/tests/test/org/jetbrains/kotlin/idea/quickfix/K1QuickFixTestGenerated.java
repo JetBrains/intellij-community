@@ -7850,6 +7850,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/complexExpressionUsedTwice6Runtime.kt");
             }
 
+            @TestMetadata("propertyConstantInitializer.kt")
+            public void testPropertyConstantInitializer() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/propertyConstantInitializer.kt");
+            }
+
+            @TestMetadata("propertyInitializer.kt")
+            public void testPropertyInitializer() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/propertyInitializer.kt");
+            }
+
             @TestMetadata("simpleExpressionNotUsed.kt")
             public void testSimpleExpressionNotUsed() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/argumentSideEffects/simpleExpressionNotUsed.kt");
