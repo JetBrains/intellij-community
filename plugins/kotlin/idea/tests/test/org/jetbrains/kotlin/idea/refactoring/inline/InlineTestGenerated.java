@@ -959,6 +959,21 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/flexibleType.kt");
             }
 
+            @TestMetadata("functionalPropertyFunctionInitializerWithResult.kt")
+            public void testFunctionalPropertyFunctionInitializerWithResult() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/functionalPropertyFunctionInitializerWithResult.kt");
+            }
+
+            @TestMetadata("functionalPropertyLambdaInitializerNamedParamsWithResult.kt")
+            public void testFunctionalPropertyLambdaInitializerNamedParamsWithResult() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/functionalPropertyLambdaInitializerNamedParamsWithResult.kt");
+            }
+
+            @TestMetadata("functionalPropertyLambdaInitializerWithResult.kt")
+            public void testFunctionalPropertyLambdaInitializerWithResult() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/functionalPropertyLambdaInitializerWithResult.kt");
+            }
+
             @TestMetadata("functionalPropertyWithReceiver.kt")
             public void testFunctionalPropertyWithReceiver() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/functionalPropertyWithReceiver.kt");

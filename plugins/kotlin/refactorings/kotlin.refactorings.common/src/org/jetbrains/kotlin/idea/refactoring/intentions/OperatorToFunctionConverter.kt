@@ -199,7 +199,7 @@ object OperatorToFunctionConverter {
     private fun convertCall(element: KtCallExpression): KtExpression {
         val callee = element.calleeExpression!!
         val receiver = element.parent?.safeAs<KtQualifiedExpression>()?.receiverExpression
-        val isAnonymousFunctionWithReceiver = receiver != null && callee.safeDeparenthesize() is KtNamedFunction
+        val isAnonymousFunctionWithReceiver = receiver != null && (callee.safeDeparenthesize() as? KtNamedFunction)?.receiverTypeReference != null
         // to skip broken code like Main.({ println("hello")})() which is possible during inline anonymous function.
         // see KotlinInlineAnonymousFunctionProcessor.Companion.findFunction
         // and corresponding test InlineVariableOrProperty.testFunctionalPropertyWithReceiver
@@ -207,7 +207,7 @@ object OperatorToFunctionConverter {
         val argumentsList = element.valueArgumentList
         val argumentString = argumentsList?.text?.removeSurrounding("(", ")") ?: ""
         val argumentsWithReceiverIfNeeded = if (isAnonymousFunctionWithReceiver) {
-            val receiverText = receiver?.text ?: ""
+            val receiverText = receiver.text ?: ""
             val delimiter = if (receiverText.isNotEmpty() && argumentString.isNotEmpty()) ", " else ""
             receiverText + delimiter + argumentString
         } else {
@@ -245,7 +245,7 @@ object OperatorToFunctionConverter {
             return dotExpression.selectorExpression as KtExpression
         }
 
-        val elementToReplace = if (isAnonymousFunctionWithReceiver) element.parent else element
+        val elementToReplace = if (isAnonymousFunctionWithReceiver || isLambdaWithReceiver) element.parent else element
         return elementToReplace.replace(transformed) as KtExpression
     }
 
