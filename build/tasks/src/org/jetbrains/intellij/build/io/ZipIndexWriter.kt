@@ -106,7 +106,8 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     buffer.writeIntLE(0x06064b50)
     // size of - will be written later
     val eocdSizePosition = buffer.writerIndex()
-    buffer.writerIndex(eocdSizePosition + Long.SIZE_BYTES)
+    buffer.writeLongLE(0)
+    val eocdSizeCalculationStartPosition = buffer.writerIndex()
     // Version made by
     buffer.writeShortLE(0)
     // Version needed to extract (minimum)
@@ -131,7 +132,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
       buffer.writeIntLE(optimizedMetadataOffset)
     }
 
-    buffer.setLongLE(eocdSizePosition, ((buffer.writerIndex() - eocdSizePosition) - 12).toLong())
+    buffer.setLongLE(eocdSizePosition, (buffer.writerIndex() - eocdSizeCalculationStartPosition).toLong())
 
     // Zip64 end of central directory locator
     buffer.writeIntLE(0x07064b50)
