@@ -42,7 +42,8 @@ fun reportMissingLicenses(collector: SoftAssertions, project: JpsProject, licens
     }
 
     // require license entry only for a main library (ktor-client), not for sub-libraries
-    if (isImplicitLibrary(libraryName)) {
+    // we have `Ant` (uppercase `A`) as dir with JARs, and from maven `ant` (lowercase `a`) - license is specified for "Ant" (later we will remove `Ant`)
+    if (isImplicitLibrary(libraryName) || libraryName == "ant") {
       continue
     }
 
