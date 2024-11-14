@@ -12,13 +12,11 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Path
 
 /**
  * Action displayed on welcome screen to create a project by [miscFileType]
@@ -29,13 +27,10 @@ internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnActi
   miscFileType.icon
 ) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-  private val projectPath = Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject")
-
 
   @RequiresEdt
   override fun actionPerformed(e: AnActionEvent) {
     when (val r = createMiscProject(
-      projectPath,
       miscFileType,
       obtainPythonStrategy = object : ObtainPythonStrategy.FindOnSystem {
         override suspend fun confirmInstallation(): Boolean = withContext(Dispatchers.EDT) {

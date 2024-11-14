@@ -18,6 +18,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -32,6 +33,7 @@ import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.FindOnSystem
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.UseThesePythons
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.PythonModuleTypeBase
@@ -63,10 +65,10 @@ private val logger = fileLogger()
  */
 @RequiresEdt
 fun createMiscProject(
-  projectPath: Path,
   miscFileType: MiscFileType,
   scopeProvider: (Project) -> CoroutineScope,
   obtainPythonStrategy: ObtainPythonStrategy,
+  projectPath: Path = Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject"),
 ): Result<Job, LocalizedErrorString> =
   runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
@@ -80,6 +82,7 @@ fun createMiscProject(
     })
   }
 
+internal val miscProjectEnabled: Boolean get() = Registry.`is`("pycharm.miscProject")
 
 private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, sdk: Sdk): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)
