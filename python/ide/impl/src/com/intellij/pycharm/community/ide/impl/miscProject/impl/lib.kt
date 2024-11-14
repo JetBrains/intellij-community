@@ -18,9 +18,9 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -58,7 +58,7 @@ import kotlin.io.path.pathString
 private val logger = fileLogger()
 
 internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject") }
-internal val miscProjectEnabled: Boolean get() = Registry.`is`("pycharm.miscProject")
+internal val miscProjectEnabled: Lazy<Boolean> = lazy { ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(PyMiscProjectExperimentOption::class.java) }
 
 /**
  * Creates project in [projectPath] in modal window. Once created, uses [scopeProvider] to get scope

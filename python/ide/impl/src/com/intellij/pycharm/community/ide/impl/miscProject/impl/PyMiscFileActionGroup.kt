@@ -10,13 +10,13 @@ import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 internal class PyMiscFileActionGroup : ActionGroup() {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = miscProjectEnabled
+    e.presentation.isEnabledAndVisible = miscProjectEnabled.value
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> =
-    if (miscProjectEnabled)
+    if (miscProjectEnabled.value)
       (MiscFileType.EP.extensionList + listOf(MiscScriptFileType)).map { PyMiscFileAction(it) }.toTypedArray()
     else
       emptyArray()

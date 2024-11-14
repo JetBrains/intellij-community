@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.whatsNew" />
     <orderEntry type="module" module-name="intellij.pycharm.community.ide.impl.promotion" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.platform.experiment" />
   </component>
 </module>
