@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.*;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.EnvironmentUtil;
@@ -309,8 +310,8 @@ public final class TerminalSettingsPanel {
     });
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myConfigureTerminalKeybindingsActionLink);
     myCursorShape = new ComboBox<>(TerminalUiSettingsManager.CursorShape.values());
-    myCursorShape.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-      label.setText(value.getText());
+    myCursorShape.setRenderer(BuilderKt.textListCellRenderer(value -> {
+      return value.getText();
     }));
     myShellPathField = createShellPath();
   }

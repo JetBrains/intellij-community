@@ -117,6 +117,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       .toSortedMap()
 
     return panel {
+      useNewComboBoxRenderer()
+
       for ((group, extensions) in groupedExtensions) {
         val settingsRows = mutableListOf<SettingsRow>()
         val title = JBLabel(group)

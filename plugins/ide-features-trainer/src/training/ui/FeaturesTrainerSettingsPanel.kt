@@ -18,6 +18,8 @@ import training.util.resetPrimaryLanguage
 
 private class FeaturesTrainerSettingsPanel : BoundConfigurable(LearnBundle.message("learn.options.panel.name"), null) {
   override fun createPanel(): DialogPanel = panel {
+    useNewComboBoxRenderer()
+
     val languagesExtensions = LangManager.getInstance().supportedLanguagesExtensions.sortedBy { it.language }
     if (languagesExtensions.isNotEmpty()) {
       row(LearnBundle.message("learn.option.main.language")) {
