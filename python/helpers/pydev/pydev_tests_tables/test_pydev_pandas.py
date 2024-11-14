@@ -48,7 +48,7 @@ def setup_dataframe():
     )
     df['datetime64[ns]'] = df['datetime64[ns]'].astype("datetime64[ns]")
     df['I'] = df['I'].astype("datetime64[ns]")
-    df_html = repr(df.head().to_html(notebook=True, max_cols=None))
+    df_html = repr(df.head(1).to_html(notebook=True, max_cols=None))
     columns_types = [str(df.index.dtype)] + [str(t) for t in df.dtypes]
 
     return rows_number, df, df_html, columns_types
@@ -112,7 +112,7 @@ def test_get_data_saves_display_options(setup_dataframe):
     max_colwidth_before = pd.get_option('display.max_colwidth')
     max_rows_before = pd.get_option('display.max_rows')
 
-    pandas_tables_helpers.get_data(df)
+    pandas_tables_helpers.get_data(df, False)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
@@ -134,7 +134,7 @@ def test_display_saves_display_options(setup_dataframe):
     max_colwidth_before = pd.get_option('display.max_colwidth')
     max_rows_before = pd.get_option('display.max_rows')
 
-    pandas_tables_helpers.display_data(df, start_index=0, end_index=2)
+    pandas_tables_helpers.display_data_html(df, start_index=0, end_index=2)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
@@ -184,6 +184,7 @@ def test_get_info_format(setup_dataframe):
     print('$NEXT_VALUE_SEPARATOR')
     print(get_head(initCommandResult))
     print('$NEXT_VALUE_SEPARATOR')
+    print('$NEXT_VALUE_SEPARATOR')
     print(get_column_types(initCommandResult))
 
     Here we check that with pandas_tables_helpers methods can compose expected result
@@ -205,6 +206,13 @@ def test_get_info_format(setup_dataframe):
               NEXT_VALUE_SEPARATOR,
               pandas_tables_helpers.get_column_types(df)]
     actual = '\n'.join(actual)
+
+    print("GET INFO: START")
+    print()
+    pandas_tables_helpers.get_head(df)
+    print()
+    print("GET INFO: END")
+    print()
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,

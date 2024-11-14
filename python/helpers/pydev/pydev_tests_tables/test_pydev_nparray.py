@@ -1,40 +1,48 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import pytest
 import numpy as np
-import _pydevd_bundle.tables.pydevd_numpy as pandas_tables_helpers
+import pytest
+import sys
+import _pydevd_bundle.tables.pydevd_numpy as numpy_tables_helpers
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 
 
 def check_info_np_array(arr, file):
-    actual = [pandas_tables_helpers.get_type(arr),
+    actual = [numpy_tables_helpers.get_type(arr),
               NEXT_VALUE_SEPARATOR,
-              pandas_tables_helpers.get_shape(arr),
+              numpy_tables_helpers.get_shape(arr),
               NEXT_VALUE_SEPARATOR,
-              pandas_tables_helpers.get_head(arr),
+              numpy_tables_helpers.get_head(arr),
               NEXT_VALUE_SEPARATOR,
-              pandas_tables_helpers.get_column_types(arr)]
+              numpy_tables_helpers.get_column_types(arr)]
     actual = '\n'.join(actual)
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
         expected_file=file
     )
 
+def _get_python_version_info():
+    # () -> str
+    return str(sys.version_info[0]) + '_' + str(sys.version_info[1])
+
 
 def test_simple_array():
     arr = np.array([1, 2, 3])
-    check_info_np_array(arr, 'test_data/numpy/simple_np_array_after.txt')
+    exp_file_python_ver = _get_python_version_info()
+    check_info_np_array(arr, 'test_data/numpy/simple_np_array_' + exp_file_python_ver + '_after.txt')
 
 
 def test_simple_2d_array():
     arr = np.array([[True, "False", True], [True, True, False]])
-    check_info_np_array(arr, 'test_data/numpy/simple_2d_np_array_after.txt')
+    exp_file_python_ver = _get_python_version_info()
+    check_info_np_array(arr, 'test_data/numpy/simple_2d_np_array_' + exp_file_python_ver + '_after.txt')
 
 
 def test_2d_array():
     arr = np.array([[1, 2, 3],
                     [4, 5, 6],
                     [7, 8, 9]])
-    check_info_np_array(arr, 'test_data/numpy/2d_np_array_after.txt')
+    exp_file_python_ver = _get_python_version_info()
+    check_info_np_array(arr, 'test_data/numpy/2d_np_array_' + exp_file_python_ver + '_after.txt')
 
 
 def test_array_with_dtype():
@@ -45,7 +53,8 @@ def test_array_with_dtype():
                        ("cf", "f4"),
                        ("cs", "U16"),
                        ("cb", "?")])
-    check_info_np_array(arr, 'test_data/numpy/np_array_with_dtype_after.txt')
+    exp_file_python_ver = _get_python_version_info()
+    check_info_np_array(arr, 'test_data/numpy/np_array_with_dtype_' + exp_file_python_ver + '_after.txt')
 
 
 def test_sorting_simple_array():
@@ -98,17 +107,23 @@ def read_expected_from_file_and_compare_with_actual(actual, expected_file):
     with open(expected_file, 'r') as in_f:
         expected = in_f.read()
 
+
+    print("expected: ", expected)
+    print()
+    print("actual: ", actual)
     # for a more convenient assertion fails messages here we compare string char by char
     for ind, (act, exp) in enumerate(zip(actual, expected)):
         assert act == exp, \
-            ("index is %s, act part = %s, exp part = %s" %
+            ("index is %s, act part = %s,\n\nexp part = %s" %
              (ind,
-              actual[max(0, ind - 20): min(len(actual) - 1, ind + 20)],
-              expected[max(0, ind - 20): min(len(actual) - 1, ind + 20)]))
+#               actual[max(0, ind - 20): min(len(actual) - 1, ind + 20)],
+#               expected[max(0, ind - 20): min(len(actual) - 1, ind + 20)]))
+              actual,
+              expected))
 
 
 def _sort_array(arr, cols, orders):
-    return pandas_tables_helpers._NpTable(arr).sort((cols, orders))
+    return numpy_tables_helpers._NpTable(arr).sort((cols, orders))
 
 
 def _is_equals(arr_a, arr_b):

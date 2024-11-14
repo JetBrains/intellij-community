@@ -36,7 +36,7 @@ def get_column_types(table):
 # used by pydevd
 # noinspection PyUnresolvedReferences
 def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
-    # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
+    # type: (Union[pd.DataFrame, pd.Series], bool, int, int) -> str
 
     def convert_data_to_csv(data):
         return repr(__convert_to_df(data).to_csv(na_rep = "NaN", float_format=format, sep=CSV_FORMAT_SEPARATOR))
