@@ -75,6 +75,9 @@ public class TestStatusLine extends NonOpaquePanel {
     });
   }
 
+  /// Updates the test status count.
+  /// The number of passed tests is inferred from `finishedTestsCount`, `failuresCount` and `ignoredTestsCount`.
+  /// @param testsTotal total amount of tests. -1 if the amount of tests is unknown.
   public void formatTestMessage(final int testsTotal,
                                 final int finishedTestsCount,
                                 final int failuresCount,
@@ -109,6 +112,7 @@ public class TestStatusLine extends NonOpaquePanel {
 
     final boolean ongoing = finishedTestsCount != testsTotal;
     final boolean finished = endTime != 0;
+    final boolean indefinite = testsTotal < 0;
 
     if (ongoing && finished) {
       myState.append(TestRunnerBundle.message("test.result.stopped"));
@@ -125,11 +129,13 @@ public class TestStatusLine extends NonOpaquePanel {
 
     final int count = failuresCount + passedCount + ignoredTestsCount;
 
-    if (ongoing && finished && duration != null) {
+    if (ongoing && finished && !indefinite && duration != null) {
       myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description.and.duration", count, testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
-    } else if (ongoing) {
+    } else if (finished && indefinite && duration != null) {
+      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", count, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    } else if (ongoing && !indefinite) {
       myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description", count, testsTotal), SimpleTextAttributes.GRAY_ATTRIBUTES);
-    } else if (duration != null) {
+    } else if (!indefinite && duration != null) {
       myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }

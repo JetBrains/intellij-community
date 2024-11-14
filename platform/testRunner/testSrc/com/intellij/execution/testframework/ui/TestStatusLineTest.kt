@@ -91,6 +91,15 @@ class TestStatusLineTest : LightPlatformTestCase() {
     testStatus(9, 4, 2, 1, 1L, 1L, "Stopped. 2 tests failed, 1 passed, 1 ignored", "4 / 9 tests, $durationText")
   }
 
+  fun testUnknownTestCount() {
+    testStatus(-1, 2, 0, 0, null, 0L, "2 tests passed", "")
+
+    val duration = 1L
+    val durationText = NlsMessages.formatDurationApproximateNarrow(duration)
+
+    testStatus(-1, 3, 1, 0, duration, duration, "Stopped. 1 test failed, 2 passed", "3 tests total, $durationText")
+  }
+
   fun testOutdatedTestCount() {
     testStatus(9, 1, 2, 0, null, 0L, "2 tests failed", "2 / 9 tests")
     testStatus(9, 1, 0, 2, null, 0L, "2 tests ignored", "2 / 9 tests")
