@@ -76,8 +76,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
@@ -270,6 +270,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     updateStatusLabel(true);
     updateIconProgress(true);
+    myStatusLine.setIndeterminate(false);
 
     myRequests.clear();
     myUpdateTreeRequests.cancelAllRequests();
