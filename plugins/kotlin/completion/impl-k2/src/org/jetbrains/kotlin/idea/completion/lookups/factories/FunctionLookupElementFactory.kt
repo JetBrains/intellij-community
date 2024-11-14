@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.build
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -131,7 +132,9 @@ internal object FunctionLookupElementFactory {
             trailingLambdaTemplate = trailingFunctionTemplate,
         )
 
-        return createLookupElement(signature, lookupObject)
+        return createLookupElement(signature, lookupObject).apply {
+            hasTrailingLambda = true
+        }
     }
 
     context(KaSession)
