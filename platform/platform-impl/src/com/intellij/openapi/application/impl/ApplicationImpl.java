@@ -16,8 +16,8 @@ import com.intellij.idea.AppExitCodes;
 import com.intellij.idea.AppMode;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ModalityKt;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ModalityKt;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
@@ -301,11 +301,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       catch (Exception e) {
         getLogger().error(e);
       }
-    }
-
-    // Remove IW lock from EDT as EDT might be re-created, which might lead to deadlock if anybody uses this disposed app
-    if (isUnitTestMode()) {
-      invokeLater(() -> releaseWriteIntentLock(), ModalityState.nonModal());
     }
 
     // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
@@ -861,16 +856,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
     return getThreadingSupport().runReadAction(computation);
-  }
-
-  @Override
-  public boolean acquireWriteIntentLock(@Nullable String ignored) {
-    return getThreadingSupport().acquireWriteIntentLock(ignored);
-  }
-
-  @Override
-  public void releaseWriteIntentLock() {
-    getThreadingSupport().releaseWriteIntentLock();
   }
 
   @Override

@@ -46,23 +46,6 @@ public interface ApplicationEx extends Application {
    */
   boolean isWriteActionPending();
 
-  /**
-   * Acquires IW lock if it's not acquired by the current thread.
-   *
-   * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
-   * @return {@code true} if this call acquired lock, {@code false} if lock was taken already.
-   */
-  @ApiStatus.Internal
-  default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
-    return false;
-  }
-
-  /**
-   * Releases IW lock.
-   */
-  @ApiStatus.Internal
-  default void releaseWriteIntentLock() {}
-
   void setSaveAllowed(boolean value);
 
   default void exit(int flags) {

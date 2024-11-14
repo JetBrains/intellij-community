@@ -136,19 +136,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  override fun acquireWriteIntentLock(invokedClassFqn: String?): Boolean {
-    // Legacy support.
-    // This method is called by:
-    // (a) bytecode instrumentation, which is not used anymore
-    // (b) ApplicationImpl on EDT when implicit read on EDT is enabled
-    throw UnsupportedOperationException("WriteAction on any thread is not compatible with implicit read on EDT")
-  }
-
-  override fun releaseWriteIntentLock() {
-    // See acquireWriteIntentLock()
-    throw UnsupportedOperationException("WriteAction on any thread is not compatible with implicit read on EDT")
-  }
-
   override fun isWriteIntentLocked(): Boolean {
     val ts = getThreadState()
     return ts.hasWrite || ts.hasWriteIntent

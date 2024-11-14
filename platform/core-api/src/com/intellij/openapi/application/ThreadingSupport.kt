@@ -37,26 +37,6 @@ interface ThreadingSupport {
   // @Throws(E::class)
   fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
 
-
-  /**
-   * Acquires Write Intent lock if it's not acquired by the current thread.
-   *
-   * This is low-level API, please use [WriteIntentReadAction].
-   *
-   * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
-   * @return `true` if this call acquired lock, `false` if lock was taken already.
-   */
-  @ApiStatus.Internal
-  fun acquireWriteIntentLock(invokedClassFqn: String?): Boolean
-
-  /**
-   * Release Write Intent lock acquired with [acquireWriteIntentLock].
-   *
-   * This is low-level API, please use [WriteIntentReadAction].
-   */
-  @ApiStatus.Internal
-  fun releaseWriteIntentLock()
-
   /**
    * Checks, is Write Intent lock  acquired by the current thread.
    *
