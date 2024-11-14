@@ -30,6 +30,7 @@ internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnActi
 
   @RequiresEdt
   override fun actionPerformed(e: AnActionEvent) {
+    MiscProjectUsageCollector.projectCreated()
     when (val r = createMiscProject(
       miscFileType,
       obtainPythonStrategy = object : ObtainPythonStrategy.FindOnSystem {

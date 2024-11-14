@@ -23,6 +23,6 @@ private object MiscProjectRenameReporter : RefactoringElementListener {
   override fun elementMoved(newElement: PsiElement) = Unit
 
   override fun elementRenamed(newElement: PsiElement) {
-    // log
+    MiscProjectUsageCollector.projectRenamed()
   }
 }
