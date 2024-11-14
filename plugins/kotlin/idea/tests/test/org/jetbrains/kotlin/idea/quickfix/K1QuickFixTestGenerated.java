@@ -17861,6 +17861,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/typeAddition/publicValWithoutReturnTypeCaretOnPublic.kt");
         }
 
+        @TestMetadata("typealiasedConstructorCallWithImplicitTypeArguments.kt")
+        public void testTypealiasedConstructorCallWithImplicitTypeArguments() throws Exception {
+            runTest("testData/quickfix/typeAddition/typealiasedConstructorCallWithImplicitTypeArguments.kt");
+        }
+
         @TestMetadata("wrongGetterParameterType.kt")
         public void testWrongGetterParameterType() throws Exception {
             runTest("testData/quickfix/typeAddition/wrongGetterParameterType.kt");

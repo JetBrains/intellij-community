@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
@@ -14,8 +15,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.EditorNotifications
-import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.k2.DependencyResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
@@ -34,11 +35,9 @@ internal class ReloadDependenciesScriptAction : AnAction() {
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val file = getKotlinScriptFile(editor) ?: return
+        val dependencyResolutionService = project.service<DependencyResolutionService>()
 
-        runWithModalProgressBlocking(
-            project,
-            KotlinBaseScriptingBundle.message("progress.title.loading.script.dependencies")
-        ) {
+        dependencyResolutionService.resolveInBackground {
             project.scriptConfigurationsSourceOfType<DependentScriptConfigurationsSource>()?.updateDependenciesAndCreateModules(
                 listOf(BaseScriptModel(file))
             )

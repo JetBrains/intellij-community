@@ -280,6 +280,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/OnEnumDeclaration.kt");
     }
 
+    @TestMetadata("OnEnumEntries.kt")
+    public void testOnEnumEntries() throws Exception {
+        runTest("testData/editor/quickDoc/OnEnumEntries.kt");
+    }
+
     @TestMetadata("OnEnumEntry.kt")
     public void testOnEnumEntry() throws Exception {
         runTest("testData/editor/quickDoc/OnEnumEntry.kt");

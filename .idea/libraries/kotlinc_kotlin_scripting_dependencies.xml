@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-scripting-dependencies" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.1.20-dev-3814">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.1.20-dev-3814/kotlin-scripting-dependencies-2.1.20-dev-3814.jar">
+          <sha256sum>b214541e1e1de8d2e064a4154c1fb4a970270a0c6939b479b2a8bf78a1f2a2d8</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.1.20-dev-3814/kotlin-scripting-dependencies-2.1.20-dev-3814.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.1.20-dev-3814/kotlin-scripting-dependencies-2.1.20-dev-3814-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
