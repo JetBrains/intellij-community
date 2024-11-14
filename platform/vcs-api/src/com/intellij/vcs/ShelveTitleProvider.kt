@@ -7,12 +7,12 @@ import com.intellij.openapi.vcs.changes.LocalChangeList.getAllDefaultNames
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 
-interface ShelveNameProvider {
+interface ShelveTitleProvider {
 
   /**
-   * Create a custom name for shelved changes
+   * Create a custom title for shelved changes
    */
-  suspend fun generateName(project: Project, patch: ShelveNamePatch): String?
+  suspend fun suggestTitle(project: Project, patch: ShelveTitlePatch): String?
 
   /**
    * Show got it tooltip popup if applicable
@@ -21,7 +21,7 @@ interface ShelveNameProvider {
   fun showGotItPopup(project: Project, component: Component): Boolean
 
   companion object {
-    private val EP_NAME: ExtensionPointName<ShelveNameProvider> = ExtensionPointName<ShelveNameProvider>("com.intellij.vcs.shelve.name")
+    val EP_NAME: ExtensionPointName<ShelveTitleProvider> = ExtensionPointName<ShelveTitleProvider>("com.intellij.vcs.shelve.name")
 
     @JvmStatic
     fun showGotItTooltip(project: Project, component: Component) {
@@ -29,13 +29,8 @@ interface ShelveNameProvider {
     }
 
     @JvmStatic
-    suspend fun generateShelveName(project: Project, patch: ShelveNamePatch): String? {
-      return EP_NAME.getIterable().firstNotNullOfOrNull { it?.generateName(project, patch) }
-    }
-
-    @JvmStatic
     fun hasDefaultName(name: String): Boolean = getAllDefaultNames().contains(name)
   }
 }
 
-data class ShelveNamePatch(val patchText: String, val fileNumber: Int)
+data class ShelveTitlePatch(val patchText: String, val fileNumber: Int)
