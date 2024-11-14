@@ -1244,7 +1244,9 @@
     <lang.implementationTextSelectioner language="JAVA"
                                         implementationClass="com.intellij.codeInsight.hint.JavaImplementationTextSelectioner"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.JavaModuleNavigationContributor"/>
-    <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
+    <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor$ForSymbolNavigationContributor"/>
+    <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultFieldNavigationContributor"/>
+    <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultMethodNavigationContributor"/>
     <gotoSymbolContributor
       implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor$JavadocSeparatorContributor"/>
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
