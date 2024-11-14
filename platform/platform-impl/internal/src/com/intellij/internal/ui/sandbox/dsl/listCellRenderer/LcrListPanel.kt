@@ -40,6 +40,8 @@ internal class LcrListPanel : UISandboxPanel {
       indent {
         row {
           jbList(listOf("Text", "With Icon", "Italic", "Commented"), listCellRenderer {
+            toolTipText = value
+
             when (index) {
               0 -> text(value)
               1 -> {
@@ -58,7 +60,7 @@ internal class LcrListPanel : UISandboxPanel {
                 }
               }
             }
-          }).label("Mixed", LabelPosition.TOP)
+          }).label("Mixed, tooltips", LabelPosition.TOP)
 
           jbList((1..99).map { "Item $it" }, textListCellRenderer { it })
           jbList((1..99).toList(), listCellRenderer {

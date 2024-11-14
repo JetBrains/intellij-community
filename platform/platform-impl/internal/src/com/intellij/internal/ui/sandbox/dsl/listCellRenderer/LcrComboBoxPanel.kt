@@ -37,8 +37,11 @@ internal class LcrComboBoxPanel : UISandboxPanel {
           comboBox(listOf("First", "Second", "Last"), textListCellRenderer { it })
             .applyToComponent { selectedItem = null }
         }
-        row("Few items:") {
-          comboBox(listOf("First", "Second", "Try with y", "Try with ()"), textListCellRenderer { it })
+        row("Few items, tooltips:") {
+          comboBox(listOf("First", "Second", "Try with y", "Try with ()"), listCellRenderer {
+            toolTipText = value
+            text(value ?: "")
+          })
         }
         row("Items with icon:") {
           comboBox((1..100).toList(), listCellRenderer {

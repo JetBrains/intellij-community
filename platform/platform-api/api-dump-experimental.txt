@@ -683,12 +683,14 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - a:getList():javax.swing.JList
 - a:getSelected():Z
 - a:getSelectionColor():java.awt.Color
+- a:getToolTipText():java.lang.String
 - a:getValue():java.lang.Object
 - a:icon(javax.swing.Icon,kotlin.jvm.functions.Function1):V
 - bs:icon$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,javax.swing.Icon,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - a:separator(kotlin.jvm.functions.Function1):V
 - a:setBackground(java.awt.Color):V
 - a:setSelectionColor(java.awt.Color):V
+- a:setToolTipText(java.lang.String):V
 - a:text(java.lang.String,kotlin.jvm.functions.Function1):V
 - bs:text$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 *e:com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
