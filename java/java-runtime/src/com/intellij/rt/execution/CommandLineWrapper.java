@@ -176,7 +176,7 @@ public final class CommandLineWrapper {
     }
 
     String mainClassName = args[startArgsIdx - 1];
-    ClassLoader loader = new URLClassLoader(classpathUrls.toArray(new URL[0]), null);
+    ClassLoader loader = new URLClassLoader(classpathUrls.toArray(new URL[0]), ClassLoader.getSystemClassLoader());
     String systemLoaderName = System.getProperty("java.system.class.loader");
     if (systemLoaderName != null) {
       try {
