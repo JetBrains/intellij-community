@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.script.k2
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VfsUtil
@@ -12,8 +13,6 @@ import com.intellij.psi.search.FilenameIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.util.allScope
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
@@ -22,9 +21,9 @@ import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTE
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
@@ -32,52 +31,53 @@ private const val MAIN_KTS = "org.jetbrains.kotlin.mainKts.MainKtsScript.classna
 
 class ScriptTemplatesFromDependenciesDefinitionSource(
     private val project: Project,
-    private val coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope
 ) : ScriptDefinitionsSource {
 
     @Volatile
-    private var _definitions: List<ScriptDefinition>? = null
+    private var _definitions: List<ScriptDefinition> = emptyList()
 
     override val definitions: Sequence<ScriptDefinition>
-        get() {
-            return _definitions?.asSequence() ?: emptySequence()
-        }
+        get() = _definitions.asSequence()
 
-    private var oldTemplates: TemplatesWithCp? = null
+    private var oldTemplates: DiscoveredDefinitionsState? = null
 
     init {
-        val disposable = KotlinPluginDisposable.getInstance(project)
-        val connection = project.messageBus.connect(disposable)
-        connection.subscribe(FileTypeIndex.INDEX_CHANGE_TOPIC, FileTypeIndex.IndexChangeListener { fileType ->
-            if (fileType == ScriptDefinitionMarkerFileType && project.isInitialized) {
-                coroutineScope.launch { scanAndLoadDefinitions() }
-            }
-        })
+        val persistedState = ScriptTemplatesDefinitionsFromDependenciesStorage.getInstance(project).state
+        coroutineScope.launch { loadDefinitions(persistedState) }
     }
 
     suspend fun scanAndLoadDefinitions(): List<ScriptDefinition> {
-        val (templates, classpath) = readAction {
-            val templatesFolders =
-                FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
+        val newTemplates = readAction {
+            val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
             val projectFileIndex = ProjectFileIndex.getInstance(project)
             val files = mutableListOf<VirtualFile>()
             for (templatesFolder in templatesFolders) {
-                val children =
-                    templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
-                        ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }
-                        ?.children?.filter { !it.name.endsWith(MAIN_KTS) } ?: continue
+                val children = templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
+                    ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }?.children?.filter {
+                        !it.name.endsWith(
+                            MAIN_KTS
+                        )
+                    } ?: continue
                 files += children
             }
+
             getTemplateClassPath(files)
         }
 
-        val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
         if (newTemplates == oldTemplates) return emptyList()
 
         scriptingDebugLog { "Script templates found: $newTemplates" }
 
         oldTemplates = newTemplates
 
+        ScriptTemplatesDefinitionsFromDependenciesStorage.getInstance(project).loadState(newTemplates)
+        return loadDefinitions(newTemplates)
+    }
+
+    private fun loadDefinitions(
+        newTemplates: DiscoveredDefinitionsState
+    ): List<ScriptDefinition> {
         val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
             getEnvironment {
                 mapOf(
@@ -88,7 +88,7 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
 
         val newDefinitions = loadDefinitionsFromTemplatesByPaths(
             templateClassNames = newTemplates.templates,
-            templateClasspath = newTemplates.classpath,
+            templateClasspath = newTemplates.classpath.map { Path.of(it) },
             baseHostConfiguration = hostConfiguration,
         ).map {
             it.apply { order = Int.MIN_VALUE }
@@ -103,11 +103,9 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
         return newDefinitions
     }
 
-    // public for tests
-    fun getTemplateClassPath(files: Collection<VirtualFile>): Pair<Collection<String>, Collection<Path>> {
+    private fun getTemplateClassPath(files: Collection<VirtualFile>): DiscoveredDefinitionsState {
         val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
-        for (file in files) {
-            // parent of SCRIPT_DEFINITION_MARKERS_PATH, i.e. of `META-INF/kotlin/script/templates/`
+        for (file in files) { // parent of SCRIPT_DEFINITION_MARKERS_PATH, i.e. of `META-INF/kotlin/script/templates/`
             val dir = file.parent?.parent?.parent?.parent?.parent ?: continue
             rootDirToTemplates.getOrPut(dir) { arrayListOf() }.add(file)
         }
@@ -118,19 +116,17 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
         rootDirToTemplates.forEach { (root, templateFiles) ->
             scriptingDebugLog { "Root matching SCRIPT_DEFINITION_MARKERS_PATH found: ${root.path}" }
 
-            val orderEntriesForFile = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(root)
-                .filter {
-                    if (it is ModuleSourceOrderEntry) {
-                        if (ModuleRootManager.getInstance(it.ownerModule).fileIndex.isInTestSourceContent(root)) {
-                            return@filter false
-                        }
-
-                        it.getFiles(OrderRootType.SOURCES).contains(root)
-                    } else {
-                        it is LibraryOrSdkOrderEntry && it.getRootFiles(OrderRootType.CLASSES).contains(root)
+            val orderEntriesForFile = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(root).filter {
+                if (it is ModuleSourceOrderEntry) {
+                    if (ModuleRootManager.getInstance(it.ownerModule).fileIndex.isInTestSourceContent(root)) {
+                        return@filter false
                     }
+
+                    it.getFiles(OrderRootType.SOURCES).contains(root)
+                } else {
+                    it is LibraryOrSdkOrderEntry && it.getRootFiles(OrderRootType.CLASSES).contains(root)
                 }
-                .takeIf { it.isNotEmpty() } ?: return@forEach
+            }.takeIf { it.isNotEmpty() } ?: return@forEach
 
             for (virtualFile in templateFiles) {
                 templates.add(virtualFile.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT))
@@ -149,19 +145,28 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
             }
         }
 
-        return templates to classpath
+        return DiscoveredDefinitionsState(templates, classpath)
     }
+}
 
-    private data class TemplatesWithCp(
-        val templates: List<String>,
-        val classpath: List<Path>,
-    )
+@Service(Service.Level.PROJECT)
+@State(
+    name = "ScriptTemplatesDefinitionsFromDependenciesStorage", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
+)
+private class ScriptTemplatesDefinitionsFromDependenciesStorage :
+    SimplePersistentStateComponent<DiscoveredDefinitionsState>(DiscoveredDefinitionsState()) {
 
     companion object {
-        fun getInstance(project: Project): ScriptTemplatesFromDependenciesDefinitionSource? =
-            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<ScriptTemplatesFromDependenciesDefinitionSource>().firstOrNull()
-                .safeAs<ScriptTemplatesFromDependenciesDefinitionSource>()
+        fun getInstance(project: Project): ScriptTemplatesDefinitionsFromDependenciesStorage = project.service()
     }
+}
 
+internal class DiscoveredDefinitionsState() : BaseState() {
+    var templates by list<String>()
+    var classpath by list<String>()
+
+    constructor(templates: Collection<String>, classpath: Collection<Path>) : this() {
+        this.templates = templates.toMutableList()
+        this.classpath = classpath.map { it.absolutePathString() }.toMutableList()
+    }
 }

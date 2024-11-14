@@ -6,23 +6,28 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.TableView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDefinitionPersistentSettings
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptDefinitionSetting
+import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportSpecificSettingsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 
-class KotlinScriptingSettingsConfigurable(val project: Project) : SearchableConfigurable {
+class KotlinScriptingSettingsConfigurable(val project: Project, val coroutineScope: CoroutineScope) : SearchableConfigurable {
     companion object {
         const val ID: String = "preferences.language.Kotlin.scripting"
     }
@@ -56,25 +61,24 @@ class KotlinScriptingSettingsConfigurable(val project: Project) : SearchableConf
 
         row {
             button(KotlinBaseScriptingBundle.message("button.scan.classpath")) {
-                val definitionsFromClassPath = runWithModalProgressBlocking(
-                    project,
-                    KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath")
-                ) {
-                    ScriptTemplatesFromDependenciesDefinitionSource.getInstance(project)?.scanAndLoadDefinitions()
-                } ?: emptyList()
+                coroutineScope.launch {
+                    val definitionsFromClassPath = withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("looking.for.script.definitions.in.classpath")) {
+                        project.scriptDefinitionsSourceOfType<ScriptTemplatesFromDependenciesDefinitionSource>()?.scanAndLoadDefinitions()
+                    } ?: emptyList()
 
-                if (definitionsFromClassPath.isEmpty()) {
-                    definitionsFromClassPathTitle.set(KotlinBaseScriptingBundle.message("label.kotlin.script.no.definitions.found"))
-                } else {
-                    definitionsFromClassPathTitle.set(
-                        KotlinBaseScriptingBundle.message(
-                            "label.kotlin.script.definitions.found",
-                            definitionsFromClassPath.size
+                    if (definitionsFromClassPath.isEmpty()) {
+                        definitionsFromClassPathTitle.set(KotlinBaseScriptingBundle.message("label.kotlin.script.no.definitions.found"))
+                    } else {
+                        definitionsFromClassPathTitle.set(
+                            KotlinBaseScriptingBundle.message(
+                                "label.kotlin.script.definitions.found",
+                                definitionsFromClassPath.size
+                            )
                         )
-                    )
+                    }
+                    enabled(false)
+                    EditorNotifications.getInstance(project).updateAllNotifications()
                 }
-                enabled(false)
-                EditorNotifications.getInstance(project).updateAllNotifications()
             }
             label("").bindText(definitionsFromClassPathTitle)
         }
