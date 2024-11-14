@@ -13,7 +13,7 @@ abstract class K2CreateClassFromUsageTest : K2AbstractCreateFromUsageTest("creat
     class CallExpression : K2CreateClassFromUsageTest()
     class DelegationSpecifier : K2CreateClassFromUsageTest()
     class ImportDirective : K2CreateClassFromUsageTest() {
-        //class Kt21515: K2CreateClassFromUsageTest()
+        // kt21515 test data directory is no longer applicable to K2 since "Access to this type by short name is deprecated, and soon is going to be removed. Please, add explicit qualifier or import" warning is no longer produced
     }
     class ReferenceExpression : K2CreateClassFromUsageTest()
     class TypeReference : K2CreateClassFromUsageTest()
