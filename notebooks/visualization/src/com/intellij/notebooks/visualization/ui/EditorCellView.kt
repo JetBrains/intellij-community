@@ -77,8 +77,8 @@ class EditorCellView(
 
   private var mouseOver = false
 
-  // We are storing last offsets for highlighters to prevent highlighters unnecessary recreation on same values.
-  private var lastHighLightersOffsets: IntRange? = null
+  // We are storing last lines range for highlighters to prevent highlighters unnecessary recreation on same lines.
+  private var lastHighLightersLines: IntRange? = null
 
   var disableActions: Boolean = false
     set(value) {
@@ -144,8 +144,8 @@ class EditorCellView(
         DataManager.removeDataProvider(component)
         DataManager.registerDataProvider(component, NotebookCellDataProvider(editor, component) { interval })
       }
+      controller.createGutterRendererLineMarker(editor, interval, cellView = this)
     }
-    updateCellHighlight()
   }
 
   private fun recreateControllers() {
@@ -176,8 +176,8 @@ class EditorCellView(
 
   private fun isInlaysBroken(): Boolean {
     val inlaysOffsets = buildSet {
-        add(editor.document.getLineStartOffset(interval.lines.first))
-        add(editor.document.getLineEndOffset(interval.lines.last))
+      add(editor.document.getLineStartOffset(interval.lines.first))
+      add(editor.document.getLineEndOffset(interval.lines.last))
     }
     for (inlay in getInlays()) {
       if (!inlay.isValid || inlay.offset !in inlaysOffsets) {
@@ -280,11 +280,10 @@ class EditorCellView(
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
 
-    val range = IntRange(startOffset, endOffset)
-    if (interval.lines == lastHighLightersOffsets) {
+    if (interval.lines == lastHighLightersLines) {
       return
     }
-    lastHighLightersOffsets = range
+    lastHighLightersLines = IntRange(interval.lines.first, interval.lines.last)
 
     removeCellHighlight()
 
