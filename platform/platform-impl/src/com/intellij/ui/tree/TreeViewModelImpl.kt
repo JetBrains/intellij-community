@@ -425,7 +425,8 @@ private class TreeNodeViewModelImpl(
     return "TreeNodeViewModelImpl@${System.identityHashCode(this)}(" +
            "domainModel=$domainModel, " +
            "presentationLoaded=${presentationLoaded.get()}, " +
-           "childrenLoaded=${childrenLoaded.get()}" +
+           "childrenLoaded=${childrenLoaded.get()}, " +
+           "isExpanded=${lastComputedState.get()?.isExpanded}" +
            ")"
   }
 }

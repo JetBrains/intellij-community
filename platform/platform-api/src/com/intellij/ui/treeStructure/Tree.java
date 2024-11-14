@@ -1719,6 +1719,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
      * @param state the new expanded state
      */
     void setExpandedStateFromViewModel(@NotNull TreePath path, boolean state) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Setting expanded state=" + state + " from the view model " + path);
+      }
       if (isVisible(path)) {
         setExpandedState(path, state);
       }
@@ -1866,6 +1869,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         for (int i : e.getChildIndices()) {
           if (i < 0 || i >= childCount) continue; // Sanity check. This actually happens with some models.
           var newChild = model.getChild(parent, i);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Inserted child " + i + " " + newChild + " of parent " + parent);
+          }
           var childPath = path.pathByAddingChild(newChild);
           if (cachedPresentation != null) {
             cachedPresentation.updateExpandedNodes(childPath);
