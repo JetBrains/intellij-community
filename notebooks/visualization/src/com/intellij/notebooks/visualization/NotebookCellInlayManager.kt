@@ -12,6 +12,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
@@ -25,6 +27,8 @@ import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayModel
+import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -36,7 +40,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
   private val shouldCheckInlayOffsets: Boolean,
-  private val inputFactories: List<NotebookCellInlayController.InputFactory>,
   private val cellExtensionFactories: List<CellExtensionFactory>,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
 
@@ -291,7 +294,7 @@ class NotebookCellInlayManager private constructor(
   }
 
   fun removeBelowLastCellInlay() {
-    belowLastCellInlay?.dispose()
+    belowLastCellInlay?.let{ Disposer.dispose(it) }
     belowLastCellInlay = null
   }
 
@@ -379,14 +382,12 @@ class NotebookCellInlayManager private constructor(
     fun install(
       editor: EditorImpl,
       shouldCheckInlayOffsets: Boolean,
-      inputFactories: List<NotebookCellInlayController.InputFactory> = listOf(),
       cellExtensionFactories: List<CellExtensionFactory> = listOf(),
     ): NotebookCellInlayManager {
       EditorEmbeddedComponentContainer(editor as EditorEx)
       val notebookCellInlayManager = NotebookCellInlayManager(
         editor,
         shouldCheckInlayOffsets,
-        inputFactories,
         cellExtensionFactories
       ).also { Disposer.register(editor.disposable, it) }
       editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
@@ -521,7 +522,7 @@ class NotebookCellInlayManager private constructor(
   }
 
   internal fun getInputFactories(): Sequence<NotebookCellInlayController.InputFactory> {
-    return inputFactories.asSequence()
+    return NotebookCellInlayController.InputFactory.EP_NAME.extensionList.asSequence()
   }
 }
 
@@ -529,16 +530,54 @@ class UpdateContext(val force: Boolean = false) {
 
   private val foldingOperations = mutableListOf<(FoldingModelEx) -> Unit>()
 
+  private val inlayOperations = mutableListOf<(InlayModel) -> Unit>()
+
   fun addFoldingOperation(block: (FoldingModelEx) -> Unit) {
     foldingOperations.add(block)
   }
 
+  fun addInlayOperation(block: (InlayModel) -> Unit) {
+    inlayOperations.add(block)
+  }
+
   fun applyUpdates(editor: Editor) {
-    if (!editor.isDisposed && foldingOperations.isNotEmpty()) {
-      val foldingModel = editor.foldingModel as FoldingModelEx
-      foldingModel.runBatchFoldingOperation {
-        foldingOperations.forEach { it(foldingModel) }
+    if (!editor.isDisposed) {
+      if (foldingOperations.isNotEmpty()) {
+        val foldingModel = RemovalTrackingFoldingModel(editor.foldingModel as FoldingModelImpl)
+        foldingModel.runBatchFoldingOperation {
+          foldingOperations.forEach { it(foldingModel) }
+        }
+      }
+      if (inlayOperations.isNotEmpty()) {
+        val inlayModel = editor.inlayModel
+        inlayModel.execute(true) {
+          inlayOperations.forEach { it(inlayModel) }
+        }
       }
     }
   }
+
+  /**
+   * [FoldingModelEx] implementation tracking fold region removal and clearing offsets cache before custom folding creation.
+   * Else there will be an exception because of an invalid folding region.
+   */
+  class RemovalTrackingFoldingModel(private val model: FoldingModelImpl): FoldingModelEx by model {
+
+    private var resetCache = false
+
+    override fun removeFoldRegion(region: FoldRegion) {
+      resetCache = true
+      model.removeFoldRegion(region)
+    }
+
+    override fun addCustomLinesFolding(startLine: Int, endLine: Int, renderer: CustomFoldRegionRenderer): CustomFoldRegion? {
+      if (resetCache) {
+        model.updateCachedOffsets()
+        resetCache = false
+      }
+      return model.addCustomLinesFolding(startLine, endLine, renderer)
+    }
+
+  }
+
 }

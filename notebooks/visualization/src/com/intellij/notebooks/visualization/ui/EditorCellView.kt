@@ -148,18 +148,21 @@ class EditorCellView(
     }
   }
 
-  private fun recreateControllers() {
-    val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
-      .filter { it !is InputFactory }
-    val controllersToDispose = _controllers.toMutableSet()
-    _controllers = if (!editor.isDisposed) {
-      otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
+  private fun recreateControllers() = cell.manager.update { updateContext ->
+    updateContext.addInlayOperation {
+      val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
+        .filter { it !is InputFactory }
+      val controllersToDispose = _controllers.toMutableSet()
+      _controllers = if (!editor.isDisposed) {
+        otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
+      }
+      else {
+        emptyList()
+      }
+      controllersToDispose.removeAll(_controllers.toSet())
+      controllersToDispose.forEach { disposeController(it) }
+      updateControllers()
     }
-    else {
-      emptyList()
-    }
-    controllersToDispose.removeAll(_controllers.toSet())
-    controllersToDispose.forEach { disposeController(it) }
   }
 
   private fun updateInput() = runInEdt {
@@ -309,7 +312,7 @@ class EditorCellView(
     if (interval.type == NotebookCellLines.CellType.CODE) {
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o)
+          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, { input.component.calculateBounds().let { it.y to it.height } })
         }
       }
     }
@@ -317,7 +320,7 @@ class EditorCellView(
     if (uiSettings.presentationMode || DistractionFreeModeController.isDistractionFreeModeEnabled()) {  // See PY-74597
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, presentationModeMasking = true)
+          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, { input.component.calculateBounds().let { it.y to it.height } }, presentationModeMasking = true)
         }
       }
     }
