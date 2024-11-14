@@ -298,8 +298,6 @@ private class CommitChunkWorkFlowHandler(
   }
 
   fun setPopup(popupDisposable: Disposable) {
-    ui.resetSize()
-
     workflow.addListener(object : CommitWorkflowListener {
       override fun executionStarted() {
         Disposer.dispose(popupDisposable)
@@ -311,6 +309,9 @@ private class CommitChunkWorkFlowHandler(
     })
 
     commitMessagePolicy.init()
+    if (ui.commitMessageUi.text.isBlank()) {
+      ui.resetSize()
+    }
   }
 }
 
