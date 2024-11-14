@@ -2679,7 +2679,6 @@ f:org.jetbrains.jps.incremental.storage.OneToManyPathsMapping
 - appendData(java.lang.String,java.util.Collection):V
 - getKeysIterator():java.util.Iterator
 - getOutputArray(java.lang.String):java.lang.String[]
-- a:getOutputs(java.lang.String):java.util.Collection
 - getOutputs(java.lang.String):java.util.List
 - getState(java.lang.String):java.util.Collection
 - remove(java.lang.String):V
