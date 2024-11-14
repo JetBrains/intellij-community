@@ -262,6 +262,10 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT",
+                                JavaBundle.message("annotations.new.line.record.component"),
+                                recordComponentsGroup);
 
       // Try statement
       consumer.showCustomOption(JavaCodeStyleSettings.class,
@@ -320,6 +324,11 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 getInstance().BLANK_LINES,
                                 OptionAnchor.AFTER,
                                 "BLANK_LINES_AROUND_FIELD");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_BETWEEN_RECORD_COMPONENTS",
+                                JavaBundle.message("editbox.blank.lines.record.components"),
+                                getInstance().BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showStandardOptions(

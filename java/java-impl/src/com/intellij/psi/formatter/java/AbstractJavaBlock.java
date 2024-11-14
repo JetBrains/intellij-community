@@ -169,7 +169,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                          @NotNull AlignmentStrategy alignmentStrategy,
                                          int startOffset,
                                          @NotNull FormattingMode formattingMode) {
-    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings) : indent;
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child, settings, javaSettings) : indent;
     IElementType elementType = child.getElementType();
     Alignment alignment = alignmentStrategy.getAlignment(elementType);
     PsiElement childPsi = child.getPsi();
@@ -237,7 +237,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                             @NotNull CommonCodeStyleSettings settings,
                                             @NotNull JavaCodeStyleSettings javaSettings,
                                             @NotNull FormattingMode formattingMode) {
-    final Indent indent = getDefaultSubtreeIndent(child, settings);
+    final Indent indent = getDefaultSubtreeIndent(child, settings, javaSettings);
     return newJavaBlock(child, settings, javaSettings, indent, null, AlignmentStrategy.getNullStrategy(), formattingMode);
   }
 
@@ -287,20 +287,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
 
-  private static @Nullable Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings) {
+  private static @Nullable Indent getDefaultSubtreeIndent(@NotNull ASTNode child, @NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings) {
     CommonCodeStyleSettings.IndentOptions indentOptions= getJavaIndentOptions(settings);
     final ASTNode parent = child.getTreeParent();
     final IElementType childNodeType = child.getElementType();
     if (childNodeType == JavaElementType.ANNOTATION) {
       if (parent.getPsi() instanceof PsiArrayInitializerMemberValue) {
         return Indent.getNormalIndent();
+      } else if (JavaFormatterRecordUtil.shouldAdjustIndentForRecordComponentChild(child, javaSettings)) {
+        return Indent.getContinuationIndent();
       }
       return Indent.getNoneIndent();
     }
 
     final ASTNode prevElement = skipCommentsAndWhitespacesBackwards(child);
-    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
-      return Indent.getNoneIndent();
+    if (prevElement != null) {
+      if (JavaFormatterRecordUtil.shouldAdjustIndentForRecordComponentChild(child, javaSettings)) {
+        return Indent.getContinuationIndent();
+      }
+      else if (prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
+        return Indent.getNoneIndent();
+      }
     }
 
     if (childNodeType == JavaDocElementType.DOC_TAG) return Indent.getNoneIndent();

@@ -116,6 +116,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   // @Foo int param
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = false;
 
+  public boolean ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT = false;
+
   @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
 
@@ -132,6 +134,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
   public int BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS = 0;
+
+  public int BLANK_LINES_BETWEEN_RECORD_COMPONENTS = 0;
 
   public static final int FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED = 1;
   public static final int FULLY_QUALIFY_NAMES_ALWAYS = 2;
