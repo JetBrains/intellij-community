@@ -3,6 +3,7 @@ package org.jetbrains.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -11,6 +12,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * Please use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-3/Kotlin-Coroutines">Kotlin coroutines</a>.
+ */
+@ApiStatus.Obsolete
 public abstract class AsyncValueLoader<T> {
   private final AtomicReference<Promise<T>> ref = new AtomicReference<>();
 
