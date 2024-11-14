@@ -10,25 +10,38 @@ import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.plugins.newui.Tags
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.TimeoutCachedValue
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.intellij.util.io.*
+import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.RequestBuilder
+import com.intellij.util.io.computeDetached
+import com.intellij.util.io.write
 import com.intellij.util.ui.IoErrorText
-import kotlinx.coroutines.*
+import com.intellij.util.withQuery
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -39,7 +52,9 @@ import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URLConnection
+import java.net.URLEncoder
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -119,8 +134,25 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           return emptyList()
         }
 
+        var url = URI(MarketplaceUrls.getSearchCompatibleUpdatesUrl())
+        val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
+        val uid = PermanentInstallationID.get()
+        val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates")
+          .takeIf { PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
+
+        val query = buildString {
+          append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
+          append("&os=$os")
+          append("&uuid=$uid")
+          if (machineId != null) {
+            append("&machineId=$machineId")
+          }
+        }
+
+        val urlString = url.withQuery(query).toString()
+
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        return HttpRequests.post(MarketplaceUrls.getSearchCompatibleUpdatesUrl(), HttpRequests.JSON_CONTENT_TYPE).run {
+        return HttpRequests.post(urlString, HttpRequests.JSON_CONTENT_TYPE).run {
           productNameAsUserAgent()
           throwStatusCodeException(throwExceptions)
           connect {
@@ -128,7 +160,6 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
             objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
           }
         }
-
       }
       catch (e: Exception) {
         LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
