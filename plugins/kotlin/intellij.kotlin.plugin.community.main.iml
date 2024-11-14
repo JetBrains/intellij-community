@@ -165,7 +165,7 @@
     <orderEntry type="module" module-name="kotlin.highlighting.shared" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
@@ -206,7 +206,7 @@
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
     <orderEntry type="module" module-name="kotlin.onboarding" exported="" />
-    <orderEntry type="module" module-name="kotlin.onboarding.gradle" />
+    <orderEntry type="module" module-name="kotlin.onboarding.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" exported="" />
