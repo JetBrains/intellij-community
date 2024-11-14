@@ -33,6 +33,6 @@ public class CreatePythonFileAction extends CreateFileFromTemplateAction impleme
 
   @Override
   public @NotNull String getCategory() {
-    return "Python";
+    return "Java";
   }
 }

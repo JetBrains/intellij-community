@@ -97,7 +97,7 @@ public final class CreatePackageAction extends DumbAwareAction implements NewFil
 
   @Override
   public @NotNull String getCategory() {
-    return "Python";
+    return "Java";
   }
 
   private static CreateDirectoryOrPackageHandler getNewOrdinaryPackageHandler(@NotNull Project project,

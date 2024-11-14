@@ -7,6 +7,6 @@ import org.jetbrains.annotations.NotNull;
 final class NewWebDevelopmentGroup extends DefaultActionGroup implements NewFileActionWithCategory {
   @Override
   public @NotNull String getCategory() {
-    return "Web";
+    return "Java";
   }
 }
