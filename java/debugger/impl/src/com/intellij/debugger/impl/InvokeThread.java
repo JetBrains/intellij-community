@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
@@ -202,6 +205,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     if (LOG.isDebugEnabled()) {
       LOG.debug("schedule " + r + " in " + this);
     }
+    setCommandManagerThread(r);
     return myEvents.put(r, r.getPriority().ordinal());
   }
 
@@ -209,7 +213,15 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pushBack " + r + " in " + this);
     }
+    setCommandManagerThread(r);
     return myEvents.pushBack(r, r.getPriority().ordinal());
+  }
+
+  @ApiStatus.Internal
+  public void setCommandManagerThread(E event) {
+    if (event instanceof DebuggerCommandImpl command) {
+      command.setCommandManagerThread$intellij_java_debugger_impl((DebuggerManagerThreadImpl)this);
+    }
   }
 
   protected void switchToRequest(WorkerThreadRequest newRequest) {

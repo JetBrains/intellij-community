@@ -63,6 +63,13 @@ public interface DebugProcess extends UserDataHolder {
 
   ExecutionResult getExecutionResult();
 
+  /**
+   * Get the current DebuggerManagerThread.
+   * The thread can change due to a single debug process can be connected to several VMs.
+   * Prefer {@link SuspendContextImpl#getManagerThread()} or
+   * {@link com.intellij.debugger.engine.events.DebuggerCommandImpl#getCommandManagerThread()} when possible.
+   */
+  @ApiStatus.Obsolete
   DebuggerManagerThread getManagerThread();
 
   Value invokeMethod(EvaluationContext evaluationContext,

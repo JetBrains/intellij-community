@@ -433,7 +433,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     if (node.isObsolete()) {
       return false;
     }
-    evaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(command.getSuspendContext()) {
+    SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         if (node.isObsolete()) {

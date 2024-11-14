@@ -1110,6 +1110,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     requestManager.setThreadFilter(null);
   }
 
+  @ApiStatus.Obsolete
   @Override
   public final @NotNull DebuggerManagerThreadImpl getManagerThread() {
     return myDebuggerManagerThread;
@@ -1356,7 +1357,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         LOG.debug("Invoke in " + context);
         assertThreadSuspended(thread, context);
       }
-      getManagerThread().startLongProcessAndFork(() -> {
+      context.getManagerThread().startLongProcessAndFork(() -> {
         try {
           try {
             if (myMethod.isVarArgs()) {
@@ -2458,7 +2459,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         @Override
         protected void action() {
           detachVm.run();
-          getManagerThread().processRemaining();
+          getCommandManagerThread().processRemaining();
           doReattach();
         }
 

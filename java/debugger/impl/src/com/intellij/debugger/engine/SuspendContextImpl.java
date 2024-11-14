@@ -45,6 +45,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final DebugProcessImpl myDebugProcess;
   private final int mySuspendPolicy;
   private final VirtualMachineProxyImpl myVirtualMachine;
+  private final @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private ThreadReferenceProxyImpl myThread;
   boolean myIsVotedForResume = true;
@@ -94,6 +95,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     // Save the VM related to this suspend context, as a VM may be changed due to reattach
     //noinspection UsagesOfObsoleteApi
     myVirtualMachine = debugProcess.getVirtualMachineProxy();
+    //noinspection UsagesOfObsoleteApi
+    myDebuggerManagerThread = debugProcess.getManagerThread();
     myVotesToVote = eventVotes;
     myEventSet = set;
     myDebugId = debugId;
@@ -545,5 +548,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (!value) {
       myDebugProcess.logError(supplier.get());
     }
+  }
+
+  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
+    return myDebuggerManagerThread;
   }
 }

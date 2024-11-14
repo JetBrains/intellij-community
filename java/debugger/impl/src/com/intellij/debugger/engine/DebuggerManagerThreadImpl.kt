@@ -83,6 +83,7 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
   fun invoke(managerCommand: DebuggerCommandImpl) {
     if (currentThread() === this) {
+      setCommandManagerThread(managerCommand);
       processEvent(managerCommand)
     }
     else {

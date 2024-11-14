@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.events
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerThreadDispatcher
 import com.intellij.debugger.impl.DebuggerTaskImpl
-import com.intellij.debugger.impl.InvokeThread
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +22,15 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
   protected var myCoroutineScope: CoroutineScope? = null
   private val continuation = AtomicReference<Runnable>(null)
   private var myThread: DebuggerManagerThreadImpl? = null
+  protected val commandManagerThread: DebuggerManagerThreadImpl
+    get() = myThread ?: error("DebuggerManagerThread is not set")
+
+  internal fun setCommandManagerThread(value: DebuggerManagerThreadImpl) {
+    if (myThread != null && myThread !== value) {
+      error("DebuggerManagerThread is already set")
+    }
+    myThread = value
+  }
 
   @Throws(Exception::class)
   protected open fun action() {
@@ -53,9 +61,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
 
   @Throws(Exception::class)
   private suspend fun runSuspend() {
-    val managerThreadImpl = InvokeThread.currentThread() as DebuggerManagerThreadImpl
-    myThread = managerThreadImpl
-    val commands = managerThreadImpl.unfinishedCommands
+    val commands = commandManagerThread.unfinishedCommands
     commands.add(this)
     try {
       actionSuspend()
