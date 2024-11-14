@@ -3,7 +3,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SourcePositionProvider;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -109,10 +109,10 @@ public class ToggleFieldBreakpointAction extends AnAction implements ActionRemot
       NodeDescriptorImpl descriptor = ((NodeDescriptorProvider)value).getDescriptor();
       if (descriptor instanceof FieldDescriptorImpl) {
         final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
-        final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-        if (debugProcess != null) { // if there is an active debug session
+        DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
+        if (managerThread != null) { // if there is an active debug session
           final Ref<SourcePosition> positionRef = new Ref<>(null);
-          debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
+          managerThread.invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
             @Override
             public Priority getPriority() {
               return Priority.HIGH;

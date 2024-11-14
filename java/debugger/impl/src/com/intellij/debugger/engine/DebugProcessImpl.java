@@ -975,7 +975,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myState.compareAndSet(State.INITIAL, State.DETACHING) || myState.compareAndSet(State.ATTACHED, State.DETACHING)) {
       try {
         if (!keepManagerThread) {
-          getManagerThread().close();
+          myDebuggerManagerThread.close();
         }
       }
       finally {
@@ -1023,7 +1023,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void onRootProcessClosed() {
-    getManagerThread().cancelScope();
+    myDebuggerManagerThread.cancelScope();
     myWaitFor.up();
   }
 
@@ -2290,7 +2290,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       for (SuspendContextImpl suspendContext : suspendingContexts) {
         if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && suspendContext.getEventThread() == myThread) {
           getSession().getXDebugSession().sessionResumed();
-          getManagerThread().invoke(createResumeCommand(suspendContext));
+          getCommandManagerThread().invoke(createResumeCommand(suspendContext));
         }
         else {
           DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().removeThreadFilter(context.getDebugProcess());
@@ -2429,7 +2429,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (vmData != null && vmData.vm != null) {
       myDebuggerManagerThread = vmData.debuggerManagerThread;
       reattach(vmData.connection, () -> {}, () -> {
-        afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
+        afterProcessStarted(() -> vmData.debuggerManagerThread.schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             try {
@@ -2619,7 +2619,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         if (vm != null) {
           final VirtualMachine vm1 = vm;
-          afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
+          afterProcessStarted(() -> getCommandManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
             @Override
             protected void action() {
               try {

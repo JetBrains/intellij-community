@@ -66,7 +66,7 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
                     }
                 }
 
-                debuggerContext.debugProcess?.managerThread?.invoke(worker)
+                debuggerContext.managerThread?.invoke(worker)
 
                 for (i in 0..50) {
                     ProgressManager.checkCanceled()
@@ -168,7 +168,7 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
             }
         }
 
-        debuggerContext.debugProcess?.managerThread?.invoke(worker)
+        debuggerContext.managerThread?.invoke(worker)
 
         for (i in 0..50) {
             if (semaphore.waitFor(20)) break

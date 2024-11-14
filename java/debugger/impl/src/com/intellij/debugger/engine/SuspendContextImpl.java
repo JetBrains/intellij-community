@@ -487,7 +487,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Override
   public void computeExecutionStacks(final XExecutionStackContainer container) {
     assertCanBeUsed();
-    myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(this) {
+    getManagerThread().schedule(new SuspendContextCommandImpl(this) {
       final Set<ThreadReferenceProxyImpl> myAddedThreads = new HashSet<>();
 
       @Override

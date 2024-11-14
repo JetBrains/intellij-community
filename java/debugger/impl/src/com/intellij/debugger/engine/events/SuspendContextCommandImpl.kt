@@ -83,7 +83,7 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
         else {
           val postponed = suspendContext.pollPostponedCommand()
           if (postponed != null) {
-            suspendContext.debugProcess.managerThread.pushBack(postponed)
+            suspendContext.managerThread.pushBack(postponed)
           }
         }
       }

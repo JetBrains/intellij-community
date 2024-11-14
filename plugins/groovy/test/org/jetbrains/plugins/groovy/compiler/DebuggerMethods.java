@@ -177,7 +177,7 @@ public interface DebuggerMethods extends CompilerMethods {
     DebuggerContextImpl ctx = DebuggerContextUtil.createDebuggerContext(getDebugSession(),
                                                                         getDebugProcess().getSuspendManager().getPausedContext());
     ManagedCommand<T> command = new ManagedCommand<>(ctx, cl);
-    getDebugProcess().getManagerThread().invoke(command);
+    ctx.getManagerThread().invoke(command);
     boolean finished = command.getSemaphore().waitFor(ourTimeout);
     assertTrue("Too long debugger action", finished);
     return command.getResult();

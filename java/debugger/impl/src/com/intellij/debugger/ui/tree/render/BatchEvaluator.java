@@ -25,32 +25,28 @@ import java.util.*;
 public final class BatchEvaluator {
   private static final Logger LOG = Logger.getInstance(BatchEvaluator.class);
 
-  private final DebugProcess myDebugProcess;
-
   private static final Key<BatchEvaluator> BATCH_EVALUATOR_KEY = new Key<>("BatchEvaluator");
   public static final Key<Boolean> REMOTE_SESSION_KEY = new Key<>("is_remote_session_key");
 
   private final HashMap<SuspendContext, List<ToStringCommand>> myBuffer = new HashMap<>();
 
-  private BatchEvaluator(DebugProcess process) {
-    myDebugProcess = process;
+  private BatchEvaluator() {
   }
 
   public void invoke(ToStringCommand command) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
+    EvaluationContext evaluationContext = command.getEvaluationContext();
+    SuspendContextImpl suspendContext = (SuspendContextImpl)evaluationContext.getSuspendContext();
     if (!Registry.is("debugger.batch.evaluation.force") && !Registry.is("debugger.batch.evaluation")) {
-      myDebugProcess.getManagerThread().invokeCommand(command);
+      suspendContext.getManagerThread().invokeCommand(command);
     }
     else {
-      EvaluationContext evaluationContext = command.getEvaluationContext();
-      SuspendContext suspendContext = evaluationContext.getSuspendContext();
-
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
       if (toStringCommands == null) {
         toStringCommands = new ArrayList<>();
         myBuffer.put(suspendContext, toStringCommands);
-        ((DebuggerManagerThreadImpl)myDebugProcess.getManagerThread()).schedule(new BatchEvaluatorCommand(evaluationContext));
+        suspendContext.getManagerThread().schedule(new BatchEvaluatorCommand(evaluationContext));
       }
 
       toStringCommands.add(command);
@@ -61,7 +57,7 @@ public final class BatchEvaluator {
     BatchEvaluator batchEvaluator = debugProcess.getUserData(BATCH_EVALUATOR_KEY);
 
     if (batchEvaluator == null) {
-      batchEvaluator = new BatchEvaluator(debugProcess);
+      batchEvaluator = new BatchEvaluator();
       debugProcess.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
     }
     return batchEvaluator;

@@ -54,7 +54,7 @@ public class CreateRendererAction extends AnAction {
 
     final Project project = event.getProject();
 
-    process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+    javaValue.getEvaluationContext().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Type type = javaValue.getDescriptor().getType();

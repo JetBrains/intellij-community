@@ -28,10 +28,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class ThreadDumpAction extends DumbAwareAction {
   @Override
@@ -45,7 +42,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
-      process.getManagerThread().invoke(new DebuggerCommandImpl() {
+      Objects.requireNonNull(context.getManagerThread()).invoke(new DebuggerCommandImpl() {
         @Override
         protected void action() {
           final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();

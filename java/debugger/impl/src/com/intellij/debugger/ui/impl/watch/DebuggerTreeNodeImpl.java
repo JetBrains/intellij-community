@@ -28,6 +28,7 @@ import javax.swing.*;
 import javax.swing.tree.MutableTreeNode;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTreeNode, NodeDescriptorProvider, MutableTreeNode {
   private Icon myIcon;
@@ -108,7 +109,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
       myIcon = DebuggerTreeRenderer.getDescriptorIcon(MessageDescriptor.EVALUATING);
       myText = DebuggerTreeRenderer.getDescriptorText(context, MessageDescriptor.EVALUATING, false);
 
-      context.getDebugProcess().getManagerThread().invoke(new DebuggerContextCommandImpl(context) {
+      Objects.requireNonNull(context.getManagerThread()).invoke(new DebuggerContextCommandImpl(context) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           runnable.run();

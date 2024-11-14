@@ -61,7 +61,7 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
 
     EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
     DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+    evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         ExpressionEvaluator evaluator = null;

@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
@@ -123,7 +124,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
       return;
     }
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
-    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
+    Objects.requireNonNull(newContext.getManagerThread()).schedule(new SuspendContextCommandImpl(newContext.getSuspendContext()) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         StackFrameProxyImpl proxy = suspendContext.getFrameProxy();

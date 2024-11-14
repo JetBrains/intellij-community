@@ -2,6 +2,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class ViewAsGroup extends ActionGroup implements DumbAware {
@@ -76,12 +78,12 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
 
       LOG.assertTrue(!values.isEmpty());
 
-      DebugProcessImpl process = debuggerContext.getDebugProcess();
-      if (process == null) {
+      DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
+      if (managerThread == null) {
         return;
       }
 
-      process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+      managerThread.schedule(new DebuggerContextCommandImpl(debuggerContext) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           for (XValueNodeImpl node : selectedNodes) {
@@ -109,7 +111,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     List<JavaValue> values = getSelectedValues(e);
     if (!values.isEmpty()) {
       CompletableFuture<List<NodeRenderer>> future = new CompletableFuture<>();
-      boolean scheduled = process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+      boolean scheduled = Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext) {
         @Override
         public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           getApplicableRenderers(values, process)

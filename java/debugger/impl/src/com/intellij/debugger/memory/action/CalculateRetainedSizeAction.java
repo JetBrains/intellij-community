@@ -45,7 +45,7 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
     dialog.show();
 
     SuspendContextImpl suspendContext = debugProcess.getSuspendManager().getPausedContext();
-    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         try {

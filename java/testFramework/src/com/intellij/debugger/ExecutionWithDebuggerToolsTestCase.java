@@ -78,7 +78,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected void resume(SuspendContextImpl context) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
+    context.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
   }
 
   protected void stepInto(SuspendContextImpl context) {
@@ -87,17 +87,17 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   protected void stepInto(SuspendContextImpl context, boolean ignoreFilters) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, ignoreFilters, null));
+    context.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, ignoreFilters, null));
   }
 
   protected void stepOver(SuspendContextImpl context) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createStepOverCommand(context, false));
+    context.getManagerThread().schedule(debugProcess.createStepOverCommand(context, false));
   }
 
   protected void stepOut(SuspendContextImpl context) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createStepOutCommand(context));
+    context.getManagerThread().schedule(debugProcess.createStepOutCommand(context));
   }
 
   @Override
@@ -272,9 +272,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       if (!myRatherLaterRequests.isEmpty()) pumpSwingThread();
     }
 
-    if (request.myDebuggerCommand instanceof SuspendContextCommandImpl) {
-      request.myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(
-        ((SuspendContextCommandImpl)request.myDebuggerCommand).getSuspendContext()) {
+    if (request.myDebuggerCommand instanceof SuspendContextCommandImpl suspendContextCommand) {
+      SuspendContextImpl suspendContext = suspendContextCommand.getSuspendContext();
+      Objects.requireNonNull(suspendContext).getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           pumpDebuggerThread(request);
@@ -584,7 +584,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     @Override
     public void paused(SuspendContextImpl suspendContext) {
       // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
-      DebuggerManagerThreadImpl debuggerManagerThread = Objects.requireNonNull(suspendContext.getDebugProcess()).getManagerThread();
+      DebuggerManagerThreadImpl debuggerManagerThread = suspendContext.getManagerThread();
       debuggerManagerThread.invoke(new SuspendContextCommandImpl(suspendContext) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
@@ -624,7 +624,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl pausedContext = myDebugProcess.getSuspendManager().getPausedContext();
       if (pausedContext != null) {
-        myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
+        suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
           @Override
           public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             paused(pausedContext);

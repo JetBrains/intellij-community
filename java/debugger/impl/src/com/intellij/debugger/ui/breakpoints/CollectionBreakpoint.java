@@ -800,7 +800,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       try {
         DebugProcessImpl debugProcess = context.getDebugProcess();
         DebugProcessImpl.ResumeCommand stepOutCommand = debugProcess.createStepOutCommand(context);
-        debugProcess.getManagerThread().schedule(stepOutCommand);
+        context.getManagerThread().schedule(stepOutCommand);
       }
       catch (Exception e) {
         DebuggerUtilsImpl.logError(e);

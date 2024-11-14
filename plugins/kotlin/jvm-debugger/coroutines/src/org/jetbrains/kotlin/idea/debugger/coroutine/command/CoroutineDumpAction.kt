@@ -35,8 +35,7 @@ class CoroutineDumpAction : AnAction() {
         val context = DebuggerManagerEx.getInstanceEx(project).context
         val session = context.debuggerSession
         if (session != null && session.isAttached) {
-            val process = context.debugProcess ?: return
-            process.managerThread.schedule(object : SuspendContextCommandImpl(context.suspendContext) {
+            context.managerThread?.schedule(object : SuspendContextCommandImpl(context.suspendContext) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
                     if (states.isOk()) {

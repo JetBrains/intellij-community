@@ -3,7 +3,7 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.GotoFrameSourceAction;
-import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
@@ -81,9 +81,9 @@ public final class ThreadsPanel extends DebuggerTreePanel {
             final ThreadsDebuggerTree tree = getThreadsTree();
             final DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl)tree.getModel().getRoot();
             if (root != null) {
-              final DebugProcessImpl process = getContext().getDebugProcess();
-              if (process != null) {
-                process.getManagerThread().invoke(new DebuggerCommandImpl() {
+              DebuggerManagerThreadImpl managerThread = getContext().getManagerThread();
+              if (managerThread != null) {
+                managerThread.invoke(new DebuggerCommandImpl() {
                   @Override
                   protected void action() {
                     try {

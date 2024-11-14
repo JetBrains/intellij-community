@@ -121,6 +121,8 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
         return f(debuggerContext)
     }
     var result: T? = null
+    @Suppress("UsagesOfObsoleteApi")
+    val managerThread = debuggerContext.managerThread ?: managerThread
     managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
         override fun threadAction(suspendContext: SuspendContextImpl) {
             result = f(debuggerContext)

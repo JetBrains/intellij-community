@@ -118,7 +118,7 @@ public class JavaDebugProcess extends XDebugProcess {
           final SuspendContextImpl newSuspendContext = newContext.getSuspendContext();
           if (newSuspendContext != null &&
               (shouldApplyContext(newContext) || event == DebuggerSession.Event.REFRESH_WITH_STACK)) {
-            process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
+            newSuspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
               public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                 ThreadReferenceProxyImpl threadProxy = newContext.getThreadProxy();

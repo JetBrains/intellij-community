@@ -128,7 +128,7 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
             semaphore.up()
         }
 
-        suspendContext.debugProcess.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+        suspendContext.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
             override fun contextAction(suspendContext: SuspendContextImpl) {
                 val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
                 valueDescriptor.setContext(evaluationContext)

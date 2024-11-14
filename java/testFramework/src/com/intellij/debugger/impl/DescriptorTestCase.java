@@ -74,7 +74,7 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         flushDescriptors();
-        localProcess.getManagerThread().schedule(localProcess.createResumeCommand(suspendContext, Priority.LOW));
+        suspendContext.getManagerThread().schedule(localProcess.createResumeCommand(suspendContext, Priority.LOW));
       }
     });
   }

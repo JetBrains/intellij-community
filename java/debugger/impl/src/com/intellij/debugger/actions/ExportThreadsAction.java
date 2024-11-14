@@ -4,6 +4,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -33,8 +34,9 @@ public class ExportThreadsAction extends AnAction {
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
-      if (process != null) {
-        process.getManagerThread().invoke(new DebuggerCommandImpl() {
+      DebuggerManagerThreadImpl managerThread = context.getManagerThread();
+      if (process != null && managerThread != null) {
+        managerThread.invoke(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());

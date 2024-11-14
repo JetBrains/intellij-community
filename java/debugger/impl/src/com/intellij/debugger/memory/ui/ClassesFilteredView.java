@@ -210,7 +210,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   @Override
   protected void scheduleUpdateClassesCommand(XSuspendContext context) {
     SuspendContextImpl suspendContext = (SuspendContextImpl)context;
-    suspendContext.getDebugProcess().getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
+    suspendContext.getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
   }
 
   @Nullable

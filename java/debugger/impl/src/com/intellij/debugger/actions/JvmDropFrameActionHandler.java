@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
@@ -161,7 +162,7 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
   }
 
   private static void popFrame(DebugProcessImpl debugProcess, DebuggerContextImpl debuggerContext, JavaStackFrame stackFrame) {
-    debugProcess.getManagerThread()
+    Objects.requireNonNull(debuggerContext.getManagerThread())
       .schedule(debugProcess.createPopFrameCommand(debuggerContext, stackFrame.getStackFrameProxy()));
   }
 

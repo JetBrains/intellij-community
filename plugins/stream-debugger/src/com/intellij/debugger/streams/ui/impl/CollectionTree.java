@@ -87,7 +87,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
           final XValueContainer container = ((XValueContainerNode<?>)node).getValueContainer();
           if (container instanceof JavaValue) {
             final ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
-            evaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+            evaluationContext.getManagerThread().schedule(new DebuggerCommandImpl() {
               @Override
               protected void action() {
                 final Value value = descriptor.getValue();

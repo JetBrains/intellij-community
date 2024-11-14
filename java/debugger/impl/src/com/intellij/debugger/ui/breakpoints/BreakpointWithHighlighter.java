@@ -46,6 +46,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance(BreakpointWithHighlighter.class);
@@ -337,7 +338,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         updateCaches(null);
       }
       else {
-        debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
+        Objects.requireNonNull(context.getManagerThread()).invoke(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             if (!myProject.isDisposed()) {

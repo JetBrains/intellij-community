@@ -348,7 +348,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
     // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
     suspendContext.myIsGoingToResume = true;
-    myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
+    suspendContext.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
   }
 
   private void notifyPaused(@NotNull SuspendContextImpl suspendContext, boolean pushPaused) {

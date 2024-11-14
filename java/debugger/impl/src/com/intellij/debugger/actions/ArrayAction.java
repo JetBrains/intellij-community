@@ -2,6 +2,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -108,9 +109,9 @@ public abstract class ArrayAction extends DebuggerAction {
 
     ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
 
-    DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if (debugProcess != null) {
-      debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
+    DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
+    if (managerThread != null) {
+      managerThread.schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           final Renderer lastRenderer = descriptor.getLastRenderer();
