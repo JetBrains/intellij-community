@@ -156,7 +156,7 @@ public class Invoker implements InvokerMBean {
       result = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
     }
 
-      return getRemoteCallResult(sessions.get(call.getSessionId()), callTarget, result);
+    return getRemoteCallResult(sessions.get(call.getSessionId()), callTarget, result);
   }
 
   @Override
