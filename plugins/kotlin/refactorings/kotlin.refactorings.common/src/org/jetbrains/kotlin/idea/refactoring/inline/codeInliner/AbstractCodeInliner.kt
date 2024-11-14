@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
@@ -101,6 +102,29 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
     )
 
     protected abstract fun argumentForParameter(parameter: Parameter, callableDescriptor: CallableDescriptor): Argument?
+
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    protected fun expandTypeArgumentsInParameterDefault(
+        expression: KtExpression,
+    ): KtExpression? {
+        if (expression is KtCallExpression && expression.typeArguments.isEmpty() && expression.calleeExpression != null) {
+            val arguments = allowAnalysisFromWriteAction {
+                allowAnalysisOnEdt {
+                    analyze(expression) {
+                        getRenderedTypeArguments(expression)
+                    }
+                }
+            }
+
+            if (arguments != null) {
+                val ktCallExpression = expression.copied()
+                val callee = ktCallExpression.calleeExpression
+                ktCallExpression.addAfter(psiFactory.createTypeArguments(arguments), callee)
+                return ktCallExpression
+            }
+        }
+        return null
+    }
 
     protected abstract fun CallableDescriptor.valueParameters(): List<Parameter>
     protected abstract fun Parameter.name(): Name

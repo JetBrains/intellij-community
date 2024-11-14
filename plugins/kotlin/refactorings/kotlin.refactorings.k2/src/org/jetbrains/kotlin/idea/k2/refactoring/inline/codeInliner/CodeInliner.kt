@@ -369,7 +369,7 @@ class CodeInliner(
             val expression = expressions.firstOrNull() ?: parameter.defaultValue ?: return null
             val parent = expression.parent
             val isNamed = (parent as? KtValueArgument)?.isNamed() == true
-            val resultExpression = run {
+            var resultExpression = run {
                 if (expression !is KtLambdaExpression) return@run null
                 if (parent is LambdaArgument) {
                     expression.putCopyableUserData(WAS_FUNCTION_LITERAL_ARGUMENT_KEY, Unit)
@@ -387,6 +387,7 @@ class CodeInliner(
 
             markAsUserCode(resultExpression)
 
+            val expressionType = analyze(call) { resultExpression.expressionType }
             if (expressions.isEmpty() && callableDescriptor is KtFunction) {
                 //encode default value
                 val allParameters = callableDescriptor.valueParameters()
@@ -396,9 +397,11 @@ class CodeInliner(
                         it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, target.nameAsSafeName)
                     }
                 }
+
+                resultExpression = expandTypeArgumentsInParameterDefault(expression) ?: resultExpression
             }
 
-            return Argument(resultExpression, analyze(call) { resultExpression.expressionType }, isNamed = isNamed, expressions.isEmpty())
+            return Argument(resultExpression, expressionType, isNamed = isNamed, expressions.isEmpty())
         }
     }
 

@@ -2165,6 +2165,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterDiffers1.kt");
             }
 
+            @TestMetadata("defaultParameterExpandedType.kt")
+            public void testDefaultParameterExpandedType() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterExpandedType.kt");
+            }
+
             @TestMetadata("defaultParameterFromSuper.kt")
             public void testDefaultParameterFromSuper() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/defaultParameterFromSuper.kt");

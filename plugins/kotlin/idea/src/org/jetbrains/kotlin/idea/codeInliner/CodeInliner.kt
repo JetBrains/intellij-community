@@ -308,10 +308,11 @@ class CodeInliner (
                     usages.forEach { it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, param.name) }
                 }
 
-                val defaultValueCopy = defaultValue.copied()
+                var defaultValueCopy = defaultValue.copied()
 
                 // clean up user data in original
                 defaultValue.forEachDescendantOfType<KtExpression> { it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, null) }
+                defaultValueCopy = expandTypeArgumentsInParameterDefault(defaultValue) ?: defaultValueCopy
 
                 return Argument(defaultValueCopy, null/*TODO*/, isDefaultValue = true)
             }
