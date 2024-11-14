@@ -5,6 +5,8 @@ import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
 import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.ADOPTOPENJDK
 import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.JETBRAINS
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.ADOPTIUM
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.IBM
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VendorItem
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VersionItem
 import org.junit.jupiter.api.Assertions.*
@@ -133,6 +135,31 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
       assertEquals("ADOPTOPENJDK", initialCriteria.vendor)
       assertEquals(VersionItem.Default(2), selectedVersion)
       assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
+    }
+  }
+
+  @Test
+  fun `test When created view with selected known vendor in non-default form Then corresponding default vendor are selected`() {
+    val vendors = listOf(ADOPTIUM, IBM)
+    createGradleDaemonJvmCriteriaView("1", "temurin", 1..2, vendors, true).run {
+      assertFalse(isModified)
+      assertEquals(VendorItem.Default(ADOPTIUM), selectedVendor)
+    }
+    createGradleDaemonJvmCriteriaView("1", "adoptium", 1..2, vendors, true).run {
+      assertFalse(isModified)
+      assertEquals(VendorItem.Default(ADOPTIUM), selectedVendor)
+    }
+    createGradleDaemonJvmCriteriaView("1", "eclipse foundation", 1..2, vendors, true).run {
+      assertFalse(isModified)
+      assertEquals(VendorItem.Default(ADOPTIUM), selectedVendor)
+    }
+    createGradleDaemonJvmCriteriaView("1", "ibm", 1..2, vendors, true).run {
+      assertFalse(isModified)
+      assertEquals(VendorItem.Default(IBM), selectedVendor)
+    }
+    createGradleDaemonJvmCriteriaView("1", "international business machines corporation", 1..2, vendors, true).run {
+      assertFalse(isModified)
+      assertEquals(VendorItem.Default(IBM), selectedVendor)
     }
   }
 }

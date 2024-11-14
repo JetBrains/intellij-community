@@ -33,17 +33,18 @@ class GradleDaemonJvmCriteriaView(
 
   private var initialVersion: VersionItem? = when (version) {
     null -> null
-    else -> when (val knownVersion = versionsDropdownList.find { it.toString() == version }) {
+    else -> when (val knownVersion = version.toIntOrNull()) {
       null -> VersionItem.Custom(version)
-      else -> VersionItem.Default(knownVersion)
+      in versionsDropdownList -> VersionItem.Default(knownVersion)
+      else -> VersionItem.Custom(version)
     }
   }
 
   private var initialVendor: VendorItem? = when (vendor) {
     null -> VendorItem.Any
-    else -> when (val knownVendor = vendorDropdownList.find { it.name == vendor }) {
-      null -> VendorItem.Custom(vendor)
-      else -> VendorItem.Default(knownVendor)
+    else -> when (val knownVendor = JvmVendor.fromString(vendor).knownVendor) {
+      in vendorDropdownList -> VendorItem.Default(knownVendor)
+      else -> VendorItem.Custom(vendor)
     }
   }
 
