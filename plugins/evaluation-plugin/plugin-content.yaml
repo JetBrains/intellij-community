@@ -26,12 +26,7 @@
     reason: <- intellij.evaluationPlugin
   - name: intellij.evaluationPlugin.core
     reason: <- intellij.evaluationPlugin
-- name: lib/modules/intellij.evaluationPlugin.languages.java.jar
   contentModules:
   - name: intellij.evaluationPlugin.languages.java
-- name: lib/modules/intellij.evaluationPlugin.languages.kotlin.jar
-  contentModules:
-  - name: intellij.evaluationPlugin.languages.kotlin
-- name: lib/modules/intellij.evaluationPlugin.languages.python.jar
-  contentModules:
   - name: intellij.evaluationPlugin.languages.python
+  - name: intellij.evaluationPlugin.languages.kotlin
