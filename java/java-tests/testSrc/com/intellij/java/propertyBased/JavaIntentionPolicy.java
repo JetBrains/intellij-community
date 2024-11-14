@@ -91,6 +91,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
     boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
                                       intentionText.startsWith("Replace with block comment") ||
                                       intentionText.equals("Replace with Javadoc comment") ||
+                                      intentionText.equals("Convert to Markdown documentation comment") ||
                                       intentionText.startsWith("Remove //noinspection") ||
                                       intentionText.startsWith("Convert to Basic Latin") ||
                                       intentionText.startsWith("Unwrap 'if' statement") ||//remove ifs content
