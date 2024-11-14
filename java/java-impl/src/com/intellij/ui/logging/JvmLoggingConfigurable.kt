@@ -40,6 +40,8 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
   override fun createPanel(): DialogPanel {
     val loggers = JvmLogger.getAllLoggers(settings.loggerId == UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
     val panel = panel {
+      useNewComboBoxRenderer()
+
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row(JavaBundle.message("label.configurable.logger.generation.variable.name")) {
           loggerName = textField()

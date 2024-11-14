@@ -25,6 +25,7 @@ import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
@@ -62,14 +63,15 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     row(ExecutionBundle.message("targets.details.project.default.target")) {
       projectDefaultTargetComboBox = comboBox(
         DefaultComboBoxModel<TargetEnvironmentConfiguration?>(),
-        SimpleListCellRenderer.create { label, value, _ ->
+        listCellRenderer {
+          val value = value
           if (value == null) {
-            label.text = ExecutionBundle.message("local.machine")
-            label.icon = AllIcons.Nodes.HomeFolder
+            icon(AllIcons.Nodes.HomeFolder)
+            text(ExecutionBundle.message("local.machine"))
           }
           else {
-            label.text = value.displayName
-            label.icon = value.getTargetType().icon
+            icon(value.getTargetType().icon)
+            text(value.displayName)
           }
         }
       ).bindItem(

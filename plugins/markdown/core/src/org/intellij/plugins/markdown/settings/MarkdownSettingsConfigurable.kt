@@ -25,10 +25,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -73,6 +73,8 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
 
   override fun createPanel(): DialogPanel {
     return panel {
+      useNewComboBoxRenderer()
+
       showPreviewUnavailableWarningIfNeeded()
       previewDependentOptionsBlock {
         if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {
@@ -81,13 +83,13 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
         row(MarkdownBundle.message("markdown.settings.default.layout")) {
           comboBox(
             model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
-            renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
+            renderer = textListCellRenderer("") { it.getName() }
           ).bindItem(settings::splitLayout.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }
         row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
           comboBox(
             model = DefaultComboBoxModel(arrayOf(false, true)),
-            renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
+            renderer = textListCellRenderer("", ::presentSplitLayout)
           ).bindItem(settings::isVerticalSplit.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }.bottomGap(BottomGap.SMALL)
         row(label = MarkdownBundle.message("markdown.settings.preview.font.size")) {
@@ -371,11 +373,10 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
     const val ID = "Settings.Markdown"
     private const val comboBoxWidthGroup = "Markdown.ComboBoxWidthGroup"
 
-    private fun presentSplitLayout(splitLayout: Boolean?): @Nls String {
+    private fun presentSplitLayout(splitLayout: Boolean): @Nls String {
       return when (splitLayout) {
         false -> MarkdownBundle.message("markdown.settings.preview.layout.horizontal")
         true -> MarkdownBundle.message("markdown.settings.preview.layout.vertical")
-        else -> ""
       }
     }
 
