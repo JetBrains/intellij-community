@@ -12,7 +12,7 @@ interface CodeExecutionManager {
   val language: Language
   var isTest: Boolean
 
-  fun saveFile(): String
+  fun saveFile(code: String)
   fun compile(): ProcessExecutionLog
   fun execute(): ProcessExecutionLog
 }

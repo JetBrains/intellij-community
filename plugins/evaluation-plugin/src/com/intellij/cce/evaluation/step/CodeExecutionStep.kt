@@ -22,17 +22,23 @@ class CodeExecutionStep(
     val language = config.actions?.language
     if (language == null)
       return workspace
+    //workspace.sessionsStorage.getSessions(workspace.sessionsStorage.getSessionFiles().get(0).first).sessions.
 
-    CodeExecutionManager.getForLanguage(Language.resolve(language))?.let{ manager: CodeExecutionManager ->
-      manager.isTest = true
-      val savedPath = manager.saveFile()
-      val compilationLog = manager.compile()
-      val executionLog = manager.execute()
+    //workspace.sessionsStorage.getSessionFiles().
+    //workspace.sessionsStorage.getSessions(workspace.sessionsStorage.getSessionFiles().get(0).first).sessions[0].lookups[0].suggestions[0].text
+    val sessionFiles = workspace.sessionsStorage.getSessionFiles()
+
+    for (sessionFile in sessionFiles) {
+      val session = workspace.sessionsStorage.getSessions(sessionFile.first).sessions[0]
+      val code = session.lookups[0].suggestions[0].text
+      CodeExecutionManager.getForLanguage(Language.resolve(language))?.let { manager: CodeExecutionManager ->
+        manager.isTest = true
+        manager.saveFile(code)
+        val compilationLog = manager.compile()
+        val executionLog = manager.execute()
+      }
     }
 
-    CodeExecutionManager.getForLanguage(
-      Language.resolve(language)
-    )?.execute()
     return workspace
   }
 }
