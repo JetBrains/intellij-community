@@ -26,6 +26,18 @@ fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
   return UiDslRendererProvider.getInstance().getLcrRenderer(init)
 }
 
+@ApiStatus.Internal
+fun <T> listCellRenderer(nullValue: @Nls String, init: LcrRow<T>.() -> Unit): ListCellRenderer<T?> {
+  return listCellRenderer {
+    if (value == null) {
+      text(nullValue)
+    } else {
+      @Suppress("UNCHECKED_CAST")
+      (this as LcrRow<T>).init()
+    }
+  }
+}
+
 /**
  * Simplified version of [listCellRenderer] with one text cell
  */

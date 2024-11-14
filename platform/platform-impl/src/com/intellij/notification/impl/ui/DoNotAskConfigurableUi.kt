@@ -8,9 +8,9 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 import javax.swing.JComponent
@@ -27,7 +27,7 @@ internal class DoNotAskConfigurableUi {
     val result = JBList(*getDoNotAskValues().toTypedArray())
     result.emptyText.clear()
     val projectTitle = IdeBundle.message("notifications.configurable.do.not.ask.project.title")
-    result.cellRenderer = SimpleListCellRenderer.create("") { if (it.forProject) it.name + " (${projectTitle})" else it.name }
+    result.cellRenderer = textListCellRenderer("") { if (it.forProject) it.name + " (${projectTitle})" else it.name }
     return result
   }
 
