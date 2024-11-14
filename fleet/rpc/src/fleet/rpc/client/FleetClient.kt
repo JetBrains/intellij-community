@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
+import kotlin.jvm.Volatile
 
 class FleetClient private constructor(
   val connectionStatus: StateFlow<ConnectionStatus<IRpcClient>>,
@@ -37,7 +38,7 @@ class FleetClient private constructor(
 
   @Deprecated("Please use withFleetClient instead")
   suspend fun terminate(cause: CancellationException? = null) {
-    poison = cause ?: CancellationException()
+    poison = cause ?: CancellationException("Client was terminated")
     job.cancel(cause)
     job.join()
   }

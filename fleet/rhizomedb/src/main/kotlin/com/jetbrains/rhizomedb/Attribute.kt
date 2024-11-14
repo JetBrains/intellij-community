@@ -1,5 +1,7 @@
 package com.jetbrains.rhizomedb
 
+import kotlin.jvm.JvmInline
+
 /**
  * Represents attribute in [Datom].
  *

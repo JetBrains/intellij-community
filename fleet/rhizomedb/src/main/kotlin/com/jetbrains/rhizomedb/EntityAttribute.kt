@@ -5,6 +5,7 @@ import com.jetbrains.rhizomedb.impl.*
 import fleet.util.singleOrNullOrThrow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlin.jvm.JvmName
 
 /**
  * Represents an attribute of an [Entity].

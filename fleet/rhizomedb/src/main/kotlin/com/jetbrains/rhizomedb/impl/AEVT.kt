@@ -2,6 +2,7 @@
 package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.*
+import kotlin.jvm.JvmInline
 
 /**
  * last Any here is either Map<T, TX> or Versioned<T> depending on Cardinality

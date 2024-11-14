@@ -2,6 +2,7 @@
 package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.*
+import kotlin.jvm.JvmStatic
 
 data class DB(
   val index: Index,

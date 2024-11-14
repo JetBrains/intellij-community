@@ -2,6 +2,7 @@
 package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.*
+import kotlin.jvm.JvmInline
 
 /**
  * the last Any here is either Radix<TX> or VersionedEID depending on unique?

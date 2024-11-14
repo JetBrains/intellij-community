@@ -2,6 +2,7 @@
 package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.*
+import kotlin.jvm.JvmInline
 
 /**
  * the last Any here is either Map<EID, TX> or Versioned<T> depending on unique?

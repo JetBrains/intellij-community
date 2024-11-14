@@ -5,6 +5,7 @@ package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.*
 import fleet.util.letIf
+import kotlin.jvm.JvmInline
 
 private fun avet(attribute: Attribute<*>): Boolean =
   !attribute.schema.isRef && (attribute.schema.indexed || attribute.schema.unique)

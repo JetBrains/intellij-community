@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.longs.LongSet
 import kotlinx.coroutines.flow.MutableStateFlow
 import fleet.util.PriorityQueue
+import kotlin.jvm.JvmInline
 
 internal class IdGen(private val observerId: Int) {
   private var nextQueryId: Int = 1

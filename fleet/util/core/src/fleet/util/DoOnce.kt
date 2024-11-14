@@ -2,6 +2,7 @@
 package fleet.util
 
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.jvm.JvmInline
 
 sealed class DoOnce {
   companion object : DoOnce()
