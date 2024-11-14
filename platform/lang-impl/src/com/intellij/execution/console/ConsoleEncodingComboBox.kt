@@ -44,19 +44,12 @@ class ConsoleEncodingComboBox : ComboBox<ConsoleEncodingComboBox.EncodingItem>()
   init {
     model = CollectionComboBoxModel<EncodingItem>()
 
-    renderer = listCellRenderer<EncodingItem?> {
-      val value = value
+    renderer = listCellRenderer<EncodingItem>("") {
+      text(value.displayName)
 
-      if (value == null) {
-        text("")
-      }
-      else {
-        text(value.displayName)
-
-        when (value) {
-          firstFavorite -> separator { text = ApplicationBundle.message("combobox.console.favorites.separator.label") }
-          firstMore -> separator { text = ApplicationBundle.message("combobox.console.more.separator.label") }
-        }
+      when (value) {
+        firstFavorite -> separator { text = ApplicationBundle.message("combobox.console.favorites.separator.label") }
+        firstMore -> separator { text = ApplicationBundle.message("combobox.console.more.separator.label") }
       }
     }
 

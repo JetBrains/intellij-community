@@ -38,17 +38,15 @@ internal class LcrComboBoxPanel : UISandboxPanel {
             .applyToComponent { selectedItem = null }
         }
         row("Few items, tooltips:") {
-          comboBox(listOf("First", "Second", "Try with y", "Try with ()"), listCellRenderer {
+          comboBox(listOf("First", "Second", "Try with y", "Try with ()"), listCellRenderer("") {
             toolTipText = value
-            text(value ?: "")
+            text(value)
           })
         }
         row("Items with icon:") {
-          comboBox((1..100).toList(), listCellRenderer {
-            value?.let {
-              icon(if (it % 2 == 0) AllIcons.General.Information else AllIcons.General.Gear)
-              text("Item $it")
-            }
+          comboBox((1..100).toList(), listCellRenderer("") {
+            icon(if (value % 2 == 0) AllIcons.General.Information else AllIcons.General.Gear)
+            text("Item $value")
           })
         }
         row("Long items:") {
@@ -67,11 +65,9 @@ internal class LcrComboBoxPanel : UISandboxPanel {
           jComboBox(listOf("First", "Second", "Try with y", "Try with ()"), textListCellRenderer { it })
         }
         row("Items with icon:") {
-          jComboBox((1..100).toList(), listCellRenderer {
-            value?.let {
-              icon(if (it % 2 == 0) AllIcons.General.Information else AllIcons.General.Gear)
-              text("Item $it")
-            }
+          jComboBox((1..100).toList(), listCellRenderer("") {
+            icon(if (value % 2 == 0) AllIcons.General.Information else AllIcons.General.Gear)
+            text("Item $value")
           })
         }
         row("Long items:") {

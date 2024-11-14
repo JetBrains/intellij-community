@@ -80,14 +80,14 @@ internal class LcrSeparatorPanel : UISandboxPanel {
   }
 
   private fun newApiRenderer(): ListCellRenderer<String?> {
-    return listCellRenderer {
+    return listCellRenderer("") {
       toolTipText = value
       separators[value]?.let {
         separator {
           text = it
         }
       }
-      text(value ?: "")
+      text(value)
     }
   }
 
