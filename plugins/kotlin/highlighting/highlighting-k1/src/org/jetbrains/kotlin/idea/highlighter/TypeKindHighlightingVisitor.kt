@@ -106,10 +106,20 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         return when (target.kind) {
             ClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
             ClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
-            ClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+            ClassKind.OBJECT -> if (target.isData) {
+                KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT
+            } else {
+                KotlinHighlightInfoTypeSemanticNames.OBJECT
+            }
             ClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
             ClassKind.ENUM_ENTRY -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
-            else -> if (target.modality === Modality.ABSTRACT) KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS else KotlinHighlightInfoTypeSemanticNames.CLASS
+            else -> if (target.modality === Modality.ABSTRACT) {
+                KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+            } else if (target.isData) {
+                KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
+            } else {
+                KotlinHighlightInfoTypeSemanticNames.CLASS
+            }
         }
     }
 

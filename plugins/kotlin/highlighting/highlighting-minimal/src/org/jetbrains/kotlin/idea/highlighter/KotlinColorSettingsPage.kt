@@ -74,7 +74,11 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
     }
 }
 
+<BUILTIN_ANNOTATION>data</BUILTIN_ANNOTATION> <KEYWORD>class</KEYWORD> <DATA_CLASS>DataClass</DATA_CLASS>(val <PARAMETER><INSTANCE_PROPERTY>par</INSTANCE_PROPERTY></PARAMETER>: String)
+
 <KEYWORD>object</KEYWORD> <OBJECT>Obj</OBJECT>
+
+<BUILTIN_ANNOTATION>data</BUILTIN_ANNOTATION> <KEYWORD>object</KEYWORD> <DATA_OBJECT>DataObj</DATA_OBJECT>
 
 <KEYWORD>enum</KEYWORD> <KEYWORD>class</KEYWORD> <ENUM>E</ENUM> { <ENUM_ENTRY>A</ENUM_ENTRY>, <ENUM_ENTRY>B</ENUM_ENTRY> }
 
@@ -150,6 +154,8 @@ var <PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION><MUTABLE_VARIABLE>globalCounte
             KotlinBundle.message("highlighter.descriptor.text.enum") to KotlinHighlightingColors.ENUM,
             KotlinBundle.message("highlighter.descriptor.text.enumEntry") to KotlinHighlightingColors.ENUM_ENTRY,
             KotlinBundle.message("highlighter.descriptor.text.typeAlias") to KotlinHighlightingColors.TYPE_ALIAS,
+            KotlinBundle.message("highlighter.descriptor.text.data.class") to KotlinHighlightingColors.DATA_CLASS,
+            KotlinBundle.message("highlighter.descriptor.text.data.object") to KotlinHighlightingColors.DATA_OBJECT,
             KotlinBundle.message("highlighter.descriptor.text.var") to KotlinHighlightingColors.MUTABLE_VARIABLE,
             KotlinBundle.message("highlighter.descriptor.text.local.variable") to KotlinHighlightingColors.LOCAL_VARIABLE,
             OptionsBundle.message("options.java.attribute.descriptor.parameter") to KotlinHighlightingColors.PARAMETER,
