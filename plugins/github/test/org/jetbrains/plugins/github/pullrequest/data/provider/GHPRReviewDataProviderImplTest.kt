@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
-import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.util.MainDispatcherRule
 import com.intellij.util.messages.MessageBus
 import io.mockk.*
@@ -41,7 +40,7 @@ class GHPRReviewDataProviderImplTest {
     GHPRReviewDataProviderImpl(backgroundScope, reviewService, mockk(), PR_ID, messageBus)
 
   private fun createPendingReview(id: String, comments: List<GHPullRequestReviewComment>): GHPullRequestPendingReviewDTO =
-    GHPullRequestPendingReviewDTO(id, GHPullRequestReviewState.PENDING, GraphQLNodesDTO(comments, comments.size))
+    GHPullRequestPendingReviewDTO(id, GHPullRequestReviewState.PENDING, GHPullRequestPendingReviewDTO.CommentCount(comments.size))
 
   @Test
   fun testCachingReviewLoad() = runTest {

@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
-import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import org.jetbrains.plugins.github.api.data.GHNode
 
 @GraphQLFragment("/graphql/fragment/pullRequestPendingReview.graphql")
-class GHPullRequestPendingReviewDTO(id: String,
-                                    val state: GHPullRequestReviewState,
-                                    val comments: GraphQLNodesDTO<GHPullRequestReviewComment>)
-  : GHNode(id)
+class GHPullRequestPendingReviewDTO(
+  id: String,
+  val state: GHPullRequestReviewState,
+  val comments: CommentCount,
+) : GHNode(id) {
+  data class CommentCount(val totalCount: Int)
+}
