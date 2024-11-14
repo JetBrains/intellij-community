@@ -1395,7 +1395,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         LOG.trace(new Throwable((expanded ? "Expanding" : "Collapsing") + " " + path));
       }
       else if (LOG.isDebugEnabled()) {
-        LOG.trace((expanded ? "Expanding" : "Collapsing") + " " + path);
+        LOG.debug((expanded ? "Expanding" : "Collapsing") + " " + path);
       }
       var model = getModel();
       if (!expanded && model != null && model.isLeaf(path.getLastPathComponent())) {
