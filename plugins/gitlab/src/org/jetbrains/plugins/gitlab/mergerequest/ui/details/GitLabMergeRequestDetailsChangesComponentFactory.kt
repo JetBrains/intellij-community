@@ -31,7 +31,7 @@ internal object GitLabMergeRequestDetailsChangesComponentFactory {
           it.fold(onSuccess = {
             createChangesTree(it)
           }, onFailure = {
-            SimpleHtmlPane(it.localizedMessage)
+            SimpleHtmlPane(it.localizedMessage ?: it.message ?: "${it.javaClass.name} occurred")
           })
         } ?: LoadingLabel()
       }
