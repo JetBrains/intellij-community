@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.library.KotlinLibrary
 import com.intellij.openapi.module.Module as OpenapiModule
 
 @ApiStatus.Internal
@@ -39,6 +40,8 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
     abstract fun getOpenapiSdk(module: KaLibraryModule): OpenapiSdk?
 
     abstract fun getKaLibraryModule(sdk: OpenapiSdk): KaLibraryModule
+
+    abstract fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary>
 
     abstract fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule>
 

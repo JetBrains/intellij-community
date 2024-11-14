@@ -41,6 +41,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
+import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.library.KotlinLibrary
+import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
+import org.jetbrains.kotlin.library.resolveSingleFileKlib
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -295,6 +299,15 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
         return ModuleInfoProvider.getInstance(project)
             .collectLibraryBinariesModuleInfos(virtualFile)
             .mapTo(mutableListOf()) { getKtModuleByModuleInfo(it) }
+    }
+
+    override fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary> {
+        return module.binaryRoots.map { root ->
+            resolveSingleFileKlib(
+                libraryFile = File(root),
+                strategy = ToolingSingleFileKlibResolveStrategy
+            )
+        }
     }
 
     override fun getForcedKaModule(file: PsiFile): KaModule? {
