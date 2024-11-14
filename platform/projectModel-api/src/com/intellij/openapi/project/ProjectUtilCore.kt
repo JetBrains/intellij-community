@@ -43,10 +43,9 @@ fun displayUrlRelativeToProject(
   return appendModuleName(file = file, project = project, result = result, moduleOnTheLeft = moduleOnTheLeft)
 }
 
-fun displayFilePath(
-  project: Project,
-  file: VirtualFile
-): @NlsSafe String = displayFilePath(project = project, url = file.presentableUrl, file = file)
+fun displayFilePath(project: Project, file: VirtualFile): @NlsSafe String {
+  return displayFilePath(project = project, url = file.presentableUrl, file = file)
+}
 
 private fun displayFilePath(project: Project, url: String, file: VirtualFile): @NlsSafe String {
   val projectHomeUrl = PathUtil.toSystemDependentName(project.basePath)
@@ -67,10 +66,7 @@ fun decorateWithLibraryName(file: VirtualFile, project: Project, result: String)
   return null
 }
 
-fun appendModuleName(file: VirtualFile,
-                     project: Project,
-                     result: String,
-                     moduleOnTheLeft: Boolean): String {
+fun appendModuleName(file: VirtualFile, project: Project, result: String, moduleOnTheLeft: Boolean): String {
   val module = ModuleUtilCore.findModuleForFile(file, project)
   return appendModuleName(module, result, moduleOnTheLeft)
 }
