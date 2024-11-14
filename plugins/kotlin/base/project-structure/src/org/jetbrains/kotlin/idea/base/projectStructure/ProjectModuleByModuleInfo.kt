@@ -9,13 +9,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -30,19 +26,16 @@ import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.SOURCE_MODULE_DEPENDENCIES
 import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.SOURCE_MODULE_DEPENDENCIES_IGNORED
 import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODULE_DEPENDENCIES
 import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODULE_DEPENDENCIES_IGNORED
-import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.kotlinForwardDeclarationsWorkspaceEntity
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.createForwardDeclarationScope
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
 import org.jetbrains.kotlin.idea.base.projectStructure.util.createAtomicReferenceFieldUpdaterForProperty
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.base.util.minus
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
@@ -331,40 +324,17 @@ class KtNativeKlibLibraryModuleByModuleInfo(
 ) : KtLibraryModuleByModuleInfo(nativeLibraryInfo) {
     override val contentScope: GlobalSearchScope
         get() = GlobalSearchScope.union(
-            listOf(mainScope, forwardDeclarationsScope)
+            listOfNotNull(mainScope, forwardDeclarationsScope)
         )
 
     val mainScope: GlobalSearchScope
         get() = nativeLibraryInfo.contentScope
 
-    val forwardDeclarationsScope: GlobalSearchScope
+    val forwardDeclarationsScope: GlobalSearchScope?
         get() {
-            val rootDirectories = getGeneratedFwdDeclarationRoots(nativeLibraryInfo)
-
-            val files = rootDirectories.flatMap { directory ->
-                directory.children.filter { it.fileType == KotlinFileType.INSTANCE }
-            }.onEach { file ->
-                val ktFile = file.toPsiFile(project) as KtFile?
-                ktFile?.forcedModuleInfo = nativeLibraryInfo
-            }
-
-            return GlobalSearchScope.filesScope(project, files)
+            val libraryEntityId = (libraryInfo.library as? LibraryBridge)?.libraryId ?: return null
+            return createForwardDeclarationScope(libraryEntityId, this, project)
         }
-
-    private fun getGeneratedFwdDeclarationRoots(libraryInfo: NativeKlibLibraryInfo): List<VirtualFile> {
-        val libraryEntityId = (libraryInfo.library as? LibraryBridge)?.libraryId ?: return emptyList()
-        val libraryEntity = WorkspaceModel.getInstance(project).currentSnapshot.resolve(libraryEntityId) ?: return emptyList()
-        val vFiles = getGeneratedFwdDeclarationRootsFromEntity(libraryEntity)
-        return vFiles
-    }
-
-    private fun getGeneratedFwdDeclarationRootsFromEntity(libraryEntity: LibraryEntity): List<VirtualFile> {
-        val forwardDeclarationLibraryWorkspaceEntity = libraryEntity.kotlinForwardDeclarationsWorkspaceEntity ?: return emptyList()
-
-        return forwardDeclarationLibraryWorkspaceEntity
-            .forwardDeclarationRoots
-            .mapNotNull { it.virtualFile }
-    }
 }
 
 @ApiStatus.Internal
