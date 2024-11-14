@@ -1873,13 +1873,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
             LOG.debug("Inserted child " + i + " " + newChild + " of parent " + parent);
           }
           var childPath = path.pathByAddingChild(newChild);
-          if (cachedPresentation != null) {
-            cachedPresentation.updateExpandedNodes(childPath);
-          }
           if (newChild instanceof TreeNodeViewModel) {
             applyViewModelChange(() -> {
               applyNewNodeExpandedState(model, childPath);
             });
+          }
+          // This has to be done AFTER applying the model's state,
+          // as we should preserve the cached presentation's state to avoid
+          // expand/collapse flickering.
+          // So what happens is that we first apply the model's state (usually collapsed) to the tree
+          // and then reset it right back in case it was expanded in the cached state.
+          if (cachedPresentation != null) {
+            cachedPresentation.updateExpandedNodes(childPath);
           }
         }
       }
