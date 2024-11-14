@@ -561,6 +561,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon InspectionsWarning = load("expui/general/inspections/inspectionsWarning.svg", "general/inspectionsWarning.svg", 1067540192, 0);
     /** 16x16 */ public static final @NotNull Icon InspectionsWarningEmpty = load("expui/general/inspections/inspectionsWarningEmpty.svg", "general/inspectionsWarningEmpty.svg", -845558838, 0);
     /** 16x16 */ public static final @NotNull Icon Keyboard = load("expui/general/keyboard.svg", 1621148328, 2);
+    /** 16x16 */ public static final @NotNull Icon Language = load("expui/general/language.svg", 642093226, 2);
     /** 16x16 */ public static final @NotNull Icon Layout = load("general/layout.svg", -1749612722, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorOnly = load("expui/general/editorOnly.svg", "general/layoutEditorOnly.svg", -570440550, 2);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("expui/general/editorPreview.svg", "general/layoutEditorPreview.svg", 1995065496, 2);

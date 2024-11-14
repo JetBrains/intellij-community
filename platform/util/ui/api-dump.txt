@@ -527,6 +527,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:InspectionsWarning:javax.swing.Icon
 - sf:InspectionsWarningEmpty:javax.swing.Icon
 - sf:Keyboard:javax.swing.Icon
+- sf:Language:javax.swing.Icon
 - sf:Layout:javax.swing.Icon
 - sf:LayoutEditorOnly:javax.swing.Icon
 - sf:LayoutEditorPreview:javax.swing.Icon
