@@ -17,12 +17,13 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportProgress
 import com.intellij.troubleshooting.TroubleInfoCollector
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -135,20 +136,16 @@ object LogPacker {
 
   @RequiresBackgroundThread
   @Throws(IOException::class)
-  suspend fun uploadLogs(project: Project?): String {
-    return indeterminateStep(IdeBundle.message("uploading.logs.message")) {
-      withRawProgressReporter {
-        withContext(Dispatchers.IO) {
-          val file = packLogs(project)
-          checkCanceled()
+  suspend fun uploadLogs(project: Project?): String = reportProgress { reporter ->
+    reporter.indeterminateStep("") {
+      val file = packLogs(project)
+      checkCanceled()
 
-          val folderName = uploadFile(file)
+      val folderName = uploadFile(file)
 
-          val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
-          Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
-          folderName
-        }
-      }
+      val message = IdeBundle.message("collect.logs.notification.sent.success", UPLOADS_SERVICE_URL, folderName)
+      Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message, NotificationType.INFORMATION).notify(project)
+      folderName
     }
   }
 
