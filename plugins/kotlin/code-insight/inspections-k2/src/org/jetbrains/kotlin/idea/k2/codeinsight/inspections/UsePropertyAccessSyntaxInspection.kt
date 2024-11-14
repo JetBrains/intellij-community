@@ -579,7 +579,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         val javaSymbols = allOverriddenSymbols.filter { it.origin.isJavaSourceOrLibrary() }.reversed()
         if (javaSymbols.isEmpty()) return false
         for (javaSymbol in javaSymbols) {
-            if (javaSymbol.allOverriddenSymbols.toList().isEmpty()) {
+            if (javaSymbol.directlyOverriddenSymbols.none()) {
                 // Nothing overrides it, true Java origin
                 return true
             }
