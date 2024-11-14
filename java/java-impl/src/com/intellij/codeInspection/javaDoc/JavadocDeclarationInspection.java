@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightErrorFilter;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.javadoc.SnippetMarkup;
@@ -13,6 +14,8 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -44,6 +47,7 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
   public boolean IGNORE_PERIOD_PROBLEM = true;
   public boolean IGNORE_SELF_REFS = false;
   public boolean IGNORE_DEPRECATED_ELEMENTS = false;
+  public boolean IGNORE_SYNTAX_ERRORS = false;
 
   private boolean myIgnoreEmptyDescriptions = false;
 
@@ -66,11 +70,18 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      expandableString("ADDITIONAL_TAGS", JavaBundle.message("inspection.javadoc.label.text"), ","),
-      checkbox("IGNORE_THROWS_DUPLICATE", JavaBundle.message("inspection.javadoc.option.ignore.throws")),
-      checkbox("IGNORE_PERIOD_PROBLEM", JavaBundle.message("inspection.javadoc.option.ignore.period")),
-      checkbox("IGNORE_SELF_REFS", JavaBundle.message("inspection.javadoc.option.ignore.self.ref")),
+      expandableString("ADDITIONAL_TAGS", JavaBundle.message("inspection.javadoc.additional.tags"), ",")
+        .description(JavaBundle.message("inspection.javadoc.additional.tags.description")),
+      checkbox("IGNORE_THROWS_DUPLICATE", JavaBundle.message("inspection.javadoc.option.ignore.throws"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.javadoc.option.ignore.throws.description"))),
+      checkbox("IGNORE_PERIOD_PROBLEM", JavaBundle.message("inspection.javadoc.option.ignore.period"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.period.description")),
+      checkbox("IGNORE_SELF_REFS", JavaBundle.message("inspection.javadoc.option.ignore.self.ref"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.self.ref.description")),
       checkbox("IGNORE_DEPRECATED_ELEMENTS", JavaBundle.message("inspection.javadoc.option.ignore.deprecated"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.deprecated.description")),
+      checkbox("IGNORE_SYNTAX_ERRORS", JavaBundle.message("inspection.javadoc.option.ignore.syntax.errors"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.syntax.errors.description"))
     );
   }
 
@@ -82,6 +93,25 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
         if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           checkFile(file, holder);
         }
+      }
+
+      @Override
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
+        if (IGNORE_SYNTAX_ERRORS || !JavaHighlightErrorFilter.isJavaDocProblem(element)) return;
+        PsiElement parent = element.getParent();
+        TextRange range = element.getTextRangeInParent();
+        if (range.isEmpty()) {
+          range = new TextRange(range.getStartOffset(), range.getEndOffset() + 1);
+          if (range.getEndOffset() > parent.getTextLength()) {
+            range = range.shiftLeft(1);
+          }
+        }
+        holder.problem(parent, element.getErrorDescription())
+          .range(range)
+          .highlight(ProblemHighlightType.GENERIC_ERROR)
+          .fix(new UpdateInspectionOptionFix(JavadocDeclarationInspection.this, "IGNORE_SYNTAX_ERRORS", 
+                                             JavaBundle.message("inspection.javadoc.option.ignore.syntax.errors"), true))
+          .register();
       }
 
       @Override
