@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -22,7 +23,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
+internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor(fun(argument: KtValueArgument) {
         val argumentExpression = argument.getArgumentExpression() ?: return
         val argumentList = argument.getStrictParentOfType<KtValueArgumentList>() ?: return
