@@ -14,5 +14,5 @@ interface CodeExecutionManager {
 
   fun saveFile(code: String)
   fun compile(): ProcessExecutionLog
-  fun execute(): ProcessExecutionLog
+  fun execute(projectPath: String): ProcessExecutionLog
 }

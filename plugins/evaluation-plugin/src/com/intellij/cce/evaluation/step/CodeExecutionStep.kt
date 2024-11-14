@@ -7,6 +7,7 @@ import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
+import com.intellij.openapi.application.PathManager
 
 class CodeExecutionStep(
   private val config: Config,

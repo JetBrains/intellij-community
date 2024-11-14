@@ -20,11 +20,13 @@ class PythonCodeExecutionManager() : CodeExecutionManager {
     return PythonProcessExecutionLog("", "", 0)
   }
 
-  override fun execute(): ProcessExecutionLog {
+  override fun execute(projectPath: String): ProcessExecutionLog {
     println("This is Python test generation manager running ...")
-    //TODO("Not yet implemented, we should initiate a process")
-    //val bashScriptPath = File("${PathManager.getHomePath()}/community/plugins/evaluation-plugin/languages/python/src/com/intellij/cce/execution/manager/bash_script_setup_tests.sh").absolutePath
-    //val processBuilder = ProcessBuilder("/bin/bash",  bashScriptPath, testPath)
+    val bashScriptFile = File("$projectPath/bash_script_setup_test.sh")
+    if (!bashScriptFile.exists()) {
+      // TODO provide the error
+      return PythonProcessExecutionLog("", "Bash script file not found", -1)
+    }
 
     val processBuilder = ProcessBuilder("/bin/bash", bashScriptFile.path.toString(), testPath)
 
