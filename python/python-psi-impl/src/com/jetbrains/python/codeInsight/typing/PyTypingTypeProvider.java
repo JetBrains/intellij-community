@@ -1602,7 +1602,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
               if (calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
-                return new PyTypeVarTupleTypeImpl(name).withDefaultType(getTypeVarDefaultType(assignedCall, context));
+                return new PyTypeVarTupleTypeImpl(name)
+                  .withDefaultType(as(getTypeVarDefaultType(assignedCall, context), PyPositionalVariadicType.class));
               }
               else {
                 return new PyTypeVarTypeImpl(name, getGenericTypeBound(arguments, context), getTypeVarDefaultType(assignedCall, context));
@@ -1660,7 +1661,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             PyType defaultType = defaultExpression != null ? getTypeParameterBoundType(defaultExpression, context) : null;
             yield new PyTypeVarTupleTypeImpl(name)
               .withScopeOwner(scopeOwner)
-              .withDefaultType(defaultType)
+              .withDefaultType(as(defaultType, PyPositionalVariadicType.class))
               .withDeclarationElement(declarationElement);
           }
         };

@@ -10,14 +10,17 @@ import java.util.Objects;
 public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   private final @NotNull String myName;
   private final @Nullable PyQualifiedNameOwner myScopeOwner;
-  private final @Nullable PyType myDefaultType;
+  private final @Nullable PyPositionalVariadicType myDefaultType;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
 
   public PyTypeVarTupleTypeImpl(@NotNull String name) {
     this(name, null, null, null);
   }
 
-  private PyTypeVarTupleTypeImpl(@NotNull String name, @Nullable PyQualifiedNameOwner declarationElement, @Nullable PyType defaultType, @Nullable PyQualifiedNameOwner scopeOwner) {
+  private PyTypeVarTupleTypeImpl(@NotNull String name,
+                                 @Nullable PyQualifiedNameOwner declarationElement,
+                                 @Nullable PyPositionalVariadicType defaultType,
+                                 @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
     myDeclarationElement = declarationElement;
     myDefaultType = defaultType;
@@ -35,7 +38,7 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   }
 
   @NotNull
-  public PyTypeVarTupleTypeImpl withDefaultType(@Nullable PyType defaultType) {
+  public PyTypeVarTupleTypeImpl withDefaultType(@Nullable PyPositionalVariadicType defaultType) {
     return new PyTypeVarTupleTypeImpl(myName, myDeclarationElement, defaultType, myScopeOwner);
   }
 
@@ -51,7 +54,7 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   }
 
   @Override
-  public @Nullable PyType getDefaultType() {
+  public @Nullable PyPositionalVariadicType getDefaultType() {
     return myDefaultType;
   }
 
