@@ -182,30 +182,33 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   }
 
   private void prepareGpgAgentAuth() {
-    Project project = myHandler.project();
     VirtualFile root = myHandler.getExecutableContext().getRoot();
-    if (project == null || root == null) {
+    if (root == null) {
       return;
     }
 
-    if (!GpgAgentConfigurator.isEnabled(project, myHandler.myExecutable)) {
+    GitCommand command = myHandler.getCommand();
+    boolean isCommandSupported = command == GitCommand.COMMIT
+                                 || command == GitCommand.TAG
+                                 || command == GitCommand.MERGE
+                                 || command == GitCommand.CHERRY_PICK
+                                 || command == GitCommand.REBASE;
+    if (!isCommandSupported) {
+      return;
+    }
+
+    if (!GpgAgentConfigurator.isEnabled(myProject, myHandler.myExecutable)) {
       return;
     }
 
     GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
     if (repo == null) return;
 
-    GitCommand command = myHandler.getCommand();
-    boolean needGpgSigning =
-      (command == GitCommand.COMMIT || command == GitCommand.TAG || command == GitCommand.MERGE
-       || command == GitCommand.CHERRY_PICK || command == GitCommand.REBASE) &&
-      GitGpgConfigUtilsKt.isGpgSignEnabledCached(repo);
-
-    if (needGpgSigning) {
-      PinentryService.PinentryData pinentryData = PinentryService.getInstance(project).startSession();
+    if (GitGpgConfigUtilsKt.isGpgSignEnabledCached(repo)) {
+      PinentryService.PinentryData pinentryData = PinentryService.getInstance(myProject).startSession();
       if (pinentryData != null) {
         myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv());
-        Disposer.register(myDisposable, () -> PinentryService.getInstance(project).stopSession());
+        Disposer.register(myDisposable, () -> PinentryService.getInstance(myProject).stopSession());
       }
     }
   }

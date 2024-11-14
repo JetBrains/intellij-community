@@ -16,6 +16,7 @@ import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_FIL
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_FILE_NAME
 import git4idea.config.GitExecutableManager
+import git4idea.repo.GitProjectConfigurationCache
 import git4idea.test.GitSingleRepoTest
 import org.junit.Assume.assumeTrue
 import java.io.BufferedWriter
@@ -31,6 +32,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     super.setUp()
     git("config commit.gpgSign true")
     git("config user.signingkey 0A46826A!")
+    GitProjectConfigurationCache.getInstance(project).clearCache()
     val enabled = GpgAgentConfigurator.isEnabled(project, GitExecutableManager.getInstance().getExecutable(project))
     assumeTrue("GpgAgentConfigurator should be enabled", enabled);
   }
@@ -134,7 +136,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     val cmd = GeneralCommandLine(paths.gpgPinentryAppLauncherConfigPath)
       .withEnvironment(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv())
 
-    val output = object : CapturingProcessHandler.Silent(cmd) {
+    val process = object : CapturingProcessHandler.Silent(cmd) {
       override fun createProcessAdapter(processOutput: ProcessOutput): CapturingProcessAdapter? {
         return object : CapturingProcessAdapter(processOutput) {
           val writer = BufferedWriter(OutputStreamWriter(process.outputStream, StandardCharsets.UTF_8))
@@ -162,7 +164,12 @@ class PinentryExecutionTest : GitSingleRepoTest() {
           }
         }
       }
-    }.runProcess(10000, true).stdoutLines
+    }.runProcess(10000, true)
+    val output = process.stdoutLines
+    var errLines = process.stderrLines
+    if (errLines.isNotEmpty()) {
+      LOG.warn("Error output: $errLines")
+    }
     return output
   }
 
@@ -177,5 +184,9 @@ class PinentryExecutionTest : GitSingleRepoTest() {
                            gpgPinentryAppLauncher, gpgPinentryAppLauncher.toAbsolutePath().toString())
     }
 
+  }
+
+  companion object {
+    private val LOG = logger<PinentryExecutionTest>()
   }
 }
