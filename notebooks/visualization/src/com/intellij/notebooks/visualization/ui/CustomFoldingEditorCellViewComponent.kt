@@ -70,10 +70,10 @@ class CustomFoldingEditorCellViewComponent(
   }
 
   private fun disposeFolding(ctx: UpdateContext) {
-    ctx.addFoldingOperation {
+    ctx.addFoldingOperation { foldingModel ->
       foldingRegion?.let { region ->
         if (region.isValid == true) {
-          editor.foldingModel.removeFoldRegion(region)
+          foldingModel.removeFoldRegion(region)
         }
       }
       foldingRegion = null
@@ -88,9 +88,9 @@ class CustomFoldingEditorCellViewComponent(
   }
 
   override fun updateCellFolding(updateContext: UpdateContext) {
-    updateContext.addFoldingOperation {
-      foldingRegion?.dispose()
-      val fr = editor.foldingModel.addCustomLinesFolding(
+    updateContext.addFoldingOperation { foldingModel ->
+      foldingRegion?.let { foldingModel.removeFoldRegion(it) }
+      val fr = foldingModel.addCustomLinesFolding(
         cell.interval.lines.first, cell.interval.lines.last, object : CustomFoldRegionRenderer {
         override fun calcWidthInPixels(region: CustomFoldRegion) = mainComponent.width
         override fun calcHeightInPixels(region: CustomFoldRegion) = mainComponent.height
