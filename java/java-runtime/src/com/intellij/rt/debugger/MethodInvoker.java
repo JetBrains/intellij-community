@@ -15,7 +15,7 @@ public final class MethodInvoker {
 
   public static Object invoke0(MethodHandles.Lookup lookup, Class<?> cls, Object obj, String nameAndDescriptor, ClassLoader loader)
     throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, new Object[]{});
   }
 
   public static Object invoke1(MethodHandles.Lookup lookup,
@@ -24,8 +24,12 @@ public final class MethodInvoker {
                                String nameAndDescriptor,
                                ClassLoader loader,
                                Object arg1) throws Throwable {
-    Object[] args = (arg1 == null || arg1 instanceof Object[]) ? (Object[])arg1 : new Object[]{arg1}; // do not wrap Object arrays again
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, args);
+    if (arg1 == null || arg1 instanceof Object[]) { // do not wrap Object arrays again
+      return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, false, (Object[])arg1);
+    }
+    else {
+      return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, new Object[]{arg1});
+    }
   }
 
   public static Object invoke2(MethodHandles.Lookup lookup,
@@ -35,7 +39,7 @@ public final class MethodInvoker {
                                ClassLoader loader,
                                Object arg1,
                                Object arg2) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, new Object[]{arg1, arg2});
   }
 
   public static Object invoke3(MethodHandles.Lookup lookup,
@@ -46,7 +50,7 @@ public final class MethodInvoker {
                                Object arg1,
                                Object arg2,
                                Object arg3) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, new Object[]{arg1, arg2, arg3});
   }
 
   public static Object invoke4(MethodHandles.Lookup lookup,
@@ -58,7 +62,7 @@ public final class MethodInvoker {
                                Object arg2,
                                Object arg3,
                                Object arg4) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3, arg4});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, new Object[]{arg1, arg2, arg3, arg4});
   }
 
   public static Object invoke5(MethodHandles.Lookup lookup,
@@ -71,7 +75,7 @@ public final class MethodInvoker {
                                Object arg3,
                                Object arg4,
                                Object arg5) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3, arg4, arg5});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, new Object[]{arg1, arg2, arg3, arg4, arg5});
   }
 
   public static Object invoke6(MethodHandles.Lookup lookup,
@@ -85,7 +89,7 @@ public final class MethodInvoker {
                                Object arg4,
                                Object arg5,
                                Object arg6) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3, arg4, arg5, arg6});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, new Object[]{arg1, arg2, arg3, arg4, arg5, arg6});
   }
 
   public static Object invoke7(MethodHandles.Lookup lookup,
@@ -100,7 +104,8 @@ public final class MethodInvoker {
                                Object arg5,
                                Object arg6,
                                Object arg7) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true,
+                          new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7});
   }
 
   public static Object invoke8(MethodHandles.Lookup lookup,
@@ -116,7 +121,8 @@ public final class MethodInvoker {
                                Object arg6,
                                Object arg7,
                                Object arg8) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true,
+                          new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8});
   }
 
   public static Object invoke9(MethodHandles.Lookup lookup,
@@ -133,7 +139,8 @@ public final class MethodInvoker {
                                Object arg7,
                                Object arg8,
                                Object arg9) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true,
+                          new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9});
   }
 
   public static Object invoke10(MethodHandles.Lookup lookup,
@@ -151,16 +158,27 @@ public final class MethodInvoker {
                                 Object arg8,
                                 Object arg9,
                                 Object arg10) throws Throwable {
-    return invoke(lookup, cls, obj, nameAndDescriptor, loader, new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10});
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true,
+                          new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10});
   }
-
 
   public static Object invoke(MethodHandles.Lookup lookup,
                               Class<?> cls,
                               Object obj,
                               String nameAndDescriptor,
                               ClassLoader loader,
+                              boolean vararg,
                               Object[] args) throws Throwable {
+    return invokeInternal(lookup, cls, obj, nameAndDescriptor, loader, true, args);
+  }
+
+  private static Object invokeInternal(MethodHandles.Lookup lookup,
+                                       Class<?> cls,
+                                       Object obj,
+                                       String nameAndDescriptor,
+                                       ClassLoader loader,
+                                       boolean wrapped,
+                                       Object[] args) throws Throwable {
     try {
       int separatorIndex = nameAndDescriptor.indexOf(';');
       String name = nameAndDescriptor.substring(0, separatorIndex);
@@ -183,19 +201,19 @@ public final class MethodInvoker {
       // handle the case where null is passed as the vararg array
       // TODO: handle when vararg is not the only parameter
       int parameterCount = mt.parameterCount();
-      if (parameterCount == 1 && args == null && mt.parameterType(0).isArray()) {
-        result = method.invoke((Object[])null);
+      if (wrapped && parameterCount > 0) {
+        Class<?> lastParameterType = mt.parameterType(parameterCount - 1);
+        if (args.length == parameterCount - 1 && lastParameterType.isArray()) {
+          // add an empty array if empty vararg parameter is passed
+          args = Arrays.copyOf(args, parameterCount);
+          args[parameterCount - 1] = Array.newInstance(lastParameterType.getComponentType(), 0);
+        }
+      }
+      if (wrapped) {
+        result = method.invokeWithArguments(args);
       }
       else {
-        if (parameterCount > 0) {
-          Class<?> lastParameterType = mt.parameterType(parameterCount - 1);
-          if (args.length == parameterCount - 1 && lastParameterType.isArray()) {
-            // add an empty array if empty vararg parameter is passed
-            args = Arrays.copyOf(args, parameterCount);
-            args[parameterCount - 1] = Array.newInstance(lastParameterType.getComponentType(), 0);
-          }
-        }
-        result = method.invokeWithArguments(args);
+        result = method.invoke(args);
       }
       returnValue.set(result);
       return result;
