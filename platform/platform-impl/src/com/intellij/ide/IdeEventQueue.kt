@@ -139,7 +139,6 @@ class IdeEventQueue private constructor() : EventQueue() {
     val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
     assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
     systemEventQueue.push(this)
-    threadingSupport.postInit(Thread.currentThread())
     EDT.updateEdt()
     replaceDefaultKeyboardFocusManager()
     addDispatcher(WindowsAltSuppressor(), null)

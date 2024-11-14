@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -15,11 +15,13 @@ import java.util.concurrent.Future
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import javax.swing.JComponent
+import kotlin.Boolean
+import kotlin.String
+import kotlin.Throwable
 import kotlin.coroutines.CoroutineContext
+import kotlin.run
 
 interface ThreadingSupport {
-  @ApiStatus.Internal
-  fun postInit(writeThread: Thread) {}
 
   /**
    * Runs the specified computation in a write intent. Must be called from the Swing dispatch thread. The action is executed
