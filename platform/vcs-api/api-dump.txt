@@ -2184,25 +2184,23 @@ a:com.intellij.util.ui.VcsBackgroundTask
 f:com.intellij.util.ui.VcsSynchronousProgressWrapper
 - s:compute(com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.project.Project,java.lang.String):java.lang.Object
 - s:wrap(com.intellij.util.ThrowableRunnable,com.intellij.openapi.project.Project,java.lang.String):Z
-f:com.intellij.vcs.ShelveNamePatch
+f:com.intellij.vcs.ShelveTitlePatch
 - <init>(java.lang.String,I):V
 - f:component1():java.lang.String
 - f:component2():I
-- f:copy(java.lang.String,I):com.intellij.vcs.ShelveNamePatch
-- bs:copy$default(com.intellij.vcs.ShelveNamePatch,java.lang.String,I,I,java.lang.Object):com.intellij.vcs.ShelveNamePatch
+- f:copy(java.lang.String,I):com.intellij.vcs.ShelveTitlePatch
+- bs:copy$default(com.intellij.vcs.ShelveTitlePatch,java.lang.String,I,I,java.lang.Object):com.intellij.vcs.ShelveTitlePatch
 - equals(java.lang.Object):Z
 - f:getFileNumber():I
 - f:getPatchText():java.lang.String
 - hashCode():I
-com.intellij.vcs.ShelveNameProvider
-- sf:Companion:com.intellij.vcs.ShelveNameProvider$Companion
-- a:generateName(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveNamePatch,kotlin.coroutines.Continuation):java.lang.Object
-- s:generateShelveName(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveNamePatch,kotlin.coroutines.Continuation):java.lang.Object
-- s:hasDefaultName(java.lang.String):Z
+com.intellij.vcs.ShelveTitleProvider
+- sf:Companion:com.intellij.vcs.ShelveTitleProvider$Companion
 - s:showGotItTooltip(com.intellij.openapi.project.Project,java.awt.Component):V
-f:com.intellij.vcs.ShelveNameProvider$Companion
-- f:generateShelveName(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveNamePatch,kotlin.coroutines.Continuation):java.lang.Object
-- f:hasDefaultName(java.lang.String):Z
+- a:showTooltipPopup(com.intellij.openapi.project.Project,java.awt.Component):Z
+- a:suggestTitle(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveTitlePatch,java.util.function.Consumer):Z
+f:com.intellij.vcs.ShelveTitleProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:showGotItTooltip(com.intellij.openapi.project.Project,java.awt.Component):V
 com.intellij.vcs.VcsRepositoryInitializer
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
