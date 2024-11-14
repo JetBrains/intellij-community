@@ -161,13 +161,12 @@ internal class TrustedProjectStartupDialog(
           }
           row {
             val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name, 18, 0, true)
+            val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
             windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
               .bindSelected(windowsDefender)
               .apply {
                 component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter {
-                  listOf(pathsToExclude.joinToString(separator = "<br>"), getTrustFolder(isTrustAll()).pathString)
-                })
+                component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
                 comment(IdeBundle.message("untrusted.project.location.comment"))
                 visible(pathsToExclude.isNotEmpty())
               }

@@ -86,7 +86,12 @@ object TrustedProjectsDialog {
         if (project == null) {
           checker.markProjectPath(projectRoot)
         }
-        (pathsToExclude as MutableList<Path>).add(0, defenderTrustDir)
+        if (defenderTrustDir != projectRoot) {
+          (pathsToExclude as MutableList<Path>).apply {
+            remove(projectRoot)
+            add(0, defenderTrustDir)
+          }
+        }
         WindowsDefenderCheckerActivity.runAndNotify(project) {
           checker.excludeProjectPaths(project, projectRoot, pathsToExclude)
         }
@@ -108,7 +113,6 @@ object TrustedProjectsDialog {
         if (paths.isEmpty()) {
           logger<TrustedProjectsDialog>().info("all paths are on a DevDrive")
         }
-        paths.remove(projectPath) // a project directory is not needed for the dialog and might be changed by it
         return paths
       }
     }
