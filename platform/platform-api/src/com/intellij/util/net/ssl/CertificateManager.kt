@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.crypto.BadPaddingException
+import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.KeyManager
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
@@ -283,6 +284,11 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
       // NOTE: existence of default trust manager can be checked here as
       // assert systemManager.getAcceptedIssuers().length != 0
       context.init(getDefaultKeyManagers(), arrayOf(trustManager), null)
+      // HttpsUrlConnection behaves strangely and caches defaultSSLSocketFactory = (SSLSocketFactory)SSLSocketFactory.getDefault()
+      // on the first invocation, even though it could be overridden later
+      // if we change the default factory, we need to manually update the HttpsURLConnection.defaultSSLSocketFactory as well
+      // see https://youtrack.jetbrains.com/issue/IJPL-171446
+      HttpsURLConnection.setDefaultSSLSocketFactory(context.socketFactory)
     }
     catch (e: KeyManagementException) {
       LOG.error(e)
