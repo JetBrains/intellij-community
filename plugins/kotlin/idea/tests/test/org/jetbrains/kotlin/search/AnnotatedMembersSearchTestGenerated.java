@@ -89,4 +89,9 @@ public class AnnotatedMembersSearchTestGenerated extends AbstractAnnotatedMember
     public void testTestTypeAlias() throws Exception {
         runTest("testData/search/annotations/testTypeAlias.kt");
     }
+
+    @TestMetadata("useTarget.kt")
+    public void testUseTarget() throws Exception {
+        runTest("testData/search/annotations/useTarget.kt");
+    }
 }

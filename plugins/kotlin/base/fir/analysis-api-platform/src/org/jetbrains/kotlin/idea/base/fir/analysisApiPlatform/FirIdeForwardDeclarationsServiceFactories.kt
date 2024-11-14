@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.createDeclaration
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinForwardDeclarationsPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.createPackageProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModuleByModuleInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.K2ForwardDeclarationScopeProvider
 
 /**
  * FIR IDE declaration provider factory implementation for Kotlin/Native forward declarations.
@@ -20,11 +20,11 @@ import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProviderFactory {
-    @OptIn(K1ModeProjectStructureApi::class)
     override fun createDeclarationProvider(module: KaModule): KotlinDeclarationProvider? {
-        if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
+        if (module !is KaLibraryModule) return null
+        val scope = K2ForwardDeclarationScopeProvider.getInstance(module.project).createForwardDeclarationScope(module) ?: return null
 
-        return module.project.createDeclarationProvider(module.forwardDeclarationsScope, module)
+        return module.project.createDeclarationProvider(scope, module)
     }
 }
 
@@ -35,10 +35,10 @@ internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclaratio
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileGenerator]
  */
 internal class FirIdeForwardDeclarationPackageProviderFactory : KotlinForwardDeclarationsPackageProviderFactory {
-    @OptIn(K1ModeProjectStructureApi::class)
     override fun createPackageProvider(module: KaModule): KotlinPackageProvider? {
-        if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
+        if (module !is KaLibraryModule) return null
+        val scope = K2ForwardDeclarationScopeProvider.getInstance(module.project).createForwardDeclarationScope(module) ?: return null
 
-        return module.project.createPackageProvider(module.forwardDeclarationsScope)
+        return module.project.createPackageProvider(scope)
     }
 }
