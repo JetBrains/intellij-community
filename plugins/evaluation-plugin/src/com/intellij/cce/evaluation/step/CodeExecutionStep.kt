@@ -23,7 +23,6 @@ class CodeExecutionStep(
     if (language == null)
       return workspace
     //workspace.sessionsStorage.getSessions(workspace.sessionsStorage.getSessionFiles().get(0).first).sessions.
-
     //workspace.sessionsStorage.getSessionFiles().
     //workspace.sessionsStorage.getSessions(workspace.sessionsStorage.getSessionFiles().get(0).first).sessions[0].lookups[0].suggestions[0].text
     val sessionFiles = workspace.sessionsStorage.getSessionFiles()
@@ -35,7 +34,7 @@ class CodeExecutionStep(
         manager.isTest = true
         manager.saveFile(code)
         val compilationLog = manager.compile()
-        val executionLog = manager.execute()
+        val executionLog = manager.execute(PathManager.getAbsolutePath(config.actions!!.projectPath))
       }
     }
 

@@ -17,7 +17,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager {
 
   override fun compile(): ProcessExecutionLog {
     // NA
-    return PythonProcessExecutionLog("", "")
+    return PythonProcessExecutionLog("", "", 0)
   }
 
   override fun execute(): ProcessExecutionLog {
@@ -26,12 +26,11 @@ class PythonCodeExecutionManager() : CodeExecutionManager {
     //val bashScriptPath = File("${PathManager.getHomePath()}/community/plugins/evaluation-plugin/languages/python/src/com/intellij/cce/execution/manager/bash_script_setup_tests.sh").absolutePath
     //val processBuilder = ProcessBuilder("/bin/bash",  bashScriptPath, testPath)
 
-    val processBuilder = ProcessBuilder("python3", testPath)
+    val processBuilder = ProcessBuilder("/bin/bash", bashScriptFile.path.toString(), testPath)
 
-    //processBuilder.environment()["PYTHON"] = sdk.homePath
+    //processBuilder.environment()["PYTHON"] = TODO set correct python version
 
-    //processBuilder.directory(File("~/ul"))
-
+    processBuilder.directory(File(projectPath))
 
     try {
       // Start the process
@@ -46,12 +45,11 @@ class PythonCodeExecutionManager() : CodeExecutionManager {
       println("Output:\n$output")
       println("Error:\n$error")
       println("Exit code: $exitCode")
+      return PythonProcessExecutionLog(output, error, exitCode)
     }
     catch (e: Exception) {
       e.printStackTrace()
+      return PythonProcessExecutionLog("", "", 1)
     }
-
-
-    return PythonProcessExecutionLog("", "")
   }
 }
