@@ -213,7 +213,7 @@ public final class MethodInvoker {
         result = method.invokeWithArguments(args);
       }
       else {
-        result = method.invoke(args);
+        result = method.asFixedArity().invoke(args);
       }
       returnValue.set(result);
       return result;
