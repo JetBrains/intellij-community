@@ -16,6 +16,7 @@ import com.intellij.psi.*
 import com.intellij.psi.PsiModifier.ModifierConstant
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass
+import com.intellij.psi.util.PsiTypesUtil
 
 @ModifierConstant
 internal fun JvmModifier.toPsiModifier(): String = when (this) {
@@ -66,7 +67,7 @@ internal fun extractExpectedTypes(project: Project, expectedTypes: ExpectedTypes
 private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType, context: PsiElement): ExpectedTypeInfo {
   if (expectedType is ExpectedJavaType) return expectedType.info
   val helper = JvmPsiConversionHelper.getInstance(project)
-  var psiType = helper.convertType(expectedType.theType)
+  var psiType = PsiTypesUtil.removeExternalAnnotations(helper.convertType(expectedType.theType))
   if (expectedType is ExpectedTypeWithNullability) {
     psiType =
     when (expectedType.nullability) {
