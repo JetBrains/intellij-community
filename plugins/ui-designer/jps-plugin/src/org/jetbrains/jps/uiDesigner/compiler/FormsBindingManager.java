@@ -54,7 +54,7 @@ public final class FormsBindingManager extends FormsBuilder {
 
   @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
-    FORMS_REBUILD_FORCED.set(context, null); // clear the flag on per-chunk basis
+    FORMS_REBUILD_FORCED.set(context, null); // clear the flag on a per-chunk basis
     super.chunkBuildFinished(context, chunk);
   }
 
@@ -107,9 +107,9 @@ public final class FormsBindingManager extends FormsBuilder {
       }
     }
 
-    dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
+    dirtyFilesHolder.processDirtyFiles(new FileProcessor<>() {
       @Override
-      public boolean apply(@NotNull ModuleBuildTarget target, @NotNull File file, @NotNull JavaSourceRootDescriptor descriptor) throws IOException {
+      public boolean apply(@NotNull ModuleBuildTarget target, @NotNull File file, @NotNull JavaSourceRootDescriptor descriptor) {
         if (JAVA_SOURCES_FILTER.accept(file)) {
           filesToCompile.put(file, target);
         }
@@ -126,7 +126,7 @@ public final class FormsBindingManager extends FormsBuilder {
 
       final FSOperations.DirtyFilesHolderBuilder<JavaSourceRootDescriptor, ModuleBuildTarget> holderBuilder = FSOperations.createDirtyFilesHolderBuilder(context, CompilationRound.CURRENT);
 
-      // force compilation of bound source file if the form is dirty
+      // force compilation of the bound source file if the form is dirty
       final Set<File> alienForms = FileCollectionFactory.createCanonicalFileSet();
       for (final Map.Entry<File, ModuleBuildTarget> entry : formsToCompile.entrySet()) {
         final File form = entry.getKey();
@@ -245,7 +245,7 @@ public final class FormsBindingManager extends FormsBuilder {
   }
 
   @Nullable
-  private static File findSourceForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) throws IOException {
+  private static File findSourceForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) {
     if (boundClassName == null) {
       return null;
     }
@@ -264,7 +264,7 @@ public final class FormsBindingManager extends FormsBuilder {
   }
 
   @NotNull
-  private static Collection<File> findPossibleSourcesForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) throws IOException {
+  private static Collection<File> findPossibleSourcesForClass(JavaSourceRootDescriptor rd, final @Nullable String boundClassName) {
     if (boundClassName == null) {
       return Collections.emptyList();
     }
