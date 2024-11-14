@@ -1,5 +1,5 @@
 // "Create annotation 'foo'" "true"
-
+// IGNORE_K2
 @[<caret>foo<String>(1, "2")] fun test() {
 
 }

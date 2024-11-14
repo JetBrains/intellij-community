@@ -9,18 +9,23 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.*
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import java.lang.annotation.Retention
-import java.util.*
 
 
 fun PsiElement.isTrueJavaMethod(): Boolean = this is PsiMethod && this !is KtLightMethod
@@ -133,6 +138,7 @@ fun createJavaField(property: KtNamedDeclaration, targetClass: PsiClass): PsiFie
     return field
 }
 
+@OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
 fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind): PsiClass {
     val factory = PsiElementFactory.getInstance(klass.project)
     val className = klass.name!!
@@ -198,7 +204,23 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind
             }
         }
     }
-
+    if (classKind == ClassKind.ANNOTATION_CLASS && template.methods.isEmpty()) {
+        // convert kotlin annotation class ctr parameters to java getters, if "convert to light class" failed
+        val psiElementFactory = PsiElementFactory.getInstance(template.project)
+        for (ktParameter in klass.primaryConstructorParameters) {
+            val name = ktParameter.name ?: break
+            val returnType: PsiType? = allowAnalysisOnEdt {
+                allowAnalysisFromWriteAction {
+                    analyze(klass) {
+                        ktParameter.typeReference?.type?.asPsiType(klass, false, isAnnotationMethod = true)
+                    }
+                }
+            } ?: break
+            val psiMethod = psiElementFactory.createMethod(name, returnType)
+            psiMethod.body?.delete()
+            javaClass.add(psiMethod)
+        }
+    }
     return javaClass
 }
 
