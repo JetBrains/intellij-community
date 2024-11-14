@@ -1099,6 +1099,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/PropertyReference3WithQualifiedThis.kt");
             }
 
+            @TestMetadata("receiverSubstitution.kt")
+            public void testReceiverSubstitution() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/receiverSubstitution.kt");
+            }
+
             @TestMetadata("semicolon.kt")
             public void testSemicolon() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/semicolon.kt");
