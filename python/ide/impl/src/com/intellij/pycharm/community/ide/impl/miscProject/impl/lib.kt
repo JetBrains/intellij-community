@@ -57,6 +57,9 @@ import kotlin.io.path.pathString
 
 private val logger = fileLogger()
 
+internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject") }
+internal val miscProjectEnabled: Boolean get() = Registry.`is`("pycharm.miscProject")
+
 /**
  * Creates project in [projectPath] in modal window. Once created, uses [scopeProvider] to get scope
  * to launch [miscFileType] generation in background, returns it as a job.
@@ -68,7 +71,7 @@ fun createMiscProject(
   miscFileType: MiscFileType,
   scopeProvider: (Project) -> CoroutineScope,
   obtainPythonStrategy: ObtainPythonStrategy,
-  projectPath: Path = Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject"),
+  projectPath: Path = miscProjectDefaultPath.value,
 ): Result<Job, LocalizedErrorString> =
   runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
@@ -82,7 +85,6 @@ fun createMiscProject(
     })
   }
 
-internal val miscProjectEnabled: Boolean get() = Registry.`is`("pycharm.miscProject")
 
 private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, sdk: Sdk): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)

@@ -17,6 +17,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <refactoring.elementListenerProvider implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
     <registryKey defaultValue="5" description="Number of primary buttons on welcome screen (other go to 'more actions')"
                  key="welcome.screen.primaryButtonsCount" restartRequired="true" overrides="true"/>
     <registryKey defaultValue="false" description="Misc project enable" key="pycharm.miscProject"/>
