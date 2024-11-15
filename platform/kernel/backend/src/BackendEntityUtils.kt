@@ -22,8 +22,8 @@ fun <T : Any> Flow<T>.asIDsFlow(): Flow<EID> {
   return channelFlow {
     flow.collectLatest { value ->
       val valueEntity = newValueEntity(value)
-      send(valueEntity.id)
       try {
+        send(valueEntity.id)
         awaitCancellation()
       }
       catch (_: CancellationException) {
@@ -50,8 +50,8 @@ fun <T : Any?> Flow<T>.asNullableIDsFlow(): Flow<EID?> {
         return@collectLatest
       }
       val valueEntity = newValueEntity(value)
-      send(valueEntity.id)
       try {
+        send(valueEntity.id)
         awaitCancellation()
       }
       catch (_: CancellationException) {
