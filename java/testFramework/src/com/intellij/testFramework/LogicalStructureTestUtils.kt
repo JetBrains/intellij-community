@@ -23,9 +23,10 @@ object LogicalStructureTestUtils {
     val builder = LogicalStructureViewService.getInstance(project).getLogicalStructureBuilder(psiFile)
     val structureView = builder!!.createStructureView(null, project)
     val actualRoot = createActualNode(structureView.treeModel.root)
-    val expectedRoot = LogicalStructureNode(null, "root", "")
+    val expectedRoot = LogicalStructureNode(null, "", "")
     expectedRoot.expectedStructureInitializer()
     if (!expectedRoot.isEqualTo(actualRoot, false)) {
+      expectedRoot.applyChildrenDontMatterToOther(actualRoot)
       throw ComparisonFailure("The models are not equals: ",
                               expectedRoot.print("", false),
                               actualRoot.print("", false))
@@ -55,13 +56,15 @@ object LogicalStructureTestUtils {
   ) {
 
     private val subNodes = mutableListOf<LogicalStructureNode>()
+    private var childrenDontMatter = false
 
     fun subNode(subNode: LogicalStructureNode) {
       subNodes.add(subNode)
     }
 
-    fun node(icon: Icon?, name: String, location: String? = "", initializer: (LogicalStructureNode.() -> Unit)? = null) {
+    fun node(icon: Icon?, name: String, location: String? = "", childrenDontMatter: Boolean = false, initializer: (LogicalStructureNode.() -> Unit)? = null) {
       val subNode = LogicalStructureNode(icon, name, location ?: "")
+      if (childrenDontMatter) subNode.anyNodes()
       initializer?.invoke(subNode)
       subNodes.add(subNode)
     }
@@ -70,6 +73,22 @@ object LogicalStructureTestUtils {
       val subNode = LogicalStructureNode(icon, "", "", coloredText.map { PresentableNodeDescriptor.ColoredFragment(it.first, it.second) })
       initializer?.invoke(subNode)
       subNodes.add(subNode)
+    }
+
+    fun anyNodes() {
+      childrenDontMatter = true
+    }
+
+    fun applyChildrenDontMatterToOther(other: LogicalStructureNode) {
+      if (name != other.name) return
+      if (childrenDontMatter) {
+        other.anyNodes()
+        return
+      }
+      if (subNodes.size != other.subNodes.size) return
+      for (i in subNodes.indices) {
+        subNodes[i].applyChildrenDontMatterToOther(other.subNodes[i])
+      }
     }
 
     fun isEqualTo(other: LogicalStructureNode, compareItSelf: Boolean, availableDepth: Int = MAX_DEPTH): Boolean {
@@ -84,9 +103,11 @@ object LogicalStructureTestUtils {
           if (icon != other.icon || name != other.name || location != other.location) return false
         }
       }
-      if (subNodes.size != other.subNodes.size) return false
-      for (i in subNodes.indices) {
-        if (!subNodes[i].isEqualTo(other.subNodes[i], true, availableDepth - 1)) return false
+      if (!childrenDontMatter) {
+        if (subNodes.size != other.subNodes.size) return false
+        for (i in subNodes.indices) {
+          if (!subNodes[i].isEqualTo(other.subNodes[i], true, availableDepth - 1)) return false
+        }
       }
       return true
     }
@@ -100,8 +121,13 @@ object LogicalStructureTestUtils {
         result += name
         if (location.isNotEmpty()) result += " | $location"
       }
-      for (subNode in subNodes) {
-        result += "\n" + subNode.print(if (printItself) "$indent  " else indent)
+      if (childrenDontMatter) {
+        result += "\n$indent  some nodes..."
+      }
+      else {
+        for (subNode in subNodes) {
+          result += "\n" + subNode.print(if (printItself) "$indent  " else indent)
+        }
       }
       if (!printItself) result = result.substringAfter("\n")
       return result
