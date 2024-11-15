@@ -41,6 +41,9 @@ public final class GraphicsUtil {
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
   }
 
+  /**
+   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
+   */
   public static void setupAntialiasing(@NotNull Graphics g2) {
     setupAntialiasing(g2, true, false);
   }
@@ -58,6 +61,9 @@ public final class GraphicsUtil {
     return ourGraphics.getFontMetrics(font).charWidth(ch);
   }
 
+  /**
+   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
+   */
   public static void setupAntialiasing(Graphics g2, boolean enableAA, boolean ignoreSystemSettings) {
     if (g2 instanceof Graphics2D g) {
       Toolkit tk = Toolkit.getDefaultToolkit();
