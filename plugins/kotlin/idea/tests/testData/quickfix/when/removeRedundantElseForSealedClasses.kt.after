@@ -1,10 +1,14 @@
 // "Remove else branch" "true"
 
-fun foo(b: Boolean) {
-    when (b) {
-        true -> return
-        false -> {}
-        <caret>else -> error()
+sealed class Parent
+
+class AChild : Parent()
+class BChild : Parent()
+
+fun foo(p: Parent) {
+    when (p) {
+        is AChild -> return
+        is BChild -> {}
     }
 }
 

@@ -3781,6 +3781,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/when/removeRedundantElse.kt");
         }
 
+        @TestMetadata("removeRedundantElseForSealedClasses.kt")
+        public void testRemoveRedundantElseForSealedClasses() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/when/removeRedundantElseForSealedClasses.kt");
+        }
+
         @TestMetadata("twoElseBranchesInWhen.kt")
         public void testTwoElseBranchesInWhen() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/when/twoElseBranchesInWhen.kt");
