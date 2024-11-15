@@ -2133,6 +2133,18 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertResolvedElement(LanguageLevel.PYTHON34, starImport, TestCase::assertNull);
   }
 
+  // PY-77168
+  public void testResolveFromUnderUnmatchedVersionCheck() {
+    assertResolvesTo("""
+                       import sys
+                       
+                       Alias = int
+                       if sys.version_info < (3, 12):
+                           name: Alias
+                       #          <ref>
+                       """, PyTargetExpression.class, "Alias");
+  }
+
   private void assertResolvedElement(@NotNull LanguageLevel languageLevel, @NotNull String text, @NotNull Consumer<PsiElement> assertion) {
     runWithLanguageLevel(languageLevel, () -> {
       myFixture.configureByText(PythonFileType.INSTANCE, text);
