@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +19,7 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -177,12 +178,13 @@ public final class FileTypeChooser extends DialogWrapper {
     return type;
   }
 
-  public static @Nullable FileType associateFileType(final @NotNull String fileName) {
-    final FileTypeChooser chooser = new FileTypeChooser(suggestPatterns(fileName), fileName);
+  @RequiresEdt
+  public static @Nullable FileType associateFileType(@NotNull String fileName) {
+    var chooser = new FileTypeChooser(suggestPatterns(fileName), fileName);
     if (!chooser.showAndGet()) {
       return null;
     }
-    final FileType type = chooser.getSelectedType();
+    var type = chooser.getSelectedType();
     if (type == FileTypes.UNKNOWN || type == null) return null;
 
     ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().associatePattern(type, chooser.getSelectedPattern()));
