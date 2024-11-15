@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searching.usages
 
@@ -10,15 +10,18 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -106,24 +109,28 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
 
         val psiToResolve = adaptSuperCall(element) ?: element
+        return analyze(psiToResolve) {
+            // The element cannot refer classes from unrelated sessions
+            if (!ktClassOrObject.canBeAnalysed()) return false
 
-        return withResolvedCall(psiToResolve) { call ->
-            when (call) {
-                is KaFunctionCall<*> -> {
-                    val constructorSymbol = call.symbol as? KaConstructorSymbol ?: return@withResolvedCall false
-                    val constructedClassSymbol =
-                        constructorSymbol.containingDeclaration as? KaClassLikeSymbol ?: return@withResolvedCall false
-                    val classOrObjectSymbol = ktClassOrObject.classSymbol
+            withResolvedCall(psiToResolve) { call ->
+                when (call) {
+                    is KaFunctionCall<*> -> {
+                        val constructorSymbol = call.symbol as? KaConstructorSymbol ?: return@withResolvedCall false
+                        val constructedClassSymbol =
+                            constructorSymbol.containingDeclaration as? KaClassLikeSymbol ?: return@withResolvedCall false
+                        val classOrObjectSymbol = ktClassOrObject.classSymbol
 
-                    fun KaClassLikeSymbol.getExpectsOrSelf(): List<KaDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
+                        fun KaClassLikeSymbol.getExpectsOrSelf(): List<KaDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
 
-                    constructedClassSymbol == classOrObjectSymbol ||
-                            constructedClassSymbol.getExpectsOrSelf() == classOrObjectSymbol?.getExpectsOrSelf()
+                        constructedClassSymbol == classOrObjectSymbol ||
+                                constructedClassSymbol.getExpectsOrSelf() == classOrObjectSymbol?.getExpectsOrSelf()
+                    }
+
+                    else -> false
                 }
-
-                else -> false
-            }
-        } ?: false
+            } == true
+        }
     }
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
