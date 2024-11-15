@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.vcs.commit.CommitMode;
 import com.intellij.vcs.commit.CommitModeManager;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -150,7 +151,8 @@ public final class RollbackAction extends DumbAwareAction {
 
   @Nullable
   private static Set<VirtualFile> getModifiedWithoutEditing(final AnActionEvent e, Project project) {
-    final List<VirtualFile> selectedModifiedWithoutEditing = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    List<VirtualFile> selectedModifiedWithoutEditing =
+      JBIterable.from(e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY)).toList();
     if (!ContainerUtil.isEmpty(selectedModifiedWithoutEditing)) {
       return new HashSet<>(selectedModifiedWithoutEditing);
     }

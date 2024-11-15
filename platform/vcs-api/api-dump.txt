@@ -557,7 +557,6 @@ com.intellij.openapi.vcs.VcsDataKeys
 - sf:FILE_PATH:com.intellij.openapi.actionSystem.DataKey
 - sf:HISTORY_PROVIDER:com.intellij.openapi.actionSystem.DataKey
 - sf:HISTORY_SESSION:com.intellij.openapi.actionSystem.DataKey
-- sf:MODIFIED_WITHOUT_EDITING_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:PRESET_COMMIT_MESSAGE:com.intellij.openapi.actionSystem.DataKey
 - sf:REMOTE_HISTORY_CHANGED_LISTENER:com.intellij.openapi.actionSystem.DataKey
 - sf:REMOTE_HISTORY_LOCATION:com.intellij.openapi.actionSystem.DataKey

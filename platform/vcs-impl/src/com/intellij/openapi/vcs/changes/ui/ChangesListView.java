@@ -53,7 +53,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
   @NonNls public static final DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY
     = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<Iterable<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY
-    = DataKey.create("ChangeListView.ModifiedWithoutEditingFiles");
+    = DataKey.create("ChangeListView.ModifiedWithoutEditing");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY
     = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
@@ -142,7 +142,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
              : null);
     sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY, getSelectedUnversionedFiles());
     sink.set(IGNORED_FILE_PATHS_DATA_KEY, getSelectedIgnoredFiles());
-    sink.set(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().toList());
+    sink.set(MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing());
     sink.set(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().toList());
     sink.set(MISSING_FILES_DATA_KEY, getSelectedLocallyDeletedChanges()
       .map(LocallyDeletedChange::getPath)
