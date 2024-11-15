@@ -27,6 +27,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.findPsiFile
@@ -55,6 +56,7 @@ import java.util.concurrent.ConcurrentMap
 
 const val PY_PROJECT_TOML: String = "pyproject.toml"
 const val POETRY_LOCK: String = "poetry.lock"
+const val POETRY_TOML: String = "poetry.toml"
 const val POETRY_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 
 val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
@@ -81,6 +83,9 @@ private suspend fun poetryLock(module: Module) = withContext(Dispatchers.IO) { f
 @Internal
 suspend fun pyProjectToml(module: Module): VirtualFile? = withContext(Dispatchers.IO) { findAmongRoots(module, PY_PROJECT_TOML) }
 
+internal suspend fun poetryToml(module: Module): VirtualFile? = withContext(Dispatchers.IO) {
+  findAmongRoots(module, POETRY_TOML)?.takeIf { readAction { ProjectFileIndex.getInstance(module.project).isInProject(it) } }
+}
 
 /**
  * Watches for edits in PyProjectToml inside modules with a poetry SDK set.
