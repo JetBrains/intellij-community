@@ -189,31 +189,18 @@ public final class SystemInfo {
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
-    return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
-  }
-
-  /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
-  /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
+  /** @deprecated might be inaccurate; please use {@link CpuArch} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean is32Bit = CpuArch.CURRENT.width == 32;
 
-  /** @deprecated may be inaccurate; please use {@link CpuArch} instead */
+  /** @deprecated might be inaccurate; please use {@link CpuArch} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
-
-  /** @deprecated always true (Java 8 requires macOS 10.9+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isMacOSLeopard = isMac;
-
   //</editor-fold>
 }

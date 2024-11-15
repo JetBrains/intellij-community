@@ -966,7 +966,6 @@ f:com.intellij.openapi.util.SystemInfo
 - sf:isMac:Z
 - sf:isMacOSBigSur:Z
 - sf:isMacOSCatalina:Z
-- sf:isMacOSLeopard:Z
 - sf:isMacOSMonterey:Z
 - sf:isMacOSSonoma:Z
 - sf:isMacOSVentura:Z
@@ -995,7 +994,6 @@ f:com.intellij.openapi.util.SystemInfo
 - s:getWinBuildNumber():java.lang.Long
 - s:hasXdgMime():Z
 - s:hasXdgOpen():Z
-- s:isJavaVersionAtLeast(I,I,I):Z
 - s:isJavaVersionAtLeast(java.lang.String):Z
 - s:isOsVersionAtLeast(java.lang.String):Z
 com.intellij.openapi.util.Throwable2Computable
