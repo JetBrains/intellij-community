@@ -3,14 +3,10 @@ package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
-import com.intellij.searchEverywhere.SearchEverywhereListItem
 import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
 import com.intellij.searchEverywhere.core.DefaultViewItemsProvider
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
-import org.mockito.Mockito
-
-private typealias ActionProcessor = (SearchEverywhereListItem<GotoActionModel.MatchedValue, SearchEverywhereItemPresentation>) -> Boolean
 
 class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   fun `test empty`() {}
@@ -20,12 +16,9 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
     runBlocking {
       val provider = createProvider()
       val params = ActionSearchParams("apply patch", true)
-      val processor = Mockito.mock<ActionProcessor>()
 
-      //provider.processViewItems(this, params, processor)
-      provider.processViewItems(this, params) {
+      provider.processViewItems(params).collect {
         println(it)
-        true
       }
     }
 

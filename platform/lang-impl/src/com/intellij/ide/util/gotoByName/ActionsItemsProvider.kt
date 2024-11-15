@@ -5,14 +5,18 @@ import com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
+import com.intellij.openapi.actionSystem.impl.Utils.runSuspendingUpdateSessionForActionSearch
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+
 
 @ApiStatus.Internal
 class ActionsItemsProvider(project: Project?, contextComponent: Component?, editor: Editor?): SearchEverywhereItemsProvider<MatchedValue, ActionSearchParams> {
@@ -20,9 +24,18 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 
-  override suspend fun processItems(scope: CoroutineScope, searchParams: ActionSearchParams, processor: (MatchedValue, Int) -> Boolean) {
+  override suspend fun processItems(searchParams: ActionSearchParams): Flow<SearchEverywhereItemsProvider.WeightedItem<MatchedValue>> {
+    return channelFlow {
+      processItems(searchParams) { value, weight ->
+        channel.send(SearchEverywhereItemsProvider.WeightedItem(value, weight))
+        coroutineContext.isActive
+      }
+    }
+  }
+
+  private suspend fun processItems(searchParams: ActionSearchParams, processor: suspend (MatchedValue, Int) -> Boolean) {
     model.buildGroupMappings()
-    scope.runUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
+    runSuspendingUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
       if (searchParams.pattern.isEmpty() && isRecentsShown()) {
         processRecents(searchParams, presentationProvider, processor)
       }
@@ -32,7 +45,7 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
     }
   }
 
-  private fun CoroutineScope.processAllItems(params: ActionSearchParams, presentationProvider: suspend (AnAction) -> Presentation, processor: (MatchedValue, Int) -> Boolean) {
+  private fun CoroutineScope.processAllItems(params: ActionSearchParams, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue, Int) -> Boolean) {
     asyncProvider.filterElements(this, presentationProvider, params.pattern) { matchedValue ->
       if (!params.includeDisabled) {
         val enabled = (matchedValue.value as? GotoActionModel.ActionWrapper)?.isAvailable != false
@@ -44,7 +57,7 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
 
   }
 
-  private fun CoroutineScope.processRecents(params: ActionSearchParams, presentationProvider: suspend (AnAction) -> Presentation, processor: (MatchedValue, Int) -> Boolean) {
+  private fun CoroutineScope.processRecents(params: ActionSearchParams, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue, Int) -> Boolean) {
     val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
     asyncProvider.processActions(this, presentationProvider, params.pattern, actionIDs) { matchedValue ->
       if (!params.includeDisabled) {

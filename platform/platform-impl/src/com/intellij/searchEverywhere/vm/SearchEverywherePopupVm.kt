@@ -2,7 +2,7 @@
 package com.intellij.searchEverywhere.vm
 
 import com.intellij.openapi.project.Project
-import com.intellij.searchEverywhere.core.DefaultSearchEverywhereRequestHandler
+import com.intellij.searchEverywhere.core.DefaultSearchEverywhereDispatcher
 import com.intellij.searchEverywhere.core.SearchEverywhereTab
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +19,7 @@ class SearchEverywherePopupVm(private val coroutineScope: CoroutineScope,
 
   private val searchPattern = MutableStateFlow("")
   private val tabVms: List<SearchEverywhereTabVm> = tabs.map {
-    SearchEverywhereTabVm(coroutineScope, it, searchPattern, DefaultSearchEverywhereRequestHandler())
+    SearchEverywhereTabVm(coroutineScope, it, searchPattern, DefaultSearchEverywhereDispatcher())
   }
   private val _currentTab: MutableStateFlow<SearchEverywhereTabVm>
 

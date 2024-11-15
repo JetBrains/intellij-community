@@ -4,23 +4,24 @@ package com.intellij.searchEverywhere.core
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
 import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
-import com.intellij.searchEverywhere.SearchEverywhereListItem
+import com.intellij.searchEverywhere.SearchEverywhereViewItem
 import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class DefaultViewItemsProvider<Item, Presentation: SearchEverywhereItemPresentation, Params>(
+class DefaultViewItemsProvider<Item, Presentation : SearchEverywhereItemPresentation, Params>(
   private val searchProvider: SearchEverywhereItemsProvider<Item, Params>,
   private val presentationRenderer: (Item) -> Presentation,
   private val dataContextRenderer: (Item) -> DataContext,
   private val descriptionRenderer: (Item) -> String? = { null },
 ) : SearchEverywhereViewItemsProvider<Item, Presentation, Params> {
 
-  override suspend fun processViewItems(scope: CoroutineScope, searchParams: Params, processor: (SearchEverywhereListItem<Item, Presentation>) -> Boolean) {
-    searchProvider.processItems(scope, searchParams) { item, weight ->
-      val listItem = SearchEverywhereListItem<Item, Presentation>(item, presentationRenderer(item), weight, dataContextRenderer(item), descriptionRenderer(item))
-      processor(listItem)
+  override suspend fun processViewItems(searchParams: Params): Flow<SearchEverywhereViewItem<Item, Presentation>> =
+    searchProvider.processItems(searchParams).map { weightedItem ->
+      val item = weightedItem.item
+      val weight = weightedItem.weight
+      SearchEverywhereViewItem(item, presentationRenderer(item), weight, dataContextRenderer(item), descriptionRenderer(item))
     }
-  }
 }

@@ -1029,14 +1029,28 @@ object Utils {
     result
   }
 
+  @ApiStatus.Internal
+  suspend fun <R> runSuspendingUpdateSessionForActionSearch(updateSession: UpdateSession,
+                                                            block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R) {
+    val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
+    withContext(contextMenuDispatcher + ModalityState.any().asContextElement()) {
+      runUpdateSessionForActionSearch(updater, block)
+    }
+  }
+
   fun <R> CoroutineScope.runUpdateSessionForActionSearch(updateSession: UpdateSession,
                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
     val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
     return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
-      updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
-        block {
-          updater.presentation(it)
-        }
+      runUpdateSessionForActionSearch(updater, block)
+    }
+  }
+
+  private suspend fun <R> runUpdateSessionForActionSearch(updater: ActionUpdater,
+                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): R {
+    return updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
+      block {
+        updater.presentation(it)
       }
     }
   }
