@@ -343,10 +343,6 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     classpathInferer.add(JDK14LoggerFactory::class.java)
     // gradle tooling proxy module
     classpathInferer.add(Main::class.java)
-    // intellij.gradle.toolingExtension - for use of model adapters classes
-    classpathInferer.add(GradleToolingExtensionClass::class.java)
-    // intellij.platform.externalSystem.rt
-    classpathInferer.add(ExternalSystemRtClass::class.java)
     // groovy runtime for serialization
     classpathInferer.add(MissingMethodException::class.java)
 
