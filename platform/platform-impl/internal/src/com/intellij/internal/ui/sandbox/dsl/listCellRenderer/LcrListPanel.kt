@@ -6,6 +6,7 @@ package com.intellij.internal.ui.sandbox.dsl.listCellRenderer
 
 import com.intellij.icons.AllIcons
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.items
 import com.intellij.openapi.Disposable
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
@@ -62,7 +63,7 @@ internal class LcrListPanel : UISandboxPanel {
             }
           }).label("Mixed, tooltips", LabelPosition.TOP)
 
-          jbList((1..99).map { "Item $it" }, textListCellRenderer { it })
+          jbList(items(99), textListCellRenderer { it })
           jbList((1..99).toList(), listCellRenderer {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text("Item $value")

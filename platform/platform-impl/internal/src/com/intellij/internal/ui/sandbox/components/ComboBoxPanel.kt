@@ -4,6 +4,7 @@ package com.intellij.internal.ui.sandbox.components
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.items
 import com.intellij.internal.ui.sandbox.withStateLabel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComboBox
@@ -20,14 +21,16 @@ import javax.swing.JComponent
 import javax.swing.border.TitledBorder
 import kotlin.math.max
 
-internal class JComboBoxPanel : UISandboxPanel {
+internal class ComboBoxPanel : UISandboxPanel {
 
-  override val title: String = "JComboBox"
+  override val title: String = "ComboBox"
 
   override fun createContent(disposable: Disposable): JComponent {
-    val items = (1..10).map { "Item $it" }.toList()
+    val items = items(10)
 
     val result = panel {
+      useNewComboBoxRenderer()
+
       withStateLabel {
         comboBox(items)
       }
