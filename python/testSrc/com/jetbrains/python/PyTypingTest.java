@@ -6065,15 +6065,35 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-40458
   public void testReturnTypeOfNonAnnotatedAsyncOverrideOfNonAsyncMethod() {
-    doTest("Coroutine[Any, Any, str]", """
-      class Base:
-          def get(self) -> str:
+    doTest("AsyncGenerator[int, Any]", """
+      from typing import AsyncIterator, TypeGuard, Protocol
+      
+      class Base(Protocol):
+          def get(self) -> AsyncIterator[int]:
               ...
       
       class Specific(Base):
           async def get(self):
-              ...
+              yield 42
+      
+      expr = Specific().get()
+      """);
+  }
+
+  // PY-40458
+  public void testReturnTypeOfNonAnnotatedAsyncOverrideOfAsyncGeneratorMethod() {
+    doTest("AsyncIterator[int]", """
+      from typing import AsyncIterator, TypeGuard, Protocol
+      
+      class Base(Protocol):
+          async def get(self) -> AsyncIterator[int]:
+              if False: yield
+      
+      class Specific(Base):
+          async def get(self):
+              yield 42
       
       expr = Specific().get()
       """);
