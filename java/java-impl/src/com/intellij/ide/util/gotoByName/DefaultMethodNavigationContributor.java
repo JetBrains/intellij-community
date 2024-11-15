@@ -16,7 +16,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -61,15 +59,11 @@ final class DefaultMethodNavigationContributor implements ChooseByNameContributo
         return true;
       }, scope, filter);
       if (success) {
-        Iterator<PsiMethod> iterator = collectedMethods.iterator();
-        while (iterator.hasNext()) {
-          PsiMethod method = iterator.next();
-          if (!hasSuperMethod(project, method, scope, qualifiedMatcher, completePattern) &&
-              !processor.process(method)) {
+        for (PsiMethod method : collectedMethods) {
+          ProgressManager.checkCanceled();
+          if (!hasSuperMethod(project, method, scope, qualifiedMatcher, completePattern) && !processor.process(method)) {
             return;
           }
-          ProgressManager.checkCanceled();
-          iterator.remove();
         }
       }
     });
@@ -112,22 +106,7 @@ final class DefaultMethodNavigationContributor implements ChooseByNameContributo
     if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
 
     final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null) return false;
-
-    final int parametersCount = method.getParameterList().getParametersCount();
-    return !InheritanceUtil.processSupers(containingClass, false, superClass -> {
-      if (PsiSearchScopeUtil.isInScope(scope, superClass)) {
-        for (PsiMethod candidate : superClass.findMethodsByName(method.getName(), false)) {
-          if (parametersCount == candidate.getParameterList().getParametersCount() &&
-              !candidate.hasModifierProperty(PsiModifier.PRIVATE) &&
-              !candidate.hasModifierProperty(PsiModifier.STATIC) &&
-              qualifiedMatcher.test(candidate)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    });
+    return containingClass != null;
   }
 
   static Predicate<PsiMember> getQualifiedNameMatcher(String completePattern) {
