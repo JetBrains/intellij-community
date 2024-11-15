@@ -1,8 +1,8 @@
-<idea-plugin package="com.intellij.execution.testframework.sm.vcs">
+<idea-plugin package="com.intellij.execution.vcs">
   <dependencies>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <checkinHandlerFactory implementation="com.intellij.execution.testframework.sm.vcs.RunTestsCheckinHandlerFactory" id="tests"/>
+    <checkinHandlerFactory implementation="com.intellij.execution.vcs.RunConfigurationBeforeCommitHandlerFactory" id="tests"/>
   </extensions>
 </idea-plugin>

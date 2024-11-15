@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.testframework.sm.vcs
+package com.intellij.execution.vcs
 
 import com.intellij.build.BuildView
 import com.intellij.execution.*
@@ -57,11 +57,11 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.resume
 
-private val LOG = logger<RunTestsCheckinHandlerFactory>()
+private val LOG = logger<RunConfigurationBeforeCommitHandlerFactory>()
 
 @Service(Service.Level.PROJECT)
 @State(name = "TestsVcsConfig", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-private class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyState> {
+private class VcsRunConfigurationBeforeCommitConfig : PersistentStateComponent<VcsRunConfigurationBeforeCommitConfig.MyState> {
   class MyState {
     var enabled = false
     var configuration: ConfigurationBean? = null
@@ -75,10 +75,10 @@ private class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfigura
   }
 }
 
-private class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
+private class RunConfigurationBeforeCommitHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     if (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler) {
-      return RunTestsBeforeCheckinHandler(panel.project)
+      return RunConfigurationBeforeCommitHandler(panel.project)
     }
     return CheckinHandler.DUMMY
   }
@@ -147,8 +147,8 @@ private sealed class FailureDescription(val configName: String) {
   }
 }
 
-private class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
-  private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
+private class RunConfigurationBeforeCommitHandler(private val project: Project) : CheckinHandler(), CommitCheck {
+  private val settings: VcsRunConfigurationBeforeCommitConfig get() = project.getService(VcsRunConfigurationBeforeCommitConfig::class.java)
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.POST_COMMIT
 
