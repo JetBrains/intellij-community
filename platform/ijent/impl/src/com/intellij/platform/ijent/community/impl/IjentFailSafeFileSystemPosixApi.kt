@@ -40,8 +40,7 @@ suspend fun IjentFailSafeFileSystemPosixApi(
   delegateFactory: suspend () -> IjentPosixApi,
 ): IjentFileSystemApi {
   val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, delegateFactory)
-  val user = holder.withDelegateRetrying { user }
-  return IjentFailSafeFileSystemPosixApiImpl(user, holder)
+  return IjentFailSafeFileSystemPosixApiImpl(holder)
 }
 
 private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
@@ -98,9 +97,14 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  * so implementing a similar class for Windows will require a full copy-paste of this class.
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
-  override val user: EelUserPosixInfo,
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
 ) : IjentFileSystemPosixApi {
+  // TODO Make user suspendable again?
+  override val user: EelUserPosixInfo by lazy {
+    runBlocking {
+      holder.withDelegateRetrying { user }
+    }
+  }
 
   override suspend fun listDirectory(
     path: EelPath.Absolute,
