@@ -306,14 +306,12 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     @NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action
   ) {
     GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
-    GradleModelHolderState state;
     try {
-      state = action.apply(telemetry);
+      return action.apply(telemetry);
     }
     catch (Throwable exception) {
       telemetry.shutdown();
       throw exception;
     }
-    return state.current();
   }
 }
