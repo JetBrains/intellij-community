@@ -37,40 +37,6 @@ object WebAnimationUtils {
     return createSingleContentHtmlPage(body, background, componentId)
   }
 
-  fun createVideoHtmlPage(videoBase64: String, background: Color): String {
-    val componentId = "video"
-    val scriptText =
-      """
-        document.addEventListener("DOMContentLoaded", function() {
-            let video = document.getElementById("$componentId");
-
-            window.playVideo = function() {
-                video.play();
-            }
-
-            window.pauseVideo = function() {
-                video.pause();
-            }
-        });
-    """.trimIndent()
-
-    val script = HtmlChunk.tag("script").addRaw(scriptText)
-
-    val videoTag = HtmlChunk.tag("video")
-      .attr("id", componentId)
-      .attr("autoplay")
-      .attr("loop")
-      .attr("muted")
-      .child(HtmlChunk.tag("source")
-               .attr("type", "video/webm")
-               .attr("src", "data:video/webm;base64,$videoBase64"))
-    val body = HtmlChunk.body()
-      .child(script)
-      .child(videoTag)
-
-    return createSingleContentHtmlPage(body, background, componentId)
-  }
-
   fun createVideoHtmlPageWithUrl(
     videoUrl: String,
     background: Color,
@@ -78,12 +44,16 @@ object WebAnimationUtils {
     autoplay: Boolean = true,
     loop: Boolean = true,
     injectedVideoEndedListener: String? = null,
+    injectedVideoLoadingErrorListener: String? = null,
   ): String {
     val componentId = "video"
+    val sourceId = "video-source"
+    @Suppress("HardCodedStringLiteral")
     val scriptText =
       """
         document.addEventListener("DOMContentLoaded", function() {
             let video = document.getElementById("$componentId");
+            let source = document.getElementById("$sourceId");
 
             window.playVideo = function() {
                 video.play();
@@ -97,6 +67,7 @@ object WebAnimationUtils {
               video.currentTime = 0;
             }
             ${if (injectedVideoEndedListener != null) """video.addEventListener('ended', function() { $injectedVideoEndedListener });""" else ""}
+            ${if (injectedVideoLoadingErrorListener != null) """source.addEventListener('error', function() { $injectedVideoLoadingErrorListener });""" else ""}
         });
     """.trimIndent()
 
@@ -111,6 +82,7 @@ object WebAnimationUtils {
       .child(HtmlChunk.tag("source")
                .attr("type", "video/webm")
                .attr("src", videoUrl)
+               .attr("id", sourceId)
       )
     val body = HtmlChunk.body()
       .child(script)
