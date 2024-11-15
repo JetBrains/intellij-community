@@ -1,15 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentTunnelsUtil")
 
-package com.intellij.platform.ijent.tunnels
+package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.component1
 import com.intellij.platform.eel.component2
+import com.intellij.platform.eel.withAcceptorForRemotePort
 import com.intellij.platform.eel.withConnectionToRemotePort
-import com.intellij.platform.ijent.coroutineNameAppended
-import com.intellij.platform.ijent.spi.IjentThreadPool
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ClosedSendChannelException
@@ -17,7 +17,6 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import java.net.*
 import java.nio.ByteBuffer
-import java.util.concurrent.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
@@ -47,7 +46,7 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   LOG.info("Accepting a connection within IDE client on port $localPort; Conections go to remote address $address")
   var connectionCounter = 0
   // DO NOT use Dispatchers.IO here. Sockets live long enough to cause starvation of the IO dispatcher.
-  launch(IjentThreadPool.asCoroutineDispatcher() + coroutineNameAppended("Local port forwarding server")) {
+  launch(blockingDispatcher.plus(CoroutineName("Local port forwarding server"))) {
     while (true) {
       try {
         LOG.debug("Accepting a coroutine on server socket")
@@ -77,10 +76,56 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
   }
 }
 
-private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: SendChannel<ByteBuffer>) = launch(coroutineNameAppended("Reader for connection $connectionId")) {
-  val inputStream = socket.getInputStream()
-  val buffer = ByteArray(4096)
+/**
+ * A reverse tunnel to a local server (a.k.a. remote port forwarding).
+ *
+ * This function spawns a server on the remote side, and starts accepting connections to [address].
+ * Each connection to this hostname results in a connection to a server located at "localhost:[localPort]" on the local side.
+ * The data is transferred from the remote connections to local ones and back, thus establishing tunnels.
+ *
+ * The lifetime of port forwarding is bound to the accepting [CoroutineScope]. The receiving [CoroutineScope] cannot complete normally when
+ * it runs port forwarding.
+ *
+ * This function returns when the remote server starts accepting connections.
+ * @return An address which remote server listens to. It is useful to get the actual port if the port of [address] was 0
+ */
+@OptIn(DelicateCoroutinesApi::class)
+fun CoroutineScope.forwardLocalServer(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress): Deferred<EelTunnelsApi.ResolvedSocketAddress> {
+  // todo: do not forward anything if it is local eel
+  val remoteAddress = CompletableDeferred<EelTunnelsApi.ResolvedSocketAddress>()
+  launch(blockingDispatcher.plus(CoroutineName("Local server on port $localPort (tunneling to $address)"))) {
+    tunnels.withAcceptorForRemotePort(address, {
+      LOG.error("Failed to start a server on $address (was forwarding $localPort): $it")
+      remoteAddress.cancel()
+    }) { acceptor ->
+      remoteAddress.complete(acceptor.boundAddress)
+      var connections = 0
+      for ((sendChannel, receiveChannel) in acceptor.incomingConnections) {
+        val currentConnection = connections++
+        launch {
+          Socket().use { socket ->
+            coroutineScope {
+              socket.soTimeout = 2.seconds.toInt(DurationUnit.MILLISECONDS)
+              socket.connect(InetSocketAddress("localhost", localPort))
+              redirectClientConnectionDataToIJent(currentConnection, socket, sendChannel)
+              redirectIJentDataToClientConnection(currentConnection, socket, receiveChannel)
+            }
+            LOG.debug("Stopped forwarding remote connection $currentConnection to local server")
+          }
+        }
+      }
+    }
+  }.invokeOnCompletion {
+    LOG.info("Remote server on $address (was tunneling local server on $address) is terminated")
+  }
+  return remoteAddress
+}
+
+@OptIn(DelicateCoroutinesApi::class)
+private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: SendChannel<ByteBuffer>) = launch(CoroutineName("Reader for connection $connectionId")) {
   try {
+    val inputStream = socket.getInputStream()
+    val buffer = ByteArray(4096)
     while (true) {
       try {
         val bytesRead = runInterruptible {
@@ -96,7 +141,10 @@ private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int
           break
         }
       }
-      catch (e: SocketTimeoutException) {
+      catch (_: SocketTimeoutException) {
+        if (channelToIJent.isClosedForSend) {
+          this@launch.cancel("Channel is closed normally")
+        }
         ensureActive()
       }
     }
@@ -105,15 +153,17 @@ private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int
     LOG.warn("Connection $connectionId closed by IJent; $e")
   }
   catch (e: SocketException) {
-    LOG.warn("Connection $connectionId closed", e)
+    if (!socket.isClosed) {
+      LOG.warn("Connection $connectionId closed", e)
+    }
     channelToIJent.close()
-    throw CancellationException("Closed because of a socket exception: ${e.message}")
+    throw CancellationException("Closed because of a socket exception", e)
   }
 }
 
-private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: ReceiveChannel<ByteBuffer>) = launch(coroutineNameAppended("Writer for connection $connectionId")) {
-  val outputStream = socket.getOutputStream()
+private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: ReceiveChannel<ByteBuffer>) = launch(CoroutineName("Writer for connection $connectionId")) {
   try {
+    val outputStream = socket.getOutputStream()
     for (data in backChannel) {
       LOG.debug("IJent port forwarding: $connectionId; Received ${data.remaining()} bytes from IJent; sending them back to client connection")
       try {
@@ -122,7 +172,7 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
           outputStream.flush()
         }
       }
-      catch (e: SocketTimeoutException) {
+      catch (_: SocketTimeoutException) {
         ensureActive()
       }
     }
@@ -130,6 +180,16 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
   }
   catch (e: EelTunnelsApi.RemoteNetworkException) {
     LOG.warn("Connection $connectionId closed", e)
+  }
+  catch (e: SocketException) {
+    if (!socket.isClosed) {
+      LOG.warn("Socket connection $connectionId closed", e)
+    }
+    else {
+      LOG.debug("Socket connection $connectionId closed because of cancellation", e)
+    }
+    backChannel.cancel()
+    throw CancellationException("Connection closed", e)
   }
 }
 
