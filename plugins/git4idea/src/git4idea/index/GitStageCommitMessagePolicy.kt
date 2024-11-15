@@ -7,7 +7,7 @@ import com.intellij.vcs.commit.AbstractCommitMessagePolicy
 import com.intellij.vcs.commit.CommitMessage
 import com.intellij.vcs.commit.CommitMessageUi
 
-class GitStageCommitMessagePolicy(
+internal class GitStageCommitMessagePolicy(
   project: Project,
   commitMessageUi: CommitMessageUi,
 ) : AbstractCommitMessagePolicy(project, commitMessageUi) {

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
  * @see [CommitMessageProvider]
  * @see [DelayedCommitMessageProvider]
  */
+@ApiStatus.Internal
 abstract class AbstractCommitMessagePolicy(
   protected val project: Project,
   protected val commitMessageUi: CommitMessageUi,
@@ -135,14 +136,14 @@ abstract class AbstractCommitMessagePolicy(
     }
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   interface DelayedMessageProvidersSupport {
     fun saveCurrentCommitMessage()
     fun restoredCommitMessage(): CommitMessage?
   }
 }
 
-abstract class ChangeListCommitMessagePolicy(
+internal abstract class ChangeListCommitMessagePolicy(
   project: Project,
   commitMessageUi: CommitMessageUi,
   initialChangeList: LocalChangeList,
@@ -208,7 +209,6 @@ abstract class ChangeListCommitMessagePolicy(
 
 @ApiStatus.Internal
 open class CommitMessage(val text: String, val disposable: Boolean = false) {
-  @ApiStatus.Internal
   companion object {
     val EMPTY: CommitMessage = CommitMessage("")
   }

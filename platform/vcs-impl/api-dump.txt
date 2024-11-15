@@ -4671,15 +4671,6 @@ f:com.intellij.vcs.changes.VcsChangesLocalSearchScope
 - getVirtualFiles():com.intellij.openapi.vfs.VirtualFile[]
 - getWeight():I
 f:com.intellij.vcs.changes.VcsChangesLocalSearchScope$Companion
-a:com.intellij.vcs.commit.AbstractCommitMessagePolicy
-- <init>(com.intellij.openapi.project.Project):V
-- pf:getChangeListManager():com.intellij.openapi.vcs.changes.ChangeListManager
-- pf:getCommitMessageForList(com.intellij.openapi.vcs.changes.LocalChangeList):java.lang.String
-- pf:getCommitMessageFromProvider(com.intellij.openapi.vcs.changes.LocalChangeList):java.lang.String
-- pf:getCommitMessageFromVcs(java.util.List):java.lang.String
-- pf:getProject():com.intellij.openapi.project.Project
-- pf:getVcsConfiguration():com.intellij.openapi.vcs.VcsConfiguration
-- pf:listenForDelayedProviders(com.intellij.vcs.commit.CommitMessageUi,com.intellij.openapi.Disposable):V
 a:com.intellij.vcs.commit.AbstractCommitWorkflow
 - sf:Companion:com.intellij.vcs.commit.AbstractCommitWorkflow$Companion
 - <init>(com.intellij.openapi.project.Project):V
@@ -4853,10 +4844,8 @@ f:com.intellij.vcs.commit.CommitAuthorComponent
 a:com.intellij.vcs.commit.CommitChangeListDialogWorkflow
 - com.intellij.vcs.commit.AbstractCommitWorkflow
 - commitState:com.intellij.vcs.commit.ChangeListCommitState
-- <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection):V
-- p:addCommonResultHandlers(com.intellij.vcs.commit.CommitSessionInfo,com.intellij.vcs.commit.Committer):V
+- <init>(com.intellij.openapi.project.Project):V
 - f:getCommitState():com.intellij.vcs.commit.ChangeListCommitState
-- f:getInitiallyIncluded():java.util.Collection
 - a:isPartialCommitEnabled():Z
 - f:setCommitState(com.intellij.vcs.commit.ChangeListCommitState):V
 a:com.intellij.vcs.commit.CommitCheckFailure
@@ -5204,7 +5193,7 @@ f:com.intellij.vcs.commit.ShowNotificationCommitResultHandler
 - onSuccess():V
 f:com.intellij.vcs.commit.SingleChangeListCommitWorkflow
 - com.intellij.vcs.commit.CommitChangeListDialogWorkflow
-- <init>(com.intellij.openapi.project.Project,java.util.Set,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,Z,java.lang.String,com.intellij.openapi.vcs.changes.CommitResultHandler):V
+- <init>(com.intellij.openapi.project.Project,java.util.Set,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,Z,com.intellij.openapi.vcs.changes.CommitResultHandler):V
 - f:getInitialChangeList():com.intellij.openapi.vcs.changes.LocalChangeList
 - isDefaultCommitEnabled():Z
 - isPartialCommitEnabled():Z
@@ -5212,11 +5201,12 @@ f:com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler
 - com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 - com.intellij.vcs.commit.CommitWorkflowUiStateListener
 - com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi$ChangeListListener
-- <init>(com.intellij.vcs.commit.CommitChangeListDialogWorkflow,com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi):V
+- <init>(com.intellij.vcs.commit.CommitChangeListDialogWorkflow,com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi,java.lang.String,java.util.Collection):V
 - f:activate():Z
 - beforeCommitChecksEnded(com.intellij.vcs.commit.CommitSessionInfo,com.intellij.vcs.commit.CommitChecksResult):V
 - cancelled():V
 - changeListChanged(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.vcs.changes.LocalChangeList):V
+- f:getInitiallyIncluded():java.util.Collection
 - getUi():com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 - getWorkflow():com.intellij.vcs.commit.CommitChangeListDialogWorkflow
 - isExecutorEnabled(com.intellij.openapi.vcs.changes.CommitExecutor):Z
