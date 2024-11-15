@@ -350,10 +350,6 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     // groovy runtime for serialization
     classpathInferer.add(MissingMethodException::class.java)
 
-    // opentelemetry SDK related classes
-    classpathInferer.add(Span::class.java)
-    classpathInferer.add(PlatformTelemetryRtClass::class.java)
-
     javaParameters.classPath.addAll(classpathInferer.getClasspath())
     javaParameters.vmParametersList.add("-Djava.net.preferIPv4Stack=true")
     javaParameters.mainClass = Main::class.java.name
