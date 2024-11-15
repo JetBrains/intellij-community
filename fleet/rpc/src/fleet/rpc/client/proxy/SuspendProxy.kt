@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.yield
-import java.lang.reflect.Proxy
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -102,7 +101,6 @@ fun SuspendInvocationHandler.outOfScope(
             }) {
               publish(it.map { res ->
                 when (res) {
-                  is Proxy -> res
                   is RemoteObject -> {
                     val remoteObject = remoteApiDescriptor.getSignature(method).returnType as RemoteKind.RemoteObject
                     suspendProxy(remoteObject.descriptor, delegatingHandler(res).outOfScope(callerContext, hotScope, calleeScope))
