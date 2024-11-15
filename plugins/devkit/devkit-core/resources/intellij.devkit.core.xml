@@ -675,6 +675,7 @@
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.inspections.metaInformation.MetaInformationJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.documentation.DescriptorDocumentationYamlSchemaProviderFactory"/>
   </extensions>
 
 
