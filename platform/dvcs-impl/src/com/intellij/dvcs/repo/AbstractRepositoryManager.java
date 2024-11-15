@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.dvcs.MultiRootBranches;
@@ -39,7 +39,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   public @Nullable T getRepositoryForRoot(@Nullable VirtualFile root) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRoot(root));
   }
@@ -72,7 +72,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   public @Nullable T getRepositoryForFile(@Nullable VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
@@ -83,7 +83,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   public @Nullable T getRepositoryForFile(@Nullable FilePath file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, false));
   }
