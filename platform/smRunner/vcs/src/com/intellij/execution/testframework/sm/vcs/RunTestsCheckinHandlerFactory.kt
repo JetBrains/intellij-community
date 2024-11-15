@@ -176,7 +176,6 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
     val environmentBuilder = ExecutionUtil.createEnvironment(executor, configurationSettings) ?: return
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
-    environment.setHeadless()
     val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
@@ -203,8 +202,6 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
                                       configurationSettings.name))
       awaitSavingHistory(fileName)
     }
-
-    disposeConsole(formDescriptor.executionConsole)
   }
 
   private fun onProcessStarted(reporter: RawProgressReporter?,
@@ -232,7 +229,6 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
       continuation.invokeOnCancellation {
         handler.removeProcessListener(processListener)
         handler.destroyProcess()
-        executionConsole?.let { disposeConsole(it) }
       }
     }
     else {
@@ -363,11 +359,5 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
   @NlsContexts.DialogTitle
   private fun getOptionTitle(name: String): String {
     return SmRunnerBundle.message("checkbox.run.tests.before.commit", name)
-  }
-
-  private fun disposeConsole(executionConsole: ExecutionConsole) {
-    UIUtil.invokeLaterIfNeeded {
-      Disposer.dispose(executionConsole)
-    }
   }
 }
