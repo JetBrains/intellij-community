@@ -2280,6 +2280,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/functionReferenceOfCompanionObject.kt");
             }
 
+            @TestMetadata("functionalParameterWithReceiverPassedAsParameter.kt")
+            public void testFunctionalParameterWithReceiverPassedAsParameter() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/functionalParameterWithReceiverPassedAsParameter.kt");
+            }
+
             @TestMetadata("getOperator.kt")
             public void testGetOperator() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/getOperator.kt");

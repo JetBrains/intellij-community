@@ -2280,6 +2280,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/functionReferenceOfCompanionObject.kt");
             }
 
+            @TestMetadata("functionalParameterWithReceiverPassedAsParameter.kt")
+            public void testFunctionalParameterWithReceiverPassedAsParameter() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/functionalParameterWithReceiverPassedAsParameter.kt");
+            }
+
             @TestMetadata("getOperator.kt")
             public void testGetOperator() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/getOperator.kt");

@@ -220,6 +220,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 target.nameAsSafeName
             }
             expression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, getParameterName())
+            if (!target.hasValOrVar() && parent !is KtCallElement) {
+                return@forEachDescendantOfType
+            }
         } else if (target is KtTypeParameter) {
             expression.putCopyableUserData(CodeToInline.TYPE_PARAMETER_USAGE_KEY, target.nameAsName)
         } else if (resolve == (originalDeclaration as? KtNamedFunction)?.receiverTypeReference && isAnonymousFunctionWithReceiver && expression.getReceiverExpression() == null) {
