@@ -341,4 +341,18 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                            pass
                    """);
   }
+
+  // PY-77168
+  public void testReferenceFromUnderUnmatchedVersionCheck() {
+    doTestByText("""
+                   import sys
+                   from typing import overload
+                   
+                   Alias = int
+                   if sys.version_info < (3, 12):
+                       @overload
+                       def f() -> Alias:
+                           ...
+                   """);
+  }
 }

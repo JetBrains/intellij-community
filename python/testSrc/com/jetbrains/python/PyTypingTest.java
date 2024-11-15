@@ -5959,6 +5959,28 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-77168
+  public void testReferencingImportedTypeFromUnmatchedVersionGuard() {
+    doTest("Literal[42]", """
+      from typing import Literal
+      import sys
+      
+      if sys.version_info < (3, 0):
+          expr: Literal[42]
+      """);
+  }
+
+  // PY-77168
+  public void testReferencingTopLevelTypeFromUnmatchedVersionGuard() {
+    doTest("int", """
+      import sys
+      
+      type Alias = int
+      if sys.version_info < (3, 0):
+          expr: Alias
+      """);
+  }
+  
   // PY-76243
   public void testGenericClassDeclaredInStubPackage() {
     runWithAdditionalClassEntryInSdkRoots("types/" + getTestName(false) + "/site-packages", () -> {
