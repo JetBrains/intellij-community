@@ -39,14 +39,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ApiStatus.Internal
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
   private static final Key<Boolean> CODE_SMELL_DETECTOR_KEY = new Key<Boolean>("CODE_SMELL_DETECTOR_KEY");
+
+  /**
+   * Highlighting entries are also generated for tests failures (e.g., for JUnit line with failed 'assert...' can be highlighted).
+   * However, it makes no sense to prevent commit for these kinds of warnings.
+   */
+  private static final @NotNull Set<@NotNull String> INSPECTIONS_TO_IGNORE = Set.of(
+    "TestFailedLine",
+    "PestTestFailedLineInspection",
+    "JSTestFailedLine",
+    "PhpUnitTestFailedLineInspection"
+  );
 
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance(CodeSmellDetectorImpl.class);
@@ -143,6 +151,8 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
       Document document = e.getKey();
       List<HighlightInfo> infos = e.getValue();
       for (HighlightInfo info : infos) {
+        String inspectionToolId = info.getInspectionToolId();
+        if (inspectionToolId != null && INSPECTIONS_TO_IGNORE.contains(inspectionToolId)) continue;
         final HighlightSeverity severity = info.getSeverity();
         if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
             result.add(new CodeSmellInfo(document, getDescription(info),
