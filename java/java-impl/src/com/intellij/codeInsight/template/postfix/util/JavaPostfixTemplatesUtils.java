@@ -176,6 +176,11 @@ public final class JavaPostfixTemplatesUtils {
   }
 
   @Contract("null -> false")
+  public static boolean isArrayReference(@Nullable PsiType type) {
+    return type instanceof PsiArrayType arrayType && !(arrayType.getComponentType() instanceof PsiPrimitiveType);
+  }
+
+  @Contract("null -> false")
   public static boolean isBoolean(@Nullable PsiType type) {
     return type != null && (PsiTypes.booleanType().equals(type) || type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN));
   }

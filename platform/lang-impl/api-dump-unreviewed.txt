@@ -5614,6 +5614,7 @@ c:com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElem
 - com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement
 - <init>(com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate,com.intellij.codeInsight.template.postfix.templates.PostfixTemplate,java.lang.String,com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider,Z):V
 - expandTemplate(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- getAllLookupStrings():java.util.Set
 - getPostfixTemplate():com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 - getProvider():com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 - renderElement(com.intellij.codeInsight.lookup.LookupElementPresentation):V

@@ -54,7 +54,6 @@ import java.awt.*
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.EmptyBorder
-import kotlin.concurrent.Volatile
 import kotlin.math.max
 
 class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : ListCellRenderer<LookupElement> {
@@ -765,7 +764,10 @@ private fun renderItemNameDecoration(
         TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, color).applyTo(newAttributes)
         iterator.textAttributes = SimpleTextAttributes.fromTextAttributes(newAttributes)
       }
-
+      if (decoration == LookupItemDecoration.GRAY) {
+        newAttributes.foregroundColor = UIUtil.getContextHelpForeground()
+        iterator.textAttributes = SimpleTextAttributes.fromTextAttributes(newAttributes)
+      }
       // must be the last
       if (decoration == LookupItemDecoration.HIGHLIGHT_MATCHED) {
         iterator.textAttributes = SimpleTextAttributes(iterator.textAttributes.style, MATCHED_FOREGROUND_COLOR)
