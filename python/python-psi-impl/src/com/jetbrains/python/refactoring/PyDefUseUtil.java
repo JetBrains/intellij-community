@@ -51,15 +51,23 @@ public final class PyDefUseUtil {
   private static final int MAX_CONTROL_FLOW_SIZE = 200;
 
   @NotNull
-  public static List<Instruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports, @NotNull TypeEvalContext context) {
+  public static List<Instruction> getLatestDefs(@NotNull ScopeOwner block,
+                                                @NotNull String varName,
+                                                PsiElement anchor,
+                                                boolean acceptTypeAssertions,
+                                                boolean acceptImplicitImports,
+                                                @NotNull TypeEvalContext context) {
     return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports, context);
   }
 
 
   @NotNull
-  public static List<Instruction> getLatestDefs(ControlFlow controlFlow, String varName, PsiElement anchor, boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports, @NotNull TypeEvalContext context) {
+  public static List<Instruction> getLatestDefs(@NotNull ControlFlow controlFlow,
+                                                @NotNull String varName,
+                                                PsiElement anchor,
+                                                boolean acceptTypeAssertions,
+                                                boolean acceptImplicitImports,
+                                                @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
     final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(anchor);
     if (augAssignment != null) {
@@ -79,9 +87,12 @@ public final class PyDefUseUtil {
     return new ArrayList<>(result);
   }
 
-  private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int startNum,
-                                                       final boolean acceptTypeAssertions, final boolean acceptImplicitImports,
-                                                       @NotNull final TypeEvalContext context) {
+  private static @NotNull Collection<Instruction> getLatestDefs(final @NotNull String varName,
+                                                                final Instruction @NotNull [] instructions,
+                                                                final int startNum,
+                                                                final boolean acceptTypeAssertions,
+                                                                final boolean acceptImplicitImports,
+                                                                @NotNull final TypeEvalContext context) {
     final Collection<Instruction> result = new LinkedHashSet<>();
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
@@ -162,7 +173,7 @@ public final class PyDefUseUtil {
     return element instanceof PyElement ? ((PyElement)element).getName() : null;
   }
 
-  public static PsiElement @NotNull [] getPostRefs(ScopeOwner block, PyTargetExpression var, PyExpression anchor) {
+  public static PsiElement @NotNull [] getPostRefs(@NotNull ScopeOwner block, @NotNull PyTargetExpression var, PyExpression anchor) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
@@ -177,11 +188,11 @@ public final class PyDefUseUtil {
     return result.toArray(PyElement.EMPTY_ARRAY);
   }
 
-  private static void getPostRefs(PyTargetExpression var,
+  private static void getPostRefs(@NotNull PyTargetExpression var,
                                   Instruction[] instructions,
                                   int instr,
-                                  boolean[] visited,
-                                  Collection<PyElement> result) {
+                                  boolean @NotNull [] visited,
+                                  @NotNull Collection<PyElement> result) {
     // TODO: Use ControlFlowUtil.process() for forwards CFG traversal
     if (visited[instr]) return;
     visited[instr] = true;
