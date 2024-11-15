@@ -28,6 +28,7 @@ try {
       } catch [System.Management.Automation.ItemNotFoundException] {
       } catch [System.Management.Automation.DriveNotFoundException] {
       } catch [System.Management.Automation.WildcardPatternException] {
+      } catch [System.UnauthorizedAccessException] {
       }
     }
     return $result
