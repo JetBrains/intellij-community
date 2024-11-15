@@ -585,6 +585,26 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testLambdaUsesInlineClass() {
+        val text = """
+            @JvmInline
+            value class InlineClass(val i: Int)
+            
+            fun useInlineClass(ic: InlineClass) {
+                with(ic) {
+                    <caret>if (i > 3/*FALSE*/) /*unreachable_start*/println("hello")/*unreachable_end*/
+                }
+            }
+            
+            fun main() {
+                useInlineClass(InlineClass(1))
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$useInlineClass_yCnC9sY_u24lambda_u240", MockIntegerValue(vm, 1))
+        }
+    }
+
     fun testJavaStaticField() {
         val text = """
             import java.io.File

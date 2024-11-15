@@ -128,7 +128,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
                 val scopePart = scopeName?.let(Regex::escape) ?: ".+"
                 val inlinedPart = if (inlined) Regex.escape(KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX) else ""
-                val regex = Regex("\\\$this\\\$${scopePart}_u\\d+lambda_u\\d+$inlinedPart")
+                val regex = Regex("\\\$this\\\$${scopePart}(_\\w+)?_u\\d+lambda_u\\d+$inlinedPart")
                 val lambdaThis = proxy.stackFrame.visibleVariables().filter { it.name().matches(regex) }
                 if (lambdaThis.size == 1) {
                     return postprocess(proxy.stackFrame.getValue(lambdaThis.first()))
