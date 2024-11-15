@@ -22,7 +22,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test project level extension property`(gradleVersion: GradleVersion) {
-    test(gradleVersion, FIXTURE_BUILDER) {
+    test(gradleVersion, SIMPLE_FIXTURE_BUILDER) {
       testBuildscript("<caret>ext") {
         val ref = elementUnderCaret(GrReferenceExpression::class.java)
         assertInstanceOf<GroovyProperty>(ref.resolve())
@@ -34,7 +34,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test project level extension call type`(gradleVersion: GradleVersion) {
-    test(gradleVersion, FIXTURE_BUILDER) {
+    test(gradleVersion, SIMPLE_FIXTURE_BUILDER) {
       testBuildscript("<caret>ext {}") {
         val call = elementUnderCaret(GrMethodCallExpression::class.java)
         assertInstanceOf<GrMethod>(call.resolveMethod())
@@ -46,7 +46,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test project level extension closure delegate type`(gradleVersion: GradleVersion) {
-    test(gradleVersion, FIXTURE_BUILDER) {
+    test(gradleVersion, SIMPLE_FIXTURE_BUILDER) {
       testBuildscript("ext { <caret> }") {
         closureDelegateTest(getExtraPropertiesExtensionFqn(), 1)
       }
@@ -60,7 +60,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
       "project.ext.<caret>prop"
   """)
   fun `test property reference`(gradleVersion: GradleVersion, expression: String) {
-    test(gradleVersion, FIXTURE_BUILDER) {
+    test(gradleVersion, SIMPLE_FIXTURE_BUILDER) {
       testBuildscript(expression) {
         referenceExpressionTest(GradleGroovyProperty::class.java, JAVA_LANG_INTEGER)
       }
@@ -69,7 +69,7 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleExtensionsTest") { gradleVersion ->
+    private val SIMPLE_FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleExtensionsTest") { gradleVersion ->
       withSettingsFile {
         setProjectName("GradleExtensionsTest")
       }
@@ -79,6 +79,17 @@ class GradleExtensionsTest : GradleCodeInsightTestCase() {
             assign("prop", 1)
           }
         }
+      }
+    }
+
+    private val COMPLEX_EXTENSIONS_FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleComplexExtensionsTest") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleComplexExtensionsTest")
+      }
+      withBuildFile(gradleVersion) {
+        code("""
+          
+        """.trimIndent())
       }
     }
   }
