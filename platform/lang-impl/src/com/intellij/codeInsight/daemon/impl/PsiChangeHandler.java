@@ -55,6 +55,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent event) {
+        if (myProject.isDisposed()) return;
         Document document = event.getDocument();
         PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
         if (documentManager.getSynchronizer().isInSynchronization(document)) {
