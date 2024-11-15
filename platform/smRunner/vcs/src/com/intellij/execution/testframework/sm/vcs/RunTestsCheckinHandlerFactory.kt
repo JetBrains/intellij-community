@@ -7,22 +7,21 @@ import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.EditConfigurationsDialog
+import com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate
 import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
-import com.intellij.execution.testframework.TestRunnerBundle
+import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
-import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
-import com.intellij.execution.testframework.sm.vcs.RunTestsBeforeCheckinHandler.Companion.showFailedTests
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
@@ -40,6 +39,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.*
@@ -50,10 +50,11 @@ import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.util.progress.withProgressText
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import kotlin.coroutines.resume
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
@@ -83,48 +84,67 @@ private class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   }
 }
 
-private class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblemWithDetails {
+private class RunConfigurationMultipleProblems(val problems: List<FailureDescription>) : CommitProblem {
+  override val text: @NlsSafe String
+    get() = problems.sortedBy {
+      when (it) {
+        is FailureDescription.TestsFailed -> 0
+        is FailureDescription.ProcessNonZeroExitCode -> 1
+        is FailureDescription.FailedToStart -> 2
+      }
+    }.joinToString("\n") { it.message }
+}
+
+private class RunConfigurationProblemWithDetails(val problem: FailureDescription) : CommitProblemWithDetails {
   override val text: String
-    get() {
-      var str = ""
-      val failed = problems.sumOf { it.failed }
-      if (failed > 0) {
-        str = TestRunnerBundle.message("tests.result.failure.summary", failed)
-      }
-
-      val ignored = problems.sumOf { it.ignored }
-      if (ignored > 0) {
-        str += (if (failed > 0) ", " else "")
-        str += TestRunnerBundle.message("tests.result.ignore.summary", ignored)
-      }
-
-      val failedToStartMessages = problems
-        .filter { it.failed == 0 && it.ignored == 0 }
-        .mapNotNull { it.configName }
-        .joinToString { TestRunnerBundle.message("failed.to.start.message", it) }
-      if (failedToStartMessages.isNotEmpty()) {
-        str += (if (ignored + failed > 0) ", " else "")
-        str += failedToStartMessages
-      }
-      return str
-    }
+    get() = problem.message
 
   override fun showDetails(project: Project) {
-    showFailedTests(project, this)
+    when (problem) {
+      is FailureDescription.FailedToStart -> {
+        if (problem.configuration != null)
+          RunDialog.editConfiguration(project,
+                                      problem.configuration,
+                                      ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", problem.configuration.name))
+        else EditConfigurationsDialog(project).show()
+      }
+      is FailureDescription.ProcessNonZeroExitCode -> {
+        RunDialog.editConfiguration(project, problem.configuration,
+                                    ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", problem.configuration.name))
+      }
+      is FailureDescription.TestsFailed -> {
+        val (path, virtualFile) = getHistoryFile(project, problem.historyFileName)
+        if (virtualFile != null) {
+          AbstractImportTestsAction.doImport(project, virtualFile, ExecutionEnvironment.getNextUnusedExecutionId())
+        }
+        else {
+          LOG.error("File not found: $path")
+        }
+      }
+    }
   }
 
   override val showDetailsAction: String
-    get() = ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
+    get() =
+      if (problem is FailureDescription.TestsFailed) ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
+      else VcsBundle.message("before.commit.run.configuration.failed.edit.configuration")
 }
 
-private data class FailureDescription(val historyFileName: String,
-                              val failed: Int,
-                              val ignored: Int,
-                              val configuration: RunnerAndConfigurationSettings?,
-                              val configName: String?)
+private sealed class FailureDescription(val configName: String) {
+  abstract val message: @Nls String
 
-private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? {
-  return if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
+  class FailedToStart(configName: String, val configuration: RunnerAndConfigurationSettings?) : FailureDescription(configName) {
+    override val message
+      get() = VcsBundle.message("before.commit.run.configuration.failed.to.start", configName)
+  }
+  class TestsFailed(configName: String, val historyFileName: String, val testsResultText: String) : FailureDescription(configName) {
+    override val message
+      get() = VcsBundle.message("before.commit.run.configuration.tests.failed", configName, testsResultText)
+  }
+  class ProcessNonZeroExitCode(configName: String, val configuration: RunnerAndConfigurationSettings, val exitCode: Int) : FailureDescription(configName) {
+    override val message
+      get() = VcsBundle.message("before.commit.run.configuration.failed", configName, exitCode)
+  }
 }
 
 private class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
@@ -134,12 +154,12 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
 
   override fun isEnabled(): Boolean = settings.myState.enabled
 
-  override suspend fun runCheck(commitInfo: CommitInfo): FailedTestCommitProblem? {
+  override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val configurationBean = settings.myState.configuration ?: return null
     val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId,
                                                                                                configurationBean.name)
     if (configurationSettings == null) {
-      return createCommitProblem(listOf(FailureDescription("", 0, 0, configuration = null, configurationBean.name)))
+      return createCommitProblem(listOf(FailureDescription.FailedToStart(configurationBean.name, configurationSettings)))
     }
 
     val problems = ArrayList<FailureDescription>()
@@ -159,16 +179,15 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
         else {
           startConfiguration(executor, configurationSettings, problems)
         }
-
       }
     }
 
     return createCommitProblem(problems)
   }
 
-  private data class TestResultsFormDescriptor(val executionConsole: ExecutionConsole,
-                                               val rootNode: SMTestProxy.SMRootTestProxy,
-                                               val historyFileName: String)
+  private class RunConfigurationResult(val exitCode: Int, val testResultsFormDescriptor: TestResultsFormDescriptor?)
+
+  private data class TestResultsFormDescriptor(val rootNode: SMTestProxy.SMRootTestProxy, val historyFileName: String)
 
   private suspend fun startConfiguration(executor: Executor,
                                          configurationSettings: RunnerAndConfigurationSettings,
@@ -176,55 +195,76 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
     val environmentBuilder = ExecutionUtil.createEnvironment(executor, configurationSettings) ?: return
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
-    val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
-      val messageBus = project.messageBus
-      messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
-        override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
-          if (environment.executionId == env.executionId) {
-            Disposer.dispose(environment)
-            problems.add(FailureDescription("", 0, 0, configurationSettings, configurationSettings.name))
+
+    // Otherwise sh run configuration can be executed in the terminal resulting into processNotStarted
+    RunConfigurationBeforeRunProviderDelegate.EP_NAME.extensionList.forEach { delegate ->
+      delegate.beforeRun(environment)
+    }
+
+    val runConfigurationResult = suspendCancellableCoroutine<RunConfigurationResult?> { continuation ->
+      ProgramRunnerUtil.executeConfigurationAsync(environment, false, true, object : ProgramRunner.Callback {
+        override fun processStarted(descriptor: RunContentDescriptor?) {
+          if (descriptor == null) {
+            LOG.warn("Run descriptor is null for run configuration: ${configurationSettings.name}")
             continuation.resume(null)
+          } else {
+            onProcessStarted(reporter, descriptor, continuation)
           }
         }
-      })
-      ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) {
-        if (it != null) {
-          onProcessStarted(reporter, it, continuation)
+
+        override fun processNotStarted(error: Throwable?) {
+          Disposer.dispose(environment)
+          problems.add(FailureDescription.FailedToStart(configurationSettings.name, configurationSettings))
+          continuation.resume(null)
         }
-      }
+      })
     } ?: return
 
-    val rootNode = formDescriptor.rootNode
-    if (rootNode.isDefect || rootNode.children.isEmpty()) {
-      val fileName = formDescriptor.historyFileName
+    problems.addIfNotNull(getExecutionProblem(runConfigurationResult, configurationSettings))
+  }
+
+  private suspend fun getExecutionProblem(
+    runConfigurationResult: RunConfigurationResult,
+    configurationSettings: RunnerAndConfigurationSettings,
+  ): FailureDescription? {
+    if (runConfigurationResult.exitCode == 0) return null
+
+    val rootNode = runConfigurationResult.testResultsFormDescriptor?.rootNode
+    return if (rootNode != null && (rootNode.isDefect || rootNode.children.isEmpty())) {
+      val fileName = runConfigurationResult.testResultsFormDescriptor.historyFileName
       val presentation = TestResultPresentation(rootNode).presentation
-      problems.add(FailureDescription(fileName, presentation.failedCount, presentation.ignoredCount, configurationSettings,
-                                      configurationSettings.name))
       awaitSavingHistory(fileName)
+      FailureDescription.TestsFailed(configName = configurationSettings.name, historyFileName = fileName, testsResultText = presentation.text)
+    }
+    else {
+      FailureDescription.ProcessNonZeroExitCode(configurationSettings.name, configurationSettings, runConfigurationResult.exitCode)
     }
   }
 
-  private fun onProcessStarted(reporter: RawProgressReporter?,
-                               descriptor: RunContentDescriptor,
-                               continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
+  private fun onProcessStarted(
+    reporter: RawProgressReporter,
+    descriptor: RunContentDescriptor,
+    continuation: CancellableContinuation<RunConfigurationResult?>,
+  ) {
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
-      val resultsForm = executionConsole?.resultsForm
-      val formDescriptor = when {
-        resultsForm != null -> TestResultsFormDescriptor(executionConsole, resultsForm.testsRootNode, resultsForm.historyFileName)
-        else -> null
-      }
+      val testResultForm = executionConsole?.component as? SMTestRunnerResultsForm
       val processListener = object : ProcessAdapter() {
-        override fun processTerminated(event: ProcessEvent) = continuation.resume(formDescriptor)
+        override fun processTerminated(event: ProcessEvent) {
+          val result = RunConfigurationResult(
+            event.exitCode,
+            testResultForm?.let { TestResultsFormDescriptor(it.testsRootNode, it.historyFileName) }
+          )
+          continuation.resume(result)
+        }
       }
 
       handler.addProcessListener(processListener)
-      if (reporter != null) {
-        resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
-          override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = reporter.details(test.getFullName())
-        })
-      }
+
+      testResultForm?.addEventsListener(object : TestResultsViewer.EventsListener {
+        override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = reporter.details(test.getFullName())
+      })
 
       continuation.invokeOnCancellation {
         handler.removeProcessListener(processListener)
@@ -236,7 +276,13 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
     }
   }
 
-  private val ExecutionConsole.resultsForm: SMTestRunnerResultsForm? get() = component as? SMTestRunnerResultsForm
+  private fun createCommitProblem(descriptions: List<FailureDescription>): CommitProblem? {
+    return when {
+      descriptions.isEmpty() -> null
+      descriptions.size == 1 -> RunConfigurationProblemWithDetails(descriptions.single())
+      else -> RunConfigurationMultipleProblems(descriptions)
+    }
+  }
 
   private val RunContentDescriptor.console: ExecutionConsole?
     get() = executionConsole?.let { if (it is BuildView) it.consoleView else it }
@@ -254,43 +300,11 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
     }
   }
 
-  companion object {
-    internal fun showFailedTests(project: Project, problem: FailedTestCommitProblem) {
-      val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
-      for (p in problem.problems) {
-        if (p.historyFileName.isEmpty() && p.failed == 0 && p.ignored == 0) {
-          if (p.configuration != null) {
-            RunDialog.editConfiguration(project, p.configuration,
-                                        ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", p.configuration.name))
-            continue
-          }
-          if (p.configName != null) {
-            EditConfigurationsDialog(project).show()
-            continue
-          }
-        }
-        val (path, virtualFile) = getHistoryFile(project, p.historyFileName)
-        if (virtualFile != null) {
-          AbstractImportTestsAction.doImport(project, virtualFile, groupId)
-        }
-        else {
-          LOG.error("File not found: $path")
-        }
-      }
-    }
-
-    private fun getHistoryFile(project: Project, fileName: String): Pair<String, VirtualFile?> {
-      val path = "${TestStateStorage.getTestHistoryRoot(project).path}/$fileName.xml"
-      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-      return Pair(path, virtualFile)
-    }
-  }
-
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
     val configurationBean = settings.myState.configuration
     val initialText = when {
       configurationBean != null -> getOptionTitle(configurationBean.name)
-      else -> SmRunnerBundle.message("checkbox.run.tests.before.commit.no.configuration")
+      else -> VcsBundle.message("before.commit.run.configuration.no.configuration.selected.checkbox")
     }
 
     return BooleanCommitOption.createLink(project, this, disableWhenDumb = true, initialText, settings.myState::enabled,
@@ -305,21 +319,12 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
   }
 
   private fun createConfigurationChooser(linkContext: BooleanCommitOption.LinkContext): ActionGroup {
-    fun testConfiguration(it: RunConfiguration): Boolean {
-      return it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
-    }
-
     val result = DefaultActionGroup()
     val runManager = RunManagerImpl.getInstanceImpl(project)
     for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
       var addedSeparator = false
       for ((folder, list) in folderMap.entries) {
         val localConfigurations: List<RunConfiguration> = list.map { it.configuration }
-          .filter {
-            testConfiguration(it) ||
-            it is CompoundRunConfiguration && it.getConfigurationsWithTargets(runManager).keys.all { one -> testConfiguration(one) }
-          }
-
         if (localConfigurations.isEmpty()) continue
 
         if (!addedSeparator && result.childrenCount > 0) {
@@ -360,4 +365,10 @@ private class RunTestsBeforeCheckinHandler(private val project: Project) : Check
   private fun getOptionTitle(name: String): String {
     return SmRunnerBundle.message("checkbox.run.tests.before.commit", name)
   }
+}
+
+private fun getHistoryFile(project: Project, fileName: String): Pair<String, VirtualFile?> {
+  val path = "${TestStateStorage.getTestHistoryRoot(project).path}/$fileName.xml"
+  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
+  return Pair(path, virtualFile)
 }
