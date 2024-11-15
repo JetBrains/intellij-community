@@ -346,9 +346,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent())
         val nestedClass = myFixture.elementAtCaret as KtNamedDeclaration
         val moveModel = K2MoveModel.create(arrayOf(nestedClass), null)
-        assertInstanceOf<K2MoveModel.NestedClass>(moveModel)
+        assertInstanceOf<K2MoveModel.NestedDeclarations>(moveModel)
         assertTrue(moveModel!!.isValidRefactoring())
-        val moveDeclarationsModel = moveModel as K2MoveModel.NestedClass
+        val moveDeclarationsModel = moveModel as K2MoveModel.NestedDeclarations
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Bar")
@@ -368,9 +368,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         """.trimIndent())
         val nestedClass = myFixture.elementAtCaret as KtNamedDeclaration
         val moveModel = K2MoveModel.create(arrayOf(nestedClass), null)
-        assertInstanceOf<K2MoveModel.NestedClass>(moveModel)
+        assertInstanceOf<K2MoveModel.NestedDeclarations>(moveModel)
         assertTrue(moveModel!!.isValidRefactoring())
-        val moveDeclarationsModel = moveModel as K2MoveModel.NestedClass
+        val moveDeclarationsModel = moveModel as K2MoveModel.NestedDeclarations
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Bar")

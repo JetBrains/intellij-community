@@ -10,9 +10,9 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveNestedDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -60,16 +60,15 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         }
     }
 
-    class Declarations(
+    sealed class DeclarationsMoveDescriptor(
         project: Project,
         moveDescriptors: List<K2MoveDescriptor.Declarations>,
         searchForText: Boolean,
         searchInComments: Boolean,
         searchReferences: Boolean,
         dirStructureMatchesPkg: Boolean,
-        internal val moveDeclarationsDelegate: K2MoveDeclarationDelegate,
         moveCallBack: MoveCallback? = null
-    ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
+    )  : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
         project,
         moveDescriptors,
         searchForText,
@@ -79,9 +78,51 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         moveCallBack
     ) {
         override val sourceElements: List<KtNamedDeclaration> get() = moveDescriptors.flatMap { it.source.elements }
+    }
 
+    class Declarations(
+        project: Project,
+        moveDescriptors: List<K2MoveDescriptor.Declarations>,
+        searchForText: Boolean,
+        searchInComments: Boolean,
+        searchReferences: Boolean,
+        dirStructureMatchesPkg: Boolean,
+        moveCallBack: MoveCallback? = null
+    ) : DeclarationsMoveDescriptor(
+        project,
+        moveDescriptors,
+        searchForText,
+        searchInComments,
+        searchReferences,
+        dirStructureMatchesPkg,
+        moveCallBack
+    ) {
         override fun refactoringProcessor(): BaseRefactoringProcessor {
             return K2MoveDeclarationsRefactoringProcessor(this)
+        }
+    }
+
+    class NestedDeclarations(
+        project: Project,
+        moveDescriptors: List<K2MoveDescriptor.Declarations>,
+        searchForText: Boolean,
+        searchInComments: Boolean,
+        searchReferences: Boolean,
+        dirStructureMatchesPkg: Boolean,
+        val newClassName: String? = null,
+        val outerInstanceParameterName: String? = null,
+        moveCallBack: MoveCallback? = null
+    ) : DeclarationsMoveDescriptor(
+        project,
+        moveDescriptors,
+        searchForText,
+        searchInComments,
+        searchReferences,
+        dirStructureMatchesPkg,
+        moveCallBack
+    ) {
+        override fun refactoringProcessor(): BaseRefactoringProcessor {
+            return K2MoveNestedDeclarationsRefactoringProcessor(this)
         }
     }
 
@@ -98,7 +139,6 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
             searchInComments: Boolean,
             mppDeclarations: Boolean,
             dirStructureMatchesPkg: Boolean,
-            delegate: K2MoveDeclarationDelegate = K2MoveDeclarationDelegate.TopLevel,
             moveCallBack: MoveCallback? = null
         ): Declarations {
             if (mppDeclarations && declarations.any { it.isExpectDeclaration() || it.hasActualModifier() }) {
@@ -119,7 +159,6 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
                     searchInComments = searchReferences,
                     searchReferences = searchInComments,
                     dirStructureMatchesPkg = dirStructureMatchesPkg,
-                    moveDeclarationsDelegate = delegate,
                     moveCallBack = moveCallBack
                 )
             } else {
@@ -133,7 +172,6 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
                     searchInComments = searchInComments,
                     searchReferences = searchReferences,
                     dirStructureMatchesPkg = dirStructureMatchesPkg,
-                    moveDeclarationsDelegate = delegate,
                     moveCallBack = moveCallBack
                 )
             }

@@ -23,15 +23,17 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationDelegate
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
- * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+ * @see K2MoveDescriptor
  */
 sealed class K2MoveModel {
     abstract val project: Project
@@ -133,7 +135,7 @@ sealed class K2MoveModel {
     }
 
     /**
-     * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Files
+     * @see K2MoveDescriptor.Files
      */
     class Files(
         override val project: Project,
@@ -178,8 +180,19 @@ sealed class K2MoveModel {
         }
     }
 
+    internal fun isValidDeclarationsRefactoring(source: K2MoveSourceModel.ElementSource, target: K2MoveTargetModel.File): Boolean {
+        fun KtFile.isTargetFile(): Boolean {
+            return containingDirectory == target.directory
+                    && packageFqName == target.pkgName
+                    && name == target.fileName
+        }
+        if (!target.fileName.isValidKotlinFile()) return false
+        val files = source.elements.map { it.containingFile }
+        return files.size != 1 || !(files.single() as KtFile).isTargetFile()
+    }
+
     /**
-     * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Declarations
+     * @see K2MoveDescriptor.Declarations
      */
     open class Declarations(
         override val project: Project,
@@ -188,48 +201,42 @@ sealed class K2MoveModel {
         override val inSourceRoot: Boolean,
         override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
-        private fun KtFile.isTargetFile(): Boolean {
-            return containingDirectory == target.directory
-                    && packageFqName == target.pkgName
-                    && name == target.fileName
-        }
 
         override fun isValidRefactoring(): Boolean {
-            if (!super.isValidRefactoring()) return false
-            if (!target.fileName.isValidKotlinFile()) return false
-            val files = source.elements.map { it.containingFile }
-            return files.size != 1 || !(files.single() as KtFile).isTargetFile()
+            return super.isValidRefactoring() && isValidDeclarationsRefactoring(source, target)
         }
-
-        open fun getMoveDeclarationDelegate(): K2MoveDeclarationDelegate = K2MoveDeclarationDelegate.TopLevel
 
         override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
             return K2MoveOperationDescriptor.Declarations(
-                project,
-                source.elements,
-                target.directory,
-                target.fileName,
-                target.pkgName,
-                searchForText.state,
-                if (inSourceRoot) searchReferences.state else false,
-                searchInComments.state,
-                true,
-                mppDeclarations.state,
-                getMoveDeclarationDelegate(),
-                moveCallBack
+                project = project,
+                declarations = source.elements,
+                baseDir = target.directory,
+                fileName = target.fileName,
+                pkgName = target.pkgName,
+                searchForText = searchForText.state,
+                searchReferences = if (inSourceRoot) searchReferences.state else false,
+                searchInComments = searchInComments.state,
+                mppDeclarations = mppDeclarations.state,
+                dirStructureMatchesPkg = true,
+                moveCallBack = moveCallBack
             )
         }
     }
 
-    class NestedClass(
-        project: Project,
-        source: K2MoveSourceModel.ElementSource,
-        target: K2MoveTargetModel.File,
-        inSourceRoot: Boolean,
+    class NestedDeclarations(
+        override val project: Project,
+        override val source: K2MoveSourceModel.ElementSource,
+        override val target: K2MoveTargetModel.File,
+        override val inSourceRoot: Boolean,
         outerClassName: String?,
         internal val isInnerClass: Boolean,
-        moveCallBack: MoveCallback? = null
-    ) : Declarations(project, source, target, inSourceRoot, moveCallBack) {
+        override val moveCallBack: MoveCallback? = null
+    ) : K2MoveModel() {
+
+        override fun isValidRefactoring(): Boolean {
+            return super.isValidRefactoring() && isValidDeclarationsRefactoring(source, target)
+        }
+
         var passOuterClass: Boolean = isInnerClass
         var outerClassInstanceParameterName: String = outerClassName?.decapitalizeAsciiOnly() ?: "instance"
 
@@ -250,8 +257,22 @@ sealed class K2MoveModel {
             super.buildPanel(panel)
         }
 
-        override fun getMoveDeclarationDelegate(): K2MoveDeclarationDelegate {
-            return K2MoveDeclarationDelegate.NestedClass(null, outerClassInstanceParameterName.takeIf { passOuterClass })
+        override fun toDescriptor(): K2MoveOperationDescriptor.NestedDeclarations {
+            val srcDescr = K2MoveSourceDescriptor.ElementSource(source.elements)
+            val targetDescr = K2MoveTargetDescriptor.File(target.fileName, target.pkgName, target.directory)
+            val moveDescriptor = K2MoveDescriptor.Declarations(project, srcDescr, targetDescr)
+
+            return K2MoveOperationDescriptor.NestedDeclarations(
+                project = project,
+                moveDescriptors = listOf(moveDescriptor),
+                searchForText = searchForText.state,
+                searchInComments = searchInComments.state,
+                searchReferences = searchReferences.state,
+                dirStructureMatchesPkg = true,
+                newClassName = null,
+                outerInstanceParameterName = outerClassInstanceParameterName,
+                moveCallBack = moveCallBack
+            )
         }
     }
 
@@ -392,8 +413,8 @@ sealed class K2MoveModel {
                         .takeIf { it !is KtObjectDeclaration || !it.isCompanion() }
                     val outerClassName = (singleClassToMove?.parent?.parent as? KtClassOrObject?)?.name
 
-                    if (singleClassToMove != null) {
-                        NestedClass(
+                    if (singleClassToMove?.containingClassOrObject != null) {
+                        NestedDeclarations(
                             project = project,
                             source = source,
                             target = target,
