@@ -6080,6 +6080,35 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-36416
+  public void testReturnTypeOfNonAnnotatedAsyncOverride() {
+    doTest("Coroutine[Any, Any, str]", """
+      class Base:
+          async def get(self) -> str:
+              ...
+      
+      class Specific(Base):
+          async def get(self):
+              ...
+      
+      expr = Specific().get()
+      """);
+  }
+
+  public void testReturnTypeOfNonAnnotatedAsyncOverrideOfNonAsyncMethod() {
+    doTest("Coroutine[Any, Any, str]", """
+      class Base:
+          def get(self) -> str:
+              ...
+      
+      class Specific(Base):
+          async def get(self):
+              ...
+      
+      expr = Specific().get()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
