@@ -82,13 +82,8 @@ class CompilationChartsPopup(
       alignmentX = JPanel.LEFT_ALIGNMENT
     }
 
-    val title = JLabel(info["name"]).apply {
-      toolTipText = info["name"]
-    }
-
-    val duration = JLabel(CompilationChartsBundle.message("charts.duration", info["duration"])).apply {
-      toolTipText = info["duration"]
-    }
+    val title = JLabel(info["name"])
+    val duration = JLabel(CompilationChartsBundle.message("charts.duration", info["duration"]))
 
     val left = JPanel().apply {
       actions.filter { action -> action.isAccessible() }
