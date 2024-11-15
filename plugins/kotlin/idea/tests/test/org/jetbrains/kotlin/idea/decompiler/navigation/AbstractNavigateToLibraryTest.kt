@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.util.ThrowableRunnable
-import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
@@ -107,25 +106,30 @@ abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLib
 
 class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiElement) -> Unit) {
     fun annotatedLibraryCode(): String {
-        return NavigationTestUtils.getNavigateElementsText(file.project, collectInterestingNavigationElements())
+        val navigableElements = collectInterestingNavigationElements()
+        return NavigationTestUtils.getNavigateElementsText(file.project, navigableElements)
     }
 
-    private fun collectInterestingNavigationElements() = collectInterestingReferences().map {
-        val target = it.resolve()
-        TestCase.assertNotNull(target)
-        target!!.navigationElement
+    private fun collectInterestingNavigationElements(): List<PsiElement?> {
+        val refs = collectInterestingReferences()
+        return refs.map {
+            val target = requireNotNull(it.resolve())
+            target.navigationElement
+        }
     }
 
     private fun collectInterestingReferences(): Collection<PsiReference> {
         val referenceContainersToReferences = LinkedHashMap<PsiElement, PsiReference>()
-        for (offset in 0 until file.textLength) {
-            val refs = when (val ref = file.findReferenceAt(offset)) {
-                is KtReference, is PsiReferenceExpression, is PsiJavaCodeReferenceElement -> listOf(ref)
-                is PsiMultiReference -> ref.references.filterIsInstance<KtReference>()
-                else -> emptyList()
-            }
+        val allRefs = (0 until file.textLength).flatMap { offset ->
+          when (val ref = file.findReferenceAt(offset)) {
+              is KtReference, is PsiReferenceExpression, is PsiJavaCodeReferenceElement -> listOf(ref)
+              is PsiMultiReference -> ref.references.filterIsInstance<KtReference>()
+              else -> emptyList()
+          }
+        }.distinct()
 
-            refs.forEach { referenceContainersToReferences.addReference(it) }
+        for (reference in allRefs) {
+            referenceContainersToReferences.addReference(reference)
         }
         return referenceContainersToReferences.values
     }
