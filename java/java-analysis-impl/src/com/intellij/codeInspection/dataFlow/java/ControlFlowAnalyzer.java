@@ -806,6 +806,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         if (descriptor != null) {
           descriptors.add(descriptor);
         }
+        if (JavaDfaValueFactory.getQualifierOrThisValue(myFactory, expression) instanceof DfaVariableValue dfaVar) {
+          descriptors.add(dfaVar.getDescriptor());
+        }
       }
 
       @Override
