@@ -1082,6 +1082,8 @@ f:com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 - isTemporary():Z
 - f:needsToBeMigrated():Z
 - f:readExternal(org.jdom.Element,Z):V
+- f:readExternal(org.jdom.Element,Z,java.lang.String):V
+- bs:readExternal$default(com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl,org.jdom.Element,Z,java.lang.String,I,java.lang.Object):V
 - setActivateToolWindowBeforeRun(Z):V
 - f:setConfiguration(com.intellij.execution.configurations.RunConfiguration):V
 - setEditBeforeRun(Z):V
