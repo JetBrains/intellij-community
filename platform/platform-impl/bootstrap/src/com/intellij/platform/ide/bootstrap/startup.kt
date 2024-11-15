@@ -124,8 +124,9 @@ fun CoroutineScope.startApplication(
     initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = this@startApplication)
   }
 
+  var initUiScale: Job? = null
   if (!isHeadless) {
-    val initUiScale = launch {
+    initUiScale = launch {
       if (SystemInfoRt.isMac) {
         initAwtToolkitJob.join()
         JBUIScale.preloadOnMac()
@@ -143,6 +144,7 @@ fun CoroutineScope.startApplication(
   }
 
   val initLafJob = launch {
+    initUiScale?.join()
     initBaseLafJob.join()
     if (!isHeadless) {
       configureCssUiDefaults()
