@@ -28,6 +28,7 @@ import com.intellij.util.ui.tree.AbstractTreeModel;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -95,7 +96,11 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
     else if (object instanceof Node) {
       Entry<Node> entry = getEntry((Node)object, true);
-      if (entry != null) return entry.getChild(index);
+      if (entry != null) {
+        Node child = entry.getChild(index);
+        child.ensureInitialized();
+        return child;
+      }
     }
     return null;
   }
@@ -394,11 +399,13 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   private static class Node extends FileNode {
+    private final @Nullable FileRefresher myRefresher;
+    private boolean myInitialized;
     private boolean invalid;
 
     private Node(State state, VirtualFile file) {
       super(file);
-      if (state.refresher != null && !state.refresher.isRecursive()) state.refresher.register(file);
+      this.myRefresher = state.refresher;
       updateContent(state);
     }
 
@@ -427,6 +434,12 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     public String toString() {
       return getName();
     }
+
+    void ensureInitialized() {
+      if (myInitialized) return;
+      myInitialized = true;
+      if (myRefresher != null && !myRefresher.isRecursive()) myRefresher.register(getFile());
+    }
   }
 
   private static final class Root extends Node {
@@ -434,7 +447,6 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
     private Root(State state, VirtualFile file) {
       super(state, file);
-      if (state.refresher != null && state.refresher.isRecursive()) state.refresher.register(file);
       tree = new MapBasedTree<>(false, node -> node.getFile(), state.path);
       tree.onInsert(node -> markDirtyInternal(node.getFile()));
       tree.updateRoot(Pair.create(this, state.isLeaf(file)));
