@@ -12,14 +12,14 @@ elements:
             name: include
             #language=Markdown
             description: |
-              Allows reusing data from another <path>product-modules.xml</path> located in the module specified by [`<from-module>`](#element:product-modules__include__from-module) and [`<without-module>`](#element:product-modules__include__without-module) elements.
+              Allows reusing data from another <path>product-modules.xml</path> located in the module specified by [`<from-module>`](#element:product-modules__include__from-module) and skipping modules specified by [`<without-module>`](#element:product-modules__include__without-module) elements.
             requirement:
               required: no
             children:
               - element:
                   name: from-module
                   requirement:
-                    required: no
+                    required: yes
                   #language=Markdown
                   description: Specifies the name of the module where <path>product-modules.xml</path> to be included is located.
               - element:
