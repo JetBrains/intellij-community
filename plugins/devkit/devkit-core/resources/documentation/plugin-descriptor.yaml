@@ -50,7 +50,7 @@ elements:
               It should be a fully qualified name similar to Java packages and must not collide with the ID of existing plugins.
               The ID is a technical value used to identify the plugin in the IDE and [JetBrains Marketplace](https://plugins.jetbrains.com).
               Please use characters, numbers, and `'.'`/`'-'`/`'_'` symbols only and keep it reasonably short.
-            
+              
               > Make sure to pick a stable ID, as the value cannot be changed later after public release.
               >
               {style="warning"}
@@ -419,7 +419,7 @@ elements:
 
         - element:
             name: incompatible-with
-            since: 2020.2
+            since: "2020.2"
             #language=Markdown
             references:
               - |
@@ -694,7 +694,7 @@ elements:
             attributes:
               - attribute:
                   name: resource-bundle
-                  since: 2020.1
+                  since: "2020.1"
                   requirement:
                     required: no
                   #language=Markdown
@@ -1004,7 +1004,7 @@ elements:
                     - element: &overrideText
                         name: override-text
                         sdkDocsFixedPath: [idea-plugin, actions, action, override-text]
-                        since: 2020.1
+                        since: "2020.1"
                         #language=Markdown
                         description: Defines an alternate version of the text for the menu action or group.
                         #language=Markdown
@@ -1057,7 +1057,7 @@ elements:
                     - element:
                         name: synonym
                         sdkDocsFixedPath: [idea-plugin, actions, action, synonym]
-                        since: 2020.3
+                        since: "2020.3"
                         #language=Markdown
                         description: |
                           Defines an alternative text for searching the action in <ui-path>Help | Find Action...</ui-path> or
@@ -1204,7 +1204,7 @@ elements:
                           The ID of the action whose keyboard shortcut this group will use.
                     - attribute:
                         name: searchable
-                        since: 2020.3
+                        since: "2020.3"
                         requirement:
                           required: no
                         #language=Markdown
@@ -1354,7 +1354,7 @@ elements:
               - element: *reference
         - element:
             name: applicationListeners
-            since: 2019.3
+            since: "2019.3"
             #language=Markdown
             references:
               - |
@@ -1368,7 +1368,7 @@ elements:
               - element: &listener
                   name: listener
                   sdkDocsFixedPath: [idea-plugin, applicationListeners, listener]
-                  since: 2019.3
+                  since: "2019.3"
                   #language=Markdown
                   references:
                     - |
@@ -1397,7 +1397,7 @@ elements:
                           The fully qualified name of the class implementing the listener interface that receives and handles the events.
                     - attribute:
                         name: os
-                        since: 2020.1
+                        since: "2020.1"
                         requirement:
                           required: no
                         #language=Markdown
@@ -1441,7 +1441,7 @@ elements:
                       ```
         - element:
             name: projectListeners
-            since: 2019.3
+            since: "2019.3"
             #language=Markdown
             references:
               - |
@@ -1455,7 +1455,7 @@ elements:
               - element: *listener
         - element:
             name: application-components
-            deprecatedSince: &componentsDeprecatedSince 2020.1
+            deprecatedSince: &componentsDeprecatedSince "2020.1"
             #language=Markdown
             deprecationNote: &componentsDeprecationNote |
               Do not use it in new plugins.
