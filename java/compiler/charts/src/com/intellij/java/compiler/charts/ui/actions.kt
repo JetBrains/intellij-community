@@ -84,12 +84,13 @@ class ShowModuleDependenciesAction(
   override fun isAccessible() = action != null
 
   override fun actionPerformed(e: MouseEvent) {
-    val context = object : DataContext {
-      val module = ModuleManager.getInstance(project).findModuleByName(name)
-      override fun getData(dataId: String): Any? = when {
-        CommonDataKeys.PROJECT.`is`(dataId) -> project
-        LangDataKeys.MODULE_CONTEXT_ARRAY.`is`(dataId) -> arrayOf(module)
-        PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId) -> component
+    @Suppress("UNCHECKED_CAST")
+    val context = object : ActionDataContext {
+      private val module = ModuleManager.getInstance(project).findModuleByName(name)
+      override fun <T : Any?> getData(key: DataKey<T?>): T? = when (key) {
+        CommonDataKeys.PROJECT -> project as T
+        LangDataKeys.MODULE_CONTEXT_ARRAY -> notNullArrayOf(module) as T
+        PlatformCoreDataKeys.CONTEXT_COMPONENT -> component as T
         else -> null
       }
     }
@@ -119,12 +120,13 @@ class ShowMatrixDependenciesAction(
   override fun isAccessible() = action != null
 
   override fun actionPerformed(e: MouseEvent) {
-    val context = object : DataContext {
+    @Suppress("UNCHECKED_CAST")
+    val context = object : ActionDataContext {
       val module = ModuleManager.getInstance(project).findModuleByName(name)
-      override fun getData(dataId: String): Any? = when {
-        CommonDataKeys.PROJECT.`is`(dataId) -> project
-        LangDataKeys.MODULE.`is`(dataId) -> module
-        PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId) -> component
+      override fun <T : Any?> getData(key: DataKey<T?>): T? = when (key) {
+        CommonDataKeys.PROJECT -> project as T
+        LangDataKeys.MODULE -> module as T?
+        PlatformCoreDataKeys.CONTEXT_COMPONENT -> component as T
         else -> null
       }
     }
@@ -159,4 +161,26 @@ private class ActionMouseAdapter(private val parent: JLabel, private val action:
     parent.cursor = Cursor.getDefaultCursor()
     parent.font = parent.font.deriveFont(mapOf(TextAttribute.UNDERLINE to -1))
   }
+}
+
+@Suppress("removal", "OVERRIDE_DEPRECATION")
+private interface ActionDataContext : DataContext {
+  override fun getData(dataId: String): Any? {
+    if (CommonDataKeys.PROJECT.`is`(dataId)) return getData(CommonDataKeys.PROJECT)
+    if (LangDataKeys.MODULE.`is`(dataId)) return getData(LangDataKeys.MODULE)
+    if (LangDataKeys.MODULE_CONTEXT_ARRAY.`is`(dataId)) return getData(LangDataKeys.MODULE_CONTEXT_ARRAY)
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) return getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+    return null
+  }
+}
+
+private inline fun <reified T> notNullArrayOf(vararg elements: T): Array<T> {
+  val size = elements.count { it != null }
+  val array = arrayOfNulls<T>(size)
+  var index = 0
+  for (element in elements) {
+    if (element != null) array[index++] = element
+  }
+  @Suppress("UNCHECKED_CAST")
+  return array as Array<T>
 }
