@@ -14,6 +14,9 @@ import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.HmppSourceModuleDependencyFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.NegatedModuleDependencyFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.NonHmppSourceModuleDependenciesFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
