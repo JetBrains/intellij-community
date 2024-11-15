@@ -3,44 +3,34 @@ package com.intellij.searchEverywhere.core
 
 import com.intellij.searchEverywhere.SearchEverywhereViewItem
 import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flatMapMerge
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface SearchEverywhereDispatcher {
   suspend fun <Param> search(
-    scope: CoroutineScope,
     providers: Collection<SearchEverywhereViewItemsProvider<*, *, Param>>,
     providersAndLimits: Map<SearchEverywhereViewItemsProvider<*, *, Param>, Int?>,
     pattern: Param,
     alreadyFoundResults: List<SearchEverywhereViewItem<*, *>>,
-    processor: (SearchEverywhereViewItem<*, *>) -> Boolean,
-  )
+  ): Flow<SearchEverywhereViewItem<*, *>>
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Internal
-class DefaultSearchEverywhereDispatcher: SearchEverywhereDispatcher {
-
+class DefaultSearchEverywhereDispatcher : SearchEverywhereDispatcher {
 
   override suspend fun <Param> search(
-    scope: CoroutineScope,
     providers: Collection<SearchEverywhereViewItemsProvider<*, *, Param>>,
     providersAndLimits: Map<SearchEverywhereViewItemsProvider<*, *, Param>, Int?>,
     pattern: Param,
     alreadyFoundResults: List<SearchEverywhereViewItem<*, *>>,
-    processor: (SearchEverywhereViewItem<*, *>) -> Boolean,
-  ) {
-    val overallLimit = providersAndLimits.values.filterNotNull().sum()
-    val resultsSharedFlow = MutableSharedFlow<SearchEverywhereViewItem<*, *>>(replay = overallLimit)
-
-    coroutineScope {
-      providers.map { provider ->
-        provider.processViewItems(pattern)
-      }.forEach { providerResultsFlow ->
-
-      }
+  ): Flow<SearchEverywhereViewItem<*, *>> {
+    return providers.asFlow().flatMapMerge { provider ->
+      provider.processViewItems(pattern)
     }
   }
 }

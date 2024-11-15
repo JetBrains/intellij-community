@@ -2,10 +2,16 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.searchEverywhere.OptionItemPresentation
 import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
+import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
 import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
+import com.intellij.searchEverywhere.core.DefaultSearchEverywhereDispatcher
 import com.intellij.searchEverywhere.core.DefaultViewItemsProvider
+import com.intellij.searchEverywhere.mocks.SearchEverywhereItemsProviderMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
@@ -21,7 +27,49 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
         println(it)
       }
     }
+  }
 
+  @Suppress("unused")
+  fun `mock test mocked provider`() {
+    runBlocking {
+      val params = "it"
+
+      createMockProviders().first().processViewItems(params).collect {
+        println(it.item)
+      }
+    }
+  }
+
+  @Suppress("unused")
+  fun `mock test search dispatcher`() {
+    val providers = createMockProviders(listOf(
+      SearchEverywhereItemsProviderMock(delayMillis = 100, delayStep = 1, resultPrefix = "alpha"),
+      SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5, resultPrefix = "bravo"),
+      SearchEverywhereItemsProviderMock(delayMillis = 1500, delayStep = 7, resultPrefix = "centurion"),
+      SearchEverywhereItemsProviderMock(delayMillis = 2000, delayStep = 10, resultPrefix = "delta"),
+    ))
+
+    runBlocking {
+      val searchJob = launch {
+        DefaultSearchEverywhereDispatcher().search(providers, emptyMap(), "item", emptyList()).collect {
+          println(it.item)
+        }
+      }
+
+      searchJob.invokeOnCompletion {
+        if (searchJob.isCancelled) {
+          println("Search cancelled")
+        }
+        else {
+          println("Search completed")
+        }
+      }
+
+      delay(5000)
+      println("Canceling search")
+      searchJob.cancel()
+      searchJob.join()
+    }
   }
 
   private fun createProvider(): SearchEverywhereViewItemsProvider<GotoActionModel.MatchedValue, SearchEverywhereItemPresentation, ActionSearchParams> {
@@ -31,5 +79,18 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
       ActionPresentationProvider,
       { SimpleDataContext.getProjectContext(project) }
     )
+  }
+
+  private fun createMockProviders(
+    itemProviders: List<SearchEverywhereItemsProvider<String, String>> =
+      listOf(SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5)),
+  ): List<SearchEverywhereViewItemsProvider<String, OptionItemPresentation, String>> {
+    return itemProviders.map { itemsProvider ->
+      DefaultViewItemsProvider(
+        itemsProvider,
+        { item -> OptionItemPresentation(name = item) },
+        { SimpleDataContext.getProjectContext(project) }
+      )
+    }
   }
 }
