@@ -31,7 +31,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val nextCall = controller.nextCall ?: error("intermediate state should know about next call")
       val mappingPane = MappingPane(nextCall.name, TraceUtil.formatWithArguments(nextCall), valuesBefore, mapping, controller)
 
-      val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#controller#${index}")
+      val tree = CollectionTree(valuesBefore.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#controller#${index}")
       val view = PositionsAwareCollectionView(tree, valuesBefore)
       controller.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
@@ -65,11 +65,10 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
 
       val prevCall = lastController.prevCall
       val tree = if (prevCall != null && prevCall is TerminatorStreamCall) {
-        val values = lastController.values
-        SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Single")
+        SingleElementTree(it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Single")
       }
       else {
-        CollectionTree(lastController.values, it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Collection")
+        CollectionTree(it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Collection")
       }
       val view = PositionsAwareCollectionView(tree, it)
       lastController.register(view)
@@ -86,7 +85,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
 
     if (controllers.size == 1) {
       val controller = controllers[0]
-      val tree = CollectionTree(controller.values, controller.trace, evaluationContext, builder, "FlatView#singleController")
+      val tree = CollectionTree(controller.trace, evaluationContext, builder, "FlatView#singleController")
       val view = CollectionView(tree)
       add(view)
       controller.register(view)
