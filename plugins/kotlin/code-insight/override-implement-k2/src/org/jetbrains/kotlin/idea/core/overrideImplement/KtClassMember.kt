@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
@@ -89,7 +90,8 @@ data class KaClassOrObjectSymbolChooserObject(
 ) :
     MemberChooserObjectBase(symbolText, symbolIcon)
 
-internal fun createKtClassMember(
+@IntellijInternalApi
+fun createKtClassMember(
     memberInfo: KtClassMemberInfo,
     bodyType: BodyType,
     preferConstructorParameter: Boolean

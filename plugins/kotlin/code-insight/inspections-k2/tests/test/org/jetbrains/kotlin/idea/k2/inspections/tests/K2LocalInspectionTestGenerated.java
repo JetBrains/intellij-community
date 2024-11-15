@@ -8848,6 +8848,122 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation")
+        public abstract static class JavaDefaultMethodsNotOverriddenByDelegation extends AbstractK2LocalInspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToDelegateObject")
+            public static class DelegateToDelegateObject extends AbstractK2LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("classCtorProperty.kt")
+                public void testClassCtorProperty() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToDelegateObject/classCtorProperty.kt");
+                }
+
+                @TestMetadata("objectLocalVariable.kt")
+                public void testObjectLocalVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToDelegateObject/objectLocalVariable.kt");
+                }
+
+                @TestMetadata("objectParameter.kt")
+                public void testObjectParameter() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToDelegateObject/objectParameter.kt");
+                }
+
+                @TestMetadata("openClassWithoutOverride.kt")
+                public void testOpenClassWithoutOverride() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToDelegateObject/openClassWithoutOverride.kt");
+                }
+
+                @TestMetadata("sealedClassWithOverride.kt")
+                public void testSealedClassWithOverride() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToDelegateObject/sealedClassWithOverride.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToSuperclass")
+            public static class DelegateToSuperclass extends AbstractK2LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("classCtorProperty.kt")
+                public void testClassCtorProperty() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToSuperclass/classCtorProperty.kt");
+                }
+
+                @TestMetadata("objectLocalVariable.kt")
+                public void testObjectLocalVariable() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToSuperclass/objectLocalVariable.kt");
+                }
+
+                @TestMetadata("objectParameter.kt")
+                public void testObjectParameter() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToSuperclass/objectParameter.kt");
+                }
+
+                @TestMetadata("openClassWithoutOverride.kt")
+                public void testOpenClassWithoutOverride() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToSuperclass/openClassWithoutOverride.kt");
+                }
+
+                @TestMetadata("sealedClassWithOverride.kt")
+                public void testSealedClassWithOverride() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/delegateToSuperclass/sealedClassWithOverride.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/noProblem")
+            public static class NoProblem extends AbstractK2LocalInspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("finalClassWithoutOverride.kt")
+                public void testFinalClassWithoutOverride() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/noProblem/finalClassWithoutOverride.kt");
+                }
+
+                @TestMetadata("noDefaultMethods.kt")
+                public void testNoDefaultMethods() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/noProblem/noDefaultMethods.kt");
+                }
+
+                @TestMetadata("noDefaultMethodsInDelegatedInterface.kt")
+                public void testNoDefaultMethodsInDelegatedInterface() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/noProblem/noDefaultMethodsInDelegatedInterface.kt");
+                }
+
+                @TestMetadata("sealedClassWithoutOverride.kt")
+                public void testSealedClassWithoutOverride() throws Exception {
+                    runTest("testData/inspectionsLocal/javaDefaultMethodsNotOverriddenByDelegation/noProblem/sealedClassWithoutOverride.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/kotlinOptionsToCompilerOptions")
         public static class KotlinOptionsToCompilerOptions extends AbstractK2LocalInspectionTest {
             @java.lang.Override
