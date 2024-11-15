@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculatorImpl
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ByInfoSuperFunctionsProvider
@@ -36,7 +35,6 @@ internal abstract class InferenceProcessing : ElementsBasedPostProcessing() {
         converterContext: NewJ2kConverterContext
     ): InferenceFacade
 
-    context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }

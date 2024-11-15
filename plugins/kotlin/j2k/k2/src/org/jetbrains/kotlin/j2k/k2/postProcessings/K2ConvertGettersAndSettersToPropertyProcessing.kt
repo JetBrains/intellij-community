@@ -13,6 +13,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.ArrayValue
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue.EnumEntryValue
@@ -88,7 +89,6 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         error("Not supported in K2 J2K")
     }
 
-    context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return Applier.EMPTY }
         val psiFactory = KtPsiFactory(converterContext.project)
@@ -104,14 +104,22 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
             // KtEnumEntrySymbol is not a KtClassOrObjectSymbol, so we skip enum entries here
             // TODO handle enum overrides (KTIJ-29782)
             .filterNot { it is KtEnumEntry }
-            .sortedByInheritance()
+            .groupBy(KtClassOrObject::getContainingKtFile)
+            .flatMap { (file, classes) ->
+                analyze(file) {
+                    classes.sortedByInheritance()
+                }
+            }
+
         val classesWithPropertiesData = collector.collectPropertiesData(classes).ifEmpty { return Applier.EMPTY }
         val infos = mutableSetOf<ApplicationInfo>()
 
         for ((klass, propertiesData) in classesWithPropertiesData) {
-            val propertiesWithAccessors = filter.filter(klass, propertiesData)
-            infos.add(ApplicationInfo(converter, klass, propertiesWithAccessors))
-            externalProcessingUpdater.update(klass, propertiesWithAccessors)
+            analyze(klass) {
+                val propertiesWithAccessors = filter.filter(klass, propertiesData)
+                infos.add(ApplicationInfo(converter, klass, propertiesWithAccessors))
+                externalProcessingUpdater.update(klass, propertiesWithAccessors)
+            }
         }
 
         return Applier(infos)
@@ -155,20 +163,23 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
 private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearcher) {
     private val propertyNameToSuperType: MutableMap<Pair<KtClassOrObject, String>, KaType> = mutableMapOf()
 
-    context(KaSession)
     fun collectPropertiesData(classes: List<KtClassOrObject>): List<Pair<KtClassOrObject, List<PropertyData>>> {
         val result = classes.map { klass -> klass to collectPropertiesData(klass) }
         propertyNameToSuperType.clear() // flush KaTypes
         return result
     }
 
-    context(KaSession)
     private fun collectPropertiesData(klass: KtClassOrObject): List<PropertyData> {
         val propertyInfos: List<PropertyInfo> = klass.declarations.mapNotNull { it.asPropertyInfo() }
         val propertyInfoGroups: Collection<List<PropertyInfo>> =
             propertyInfos.groupBy { it.name.removePrefix("is").decapitalizeAsciiOnly() }.values
 
-        val propertyDataList = propertyInfoGroups.mapNotNull { group -> collectPropertyData(klass, group) }
+        val propertyDataList = propertyInfoGroups.mapNotNull { group ->
+            analyze(klass) {
+                collectPropertyData(klass, group)
+            }
+        }
+
         return propertyDataList
     }
 
@@ -213,7 +224,6 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
         )
     }
 
-    context(KaSession)
     private fun KtDeclaration.asPropertyInfo(): PropertyInfo? {
         return when (this) {
             is KtProperty -> RealProperty(this, name ?: return null)
@@ -222,7 +232,6 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
         }
     }
 
-    context(KaSession)
     private fun KtNamedFunction.asGetter(): Getter? {
         val name = name?.asGetterName() ?: return null
         if (valueParameters.isNotEmpty()) return null
@@ -230,35 +239,39 @@ private class PropertiesDataCollector(private val searcher: JKInMemoryFilesSearc
 
         val returnExpression = bodyExpression?.statements()?.singleOrNull() as? KtReturnExpression
         val property = returnExpression?.returnedExpression?.unpackedReferenceToProperty()
-        val getterType = type()
-        val singleTimeUsedTarget = property?.takeIf {
-            it.containingClass() == containingClass() && getterType != null && it.type()?.semanticallyEquals(getterType) == true
-        }
+        return analyze(this) {
+            val getterType = type()
+            val singleTimeUsedTarget = property?.takeIf {
+                it.containingClass() == containingClass() && getterType != null && it.type()?.semanticallyEquals(getterType) == true
+            }
 
-        return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
+            RealGetter(this@asGetter, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
+        }
     }
 
-    context(KaSession)
     private fun KtNamedFunction.asSetter(): Setter? {
         val name = name?.asSetterName() ?: return null
         val parameter = valueParameters.singleOrNull() ?: return null
         if (typeParameters.isNotEmpty()) return null
 
-        if (!symbol.returnType.isUnitType) return null
+        return analyze(this) {
+            if (!symbol.returnType.isUnitType) return null
 
-        val binaryExpression = bodyExpression?.statements()?.singleOrNull() as? KtBinaryExpression
-        val property = binaryExpression?.let { expression ->
-            if (expression.operationToken != EQ) return@let null
-            val right = expression.right as? KtNameReferenceExpression ?: return@let null
-            if (right.resolve() != parameter) return@let null
-            expression.left?.unpackedReferenceToProperty()
-        }
-        val singleTimeUsedTarget = property?.takeIf {
-            val parameterType = parameter.type() ?: return@takeIf false
-            it.containingClass() == containingClass() && it.type()?.semanticallyEquals(parameterType) == true
-        }
+            val binaryExpression = bodyExpression?.statements()?.singleOrNull() as? KtBinaryExpression
+            val property = binaryExpression?.let { expression ->
+                if (expression.operationToken != EQ) return@let null
+                val right = expression.right as? KtNameReferenceExpression ?: return@let null
+                if (right.resolve() != parameter) return@let null
+                expression.left?.unpackedReferenceToProperty()
+            }
 
-        return RealSetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
+            val singleTimeUsedTarget = property?.takeIf {
+                val parameterType = parameter.type() ?: return@takeIf false
+                it.containingClass() == containingClass() && it.type()?.semanticallyEquals(parameterType) == true
+            }
+
+            RealSetter(this@asSetter, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
+        }
     }
 
     private fun KtExpression.statements(): List<KtExpression> =

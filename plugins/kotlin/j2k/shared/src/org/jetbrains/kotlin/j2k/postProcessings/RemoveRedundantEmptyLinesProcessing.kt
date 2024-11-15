@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -53,7 +52,6 @@ class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
         }
     }
 
-    context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         val containers = elements.descendantsOfType<KtBlockExpression>() +
                 elements.descendantsOfType<KtClassBody>() +

@@ -121,7 +121,6 @@ internal class K1ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         }
     }
 
-    context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }
