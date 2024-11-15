@@ -23,8 +23,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
   public DependencyGraphImpl(MapletFactory containerFactory) {
     super(containerFactory);
-    addIndex(new SubclassesIndex(containerFactory));
-    myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
+    try {
+      addIndex(new SubclassesIndex(containerFactory));
+      myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
+    }
+    catch (RuntimeException e) {
+      closeIgnoreErrors();
+      throw e;
+    }
   }
 
   @Override
