@@ -48,7 +48,7 @@ public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
     return new ValuesOrderInfo(call, before, after);
   }
 
-  private static int extractTime(@NotNull ArrayReference value) {
+  public static int extractTime(@NotNull ArrayReference value) {
     final Value timeArray = value.getValue(1);
     if (timeArray instanceof ArrayReference) {
       final Value time = ((ArrayReference)timeArray).getValue(0);
