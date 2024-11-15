@@ -2536,6 +2536,10 @@ interface UastResolveApiFixtureTestBase {
                     TestCase.assertNotNull(resolved.returnType)
                     TestCase.assertEquals("MyClass", resolved.returnType!!.canonicalText)
 
+                    TestCase.assertEquals(1, resolved.typeParameters.size)
+                    val typeParam = resolved.typeParameters.single()
+                    TestCase.assertEquals("T", typeParam.name)
+
                     return super.visitCallExpression(node)
                 }
             })
