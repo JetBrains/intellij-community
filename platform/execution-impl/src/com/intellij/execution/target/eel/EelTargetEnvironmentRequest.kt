@@ -50,7 +50,9 @@ class EelTargetEnvironmentRequest(override val configuration: Configuration) : B
   override val targetPlatform: TargetPlatform = configuration.eel.platform.toTargetPlatform()
 
   override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment {
-    return EelTargetEnvironment(this)
+    val env = EelTargetEnvironment(this)
+    environmentPrepared(env, progressIndicator)
+    return env
   }
 
   override var shouldCopyVolumes: Boolean = false
