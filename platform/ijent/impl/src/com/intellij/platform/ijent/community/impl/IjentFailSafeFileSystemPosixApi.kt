@@ -53,10 +53,11 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   private fun getDelegate(): Deferred<I> =
     delegate.updateAndGet { oldDelegate ->
       if (
-        oldDelegate != null &&
-        oldDelegate.isCompleted &&
-        oldDelegate.getCompletionExceptionOrNull() == null &&
-        oldDelegate.getCompleted().isRunning
+        oldDelegate != null && (
+          !oldDelegate.isCompleted ||
+          oldDelegate.getCompletionExceptionOrNull() == null &&
+          oldDelegate.getCompleted().isRunning
+        )
       )
         oldDelegate
       else
