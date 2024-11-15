@@ -1839,6 +1839,7 @@
     <applicationService serviceInterface="com.intellij.auth.GenericAuthService"
                         serviceImplementation="com.intellij.auth.LocalGenericAuthService"
                         client="local"/>
+    <project.projectIdResolver implementation="com.intellij.ide.lightEdit.project.LightEditProjectIdResolver" />
   </extensions>
 
   <applicationListeners>
