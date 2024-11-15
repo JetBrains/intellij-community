@@ -20,11 +20,13 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.diagnostic.telemetry.rt.PlatformTelemetryRtClass
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
 import groovy.lang.MissingMethodException
+import io.opentelemetry.api.trace.Span
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.annotations.NotNull
@@ -347,6 +349,10 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     classpathInferer.add(ExternalSystemRtClass::class.java)
     // groovy runtime for serialization
     classpathInferer.add(MissingMethodException::class.java)
+
+    // opentelemetry SDK related classes
+    classpathInferer.add(Span::class.java)
+    classpathInferer.add(PlatformTelemetryRtClass::class.java)
 
     javaParameters.classPath.addAll(classpathInferer.getClasspath())
     javaParameters.vmParametersList.add("-Djava.net.preferIPv4Stack=true")
