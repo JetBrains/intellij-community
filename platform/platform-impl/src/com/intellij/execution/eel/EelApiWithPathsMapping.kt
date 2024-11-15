@@ -20,7 +20,7 @@ import kotlin.io.path.pathString
 
 @Internal
 // TODO: add EelWindowsApi analog
-class EelApiWithPathsMapping(private val ephemeralRoot: Path, private val original: EelPosixApi) : EelPosixApi by original, EelApi {
+class EelApiWithPathsMapping(private val ephemeralRoot: Path, private val original: EelPosixApiBase) : EelPosixApiBase by original, EelApi {
   private fun normalizeIfPath(maybePath: String): String {
     return if (maybePath.startsWith(ephemeralRoot.pathString)) {
       val originalPath = mapper.getOriginalPath(Path.of(maybePath))?.toString()

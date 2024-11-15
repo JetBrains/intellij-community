@@ -2,8 +2,8 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelApiBase
-import com.intellij.platform.eel.EelPosixApi
-import com.intellij.platform.eel.EelWindowsApi
+import com.intellij.platform.eel.EelPosixApiBase
+import com.intellij.platform.eel.EelWindowsApiBase
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -54,12 +54,12 @@ sealed interface IjentApi : EelApiBase, AutoCloseable {
   override val fs: IjentFileSystemApi
 }
 
-interface IjentPosixApi : IjentApi, EelPosixApi {
+interface IjentPosixApi : IjentApi, EelPosixApiBase {
   override val fs: IjentFileSystemPosixApi
   override val tunnels: IjentTunnelsPosixApi
 }
 
-interface IjentWindowsApi : IjentApi, EelWindowsApi {
+interface IjentWindowsApi : IjentApi, EelWindowsApiBase {
   override val fs: IjentFileSystemWindowsApi
   override val tunnels: IjentTunnelsWindowsApi
 }
