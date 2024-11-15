@@ -24,6 +24,10 @@ interface EelPathMapper {
   /**
    * Transfers file system entry which is pointed to by [path] to the machine which owns this [EelPathMapper].
    *
+   * Example:
+   * If `path` points to `C:\Users\Me\archive.zip`, and this Eel is running on WSL,
+   * then the file gets uploaded to WSL distribution and the returned path could point to `/tmp/archive.zip`.
+   *
    * The entry is transferred completely, i.e., if it is a directory, then it is copied recursively with contents.
    * Symbolic links are **not** followed.
    *

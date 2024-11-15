@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.path.EelPathKt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -175,7 +176,8 @@ public abstract class JavaHomeFinder {
     }
     if (platform instanceof EelPlatform.Linux) {
       String defaultLinuxPathRepresentation = "/opt/java";
-      Path defaultLinuxPath = eel.getMapper().toNioPath(EelPath.Absolute.parse(defaultLinuxPathRepresentation, platform.pathOs()));
+      Path defaultLinuxPath =
+        eel.getMapper().toNioPath(EelPath.Absolute.parse(defaultLinuxPathRepresentation, EelPathKt.getPathOs(platform)));
       if (Files.exists(defaultLinuxPath)) {
         eelPath = defaultLinuxPathRepresentation;
       }
@@ -184,7 +186,7 @@ public abstract class JavaHomeFinder {
       }
     }
     if (eelPath != null) {
-      EelPath.Absolute absoluteLocation = EelPath.Absolute.parse(eelPath, platform.pathOs());
+      EelPath.Absolute absoluteLocation = EelPath.Absolute.parse(eelPath, EelPathKt.getPathOs(platform));
       return eel.getMapper().toNioPath(absoluteLocation);
     }
     return null;

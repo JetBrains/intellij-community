@@ -256,6 +256,12 @@ sealed interface EelPath {
 
 operator fun EelPath.div(part: String): EelPath = resolve(EelPath.Relative.parse(part))
 
+val OS.pathSeparator: String
+  get() = when (this) {
+    OS.UNIX -> ":"
+    OS.WINDOWS -> ";"
+  }
+
 val EelPlatform.pathOs: OS
   get() = when (this) {
     is EelPlatform.Posix -> OS.UNIX
