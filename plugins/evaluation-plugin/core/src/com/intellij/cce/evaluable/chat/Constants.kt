@@ -5,3 +5,9 @@ const val INTERNAL_API_CALLS_PROPERTY = "internal_api_calls"
 const val INTERNAL_RELEVANT_FILES_PROPERTY = "internal_relevant_files"
 
 const val METHOD_NAME_PROPERTY = "method_name"
+
+const val REFERENCE_PROPERTY = "reference"
+const val CATEGORY_PROPERTY = "category"
+const val FILE_PATH_PROPERTY = "file_path"
+const val START_LINE_PROPERTY = "start_line"
+const val END_LINE_PROPERTY = "end_line"
