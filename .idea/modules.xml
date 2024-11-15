@@ -982,6 +982,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" filepath="$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.iml" filepath="$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gitlab/gitlab-core/intellij.vcs.gitlab.iml" filepath="$PROJECT_DIR$/plugins/gitlab/gitlab-core/intellij.vcs.gitlab.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gitlab/gitlab-community/intellij.vcs.gitlab.community.iml" filepath="$PROJECT_DIR$/plugins/gitlab/gitlab-community/intellij.vcs.gitlab.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gitlab/gitlab-yaml/intellij.vcs.gitlab.yaml.iml" filepath="$PROJECT_DIR$/plugins/gitlab/gitlab-yaml/intellij.vcs.gitlab.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/hg4idea/intellij.vcs.hg.iml" filepath="$PROJECT_DIR$/plugins/hg4idea/intellij.vcs.hg.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/intellij.vcs.svn.iml" />
