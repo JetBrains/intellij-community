@@ -2175,7 +2175,7 @@ public class Py3TypeTest extends PyTestCase {
 
 
   public void testTypeGuardResultIsAssignedButValIsReassignedSometimes() {
-    doTest("int | list[str]",
+    doTest("list[str] | int",
            """
              from typing import List
              from typing import TypeGuard

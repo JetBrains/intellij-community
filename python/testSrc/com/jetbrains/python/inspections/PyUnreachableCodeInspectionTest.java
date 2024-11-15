@@ -66,6 +66,16 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testWhileTrue() {
+    doTestByText(
+      """
+        while True:
+            pass
+        <warning descr="This code is unreachable">print()</warning>
+        """
+    );
+  }
+
   // PY-22184
   public void testWhileTrueTryBreakFinally() {
     doTest();
@@ -76,15 +86,18 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     doTestByText(
       """
         if False:
-            <warning descr="This code is unreachable">a = 1</warning>
+            <warning descr="This code is unreachable">a = 1
+            a1 = 1</warning>
 
         if False:
-            <warning descr="This code is unreachable">b = 1</warning>
+            <warning descr="This code is unreachable">b = 1
+            b1 = 1</warning>
         else:
             pass
 
         if False:
-            <warning descr="This code is unreachable">c = 1</warning>
+            <warning descr="This code is unreachable">c = 1
+            c1 = 1</warning>
         elif d:
             pass
         else:
@@ -103,14 +116,17 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
         if True:
             pass
         else:
-            <warning descr="This code is unreachable">b = 1</warning>
+            <warning descr="This code is unreachable">b = 1
+            b1 = 1</warning>
 
         if True:
             pass
         elif c:
-            <warning descr="This code is unreachable">d = 1</warning>
+            <warning descr="This code is unreachable">d = 1
+            d1 = 1</warning>
         else:
-            <warning descr="This code is unreachable">e = 1</warning>
+            <warning descr="This code is unreachable">e = 1
+            e1 = 1</warning>
         """
     );
   }
@@ -129,7 +145,8 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
         elif True:
             pass
         else:
-            <warning descr="This code is unreachable">e = 1</warning>
+            <warning descr="This code is unreachable">e = 1
+            f = 2</warning>
         """
     );
   }
@@ -141,12 +158,14 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
         if c:
             pass
         elif False:
-            <warning descr="This code is unreachable">a = 1</warning>
+            <warning descr="This code is unreachable">a = 1
+            a1 = 1</warning>
 
         if d:
             pass
         elif False:
-            <warning descr="This code is unreachable">b = 1</warning>
+            <warning descr="This code is unreachable">b = 1
+            b1 = 1</warning>
         else:
             pass"""
     );

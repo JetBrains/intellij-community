@@ -24,28 +24,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private final Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;
 
-  public PyTypeAssertionEvaluator() {
-    this(true);
-  }
-
   public PyTypeAssertionEvaluator(boolean positive) {
     myPositive = positive;
   }
 
   public List<Assertion> getDefinitions() {
     return myStack;
-  }
-
-  @Override
-  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
-    if (node.getOperator() == PyTokenTypes.NOT_KEYWORD) {
-      myPositive = !myPositive;
-      super.visitPyPrefixExpression(node);
-      myPositive = !myPositive;
-    }
-    else {
-      super.visitPyPrefixExpression(node);
-    }
   }
 
   @Override
@@ -89,6 +73,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
+    if (node.isOperator(PyNames.AND) || node.isOperator(PyNames.OR)) return;
+
     final PyExpression lhs = node.getLeftExpression();
     final PyExpression rhs = node.getRightExpression();
 

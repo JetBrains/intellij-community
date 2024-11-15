@@ -9,20 +9,20 @@
 8(9,10) WRITE ACCESS: r
 9(14) element: null. Condition: (r := undefined2()):false
 10(11) element: null. Condition: (r := undefined2()):true
-11(12) element: PyStatementList. Condition: undefined1 and (r := undefined2()):true
+11(12) element: PyStatementList
 12(13) element: PyPrintStatement
 13(1) READ ACCESS: r
 14(15) element: PyWhileStatement
 15(16) element: PyBinaryExpression
 16(17,18) READ ACCESS: undefined3
-17(24) element: null. Condition: undefined3:true
-18(19) element: null. Condition: undefined3:false
+17(19) element: null. Condition: undefined3:false
+18(24) element: null. Condition: undefined3:true
 19(20) READ ACCESS: undefined4
 20(21) element: PyCallExpression: undefined4
 21(22,23) WRITE ACCESS: r2
 22(27) element: null. Condition: (r2 := undefined4()):false
 23(24) element: null. Condition: (r2 := undefined4()):true
-24(25) element: PyStatementList. Condition: undefined3 or (r2 := undefined4()):true
+24(25) element: PyStatementList
 25(26) element: PyPrintStatement
 26(14) READ ACCESS: r2
 27() element: null

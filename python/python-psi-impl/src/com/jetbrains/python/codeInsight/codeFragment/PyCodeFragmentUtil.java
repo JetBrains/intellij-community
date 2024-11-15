@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.codeFragment;
 import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
 import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
+import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Pair;
@@ -133,7 +134,13 @@ public final class PyCodeFragmentUtil {
   private static List<Instruction> getFragmentSubGraph(@NotNull List<Instruction> graph, int start, int end) {
     List<Instruction> instructions = new ArrayList<>();
     for (Instruction instruction : graph) {
-      final PsiElement element = instruction.getElement();
+      final PsiElement element;
+      if (instruction instanceof ConditionalInstruction conditionalInstruction) {
+        element = conditionalInstruction.getCondition();
+      }
+      else {
+        element = instruction.getElement();
+      }
       if (element != null) {
         if (CodeFragmentUtil.getPosition(element, start, end) == Position.INSIDE) {
           instructions.add(instruction);

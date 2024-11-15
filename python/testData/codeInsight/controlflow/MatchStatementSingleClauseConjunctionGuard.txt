@@ -3,10 +3,10 @@
 2(3) WRITE ACCESS: x
 3(4) element: PyBinaryExpression
 4(5,6) READ ACCESS: x
-5(13) element: null. Condition: x > 0:false
+5(10) element: null. Condition: x > 0:false
 6(7) element: null. Condition: x > 0:true
 7(8,9) READ ACCESS: x
-8(13) element: null. Condition: x < 10:false
+8(10) element: null. Condition: x < 10:false
 9(10) element: null. Condition: x < 10:true
 10(11) element: PyStatementList. Condition: x > 0 and x < 10:true
 11(12) element: PyExpressionStatement

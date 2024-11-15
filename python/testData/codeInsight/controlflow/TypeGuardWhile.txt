@@ -22,10 +22,12 @@
 21(22) element: PyWhileStatement
 22(23) READ ACCESS: checkit
 23(24) READ ACCESS: x
-24(25,30) element: PyCallExpression: checkit
-25(26) element: PyStatementList. Condition: checkit(x):true
-26(27) element: PyAssignmentStatement
-27(28) READ ACCESS: foo
-28(29) element: PyCallExpression: foo.bar
-29(21) WRITE ACCESS: x
-30() element: null
+24(25,26) element: PyCallExpression: checkit
+25(32) element: null. Condition: checkit(x):false
+26(27) element: null. Condition: checkit(x):true
+27(28) element: PyStatementList
+28(29) element: PyAssignmentStatement
+29(30) READ ACCESS: foo
+30(31) element: PyCallExpression: foo.bar
+31(21) WRITE ACCESS: x
+32() element: null

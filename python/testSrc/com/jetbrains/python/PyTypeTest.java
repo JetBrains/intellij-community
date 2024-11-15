@@ -287,6 +287,74 @@ public class PyTypeTest extends PyTestCase {
              """);
   }
 
+  public void testIfIsInstanceOr1() {
+    doTest("Union[str, int]",
+           """
+               def foo(a):
+                   if isinstance(a, int) or isinstance(a, str):
+                       expr = a
+           """);
+  }
+
+  public void testIfIsInstanceOr2() {
+    doTest("Union[B, A, int, str]",
+           """
+           class A:
+               pass
+           
+           class B:
+               pass
+          
+           def f(a: object):
+               if isinstance(a, str) or isinstance(a, int) or isinstance(a, A) or isinstance(a, B):
+                   expr = a
+               else:
+                   pass
+           """);
+  }
+
+  public void testIfIsInstanceAnd1() {
+    doTest("A",
+           """
+             class A:
+                 pass
+             
+             def f(a):
+                 if isinstance(a, (str, A)) and isinstance(a, (A, int)):
+                     expr = a
+             """);
+  }
+
+  public void testIfIsInstanceAnd2() {
+    doTest("A",
+           """
+             class A:
+                 pass
+             
+             class B:
+                 pass
+             
+             def f(a):
+                 if isinstance(a, (str, A)) and isinstance(a, (A, int)) and isinstance(a, (B, A)):
+                     expr = a
+             """);
+  }
+
+  public void testIfIsInstanceLogicalExpressions() {
+    doTest("Union[B, str]",
+           """
+             class A:
+                 pass
+             
+             class B:
+                 pass
+             
+             def f(a):
+                 if isinstance(a, (str, A, int)) and not isinstance(a, (A, int)) or isinstance(a, B):
+                     expr = a
+             """);
+  }
+
   // PY-4383
   public void testAssertIsInstance() {
     doTest("int",
@@ -3335,7 +3403,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-9634
   public void testAfterIsInstanceAndAttributeUsage() {
-    doTest("Union[int, {bar}]",
+    doTest("Union[{bar}, int]",
            """
              def bar(y):
                  if isinstance(y, int):
@@ -4108,28 +4176,34 @@ public class PyTypeTest extends PyTestCase {
     doTest("int", "((expr)) = 42");
   }
 
-  public void testElif() {
-    doTest("float",
+  public void testElif1() {
+    doTest("str",
            """
-             def foo(a: int | str | float):
-                 if isinstance(a, int):
-                     pass
-                 elif isinstance(a, str):
-                     pass
-                 else:
-                     expr = a
-             """);
+            class A:
+                pass
+            
+            def foo(a: int | str | A):
+                if isinstance(a, A):
+                    pass
+                elif isinstance(a, int):
+                    pass
+                else:
+                    expr = a
+            """);
   }
 
   public void testElif2() {
-    doTest("float",
+    doTest("A",
            """
-             def foo(a: int | str | float):
-                 if isinstance(a, int):
-                     pass
-                 elif not isinstance(a, str):
-                     expr = a
-             """);
+            class A:
+                pass
+            
+            def foo(a: int | str | A):
+               if isinstance(a, int):
+                   pass
+               elif not isinstance(a, str):
+                   expr = a
+            """);
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
