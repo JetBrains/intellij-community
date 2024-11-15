@@ -55,6 +55,7 @@ jobs:
         with:
           name: dmg-build-scripts
           if-no-files-found: 'error'
+          retention-days: 1
           path: ${{env.artifacts_dir}}/macos-dmg-build/
   build-dmg:
     runs-on: macos-latest
