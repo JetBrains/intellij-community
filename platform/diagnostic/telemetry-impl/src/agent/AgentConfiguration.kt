@@ -61,7 +61,7 @@ data class AgentConfiguration(
   fun toJavaAgentSettings(): Properties {
     return Properties().apply {
       put("otel.traces.exporter", "otlp")
-      put("otel.exporter.otlp.endpoint", traceEndpoint.getHostFqdn())
+      put("otel.exporter.otlp.traces.endpoint", traceEndpoint.toString())
 
       put("otel.service.name", serviceName)
 
@@ -88,9 +88,5 @@ data class AgentConfiguration(
         }
       }
     }
-  }
-
-  private fun URI.getHostFqdn(): String {
-    return "$scheme://$host:$port"
   }
 }
