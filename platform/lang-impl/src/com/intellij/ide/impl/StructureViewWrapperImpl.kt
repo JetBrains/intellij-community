@@ -10,6 +10,7 @@ import com.intellij.ide.structureView.StructureViewWrapper
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.impl.StructureViewComposite.StructureViewDescriptor
+import com.intellij.ide.structureView.impl.StructureViewState
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.lang.LangBundle
 import com.intellij.lang.PsiStructureViewFactory
@@ -28,6 +29,7 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.impl.ProjectManagerImpl.Companion.isLight
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
@@ -72,9 +74,11 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 @OptIn(FlowPreview::class)
-class StructureViewWrapperImpl(private val project: Project,
-                               private val myToolWindow: ToolWindow,
-                               private val coroutineScope: CoroutineScope) : StructureViewWrapper, Disposable {
+class StructureViewWrapperImpl(
+  private val project: Project,
+  private val myToolWindow: ToolWindow,
+  private val coroutineScope: CoroutineScope,
+) : StructureViewWrapper, Disposable {
   private var myFile: VirtualFile? = null
   private var myStructureView: StructureView? = null
   private var myFileEditor: FileEditor? = null
@@ -155,6 +159,11 @@ class StructureViewWrapperImpl(private val project: Project,
     PsiStructureViewFactory.EP_NAME.addChangeListener({ clearCaches() }, this)
     StructureViewBuilder.EP_NAME.addChangeListener({ clearCaches() }, this)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(STRUCTURE_CHANGED, Runnable { clearCaches() })
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosingBeforeSave(project: Project) {
+        StructureViewState.getInstance(project).selectedTab = myToolWindow.contentManager.selectedContent?.tabName
+      }
+    })
 
     coroutineScope.launch {
       rebuildRequests
@@ -358,7 +367,7 @@ class StructureViewWrapperImpl(private val project: Project,
         myStructureView!!.storeState()
         contentManager.selectedContent?.tabName
           ?.takeIf { it.isNotEmpty() }
-          ?.let { project.putUserData(STRUCTURE_VIEW_SELECTED_TAB_KEY, it) }
+          ?.let { StructureViewState.getInstance(project).selectedTab = it }
         Disposer.dispose(myStructureView!!)
         myStructureView = null
         myFileEditor = null
@@ -440,7 +449,7 @@ class StructureViewWrapperImpl(private val project: Project,
       for (i in panels.indices) {
         val content = ContentFactory.getInstance().createContent(panels[i], names[i], false)
         contentManager.addContent(content)
-        val previouslySelectedTab = project.getUserData(STRUCTURE_VIEW_SELECTED_TAB_KEY)
+        val previouslySelectedTab = StructureViewState.getInstance(project).selectedTab
         if (panels.size > 1 && names[i] == previouslySelectedTab) {
           contentManager.setSelectedContent(content)
         }
