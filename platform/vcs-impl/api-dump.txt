@@ -118,6 +118,7 @@ c:com.intellij.openapi.diff.impl.patch.PatchSyntaxException
 - getLine():I
 - getMessage():java.lang.String
 f:com.intellij.openapi.diff.impl.patch.TextPatchBuilder
+- s:buildPatch(java.util.Collection,java.nio.file.Path,Z):java.util.List
 - s:buildPatch(java.util.Collection,java.nio.file.Path,Z,java.lang.Runnable):java.util.List
 - s:buildPatchHunks(java.lang.String,java.lang.String):java.util.List
 - s:buildPatchHunks(java.lang.String,java.lang.String,I):java.util.List
