@@ -44,17 +44,17 @@ final class OverwrittenFieldAnalyzer {
     new StandardDataFlowInterpreter(flow, listener) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
-        if (instructionState.getInstruction() instanceof ReturnInstruction) {
+        if (instructionState.getInstruction() instanceof ReturnInstruction && !listener.myAnchors.isEmpty()) {
           DfaMemoryState state = instructionState.getMemoryState();
           for (DfaValue value : factory.getValues()) {
             if (value instanceof DfaVariableValue var && var.getDescriptor() == WriteNotReadDescriptor.INSTANCE) {
               DfaAnchor anchor = state.getDfType(var).getConstantOfType(DfaAnchor.class);
               if (anchor != null) {
                 listener.myAnchors.remove(anchor);
+                if (listener.myAnchors.isEmpty()) break;
               }
             }
           }
-          return DfaInstructionState.EMPTY_ARRAY;
         }
         return super.acceptInstruction(instructionState);
       }
