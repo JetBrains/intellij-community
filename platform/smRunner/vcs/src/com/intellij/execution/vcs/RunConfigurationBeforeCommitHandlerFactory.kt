@@ -18,6 +18,7 @@ import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
+import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
@@ -177,7 +178,8 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
-      val testResultForm = executionConsole?.component as? SMTestRunnerResultsForm
+      val testResultForm = getTestRunnerResultsForm(executionConsole)
+                           ?: getTestRunnerResultsForm((executionConsole as? ConsoleViewWithDelegate)?.delegate)
       val processListener = object : ProcessAdapter() {
         override fun processTerminated(event: ProcessEvent) {
           val result = RunConfigurationResult(
@@ -203,6 +205,9 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
       continuation.resume(null)
     }
   }
+
+  private fun getTestRunnerResultsForm(executionConsole: ExecutionConsole?): SMTestRunnerResultsForm? =
+    (executionConsole?.component as? SMTestRunnerResultsForm)
 
   private fun createCommitProblem(descriptions: List<FailureDescription>): CommitProblem? {
     return when {
