@@ -19,9 +19,16 @@ import java.util.function.Supplier;
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 public final class SystemInfo {
+  /** Use {@link com.intellij.util.system.OS} instead */
+  @ApiStatus.Obsolete
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
+  /** Use {@link com.intellij.util.system.OS#version} instead */
+  @ApiStatus.Obsolete
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
+  /** Use {@link CpuArch} instead */
+  @ApiStatus.Obsolete
   public static final String OS_ARCH = System.getProperty("os.arch");
+
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");

@@ -5449,6 +5449,7 @@ e:com.intellij.util.system.OS
 - sf:Other:com.intellij.util.system.OS
 - sf:Windows:com.intellij.util.system.OS
 - sf:macOS:com.intellij.util.system.OS
+- f:version:java.lang.String
 - s:fromString(java.lang.String):com.intellij.util.system.OS
 - getPlatform():com.intellij.execution.Platform
 - s:valueOf(java.lang.String):com.intellij.util.system.OS
