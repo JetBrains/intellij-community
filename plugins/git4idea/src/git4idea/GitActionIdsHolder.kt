@@ -11,7 +11,9 @@ class GitActionIdsHolder : ActionIdsHolder {
     ABORT("git4idea.rebase.abort"),
     CONTINUE("git4idea.rebase.continue"),
     RETRY("git4idea.rebase.retry"),
-    RESOLVE("git4idea.rebase.resolve")
+    RESOLVE("git4idea.rebase.resolve"),
+
+    GPG_AGENT_CONFIGURATION_SUCCESS_MANUAL("git.gpg.agent.configuration.success.manual.action"),
   }
 
   override fun getActionsIds(): List<String> = Id.entries.map(Id::id).toList()

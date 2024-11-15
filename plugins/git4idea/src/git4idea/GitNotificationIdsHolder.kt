@@ -116,7 +116,9 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       UNTRACKED_FIES_OVERWITTEN,
       TAGS_LOADING_FAILED,
       OPEN_IN_BROWSER_ERROR,
-      IGNORE_FILE_GENERATION_ERROR
+      IGNORE_FILE_GENERATION_ERROR,
+      GPG_AGENT_CONFIGURATION_SUCCESS,
+      GPG_AGENT_CONFIGURATION_ERROR,
     )
   }
 
@@ -232,5 +234,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val TAGS_LOADING_FAILED = "git.tags.loading.failed"
     const val OPEN_IN_BROWSER_ERROR: String = "git.open.in.browser.error"
     const val IGNORE_FILE_GENERATION_ERROR: String = "git.ignore.file.generation.error"
+    const val GPG_AGENT_CONFIGURATION_SUCCESS = "git.gpg.agent.configuration.success"
+    const val GPG_AGENT_CONFIGURATION_ERROR = "git.gpg.agent.configuration.error"
   }
 }
