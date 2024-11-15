@@ -728,6 +728,7 @@ a:com.intellij.notification.NotificationAction
 - s:create(java.util.function.Supplier,java.util.function.BiConsumer):com.intellij.notification.NotificationAction
 - s:createExpiring(java.lang.String,java.util.function.BiConsumer):com.intellij.notification.NotificationAction
 - s:createSimple(java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction
+- s:createSimple(java.lang.String,java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction
 - s:createSimple(java.util.function.Supplier,java.lang.Runnable):com.intellij.notification.NotificationAction
 - s:createSimpleExpiring(java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction
 - s:createSimpleExpiring(java.lang.String,java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction

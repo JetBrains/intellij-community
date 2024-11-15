@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,12 @@ public abstract class NotificationAction extends DumbAwareAction {
     @NotNull BiConsumer<? super AnActionEvent, ? super Notification> action
   ) {
     return new Simple(text, action, true, action, null);
+  }
+
+  public static @NotNull NotificationAction createSimple(@NotNull @NotificationContent String text,
+                                                         @NotNull @NonNls String actionId,
+                                                         @NotNull Runnable action) {
+    return new Simple(text, (event, notification) -> action.run(), false, action, actionId);
   }
 
   public static @NotNull NotificationAction createSimple(@NotNull @NotificationContent String text, @NotNull Runnable action) {

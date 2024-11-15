@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.io.write
 import git4idea.commands.GitScriptGenerator
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_BACKUP_FILE_NAME
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_FILE_NAME
@@ -43,6 +42,7 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -111,7 +111,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     var needBackup = gpgAgentConf.exists()
     if (!needBackup) {
       LOG.debug("Cannot locate $gpgAgentConf, creating new")
-      gpgAgentConf.write("$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY ${gpgAgentPaths.gpgPinentryAppLauncherConfigPath}")
+      writeAgentConfig(gpgAgentPaths, GpgAgentConfig(gpgAgentConf, emptyMap()))
       restartAgent(executable)
       needBackup = false
     }
@@ -128,7 +128,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
         LOG.debug("$gpgAgentConfBackup already exist, skipping configuration backup")
       }
       else if (backupExistingConfig(gpgAgentPaths, config)) {
-        changePinentryProgram(gpgAgentPaths, config)
+        writeAgentConfig(gpgAgentPaths, config)
         restartAgent(executable)
       }
     }
@@ -194,17 +194,32 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     return true
   }
 
-  private fun changePinentryProgram(gpgAgentPaths: GpgAgentPaths, config: GpgAgentConfig) {
+  private fun writeAgentConfig(gpgAgentPaths: GpgAgentPaths, config: GpgAgentConfig) {
     val pinentryAppLauncherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
     val (configPath, configContent) = config
     val configToSave = configContent.toMutableMap()
     configToSave.put(GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY, pinentryAppLauncherConfigPath)
+    val notificator = project.service<GpgAgentConfigurationNotificator>()
     try {
       FileUtil.writeToFile(configPath.toFile(),
                            configToSave.map { (key, value) -> "$key $value".trimEnd() }.joinToString(separator = "\n"))
+
+      notificator.notifyConfigurationSuccessful(gpgAgentPaths)
     }
     catch (e: IOException) {
-      LOG.error("Cannot change config $configPath", e)
+      LOG.warn("Cannot change config $configPath", e)
+      notificator.notifyConfigurationFailed(e)
+      deleteBackup(gpgAgentPaths)
+    }
+  }
+
+  private fun deleteBackup(paths: GpgAgentPaths) {
+    val gpgAgentConfBackup = paths.gpgAgentConfBackup
+    try {
+      Files.deleteIfExists(gpgAgentConfBackup)
+    }
+    catch (e: Exception) {
+      LOG.warn("Cannot delete config $gpgAgentConfBackup", e)
     }
   }
 
