@@ -215,7 +215,6 @@ f:com.intellij.execution.process.WinProcessManager
 f:com.intellij.jna.JnaLoader
 - <init>():V
 - s:isLoaded():Z
-- s:isSupportsDirectMapping():Z
 - s:load(com.intellij.openapi.diagnostic.Logger):V
 f:com.intellij.openapi.CompositeDisposable
 - com.intellij.openapi.Disposable
