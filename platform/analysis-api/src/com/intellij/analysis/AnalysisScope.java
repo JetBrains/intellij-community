@@ -455,10 +455,9 @@ public class AnalysisScope {
     return switch (myType) {
       case CUSTOM -> myScope.getDisplayName();
       case MODULE -> AnalysisBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
-      case MODULES -> {
-        String modules = StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", ");
-        yield AnalysisBundle.message("scope.module.list", modules, myModules.size());
-      }
+      case MODULES -> AnalysisBundle.message("scope.module.list",
+                                             StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", "),
+                                             myModules.size());
       case PROJECT -> AnalysisBundle.message("scope.project", myProject.getName());
       case FILE -> AnalysisBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement, myModule));
       case DIRECTORY -> AnalysisBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement, myModule));
@@ -471,19 +470,10 @@ public class AnalysisScope {
     return switch (myType) {
       case CUSTOM -> myScope.getDisplayName();
       case MODULE -> AnalysisBundle.message("scope.option.module", myModule.getName());
-      case MODULES -> {
-        String modules = StringUtil.join(myModules, Module::getName, ", ");
-        yield AnalysisBundle.message("scope.module.list", modules, myModules.size());
-      }
+      case MODULES -> AnalysisBundle.message("scope.module.list", StringUtil.join(myModules, Module::getName, ", "), myModules.size());
       case PROJECT -> AnalysisBundle.message("scope.project", myProject.getName());
-      case FILE -> {
-        String relativePath = getRelativePath();
-        yield AnalysisBundle.message("scope.file", relativePath);
-      }
-      case DIRECTORY -> {
-        String relativeDirPath = getRelativePath();
-        yield AnalysisBundle.message("scope.directory", relativeDirPath);
-      }
+      case FILE -> AnalysisBundle.message("scope.file", getRelativePath());
+      case DIRECTORY -> AnalysisBundle.message("scope.directory", getRelativePath());
       case VIRTUAL_FILES -> AnalysisBundle.message("scope.selected.files");
       default -> "";
     };
@@ -691,6 +681,6 @@ public class AnalysisScope {
 
   @Override
   public String toString() {
-    return ReadAction.compute(() -> toSearchScope().toString());
+    return getDisplayName();
   }
 }
