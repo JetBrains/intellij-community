@@ -111,7 +111,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     if (controllers.isEmpty()) return;
     final List<TraceElement> trace = controllers.get(0).getTrace();
-    final CollectionTree tree = new CollectionTree(trace, context, builder);
+    final CollectionTree tree = new CollectionTree(trace, context, builder, "setTrace#Tree#0#");
     final CollectionView sourceView = new CollectionView(tree);
     controllers.get(0).register(sourceView);
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
@@ -127,7 +127,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final TraceController previous = controllers.get(i - 1);
       final TraceController current = controllers.get(i);
 
-      final StreamTracesMappingView view = new StreamTracesMappingView(context, previous, current, builder);
+      final StreamTracesMappingView view = new StreamTracesMappingView(context, previous, current, builder, "setTrace#MappingView#" + i + "#");
       tab.setContent(view, BorderLayout.CENTER);
     }
 
@@ -148,7 +148,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       resultTab.setContent(label, BorderLayout.CENTER);
     }
 
-    final FlatView flatView = new FlatView(controllers, context, builder);
+    final FlatView flatView = new FlatView(controllers, context, builder, "setTrace#FlatView#");
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
     myCenterPane.revalidate();
     myCenterPane.repaint();

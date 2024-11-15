@@ -13,7 +13,7 @@ import javax.swing.JTree
  * @author Vitaliy.Bibaev
  */
 class ExceptionView(context: EvaluationContextWrapper, ex: TraceElement, builder: CollectionTreeBuilder)
-  : CollectionView(JBLabel(StreamDebuggerBundle.message("exception.label")), SingleElementTree(ex.value!!, listOf(ex), context, builder)) {
+  : CollectionView(JBLabel(StreamDebuggerBundle.message("exception.label")), SingleElementTree(ex.value!!, listOf(ex), context, builder, "ExceptionView")) {
   init {
     instancesTree.cellRenderer = object : TraceTreeCellRenderer() {
       override fun customizeCellRenderer(tree: JTree,

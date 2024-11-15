@@ -22,8 +22,9 @@ public class SingleElementTree extends CollectionTree {
   SingleElementTree(@Nullable Value value,
                     @NotNull List<TraceElement> traceElements,
                     @NotNull EvaluationContextWrapper evaluationContext,
-                    @NotNull CollectionTreeBuilder collectionTreeBuilder) {
-    super(Collections.singletonList(value), traceElements, evaluationContext, collectionTreeBuilder);
+                    @NotNull CollectionTreeBuilder collectionTreeBuilder,
+                    @NotNull String debugName) {
+    super(Collections.singletonList(value), traceElements, evaluationContext, collectionTreeBuilder, debugName);
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {

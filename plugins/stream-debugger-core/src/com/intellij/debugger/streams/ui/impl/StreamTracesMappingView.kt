@@ -12,5 +12,6 @@ class StreamTracesMappingView(
   evaluationContext: EvaluationContextWrapper,
   prevController: TraceController,
   nextController: TraceController,
-  builder: CollectionTreeBuilder
-) : FlatView(listOf(prevController, nextController), evaluationContext, builder)
+  builder: CollectionTreeBuilder,
+  debugName: String
+) : FlatView(listOf(prevController, nextController), evaluationContext, builder, debugName)

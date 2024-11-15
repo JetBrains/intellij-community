@@ -45,6 +45,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private final Map<TraceElement, TreePath> myValue2Path = new HashMap<>();
   private final Map<TreePath, TraceElement> myPath2Value = new HashMap<>();
   private final int myItemsCount;
+  private final String myDebugName;
   private Set<TreePath> myHighlighted = Collections.emptySet();
   private final EventDispatcher<ValuesSelectionListener> mySelectionDispatcher = EventDispatcher.create(ValuesSelectionListener.class);
   private final EventDispatcher<PaintingListener> myPaintingDispatcher = EventDispatcher.create(PaintingListener.class);
@@ -55,11 +56,13 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   CollectionTree(@NotNull List<@Nullable Value> values,
                  @NotNull List<TraceElement> traceElements,
                  @NotNull EvaluationContextWrapper evaluationContextWrapper,
-                 @NotNull CollectionTreeBuilder collectionTreeBuilder) {
+                 @NotNull CollectionTreeBuilder collectionTreeBuilder,
+                 @NotNull String debugName) {
     super(evaluationContextWrapper.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
     myBuilder = collectionTreeBuilder;
     myItemsCount = values.size();
+    myDebugName = debugName;
     final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(values, evaluationContextWrapper));
     setRoot(root, false);
     root.setLeaf(false);
@@ -118,8 +121,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
   CollectionTree(@NotNull List<TraceElement> traceElements,
                  @NotNull EvaluationContextWrapper evaluationContextWrapper,
-                 @NotNull CollectionTreeBuilder collectionTreeBuilder) {
-    this(ContainerUtil.map(traceElements, TraceElement::getValue), traceElements, evaluationContextWrapper, collectionTreeBuilder);
+                 @NotNull CollectionTreeBuilder collectionTreeBuilder,
+                 @NotNull String debugName) {
+    this(ContainerUtil.map(traceElements, TraceElement::getValue), traceElements, evaluationContextWrapper, collectionTreeBuilder, debugName);
   }
 
   @Override
