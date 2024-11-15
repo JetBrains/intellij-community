@@ -56,6 +56,7 @@ c:com.intellij.analysis.BaseAnalysisActionDialog
 - p:createCenterPanel():javax.swing.JComponent
 - p:getAdditionalActionSettings(com.intellij.openapi.project.Project):javax.swing.JComponent
 - getOKButtonText():java.lang.String
+- p:getOptions():com.intellij.analysis.AnalysisUIOptions
 - getPreferredFocusedComponent():javax.swing.JComponent
 - getScope(com.intellij.analysis.AnalysisScope):com.intellij.analysis.AnalysisScope
 - getScope(com.intellij.analysis.AnalysisUIOptions,com.intellij.analysis.AnalysisScope,com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):com.intellij.analysis.AnalysisScope

@@ -122,7 +122,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       int type = myOptions.SCOPE_TYPE;
       List<ModelScopeItemView> preselectedScopes = ContainerUtil.filter(myViewItems, x -> x.scopeId == type);
 
-      if (preselectedScopes.size() >= 1) {
+      if (!preselectedScopes.isEmpty()) {
         LOG.assertTrue(preselectedScopes.size() == 1, "preselectedScopes.size() == 1");
         preselectedScopes.get(0).button.setSelected(true);
         return;
@@ -165,6 +165,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @Deprecated
   public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions, @NotNull AnalysisScope defaultScope, @NotNull Project project, Module module) {
     return getScope(defaultScope);
+  }
+
+  protected @NotNull AnalysisUIOptions getOptions() {
+    return myOptions;
   }
 
   public boolean isProjectScopeSelected() {

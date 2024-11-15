@@ -32,7 +32,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -94,9 +93,12 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
       }
 
       @Override
-      public void elementChosen(ChooseByNamePopup popup, final Object element) {
+      public void elementChosen(ChooseByNamePopup popup, Object element) {
         ApplicationManager.getApplication().invokeLater(
-          () -> runInspection(project, (((InspectionElement)element)).getToolWrapper().getShortName(), virtualFiles, psiElement, psiFile));
+          () -> {
+            String shortName = (((InspectionElement)element)).getToolWrapper().getShortName();
+            runInspection(project, shortName, virtualFiles, psiElement, psiFile);
+          });
       }
     }, false);
   }
@@ -111,7 +113,8 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
                                    @Nullable VirtualFile virtualFile,
                                    @Nullable PsiElement psiElement,
                                    @Nullable PsiFile psiFile) {
-    runInspection(project, shortName, virtualFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {virtualFile} , psiElement, psiFile);
+    VirtualFile[] files = virtualFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {virtualFile};
+    runInspection(project, shortName, files, psiElement, psiFile);
   }
 
   public static void runInspection(@NotNull Project project,
@@ -121,14 +124,11 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
                                    @Nullable PsiFile psiFile) {
     final PsiElement element = psiFile == null ? psiElement : psiFile;
     final InspectionProfile currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    final InspectionToolWrapper<?, ?> toolWrapper = element != null ? currentProfile.getInspectionTool(shortName, element)
-                                                                    : currentProfile.getInspectionTool(shortName, project);
+    final InspectionToolWrapper<?, ?> toolWrapper = element != null
+                                                    ? currentProfile.getInspectionTool(shortName, element)
+                                                    : currentProfile.getInspectionTool(shortName, project);
     LOGGER.assertTrue(toolWrapper != null, "Missed inspection: " + shortName);
-
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-
-    record BaseAnalysisActionDialogInfo(@NotNull AnalysisScope analysisScope, @NotNull List<ModelScopeItem> items) {
-    }
+    record BaseAnalysisActionDialogInfo(@NotNull AnalysisScope analysisScope, @NotNull List<ModelScopeItem> items) {}
 
     ReadAction.nonBlocking(() -> {
       final Module module = findModuleForFiles(project, virtualFiles);
@@ -153,113 +153,10 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
       }
       List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(project, analysisScope, module, psiElement);
       return new BaseAnalysisActionDialogInfo(analysisScope, items);
-    }).finishOnUiThread(ModalityState.nonModal(), info -> {
-      final AnalysisUIOptions options = AnalysisUIOptions.getInstance(project);
-      final FileFilterPanel fileFilterPanel = new FileFilterPanel();
-      fileFilterPanel.init(options);
-
-      final AnalysisScope initialAnalysisScope = info.analysisScope;
-      final BaseAnalysisActionDialog dialog =
-        new BaseAnalysisActionDialog(IdeBundle.message("goto.inspection.action.dialog.title", toolWrapper.getDisplayName()),
-                                     CodeInsightBundle.message("analysis.scope.title", InspectionsBundle
-                                       .message("inspection.action.noun")), project,
-                                     info.items, options, true) {
-
-          private InspectionToolWrapper<?, ?> myUpdatedSettingsToolWrapper;
-
-          @Override
-          protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project) {
-            final JPanel panel = new JPanel(new GridBagLayout());
-            final boolean hasOptionsPanel = OptionPaneRenderer.hasSettings(toolWrapper.getTool());
-            final GridBag constraints = new GridBag()
-              .setDefaultWeightX(1)
-              .setDefaultWeightY(hasOptionsPanel ? 0 : 1)
-              .setDefaultFill(GridBagConstraints.HORIZONTAL);
-
-            panel.add(fileFilterPanel.getPanel(), constraints.nextLine());
-
-            if (hasOptionsPanel) {
-              myUpdatedSettingsToolWrapper = copyToolWithSettings(toolWrapper);
-              final JComponent optionsPanel =
-                OptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable, project);
-              LOGGER.assertTrue(optionsPanel != null);
-
-              final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
-              separator.setBorder(JBUI.Borders.empty());
-              panel.add(separator, constraints.nextLine().insetTop(20));
-
-              optionsPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(optionsPanel));
-              final var scrollPane = InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel);
-              final var preferredSize = scrollPane.getPreferredSize();
-              scrollPane.setPreferredSize(new Dimension(preferredSize.width, Math.min(preferredSize.height, 400)));
-              panel.add(scrollPane, constraints.nextLine());
-            }
-
-            return panel;
-          }
-
-          @Override
-          public @NotNull AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
-            final AnalysisScope scope = super.getScope(defaultScope);
-            final GlobalSearchScope filterScope = fileFilterPanel.getSearchScope();
-            if (filterScope == null) {
-              return scope;
-            }
-            scope.setFilter(filterScope);
-            return scope;
-          }
-
-          private AnalysisScope getScope() {
-            return getScope(initialAnalysisScope);
-          }
-
-          private InspectionToolWrapper<?, ?> getToolWrapper() {
-            return myUpdatedSettingsToolWrapper == null ? toolWrapper : myUpdatedSettingsToolWrapper;
-          }
-
-          @Override
-          protected Action @NotNull [] createActions() {
-            final List<Action> actions = new ArrayList<>();
-            final boolean hasFixAll = toolWrapper.isCleanupTool();
-            actions.add(new AbstractAction(hasFixAll ? CodeInsightBundle.message("action.analyze.verb")
-                                                     : CommonBundle.getOkButtonText()) {
-              {
-                putValue(DEFAULT_ACTION, Boolean.TRUE);
-              }
-
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                AnalysisScope scope = getScope();
-                InspectionToolWrapper<?, ?> wrapper = getToolWrapper();
-                DumbService.getInstance(project)
-                  .smartInvokeLater(() -> RunInspectionIntention.rerunInspection(wrapper, managerEx, scope, null));
-                close(DialogWrapper.OK_EXIT_CODE);
-              }
-            });
-            if (hasFixAll) {
-              actions.add(new AbstractAction(IdeBundle.message("goto.inspection.action.fix.all")) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                  InspectionToolWrapper<?, ?> wrapper = getToolWrapper();
-                  InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
-                  managerEx.createNewGlobalContext()
-                    .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
-                  close(DialogWrapper.OK_EXIT_CODE);
-                }
-              });
-            }
-            actions.add(getCancelAction());
-            if (SystemInfo.isMac) {
-              Collections.reverse(actions);
-            }
-            return actions.toArray(new Action[0]);
-          }
-        };
-
-      //don't show if called for regexp inspection which makes no sense without injection
-      dialog.setShowInspectInjectedCode(!(Language.findLanguageByID(toolWrapper.getLanguage()) instanceof InjectableLanguage));
-      dialog.showAndGet();
-    }).submit(AppExecutorUtil.getAppExecutorService());
+    })
+      .finishOnUiThread(ModalityState.nonModal(),
+                        info -> new RunInspectionDialog(toolWrapper, project, info.items, info.analysisScope).showAndGet())
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static @Nullable Module findModuleForFiles(@NotNull Project project, VirtualFile @NotNull [] files) {
@@ -267,11 +164,131 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
     return ContainerUtil.getFirstItem(modules);
   }
 
-  private static InspectionToolWrapper<?, ?> copyToolWithSettings(final @NotNull InspectionToolWrapper tool) {
-    final Element options = new Element("copy");
-    tool.getTool().writeSettings(options);
-    final InspectionToolWrapper<?, ?> copiedTool = tool.createCopy();
-    copiedTool.getTool().readSettings(options);
-    return copiedTool;
+  private static class RunInspectionDialog extends BaseAnalysisActionDialog {
+
+    private final InspectionToolWrapper<?, ?> myToolWrapper;
+    private InspectionToolWrapper<?, ?> myUpdatedSettingsToolWrapper;
+    private final @NotNull Project myProject;
+    private final FileFilterPanel myFileFilterPanel;
+    private final AnalysisScope myInitialAnalysisScope;
+
+    RunInspectionDialog(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                        @NotNull Project project,
+                        @NotNull List<ModelScopeItem> items,
+                        AnalysisScope initialAnalysisScope) {
+      super(IdeBundle.message("goto.inspection.action.dialog.title", toolWrapper.getDisplayName()),
+            CodeInsightBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
+            project, items, AnalysisUIOptions.getInstance(project), true);
+      myToolWrapper = toolWrapper;
+      myProject = project;
+      myFileFilterPanel = new FileFilterPanel();
+      myFileFilterPanel.init(getOptions());
+      myInitialAnalysisScope = initialAnalysisScope;
+
+      //don't show if called for regexp inspection which makes no sense without injection
+      setShowInspectInjectedCode(!(Language.findLanguageByID(toolWrapper.getLanguage()) instanceof InjectableLanguage));
+      super.init();
+    }
+
+    @Override
+    protected void init() {
+      // do nothing when called from super constructor, super.init() is called from this class' constructor
+    }
+
+    @Override
+    protected @NotNull JComponent getAdditionalActionSettings(@NotNull Project project) {
+      final JPanel panel = new JPanel(new GridBagLayout());
+      final boolean hasOptionsPanel = OptionPaneRenderer.hasSettings(myToolWrapper.getTool());
+      final GridBag constraints = new GridBag()
+        .setDefaultWeightX(1)
+        .setDefaultWeightY(hasOptionsPanel ? 0 : 1)
+        .setDefaultFill(GridBagConstraints.HORIZONTAL);
+
+      panel.add(myFileFilterPanel.getPanel(), constraints.nextLine());
+
+      if (hasOptionsPanel) {
+        myUpdatedSettingsToolWrapper = copyToolWithSettings();
+        final JComponent optionsPanel =
+          OptionPaneRenderer.createOptionsPanel(myUpdatedSettingsToolWrapper.getTool(), myDisposable, project);
+        LOGGER.assertTrue(optionsPanel != null);
+
+        final var separator = new TitledSeparator(IdeBundle.message("goto.inspection.action.choose.inherit.settings.from"));
+        separator.setBorder(JBUI.Borders.empty());
+        panel.add(separator, constraints.nextLine().insetTop(20));
+
+        optionsPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(optionsPanel));
+        final var scrollPane = InspectionUiUtilKt.addScrollPaneIfNecessary(optionsPanel);
+        final var preferredSize = scrollPane.getPreferredSize();
+        scrollPane.setPreferredSize(new Dimension(preferredSize.width, Math.min(preferredSize.height, 400)));
+        panel.add(scrollPane, constraints.nextLine());
+      }
+
+      return panel;
+    }
+
+    private InspectionToolWrapper<?, ?> copyToolWithSettings() {
+      final Element options = new Element("copy");
+      myToolWrapper.getTool().writeSettings(options);
+      final InspectionToolWrapper<?, ?> copiedTool = myToolWrapper.createCopy();
+      copiedTool.getTool().readSettings(options);
+      return copiedTool;
+    }
+
+    @Override
+    public @NotNull AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
+      final AnalysisScope scope = super.getScope(defaultScope);
+      final GlobalSearchScope filterScope = myFileFilterPanel.getSearchScope();
+      if (filterScope == null) {
+        return scope;
+      }
+      scope.setFilter(filterScope);
+      return scope;
+    }
+
+    private AnalysisScope getScope() {
+      return getScope(myInitialAnalysisScope);
+    }
+
+    private InspectionToolWrapper<?, ?> getToolWrapper() {
+      return myUpdatedSettingsToolWrapper == null ? myToolWrapper : myUpdatedSettingsToolWrapper;
+    }
+
+    @Override
+    protected Action @NotNull [] createActions() {
+      final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+      final List<Action> actions = new ArrayList<>();
+      final boolean hasFixAll = myToolWrapper.isCleanupTool();
+      actions.add(new AbstractAction(hasFixAll ? CodeInsightBundle.message("action.analyze.verb") : CommonBundle.getOkButtonText()) {
+        {
+          putValue(DEFAULT_ACTION, Boolean.TRUE);
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          AnalysisScope scope = getScope();
+          InspectionToolWrapper<?, ?> wrapper = getToolWrapper();
+          DumbService.getInstance(myProject)
+            .smartInvokeLater(() -> RunInspectionIntention.rerunInspection(wrapper, managerEx, scope, null));
+          close(OK_EXIT_CODE);
+        }
+      });
+      if (hasFixAll) {
+        actions.add(new AbstractAction(IdeBundle.message("goto.inspection.action.fix.all")) {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            InspectionToolWrapper<?, ?> wrapper = getToolWrapper();
+            InspectionProfileImpl cleanupToolProfile = RunInspectionIntention.createProfile(wrapper, managerEx, null);
+            managerEx.createNewGlobalContext()
+              .codeCleanup(getScope(), cleanupToolProfile, "Cleanup by " + wrapper.getDisplayName(), null, false);
+            close(OK_EXIT_CODE);
+          }
+        });
+      }
+      actions.add(getCancelAction());
+      if (SystemInfo.isMac) {
+        Collections.reverse(actions);
+      }
+      return actions.toArray(new Action[0]);
+    }
   }
 }
