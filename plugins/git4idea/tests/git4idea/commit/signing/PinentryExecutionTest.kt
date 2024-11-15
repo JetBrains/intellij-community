@@ -106,7 +106,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
   private fun requestPasswordAndAssert(paths: GpgAgentPaths) {
     PinentryService.getInstance(project).use { pinentryData ->
-      val keyPassword = PinentryTestUtil.generatePassword(Random.nextInt(2, 200))
+      val keyPassword = PinentryTestUtil.generatePassword(Random.nextInt(4, 200))
       setUiRequester { keyPassword }
       val output = requestPassword(paths, pinentryData)
 
