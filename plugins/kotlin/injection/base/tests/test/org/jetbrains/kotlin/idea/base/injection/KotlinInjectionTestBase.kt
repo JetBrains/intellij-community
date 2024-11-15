@@ -392,6 +392,20 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         injectedText = "s text smissingValues text s"
     )
 
+    fun testEditorShortShreadsInInterpolatedInjectionWithEscapes() = doInjectionPresentTest(
+        """
+        const val s = "text1"
+        // language=TEXT
+        val test = "${'$'}s <caret>text"
+        """,
+        languageId = PlainTextLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+        shreds = listOf(
+            ShredInfo(range(0, 0), hostRange = range(1, 1)),
+            ShredInfo(range(0, 10), hostRange = range(3, 8), prefix = "text1")
+        ),
+        injectedText = "text1 text"
+    )
+
     fun testEditorLongShreadsInInterpolatedInjection() = doInjectionPresentTest(
         """
         val s = 42

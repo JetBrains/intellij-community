@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.injection
 
+import com.intellij.openapi.util.text.StringUtilRt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -16,11 +17,11 @@ internal class K2KotlinLanguageInjectionPerformer : KotlinLanguageInjectionPerfo
         allowAnalysisOnEdt { // in refactorings this code might run in a write action on EDT
             allowAnalysisFromWriteAction {
                 analyze(exp) {
-                    exp.evaluate()?.takeUnless { it is KaConstantValue.ErrorValue }
+                    val value = exp.evaluate()?.takeUnless { it is KaConstantValue.ErrorValue }
                         ?.render()
+                    if (value != null) StringUtilRt.unquoteString(value) else null
                 }
             }
-
         }
     }
 }
