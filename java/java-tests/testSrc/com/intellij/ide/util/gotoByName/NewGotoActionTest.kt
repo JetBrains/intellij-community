@@ -2,10 +2,7 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.searchEverywhere.OptionItemPresentation
-import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
-import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
-import com.intellij.searchEverywhere.SearchEverywhereViewItemsProvider
+import com.intellij.searchEverywhere.*
 import com.intellij.searchEverywhere.core.DefaultSearchEverywhereDispatcher
 import com.intellij.searchEverywhere.core.DefaultViewItemsProvider
 import com.intellij.searchEverywhere.mocks.SearchEverywhereItemsProviderMock
@@ -68,6 +65,42 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
       delay(5000)
       println("Canceling search")
       searchJob.cancel()
+      searchJob.join()
+    }
+  }
+
+  @Suppress("unused")
+  fun `mock test search dispatcher with limits`() {
+    val providers = createMockProviders(listOf(
+      SearchEverywhereItemsProviderMock(delayMillis = 100, delayStep = 1, resultPrefix = "alpha"),
+      SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5, resultPrefix = "bravo")
+    ))
+
+    val providersWithLimits = providers.mapIndexed { index, searchEverywhereViewItemsProvider ->
+      (searchEverywhereViewItemsProvider as SearchEverywhereViewItemsProvider<*, *, String>) to (index + 1) * 3
+    }.toMap()
+
+    val existingResults = listOf("alpha 1", "bravo 2", "bravo 5").map {
+      SearchEverywhereViewItem(it, OptionItemPresentation(name = it), weight = 0, dataContext = SimpleDataContext.getProjectContext(project))
+    }
+
+    runBlocking {
+      val searchJob = launch {
+        println("Search will start")
+        DefaultSearchEverywhereDispatcher().search(providers, providersWithLimits, "item", existingResults).collect {
+          println(it.item)
+        }
+      }
+
+      searchJob.invokeOnCompletion {
+        if (searchJob.isCancelled) {
+          println("Search cancelled")
+        }
+        else {
+          println("Search completed")
+        }
+      }
+
       searchJob.join()
     }
   }
