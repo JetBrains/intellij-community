@@ -86,9 +86,6 @@ public final class PyDefUseUtil {
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
-                                  if (unreachableDueToVersionGuard(instruction)) {
-                                    return ControlFlowUtil.Operation.CONTINUE;
-                                  }
                                   if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
                                     var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
                                     if (typeGuardInstruction != null) {
@@ -123,14 +120,18 @@ public final class PyDefUseUtil {
                                     if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
                                       final String name = elementName(element);
                                       if (Comparing.strEqual(name, varName)) {
-                                        result.add(rwInstruction);
+                                        if (isReachableWithVersionChecks(rwInstruction)) {
+                                          result.add(rwInstruction);
+                                        }
                                         return ControlFlowUtil.Operation.CONTINUE;
                                       }
                                     }
                                   }
                                   else if (acceptImplicitImports && element instanceof PyImplicitImportNameDefiner implicit) {
                                     if (!implicit.multiResolveName(varName).isEmpty()) {
-                                      result.add(instruction);
+                                      if (isReachableWithVersionChecks(instruction)) {
+                                        result.add(instruction);
+                                      }
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
                                   }
@@ -139,12 +140,12 @@ public final class PyDefUseUtil {
     return result;
   }
 
-  private static boolean unreachableDueToVersionGuard(@NotNull Instruction instruction) {
+  private static boolean isReachableWithVersionChecks(@NotNull Instruction instruction) {
     PsiElement element = instruction.getElement();
-    if (element == null) return false;
+    if (element == null) return true;
     LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(element.getContainingFile());
     Version version = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
-    return !evaluateVersionsForElement(element).contains(version);
+    return evaluateVersionsForElement(element).contains(version);
   }
 
   @Nullable
