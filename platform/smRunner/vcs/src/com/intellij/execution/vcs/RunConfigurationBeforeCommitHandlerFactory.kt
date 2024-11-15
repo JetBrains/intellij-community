@@ -6,20 +6,16 @@ import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate
-import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
-import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ExecutionConsole
@@ -54,7 +50,6 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.Nls
 import kotlin.coroutines.resume
 
 private val LOG = logger<RunConfigurationBeforeCommitHandlerFactory>()
@@ -81,69 +76,6 @@ private class RunConfigurationBeforeCommitHandlerFactory : CheckinHandlerFactory
       return RunConfigurationBeforeCommitHandler(panel.project)
     }
     return CheckinHandler.DUMMY
-  }
-}
-
-private class RunConfigurationMultipleProblems(val problems: List<FailureDescription>) : CommitProblem {
-  override val text: @NlsSafe String
-    get() = problems.sortedBy {
-      when (it) {
-        is FailureDescription.TestsFailed -> 0
-        is FailureDescription.ProcessNonZeroExitCode -> 1
-        is FailureDescription.FailedToStart -> 2
-      }
-    }.joinToString("\n") { it.message }
-}
-
-private class RunConfigurationProblemWithDetails(val problem: FailureDescription) : CommitProblemWithDetails {
-  override val text: String
-    get() = problem.message
-
-  override fun showDetails(project: Project) {
-    when (problem) {
-      is FailureDescription.FailedToStart -> {
-        if (problem.configuration != null)
-          RunDialog.editConfiguration(project,
-                                      problem.configuration,
-                                      ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", problem.configuration.name))
-        else EditConfigurationsDialog(project).show()
-      }
-      is FailureDescription.ProcessNonZeroExitCode -> {
-        RunDialog.editConfiguration(project, problem.configuration,
-                                    ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", problem.configuration.name))
-      }
-      is FailureDescription.TestsFailed -> {
-        val (path, virtualFile) = getHistoryFile(project, problem.historyFileName)
-        if (virtualFile != null) {
-          AbstractImportTestsAction.doImport(project, virtualFile, ExecutionEnvironment.getNextUnusedExecutionId())
-        }
-        else {
-          LOG.error("File not found: $path")
-        }
-      }
-    }
-  }
-
-  override val showDetailsAction: String
-    get() =
-      if (problem is FailureDescription.TestsFailed) ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
-      else VcsBundle.message("before.commit.run.configuration.failed.edit.configuration")
-}
-
-private sealed class FailureDescription(val configName: String) {
-  abstract val message: @Nls String
-
-  class FailedToStart(configName: String, val configuration: RunnerAndConfigurationSettings?) : FailureDescription(configName) {
-    override val message
-      get() = VcsBundle.message("before.commit.run.configuration.failed.to.start", configName)
-  }
-  class TestsFailed(configName: String, val historyFileName: String, val testsResultText: String) : FailureDescription(configName) {
-    override val message
-      get() = VcsBundle.message("before.commit.run.configuration.tests.failed", configName, testsResultText)
-  }
-  class ProcessNonZeroExitCode(configName: String, val configuration: RunnerAndConfigurationSettings, val exitCode: Int) : FailureDescription(configName) {
-    override val message
-      get() = VcsBundle.message("before.commit.run.configuration.failed", configName, exitCode)
   }
 }
 
@@ -184,10 +116,6 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
 
     return createCommitProblem(problems)
   }
-
-  private class RunConfigurationResult(val exitCode: Int, val testResultsFormDescriptor: TestResultsFormDescriptor?)
-
-  private data class TestResultsFormDescriptor(val rootNode: SMTestProxy.SMRootTestProxy, val historyFileName: String)
 
   private suspend fun startConfiguration(executor: Executor,
                                          configurationSettings: RunnerAndConfigurationSettings,
@@ -367,7 +295,11 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
   }
 }
 
-private fun getHistoryFile(project: Project, fileName: String): Pair<String, VirtualFile?> {
+private class RunConfigurationResult(val exitCode: Int, val testResultsFormDescriptor: TestResultsFormDescriptor?)
+
+private data class TestResultsFormDescriptor(val rootNode: SMTestProxy.SMRootTestProxy, val historyFileName: String)
+
+internal fun getHistoryFile(project: Project, fileName: String): Pair<String, VirtualFile?> {
   val path = "${TestStateStorage.getTestHistoryRoot(project).path}/$fileName.xml"
   val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
   return Pair(path, virtualFile)
