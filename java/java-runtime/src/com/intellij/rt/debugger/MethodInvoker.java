@@ -190,19 +190,25 @@ public final class MethodInvoker {
         method = lookup.findConstructor(cls, mt);
       }
       else if (obj != null) {
-        method = lookup.findVirtual(cls, name, mt).bindTo(obj);
+        method = lookup.findVirtual(cls, name, mt);
       }
       else {
         method = lookup.findStatic(cls, name, mt);
       }
 
+      boolean vararg = method.isVarargsCollector();
+      if (obj != null) {
+        method = method.bindTo(obj);
+        if (vararg) {
+          method = method.asVarargsCollector(mt.parameterType(mt.parameterCount() - 1));
+        }
+      }
+
       Object result;
 
-      // handle the case where null is passed as the vararg array
-      // TODO: handle when vararg is not the only parameter
       int parameterCount = mt.parameterCount();
-      if (wrapped && parameterCount > 0) {
-        Class<?> lastParameterType = mt.parameterType(parameterCount - 1);
+      Class<?> lastParameterType = parameterCount > 0 ? mt.parameterType(parameterCount - 1) : null;
+      if (wrapped && vararg && parameterCount > 0) {
         if (args.length == parameterCount - 1 && lastParameterType.isArray()) {
           // add an empty array if empty vararg parameter is passed
           args = Arrays.copyOf(args, parameterCount);
@@ -210,7 +216,12 @@ public final class MethodInvoker {
         }
       }
       if (wrapped) {
-        result = method.invokeWithArguments(args);
+        if (vararg && args.length == parameterCount && lastParameterType.isAssignableFrom(args[args.length - 1].getClass())) {
+          result = method.asFixedArity().invokeWithArguments(args);
+        }
+        else {
+          result = method.invokeWithArguments(args);
+        }
       }
       else {
         result = method.asFixedArity().invoke(args);
