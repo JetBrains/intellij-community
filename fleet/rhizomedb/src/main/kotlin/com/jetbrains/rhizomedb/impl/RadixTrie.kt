@@ -2,7 +2,6 @@
 package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.ReduceDecision
-import kotlin.system.measureTimeMillis
 
 private typealias TinyInt = Int // 5 bit
 
@@ -381,13 +380,5 @@ private fun radix() {
   }
   t.reduce { k, v ->
     error("should be empty: $k")
-  }
-}
-
-fun main() {
-  measureTimeMillis {
-    radix()
-  }.let {
-    println("elapsed radix trie $it")
   }
 }

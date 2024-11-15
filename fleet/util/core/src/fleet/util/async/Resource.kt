@@ -6,7 +6,6 @@ package fleet.util.async
 import fleet.tracing.SpanInfoBuilder
 import fleet.tracing.spannedScope
 import kotlinx.coroutines.*
-import java.lang.RuntimeException
 import kotlin.coroutines.CoroutineContext
 
 /**

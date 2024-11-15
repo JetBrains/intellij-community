@@ -158,7 +158,7 @@ fun SuspendInvocationHandler.poisoned(poison: () -> CancellationException?): Sus
                               publish: (SuspendInvocationHandler.CallResult) -> Unit) {
       when (val cause = poison()) {
         null -> this@poisoned.call(remoteApiDescriptor, method, args, publish)
-        else -> throw java.lang.RuntimeException("RequestQueue is terminated", cause)
+        else -> throw RuntimeException("RequestQueue is terminated", cause)
       }
     }
   }
