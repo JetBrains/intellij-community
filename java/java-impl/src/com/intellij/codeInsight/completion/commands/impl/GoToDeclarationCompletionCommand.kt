@@ -13,7 +13,7 @@ import javax.swing.Icon
 
 class GoToDeclarationCompletionCommand : CompletionCommand() {
   override val name: String
-    get() = "goToDeclaration"
+    get() = "Go to declaration"
 
   override val icon: Icon
     get() = AllIcons.Ide.ExternalLinkArrowWhite // Use the appropriate icon

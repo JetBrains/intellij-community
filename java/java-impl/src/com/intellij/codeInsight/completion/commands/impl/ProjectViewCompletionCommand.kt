@@ -4,5 +4,6 @@ package com.intellij.codeInsight.completion.commands.impl
 import com.intellij.ide.actions.ActivateToolWindowAction.Manager
 
 class ProjectViewCompletionCommand : AbstractActionCompletionCommand(Manager.getActionIdForToolWindow("Project"),
-                                                                     "project",
-                                                                     null)
+                                                                     "Project tree",
+                                                                     null,
+                                                                     -150)

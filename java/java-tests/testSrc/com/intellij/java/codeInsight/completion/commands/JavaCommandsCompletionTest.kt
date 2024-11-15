@@ -46,7 +46,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("goToDec", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Go to dec", ignoreCase = true) })
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult("""
       class A { 

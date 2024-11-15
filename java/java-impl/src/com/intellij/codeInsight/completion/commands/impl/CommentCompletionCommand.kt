@@ -2,5 +2,5 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 class CommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
-                                                                 "comment",
+                                                                 "Comment",
                                                                  null)

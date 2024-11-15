@@ -195,7 +195,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
     myArranger = arranger;
     if (previousMatcher != null) {
-      myArranger.registerAdditionalMatcher(previousMatcher, this);
+      myArranger.registerAdditionalMatcher(previousMatcher);
     }
   }
 
@@ -1278,7 +1278,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void markReused() {
     EDT.assertIsEdt();
-    myArranger = myArranger.createEmptyCopy();
+    LookupArranger copy = myArranger.createEmptyCopy();
+    Predicate<LookupElement> additionalMatcher = myArranger.getAdditionalMatcher();
+    if (additionalMatcher != null) {
+      copy.registerAdditionalMatcher(additionalMatcher);
+    }
+    myArranger = copy;
+
     requestResize();
   }
 

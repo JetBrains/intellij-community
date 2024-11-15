@@ -2,5 +2,6 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 class OptimizeImportCompletionCommand : AbstractActionCompletionCommand("OptimizeImports",
-                                                                        "optimizeImports",
-                                                                        null)
+                                                                        "Optimize imports",
+                                                                        null,
+                                                                        -100)

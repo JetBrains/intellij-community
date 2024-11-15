@@ -52,9 +52,8 @@ public abstract class LookupArranger implements WeighingContext {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public void registerAdditionalMatcher(@NotNull Predicate<LookupElement> matcher, @NotNull Lookup lookup) {
+  public void registerAdditionalMatcher(@NotNull Predicate<LookupElement> matcher) {
     myAdditionalMatcher = matcher;
-    prefixChanged(lookup);
   }
 
   @ApiStatus.Internal

@@ -2,5 +2,6 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 class RecentFilesCompletionCommand : AbstractActionCompletionCommand("RecentFiles",
-                                                                     "recentFiles",
-                                                                     null)
+                                                                     "Recent files",
+                                                                     null,
+                                                                     -150)

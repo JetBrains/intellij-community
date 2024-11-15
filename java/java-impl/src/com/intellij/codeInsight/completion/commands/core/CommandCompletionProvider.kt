@@ -101,7 +101,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                                                                     command.icon ?: Lightning,
                                                                     command.highlightInfo)
         val priority = command.priority
-        PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - 100.0 } ?: -110.0)
+        PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - 100.0 } ?: -150.0)
       })
       true
     }

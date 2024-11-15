@@ -82,7 +82,8 @@ class CommandCompletionService(
     if (index == 0) return
     if (lookup.lookupOriginalStart - index + 1 < lookup.editor.document.textLength && lookup.editor.document.immutableCharSequence[lookup.lookupOriginalStart - index + 1] != filterSuffix) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
-    lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter, lookup)
+    lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
+    lookup.arranger.prefixChanged(lookup);
     lookup.requestResize()
     lookup.refreshUi(false, true)
     lookup.ensureSelectionVisible(true)
@@ -92,7 +93,8 @@ class CommandCompletionService(
     val userData = lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY)
     if (userData == true) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
-    lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter, lookup)
+    lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
+    lookup.arranger.prefixChanged(lookup);
     lookup.requestResize()
     lookup.refreshUi(false, true)
     lookup.ensureSelectionVisible(true)
@@ -333,14 +335,15 @@ private class CommandCompletionCharFilter : CharFilter() {
     val psiFile = lookup.psiFile ?: return null
     val completionFactory = completionService.getFactory(psiFile.language) ?: return null
     val offset = lookup.editor.caretModel.offset
+    if (completionService.filterLookup(c, lookup.editor, psiFile, lookup)) {
+      completionService.addFiltersAndRefresh(lookup)
+      return Result.ADD_TO_PREFIX
+    }
     if (offset > 0 && completionFactory.filterSuffix() == c &&
         lookup.editor.document.immutableCharSequence[offset - 1] == completionFactory.suffix() &&
         lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true && !lookup.isFocused) return Result.ADD_TO_PREFIX
     val element = lookup.currentItem ?: return null
     element.`as`(CommandCompletionLookupElement::class.java) ?: return null
-    if (completionService.filterLookup(c, lookup.editor, psiFile, lookup)) {
-      completionService.addFiltersAndRefresh(lookup)
-    }
     return Result.ADD_TO_PREFIX
   }
 }

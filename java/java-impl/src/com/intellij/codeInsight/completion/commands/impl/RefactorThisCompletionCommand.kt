@@ -2,5 +2,6 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 class RefactorThisCompletionCommand : AbstractActionCompletionCommand("Refactorings.QuickListPopupAction",
-                                                                      "refactor",
-                                                                      null)
+                                                                      "Refactor",
+                                                                      null,
+                                                                      -100)

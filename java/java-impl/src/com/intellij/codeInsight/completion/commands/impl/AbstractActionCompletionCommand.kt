@@ -17,6 +17,7 @@ abstract class AbstractActionCompletionCommand(
   var actionId: String,
   override val name: String,
   override val icon: Icon?,
+  override val priority: Int? = null
 ) : OldCompletionCommand() {
   private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
 
