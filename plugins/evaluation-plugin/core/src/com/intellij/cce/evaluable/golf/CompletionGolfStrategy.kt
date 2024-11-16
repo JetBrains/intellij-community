@@ -28,7 +28,7 @@ data class CompletionGolfStrategy(
   val invokeOnEachChar: Boolean,
 
   val source: SuggestionSource?,
-  var topN: Int?,
+  var topN: Int,
 
   val suggestionsProvider: String,
   val pathToZipModel: String?,

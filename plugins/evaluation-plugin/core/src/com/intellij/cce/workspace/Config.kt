@@ -28,7 +28,7 @@ data class Config private constructor(
   val fileDataset: FileDataset?,
   val interpret: ActionsInterpretation,
   val reorder: ReorderElements,
-  val reports: ReportGeneration
+  val reports: ReportGeneration,
 ) {
   companion object {
     fun build(init: Builder.() -> Unit): Config {
@@ -103,7 +103,8 @@ data class Config private constructor(
     val saveFeatures: Boolean,
     val saveContent: Boolean,
     val logLocationAndItemText: Boolean,
-    val trainTestSplit: Int)
+    val trainTestSplit: Int,
+  )
 
   /**
    * Represents the configuration for reordering elements step.
@@ -115,7 +116,7 @@ data class Config private constructor(
   data class ReorderElements internal constructor(
     val useReordering: Boolean,
     val title: String,
-    val features: List<String>
+    val features: List<String>,
   )
 
   /**
@@ -130,7 +131,8 @@ data class Config private constructor(
     val evaluationTitle: String,
     val defaultMetrics: List<String>?,
     val sessionsFilters: List<SessionsFilter>,
-    val comparisonFilters: List<CompareSessionsFilter>)
+    val comparisonFilters: List<CompareSessionsFilter>,
+  )
 
   class Builder internal constructor() {
     var actions: ActionsGeneration? = null
