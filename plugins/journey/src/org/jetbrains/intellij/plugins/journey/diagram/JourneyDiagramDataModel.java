@@ -105,7 +105,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   public @Nullable DiagramEdge<JourneyNodeIdentity> createEdge(@NotNull DiagramNode<JourneyNodeIdentity> from,
                                                                @NotNull DiagramNode<JourneyNodeIdentity> to) {
     if (from.equals(to)) return null;
-    JourneyEdge edge = new JourneyEdge(from, to, DiagramRelationships.DEPENDENCY);
+    JourneyEdge edge = new JourneyEdge(to, from, DiagramRelationships.DEPENDENCY);
     myEdges.add(edge);
     return edge;
   }

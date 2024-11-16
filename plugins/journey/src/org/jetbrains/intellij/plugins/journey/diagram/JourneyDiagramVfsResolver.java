@@ -32,7 +32,7 @@ class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNodeIdentit
     return psiElementToPathAndOffsetFQN(element);
   }
 
-  public @Nullable String getQualifiedName(@NotNull PsiElement element) {
+  public static @Nullable String getQualifiedName(@NotNull PsiElement element) {
     if (element instanceof PsiMethod psiMethod) {
       if (psiMethod.getContainingClass() != null) return psiMethod.getContainingClass().getQualifiedName() + METHOD_DELIMITER + psiMethod.getName();
     }

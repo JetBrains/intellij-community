@@ -42,7 +42,7 @@ public class JourneyDiagramExtras extends DiagramExtras<JourneyNodeIdentity> {
   @Override
   public @Nullable Layouter getCustomLayouter(GraphSettings settings, Project project) {
     var layouter = GraphLayoutService.getInstance().getGroupLayouter();
-    layouter.setLayoutOrientation(LayoutOrientation.LEFT_TO_RIGHT);
+    layouter.setLayoutOrientation(LayoutOrientation.RIGHT_TO_LEFT);
     return layouter;
   }
 

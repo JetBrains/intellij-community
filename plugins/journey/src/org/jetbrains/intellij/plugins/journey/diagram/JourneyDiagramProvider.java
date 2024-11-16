@@ -2,9 +2,8 @@ package org.jetbrains.intellij.plugins.journey.diagram;// Copyright 2000-2024 Je
 
 import com.intellij.diagram.*;
 import com.intellij.diagram.extras.DiagramExtras;
-import com.intellij.diagram.presentation.DiagramState;
-import com.intellij.diagram.presentation.EdgeInfo;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.graph.builder.GraphBuilder;
 import com.intellij.openapi.graph.builder.event.GraphBuilderEvent;
@@ -20,20 +19,21 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.intellij.plugins.journey.diagram.persistence.JourneyUmlFileSnapshotLoader;
 import org.jetbrains.intellij.plugins.journey.navigation.JourneyNavigationUtils;
 
+import javax.swing.*;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNodeIdentity> {
   public static final String ID = "JOURNEY";
+  private static final Logger LOG = Logger.getInstance(JourneyDiagramProvider.class);
 
   private final DiagramElementManager<JourneyNodeIdentity> myElementManager;
   private final JourneyDiagramVfsResolver myVfsResolver = new JourneyDiagramVfsResolver();
-  private JourneyDiagramExtras myExtras = new JourneyDiagramExtras();
+  private final JourneyDiagramExtras myExtras = new JourneyDiagramExtras();
 
   public JourneyDiagramProvider() {
     myElementManager = new JourneyDiagramElementManager();
@@ -52,10 +52,12 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
   }
 
   @Override
-  public @NotNull DiagramDataModel<JourneyNodeIdentity> createDataModel(@NotNull Project project,
-                                                                        @Nullable JourneyNodeIdentity element,
-                                                                        @Nullable VirtualFile file,
-                                                                        @NotNull DiagramPresentationModel presentationModel) {
+  public @NotNull DiagramDataModel<JourneyNodeIdentity> createDataModel(
+    @NotNull Project project,
+    @Nullable JourneyNodeIdentity element,
+    @Nullable VirtualFile file,
+    @NotNull DiagramPresentationModel presentationModel
+  ) {
     try {
       var dataModel = new JourneyDiagramDataModel(project, this);
 
@@ -63,21 +65,11 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
         dataModel.addElement(element);
       }
 
-      @Nullable DiagramState diagramState = tryReadDiagramState(file);
-      if (diagramState != null) {
-        Map<String, JourneyNodeIdentity> cache = new HashMap<>();
-        Map<String, JourneyNode> cache2 = new HashMap<>();
-        for (String fqn : diagramState.getFQNs()) {
-          JourneyNode node = dataModel.addElement(cache.computeIfAbsent(fqn, __ -> myVfsResolver.resolveElementByFQN(fqn, project)));
-          cache2.put(fqn, node);
-        }
-        for (EdgeInfo edge : diagramState.getEdgeInfos()) {
-          JourneyNode from = cache2.get(edge.getSrc());
-          JourneyNode to = cache2.get(edge.getTrg());
-          if (from != null && to != null) {
-            dataModel.createEdge(from, to);
-          }
-        }
+      JourneyUmlFileSnapshotLoader loader = new JourneyUmlFileSnapshotLoader(project, myVfsResolver);
+      try {
+        loader.load(file, dataModel);
+      } catch (Exception e) {
+        LOG.error("Could not load snapshot from .uml file", e);
       }
 
       project.putUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR, (element1, element2) -> navigate(project, dataModel, element1, element2));
@@ -88,18 +80,6 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
       Messages.showErrorDialog(project, "Could not create data model: " + e.getMessage(), "Journey Diagrams");
       return new JourneyDiagramDataModel(project, this);
     }
-  }
-
-  private static @Nullable DiagramState tryReadDiagramState(@Nullable VirtualFile file) {
-    if (file == null) return null;
-    DiagramState diagramState;
-    try {
-      diagramState = DiagramState.read(file.getInputStream());
-    }
-    catch (Exception e) {
-      return null;
-    }
-    return diagramState;
   }
 
   private static Boolean navigate(Project project, JourneyDiagramDataModel model, Object from, Object to) {
@@ -170,6 +150,8 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
             Collection<Editor> editors = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.values();
             for (Editor editor : editors) {
               editor.getColorsScheme().setEditorFontSize(font);
+              // TODO such revalidation cause to flickering 
+              SwingUtilities.invokeLater(() -> editor.getComponent().revalidate());
             }
           }
         }

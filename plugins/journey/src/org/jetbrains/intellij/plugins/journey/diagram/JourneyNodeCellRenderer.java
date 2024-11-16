@@ -10,6 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+
+import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramVfsResolver.getQualifiedName;
 
 /**
  * There is no specific reason to inherit {@link DefaultUmlRenderer}, need to write custom implementation later,
@@ -41,6 +44,9 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
       if (component == null) {
         throw new IllegalStateException("Can't open " + psiElement);
       }
+      JourneyTitleBar titleBar = new JourneyTitleBar(getQualifiedName(psiElement));
+      component.add(titleBar, BorderLayout.NORTH);
+
       view.getCanvasComponent().add(component);
       var component1 = component;
       myDataModel.myEditorManager.closeComponent.addListener(it -> {
