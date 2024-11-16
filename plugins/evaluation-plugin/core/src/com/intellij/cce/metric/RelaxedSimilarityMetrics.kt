@@ -40,7 +40,7 @@ object RelaxedSimilarityUtils {
     val prefixMatch = missingCode.trim().startsWith(completion.trim())
 
     val matchingLines = completionLines.map { predicate(it, middleLines) }
-    val hasFirstLineMatching = matchingLines[0] == true
+    val hasFirstLineMatching = matchingLines.isNotEmpty() && matchingLines[0] == true
     val multilineMatch = matchingLines.all { it == true }
 
     return when {
