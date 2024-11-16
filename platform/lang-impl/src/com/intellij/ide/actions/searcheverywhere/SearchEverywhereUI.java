@@ -122,6 +122,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
+  @ApiStatus.Internal
   public static final Topic<PreviewListener> PREVIEW_EVENTS = Topic.create("Search everywhere preview events", PreviewListener.class);
 
   public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
