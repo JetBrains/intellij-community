@@ -41,7 +41,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
-                         final int cacheSize,
+                         int cacheSize,
                          boolean keyIsUniqueForIndexedFile) throws IOException {
     this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, false, null);
   }
@@ -49,7 +49,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
-                         final int cacheSize,
+                         int cacheSize,
                          boolean keyIsUniqueForIndexedFile,
                          boolean initialize,
                          boolean readOnly,
@@ -171,7 +171,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   @Override
-  public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
+  public void addValue(Key key, int inputId, Value value) throws StorageException {
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
@@ -284,7 +284,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   @Override
-  public @NotNull ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
+  public @NotNull ChangeTrackingValueContainer<Value> read(Key key) throws StorageException {
     try {
       return myCache.read(key);
     }
