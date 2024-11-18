@@ -540,11 +540,9 @@ public class RefManagerImpl extends RefManager {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
-    answer = getElements();
     Map<VirtualFile, List<RefElement>> map = new HashMap<>();
-    for (RefElement ref : answer) {
-      VirtualFile file = ((RefElementImpl)ref).getVirtualFile();
-      map.computeIfAbsent(file, k -> new ArrayList<>()).add(ref);
+    for (RefElement ref : getElements()) {
+      map.computeIfAbsent(((RefElementImpl)ref).getVirtualFile(), k -> new ArrayList<>()).add(ref);
     }
     for (List<RefElement> elementsInFile : map.values()) {
       if (elementsInFile.size() > 1) {
@@ -555,11 +553,9 @@ public class RefManagerImpl extends RefManager {
         });
       }
     }
-    answer = EntryStream.of(map)
+    return myCachedSortedRefs = Collections.unmodifiableList(EntryStream.of(map)
       .sorted((e1, e2) -> VfsUtilCore.compareByPath(e1.getKey(), e2.getKey()))
-      .values().toFlatList(Function.identity());
-    myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
-    return answer;
+      .values().toFlatList(Function.identity()));
   }
 
   public @NotNull List<RefElement> getElements() {
