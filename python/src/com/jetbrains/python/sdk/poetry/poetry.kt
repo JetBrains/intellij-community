@@ -16,7 +16,13 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.FileNotFoundException
 import java.nio.file.Path
+import java.util.regex.Pattern
 import kotlin.io.path.pathString
 
 const val POETRY_LOCK: String = "poetry.lock"
@@ -83,3 +89,27 @@ internal fun allModules(project: Project?): List<Module> {
 }
 
 internal fun sdkHomes(sdks: List<Sdk>): Set<String> = sdks.mapNotNull { it.homePath }.toSet()
+
+private suspend fun setUpPoetry(projectPathString: String, python: String?, installPackages: Boolean, poetryPath: String? = null): Result<Path> {
+  val poetryExecutablePathString = when (poetryPath) {
+    is String -> poetryPath
+    else -> {
+      val pyProjectToml = withContext(Dispatchers.IO) { StandardFileSystems.local().findFileByPath(projectPathString)?.findChild(PY_PROJECT_TOML) }
+      val init = pyProjectToml?.let { getPyProjectTomlForPoetry(it) } == null
+      setupPoetry(Path.of(projectPathString), python, installPackages, init).getOrElse { return Result.failure(it) }
+    }
+  }
+
+  return Result.success(Path.of(getPythonExecutable(poetryExecutablePathString)))
+}
+
+fun parsePoetryShowOutdated(input: String): Map<String, PythonOutdatedPackage> {
+  return input
+    .lines()
+    .map { it.trim() }
+    .filter { it.isNotBlank() }
+    .mapNotNull { line ->
+      line.split(Pattern.compile(" +"))
+        .takeIf { it.size > 3 }?.let { it[0] to PythonOutdatedPackage(it[0], it[1], it[2]) }
+    }.toMap()
+}
