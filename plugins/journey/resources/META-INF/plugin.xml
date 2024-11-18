@@ -21,6 +21,12 @@
     <group id="JourneyAction" searchable="false">
       <action id="JourneyToggleAction" class="org.jetbrains.intellij.plugins.journey.JourneyToggleAction"/>
     </group>
+    <action id="org.jetbrains.intellij.plugins.journey.editor.actions.OpenInEditorAction"
+            class="org.jetbrains.intellij.plugins.journey.editor.actions.OpenInEditorAction"
+            text="Jump To Source"
+    >
+      <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

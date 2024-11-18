@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +20,16 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
 
   @NotNull
   private final JourneyNodeIdentity identity;
+  @Nullable private final String myTitle;
 
-  public JourneyNode(@NotNull JourneyNodeIdentity identity, @NotNull DiagramProvider<JourneyNodeIdentity> provider) {
+  public JourneyNode(
+    @NotNull DiagramProvider<JourneyNodeIdentity> provider,
+    @NotNull JourneyNodeIdentity identity,
+    @Nullable String title
+  ) {
     super(provider);
     this.identity = identity;
+    myTitle = title;
   }
 
   @Override
@@ -37,6 +45,12 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
   @Override
   public @Nullable Icon getIcon() {
     return AllIcons.Process.ProgressResume; // TODO
+  }
+
+  @Override
+  public @Nullable SimpleColoredText getPresentableTitle() {
+    if (myTitle == null) return null;
+    return new SimpleColoredText(myTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   @Override

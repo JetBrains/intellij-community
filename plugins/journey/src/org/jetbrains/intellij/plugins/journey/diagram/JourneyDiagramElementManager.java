@@ -4,6 +4,7 @@ import com.intellij.diagram.DiagramBuilder;
 import com.intellij.diagram.DiagramElementManager;
 import com.intellij.diagram.DiagramProvider;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,13 @@ public final class JourneyDiagramElementManager implements DiagramElementManager
     return getNodeItems(nodeElement);
   }
 
+  // Override to prevent stackoverflow error.
+  @Override
+  public @Nullable SimpleColoredText getItemType(@Nullable JourneyNodeIdentity nodeElement,
+                                                 @Nullable Object nodeItem,
+                                                 @Nullable DiagramBuilder builder) {
+    return null;
+  }
 
   @Override
   public boolean canCollapse(JourneyNodeIdentity element) {

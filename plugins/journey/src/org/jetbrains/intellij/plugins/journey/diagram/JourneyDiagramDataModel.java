@@ -2,6 +2,14 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 
 import com.intellij.diagram.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.graph.base.Edge;
+import com.intellij.openapi.graph.base.Node;
+import com.intellij.openapi.graph.builder.GraphBuilder;
+import com.intellij.openapi.graph.services.GraphLayoutService;
+import com.intellij.openapi.graph.services.GraphUndoService;
+import com.intellij.openapi.graph.util.Futures;
+import com.intellij.openapi.graph.view.Graph2D;
+import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -13,6 +21,7 @@ import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager;
 import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.*;
+import java.util.List;
 
 public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeIdentity> {
 
@@ -20,6 +29,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   private final Collection<JourneyNode> myNodes = new HashSet<>();
   private @NotNull List<JourneyEdge> myEdges = new ArrayList<>();
   public final JourneyEditorManager myEditorManager;
+  private static final double LAYOUT_OFFSET = 600;
 
   public JourneyDiagramDataModel(@NotNull Project project,
                                  @NotNull DiagramProvider<JourneyNodeIdentity> provider) {
@@ -49,7 +59,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
 
   @Override
   public @NotNull ModificationTracker getModificationTracker() {
-    return ModificationTracker.NEVER_CHANGED;
+    return myModificationTracker;
   }
 
   @Override
@@ -72,19 +82,66 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     PsiElement psiElement = element.element();
     psiElement = PsiUtil.tryFindParentOrNull(psiElement, it -> it instanceof PsiMember);
     if (psiElement == null) throw new IllegalArgumentException("element must be a member");
-    JourneyNode node = new JourneyNode(new JourneyNodeIdentity(psiElement), myProvider);
+    JourneyNodeIdentity identity = new JourneyNodeIdentity(psiElement);
+    String title = myProvider.getVfsResolver().getQualifiedName(identity);
+    JourneyNode node = new JourneyNode(myProvider, identity, title);
     myNodes.add(node);
     return node;
   }
 
-  public void queryUpdate() {
+  private void layout(GraphBuilder<?,?> builder, List<Node> nodesToLayout, List<Edge> edgesToLayout) {
+    final var layouter = builder.getGraphPresentationModel().getSettings().getCurrentLayouter();
+    final var basicQuery = GraphLayoutService.getInstance().queryLayout(builder).animated().withLayouter(layouter);
+
+    final var partialLayouter = GraphLayoutService.getInstance().getPartialLayouter(layouter, true);
+    GraphLayoutService.getInstance().markElementsForPartialLayout(builder.getGraph(), nodesToLayout, edgesToLayout);
+    final var adjustedQuery = basicQuery
+      .withLayouter(partialLayouter)
+      .withFitContent(GraphLayoutService.GraphLayoutQueryParams.FitContentOption.NEVER);
+
+    GraphLayoutService.getInstance()
+      .calcLayoutAsync(builder, Objects.requireNonNull(adjustedQuery.getLayouter()))
+      .thenAcceptAsync(
+        layout -> GraphUndoService.getInstance().performPositionsOnlyChangingAction(
+          builder,
+          "JourneyLayout",
+          () -> adjustedQuery.withCustomLayout(layout).run()
+        ),
+        Futures.inEdt()
+      );
+  }
+
+  private Optional<NodeRealizer> getRealizer(JourneyDiagramDataModel model, JourneyNode journeyNode) {
+    Graph2D graph2D = model.getBuilder().getGraphBuilder().getGraph();
+    Optional<Node> node = Arrays.stream(graph2D.getNodeArray()).filter(
+      (n) -> Objects.equals(model.getBuilder().getNodeObject(n), journeyNode)).findFirst();
+    return node.map(graph2D::getRealizer);
+  }
+
+  public void addNewPairUpdate(JourneyNode fromJourneyNode, JourneyNode toJourneyNode) {
+    queryUpdate(() -> {
+      var edgesToLayout = List.of(getBuilder().getGraphBuilder().getGraph().getEdgeArray());
+      List<Node> nodesToLayout = new ArrayList<>();
+      var fromNode = getRealizer(this, fromJourneyNode);
+      var toNode = getRealizer(this, toJourneyNode);
+
+      if (fromNode.isPresent() && toNode.isPresent()) {
+        toNode.get().setCenterX(fromNode.get().getCenterX() + LAYOUT_OFFSET);
+        toNode.get().setCenterY(fromNode.get().getCenterY());
+        nodesToLayout = List.of(toNode.get().getNode());
+      }
+      layout(getBuilder().getGraphBuilder(), nodesToLayout, edgesToLayout);
+    });
+  }
+
+  public void queryUpdate(Runnable thenRun) {
     ApplicationManager.getApplication().invokeLater(() -> {
       getBuilder().queryUpdate()
-        .withRelayout()
         .withAllNodeSizeUpdate()
         .withDataReload()
         .withNodePresentationsUpdate(true)
-        .runAsync();
+        .runAsync()
+        .thenRun(thenRun);
     });
   }
 

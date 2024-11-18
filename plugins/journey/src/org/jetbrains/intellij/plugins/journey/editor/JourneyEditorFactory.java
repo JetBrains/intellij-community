@@ -1,5 +1,6 @@
 package org.jetbrains.intellij.plugins.journey.editor;
 
+import com.intellij.codeInsight.documentation.render.DocRenderManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -29,6 +30,12 @@ public final class JourneyEditorFactory {
     scrollPane.setWheelScrollingEnabled(true);
     scrollPane.setAutoscrolls(true);
     scrollPane.setBorder(JBUI.Borders.empty());
+    /*
+     Rendered docs cannot be resized along with font size,
+     which leads to a small code text and giant Javadocs.
+     Can turn it back when rendered docs support font size change.
+    */
+    DocRenderManager.setDocRenderingEnabled(editor, false);
     return editor;
   }
 

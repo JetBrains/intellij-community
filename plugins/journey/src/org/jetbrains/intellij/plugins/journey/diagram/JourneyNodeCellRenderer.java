@@ -1,16 +1,22 @@
 package org.jetbrains.intellij.plugins.journey.diagram;
 
 import com.intellij.diagram.DiagramBuilder;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.graph.view.Graph2DView;
 import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBColor;
 import com.intellij.uml.core.renderers.DefaultUmlRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.intellij.plugins.journey.JourneyDataKeys;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramVfsResolver.getQualifiedName;
 
@@ -28,34 +34,69 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
   }
 
   @Override
+  protected @NotNull ComponentsStoragePolicy getComponentsStoragePolicy() {
+    return super.getComponentsStoragePolicy();
+  }
+
+  private final Map<PsiElement, JComponent> NODE_PANELS = new HashMap<>();
+
+  @Override
   protected @NotNull JComponent createNodeRealizerComponent(@NotNull Graph2DView view,
                                                             @NotNull NodeRealizer realizer,
                                                             @Nullable Object object,
                                                             boolean isSelected) {
+
     final var node = myBuilder.getNodeObject(realizer.getNode());
     if (node instanceof JourneyNode journeyNode) {
       JourneyNodeIdentity id = journeyNode.getIdentifyingElement();
       PsiElement psiElement = id.calculatePsiElement();
-      JComponent component = myDataModel.myEditorManager.getOpenedJourneyComponent(psiElement);
-      if (component != null) {
-        return component;
+      JComponent cached = NODE_PANELS.get(psiElement);
+      if (cached != null) {
+        HackyBoundsTranslationNodeComponent cached1 = (HackyBoundsTranslationNodeComponent)(cached);
+        cached1.setView(view);
+        cached1.setRealizer(realizer);
+        return cached;
       }
-      component = myDataModel.myEditorManager.openPsiElementInEditor(psiElement);
+      Editor editor = myDataModel.myEditorManager.getOpenedJourneyEditor(psiElement);
+      if (editor != null) {
+        throw new IllegalStateException("Editor already opened for " + psiElement);
+      }
+      JComponent component = null;
+      editor = myDataModel.myEditorManager.openPsiElementInEditor(psiElement);
+      if (editor != null) {
+        editor.putUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL, myDataModel);
+        component = editor.getComponent();
+      }
       if (component == null) {
         throw new IllegalStateException("Can't open " + psiElement);
       }
-      JourneyTitleBar titleBar = new JourneyTitleBar(getQualifiedName(psiElement));
+      JourneyTitleBar titleBar = new JourneyTitleBar(getQualifiedName(psiElement), component);
       component.add(titleBar, BorderLayout.NORTH);
 
-      view.getCanvasComponent().add(component);
-      var component1 = component;
-      myDataModel.myEditorManager.closeComponent.addListener(it -> {
-        if (it == component1) {
-          view.getCanvasComponent().remove(component1);
+      Border border = BorderFactory.createLineBorder(JBColor.DARK_GRAY, 1);
+      component.setBorder(border);
+
+      HackyBoundsTranslationNodeComponent panel = new HackyBoundsTranslationNodeComponent(view, realizer);
+      panel.add(component);
+      panel.setSize(component.getSize());
+      view.getCanvasComponent().add(panel);
+      NODE_PANELS.put(psiElement, panel);
+      Editor finalEditor = editor;
+      myDataModel.myEditorManager.closeEditor.addListener(it -> {
+        if (it == finalEditor) {
+          view.getCanvasComponent().remove(panel);
         }
       });
-      return component;
+
+      panel.setView(view);
+      panel.setRealizer(realizer);
+      return panel;
     }
     return super.createNodeRealizerComponent(view, realizer, object, isSelected);
+  }
+
+  @Override
+  public void tuneNode(@NotNull NodeRealizer realizer, JPanel wrapper, Point point) {
+    super.tuneNode(realizer, wrapper, point);
   }
 }

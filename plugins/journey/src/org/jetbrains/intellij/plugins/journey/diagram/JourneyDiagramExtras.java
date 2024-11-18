@@ -42,8 +42,20 @@ public class JourneyDiagramExtras extends DiagramExtras<JourneyNodeIdentity> {
   @Override
   public @Nullable Layouter getCustomLayouter(GraphSettings settings, Project project) {
     var layouter = GraphLayoutService.getInstance().getGroupLayouter();
-    layouter.setLayoutOrientation(LayoutOrientation.RIGHT_TO_LEFT);
+    layouter.setLayoutOrientation(LayoutOrientation.LEFT_TO_RIGHT);
     return layouter;
   }
 
+  /**
+   * Used when exporting to file.
+   * @see com.intellij.uml.core.actions.fs.SaveDiagramAction
+   */
+  @Override
+  public @Nullable String suggestDiagramFileName(JourneyNodeIdentity element) {
+    if (element.element() instanceof PsiMember member) {
+      return member.getName();
+    }
+    
+    return null;
+  }
 }

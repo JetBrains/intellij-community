@@ -4,16 +4,12 @@ package org.jetbrains.intellij.plugins.journey.editor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.journey.JourneyLeftovers;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.EventDispatcher;
@@ -42,8 +38,8 @@ public final class JourneyEditorManager implements Disposable {
   public static interface GenericCallback<T> extends Consumer<T>, EventListener {
   }
 
-  public final EventDispatcher<GenericCallback<Component>> closeComponent =
-    (EventDispatcher<GenericCallback<Component>>)(EventDispatcher<?>)EventDispatcher.create(GenericCallback.class);
+  public final EventDispatcher<GenericCallback<Editor>> closeEditor =
+    (EventDispatcher<GenericCallback<Editor>>)(EventDispatcher<?>)EventDispatcher.create(GenericCallback.class);
 
   public void closeNode(PsiElement psiElement) {
     Editor editor = OPENED_JOURNEY_EDITORS.get(psiElement);
@@ -51,20 +47,17 @@ public final class JourneyEditorManager implements Disposable {
       FileEditorManager.getInstance(editor.getProject()).closeFile(editor.getVirtualFile());
     }
     OPENED_JOURNEY_EDITORS.remove(psiElement);
-    var component = OPENED_JOURNEY_COMPONENTS.get(psiElement);
-    if (component != null) closeComponent.getMulticaster().accept(component);
-    OPENED_JOURNEY_COMPONENTS.remove(psiElement);
+    if (editor != null) closeEditor.getMulticaster().accept(editor);
   }
 
   public final Map<PsiElement, Editor> OPENED_JOURNEY_EDITORS = new ConcurrentHashMap<>();
-  private final Map<PsiElement, JComponent> OPENED_JOURNEY_COMPONENTS = new ConcurrentHashMap<>();
 
-  public JComponent getOpenedJourneyComponent(PsiElement psiKey) {
-    return OPENED_JOURNEY_COMPONENTS.get(psiKey);
+  public Editor getOpenedJourneyEditor(PsiElement psiKey) {
+    return OPENED_JOURNEY_EDITORS.get(psiKey);
   }
 
   @RequiresEdt
-  public JComponent openPsiElementInEditor(PsiElement psiElement) {
+  public Editor openPsiElementInEditor(PsiElement psiElement) {
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) {
       return null;
@@ -88,16 +81,9 @@ public final class JourneyEditorManager implements Disposable {
 
     registerEditor(psiElement, editor);
 
-    AsyncEditorLoader.Companion.performWhenLoaded(editor, () -> {
-      LogicalPosition position = editor.offsetToLogicalPosition(startOffset);
-      position = new LogicalPosition(position.line, 0);
-      editor.getCaretModel().moveToOffset(startOffset);
-      editor.getScrollingModel().scrollTo(position, ScrollType.CENTER);
-    });
+    EditorUtils.scrollToOffset(editor, startOffset);
     ((EditorEx) editor).setBackgroundColor(com.intellij.ui.Gray._249);
     JComponent component = editor.getComponent();
-    OPENED_JOURNEY_COMPONENTS.put(psiElement, component);
-    OPENED_JOURNEY_EDITORS.put(psiElement, editor);
     TextRange range = psiElement.getTextRange();
     Point p1 = editor.offsetToXY(range.getStartOffset());
     Point p2 = editor.offsetToXY(range.getEndOffset());
@@ -106,10 +92,11 @@ public final class JourneyEditorManager implements Disposable {
     h = Math.max(h, 250);
     component.setSize(650, h);
     component.setPreferredSize(new Dimension(650, h));
-    return component;
+    return editor;
   }
 
   private void registerEditor(PsiElement psiElement, Editor editor) {
+    OPENED_JOURNEY_EDITORS.put(psiElement, editor);
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -125,12 +112,13 @@ public final class JourneyEditorManager implements Disposable {
     OPENED_JOURNEY_EDITORS.values().forEach(it -> {
       try {
         EditorFactory.getInstance().releaseEditor(it);
-        if (it.getProject() != null ) FileEditorManager.getInstance(it.getProject()).closeFile(it.getVirtualFile());
+        if (it.getProject() != null && it.getVirtualFile() != null) {
+          FileEditorManager.getInstance(it.getProject()).closeFile(it.getVirtualFile());
+        }
       } catch (Throwable e) {
         e.printStackTrace();
       }
     });
     OPENED_JOURNEY_EDITORS.clear();
-    OPENED_JOURNEY_COMPONENTS.clear();
   }
 }

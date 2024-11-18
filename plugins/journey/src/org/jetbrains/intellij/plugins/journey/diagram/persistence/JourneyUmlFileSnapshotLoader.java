@@ -3,6 +3,7 @@ package org.jetbrains.intellij.plugins.journey.diagram.persistence;
 import com.intellij.diagram.DiagramVfsResolver;
 import com.intellij.diagram.presentation.DiagramState;
 import com.intellij.diagram.presentation.EdgeInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -11,10 +12,13 @@ import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyNode;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyNodeIdentity;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 public class JourneyUmlFileSnapshotLoader {
+  private static final Logger LOG = Logger.getInstance(JourneyUmlFileSnapshotLoader.class);
+
   private final @NotNull Project myProject;
   private final @NotNull DiagramVfsResolver<JourneyNodeIdentity> myVfsResolver;
 
@@ -30,12 +34,20 @@ public class JourneyUmlFileSnapshotLoader {
     VirtualFile file,
     JourneyDiagramDataModel dataModel
   ) {
-    DiagramState diagramState = readDiagramState(file);
+    DiagramState diagramState = tryReadDiagramState(file);
+    if (diagramState == null) return;
     Map<String, JourneyNodeIdentity> cache = new HashMap<>();
     Map<String, JourneyNode> cache2 = new HashMap<>();
     for (String fqn : diagramState.getFQNs()) {
-      JourneyNode node = dataModel.addElement(cache.computeIfAbsent(fqn, __ -> myVfsResolver.resolveElementByFQN(fqn, myProject)));
-      cache2.put(fqn, node);
+      JourneyNodeIdentity identity = myVfsResolver.resolveElementByFQN(fqn, myProject);
+      if (identity == null) {
+        LOG.warn("Could not resolve element by FQN: " + fqn);
+      }
+      JourneyNodeIdentity element = cache.computeIfAbsent(fqn, __ -> identity);
+      if (element != null) {
+        JourneyNode node = dataModel.addElement(element);
+        cache2.put(fqn, node);
+      }
     }
     for (EdgeInfo edge : diagramState.getEdgeInfos()) {
       JourneyNode from = cache2.get(edge.getSrc());
@@ -46,14 +58,22 @@ public class JourneyUmlFileSnapshotLoader {
     }
   }
 
-  private static DiagramState readDiagramState(@Nullable VirtualFile file) {
+  private static @Nullable DiagramState tryReadDiagramState(@Nullable VirtualFile file) {
     if (file == null) return null;
     DiagramState diagramState;
+    InputStream stream;
     try {
-      diagramState = DiagramState.read(file.getInputStream());
+      stream = file.getInputStream();
     }
     catch (Exception e) {
-      throw new RuntimeException("Could not load diagram state from .uml file", e);
+      LOG.warn("Could not read .uml file: " + file.getCanonicalPath() + ", Has no input stream", e);
+      return null;
+    }
+    try {
+      diagramState = DiagramState.read(stream);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Could not load diagram state from .uml file " + file, e);
     }
     return diagramState;
   }

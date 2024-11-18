@@ -1074,8 +1074,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
       }
 
-      String[] webUrls = new String[0]; // TODO: какое-то исключение летит отсюда, пока игнорим
-        //JavadocOrderRootType.getUrls(orderEntry);
+      String[] webUrls = JavadocOrderRootType.getUrls(orderEntry);
       if (webUrls.length > 0) {
         List<String> httpRoots = new ArrayList<>();
         if (altUrl && altRelPath != null) {

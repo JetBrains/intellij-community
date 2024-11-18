@@ -68,6 +68,7 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
       JourneyUmlFileSnapshotLoader loader = new JourneyUmlFileSnapshotLoader(project, myVfsResolver);
       try {
         loader.load(file, dataModel);
+        dataModel.queryUpdate(() -> {});
       } catch (Exception e) {
         LOG.error("Could not load snapshot from .uml file", e);
       }
@@ -97,7 +98,7 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
     }
 
     model.createEdge(fromNode, toNode);
-    model.queryUpdate();
+    model.addNewPairUpdate(toNode, fromNode);
   }
 
   private static @Nullable JourneyNode findNodeForFile(JourneyDiagramDataModel model, PsiElement from) {

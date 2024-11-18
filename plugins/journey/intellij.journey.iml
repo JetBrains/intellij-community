@@ -21,9 +21,7 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="module" module-name="intellij.diagram" />
     <orderEntry type="module" module-name="intellij.diagram.impl" />
-    <orderEntry type="module" module-name="intellij.diagram.java"/>
-
-
+    <orderEntry type="module" module-name="intellij.diagram.java" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.platform.lang" />

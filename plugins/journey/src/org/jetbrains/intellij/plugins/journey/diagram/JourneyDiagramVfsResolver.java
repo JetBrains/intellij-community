@@ -23,6 +23,7 @@ class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNodeIdentit
 
   @Override
   public @Nullable String getQualifiedName(@Nullable JourneyNodeIdentity identity) {
+    return ReadAction.compute(() -> {
     if (identity == null) {
       return null;
     }
@@ -30,6 +31,7 @@ class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNodeIdentit
     String psiQualifiedname = getPsiFqnRecursive(element);
     if (psiQualifiedname != null) return psiQualifiedname;
     return psiElementToPathAndOffsetFQN(element);
+    });
   }
 
   public static @Nullable String getQualifiedName(@NotNull PsiElement element) {
