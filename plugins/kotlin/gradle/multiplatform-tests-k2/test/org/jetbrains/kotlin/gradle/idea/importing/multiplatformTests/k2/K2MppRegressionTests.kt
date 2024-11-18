@@ -4,16 +4,20 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2
 
 import com.intellij.ide.util.EditorHelper
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.LibraryKindsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.ReferenceTargetCheckerDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinLibraries
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import kotlin.test.Test
+import kotlin.test.assertIs
 
 /**
  * Can be used to cover regressions that require full import or can't be checked by light tests for infrastructural reasons.
@@ -40,6 +44,12 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
         doTest {
             onlyCheckers(HighlightingChecker, ReferenceTargetChecker)
             checkReference { referencedDeclaration ->
+                val kaModule = referencedDeclaration.getKaModule(project, useSiteModule = null)
+                assertIs<KaLibraryModule>(kaModule)
+                assertTrue(
+                    "A `KaLibrary` containing CInterop definitions should be a KLib-based one but was ${kaModule}",
+                    kaModule.getKotlinLibraries(project).isNotEmpty()
+                )
                 val vFile = referencedDeclaration.containingKtFile.virtualFile
                 val psiFile = vFile.toPsiFile(project)!!
                 val editor = EditorHelper.openInEditor(referencedDeclaration.containingKtFile)

@@ -15,6 +15,10 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.kmp.K2ForwardDeclarationScopeProviderImpl"
                     serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.kmp.K2ForwardDeclarationScopeProvider"/>
 
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileOwnerTracker"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.kmp.K2KotlinForwardDeclarationsFileOwnerTrackerImpl"/>
+
     <registryKey key="kotlin.use.new.project.structure.provider" defaultValue="true"
                  description="Use new project structure provider for Kotlin"
                  restartRequired="true"/>

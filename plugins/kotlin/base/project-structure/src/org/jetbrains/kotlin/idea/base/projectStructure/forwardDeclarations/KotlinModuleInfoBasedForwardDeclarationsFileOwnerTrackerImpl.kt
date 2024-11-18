@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoListener
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
@@ -24,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap
  * In such cases the user data will be lost, which will lead to errors.
  * To avoid this, the cache explicitly tracks the mapping, taking the relevant library changes into account.
  */
-private class KotlinModuleInfoBasedForwardDeclarationsFileOwnerTrackerImpl(
+@ApiStatus.Internal
+class KotlinModuleInfoBasedForwardDeclarationsFileOwnerTrackerImpl(
     project: Project,
 ) : KotlinForwardDeclarationsFileOwnerTracker, LibraryInfoListener, Disposable {
     private val cache: MutableMap<VirtualFile, IdeaModuleInfo> = ConcurrentHashMap()

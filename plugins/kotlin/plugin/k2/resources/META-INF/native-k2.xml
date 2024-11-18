@@ -9,10 +9,6 @@
             implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
     <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystemImpl"
                        key="fwd" physical="false"/>
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileOwnerTracker"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinModuleInfoBasedForwardDeclarationsFileOwnerTrackerImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
