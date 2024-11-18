@@ -696,7 +696,7 @@ private fun checkModules(modules: Collection<String?>?, fieldName: String, conte
   if (modules != null) {
     val unknownModules = modules.filter { it != null && context.findModule(it) == null }
     check(unknownModules.isEmpty()) {
-      "The following modules from $fieldName aren\'t found in the project: $unknownModules"
+      "The following modules from $fieldName aren\'t found in the project: $unknownModules, ensure you use module name instead of plugin id"
     }
   }
 }
