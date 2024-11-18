@@ -48,8 +48,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 final class FileTypeDetectionService {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
+
+  private static final boolean LOG_ACCESSED_FILES = getBooleanProperty("com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.LOG_ACCESSED_FILES", false);
 
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and AUTO_DETECTED_* flags stored in packedFlags are used instead.
@@ -615,7 +619,7 @@ final class FileTypeDetectionService {
 
   private @NotNull ByteArraySequence readFirstBytesFromFile(@NotNull VirtualFile file, int bufferLength) throws IOException {
     try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-      if (toLog()) {
+      if (LOG_ACCESSED_FILES || toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
       }
       int fileLength = (int)Math.min(file.getLength(), bufferLength);
