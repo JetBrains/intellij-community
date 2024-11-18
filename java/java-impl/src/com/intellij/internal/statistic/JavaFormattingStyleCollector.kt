@@ -19,7 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
  * USE com.intellij.psi.codeStyle.GenerateJavaFormattingStyleCollector
  */
 class JavaFormattingStyleCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("java.code.style", 2)
+  private val GROUP = EventLogGroup("java.code.style", 3)
 
   override fun getGroup(): EventLogGroup {
     return GROUP
@@ -60,6 +60,8 @@ class JavaFormattingStyleCollector : ProjectUsagesCollector() {
     addMetricIfDiffersCustom(result, commonSettings, defaultCommonSettings, { s -> s.BLOCK_COMMENT_ADD_SPACE }, "COMMON_BLOCK_COMMENT_ADD_SPACE")
 
     addMetricIfDiffersCustom(result, commonSettings, defaultCommonSettings, { s -> s.LINE_COMMENT_ADD_SPACE_ON_REFORMAT }, "COMMON_LINE_COMMENT_ADD_SPACE_ON_REFORMAT")
+
+    addMetricIfDiffersCustom(result, commonSettings, defaultCommonSettings, { s -> s.LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION }, "COMMON_LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION")
 
     addMetricIfDiffersCustom(result, commonSettings, defaultCommonSettings, { s -> s.KEEP_LINE_BREAKS }, "COMMON_KEEP_LINE_BREAKS")
 
@@ -415,6 +417,8 @@ class JavaFormattingStyleCollector : ProjectUsagesCollector() {
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.USE_EXTERNAL_ANNOTATIONS }, "JAVA_USE_EXTERNAL_ANNOTATIONS")
 
+    addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE }, "JAVA_GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE")
+
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.INSERT_OVERRIDE_ANNOTATION }, "JAVA_INSERT_OVERRIDE_ANNOTATION")
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.REPEAT_SYNCHRONIZED }, "JAVA_REPEAT_SYNCHRONIZED")
@@ -437,6 +441,8 @@ class JavaFormattingStyleCollector : ProjectUsagesCollector() {
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER }, "JAVA_DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER")
 
+    addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT }, "JAVA_ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT")
+
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.ANNOTATION_PARAMETER_WRAP }, "JAVA_ANNOTATION_PARAMETER_WRAP")
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.ENUM_FIELD_ANNOTATION_WRAP }, "JAVA_ENUM_FIELD_ANNOTATION_WRAP")
@@ -453,6 +459,10 @@ class JavaFormattingStyleCollector : ProjectUsagesCollector() {
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.BLANK_LINES_AROUND_INITIALIZER }, "JAVA_BLANK_LINES_AROUND_INITIALIZER")
 
+    addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS }, "JAVA_BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS")
+
+    addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.BLANK_LINES_BETWEEN_RECORD_COMPONENTS }, "JAVA_BLANK_LINES_BETWEEN_RECORD_COMPONENTS")
+
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.CLASS_NAMES_IN_JAVADOC }, "JAVA_CLASS_NAMES_IN_JAVADOC")
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.SPACE_BEFORE_COLON_IN_FOREACH }, "JAVA_SPACE_BEFORE_COLON_IN_FOREACH")
@@ -464,6 +474,8 @@ class JavaFormattingStyleCollector : ProjectUsagesCollector() {
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.NEW_LINE_WHEN_BODY_IS_PRESENTED }, "JAVA_NEW_LINE_WHEN_BODY_IS_PRESENTED")
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.LAYOUT_STATIC_IMPORTS_SEPARATELY }, "JAVA_LAYOUT_STATIC_IMPORTS_SEPARATELY")
+
+    addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST }, "JAVA_LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST")
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.USE_FQ_CLASS_NAMES }, "JAVA_USE_FQ_CLASS_NAMES")
 
@@ -550,6 +562,7 @@ private val ALLOWED_NAMES = listOf(
   "COMMON_LINE_COMMENT_ADD_SPACE",
   "COMMON_BLOCK_COMMENT_ADD_SPACE",
   "COMMON_LINE_COMMENT_ADD_SPACE_ON_REFORMAT",
+  "COMMON_LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION",
   "COMMON_KEEP_LINE_BREAKS",
   "COMMON_KEEP_FIRST_COLUMN_COMMENT",
   "COMMON_KEEP_CONTROL_STATEMENT_IN_ONE_LINE",
@@ -727,6 +740,7 @@ private val ALLOWED_NAMES = listOf(
   "JAVA_GENERATE_FINAL_LOCALS",
   "JAVA_GENERATE_FINAL_PARAMETERS",
   "JAVA_USE_EXTERNAL_ANNOTATIONS",
+  "JAVA_GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE",
   "JAVA_INSERT_OVERRIDE_ANNOTATION",
   "JAVA_REPEAT_SYNCHRONIZED",
   "JAVA_REPLACE_INSTANCEOF_AND_CAST",
@@ -738,6 +752,7 @@ private val ALLOWED_NAMES = listOf(
   "JAVA_SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS",
   "JAVA_DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION",
   "JAVA_DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER",
+  "JAVA_ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT",
   "JAVA_ANNOTATION_PARAMETER_WRAP",
   "JAVA_ENUM_FIELD_ANNOTATION_WRAP",
   "JAVA_ALIGN_MULTILINE_ANNOTATION_PARAMETERS",
@@ -746,12 +761,15 @@ private val ALLOWED_NAMES = listOf(
   "JAVA_SPACE_AROUND_ANNOTATION_EQ",
   "JAVA_ALIGN_MULTILINE_TEXT_BLOCKS",
   "JAVA_BLANK_LINES_AROUND_INITIALIZER",
+  "JAVA_BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS",
+  "JAVA_BLANK_LINES_BETWEEN_RECORD_COMPONENTS",
   "JAVA_CLASS_NAMES_IN_JAVADOC",
   "JAVA_SPACE_BEFORE_COLON_IN_FOREACH",
   "JAVA_SPACE_INSIDE_ONE_LINE_ENUM_BRACES",
   "JAVA_SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT",
   "JAVA_NEW_LINE_WHEN_BODY_IS_PRESENTED",
   "JAVA_LAYOUT_STATIC_IMPORTS_SEPARATELY",
+  "JAVA_LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST",
   "JAVA_USE_FQ_CLASS_NAMES",
   "JAVA_USE_SINGLE_CLASS_IMPORTS",
   "JAVA_INSERT_INNER_CLASS_IMPORTS",

@@ -36,7 +36,7 @@ public class GenerateJavaFormattingStyleCollector extends UsefulTestCase {
    * After that, check file com.intellij.internal.statistic.JavaFormattingStyleCollector
    */
   public void testGenerate() {
-    int version = 2; //change it
+    int version = 3; //change it
     List<String> names2 = new ArrayList<>();
     List<String> collectors4 = new ArrayList<>();
     collectFrom(CommonCodeStyleSettings.class, names2, collectors4, "commonSettings", "defaultCommonSettings", "COMMON_");
