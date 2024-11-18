@@ -6,16 +6,20 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class SettingsFileEditor(private val settingsFile: SettingsVirtualFile) : FileEditor {
 
   private val userDataHolder: UserDataHolder = UserDataHolderBase()
@@ -55,6 +59,7 @@ class SettingsFileEditor(private val settingsFile: SettingsVirtualFile) : FileEd
   }
 
   override fun dispose() {
+    Disposer.dispose(settingsFile.editor)
   }
 
   override fun <T> getUserData(key: Key<T?>): T? {

@@ -22,23 +22,25 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.resettableLazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.Icon
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 @Service(Level.PROJECT)
-class SettingsVirtualFileHolder private constructor (private val project: Project){
+class SettingsVirtualFileHolder private constructor(private val project: Project) {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) : SettingsVirtualFileHolder {
+    fun getInstance(project: Project): SettingsVirtualFileHolder {
       return project.getService(SettingsVirtualFileHolder::class.java)
     }
   }
 
   private val settingsFileRef = AtomicReference<SettingsVirtualFile?>(null)
 
-  suspend fun getOrCreate(initializer: () -> SettingsDialog) : SettingsVirtualFile {
+  suspend fun getOrCreate(initializer: () -> SettingsDialog): SettingsVirtualFile {
     return withContext(Dispatchers.EDT) {
       val settingsVirtualFile = settingsFileRef.get()
 
@@ -57,6 +59,10 @@ class SettingsVirtualFileHolder private constructor (private val project: Projec
     }
   }
 
+  fun invalidate(): SettingsVirtualFile? {
+    return settingsFileRef.getAndSet(null)
+  }
+
   class SettingsVirtualFile(val editor: AbstractEditor, val project: Project) :
     LightVirtualFile(CommonBundle.settingsTitle(), SettingFileType(), ""), OptionallyIncluded {
 
@@ -64,15 +70,15 @@ class SettingsVirtualFileHolder private constructor (private val project: Projec
       putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
     }
 
-    override fun isIncludedInEditorHistory(project: Project): Boolean  = false
+    override fun isIncludedInEditorHistory(project: Project): Boolean = false
   }
 
-  private class SettingFileType: FakeFileType() {
-    override fun getName(): @NonNls String  = CommonBundle.settingsTitle()
+  private class SettingFileType : FakeFileType() {
+    override fun getName(): @NonNls String = CommonBundle.settingsTitle()
 
-    override fun getDescription(): @NlsContexts.Label String  = CommonBundle.settingsTitle()
+    override fun getDescription(): @NlsContexts.Label String = CommonBundle.settingsTitle()
 
-    override fun getIcon(): Icon?  = AllIcons.General.Settings
+    override fun getIcon(): Icon? = AllIcons.General.Settings
 
     override fun isMyFileType(file: VirtualFile): Boolean {
       return file is SettingsVirtualFile
