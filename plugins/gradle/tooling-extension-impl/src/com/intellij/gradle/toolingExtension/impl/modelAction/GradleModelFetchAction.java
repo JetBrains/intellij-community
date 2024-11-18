@@ -105,12 +105,16 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     myProjectLoadedAction = myModels == null && myUseProjectsLoadedPhase;
 
     if (myProjectLoadedAction || !myUseProjectsLoadedPhase) {
-      myModels = initAction(controller, converterExecutor, telemetry);
+      myModels = telemetry.callWithSpan("InitAction", __ ->
+        initAction(controller, converterExecutor, telemetry)
+      );
     }
 
     assert myModels != null;
 
-    executeAction(controller, converterExecutor, telemetry, myModels);
+    telemetry.runWithSpan("ExecuteAction", __ ->
+      executeAction(controller, converterExecutor, telemetry, myModels)
+    );
 
     if (myProjectLoadedAction) {
       telemetry.runWithSpan("TurnOffDefaultTasks", __ ->
