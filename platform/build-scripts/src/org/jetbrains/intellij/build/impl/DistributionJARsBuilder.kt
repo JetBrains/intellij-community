@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -413,7 +412,7 @@ internal suspend fun buildNonBundledPlugins(
 
     // buildPlugins pluginBuilt listener is called concurrently
     val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
-    val autoPublishPluginChecker = loadPluginAutoPublishList(context)
+    val autoPublishPluginChecker = context.pluginAutoPublishList
     val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                         !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
     val mappings = buildPlugins(
@@ -858,26 +857,6 @@ private suspend fun containsFileInOutput(
   return true
 }
 
-fun getPluginAutoUploadFile(context: BuildContext): Path? {
-  val autoUploadFile = context.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
-  return when {
-    Files.isRegularFile(autoUploadFile) -> autoUploadFile
-    // public sources build
-    context.paths.projectHome.toUri() == context.paths.communityHomeDir.toUri() -> null
-    else -> error("File '$autoUploadFile' must exist")
-  }
-}
-
-fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
-  return autoUploadFile.useLines { lines ->
-    lines
-      .map { StringUtil.split(it, "//", true, false)[0] }
-      .map { StringUtil.split(it, "#", true, false)[0].trim() }
-      .filter { !it.isEmpty() }
-      .toCollection(TreeSet(String.CASE_INSENSITIVE_ORDER))
-  }
-}
-
 private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
   val tool = context.proprietaryBuildTools.scrambleTool
   if (tool == null) {
@@ -963,33 +942,6 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFamily?, arc
     osFamily != null && (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily)) -> false
     arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL -> false
     else -> arch == null || bundlingRestrictions.supportedArch.contains(arch)
-  }
-}
-
-/**
- * @see [[build/plugins-autoupload.txt]] for the specification.
- *
- * @return predicate to test if the given plugin should be auto-published
- */
-private fun loadPluginAutoPublishList(context: BuildContext): Predicate<PluginLayout> {
-  val file = getPluginAutoUploadFile(context) ?: return Predicate<PluginLayout> { false }
-  val config = readPluginAutoUploadFile(file)
-
-  val productCode = context.applicationInfo.productCode
-  return Predicate<PluginLayout> { plugin ->
-    val mainModuleName = plugin.mainModule
-
-    val includeInAllProducts = config.contains(mainModuleName)
-    val includeInProduct = config.contains("+$productCode:$mainModuleName")
-    val excludedFromProduct = config.contains("-$productCode:$mainModuleName")
-
-    if (includeInProduct && (excludedFromProduct || includeInAllProducts)) {
-      context.messages.error("Unsupported rules combination: " + config.filter {
-        it == mainModuleName || it.endsWith(":$mainModuleName")
-      })
-    }
-
-    !excludedFromProduct && (includeInAllProducts || includeInProduct)
   }
 }
 

@@ -42,6 +42,8 @@ class ProductModulesLayout {
    * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed into it.
    * Zip archives of these plugins will be built and placed under [BuildContext.nonBundledPlugins] directory in the build artifacts.
    * Layouts of the plugins are specified in [pluginLayouts] list.
+   *
+   * @see [org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList]
    */
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 

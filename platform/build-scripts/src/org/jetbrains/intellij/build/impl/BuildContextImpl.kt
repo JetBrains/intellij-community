@@ -13,6 +13,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
@@ -424,6 +425,10 @@ class BuildContextImpl internal constructor(
       stdErrConsumer = messages::warning,
       attachStdOutToException = attachStdOutToException,
     )
+  }
+
+  override val pluginAutoPublishList: PluginAutoPublishList by lazy {
+    PluginAutoPublishList(this)
   }
 }
 
