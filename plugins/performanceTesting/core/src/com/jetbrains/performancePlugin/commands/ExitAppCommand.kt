@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -29,7 +30,9 @@ class ExitAppCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(
     }
 
     withContext(Dispatchers.EDT) {
-      ApplicationManagerEx.getApplicationEx().exit(flags)
+      WriteIntentReadAction.run {
+        ApplicationManagerEx.getApplicationEx().exit(flags)
+      }
     }
   }
 }
