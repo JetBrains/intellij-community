@@ -9,11 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class TerminalBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.TerminalBundle";
-  public static final TerminalBundle INSTANCE = new TerminalBundle();
+public final class TerminalBundle {
+  private static final @NonNls String BUNDLE = "messages.TerminalBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(TerminalBundle.class, BUNDLE);
 
-  private TerminalBundle() { super(BUNDLE); }
+  private TerminalBundle() { }
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
