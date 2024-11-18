@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -17,11 +17,12 @@ import java.util.List;
 public final class JavaContributorCollectors extends CounterUsagesCollector {
   public static final String TAG_TYPE = "tag";
   public static final String STATIC_QUALIFIER_TYPE = "static_qualifier";
+  public static final String POSTFIX_TAG = "postfix_tag";
 
-  private static final EventLogGroup ourGroup = new EventLogGroup("java.completion.contributors", 2);
+  private static final EventLogGroup ourGroup = new EventLogGroup("java.completion.contributors", 3);
 
   private static final EventField<String>
-    TYPE_CONTRIBUTOR_FIELD = EventFields.String("type_contributor", List.of(TAG_TYPE, STATIC_QUALIFIER_TYPE));
+    TYPE_CONTRIBUTOR_FIELD = EventFields.String("type_contributor", List.of(TAG_TYPE, STATIC_QUALIFIER_TYPE, POSTFIX_TAG));
   private static final EventField<String> TYPE_COMPLETION_FIELD =
     EventFields.String("type_completion", List.of(CompletionType.SMART.name(), CompletionType.BASIC.name()));
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.JavaContributorCollectors;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
@@ -15,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.completion.JavaContributorCollectors.POSTFIX_TAG;
+
 @SuppressWarnings("PostfixTemplateDescriptionNotFound")
 public class JavaEditableTaggedPostfixTemplate extends JavaEditablePostfixTemplate implements CustomizableLookupElementTemplate {
 
@@ -25,9 +29,6 @@ public class JavaEditableTaggedPostfixTemplate extends JavaEditablePostfixTempla
 
   @NotNull
   private final String myExample;
-
-  @NotNull
-  private final String myTemplateName;
 
   public @NotNull String @NotNull [] getTags() {
     return myTags;
@@ -57,10 +58,10 @@ public class JavaEditableTaggedPostfixTemplate extends JavaEditablePostfixTempla
                                            boolean useTopmostExpression,
                                            @NotNull String @NotNull [] tags,
                                            @NotNull PostfixTemplateProvider provider) {
-    super(templateId, templateName, liveTemplate, example.replace(EXPR_$, "expr"), expressionConditions, minimumLanguageLevel, useTopmostExpression, provider);
+    super(templateId, templateName, liveTemplate, example.replace(EXPR_$, "expr"), expressionConditions, minimumLanguageLevel,
+          useTopmostExpression, provider);
     myTags = tags;
     myExample = example;
-    myTemplateName= templateName;
   }
 
 
@@ -77,7 +78,7 @@ public class JavaEditableTaggedPostfixTemplate extends JavaEditablePostfixTempla
   public void renderElement(@NotNull LookupElementPresentation presentation) {
     String exp = myText;
     String templateText = myExample;
-    if (exp == null || templateText.length() + exp.length() >= 50 || !templateText.contains(EXPR_$)) {
+    if (exp == null || templateText.length() + exp.length() >= 100 || !templateText.contains(EXPR_$)) {
       return;
     }
     String withExp = templateText.replace(EXPR_$, exp);
@@ -102,5 +103,11 @@ public class JavaEditableTaggedPostfixTemplate extends JavaEditablePostfixTempla
   @Override
   public Collection<String> getAllLookupStrings() {
     return Arrays.asList(myTags);
+  }
+
+  @Override
+  protected @NotNull TextRange getRangeToRemove(@NotNull PsiElement element) {
+    JavaContributorCollectors.logInsertHandle(element.getProject(), POSTFIX_TAG, CompletionType.BASIC);
+    return super.getRangeToRemove(element);
   }
 }

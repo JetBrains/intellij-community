@@ -76,7 +76,9 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new AsListToListPostfixTemplate(this),
     new ListOfToListPostfixTemplate(this),
     new NewArrayListToListPostfixTemplate(this),
-    new NewHashSetToSetPostfixTemplate(this)
+    new NewHashSetToSetPostfixTemplate(this),
+    new LocalDateToJavaSqlDatePostfixTemplate(this),
+    new JavaUtilDateToLocalDatePostfixTemplate(this)
   );
 
   @Override
