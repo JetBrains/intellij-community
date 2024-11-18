@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 
 
-class CoroutineStackFrameInterceptor : StackFrameInterceptor {
+private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
         if (debugProcess.xdebugProcess?.session !is XDebugSessionImpl
             || frame is SkipCoroutineStackFrameProxyImpl
@@ -46,10 +46,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             return emptyList()
         }
 
-        val suspendContextImpl = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
-        if (suspendContextImpl == null) {
-            return null
-        }
+        val suspendContext = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager) ?: return null
 
         val (isSuspendFrame, isFirst) = CoroutineFrameBuilder.isFirstSuspendFrame(frame)
         if (!isSuspendFrame) {
@@ -61,19 +58,17 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
 
         // only get the information for the first suspend frame
-        val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContextImpl) ?: return null
+        val stackFrame = CoroutineFrameBuilder.coroutineExitFrame(frame, suspendContext) ?: return null
 
         if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
             showOrHideCoroutinePanel(debugProcess, true)
         }
 
-        val resumeWithFrame = stackFrame.threadPreCoroutineFrames.firstOrNull()
-
-        if (threadAndContextSupportsEvaluation(suspendContextImpl, resumeWithFrame)) {
-            val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContextImpl, withPreFrames = false)
-            return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
+        if (!threadAndContextSupportsEvaluation(suspendContext, frame)) {
+            return listOf(stackFrame)
         }
-        return listOf(stackFrame)
+        val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContext, withPreFrames = false)
+        return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
     }
 
     override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {

@@ -19,13 +19,13 @@ class DebugMetadata private constructor(context: DefaultExecutionContext) :
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfDebugProbesImpl =
             throw IllegalStateException("Not meant to be mirrored.")
 
-    fun fetchContinuationStack(continuation: ObjectReference?, context: DefaultExecutionContext): List<MirrorOfStackFrame> {
-        continuation ?: return emptyList()
+    internal fun fetchContinuationStack(continuation: ObjectReference?, context: DefaultExecutionContext): List<MirrorOfStackFrame> {
+        if (continuation == null) return emptyList()
         val coroutineStack = mutableListOf<MirrorOfStackFrame>()
         var loopContinuation: ObjectReference? = continuation
         while (loopContinuation != null) {
             val continuationMirror = baseContinuationImpl.mirror(loopContinuation, context) ?: break
-            coroutineStack.add(MirrorOfStackFrame(loopContinuation, continuationMirror))
+            coroutineStack.add(MirrorOfStackFrame(continuationMirror))
             loopContinuation = continuationMirror.nextContinuation
         }
         return coroutineStack

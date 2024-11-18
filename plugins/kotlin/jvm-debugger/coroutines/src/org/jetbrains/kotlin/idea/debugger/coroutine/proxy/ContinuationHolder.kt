@@ -13,12 +13,12 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfBaseContinuationImpl
 
-class ContinuationHolder private constructor(val context: DefaultExecutionContext) {
+internal class ContinuationHolder private constructor(val context: DefaultExecutionContext) {
     private val debugMetadata: DebugMetadata? = DebugMetadata.instance(context)
     private val locationCache = LocationCache(context)
     private val debugProbesImpl = DebugProbesImpl.instance(context)
 
-    fun extractCoroutineInfoData(continuation: ObjectReference): CompleteCoroutineInfoData? {
+    internal fun extractCoroutineInfoData(continuation: ObjectReference): CompleteCoroutineInfoData? {
         try {
             val continuationStack = debugMetadata?.fetchContinuationStack(continuation, context) ?: return null
             val continuationStackFrames = continuationStack.mapNotNull { it.toCoroutineStackFrameItem(context, locationCache) }
@@ -43,14 +43,12 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
                 descriptor = CoroutineDescriptor.instance(coroutineInfo),
                 continuationStackFrames = continuationStackFrames,
                 creationStackFrames = creationStackFrames,
-                jobHierarchy = emptyList()
             )
         } else {
             CompleteCoroutineInfoData(
                 descriptor = CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null, null),
                 continuationStackFrames = continuationStackFrames,
                 creationStackFrames = emptyList(),
-                jobHierarchy = emptyList()
             )
         }
     }
@@ -61,13 +59,13 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
     }
 }
 
-fun MirrorOfBaseContinuationImpl.spilledValues(context: DefaultExecutionContext): List<JavaValue> {
+internal fun MirrorOfBaseContinuationImpl.spilledValues(context: DefaultExecutionContext): List<JavaValue> {
     return fieldVariables.map {
         it.toJavaValue(that, context)
     }
 }
 
-fun FieldVariable.toJavaValue(continuation: ObjectReference, context: DefaultExecutionContext): JavaValue {
+private fun FieldVariable.toJavaValue(continuation: ObjectReference, context: DefaultExecutionContext): JavaValue {
     val valueDescriptor = ContinuationVariableValueDescriptorImpl(
         context,
         continuation,

@@ -29,7 +29,7 @@ class CreationCoroutineStackFrameItem(
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val frame = debugProcess.findFirstFrame() ?: return null
         val position = sourcePosition.toXSourcePosition()
-        return CreationCoroutineStackFrame(frame, position, withSepartor = first, location)
+        return CreationCoroutineStackFrame(frame, position, withSeparator = first, location)
     }
 }
 
