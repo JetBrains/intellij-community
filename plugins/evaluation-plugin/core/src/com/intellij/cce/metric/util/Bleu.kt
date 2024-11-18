@@ -1,3 +1,7 @@
+// The logic is taken from https://github.com/mjpost/sacrebleu/blob/master/sacrebleu/metrics/bleu.py, simplified by eliminating
+// smoothing methods, tokenizer options, and advanced settings for clarity in core BLEU calculation.
+// For simplifying, a single prediction and reference text is assumed in the BLEU score calculation.
+
 import java.text.BreakIterator
 import kotlin.math.exp
 import kotlin.math.ln
@@ -39,6 +43,12 @@ fun computeBleuScore(candidateText: String, referenceText: String): Double {
 
   val brevityPenalty = calculateBrevityPenalty(referenceTokens.size, candidateTokens.size)
   val bleuScore = brevityPenalty * exp(logScore)
+  println("CandidateText:")
+  println(candidateText)
+  println("ReferenceText:")
+  println(referenceText)
+  println("Bleu Score:")
+  println(bleuScore)
   return if (bleuScore.isNaN() || bleuScore.isInfinite()) 0.0 else bleuScore
 }
 
