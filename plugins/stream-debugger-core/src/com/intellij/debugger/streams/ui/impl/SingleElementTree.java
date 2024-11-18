@@ -9,22 +9,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class SingleElementTree extends CollectionTree {
-  SingleElementTree(@Nullable Value value,
+public class SingleElementTree extends TerminationTree {
+  SingleElementTree(@NotNull Value value,
                     @NotNull List<TraceElement> traceElements,
                     @NotNull EvaluationContextWrapper evaluationContext,
                     @NotNull CollectionTreeBuilder collectionTreeBuilder,
                     @NotNull String debugName) {
-    super(Collections.singletonList(value), traceElements, evaluationContext, collectionTreeBuilder, debugName);
+    super(value, traceElements, evaluationContext, collectionTreeBuilder, debugName);
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {

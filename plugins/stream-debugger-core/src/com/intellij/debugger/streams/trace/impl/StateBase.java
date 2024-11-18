@@ -3,7 +3,9 @@ package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.IntermediateState;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -20,5 +22,10 @@ abstract class StateBase implements IntermediateState {
   @Override
   public @NotNull List<TraceElement> getTrace() {
     return myElements;
+  }
+
+  @Override
+  public @Nullable Value getStreamResult() {
+    return null;
   }
 }

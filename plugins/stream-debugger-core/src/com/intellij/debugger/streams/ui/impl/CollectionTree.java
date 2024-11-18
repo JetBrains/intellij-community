@@ -8,20 +8,11 @@ import com.intellij.debugger.streams.trace.Value;
 import com.intellij.debugger.streams.ui.PaintingListener;
 import com.intellij.debugger.streams.ui.TraceContainer;
 import com.intellij.debugger.streams.ui.ValuesSelectionListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
-import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,15 +28,16 @@ import static com.intellij.util.ui.tree.TreeUtil.collectSelectedPaths;
 /**
  * @author Vitaliy.Bibaev
  */
-public class CollectionTree extends XDebuggerTree implements TraceContainer {
+public abstract class CollectionTree extends XDebuggerTree implements TraceContainer {
   private static final Map<Integer, Color> COLORS_CACHE = new HashMap<>();
-  private static final Object NULL_MARKER = ObjectUtils.sentinel("CollectionTree.NULL_MARKER");
 
-  private final CollectionTreeBuilder myBuilder;
-  private final Map<TraceElement, TreePath> myValue2Path = new HashMap<>();
-  private final Map<TreePath, TraceElement> myPath2Value = new HashMap<>();
+  protected final Map<TraceElement, TreePath> myValue2Path = new HashMap<>();
+  protected final Map<TreePath, TraceElement> myPath2Value = new HashMap<>();
   private final int myItemsCount;
+
+  @SuppressWarnings("unused")
   private final String myDebugName;
+
   private Set<TreePath> myHighlighted = Collections.emptySet();
   private final EventDispatcher<ValuesSelectionListener> mySelectionDispatcher = EventDispatcher.create(ValuesSelectionListener.class);
   private final EventDispatcher<PaintingListener> myPaintingDispatcher = EventDispatcher.create(PaintingListener.class);
@@ -53,53 +45,14 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private boolean myIgnoreInternalSelectionEvents = false;
   private boolean myIgnoreExternalSelectionEvents = false;
 
-  CollectionTree(@NotNull List<@Nullable Value> values,
-                 @NotNull List<TraceElement> traceElements,
+  protected CollectionTree(@NotNull List<TraceElement> traceElements,
                  @NotNull EvaluationContextWrapper evaluationContextWrapper,
                  @NotNull CollectionTreeBuilder collectionTreeBuilder,
                  @NotNull String debugName) {
     super(evaluationContextWrapper.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
-    myBuilder = collectionTreeBuilder;
-    myItemsCount = values.size();
+    myItemsCount = traceElements.size();
     myDebugName = debugName;
-    final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(values, evaluationContextWrapper));
-    setRoot(root, false);
-    root.setLeaf(false);
-
-    final Map<Object, List<TraceElement>> key2TraceElements =
-      StreamEx.of(traceElements).groupingBy(element -> myBuilder.getKey(element, NULL_MARKER));
-    final Map<Object, Integer> key2Index = new HashMap<>(key2TraceElements.size() + 1);
-
-    addTreeListener(new XDebuggerTreeListener() {
-      @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
-        final XDebuggerTreeListener listener = this;
-        if (node instanceof XValueContainerNode) {
-          final XValueContainer container = ((XValueContainerNode<?>)node).getValueContainer();
-          if (myBuilder.isSupported(container)) {
-            evaluationContextWrapper.scheduleDebuggerCommand(() -> {
-              final Object key = myBuilder.getKey(container, NULL_MARKER);
-              ApplicationManager.getApplication().invokeLater(() -> {
-                List<TraceElement> elements = key2TraceElements.get(key);
-                final int nextIndex = key2Index.getOrDefault(key, -1) + 1;
-                if (elements != null && nextIndex < elements.size()) {
-                  final TraceElement element = elements.get(nextIndex);
-                  myValue2Path.put(element, node.getPath());
-                  myPath2Value.put(node.getPath(), element);
-                  key2Index.put(key, nextIndex);
-                }
-
-                if (myPath2Value.size() == traceElements.size()) {
-                  CollectionTree.this.removeTreeListener(listener);
-                  ApplicationManager.getApplication().invokeLater(CollectionTree.this::repaint);
-                }
-              });
-            });
-          }
-        }
-      }
-    });
 
     addTreeSelectionListener(e -> {
       if (myIgnoreInternalSelectionEvents) {
@@ -114,16 +67,19 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
       fireSelectionChanged(selectedItems);
     });
-
-    setSelectionRow(0);
-    expandNodesOnLoad(node -> node == root);
   }
 
-  CollectionTree(@NotNull List<TraceElement> traceElements,
-                 @NotNull EvaluationContextWrapper evaluationContextWrapper,
-                 @NotNull CollectionTreeBuilder collectionTreeBuilder,
-                 @NotNull String debugName) {
-    this(ContainerUtil.map(traceElements, TraceElement::getValue), traceElements, evaluationContextWrapper, collectionTreeBuilder, debugName);
+  public static CollectionTree create(@Nullable Value streamResult,
+                                      @NotNull List<TraceElement> traceElements,
+                                      @NotNull EvaluationContextWrapper evaluationContextWrapper,
+                                      @NotNull CollectionTreeBuilder collectionTreeBuilder,
+                                      @NotNull String debugName) {
+    if (streamResult == null) {
+      return new IntermediateTree(traceElements, evaluationContextWrapper, collectionTreeBuilder, debugName);
+    }
+    else {
+      return new TerminationTree(streamResult, traceElements, evaluationContextWrapper, collectionTreeBuilder, debugName);
+    }
   }
 
   @Override
@@ -305,31 +261,6 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
   private boolean isPathHighlighted(@NotNull TreePath path) {
     return myHighlighted.contains(path) || isPathSelected(path);
-  }
-
-  private class MyRootValue extends XValue {
-    private final List<@Nullable Value> myValues;
-    private final @NotNull EvaluationContextWrapper myEvaluationContext;
-
-    MyRootValue(@NotNull List<@Nullable Value> values, @NotNull EvaluationContextWrapper evaluationContext) {
-      myValues = values;
-      myEvaluationContext = evaluationContext;
-    }
-
-    @Override
-    public void computeChildren(@NotNull XCompositeNode node) {
-      final XValueChildrenList children = new XValueChildrenList();
-      for (final Value value : myValues) {
-        children.add(myBuilder.createXNamedValue(value, myEvaluationContext));
-      }
-
-      node.addChildren(children, true);
-    }
-
-    @Override
-    public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-      node.setPresentation(null, "", "", true);
-    }
   }
 
   @NotNull

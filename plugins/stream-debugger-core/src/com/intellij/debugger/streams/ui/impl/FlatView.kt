@@ -31,7 +31,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val nextCall = controller.nextCall ?: error("intermediate state should know about next call")
       val mappingPane = MappingPane(nextCall.name, TraceUtil.formatWithArguments(nextCall), valuesBefore, mapping, controller)
 
-      val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#controller#${index}")
+      val tree = CollectionTree.create(controller.getStreamResult(), valuesBefore.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#controller#${index}")
       val view = PositionsAwareCollectionView(tree, valuesBefore)
       controller.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
@@ -64,12 +64,12 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val lastController = controllers.last()
 
       val prevCall = lastController.prevCall
+      //TODO(Korovin): Figure out why SingleElementTree is used here
       val tree = if (prevCall != null && prevCall is TerminatorStreamCall) {
-        val values = lastController.values
-        SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Single")
+        SingleElementTree(lastController.getStreamResult()!!, it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Single")
       }
       else {
-        CollectionTree(lastController.values, it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Collection")
+        CollectionTree.create(lastController.getStreamResult(), it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Collection")
       }
       val view = PositionsAwareCollectionView(tree, it)
       lastController.register(view)
@@ -86,7 +86,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
 
     if (controllers.size == 1) {
       val controller = controllers[0]
-      val tree = CollectionTree(controller.values, controller.trace, evaluationContext, builder, "FlatView#singleController")
+      val tree = CollectionTree.create(controller.getStreamResult(), controller.trace, evaluationContext, builder, "FlatView#singleController")
       val view = CollectionView(tree)
       add(view)
       controller.register(view)

@@ -6,7 +6,6 @@ import com.intellij.debugger.streams.trace.Value;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -14,9 +13,8 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface TraceController extends ValuesHighlightingListener {
-  @NotNull
-  @Unmodifiable
-  List<Value> getValues();
+  @Nullable
+  Value getStreamResult();
 
   @NotNull
   List<TraceElement> getTrace();

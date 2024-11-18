@@ -111,7 +111,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     if (controllers.isEmpty()) return;
     final List<TraceElement> trace = controllers.get(0).getTrace();
-    final CollectionTree tree = new CollectionTree(trace, context, builder, "setTrace#Tree#0#");
+    final CollectionTree tree = CollectionTree.create(controllers.get(0).getStreamResult(), trace, context, builder, "setTrace#Tree#0#");
     final CollectionView sourceView = new CollectionView(tree);
     controllers.get(0).register(sourceView);
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);

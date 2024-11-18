@@ -6,6 +6,7 @@ import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.Value;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,8 +31,8 @@ public class TerminationStateImpl extends StateBase implements PrevAwareState {
   }
 
   @Override
-  public @NotNull List<Value> getRawValues() {
-    return Collections.singletonList(myResult.getValue());
+  public @Nullable Value getStreamResult() {
+    return myResult.getValue();
   }
 
   @Override

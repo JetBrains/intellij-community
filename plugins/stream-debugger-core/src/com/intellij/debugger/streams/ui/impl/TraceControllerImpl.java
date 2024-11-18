@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -57,8 +56,8 @@ public class TraceControllerImpl implements TraceController, Disposable {
   }
 
   @Override
-  public @NotNull @Unmodifiable List<@Nullable Value> getValues() {
-    return myState.getRawValues();
+  public @Nullable Value getStreamResult() {
+    return myState.getStreamResult();
   }
 
   @Override
