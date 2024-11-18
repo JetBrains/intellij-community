@@ -82,8 +82,10 @@ inline fun <reified T : KaModule> IdeaModuleInfo.toKaModuleOfType(): @kotlin.int
     return toKaModule() as T
 }
 
-@OptIn(K1ModeProjectStructureApi::class)
-internal class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProjectStructureProvider() {
+@K1ModeProjectStructureApi
+class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProjectStructureProvider() {
+    override val self: IDEProjectStructureProvider get() = this
+
     @OptIn(KaExperimentalApi::class)
     override fun getModule(element: PsiElement, contextualModule: KaModule?): KaModule {
         ProgressManager.checkCanceled()
@@ -380,7 +382,7 @@ private fun <T> cachedKtModule(
         }
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap<T?, KaModule> { context ->
-                val projectStructureProvider = KotlinProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
+                val projectStructureProvider = project.ideProjectStructureProvider.self as ProjectStructureProviderIdeImpl
                 projectStructureProvider.computeModule(containingFile, anchorElement, context, virtualFile)
             },
             dependencies,

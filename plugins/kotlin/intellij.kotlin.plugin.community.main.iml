@@ -215,5 +215,6 @@
     <orderEntry type="module" module-name="kotlin.ide" exported="" />
     <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
     <orderEntry type="module" module-name="kotlin.k2.internal" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.fir.scripting" exported="" />
   </component>
 </module>

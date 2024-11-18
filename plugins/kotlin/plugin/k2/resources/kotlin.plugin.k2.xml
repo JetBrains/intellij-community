@@ -207,6 +207,7 @@
     <module name="kotlin.base.fir.analysis-api-platform"/>
     <module name="kotlin.base.fir.code-insight"/>
     <module name="kotlin.base.fir.project-structure"/>
+    <module name="kotlin.base.fir.scripting"/>
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.coverage"/>

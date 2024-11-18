@@ -130,8 +130,15 @@ sealed interface WorkspaceFileInternalInfo {
     /** File is invalid */
     INVALID;
 
+    override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = emptyList()
+
     override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? = null
   }
+
+  /**
+   * A list of file sets with custom data stored in this instance.
+   */
+  val fileSets: List<WorkspaceFileSetWithCustomData<*>>
 
   /**
    * Returns a file set stored in this instance which satisfies the given [condition], or `null` if no such file set found.
@@ -142,7 +149,7 @@ sealed interface WorkspaceFileInternalInfo {
 }
 
 internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
-  val fileSets: List<WorkspaceFileSetWithCustomData<*>>
+  override val fileSets: List<WorkspaceFileSetWithCustomData<*>>
   fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetWithCustomData<*>?
 }
 

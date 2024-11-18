@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.getContainingKaModules
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.useNewK2ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.SmartList
@@ -51,10 +52,15 @@ class FirLibrarySourceScopeService(private val project: Project): LibrarySourceS
         return result
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
     private fun KaLibraryModule.sourcesOnlyDependencies(): List<KaLibraryModule> {
-        return LibraryDependenciesCache.getInstance(project).getLibraryDependencies(moduleInfo as LibraryInfo).sourcesOnlyDependencies
-            .mapNotNull { it.toKaModule() as? KaLibraryModule }
+        if (useNewK2ProjectStructureProvider) {
+             // Library dependencies are not used in K2 mode
+            return emptyList()
+        } else {
+            @OptIn(K1ModeProjectStructureApi::class)
+            return LibraryDependenciesCache.getInstance(project).getLibraryDependencies(moduleInfo as LibraryInfo).sourcesOnlyDependencies
+                .mapNotNull { it.toKaModule() as? KaLibraryModule }
+        }
     }
 
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =

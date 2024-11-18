@@ -140,7 +140,7 @@ val KaSourceModule.symbolicId: ModuleId
 val KaLibraryModule.symbolicId: LibraryId
     get() = project.ideProjectStructureProvider.getKaLibraryModuleSymbolicId(this)
 
-val KaSourceModule.sourceModuleKind: KaSourceModuleKind?
+val KaSourceModule.sourceModuleKind: KaSourceModuleKind
     get() = project.ideProjectStructureProvider.getKaSourceModuleKind(this)
 
 

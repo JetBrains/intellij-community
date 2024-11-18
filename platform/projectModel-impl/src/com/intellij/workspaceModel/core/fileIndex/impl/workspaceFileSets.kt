@@ -101,6 +101,9 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
                                     override val data: WorkspaceFileSetData,
                                     val recursive: Boolean = true)
   : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
+
+  override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
+
   fun isUnloaded(project: Project): Boolean {
     return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
   }

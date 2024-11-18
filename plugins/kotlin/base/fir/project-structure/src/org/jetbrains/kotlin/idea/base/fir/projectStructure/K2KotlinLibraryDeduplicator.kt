@@ -5,12 +5,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinLibraryDeduplicator
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.projectStructure.useNewK2ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 internal class K2KotlinLibraryDeduplicator(private val project: Project) : KotlinLibraryDeduplicator() {
     override fun deduplicatedLibrary(library: Library): Library {
-        @OptIn(K1ModeProjectStructureApi::class)
-        // as a migration phase (KTIJ-31684), we still need the deduplicator for K2
-        return LibraryInfoCache.getInstance(project).deduplicatedLibrary(library)
+        if (useNewK2ProjectStructureProvider) {
+            return library
+        } else {
+            @OptIn(K1ModeProjectStructureApi::class)
+            return LibraryInfoCache.getInstance(project).deduplicatedLibrary(library)
+        }
     }
 }

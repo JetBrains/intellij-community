@@ -21,6 +21,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
+
     <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.parsing.KotlinParserDefinition"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
