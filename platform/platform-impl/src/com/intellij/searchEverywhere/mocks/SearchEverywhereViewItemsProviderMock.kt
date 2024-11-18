@@ -14,7 +14,7 @@ class SearchEverywhereItemsProviderMock(
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
 ) : SearchEverywhereItemsProvider<String, String> {
-  override suspend fun processItems(searchParams: String): Flow<SearchEverywhereItemsProvider.WeightedItem<String>> {
+  override fun processItems(searchParams: String): Flow<SearchEverywhereItemsProvider.WeightedItem<String>> {
     return flow {
       if (delayStep <= 0) delay(delayMillis)
 

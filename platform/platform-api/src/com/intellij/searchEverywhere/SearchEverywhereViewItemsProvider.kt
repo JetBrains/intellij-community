@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SearchEverywhereViewItemsProvider<Item, Presentation: SearchEverywhereItemPresentation, Params> {
 
-  suspend fun processViewItems(searchParams: Params): Flow<SearchEverywhereViewItem<Item, Presentation>>
+  fun processViewItems(searchParams: Params): Flow<SearchEverywhereViewItem<Item, Presentation>>
 
   fun isDumbAware(): Boolean = true
 }

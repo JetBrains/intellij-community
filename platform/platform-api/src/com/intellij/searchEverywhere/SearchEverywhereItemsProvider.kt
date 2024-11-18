@@ -8,5 +8,5 @@ import org.jetbrains.annotations.ApiStatus
 interface SearchEverywhereItemsProvider<I, P> {
   data class WeightedItem<I>(val item: I, val weight: Int)
 
-  suspend fun processItems(searchParams: P): Flow<WeightedItem<I>>
+  fun processItems(searchParams: P): Flow<WeightedItem<I>>
 }

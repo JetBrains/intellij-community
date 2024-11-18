@@ -24,7 +24,7 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 
-  override suspend fun processItems(searchParams: ActionSearchParams): Flow<SearchEverywhereItemsProvider.WeightedItem<MatchedValue>> {
+  override fun processItems(searchParams: ActionSearchParams): Flow<SearchEverywhereItemsProvider.WeightedItem<MatchedValue>> {
     return channelFlow {
       processItems(searchParams) { value, weight ->
         channel.send(SearchEverywhereItemsProvider.WeightedItem(value, weight))

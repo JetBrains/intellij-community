@@ -18,7 +18,7 @@ class DefaultViewItemsProvider<Item, Presentation : SearchEverywhereItemPresenta
   private val descriptionRenderer: (Item) -> String? = { null },
 ) : SearchEverywhereViewItemsProvider<Item, Presentation, Params> {
 
-  override suspend fun processViewItems(searchParams: Params): Flow<SearchEverywhereViewItem<Item, Presentation>> =
+  override fun processViewItems(searchParams: Params): Flow<SearchEverywhereViewItem<Item, Presentation>> =
     searchProvider.processItems(searchParams).map { weightedItem ->
       val item = weightedItem.item
       val weight = weightedItem.weight
