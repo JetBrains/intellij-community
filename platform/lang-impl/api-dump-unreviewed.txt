@@ -13925,6 +13925,7 @@ f:com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 - s:addSdk(com.intellij.openapi.projectRoots.Sdk):V
 - s:configureDirectoryProjectSdk(com.intellij.openapi.project.Project,java.util.Comparator,com.intellij.openapi.projectRoots.SdkType[]):V
 - s:createAndAddSDK(java.lang.String,com.intellij.openapi.projectRoots.SdkType):com.intellij.openapi.projectRoots.Sdk
+- s:createIncompleteSDK(java.lang.String,com.intellij.openapi.projectRoots.SdkType):com.intellij.openapi.projectRoots.Sdk
 - s:createSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk[],com.intellij.util.NullableConsumer,Z,com.intellij.openapi.projectRoots.SdkType[]):V
 - s:createSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk[],com.intellij.util.NullableConsumer,com.intellij.openapi.projectRoots.SdkType[]):V
 - s:createSdk(java.util.Collection,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.projectRoots.SdkAdditionalData,java.lang.String):com.intellij.openapi.projectRoots.Sdk

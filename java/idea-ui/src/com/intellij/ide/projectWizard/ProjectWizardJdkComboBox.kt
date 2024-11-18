@@ -160,7 +160,7 @@ fun projectWizardJdkComboBox(
       val selected = combo.selectedItem
 
       if (selected is DetectedJdk) {
-        registerJdk(selected.home, combo)
+        sdkProperty.set(service<AddJdkService>().createIncompleteJdk(selected.home))
       }
 
       setProjectJdk.invoke(sdkProperty.get())
@@ -509,21 +509,6 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
     combo.detectedJDKs.add(comboItem)
     combo.addItem(comboItem)
     combo.selectedItem = comboItem
-  }
-}
-
-private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
-  service<AddJdkService>().createJdkFromPath(path) {
-    JdkComboBoxCollector.jdkRegistered(it)
-    combo.detectedJDKs.find { detected -> FileUtil.pathsEqual(detected.home, path) }?.let { item ->
-      combo.removeItem(item)
-      combo.detectedJDKs.remove(item)
-    }
-    val comboItem = ExistingJdk(it)
-    val index = combo.lastRegisteredJdkIndex
-    combo.registered.add(comboItem)
-    combo.insertItemAt(comboItem, index)
-    combo.selectedIndex = index
   }
 }
 

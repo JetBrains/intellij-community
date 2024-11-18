@@ -33,8 +33,8 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -292,6 +292,22 @@ public final class SdkConfigurationUtil {
       return newSdk;
     }
     return null;
+  }
+
+  /// Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
+  /// Contrary to [#createAndAddSDK(String, SdkType)], SDK paths are not setup.
+  /// @param path identifies the SDK
+  /// @return newly created incomplete SDK, or null.
+  public static @Nullable Sdk createIncompleteSDK(@NotNull String path, @NotNull SdkType sdkType) {
+    VirtualFile sdkHome = WriteAction.compute(() -> {
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
+    });
+    if (sdkHome == null) return null;
+
+    Sdk newSdk = createSdk(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()), sdkHome, sdkType, null, null);
+    addSdk(newSdk);
+
+    return newSdk;
   }
 
   public static @NotNull String createUniqueSdkName(@NotNull SdkType type, @NotNull String home, final Collection<? extends Sdk> sdks) {
