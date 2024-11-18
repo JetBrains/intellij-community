@@ -634,6 +634,7 @@ private fun checkProductLayout(context: BuildContext) {
     checkBaseLayout(plugin, "'${plugin.mainModule}' plugin", context)
   }
   checkPlatformSpecificPluginResources(pluginLayouts = pluginLayouts, pluginModulesToPublish = layout.pluginModulesToPublish)
+  checkPluginModulesToPublish(context)
 }
 
 private fun checkBaseLayout(layout: BaseLayout, description: String, context: BuildContext) {
@@ -724,6 +725,21 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
   check(unknownBundledPluginModules.isEmpty()) {
     "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules" +
     "in productProperties.productLayout.pluginLayouts: ${unknownBundledPluginModules.joinToString()}."
+  }
+}
+
+private fun checkPluginModulesToPublish(context: BuildContext) {
+  if (context.pluginAutoPublishList.config.none()) return
+  val pluginModulesToPublish = context.productProperties.productLayout.pluginModulesToPublish
+  val misconfigured = pluginModulesToPublish.filterNot { pluginToPublish ->
+    val layout = context.productProperties.productLayout.pluginLayouts.singleOrNull {
+      it.mainModule == pluginToPublish
+    } ?: PluginLayout.plugin(pluginToPublish)
+    context.pluginAutoPublishList.test(layout)
+  }
+  check(misconfigured.none()) {
+    "productProperties.productLayout.pluginModulesToPublish contains modules " +
+    "that aren't included in ${context.pluginAutoPublishList}: $misconfigured"
   }
 }
 

@@ -19,13 +19,14 @@ import kotlin.io.path.useLines
  */
 @ApiStatus.Internal
 class PluginAutoPublishList(private val context: BuildContext) : Predicate<PluginLayout> {
-  val file: Path? by lazy {
-    val autoUploadFile = context.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
+  private val expectedFile: Path = context.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
+
+  private val file: Path? by lazy {
     when {
-      Files.isRegularFile(autoUploadFile) -> autoUploadFile
+      Files.isRegularFile(expectedFile) -> expectedFile
       // public sources build
       context.paths.projectHome.toUri() == context.paths.communityHomeDir.toUri() -> null
-      else -> error("File '$autoUploadFile' must exist")
+      else -> error("File '$expectedFile' must exist")
     }
   }
 
@@ -59,5 +60,9 @@ class PluginAutoPublishList(private val context: BuildContext) : Predicate<Plugi
 
   override fun test(pluginLayout: PluginLayout): Boolean {
     return predicate.test(pluginLayout)
+  }
+
+  override fun toString(): String {
+    return "$expectedFile"
   }
 }
