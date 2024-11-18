@@ -33,7 +33,9 @@ internal const val EDIT_SOURCE_ACTION_ID: String = "Documentation.EditSource"
 
 internal fun primaryActions(): List<AnAction> = groupActions(PRIMARY_GROUP_ID)
 internal fun navigationActions(): List<AnAction> = groupActions("Documentation.Navigation")
-private fun groupActions(groupId: String) = listOf(*requireNotNull(ActionUtil.getActionGroup(groupId)).getChildren(null))
+private fun groupActions(groupId: String) = listOf(*requireNotNull(ActionUtil.getActionGroup(groupId)).run {
+  (this as? DefaultActionGroup)?.getChildren(ActionManager.getInstance()) ?: getChildren(null)
+})
 
 internal fun registerBackForwardActions(component: JComponent) {
   ActionUtil.wrap("Documentation.Back").registerCustomShortcutSet(CustomShortcutSet(

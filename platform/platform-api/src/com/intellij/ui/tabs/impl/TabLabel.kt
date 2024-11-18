@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl
 
-import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.registry.Registry
@@ -394,21 +394,17 @@ open class TabLabel @Internal constructor(
     place = place ?: ActionPlaces.UNKNOWN
     tabs.popupInfo = info
 
-    val toShow = DefaultActionGroup()
-    if (tabs.popupGroup != null) {
-      toShow.addAll(tabs.popupGroup!!)
-      toShow.addSeparator()
-    }
+    val tabsPopupGroup = tabs.popupGroup
+    val thisTabs = this.tabs
+    val tabNavigationGroup = this.tabs.run { navigationActions.takeIf { addNavigationGroup } }
+    val toShow = object : ActionGroup(), DumbAware {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+        val tabs = e?.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY) as? JBTabsImpl
 
-    val tabs = JBTabsEx.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.component, e.x, e.y)) as JBTabsImpl?
-    if (tabs === this.tabs && this.tabs.addNavigationGroup) {
-      toShow.addAll(this.tabs.navigationActions)
+        return (tabsPopupGroup?.let { ActionWrapperUtil.getChildren(e, this, it) + Separator() } ?: emptyArray()) +
+               (tabNavigationGroup.takeIf { tabs === thisTabs }?.let { ActionWrapperUtil.getChildren(e, this, it) } ?: emptyArray())
+      }
     }
-
-    if (toShow.childrenCount == 0) {
-      return
-    }
-
     this.tabs.activePopup = ActionManager.getInstance().createActionPopupMenu(place, toShow).component
     this.tabs.activePopup!!.addPopupMenuListener(this.tabs.popupListener)
 

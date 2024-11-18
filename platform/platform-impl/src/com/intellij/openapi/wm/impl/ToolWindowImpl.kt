@@ -767,7 +767,7 @@ internal class ToolWindowImpl(
           group.add(additionalGearActions)
         }
         else {
-          addSorted(group, additionalGearActions)
+          addSorted(e, group, additionalGearActions)
         }
         group.addSeparator()
       }
@@ -890,8 +890,8 @@ internal class ToolWindowImpl(
   }
 }
 
-private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
-  val children = group.getChildren(null)
+private fun addSorted(e: AnActionEvent?, main: DefaultActionGroup, group: ActionGroup) {
+  val children = ActionWrapperUtil.getChildren(e, main, group)
   var hadSecondary = false
   for (action in children) {
     if (group.isPrimary(action)) {

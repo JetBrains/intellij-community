@@ -29,6 +29,7 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -118,8 +119,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -463,10 +464,16 @@ public final class DiffUtil {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
+  /** @deprecated Avoid explicit synchronous group expansion! */
+  @Deprecated(forRemoval = true)
   public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
                                                   @NotNull JComponent component,
                                                   @Nullable Disposable parentDisposable) {
-    for (AnAction action : group.getChildren(null)) {
+    AnAction[] actions =
+      group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+      group instanceof CustomisedActionGroup o && o.getDelegate() instanceof DefaultActionGroup oo ? oo.getChildren(ActionManager.getInstance()) :
+      group.getChildren(null);
+    for (AnAction action : actions) {
       if (action instanceof ActionGroup) {
         recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
       }

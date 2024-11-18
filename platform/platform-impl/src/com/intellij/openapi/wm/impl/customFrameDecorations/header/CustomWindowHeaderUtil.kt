@@ -4,7 +4,9 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -64,7 +66,13 @@ object CustomWindowHeaderUtil {
       return true
     }
 
-    val mainToolbarHasNoActions = mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
+    val mainToolbarHasNoActions = mainToolbarActionSupplier().all {
+      when (val g = it.first) {
+        is DefaultActionGroup -> g.childActionsOrStubs.isEmpty()
+        is CustomisedActionGroup -> g.defaultChildrenOrStubs.isEmpty()
+        else -> false
+      }
+    }
     return if (SystemInfoRt.isMac) {
       mainToolbarHasNoActions
     }

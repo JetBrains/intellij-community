@@ -358,7 +358,9 @@ open class TextEditorWithPreview @JvmOverloads constructor(
   protected open fun createLeftToolbarActionGroup(): ActionGroup? = null
 
   protected open fun createRightToolbar(): ActionToolbar {
-    val viewActions = createViewActionGroup().getChildren(null)
+    val viewActions = createViewActionGroup().run {
+      (this as? DefaultActionGroup)?.getChildren(ActionManager.getInstance()) ?: getChildren(null)
+    }
     val viewActionsGroup = ConditionalActionGroup(viewActions) { !isShowActionsInTabs }
     val group = createRightToolbarActionGroup()
     val rightToolbarActions = if (group == null) {
@@ -382,7 +384,11 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   override fun getTabActions(): ActionGroup = ConditionalActionGroup(actions = createTabActions()) { isShowActionsInTabs }
 
-  protected open fun createTabActions(): Array<AnAction> = createViewActionGroup().getChildren(null)
+  protected open fun createTabActions(): Array<AnAction> {
+    return createViewActionGroup().run {
+      (this as? DefaultActionGroup)?.getChildren(ActionManager.getInstance()) ?: getChildren(null)
+    }
+  }
 
   protected open val showEditorAction: ToggleAction
     get() = getAction("TextEditorWithPreview.Layout.EditorOnly")!! as ToggleAction
