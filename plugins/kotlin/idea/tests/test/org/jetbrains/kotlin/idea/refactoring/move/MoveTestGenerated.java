@@ -738,6 +738,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");
         }
 
+        @TestMetadata("kotlin/protectedMemberFromJavaSuperClass/protectedMemberFromJavaSuperClass.test")
+        public void testKotlin_protectedMemberFromJavaSuperClass_ProtectedMemberFromJavaSuperClass() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedMemberFromJavaSuperClass/protectedMemberFromJavaSuperClass.test");
+        }
+
         @TestMetadata("kotlin/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test")
         public void testKotlin_protectedMemberUsageWithSuper_ProtectedMemberUsageWithSuper() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test");

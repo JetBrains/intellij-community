@@ -455,6 +455,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");
     }
 
+    @TestMetadata("kotlin/protectedMemberFromJavaSuperClass/protectedMemberFromJavaSuperClass.test")
+    public void testKotlin_protectedMemberFromJavaSuperClass_ProtectedMemberFromJavaSuperClass() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/protectedMemberFromJavaSuperClass/protectedMemberFromJavaSuperClass.test");
+    }
+
     @TestMetadata("kotlin/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test")
     public void testKotlin_protectedMemberUsageWithSuper_ProtectedMemberUsageWithSuper() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test");

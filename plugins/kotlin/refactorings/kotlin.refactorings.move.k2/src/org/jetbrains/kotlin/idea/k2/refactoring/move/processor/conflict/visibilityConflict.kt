@@ -13,6 +13,9 @@ import com.intellij.util.containers.toMultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -134,6 +137,14 @@ private fun KaClassSymbol.isSuperClassForParentOf(
     return refererSymbol.containingSymbol?.let { isSuperClassForParentOf(it) } == true
 }
 
+context(KaSession)
+private fun KaSymbol.isProtectedVisibleFrom(refererSymbol: KaSymbol): Boolean {
+    // For protected visibility to work, we need to be within a class that inherits from
+    // the parent class of the referred symbol.
+    val refererContainingClass = refererSymbol.containingClassSymbol() ?: return false
+    return containingClassSymbol()?.isSuperClassForParentOf(refererContainingClass) == true
+}
+
 /**
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
@@ -165,12 +176,9 @@ fun checkVisibilityConflictsForInternalUsages(
                             KaSymbolVisibility.PRIVATE -> false
                             KaSymbolVisibility.INTERNAL -> referencedDeclaration.module == targetDir.module
                             KaSymbolVisibility.PROTECTED ->  {
-                                // For protected visibility to work, we need to be within a class that inherits from
-                                // the parent class of the referred symbol.
-                                val refererClassSymbol = usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol
-                                if (refererClassSymbol != null) {
-                                    val referencedSymbol = referencedDeclaration.symbol
-                                    referencedSymbol.containingClassSymbol()?.isSuperClassForParentOf(refererClassSymbol) == true
+                                val refererSymbol = usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol
+                                if (refererSymbol != null) {
+                                    referencedDeclaration.symbol.isProtectedVisibleFrom(refererSymbol)
                                 } else true
                             }
                             else -> true
@@ -178,13 +186,24 @@ fun checkVisibilityConflictsForInternalUsages(
                     }
                 } else if (referencedDeclaration is PsiModifierListOwner) {
                     val modifierList = referencedDeclaration.modifierList ?: return@tryFindConflict null
-                    when (PsiUtil.getAccessLevel(modifierList)) {
+                    val accessLevel = PsiUtil.getAccessLevel(modifierList)
+                    when (accessLevel) {
                         PsiUtil.ACCESS_LEVEL_PROTECTED, PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL -> {
                             if (referencedDeclaration is PsiMethod && referencedDeclaration.isConstructor) {
                                 true // if a constructor is protected, it's accessible outside the package
                             } else {
                                 val declFqn = (referencedDeclaration as PsiModifierListOwner).containingFile.getFqNameByDirectory()
                                 declFqn == targetPkg
+                                if (declFqn == targetPkg) true
+                                else if (accessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
+                                    analyze(usageElement) {
+                                        // For Java, we still use the analysis API to check for protected visibility
+                                        // to reuse the same code as for Kotlin.
+                                        val refererSymbol = usageElement.getStrictParentOfType<KtNamedDeclaration>()?.symbol ?: return@analyze false
+                                        val call = usageElement.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>() ?: return@analyze false
+                                        call.symbol.isProtectedVisibleFrom(refererSymbol)
+                                    }
+                                } else false
                             }
                         }
                         else -> true
