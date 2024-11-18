@@ -13,11 +13,13 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
 import java.nio.file.Path
+import java.util.regex.Pattern
 import kotlin.io.path.pathString
 
 // TODO: Provide a special icon for poetry
@@ -89,4 +91,15 @@ private suspend fun setUpPoetry(projectPathString: String, python: String?, inst
   }
 
   return Result.success(Path.of(getPythonExecutable(poetryExecutablePathString)))
+}
+
+fun parsePoetryShowOutdated(input: String): Map<String, PythonOutdatedPackage> {
+  return input
+    .lines()
+    .map { it.trim() }
+    .filter { it.isNotBlank() }
+    .mapNotNull { line ->
+      line.split(Pattern.compile(" +"))
+        .takeIf { it.size > 3 }?.let { it[0] to PythonOutdatedPackage(it[0], it[1], it[2]) }
+    }.toMap()
 }

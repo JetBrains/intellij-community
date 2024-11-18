@@ -61,9 +61,9 @@ internal class PoetryPackageVersionsInspection : LocalInspectionTool() {
           val packageName = keyValue.key.text
           val outdatedVersion = (PythonPackageManager.forSdk(
             module.project, sdk) as? PoetryPackageManager)?.let { it.getOutdatedPackages()[packageName] }
-          if (outdatedVersion is PoetryOutdatedVersion) {
+          if (outdatedVersion != null) {
             val message = PyBundle.message("python.sdk.inspection.message.version.outdated.latest",
-                                           packageName, outdatedVersion.currentVersion, outdatedVersion.latestVersion)
+                                           packageName, outdatedVersion.version, outdatedVersion.latestVersion)
             holder.registerProblem(keyValue, message, ProblemHighlightType.WARNING)
           }
         }

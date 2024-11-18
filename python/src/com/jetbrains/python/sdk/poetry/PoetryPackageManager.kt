@@ -3,11 +3,11 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import java.util.regex.Pattern
 import org.jetbrains.annotations.TestOnly
 
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
@@ -16,7 +16,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   override val repositoryManager: PipRepositoryManager = PipRepositoryManager(project, sdk)
 
   @Volatile
-  private var outdatedPackages: Map<String, PoetryOutdatedVersion> = emptyMap()
+  private var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
     poetryInstallPackage(sdk, specification.getVersionForPoetry(), options)
@@ -36,7 +36,7 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return super.reloadPackages()
   }
 
-  internal fun getOutdatedPackages(): Map<String, PoetryOutdatedVersion> = outdatedPackages
+  internal fun getOutdatedPackages(): Map<String, PythonOutdatedPackage> = outdatedPackages
 
   /**
    * Updates the list of outdated packages by running the Poetry command
@@ -68,21 +68,12 @@ private fun parsePoetryShow(input: String): List<PythonPackage> {
   return result
 }
 
-/**
- * Parses the output of `poetry show --outdated` into a list of packages.
- */
-private fun parsePoetryShowOutdated(input: String): Map<String, PoetryOutdatedVersion> =
-  input
-    .lines()
-    .map { it.trim() }
-    .filter { it.isNotBlank() }
-    .mapNotNull { line ->
-      line.split(Pattern.compile(" +"))
-        .takeIf { it.size > 3 }?.let { it[0] to PoetryOutdatedVersion(it[1], it[2]) }
-    }.toMap()
+@TestOnly
+fun parsePoetryShowTest(input: String): List<PythonPackage> {
+  return parsePoetryShow(input)
+}
 
 @TestOnly
-fun parsePoetryShowTest(input: String): List<PythonPackage> = parsePoetryShow(input)
-
-@TestOnly
-fun parsePoetryShowOutdatedTest(input: String): Map<String, PoetryOutdatedVersion> = parsePoetryShowOutdated(input)
+fun parsePoetryShowOutdatedTest(input: String): Map<String, PythonOutdatedPackage> {
+  return parsePoetryShowOutdated(input)
+}

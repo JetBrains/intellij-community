@@ -67,7 +67,7 @@ internal class UvLowLevelImpl(val cwd: Path, val uvCli: UvCli) : UvLowLevel {
       val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       val packages = mapper.readValue<List<OutdatedPackageInfo>>(out).map {
-        PythonOutdatedPackage(it.name, it.version, true, it.latest_version)
+        PythonOutdatedPackage(it.name, it.version, it.latest_version)
       }
 
       return Result.success(packages)
