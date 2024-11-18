@@ -161,7 +161,9 @@ class StructureViewWrapperImpl(
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(STRUCTURE_CHANGED, Runnable { clearCaches() })
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosingBeforeSave(project: Project) {
-        StructureViewState.getInstance(project).selectedTab = myToolWindow.contentManager.selectedContent?.tabName
+        myToolWindow.contentManager.selectedContent?.tabName
+          ?.takeIf { it.isNotEmpty() }
+          ?.let { StructureViewState.getInstance(project).selectedTab = it }
       }
     })
 
