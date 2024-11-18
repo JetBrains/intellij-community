@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Internal
 class GradleKotlinBuildSystemDependencyManager(private val project: Project) : KotlinBuildSystemDependencyManager {
@@ -28,7 +29,7 @@ class GradleKotlinBuildSystemDependencyManager(private val project: Project) : K
 
     override fun isProjectSyncPending(): Boolean {
         val isNotificationVisible =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("GRADLE", "Gradle"))
+            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, GradleConstants.SYSTEM_ID)
         return isNotificationVisible.get()
     }
 

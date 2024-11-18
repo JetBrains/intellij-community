@@ -4,5 +4,5 @@ package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 
-val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
+val MAVEN_SYSTEM_ID = ProjectSystemId("MAVEN")
 

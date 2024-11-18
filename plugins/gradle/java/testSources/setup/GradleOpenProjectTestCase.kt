@@ -6,11 +6,11 @@ import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.utils.vfs.getDirectory
+import org.jetbrains.kotlin.idea.base.util.MAVEN_PROJECT_SYSTEM_ID
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
@@ -41,10 +41,9 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
   }
 
   suspend fun attachMavenProject(project: Project, relativePath: String) {
-    val mavenSystemId = ProjectSystemId("MAVEN")
     val projectPath = testRoot.getDirectory(relativePath).toNioPath().toString()
     EP_NAME.forEachExtensionSafeAsync { extension ->
-      if (extension.systemId == mavenSystemId) {
+      if (extension.systemId == MAVEN_PROJECT_SYSTEM_ID) {
         extension.linkAndLoadProjectAsync(project, projectPath)
       }
     }

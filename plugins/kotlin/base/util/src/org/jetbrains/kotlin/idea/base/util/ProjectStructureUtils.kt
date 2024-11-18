@@ -176,7 +176,14 @@ private val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
 val Module.isGradleModule: Boolean
     get() = ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)
 
+/*
+This constant should be "MAVEN" but changing it breaks the tests:
+org.jetbrains.kotlin.idea.maven.MavenUpdateConfigurationQuickFixTest12.testAddKotlinReflect
+org.jetbrains.kotlin.idea.maven.MavenKotlinBuildSystemDependencyManagerTest.testMavenDependencyManagerIsApplicable
+ */
 private val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
 
 val Module.isMavenModule: Boolean
     get() = ExternalSystemApiUtil.isExternalSystemAwareModule(MAVEN_SYSTEM_ID, this)
+
+val MAVEN_PROJECT_SYSTEM_ID: ProjectSystemId = ProjectSystemId("MAVEN")

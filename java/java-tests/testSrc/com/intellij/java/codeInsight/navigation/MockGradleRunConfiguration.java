@@ -9,10 +9,11 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 public class MockGradleRunConfiguration extends ExternalSystemRunConfiguration {
   public MockGradleRunConfiguration(Project project, String name) {
-    super(new ProjectSystemId("Gradle"), project,
+    super(new ProjectSystemId(GradleConstants.SYSTEM_ID.getId()), project,
           new SimpleConfigurationType(
             "GradleRunConfiguration",
             "Gradle",
