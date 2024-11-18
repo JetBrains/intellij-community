@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.completion.commands.core
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.api.CommandCompletionFactory
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
@@ -43,7 +42,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     context: ProcessingContext,
     resultSet: CompletionResultSet,
   ) {
-    if(!Registry.`is`("java.completion.command.enabled")) return
+    if (!Registry.`is`("java.completion.command.enabled")) return
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
@@ -230,7 +229,7 @@ internal sealed interface InvocationCommandType {
 internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): Int {
   var indexOf = suffix.length
   if (offset > text.length || offset == 0) return 0
-  while (indexOf > 0 && text.substring(offset - indexOf, offset) != suffix.substring(0, indexOf)) {
+  while (indexOf > 0 && offset - indexOf >= 0 && text.substring(offset - indexOf, offset) != suffix.substring(0, indexOf)) {
     indexOf--
   }
   //try to find outside

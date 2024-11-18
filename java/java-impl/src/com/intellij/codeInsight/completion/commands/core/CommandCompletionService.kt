@@ -78,9 +78,13 @@ class CommandCompletionService(
     val language = lookup.psiFile?.language ?: return
     val completionFactory = getFactory(language)
     val filterSuffix = completionFactory?.filterSuffix() ?: return
-    val index = findActualIndex(completionFactory.suffix() + filterSuffix.toString(), lookup.editor.document.immutableCharSequence, lookup.lookupOriginalStart)
+    val fullSuffix = completionFactory.suffix() + filterSuffix.toString()
+    val index = findActualIndex(fullSuffix, lookup.editor.document.immutableCharSequence, lookup.lookupOriginalStart)
     if (index == 0) return
-    if (lookup.lookupOriginalStart - index + 1 < lookup.editor.document.textLength && lookup.editor.document.immutableCharSequence[lookup.lookupOriginalStart - index + 1] != filterSuffix) return
+    val offsetOfFullIndex = lookup.lookupOriginalStart - index
+    if (offsetOfFullIndex < 0 ||
+        offsetOfFullIndex >= lookup.editor.document.textLength ||
+        lookup.editor.document.immutableCharSequence.substring(offsetOfFullIndex) != fullSuffix) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
     lookup.arranger.prefixChanged(lookup);
