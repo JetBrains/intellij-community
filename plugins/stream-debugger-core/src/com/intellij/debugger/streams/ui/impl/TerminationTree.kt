@@ -51,6 +51,7 @@ class TerminationTree(
                 }
                 if (myPath2Value.size == traceElements.size) {
                   removeTreeListener(listener)
+                  //TODO(Korovin): This will not be called if we have a big list of items and it's loaded partially
                   ApplicationManager.getApplication().invokeLater { repaint() }
                 }
               }
@@ -70,6 +71,7 @@ class TerminationTree(
       }
     })
 
+    //TODO(Korovin): Maybe these can be moved back to base class
     setSelectionRow(0)
     expandNodesOnLoad { node -> node === root }
   }

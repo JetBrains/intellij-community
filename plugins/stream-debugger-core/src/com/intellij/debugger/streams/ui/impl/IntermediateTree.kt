@@ -50,6 +50,7 @@ class IntermediateTree(
       }
     })
 
+    //TODO(Korovin): Maybe these can be moved back to base class
     setSelectionRow(0)
     expandNodesOnLoad { node -> node === root }
   }
