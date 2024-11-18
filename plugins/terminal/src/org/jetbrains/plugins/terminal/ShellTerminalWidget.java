@@ -273,7 +273,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       List<String> commandLine = processTtyConnector.getCommandLine();
       commandLineText = commandLine != null ? Strings.join(commandLine, " ") : null;
     }
-    return connector.getName() + ": " + Objects.requireNonNull(commandLineText, "<no command line>");
+    return connector.getName() + ": " + Objects.requireNonNullElse(commandLineText, "<no command line>");
   }
 
   @Override
