@@ -39,8 +39,7 @@ fun computeBleuScore(candidateText: String, referenceText: String): Double {
 
   val brevityPenalty = calculateBrevityPenalty(referenceTokens.size, candidateTokens.size)
   val bleuScore = brevityPenalty * exp(logScore)
-  return getRandomValue();
-  return if (bleuScore.isNaN() || bleuScore.isInfinite()) 0.0 else bleuScore * 100
+  return if (bleuScore.isNaN() || bleuScore.isInfinite()) 0.0 else bleuScore
 }
 
 // Tokenizes the input text into a list of lowercase words
