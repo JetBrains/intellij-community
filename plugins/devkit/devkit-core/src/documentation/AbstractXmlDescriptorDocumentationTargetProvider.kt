@@ -1,15 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL
 import com.intellij.icons.AllIcons
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.documentation.DocumentationLinkHandler
-import com.intellij.platform.backend.documentation.DocumentationResult
-import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.platform.backend.documentation.LinkResolveResult
-import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
+import com.intellij.platform.backend.documentation.*
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
@@ -129,6 +127,12 @@ internal class XmlDescriptorDocumentationLinkHandler : DocumentationLinkHandler 
           return LinkResolveResult.resolvedTarget(
             XmlDescriptorAttributeDocumentationTarget(target.project, target.content, attribute)
           )
+        }
+        else -> {
+          // required for Java links to work; inspired by PsiDocumentationLinkHandler
+          val project = target.project
+          val resolved = DocumentationManager.targetAndRef(project, url, null)?.first ?: return null // we can't get rid of this API usage
+          return LinkResolveResult.resolvedTarget(psiDocumentationTargets(resolved, null).first())
         }
       }
     }
