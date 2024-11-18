@@ -102,11 +102,11 @@ class AndroidAwareGradleModelProvider(
     private val androidPluginIsRequestingVariantSpecificModels: Boolean
 ) : ProjectImportModelProvider {
     private val modelClass = KotlinGradleModel::class.java
-    override fun populateBuildModels(controller: BuildController, buildModel: GradleBuild, modelConsumer: GradleModelConsumer) {
+    override fun populateModels(controller: BuildController, buildModels: Collection<GradleBuild>, modelConsumer: GradleModelConsumer) {
         if (androidPluginIsRequestingVariantSpecificModels) {
             GradleModelProviderUtil.buildModelsWithParameter(
                 controller,
-                buildModel,
+                buildModels,
                 modelClass,
                 modelConsumer,
                 ModelBuilderService.Parameter::class.java
@@ -114,7 +114,7 @@ class AndroidAwareGradleModelProvider(
                 it.value = REQUEST_FOR_NON_ANDROID_MODULES_ONLY
             }
         } else {
-            GradleModelProviderUtil.buildModels(controller, buildModel, modelClass, modelConsumer)
+            GradleModelProviderUtil.buildModels(controller, buildModels, modelClass, modelConsumer)
         }
     }
 

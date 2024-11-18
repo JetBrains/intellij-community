@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.gradle.BasicGradleProject
+import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
@@ -19,8 +19,12 @@ class TestModelProvider(
     return phase
   }
 
-  override fun populateProjectModels(controller: BuildController, projectModel: BasicGradleProject, modelConsumer: GradleModelConsumer) {
-    val model = modelClass.getConstructor().newInstance()
-    modelConsumer.consumeProjectModel(projectModel, model, modelClass)
+  override fun populateModels(controller: BuildController, buildModels: Collection<GradleBuild>, modelConsumer: GradleModelConsumer) {
+    for (buildModel in buildModels) {
+      for (projectModel in buildModel.projects) {
+        val model = modelClass.getConstructor().newInstance()
+        modelConsumer.consumeProjectModel(projectModel, model, modelClass)
+      }
+    }
   }
 }
