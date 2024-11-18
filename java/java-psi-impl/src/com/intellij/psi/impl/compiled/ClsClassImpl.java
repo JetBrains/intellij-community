@@ -24,7 +24,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
@@ -485,11 +485,11 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
     if (stubs.size() - 1 == mirrors.size()) {
       Condition<PsiMethod> isSyntheticConstructor = (PsiMethod stubMethod) -> {
-        final PsiClass containingClass = PsiTreeUtil.getParentOfType(stubMethod, PsiClass.class, false);
+        final PsiClass containingClass = stubMethod.getContainingClass();
         if (containingClass == null) return false;
 
         if (containingClass.isRecord()) {
-          return isCanonicalConstructorForRecordClass(stubMethod, containingClass);
+          return JavaPsiRecordUtil.isCanonicalConstructor(stubMethod);
         }
         else {
           return isDefaultConstructor(stubMethod);
@@ -507,20 +507,6 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   private static boolean isDefaultConstructor(PsiMethod stubMethod) {
     if (!stubMethod.isConstructor()) return false;
     if (!stubMethod.getParameterList().isEmpty()) return false;
-    return true;
-  }
-
-  private static boolean isCanonicalConstructorForRecordClass(PsiMethod stubMethod, PsiClass containingClass) {
-    if (!stubMethod.isConstructor()) return false;
-    if (containingClass.getRecordComponents().length != stubMethod.getParameterList().getParametersCount()) return false;
-    if (stubMethod.getAnnotations().length != 0) return false;
-
-    for (int i = 0; i < stubMethod.getParameterList().getParametersCount(); i++) {
-      final PsiRecordComponent recordComponent = containingClass.getRecordComponents()[i];
-      final PsiParameter parameter = stubMethod.getParameterList().getParameters()[i];
-      if (!recordComponent.getName().equals(parameter.getName())) return false;
-    }
-
     return true;
   }
 
