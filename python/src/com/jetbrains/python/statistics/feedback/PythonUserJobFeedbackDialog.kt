@@ -51,7 +51,8 @@ class PythonUserJobFeedbackDialog(
     val builder = StringBuilder()
     (myBlocks[1] as CheckBoxGroupBlock).collectBlockTextDescription(builder)
     val selectedItems = items.filter { it.property }.map { it.jsonElementName }
-    val other = builder.toString().lines()[5].substringAfter(message("python.survey.user.job.dialog.blocks.checkbox.other") + ": ")
+    val other = builder.toString()
+      .lines()[5].substringAfter(message("python.survey.user.job.dialog.blocks.checkbox.other") + ": ").take(25)
 
     PythonJobStatisticsCollector.logJobEvent(selectedItems, other)
   }
