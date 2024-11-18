@@ -262,6 +262,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             }
         }
 
+        testClass<AbstractK1IdeK2CodeKotlinSteppingPacketsNumberTest> {
+            model("stepping/packets", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+        }
+
         testClass<AbstractSmartStepIntoTest> {
             model("smartStepInto")
         }

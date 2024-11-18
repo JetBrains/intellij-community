@@ -105,6 +105,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -165,6 +166,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private Job otherThreadsJob;
   private int myOtherThreadsReachBreakpointNumber = 0;
+  private final AtomicInteger myMethodInvocations = new AtomicInteger();
 
   protected DebugProcessImpl(Project project) {
     this.project = project;
@@ -1403,6 +1405,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
             int invokePolicy = getInvokePolicy(context);
             invocationWatcherRef.set(myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context));
+            myMethodInvocations.incrementAndGet();
             result.set(invokeMethod(thread.getThreadReference(), invokePolicy, myMethod, myArgs));
           }
           finally {
@@ -2924,5 +2927,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void logError(@NotNull String message, @NotNull Throwable e) {
     LOG.error(message, e, DebuggerDiagnosticsUtil.getAttachments(this));
+  }
+
+  @ApiStatus.Internal
+  @TestOnly
+  public int getMethodInvocationsCount() {
+    return myMethodInvocations.get();
   }
 }

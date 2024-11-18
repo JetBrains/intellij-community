@@ -61,6 +61,10 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
             }
         }
 
+        testClass<AbstractK2IdeK2CodeKotlinSteppingPacketsNumberTest> {
+            model("stepping/packets", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
+        }
+
         testClass<AbstractK2SmartStepIntoTest> {
             model("smartStepInto")
         }

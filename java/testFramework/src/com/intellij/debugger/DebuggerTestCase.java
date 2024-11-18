@@ -16,6 +16,7 @@ import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -34,12 +35,14 @@ import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -648,6 +651,21 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
           }
         });
       }
+    });
+  }
+
+  protected void setUpPacketsMeasureTest() {
+    ApplicationManagerEx.setInStressTest(true);
+    setRegistryPropertyForTest("debugger.track.instrumentation", "false");
+    setRegistryPropertyForTest("debugger.evaluate.single.threaded.timeout", "-1");
+
+    boolean dfa = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST;
+    boolean dfaGray = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT;
+    ViewsGeneralSettings.getInstance().USE_DFA_ASSIST = false;
+    ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT = false;
+    Disposer.register(getTestRootDisposable(), () -> {
+      ViewsGeneralSettings.getInstance().USE_DFA_ASSIST = dfa;
+      ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT = dfaGray;
     });
   }
 }
