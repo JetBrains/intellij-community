@@ -267,6 +267,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    */
   @Deprecated
   @Nullable
+  @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
   public static PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
     if (sdkPath == null || PythonSdkUtil.isCustomPythonSdkHomePath(sdkPath)) return null;
     return tryDetectFlavorByLocalPath(sdkPath);
