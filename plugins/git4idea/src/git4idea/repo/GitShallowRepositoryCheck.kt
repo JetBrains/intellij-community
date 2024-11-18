@@ -2,6 +2,7 @@
 package git4idea.repo
 
 import com.intellij.ide.util.RunOnceUtil
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
@@ -30,18 +31,21 @@ internal class GitShallowRepositoryCheck() : ProjectActivity {
         return
       }
 
-      VcsNotifier.getInstance(project).notify(
-        VcsNotifier.importantNotification().createNotification(
-          GitBundle.message("unshallow.repository.notification.message"),
-          GitBundle.message("unshallow.repository.notification.title"),
-          NotificationType.INFORMATION,
-        ).addAction(
-          NotificationAction.createExpiring(GitBundle.message("action.Git.Unshallow.text")) { e, _ ->
-            GitUnshallowRepositoryAction().actionPerformed(e)
-          }
-        )
-      )
+      VcsNotifier.getInstance(project).notify(ShallowRepositoryNotification())
     }
+  }
+}
+
+internal class ShallowRepositoryNotification : Notification(
+  VcsNotifier.importantNotification().displayId,
+  GitBundle.message("unshallow.repository.notification.message"),
+  GitBundle.message("unshallow.repository.notification.title"),
+  NotificationType.INFORMATION,
+) {
+  init {
+    addAction(NotificationAction.createExpiring(GitBundle.message("action.Git.Unshallow.text")) { e, _ ->
+      GitUnshallowRepositoryAction().actionPerformed(e)
+    })
   }
 }
 
