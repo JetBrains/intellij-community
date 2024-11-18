@@ -2243,6 +2243,10 @@ f:com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
 - f:repaintErrorStripePanel(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 f:com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager
+com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarterDisablement
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:isEssentialHighlightingRestarterDisabledForProject(com.intellij.openapi.project.Project):Z
+- a:shouldBeDisabledForProject(com.intellij.openapi.project.Project):Z
 c:com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler
 - com.intellij.codeInsight.CodeInsightActionHandler
 - <init>(Z):V
