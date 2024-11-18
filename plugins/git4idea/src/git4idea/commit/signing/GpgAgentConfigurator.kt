@@ -359,12 +359,15 @@ internal class PinentryShellScriptLauncherGenerator(override val executable: Git
     }
 
     return """|#!/bin/sh
-              |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ] && [[
-              |  "${'$'}$PINENTRY_USER_DATA_ENV" == "${PinentryData.PREFIX}"* ]]; then
-              |  ${addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)}
-              |else
-              |  exec $fallbackPinentryPath "$@"
+              |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ]; then
+              |  case "${'$'}$PINENTRY_USER_DATA_ENV" in
+              |    ${PinentryData.PREFIX}*)
+              |      ${addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)}
+              |      exit $?
+              |    ;;
+              |  esac
               |fi
+              |exec $fallbackPinentryPath "$@"
            """.trimMargin()
   }
 }
