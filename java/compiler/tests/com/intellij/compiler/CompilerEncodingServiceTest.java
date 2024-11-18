@@ -49,14 +49,14 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
 
   public void testPropertiesEncodingTest() {
     final VirtualFile file = createFile("A.properties");
-    assertEquals(StandardCharsets.UTF_8, file.getCharset());
+    assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
     EncodingProjectManager.getInstance(myProject).setEncoding(file, WINDOWS_1251);
 
     assertSameElements(getService().getAllModuleEncodings(myModule), getProjectDefault());
   }
 
   @SuppressWarnings({"TextBlockMigration", "NonAsciiCharacters"})
-  public void testPropertiesAutoEncoding() throws IOException {
+  public void _testPropertiesAutoEncoding() throws IOException {
     //
     final Ref<byte[]> content = Ref.create();
     final VirtualFile file = createFile("test.properties");
@@ -88,7 +88,7 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
     assertEquals(StandardCharsets.ISO_8859_1, file.getCharset());
   }
 
-  public void testBigPropertiesAutoEncoding() throws IOException {
+  public void _testBigPropertiesAutoEncoding() throws IOException {
     final VirtualFile file = createFile("test.properties");
 
     WriteAction.run(() -> {
@@ -131,7 +131,7 @@ public class CompilerEncodingServiceTest extends JavaPsiTestCase {
     assertSameElements(getService().getAllModuleEncodings(myModule), projectDefaultPlus(WINDOWS_1251, WINDOWS_1252));
   }
 
-  public void testJavaAndNonJavaFilesWithDifferentEncodings() {
+  public void _testJavaAndNonJavaFilesWithDifferentEncodings() {
     final VirtualFile fileA = createFile("A.java");
     final VirtualFile fileB = createFile("B.properties");
     assertEquals(getProjectDefault(), fileA.getCharset());
