@@ -373,6 +373,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/classFromKtsToKts/classFromKtsToKts.test");
         }
 
+        @TestMetadata("kotlin/classWithCopyrightNotice/classWithCopyrightNotice.test")
+        public void testKotlin_classWithCopyrightNotice_ClassWithCopyrightNotice() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/classWithCopyrightNotice/classWithCopyrightNotice.test");
+        }
+
         @TestMetadata("kotlin/classWithInitializer/classWithInitializer.test")
         public void testKotlin_classWithInitializer_ClassWithInitializer() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/classWithInitializer/classWithInitializer.test");

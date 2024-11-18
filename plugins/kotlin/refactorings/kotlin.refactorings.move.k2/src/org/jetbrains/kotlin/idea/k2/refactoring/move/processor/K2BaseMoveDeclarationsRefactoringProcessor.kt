@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.refactoring.BaseRefactoringProcessor
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDescriptor>(
     protected val operationDescriptor: T
@@ -59,12 +61,19 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
 
     /**
      * We consider a file as effectively empty (which implies it can be safely deleted)
-     * if it contains only package, import and file annotation statements.
+     * if it contains only package, import and file annotation statements and comments before the
+     * package directive (which are usually copyright notices).
      */
     private fun KtFile.isEffectivelyEmpty(): Boolean {
         if (!declarations.isEmpty()) return false
-        return children.none {
-            it !is PsiWhiteSpace && it !is KtImportList && it !is KtPackageDirective && it !is KtFileAnnotationList
+        val packageDeclaration = packageDirective
+        return children.all {
+            it is PsiWhiteSpace ||
+                    it is KtImportList ||
+                    it is KtPackageDirective ||
+                    it is KtFileAnnotationList ||
+                    // We do not consider comments before the package declarations as they are usually copyright notices.
+                    (it is PsiComment && packageDeclaration != null && it.startOffset < packageDeclaration.startOffset)
         }
     }
 

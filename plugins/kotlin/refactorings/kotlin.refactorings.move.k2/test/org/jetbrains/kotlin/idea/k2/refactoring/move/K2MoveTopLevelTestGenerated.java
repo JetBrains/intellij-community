@@ -90,6 +90,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/classFromKtsToKts/classFromKtsToKts.test");
     }
 
+    @TestMetadata("kotlin/classWithCopyrightNotice/classWithCopyrightNotice.test")
+    public void testKotlin_classWithCopyrightNotice_ClassWithCopyrightNotice() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/classWithCopyrightNotice/classWithCopyrightNotice.test");
+    }
+
     @TestMetadata("kotlin/classWithInitializer/classWithInitializer.test")
     public void testKotlin_classWithInitializer_ClassWithInitializer() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/classWithInitializer/classWithInitializer.test");
