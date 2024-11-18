@@ -831,7 +831,7 @@ private suspend fun checkOutputOfPluginModules(
           excludes = moduleExcludes[module] ?: emptyList(),
           context = context,
         )) {
-      "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
+      "Runtime classes of GUI designer must not be packaged to '$module' module in '$mainPluginModule' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
       "to the output directory' is disabled in Settings | Editor | GUI Designer."
     }

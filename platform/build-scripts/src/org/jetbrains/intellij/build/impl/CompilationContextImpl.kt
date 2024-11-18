@@ -322,7 +322,7 @@ class CompilationContextImpl private constructor(
   override fun findRequiredModule(name: String): JpsModule {
     val module = findModule(name)
     checkNotNull(module) {
-      "Cannot find required module \'$name\' in the project"
+      "Cannot find required module '$name' in the project"
     }
     return module
   }
@@ -332,7 +332,7 @@ class CompilationContextImpl private constructor(
   override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
     requireNotNull(url) {
-      "Output directory for ${module.name} isn\'t set"
+      "Output directory for ${module.name} isn't set"
     }
     return Path.of(JpsPathUtil.urlToPath(url))
   }
@@ -340,7 +340,7 @@ class CompilationContextImpl private constructor(
   override suspend fun getModuleTestsOutputDir(module: JpsModule): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(module, true)
     requireNotNull(url) {
-      "Output directory for ${module.name} isn\'t set"
+      "Output directory for ${module.name} isn't set"
     }
     return Path.of(JpsPathUtil.urlToPath(url))
   }

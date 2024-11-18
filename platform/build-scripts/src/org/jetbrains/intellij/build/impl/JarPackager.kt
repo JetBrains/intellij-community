@@ -486,7 +486,7 @@ class JarPackager private constructor(
     for (item in layout.includedModuleLibraries) {
       val library = context.findRequiredModule(item.moduleName).libraryCollection.libraries
                       .find { getLibraryFileName(it) == item.libraryName }
-                    ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in \'${item.moduleName}\' module")
+                    ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in '${item.moduleName}' module")
       var relativePath = item.relativeOutputPath
       if (relativePath.endsWith(".jar")) {
         val targetFile = outDir.resolve(relativePath)
