@@ -13,12 +13,12 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import one.util.streamex.StreamEx
 
-open class TerminationTree(
+class TerminationTree(
   streamResult : Value,
   traceElements: List<TraceElement>,
   evaluationContextWrapper: EvaluationContextWrapper,
   private val myBuilder: CollectionTreeBuilder,
-  debugName: String,
+  @Suppress("CanBeParameter") private val debugName: String,
 ) : CollectionTree(traceElements, evaluationContextWrapper, myBuilder, debugName) {
 
   private val NULL_MARKER: Any = ObjectUtils.sentinel("CollectionTree.NULL_MARKER")
@@ -56,6 +56,16 @@ open class TerminationTree(
               }
             }
           }
+        }
+      }
+    })
+
+    addTreeListener(object : XDebuggerTreeListener {
+      override fun nodeLoaded(node: RestorableStateNode, name: String) {
+        val path = node.path
+        if (path.pathCount == 2) {
+          ApplicationManager.getApplication().invokeLater { expandPath(path) }
+          removeTreeListener(this)
         }
       }
     })

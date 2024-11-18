@@ -8,7 +8,6 @@ import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 import com.intellij.debugger.streams.wrapper.TraceUtil
 import java.awt.Component
 import java.awt.GridLayout
@@ -62,15 +61,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
 
     lastValues?.let {
       val lastController = controllers.last()
-
-      val prevCall = lastController.prevCall
-      //TODO(Korovin): Figure out why SingleElementTree is used here
-      val tree = if (prevCall != null && prevCall is TerminatorStreamCall) {
-        SingleElementTree(lastController.getStreamResult()!!, it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Single")
-      }
-      else {
-        CollectionTree.create(lastController.getStreamResult(), it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#Collection")
-      }
+      val tree = CollectionTree.create(lastController.getStreamResult(), it.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#lastValues#CollectionTree")
       val view = PositionsAwareCollectionView(tree, it)
       lastController.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
