@@ -4,14 +4,14 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.markdown.fenceInjection" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" />
-    <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" />
-    <orderEntry type="module" module-name="intellij.markdown.images" />
-    <orderEntry type="module" module-name="intellij.markdown.model" />
-    <orderEntry type="module" module-name="intellij.markdown.spellchecker" />
-    <orderEntry type="module" module-name="intellij.markdown.xml" />
-    <orderEntry type="module" module-name="intellij.markdown.compose.preview" />
+    <orderEntry type="module" module-name="intellij.markdown.fenceInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.images" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.model" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.compose.preview" scope="RUNTIME" />
   </component>
 </module>
