@@ -14,11 +14,9 @@ import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
-internal class UvPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+internal class UvPackageManager(project: Project, sdk: Sdk, val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project, sdk)
-
-  private val uv: UvLowLevel = createUvLowLevel(Path.of(project.basePath!!), createUvCli())
 
   @Volatile
   var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
@@ -62,6 +60,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk) : PythonPackageManag
 
 class UvPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
-    return if (sdk.isUv) UvPackageManager(project, sdk) else null
+    if (!sdk.isUv) {
+      return null
+    }
+
+    val uv = createUvLowLevel(Path.of(project.basePath!!), createUvCli())
+    return UvPackageManager(project, sdk, uv)
   }
 }
