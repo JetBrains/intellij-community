@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.impl.views.CompositeDeclarativeHintWithMarginsView
+import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStamp
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -66,6 +67,15 @@ private class TestCompositeView(val subViews: List<MockPresentationList>)
   override fun getSubView(index: Int): MockPresentationList = subViews[index]
 
   override val subViewCount: Int = subViews.size
+
+  override fun getCurrentTextMetricsStamp(fontMetricsStorage: InlayTextMetricsStorage): InlayTextMetricsStamp? {
+    return null
+  }
+
+  override fun areFontMetricsActual(currentStamp: InlayTextMetricsStamp?): Boolean {
+    return false
+  }
+
   override fun updateModel(newModel: InlayData) = fail("Should not be called")
 }
 
@@ -73,7 +83,7 @@ private val mockDeclarativeHintViewWithMargins = context.mock(DeclarativeHintVie
 private class MockPresentationList(override val margin: Int, val boxWidth: Int)
   : DeclarativeHintViewWithMargins by mockDeclarativeHintViewWithMargins {
   var clicked = false
-  override fun getBoxWidth(storage: InlayTextMetricsStorage): Int = boxWidth
+  override fun getBoxWidth(storage: InlayTextMetricsStorage, forceUpdate: Boolean): Int = boxWidth
   override fun handleRightClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage) {
     clicked = true
   }

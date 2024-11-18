@@ -35,7 +35,7 @@ import java.awt.geom.Rectangle2D
 @ApiStatus.Internal
 interface DeclarativeHintViewWithMargins: DeclarativeHintView<InlayData> {
   val margin: Int
-  fun getBoxWidth(storage: InlayTextMetricsStorage): Int
+  fun getBoxWidth(storage: InlayTextMetricsStorage, forceUpdate: Boolean = false): Int
 }
 
 /**
@@ -48,8 +48,6 @@ class InlayPresentationList(
 ) : DeclarativeHintViewWithMargins {
   private var entries: Array<InlayPresentationEntry> = model.tree.buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
-  private var size: Float = Float.MAX_VALUE
-  private var fontName: String = ""
 
   private fun TinyTree<Any?>.buildPresentationEntries(): Array<InlayPresentationEntry> {
     return PresentationEntryBuilder(this, model.providerClass).buildPresentationEntries()
@@ -64,15 +62,12 @@ class InlayPresentationList(
     }
   }
 
-  private fun getPartialWidthSums(storage: InlayTextMetricsStorage): IntArray {
+  private fun getPartialWidthSums(storage: InlayTextMetricsStorage, forceRecompute: Boolean = false): IntArray {
     val sums = _partialWidthSums
-    val metrics = getMetrics(storage)
-    val isActual = metrics.isActual(size, fontName)
-    if (!isActual || sums == null) {
+    if (sums == null || forceRecompute) {
+      val metrics = getMetrics(storage)
       val computed = computePartialSums(metrics)
       _partialWidthSums = computed
-      size = metrics.font.size2D
-      fontName = metrics.font.family
       return computed
     }
     return sums
@@ -124,10 +119,12 @@ class InlayPresentationList(
   @get:ApiStatus.Internal
   override val margin: Int get() = marginAndPadding.first
   private val padding: Int get() = marginAndPadding.second
-  private fun getTextWidth(storage: InlayTextMetricsStorage): Int = getPartialWidthSums(storage).lastOrNull() ?: 0
+  private fun getTextWidth(storage: InlayTextMetricsStorage, forceUpdate: Boolean): Int {
+    return getPartialWidthSums(storage, forceUpdate).lastOrNull() ?: 0
+  }
   @ApiStatus.Internal
-  override fun getBoxWidth(storage: InlayTextMetricsStorage): Int {
-    return 2 * padding + getTextWidth(storage)
+  override fun getBoxWidth(storage: InlayTextMetricsStorage, forceUpdate: Boolean): Int {
+    return 2 * padding + getTextWidth(storage, forceUpdate)
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {
