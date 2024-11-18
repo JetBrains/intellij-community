@@ -130,13 +130,13 @@ public class TestStatusLine extends NonOpaquePanel {
     final int count = failuresCount + passedCount + ignoredTestsCount;
 
     if (ongoing && finished && !indefinite && duration != null) {
-      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description.and.duration", count, testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description.and.duration", count, testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     } else if (finished && indefinite && duration != null) {
-      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", count, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", count, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     } else if (ongoing && !indefinite) {
-      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description", count, testsTotal), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      myStateDescription.append(TestRunnerBundle.message("test.result.in.progress.description", count, testsTotal), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     } else if (!indefinite && duration != null) {
-      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAY_ATTRIBUTES);
+      myStateDescription.append(TestRunnerBundle.message("test.result.finished.description", testsTotal, NlsMessages.formatDurationApproximateNarrow(duration)), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
   }
 
