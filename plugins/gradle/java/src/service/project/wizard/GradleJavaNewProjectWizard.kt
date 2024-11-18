@@ -100,6 +100,12 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       }
+
+      addEmptyDirectoryAsset("src/main/java")
+      addEmptyDirectoryAsset("src/main/resources")
+      addEmptyDirectoryAsset("src/test/java")
+      addEmptyDirectoryAsset("src/test/resources")
+
       if (parent.addSampleCode) {
         if (parent.generateOnboardingTips) {
           prepareJavaSampleOnboardingTips(project)

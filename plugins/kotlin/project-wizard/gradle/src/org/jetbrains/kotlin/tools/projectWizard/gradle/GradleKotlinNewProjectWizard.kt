@@ -338,7 +338,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             moduleBuilder.configurePreImport { _, settingsScriptFile ->
                 configureSettingsFile(project, settingsScriptFile)
             }
-            moduleBuilder.setCreateEmptyContentRoots(false)
 
             val parentKotlinVersion = project.findParentModule()?.sourceRootModules?.firstNotNullOfOrNull {
                 it.kotlinGradlePluginVersion?.versionString
@@ -376,7 +375,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
             if (parent.shouldGenerateMultipleModules) {
                 val moduleBuilder = GradleKotlinModuleBuilder()
-                moduleBuilder.setCreateEmptyContentRoots(false)
                 moduleBuilder.isCreatingSettingsScriptFile = false
                 moduleBuilder.isCreatingBuildScriptFile = false
                 parent.setupBuilder(moduleBuilder)
