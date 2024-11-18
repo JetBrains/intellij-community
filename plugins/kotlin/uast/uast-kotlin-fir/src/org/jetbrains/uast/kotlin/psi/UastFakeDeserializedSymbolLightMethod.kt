@@ -2,11 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.light.LightModifierList
-import com.intellij.psi.impl.light.LightParameterListBuilder
-import com.intellij.psi.impl.light.LightReferenceListBuilder
-import com.intellij.psi.impl.light.LightTypeParameterBuilder
-import com.intellij.psi.impl.light.LightTypeParameterListBuilder
+import com.intellij.psi.impl.light.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -171,9 +167,11 @@ constructor(
                                     override fun getExtendsList(): LightReferenceListBuilder =
                                         myExtendsListPart.getOrBuild {
                                             super.getExtendsList().apply {
-                                                for (bound in typeParamSymbol.upperBounds) {
-                                                    val psiType = bound.asPsiType(context, allowErrorTypes = true)
-                                                    (psiType as? PsiClassType)?.let { addReference(it) }
+                                                analyzeForUast(context) {
+                                                    for (bound in typeParamSymbol.upperBounds) {
+                                                        val psiType = bound.asPsiType(context, allowErrorTypes = true)
+                                                        (psiType as? PsiClassType)?.let { addReference(it) }
+                                                    }
                                                 }
                                             }
                                         }
