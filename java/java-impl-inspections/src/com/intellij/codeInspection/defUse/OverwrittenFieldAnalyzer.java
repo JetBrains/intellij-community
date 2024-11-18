@@ -22,10 +22,12 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -47,7 +49,7 @@ final class OverwrittenFieldAnalyzer {
         if (instructionState.getInstruction() instanceof ReturnInstruction && !listener.myAnchors.isEmpty()) {
           DfaMemoryState state = instructionState.getMemoryState();
           for (DfaValue value : factory.getValues()) {
-            if (value instanceof DfaVariableValue var && var.getDescriptor() == WriteNotReadDescriptor.INSTANCE) {
+            if (value instanceof DfaVariableValue var && var.getDescriptor() instanceof WriteNotReadDescriptor) {
               DfaAnchor anchor = state.getDfType(var).getConstantOfType(DfaAnchor.class);
               if (anchor != null) {
                 listener.myAnchors.remove(anchor);
@@ -78,9 +80,7 @@ final class OverwrittenFieldAnalyzer {
     }
   }
 
-  private static class WriteNotReadDescriptor implements VariableDescriptor {
-    private static final WriteNotReadDescriptor INSTANCE = new WriteNotReadDescriptor();
-
+  private record WriteNotReadDescriptor(@NotNull DfaVariableValue var) implements VariableDescriptor {
     @Override
     public boolean isStable() {
       return false;
@@ -98,7 +98,7 @@ final class OverwrittenFieldAnalyzer {
 
     @Override
     public String toString() {
-      return "writtenAt";
+      return "writtenAt(" + var + ")";
     }
   }
 
@@ -123,7 +123,7 @@ final class OverwrittenFieldAnalyzer {
              PsiUtil.isIncrementDecrementOperation(exprAnchor.getExpression()))) {
           return;
         }
-        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(WriteNotReadDescriptor.INSTANCE, var);
+        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteNotReadDescriptor(var));
         state.flushVariable(wnr);
       }
     }
@@ -134,7 +134,7 @@ final class OverwrittenFieldAnalyzer {
                                  @NotNull DfaMemoryState state,
                                  @Nullable DfaAnchor anchor) {
       if (dest instanceof DfaVariableValue var && var.getPsiVariable() instanceof PsiField && anchor != null) {
-        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(WriteNotReadDescriptor.INSTANCE, var);
+        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteNotReadDescriptor(var));
         DfaAnchor oldAnchor = state.getDfType(wnr).getConstantOfType(DfaAnchor.class);
         if (oldAnchor != null) {
           myAnchors.add(oldAnchor);
@@ -147,10 +147,16 @@ final class OverwrittenFieldAnalyzer {
                                  @NotNull DfaValue dest,
                                  @NotNull DfaMemoryState state,
                                  @Nullable DfaAnchor anchor) {
-      if (dest instanceof DfaVariableValue var && var.getPsiVariable() instanceof PsiField && anchor != null) {
-        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(WriteNotReadDescriptor.INSTANCE, var);
-        state.flushVariable(wnr);
-        state.meetDfType(wnr, new DfAnchorConstantType(anchor));
+      if (dest instanceof DfaVariableValue var) {
+        List<DfaVariableValue> varsToFlush = StreamEx.of(myFactory.getValues())
+          .select(DfaVariableValue.class)
+          .filter(v -> v.getDescriptor() instanceof WriteNotReadDescriptor desc && desc.var.dependsOn(var))
+          .toList();
+        varsToFlush.forEach(state::flushVariable);
+        if (var.getPsiVariable() instanceof PsiField && anchor != null) {
+          DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteNotReadDescriptor(var));
+          state.meetDfType(wnr, new DfAnchorConstantType(anchor));
+        }
       }
     }
   }
