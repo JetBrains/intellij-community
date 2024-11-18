@@ -9927,6 +9927,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertToScope/convertToWith/parameterExpression.kt");
             }
 
+            @TestMetadata("searchForUsages.kt")
+            public void testSearchForUsages() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/searchForUsages.kt");
+            }
+
             @TestMetadata("singleCall.kt")
             public void testSingleCall() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToWith/singleCall.kt");
