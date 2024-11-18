@@ -3,9 +3,11 @@
 
 package com.intellij.openapi.progress
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -49,9 +51,9 @@ interface CoroutineSuspender : CoroutineContext {
 
 private val EMPTY_PAUSED_STATE: CoroutineSuspenderState = CoroutineSuspenderState.Paused(emptyArray())
 
-private sealed class CoroutineSuspenderState {
+sealed class CoroutineSuspenderState {
   object Active : CoroutineSuspenderState()
-  class Paused(val continuations: Array<Continuation<Unit>>) : CoroutineSuspenderState()
+  class Paused(internal val continuations: Array<Continuation<Unit>>) : CoroutineSuspenderState()
 }
 
 /**
@@ -67,12 +69,13 @@ class CoroutineSuspenderElement(active: Boolean)
   : AbstractCoroutineContextElement(CoroutineSuspenderElementKey),
     CoroutineSuspender {
 
-  private val myState: AtomicReference<CoroutineSuspenderState> = AtomicReference(
+  private val myState: MutableStateFlow<CoroutineSuspenderState> = MutableStateFlow(
     if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE
   )
+  val state: StateFlow<CoroutineSuspenderState> = myState
 
   override fun isPaused(): Boolean {
-    return myState.get() is CoroutineSuspenderState.Paused
+    return myState.value is CoroutineSuspenderState.Paused
   }
 
   override fun pause() {
@@ -80,7 +83,7 @@ class CoroutineSuspenderElement(active: Boolean)
   }
 
   override fun resume() {
-    val oldState = myState.getAndSet(CoroutineSuspenderState.Active)
+    val oldState = myState.getAndUpdate { CoroutineSuspenderState.Active }
     if (oldState is CoroutineSuspenderState.Paused) {
       for (suspendedContinuation in oldState.continuations) {
         suspendedContinuation.resume(Unit)
@@ -90,7 +93,7 @@ class CoroutineSuspenderElement(active: Boolean)
 
   suspend fun checkPaused() {
     while (true) {
-      when (val state = myState.get()) {
+      when (val state = myState.value) {
         is CoroutineSuspenderState.Active -> return // don't suspend
         is CoroutineSuspenderState.Paused -> suspendCancellableCoroutine { continuation: Continuation<Unit> ->
           val newState = CoroutineSuspenderState.Paused(state.continuations + continuation)
