@@ -376,7 +376,8 @@ class CodeInliner(
                 }
 
                 analyze(call) {
-                    if ((expression.expressionType as? KaFunctionType)?.hasReceiver == true) {
+                    val functionType = expression.expressionType as? KaFunctionType
+                    if ((functionType)?.hasReceiver == true && !functionType.isSuspend) {
                         //expand to function only for types with an extension
                         LambdaToAnonymousFunctionUtil.prepareFunctionText(expression)
                     } else {

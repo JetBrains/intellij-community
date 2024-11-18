@@ -8289,6 +8289,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 public void testKeepOutsideWithNamedArgument() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/keepOutsideWithNamedArgument.kt");
                 }
+
+                @TestMetadata("suspendBlock.kt")
+                public void testSuspendBlock() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/suspendBlock.kt");
+                }
+
+                @TestMetadata("suspendBlockImplicitInvoke.kt")
+                public void testSuspendBlockImplicitInvoke() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/suspendBlockImplicitInvoke.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)

@@ -8183,6 +8183,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 public void testKeepOutsideWithNamedArgument() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/keepOutsideWithNamedArgument.kt");
                 }
+
+                @TestMetadata("suspendBlock.kt")
+                public void testSuspendBlock() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/suspendBlock.kt");
+                }
+
+                @TestMetadata("suspendBlockImplicitInvoke.kt")
+                public void testSuspendBlockImplicitInvoke() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments/suspendBlockImplicitInvoke.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
