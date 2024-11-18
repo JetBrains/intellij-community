@@ -51,24 +51,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library name="apache.sshd.osgi" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.sshd:sshd-osgi:2.14.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.14.0/sshd-osgi-2.14.0.jar">
-              <sha256sum>cf7450bf7204380a817c86bb5968aa7df81555081f479690b32eb20fb51015e9</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.14.0/sshd-osgi-2.14.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.14.0/sshd-osgi-2.14.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" exported="" name="jzlib" level="project" />
@@ -86,5 +68,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.impl" />
+    <orderEntry type="library" exported="" name="apache.sshd.osgi" level="project" />
   </component>
 </module>
