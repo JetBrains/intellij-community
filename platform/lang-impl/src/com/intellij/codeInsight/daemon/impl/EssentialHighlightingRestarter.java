@@ -32,7 +32,8 @@ public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerL
 
   @Override
   public void beforeSave(@NotNull SaveAndSyncHandler.SaveTask task, boolean forceExecuteImmediately) {
-    if (!Registry.is("highlighting.essential.should.restart.in.full.mode.on.save.all")) {
+    if (!Registry.is("highlighting.essential.should.restart.in.full.mode.on.save.all")
+        || EssentialHighlightingRestarterDisablement.isEssentialHighlightingRestarterDisabledForProject(myProject)) {
       return;
     }
     boolean hasFilesWithEssentialHighlightingConfigured =
