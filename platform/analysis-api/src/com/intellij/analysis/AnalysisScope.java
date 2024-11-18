@@ -474,7 +474,14 @@ public class AnalysisScope {
       case PROJECT -> AnalysisBundle.message("scope.project", myProject.getName());
       case FILE -> AnalysisBundle.message("scope.file", getRelativePath());
       case DIRECTORY -> AnalysisBundle.message("scope.directory", getRelativePath());
-      case VIRTUAL_FILES -> AnalysisBundle.message("scope.selected.files");
+      case VIRTUAL_FILES -> {
+        int types = 0;
+        for (VirtualFile file : myVFiles) {
+          types |= file.isDirectory() ? 2 : 1;
+          if (types == 3) break;
+        }
+        yield AnalysisBundle.message("scope.selected.files", types);
+      }
       default -> "";
     };
   }

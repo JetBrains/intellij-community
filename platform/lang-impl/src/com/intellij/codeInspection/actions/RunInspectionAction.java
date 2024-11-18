@@ -134,7 +134,7 @@ public final class RunInspectionAction extends GotoActionBase implements DataPro
       final Module module = findModuleForFiles(project, virtualFiles);
 
       AnalysisScope analysisScope = null;
-      if (psiFile != null) {
+      if (psiFile != null && virtualFiles.length == 1) {
         analysisScope = new AnalysisScope(psiFile, module);
       }
       else {

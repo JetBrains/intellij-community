@@ -13,6 +13,7 @@ f:com.intellij.ConfigurableFactory$Companion
 f:com.intellij.analysis.AnalysisActionUtils
 - <init>():V
 - s:getInspectionScope(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,java.lang.Boolean):com.intellij.analysis.AnalysisScope
+- s:getInspectionScope(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,Z):com.intellij.analysis.AnalysisScope
 f:com.intellij.analysis.AnalysisUIOptions
 - com.intellij.openapi.components.PersistentStateComponent
 - ANALYSIS_IN_BACKGROUND:Z
