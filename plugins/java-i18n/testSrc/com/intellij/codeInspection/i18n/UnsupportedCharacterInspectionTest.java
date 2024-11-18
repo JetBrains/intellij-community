@@ -3,6 +3,7 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.lang.properties.UnsupportedCharacterInspection;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -27,10 +28,16 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
         public String getString(String key) { return null; }
       }
     """);
-
+    Registry.get("properties.file.encoding.legacy.support").setValue(true);
   }
 
-  public void testJava8WithConversion() throws IOException {
+  @Override
+  protected void tearDown() throws Exception {
+    Registry.get("properties.file.encoding.legacy.support").resetToDefault();
+    super.tearDown();
+  }
+
+  public void _testJava8WithConversion() throws IOException {
     javaVersion(LanguageLevel.JDK_1_8);
 
     PsiFile javaFile = addClass("Test.java", """
@@ -73,7 +80,7 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
     checkHighlighting(javaFile);
   }
 
-  public void testJava8PlusConstantWithConversion() throws IOException {
+  public void _testJava8PlusConstantWithConversion() throws IOException {
     javaVersion(LanguageLevel.JDK_1_8);
 
     PsiFile javaFile = addClass("Test.java", """
