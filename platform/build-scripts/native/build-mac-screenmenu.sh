@@ -18,8 +18,8 @@ source $(dirname $0)/build-mac-common.sh
 (
   cd "$out_dir"
   export JAVA_HOME="$top/prebuilts/studio/jdk/jdk11/mac/Contents/Home"
-  "$cmake_bin" -DCMAKE_BUILD_TYPE=Release "$top/tools/idea/native/MacScreenMenu"
-  "$cmake_bin" --build .
+  "$cmake_bin" --log-level=DEBUG -DCMAKE_BUILD_TYPE=Release "$top/tools/idea/native/MacScreenMenu"
+  "$cmake_bin" --build . --parallel 1  --verbose
 )
 
 verifyArchs "$out_dir/libmacscreenmenu64.dylib"

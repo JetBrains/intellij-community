@@ -17,8 +17,8 @@ source $(dirname $0)/build-mac-common.sh
 # Make
 (
   cd "$out_dir"
-  "$cmake_bin" -DCMAKE_BUILD_TYPE=Release "$top/tools/idea/native/MacTouchBar"
-  "$cmake_bin" --build .
+  "$cmake_bin" --log-level=DEBUG -DCMAKE_BUILD_TYPE=Release "$top/tools/idea/native/MacTouchBar"
+  "$cmake_bin" --build . --parallel 1  --verbose
 )
 
 verifyArchs "$out_dir/libnst64.dylib"
