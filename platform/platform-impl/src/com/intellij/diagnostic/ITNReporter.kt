@@ -23,7 +23,6 @@ import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.Consumer
 import kotlinx.coroutines.*
@@ -137,15 +136,13 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
 
     if (!NOTIFY_SUCCESS_EACH_REPORT.get()) return
 
-    if (Registry.`is`("exception.analyzer.report.show.successful.notification")) {
-      val content = DiagnosticBundle.message("error.report.gratitude")
-      val title = DiagnosticBundle.message("error.report.submitted")
-      val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
-      if (reportUrl != null) {
-        notification.addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
-      }
-      notification.notify(project)
+    val content = DiagnosticBundle.message("error.report.gratitude")
+    val title = DiagnosticBundle.message("error.report.submitted")
+    val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
+    if (reportUrl != null) {
+      notification.addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
     }
+    notification.notify(project)
   }
 
   private suspend fun onError(
