@@ -88,7 +88,7 @@ class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, pr
 
 @Service(Service.Level.APP)
 @State(name = "PyPoetrySettings", storages = [Storage("pyPoetrySettings.xml")])
-internal class PoetryConfigService(private val cs: CoroutineScope) : PersistentStateComponent<PoetryConfigService> {
+internal class PoetryConfigService : PersistentStateComponent<PoetryConfigService> {
   var isInProjectEnv: Boolean = false
 
   override fun getState(): PoetryConfigService = this
@@ -101,7 +101,7 @@ internal class PoetryConfigService(private val cs: CoroutineScope) : PersistentS
     val hasPoetryToml = poetryToml(module) != null
 
     if (isInProjectEnv || hasPoetryToml) {
-      val modulePath = withContext(Dispatchers.IO) { pyProjectToml(module)?.parent }?.toNioPath() ?: module.basePath?.let { Path.of(it) }
+      val modulePath = withContext(Dispatchers.IO) { pyProjectToml(module)?.parent?.toNioPath() ?: module.basePath?.let { Path.of(it) } }
       configurePoetryEnvironment(modulePath, "virtualenvs.in-project", isInProjectEnv.toString(), "--local")
     }
   }
