@@ -18,6 +18,8 @@ class IntermediateTree(
 ) : CollectionTree(traceElements, evaluationContextWrapper, myBuilder, debugName) {
   private val myXValue2TraceElement: MutableMap<XValueContainer, TraceElement> = HashMap()
 
+  private val itemsCount : Int = traceElements.size
+
   init {
     val root = XValueNodeImpl(this, null, "root", MyTraceElementsRoot(traceElements, evaluationContextWrapper))
     setRoot(root, false)
@@ -70,5 +72,9 @@ class IntermediateTree(
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
       node.setPresentation(null, "", "", true)
     }
+  }
+
+  override fun getItemsCount(): Int {
+    return itemsCount
   }
 }

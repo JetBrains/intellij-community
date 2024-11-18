@@ -75,4 +75,8 @@ open class TerminationTree(
       node.setPresentation(null, "", "", true)
     }
   }
+
+  override fun getItemsCount(): Int {
+    return 1
+  }
 }

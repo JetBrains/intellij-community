@@ -33,7 +33,6 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
 
   protected final Map<TraceElement, TreePath> myValue2Path = new HashMap<>();
   protected final Map<TreePath, TraceElement> myPath2Value = new HashMap<>();
-  private final int myItemsCount;
 
   @SuppressWarnings("unused")
   private final String myDebugName;
@@ -51,7 +50,6 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
                  @NotNull String debugName) {
     super(evaluationContextWrapper.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
-    myItemsCount = traceElements.size();
     myDebugName = debugName;
 
     addTreeSelectionListener(e -> {
@@ -146,9 +144,7 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
     return !isSelectionEmpty() || !myHighlighted.isEmpty();
   }
 
-  public int getItemsCount() {
-    return myItemsCount;
-  }
+  public abstract int getItemsCount();
 
   public void addPaintingListener(@NotNull PaintingListener listener) {
     myPaintingDispatcher.addListener(listener);
