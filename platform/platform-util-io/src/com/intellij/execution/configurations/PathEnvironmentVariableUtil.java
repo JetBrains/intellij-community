@@ -122,7 +122,7 @@ public final class PathEnvironmentVariableUtil {
     if (SystemInfo.isWindows) {
       String allExtensions = System.getenv("PATHEXT");
       if (allExtensions != null) {
-        Collection<String> extensions = StringUtil.split(allExtensions, ";", true, true);
+        List<? extends String> extensions = StringUtil.split(allExtensions, ";", true, true);
         extensions = ContainerUtil.filter(extensions, s -> !StringUtil.isEmpty(s) && s.startsWith("."));
         return ContainerUtil.map(extensions, s -> StringUtil.toLowerCase(s));
       }

@@ -33,6 +33,7 @@ import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.performance.ClassInitializerMayBeStaticInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -120,6 +121,7 @@ public final class ClassInitializerInspection extends BaseInspection {
       }
     }
 
+    @Unmodifiable
     private static @NotNull Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
       PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {

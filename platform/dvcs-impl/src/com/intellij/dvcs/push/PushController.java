@@ -539,6 +539,7 @@ public final class PushController implements Disposable {
            Collections.emptyMap();
   }
 
+  @Unmodifiable
   private Collection<MyRepoModel<Repository, PushSource, PushTarget>> getSelectedRepoNode() {
     //return all selected despite a loading state;
     return ContainerUtil.filter(myView2Model.values(), model -> {

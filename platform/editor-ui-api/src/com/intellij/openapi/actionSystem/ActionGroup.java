@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -144,6 +145,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded visible children.
    */
+  @Unmodifiable
   public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
     @NotNull AnActionEvent e,
     @NotNull List<? extends @NotNull AnAction> visibleChildren) {

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -226,6 +227,7 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<GrField> getFinalFields(@NotNull GrTypeDefinition clazz) {
     final GrField[] fields = clazz.getCodeFields();
     return ContainerUtil.filter(fields, field -> {

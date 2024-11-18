@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Date;
 import java.util.List;
@@ -69,6 +70,7 @@ public abstract class LocalTask extends Task {
   public abstract List<BranchInfo> getBranches();
 
   @NotNull
+  @Unmodifiable
   public List<BranchInfo> getBranches(final boolean original) {
     return ContainerUtil.filter(getBranches(), info -> info.original == original);
   }

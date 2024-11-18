@@ -27,6 +27,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -179,6 +180,7 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
     }
   }
 
+  @Unmodifiable
   private static @NotNull List<? extends MainVcsLogUi> getAdditionalLogUis(@NotNull List<? extends VcsLogUi> uis,
                                                                            @NotNull Set<String> additionalTabIds) {
     return ContainerUtil.filter(ContainerUtil.filterIsInstance(uis, MainVcsLogUi.class),

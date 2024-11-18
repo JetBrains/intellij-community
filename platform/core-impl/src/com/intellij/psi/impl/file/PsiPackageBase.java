@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -30,6 +31,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   private final PsiManager myManager;
   private final String myQualifiedName;
 
+  @Unmodifiable
   protected abstract Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope);
 
   protected abstract PsiPackageBase findPackage(String qName);

@@ -234,6 +234,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     };
   }
 
+  @Unmodifiable
   private static @NotNull Collection<InspectionSuppressor> checkDumbMode(@NotNull PsiFile file,
                                                                          @NotNull Collection<InspectionSuppressor> suppressors) {
     DumbService dumbService = DumbService.getInstance(file.getProject());

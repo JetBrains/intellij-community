@@ -20,6 +20,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +65,7 @@ public class ReferenceChainLink {
 
 
   @Nullable
+  @Unmodifiable
   List<PsiMember> getGlobalMembers(VirtualFile placeFile, Project project) {
     if (isExpensive(project)) return null;
 

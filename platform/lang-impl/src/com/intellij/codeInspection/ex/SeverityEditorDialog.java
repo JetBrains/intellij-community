@@ -30,10 +30,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -271,6 +268,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
     myOptionsList.setSelectedValue(preselection, true);
   }
 
+  @Unmodifiable
   private Collection<SeverityBasedTextAttributes> getApplicableSeverities() {
     return ContainerUtil.filter(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar), t -> t.getType().isApplicableToInspections());
   }

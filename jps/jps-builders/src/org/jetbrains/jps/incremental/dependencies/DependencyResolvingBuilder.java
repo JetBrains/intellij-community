@@ -222,7 +222,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     JpsLibraryResolveGuard.performUnderGuard(context, descriptor, compiledRoots, () -> {
       try {
         // list of missing roots needed to be resolved
-        List<File> required = ContainerUtil.filter(compiledRoots, root -> !verifyLibraryArtifact(context, lib.getName(), descriptor, root));
+        List<? extends File>
+          required = ContainerUtil.filter(compiledRoots, root -> !verifyLibraryArtifact(context, lib.getName(), descriptor, root));
 
         // be strict and verify effective repo manager exists (will throw an exception if bind repository is required, but missing)
         ArtifactRepositoryManager effectiveRepoManager = getRepositoryManager(context, descriptor, lib.getName(), useBindRepositories);
@@ -340,7 +341,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static void verifyLibraryRootsChecksums(@NotNull CompileContext context,
                                                   @NotNull String libraryName,
                                                   @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                  @NotNull List<File> compiledRoots,
+                                                  @NotNull List<? extends File> compiledRoots,
                                                   boolean verifySha256Checksums) throws ArtifactVerificationException {
     // don't verify checksums if the library doesn't have a fixed version or when verification is disabled
     if (!verifySha256Checksums || !isLibraryVersionFixed(descriptor)) {
@@ -353,7 +354,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
 
     List<Path> allCompiledRoots = ContainerUtil.map(compiledRoots, File::toPath);
-    List<Path> missingCompiledRoots = ContainerUtil.filter(allCompiledRoots, rootFile -> !Files.exists(rootFile));
+    List<? extends Path> missingCompiledRoots = ContainerUtil.filter(allCompiledRoots, rootFile -> !Files.exists(rootFile));
 
     if (!missingCompiledRoots.isEmpty()) {
       reportMissingCompiledRootArtifacts(context, libraryName, descriptor, allCompiledRoots, missingCompiledRoots);
@@ -380,7 +381,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean isAllCompiledRootsVerificationPresent(@NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                               @NotNull List<File> compiledRootsFiles) {
+                                                               @NotNull List<? extends File> compiledRootsFiles) {
     if (compiledRootsFiles.size() != descriptor.getArtifactsVerification().size()) {
       return false;
     }
@@ -485,8 +486,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static void reportMissingCompiledRootArtifacts(@NotNull CompileContext context,
                                                          @NotNull String libraryName,
                                                          @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                         @NotNull List<Path> allRoots,
-                                                         @NotNull List<Path> missingRoots) {
+                                                         @NotNull List<? extends Path> allRoots,
+                                                         @NotNull List<? extends Path> missingRoots) {
     if (missingRoots.isEmpty() || !SystemProperties.getBooleanProperty(RESOLUTION_REPORT_INVALID_SHA256_CHECKSUM_PROPERTY, false)) {
       return;
     }
@@ -520,7 +521,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
                                                                 @NotNull String libraryName,
                                                                 @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
                                                                 @NotNull String problemKind,
-                                                                @NotNull Consumer<Properties> metadataWriter) {
+                                                                @NotNull Consumer<? super Properties> metadataWriter) {
     String outputDirPath = System.getProperty(RESOLUTION_CORRUPTED_ARTIFACTS_REPORTS_DIRECTORY_PROPERTY, null);
     if (outputDirPath == null) {
       return null;
@@ -569,7 +570,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
     private static void performUnderGuard(@NotNull CompileContext context,
                                           @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                          @NotNull List<File> roots,
+                                          @NotNull List<? extends File> roots,
                                           @NotNull ThrowingRunnable action) throws Exception {
       Stream<Guard> descriptorGuard = Stream.of(getDescriptorGuard(context, descriptor));
       Stream<Guard> rootsGuards = roots.stream()

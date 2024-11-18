@@ -17,6 +17,7 @@ import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,6 +165,7 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
     }
   }
 
+  @Unmodifiable
   private static List<PsiReferenceExpression> collectReferences(@NotNull PsiVariable variable) {
     List<PsiReferenceExpression> references = new ArrayList<>(VariableAccessUtils.getVariableReferences(variable));
     references.removeIf(ref -> !PsiUtil.isAccessedForWriting(ref));

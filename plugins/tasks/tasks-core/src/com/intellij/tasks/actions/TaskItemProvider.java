@@ -1,7 +1,6 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.Disposable;
@@ -18,6 +17,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -100,6 +100,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       // was contained in server response (as not remotely closed). Moreover on next request with pagination when the
       // same issues was not returned again by server it was *excluded* from popup (thus subsequent update reduced total
       // number of items shown).
+      tasks = new ArrayList<>(tasks);
       tasks.removeAll(allCachedAndLocalTasks);
       return processTasks(tasks, consumer, cancelled);
     }

@@ -19,10 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -1139,6 +1136,7 @@ public final class ChangesCacheFile {
     public CommittedChangeList changeList;
     public Set<Change> accountedChanges;
 
+    @Unmodifiable
     List<Change> getChangesToProcess() {
       return ContainerUtil.filter(changeList.getChanges(), change -> !accountedChanges.contains(change));
     }

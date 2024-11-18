@@ -1341,6 +1341,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
+  @Unmodifiable
   Collection<FileIndexingRequest> getFilesToUpdate(final Project project) {
     return ContainerUtil.filter(getAllFilesToUpdate(), filesToBeIndexedForProjectCondition(project)::test);
   }

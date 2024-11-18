@@ -271,7 +271,7 @@ public class LocalSearchScope extends SearchScope {
       return EMPTY;
     }
     return ReadAction.compute(() -> {
-      List<PsiElement> result = ContainerUtil.filter(
+      List<? extends PsiElement> result = ContainerUtil.filter(
         scope.getScope(),
         element -> matcher.matchesLanguage(element.getContainingFile().getLanguage())
       );

@@ -40,10 +40,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.Timer;
@@ -241,6 +238,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<Task> getIssues(@Nullable String query,
                               int offset,
                               int limit,
@@ -261,6 +259,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<Task> getCachedIssues(final boolean withClosed) {
     return ContainerUtil.filter(myIssueCache.values(), task -> withClosed || !task.isClosed());
   }
@@ -294,6 +293,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<LocalTask> getLocalTasks(final boolean withClosed) {
     synchronized (myTasks) {
       return ContainerUtil.filter(myTasks.values(), task -> withClosed || !isLocallyClosed(task));

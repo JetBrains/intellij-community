@@ -32,7 +32,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link HashMap#HashMap()}
+   * @deprecated Use {@link java.util.HashMap#HashMap()}
    */
   @Contract(pure = true)
   @Deprecated
@@ -1033,7 +1033,7 @@ public final class ContainerUtil {
         result.add(t);
       }
     }
-    return result;
+    return result.isEmpty() ? emptyList() : result;
   }
 
   /**
@@ -1058,21 +1058,21 @@ public final class ContainerUtil {
 
   @Contract(pure=true)
   public static <T, V extends T> V @NotNull [] findAllAsArray(T @NotNull [] collection, @NotNull Class<V> instanceOf) {
-    List<V> list = findAll(collection, instanceOf);
+    List<? extends V> list = findAll(collection, instanceOf);
     V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
   @Contract(pure=true)
   public static <T, V extends T> V @NotNull [] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
-    List<V> list = findAll(collection, instanceOf);
+    List<? extends V> list = findAll(collection, instanceOf);
     V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
   @Contract(pure=true)
   public static <T> T @NotNull [] findAllAsArray(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
-    List<T> list = findAll(collection, condition);
+    List<? extends T> list = findAll(collection, condition);
     if (list.size() == collection.length) {
       return collection;
     }

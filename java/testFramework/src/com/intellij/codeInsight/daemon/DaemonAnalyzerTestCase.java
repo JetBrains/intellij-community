@@ -52,6 +52,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -217,6 +218,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     return doDoTest(checkWarnings, checkInfos, false);
   }
 
+  @Unmodifiable
   protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     return ContainerUtil.filter(
       checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos)),
@@ -331,6 +333,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
     return ContainerUtil.filter(infos, info -> info.getSeverity().compareTo(minSeverity) >= 0);
   }

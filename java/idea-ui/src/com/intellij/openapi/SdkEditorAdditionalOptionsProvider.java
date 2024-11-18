@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public abstract class SdkEditorAdditionalOptionsProvider {
     myType = type;
   }
 
+  @Unmodifiable
   public static List<SdkEditorAdditionalOptionsProvider> getSdkOptionsFactory(SdkTypeId sdkType) {
     return ContainerUtil.filter(EP_NAME.getExtensions(), (e) -> sdkType == e.myType);
   }

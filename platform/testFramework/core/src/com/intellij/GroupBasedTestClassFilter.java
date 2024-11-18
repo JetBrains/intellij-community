@@ -45,7 +45,7 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
   private final Set<String> myGroupNames;
   private final boolean myMatchUnlisted;
   private final List<Group> myGroups;
-  private final List<Group> mySelectedGroups;
+  private final List<? extends Group> mySelectedGroups;
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> groupNames) {
     // empty group means all patterns from each defined group should be excluded

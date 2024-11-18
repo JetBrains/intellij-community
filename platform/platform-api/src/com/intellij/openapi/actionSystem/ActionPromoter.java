@@ -46,6 +46,7 @@ public interface ActionPromoter {
    * <p>
    * See {@link #promote(List, DataContext)} javadoc notes on performance and the provided {@link DataContext}.
    */
+  @Unmodifiable
   default @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }

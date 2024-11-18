@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,6 +59,7 @@ public class ExcludedFiles {
     myDescriptors.clear();
   }
 
+  @Unmodifiable
   public List<FileSetDescriptor> getDescriptors(@NotNull String descriptorType) {
     return ContainerUtil.filter(myDescriptors, descriptor -> descriptorType.equals(descriptor.getType()));
   }

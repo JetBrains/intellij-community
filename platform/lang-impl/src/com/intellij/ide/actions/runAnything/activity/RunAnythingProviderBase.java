@@ -17,6 +17,7 @@ import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -27,6 +28,7 @@ import java.util.List;
  */
 public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<V> {
   @Override
+  @Unmodifiable
   public @NotNull Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }

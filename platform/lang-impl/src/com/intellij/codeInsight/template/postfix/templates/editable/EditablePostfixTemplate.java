@@ -24,6 +24,7 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Objects;
@@ -109,6 +110,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     return Objects.hash(getKey(), myLiveTemplate);
   }
 
+  @Unmodifiable
   protected abstract List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
 
   @Override

@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,6 +97,7 @@ public final class JavaModuleInsight extends ModuleInsight {
 
   @NotNull
   @Override
+  @Unmodifiable
   protected List<DetectedSourceRoot> getSourceRootsToScan() {
     final List<DetectedSourceRoot> allRoots = super.getSourceRootsToScan();
     return ContainerUtil.filter(allRoots, r -> !(r instanceof JavaModuleSourceRoot) || !((JavaModuleSourceRoot)r).isWithModuleInfoFile());

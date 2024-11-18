@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -480,8 +481,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
 
     MemoryStateChange[] flatten() {
       List<MemoryStateChange> changes = StreamEx.iterate(this, Objects::nonNull, change -> change.getPrevious()).toList();
-      Collections.reverse(changes);
-      return changes.toArray(new MemoryStateChange[0]);
+      return ArrayUtil.reverseArray(changes.toArray(new MemoryStateChange[0]));
     }
 
     String dump() {

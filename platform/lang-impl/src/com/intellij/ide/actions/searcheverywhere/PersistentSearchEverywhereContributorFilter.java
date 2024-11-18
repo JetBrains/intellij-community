@@ -6,6 +6,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameFilterConfiguration;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -39,6 +40,7 @@ public final class PersistentSearchEverywhereContributorFilter<T> {
     return myElements;
   }
 
+  @Unmodifiable
   public List<T> getSelectedElements() {
     return ContainerUtil.filter(myElements, type -> myVisibilityStateHolder.isVisible(type));
   }

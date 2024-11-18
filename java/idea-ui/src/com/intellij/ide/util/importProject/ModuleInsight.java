@@ -20,6 +20,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -204,6 +205,7 @@ public abstract class ModuleInsight {
   }
 
   @NotNull
+  @Unmodifiable
   protected List<DetectedSourceRoot> getSourceRootsToScan() {
     return Collections.unmodifiableList(mySourceRoots);
   }

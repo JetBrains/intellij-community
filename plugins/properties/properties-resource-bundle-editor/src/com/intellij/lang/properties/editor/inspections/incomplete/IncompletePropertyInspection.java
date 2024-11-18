@@ -27,6 +27,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -142,6 +143,7 @@ public final class IncompletePropertyInspection extends LocalInspectionTool impl
     return mySuffixes;
   }
 
+  @Unmodifiable
   public List<PropertiesFile> getPropertiesFilesWithoutTranslation(final ResourceBundle resourceBundle, final String key) {
     return ContainerUtil.filter(resourceBundle.getPropertiesFiles(), propertiesFile -> propertiesFile.findPropertyByKey(key) == null &&
                                                                                    !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(propertiesFile)));

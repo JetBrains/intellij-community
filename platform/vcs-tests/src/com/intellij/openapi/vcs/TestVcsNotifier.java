@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +33,7 @@ public final class TestVcsNotifier extends VcsNotifier {
   }
 
   @NotNull
+  @Unmodifiable
   public List<Notification> getNotifications() {
     List<NotificationGroup> vcsGroups
       = Arrays.asList(toolWindowNotification(), importantNotification(), standardNotification(), silentNotification());

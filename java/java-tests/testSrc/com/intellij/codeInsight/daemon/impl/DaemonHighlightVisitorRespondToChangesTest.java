@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -156,6 +157,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
   }
 
   @NotNull
+  @Unmodifiable
   private static List<HighlightInfo> filterMy(@NotNull List<? extends HighlightInfo> infos) {
     return ContainerUtil.filter(infos, h -> MyHighlightCommentsSubstringVisitor.isMy(h));
   }

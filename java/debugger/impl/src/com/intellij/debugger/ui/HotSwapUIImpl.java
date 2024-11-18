@@ -36,6 +36,7 @@ import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -479,6 +480,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<DebuggerSession> getHotSwappableDebugSessions(Project project) {
     return ContainerUtil.filter(DebuggerManagerEx.getInstanceEx(project).getSessions(), HotSwapUIImpl::canHotSwap);
   }

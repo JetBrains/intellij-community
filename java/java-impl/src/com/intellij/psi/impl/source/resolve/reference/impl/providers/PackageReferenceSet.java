@@ -13,6 +13,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -39,6 +40,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     return new PsiPackageReference(this, range, index);
   }
 
+  @Unmodifiable
   public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
     if (context != null) {
       return ContainerUtil.filter(context.getSubPackages(getResolveScope()), aPackage -> Objects.equals(aPackage.getName(), packageName));

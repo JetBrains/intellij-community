@@ -424,6 +424,7 @@ public final class SearchEverywhereHeader {
       return contributors.size() == 1;
     }
 
+    @Unmodifiable
     public @NotNull List<SearchEverywhereContributor<?>> getContributors() {
       if (myContributorsFilter == null) return contributors;
 

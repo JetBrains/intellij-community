@@ -52,8 +52,7 @@ public final class TaskSearchSupport {
     try {
       TaskManager manager = TaskManager.getManager(project);
       List<Task> tasks = manager.getIssues(pattern, offset, limit, withClosed, cancelled, forceRequest);
-      ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
-      return tasks;
+      return ContainerUtil.sorted(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
     }
     catch (RequestFailedException e) {
       notifyAboutConnectionFailure(e, project);

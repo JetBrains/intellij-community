@@ -31,6 +31,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -377,6 +378,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
        * @return a list of exceptions that have inducers
        */
       @Contract(pure = true)
+      @Unmodifiable
       private @NotNull List<@NotNull PsiType> getEssentialExceptionsOfCatch(final @NotNull PsiCatchSection catchSection) {
         return ContainerUtil.filter(catchToExceptionTypes.get(catchSection), this::isEssentialException);
       }

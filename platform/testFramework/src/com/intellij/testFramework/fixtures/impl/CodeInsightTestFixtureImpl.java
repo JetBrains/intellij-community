@@ -150,6 +150,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -735,6 +736,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<IntentionAction> filterAvailableIntentions(@NotNull String hint) {
     return ContainerUtil.filter(getAvailableIntentions(), action -> action.getText().startsWith(hint));
   }
@@ -1804,6 +1806,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minimalSeverity) {
     return ContainerUtil.filter(doHighlighting(), info -> info.getSeverity().compareTo(minimalSeverity) >= 0);
   }

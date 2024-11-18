@@ -4,6 +4,7 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ public interface CustomScopesProvider {
 
   @NotNull List<NamedScope> getCustomScopes();
 
+  @Unmodifiable
   default @NotNull List<NamedScope> getFilteredScopes() {
     return ContainerUtil.filter(getCustomScopes(), scope -> {
       for (CustomScopesFilter filter : CustomScopesFilter.EP_NAME.getIterable()) {

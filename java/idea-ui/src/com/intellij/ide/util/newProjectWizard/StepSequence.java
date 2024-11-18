@@ -14,6 +14,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -60,6 +61,7 @@ public class StepSequence {
     mySpecificSteps.putValue(type, step);
   }
 
+  @Unmodifiable
   public List<ModuleWizardStep> getSelectedSteps() {
     if (mySelectedSteps == null) {
       mySelectedSteps = new ArrayList<>();

@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,6 +123,7 @@ public final class RefactoringQuickListPopupAction extends QuickSwitchSchemeActi
     }
 
     @Override
+    @Unmodifiable
     public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
                                                                        @NotNull List<? extends @NotNull AnAction> visibleChildren) {
       boolean isRootGroup = getClass() == MyGroup.class;

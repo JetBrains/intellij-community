@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
-import com.intellij.coverage.*;
+import com.intellij.coverage.CoverageAnnotator;
+import com.intellij.coverage.CoverageBundle;
+import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
@@ -17,6 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -98,6 +101,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   }
 
   @Override
+  @Unmodifiable
   public List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode node) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     if (node instanceof CoverageListNode) {

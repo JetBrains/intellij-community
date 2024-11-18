@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
@@ -125,6 +126,7 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
     return className.equals(psiClass.getName()) ? psiClass : null;
   }
 
+  @Unmodifiable
   private static @NotNull List<PsiMember> findMembers(@NotNull PsiClass psiClass) {
     Collection<? extends PsiMember> children = PsiTreeUtil.getChildrenOfAnyType(psiClass, PsiMethod.class, PsiField.class);
     return ContainerUtil.filter(children, c -> (c instanceof PsiField field && !isMultipleFieldsDeclaration(field) ||

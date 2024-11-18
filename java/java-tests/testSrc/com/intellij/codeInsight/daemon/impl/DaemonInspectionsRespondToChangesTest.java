@@ -56,6 +56,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -364,6 +365,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     assertEmpty(fixes);
   }
 
+  @Unmodifiable
   private @NotNull List<IntentionAction> findStupidFixes() {
     return ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()), f -> f.getFamilyName()
       .equals(new FindElseBranchInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()));

@@ -16,6 +16,7 @@ import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
@@ -31,6 +32,7 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
 
   @Override
   @NotNull
+  @Unmodifiable
   public Collection<? extends IdeaPlugin> getVariants(final @NotNull ConvertContext context) {
     Collection<IdeaPlugin> plugins = getAllPluginsWithoutSelf(context);
     return ContainerUtil.filter(plugins, NON_CORE_PLUGINS);
@@ -53,6 +55,7 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
     return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
   }
 
+  @Unmodifiable
   private static Collection<IdeaPlugin> getAllPluginsWithoutSelf(final ConvertContext context) {
     final IdeaPlugin self = context.getInvocationElement().getParentOfType(IdeaPlugin.class, true);
     if (self == null) return Collections.emptyList();

@@ -61,6 +61,7 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -874,6 +875,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
       return res;
     }
 
+    @Unmodifiable
     private @NotNull List<RunAnythingGroup> getVisibleGroups() {
       return ContainerUtil.filter(myTemplateGroups, group -> RunAnythingCache.getInstance(myProject).isGroupVisible(group));
     }
