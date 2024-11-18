@@ -12,5 +12,6 @@ interface ValueWithPosition {
   val isVisible: Boolean
   val isHighlighted: Boolean
   val position: Int
+  val isValid: Boolean
 }
 

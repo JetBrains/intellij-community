@@ -87,7 +87,7 @@ class MappingPane(@Nls name: String,
       }
     }
 
-    private fun needToDraw(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isVisible || right.isVisible
+    private fun needToDraw(left: ValueWithPosition, right: ValueWithPosition): Boolean = (left.isVisible || right.isVisible) && left.isValid && right.isValid
 
     private fun needToHighlight(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isHighlighted && right.isHighlighted
   }

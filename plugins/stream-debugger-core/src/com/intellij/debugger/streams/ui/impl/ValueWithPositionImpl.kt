@@ -30,6 +30,9 @@ data class ValueWithPositionImpl(override val traceElement: TraceElement) : Valu
   override val position: Int
     get() = myPosition
 
+  override val isValid: Boolean
+    get() = myPosition != INVALID_POSITION
+
   override val isHighlighted: Boolean
     get() = myIsHighlighted
 
