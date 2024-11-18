@@ -70,10 +70,10 @@ suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
  * }
  * ```
  */
-suspend fun EelApi.where(exe: String): EelPath.Absolute? {
+suspend fun EelApiBase.where(exe: String): EelPath.Absolute? {
   val tool = when (this) {
-    is EelPosixApi -> "which"
-    is EelWindowsApi -> "where.exe"
+    is EelPosixApiBase -> "which"
+    is EelWindowsApiBase -> "where.exe"
     else -> throw IllegalArgumentException("Unsupported OS: $this")
   }
 
