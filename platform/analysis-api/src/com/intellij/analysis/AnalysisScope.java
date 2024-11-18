@@ -310,6 +310,14 @@ public class AnalysisScope {
       }
       return true;
     }
+    if (myElement instanceof PsiDirectory dir) {
+      return accept(dir, processor);
+    }
+    if (myElement != null) {
+      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(myElement));
+      return file == null || processor.process(file);
+    }
+
     List<Module> modules = myModule != null ? Collections.singletonList(myModule) : myModules;
     if (modules != null) {
       for (Module module : modules) {
@@ -319,14 +327,6 @@ public class AnalysisScope {
         }
       }
       return true;
-    }
-
-    if (myElement instanceof PsiDirectory) {
-      return accept((PsiDirectory)myElement, processor);
-    }
-    if (myElement != null) {
-      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(myElement));
-      return file == null || processor.process(file);
     }
 
     return projectFileIndex.iterateContent(createScopeIterator(processor, null));
