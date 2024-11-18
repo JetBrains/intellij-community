@@ -5,6 +5,8 @@ TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH_PYTHON_2 = 100000
 BATCH_SIZE = 10000
 
+CSV_FORMAT_SEPARATOR = '~'
+
 
 def get_type(table):
     # type: (str) -> str
@@ -37,7 +39,7 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
      # type: (datasets.arrow_dataset.Dataset, int, int) -> str
 
     def convert_data_to_csv(data):
-        return repr(data.to_csv(na_rep = "NaN", float_format=format))
+        return repr(data.to_csv(na_rep = "NaN", float_format=format, sep=CSV_FORMAT_SEPARATOR))
 
     def convert_data_to_html(data):
         return repr(data.to_html(notebook=True))
@@ -55,7 +57,7 @@ def display_data_csv(table, start_index, end_index):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> None
     def ipython_display(data):
         try:
-            data = data.to_csv(na_rep = "NaN")
+            data = data.to_csv(na_rep = "NaN", sep=CSV_FORMAT_SEPARATOR)
         except AttributeError:
             pass
         print(data)
