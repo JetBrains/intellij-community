@@ -116,7 +116,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
       // add main as an implicit dependency for optional content modules; for required modules dependency is in the opposite way. 
       val main = moduleMap.get(module.pluginId.idString)!!
       assert(main !== module)
-      if (module.moduleLoadingRule != ModuleLoadingRule.REQUIRED) {
+      if (!module.isRequiredContentModule) {
         result.add(main)
       }
     }
@@ -227,7 +227,7 @@ private fun collectDirectDependenciesInNewFormat(module: IdeaPluginDescriptorImp
     val descriptor = idMap.get(item.name)
     if (descriptor != null) {
       result.add(descriptor)
-      if (descriptor.moduleLoadingRule == ModuleLoadingRule.REQUIRED) {
+      if (descriptor.isRequiredContentModule) {
         /* Adds a dependency on the main plugin module.
            This is needed to ensure that modules depending on a required content module are processed after all required content modules, because if a required module cannot be 
            loaded, the whole plugin will be disabled. */
@@ -249,7 +249,7 @@ private fun collectDirectDependenciesInNewFormat(module: IdeaPluginDescriptorImp
   /* Add dependencies on all required content modules. This is needed to ensure that the main plugin module is processed after them, and at that point we can determine whether 
      the plugin can be loaded or not. */
   for (item in module.content.modules) {
-    if (item.loadingRule == ModuleLoadingRule.REQUIRED) {
+    if (item.loadingRule.required) {
       val descriptor = idMap.get(item.name)
       if (descriptor != null) {
         result.add(descriptor)

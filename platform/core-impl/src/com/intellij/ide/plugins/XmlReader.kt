@@ -746,6 +746,7 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
           loadingRule = when (loading) {
             "optional" -> ModuleLoadingRule.OPTIONAL
             "required" -> ModuleLoadingRule.REQUIRED
+            "embedded" -> ModuleLoadingRule.EMBEDDED
             "on-demand" -> ModuleLoadingRule.ON_DEMAND
             else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
           }

@@ -97,7 +97,10 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     return element.content!!
   }
 
-  suspend fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<Pair<String, RuntimeModuleLoadingRule>> {
+  /**
+   * Returns pairs of the module names and the corresponding [com.intellij.ide.plugins.ModuleLoadingRule].
+   */
+  suspend fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<Pair<String, String?>> {
     return readPluginContentFromDescriptor(getResolvedPluginDescriptor(pluginModule, moduleOutputPatcher))
   }
 
@@ -112,18 +115,13 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     return readPluginContentFromDescriptor(readXmlAsModel(pluginXml)).map { it.first  }
   }
 
-  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, RuntimeModuleLoadingRule>> {
+  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, String?>> {
     return sequence {
       for (content in pluginDescriptor.children("content")) {
         for (module in content.children("module")) {
           val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
           val loadingRuleString = module.attributes.get("loading")
-          val loadingRule = when (loadingRuleString) {
-            "required" -> RuntimeModuleLoadingRule.REQUIRED
-            "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
-            else -> RuntimeModuleLoadingRule.OPTIONAL
-          }
-          yield(moduleName to loadingRule)
+          yield(moduleName to loadingRuleString)
         }
       }
     }

@@ -121,7 +121,7 @@ class ClassLoaderConfigurator(
         configureMainPluginModule(mainDescriptor)
       }
       
-      if (module.moduleLoadingRule == ModuleLoadingRule.REQUIRED) {
+      if (module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
         module.pluginClassLoader = mainInfo.mainClassLoader
       }
       else {
@@ -159,7 +159,7 @@ class ClassLoaderConfigurator(
     val dependenciesList = pluginSet.moduleGraph.getDependencies(module)
     var mutableDependenciesList: MutableList<IdeaPluginDescriptorImpl>? = null
     for (moduleItem in module.content.modules) {
-      if (moduleItem.loadingRule == ModuleLoadingRule.REQUIRED) {
+      if (moduleItem.loadingRule == ModuleLoadingRule.EMBEDDED) {
         if (mutableDependenciesList == null) {
           mutableDependenciesList = dependenciesList.toMutableList()
         }
@@ -186,7 +186,7 @@ class ClassLoaderConfigurator(
     }
     var allFiles: MutableList<Path>? = null
     for (contentModule in module.content.modules) {
-      if (contentModule.loadingRule == ModuleLoadingRule.REQUIRED) {
+      if (contentModule.loadingRule == ModuleLoadingRule.EMBEDDED) {
         val customJarFiles = contentModule.requireDescriptor().jarFiles
         if (customJarFiles != null) {
           if (allFiles == null) {
@@ -421,7 +421,7 @@ private fun getPackagePrefixesLoadedBySeparateClassLoaders(descriptor: IdeaPlugi
   val result = ArrayList<Pair<String, String?>>(modules.size)
   for (item in modules) {
     val module = item.requireDescriptor()
-    if (!module.jarFiles.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.REQUIRED) {
+    if (!module.jarFiles.isNullOrEmpty() || module.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
       continue
     }
 

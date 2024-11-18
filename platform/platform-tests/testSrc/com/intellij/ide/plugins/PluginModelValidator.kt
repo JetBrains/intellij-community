@@ -403,9 +403,9 @@ class PluginModelValidator(sourceModules: List<Module>) {
       }
 
       val moduleLoadingRule = child.getAttributeValue("loading")
-      if (moduleLoadingRule != null && moduleLoadingRule !in arrayOf("required", "optional", "on-demand")) {
+      if (moduleLoadingRule != null && moduleLoadingRule !in arrayOf("required", "embedded", "optional", "on-demand")) {
         _errors.add(PluginValidationError(
-          "Unknown value for 'loading' attribute: $moduleLoadingRule. Supported values are 'required', 'optional' and 'on-demand'.",
+          "Unknown value for 'loading' attribute: $moduleLoadingRule. Supported values are 'required', 'embedded', 'optional' and 'on-demand'.",
           getErrorInfo(),
         ))
         continue
