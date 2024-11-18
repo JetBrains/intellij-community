@@ -77,7 +77,7 @@ class BookmarksPopupUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun clickBookmark(textContains: String, doubleClick: Boolean = false) =
     bookmarksTree.waitAnyTextsContains(text = textContains).first().apply { if (doubleClick) {
-      withRetries(times = 2) {
+      withRetries(times = 3) {
         doubleClick()
         waitNotFound(2.seconds)
       }
