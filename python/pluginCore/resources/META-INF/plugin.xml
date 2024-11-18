@@ -998,6 +998,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
               text="Update Python SDK" description="Forcibly update all configured Python SDKs in the project"/>
       <action id="PySetPropertyAction" internal="true" class="com.jetbrains.python.sdk.add.v2.PySetPropertyAction"
               text="Set PropertiesComponent Value" description="Set value in application-level PropertiesComponent"/>
+      <action id="PyShowJobSurvey" internal="true" class="com.jetbrains.python.statistics.feedback.PythonShowJobSurveyAction"
+              text="Show Python Job Survey"/>
       <add-to-group group-id="Internal"/>
     </group>
   </actions>
