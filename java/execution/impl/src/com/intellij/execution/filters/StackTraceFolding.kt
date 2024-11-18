@@ -41,6 +41,4 @@ class StackTraceFolding : ConsoleFolding() {
   override fun shouldBeAttachedToThePreviousLine(): Boolean {
     return false
   }
-
-  override fun getNestingPriority(): Int = super.nestingPriority + 10
 }
