@@ -55,6 +55,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -678,6 +679,7 @@ public class MavenUtil {
     return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
   }
 
+  @RequiresBackgroundThread
   public static List<MavenHomeType> getSystemMavenHomeVariants(Project project) {
     List<MavenHomeType> result = new ArrayList<>();
 

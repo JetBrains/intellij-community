@@ -14885,6 +14885,7 @@ f:com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 - f:getSdkListLoadingText():java.lang.String
 - f:getSelectedDistribution():com.intellij.openapi.roots.ui.distribution.DistributionInfo
 - f:getSpecifyLocationActionName():java.lang.String
+- f:hasLoadingItem():Z
 - f:removeLoadingItem():V
 - f:setNoDistributionText(java.lang.String):V
 - f:setSdkListLoadingText(java.lang.String):V
