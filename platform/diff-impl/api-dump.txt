@@ -2277,7 +2277,7 @@ Fc:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ToggleByWordDiffActi
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAware
-- <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopupController):V
+- <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopupController):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
@@ -2295,7 +2295,6 @@ c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 - s:installEditorDiffHighlighters(com.intellij.openapi.editor.Editor,java.util.List):java.util.List
 - s:installMasterEditorWordHighlighters(com.intellij.openapi.editor.Editor,I,I,java.util.List,com.intellij.openapi.Disposable):V
 - s:installPopupEditorWordHighlighters(com.intellij.ui.EditorTextField,java.util.List):V
-- s:showPopupAt(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel,java.awt.Point,com.intellij.openapi.Disposable):V
 c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer
 - com.intellij.openapi.vcs.ex.LineStatusTrackerMarkerRenderer
 - pf:myTracker:com.intellij.openapi.vcs.ex.LineStatusTrackerI
@@ -2318,6 +2317,14 @@ f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$ShowPrevChangeMarker
 f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer$ToggleByWordDiffAction
 - com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ToggleByWordDiffAction
 - <init>(com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer,com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point):V
+f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService
+- sf:Companion:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService$Companion
+- <init>():V
+- f:buildAndShowPopup(com.intellij.openapi.Disposable,com.intellij.openapi.editor.Editor,java.awt.Point,kotlin.jvm.functions.Function1):V
+- f:closeActivePopup():V
+- sf:getInstance():com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService
+f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService$Companion
+- f:getInstance():com.intellij.openapi.vcs.ex.LineStatusMarkerPopupService
 a:com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer
 - sf:Companion:com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer$Companion
 - p:createErrorStripeTextAttributes(B):com.intellij.openapi.editor.markup.TextAttributes
@@ -2462,6 +2469,7 @@ a:com.intellij.openapi.vcs.ex.LineStatusTrackerMarkerRenderer
 - b:<init>(com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.editor.markup.MarkupEditorFilter,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - p:createAdditionalInfoPanel(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):javax.swing.JComponent
 - p:createAdditionalToolbarActions(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):java.util.List
+- p:createEditorContextMenuActions(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point):java.util.List
 - pf:createPopupPanel(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point,com.intellij.openapi.Disposable):com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel
 - p:createToolbarActions(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range,java.awt.Point):java.util.List
 - pf:getFileType():com.intellij.openapi.fileTypes.FileType
