@@ -49,32 +49,24 @@ open class GradleScriptConfigurationsSource(override val project: Project) : Scr
         { entitySource -> entitySource is KotlinGradleScriptModuleEntitySource }
 
     override suspend fun updateModules(storage: MutableEntityStorage?) {
+        if (storage == null ) return
+
         val storageWithGradleScriptModules = getUpdatedStorage(
             project, data.get()
         ) { KotlinGradleScriptModuleEntitySource(it) }
 
-        if (storage != null) {
-            storage.replaceBySource(gradleEntitySourceFilter, storageWithGradleScriptModules)
-        } else {
-            val workspaceModel = project.workspaceModel
-            workspaceModel.update("Updating Gradle Kotlin Scripts modules") {
-                it.replaceBySource(gradleEntitySourceFilter, storageWithGradleScriptModules)
-            }
-        }
+        storage.replaceBySource(gradleEntitySourceFilter, storageWithGradleScriptModules)
     }
 
     override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
         project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()
 
     override suspend fun updateConfigurations(scripts: Iterable<GradleScriptModel>) {
-        val newClasses = mutableSetOf<VirtualFile>()
-        val newSources = mutableSetOf<VirtualFile>()
         val sdks = mutableMapOf<Path, Sdk>()
 
         val newConfigurations = mutableMapOf<VirtualFile, ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>>()
 
         for (script in scripts) {
-
             val sourceCode = VirtualFileScriptSource(script.virtualFile)
             val definition = findScriptDefinition(project, sourceCode)
 
@@ -95,11 +87,6 @@ open class GradleScriptConfigurationsSource(override val project: Project) : Scr
                 refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
             }
             newConfigurations[script.virtualFile] = updatedConfiguration
-
-            val configurationWrapper = updatedConfiguration.valueOrNull() ?: continue
-
-            newClasses.addAll(toVfsRoots(configurationWrapper.dependenciesClassPath))
-            newSources.addAll(toVfsRoots(configurationWrapper.dependenciesSources))
 
             if (javaProjectSdk != null) {
                 javaProjectSdk.homePath?.let { path ->
