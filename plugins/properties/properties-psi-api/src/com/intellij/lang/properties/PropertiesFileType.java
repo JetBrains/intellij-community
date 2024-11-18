@@ -68,7 +68,7 @@ public class PropertiesFileType extends LanguageFileType {
   }
 
   public @NotNull Charset getDefaultCharset() {
-    if (Registry.is("properties.file.encoding.legacy.support", false)) {
+    if (Registry.is("properties.file.encoding.legacy.support", true)) {
       return StandardCharsets.ISO_8859_1;
     }
     else {
