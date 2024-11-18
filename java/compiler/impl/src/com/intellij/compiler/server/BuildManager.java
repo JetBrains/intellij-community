@@ -1590,6 +1590,10 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-D" + GlobalOptions.USE_IN_MEMORY_FAILED_BUILD_LOGGER + "=true");
     }
 
+    if (Registry.is("jps.report.registered.unexistent.output", false)) {
+      cmdLine.addParameter("-Djps.report.registered.unexistent.output=true");
+    }
+
     if (myFallbackSdkHome != null && myFallbackSdkVersion != null) {
       cmdLine.addPathParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + '=', myFallbackSdkHome);
       cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + '=' + myFallbackSdkVersion);

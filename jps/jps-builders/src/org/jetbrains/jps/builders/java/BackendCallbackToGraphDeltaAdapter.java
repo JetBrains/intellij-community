@@ -10,6 +10,7 @@ import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -24,6 +25,7 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
   private final Map<NodeSource, Set<Usage>> mySelfUsages = new HashMap<>();
   private final GraphConfiguration myGraphConfig;
+  private final boolean reportMissingOutput = Boolean.parseBoolean(System.getProperty("jps.report.registered.unexistent.output"));
 
   BackendCallbackToGraphDeltaAdapter(GraphConfiguration graphConfig) {
     myGraphConfig = graphConfig;
@@ -31,6 +33,9 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   @Override
   public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
+    if (reportMissingOutput && !new File(classFileName).exists()) {
+      throw new IllegalArgumentException("Class file '" + classFileName + "' was registered but it does not exist");
+    }
     JvmClassNodeBuilder builder = JvmClassNodeBuilder.create(classFileName, cr, isGenerated);
 
     JvmNodeReferenceID nodeID = builder.getReferenceID();
