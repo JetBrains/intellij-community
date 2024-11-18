@@ -482,6 +482,13 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           }
           else {
             refSuggestions = completeReference(parameters, parentRef, session, expectedInfos, matcher::prefixMatches);
+            if (refSuggestions
+              .stream()
+              .map(lookupElement -> MethodTags.collectTags(lookupElement, matcher::prefixMatches))
+              .anyMatch(t -> t != null && !t.isEmpty())) {
+              //it is possible to propose some tags, let's try to do this
+              _result.restartCompletionWhenNothingMatches();
+            }
           }
         }
         List<LookupElement> filtered = filterReferenceSuggestions(parameters, expectedInfos, refSuggestions);
