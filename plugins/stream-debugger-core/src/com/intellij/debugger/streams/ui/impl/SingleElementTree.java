@@ -19,11 +19,12 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class SingleElementTree extends CollectionTree {
-  SingleElementTree(@NotNull List<TraceElement> traceElements,
+  SingleElementTree(@Nullable Value value,
+                    @NotNull List<TraceElement> traceElements,
                     @NotNull EvaluationContextWrapper evaluationContext,
                     @NotNull CollectionTreeBuilder collectionTreeBuilder,
                     @NotNull String debugName) {
-    super(traceElements, evaluationContext, collectionTreeBuilder, debugName);
+    super(Collections.singletonList(value), traceElements, evaluationContext, collectionTreeBuilder, debugName);
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {
