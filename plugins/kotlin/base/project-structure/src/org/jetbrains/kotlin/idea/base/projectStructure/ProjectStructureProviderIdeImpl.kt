@@ -14,7 +14,9 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -241,6 +243,15 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
         return getKaSourceModule(openapiModule, type)
     }
 
+    override fun getKaSourceModule(
+        moduleEntity: ModuleEntity,
+        kind: KaSourceModuleKind
+    ): KaSourceModule? {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val openapiModule = moduleEntity.findModule(snapshot) ?: return null
+        return getKaSourceModule(openapiModule, kind)
+    }
+
     override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
         require(module is KtSourceModuleByModuleInfo)
         val moduleInfo = module.moduleInfo as ModuleSourceInfo
@@ -271,6 +282,12 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
     override fun getKaLibraryModules(libraryId: LibraryId): List<KaLibraryModule> {
         val snapshot = project.workspaceModel.currentSnapshot
         val library = libraryId.resolve(snapshot)?.findLibraryBridge(snapshot) ?: return emptyList()
+        return getKaLibraryModules(library)
+    }
+
+    override fun getKaLibraryModules(libraryEntity: LibraryEntity): List<KaLibraryModule> {
+        val snapshot = project.workspaceModel.currentSnapshot
+        val library = libraryEntity.findLibraryBridge(snapshot) ?: return emptyList()
         return getKaLibraryModules(library)
     }
 
