@@ -664,6 +664,7 @@
         "nodes/newParameter.svg",
         "nodes/parameter.svg"
       ],
+      "pluginJB.svg": "nodes/pluginJB.svg",
       "plugin.svg": [
         "nodes/plugin.svg",
         "nodes/pluginobsolete.svg"

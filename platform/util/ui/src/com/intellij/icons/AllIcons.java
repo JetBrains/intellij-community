@@ -986,7 +986,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Padlock = load("nodes/padlock.svg", -179511723, 0);
     /** 16x16 */ public static final @NotNull Icon Parameter = load("expui/nodes/parameter.svg", "nodes/parameter.svg", -2136427129, 0);
     /** 16x16 */ public static final @NotNull Icon Plugin = load("expui/nodes/plugin.svg", "nodes/plugin.svg", 1733633283, 0);
-    /** 16x16 */ public static final @NotNull Icon PluginJB = load("nodes/pluginJB.svg", -1193894334, 0);
+    /** 16x16 */ public static final @NotNull Icon PluginJB = load("expui/nodes/pluginJB.svg", "nodes/pluginJB.svg", -1193894334, 0);
     /** 32x32 */ public static final @NotNull Icon PluginLogo = load("nodes/pluginLogo.svg", -1280089851, 0);
     /** 16x16 */ public static final @NotNull Icon Pluginnotinstalled = load("nodes/pluginnotinstalled.svg", -75865196, 0);
     /** 16x16 */ public static final @NotNull Icon Pluginobsolete = load("expui/nodes/plugin.svg", "nodes/pluginobsolete.svg", -1473078649, 0);

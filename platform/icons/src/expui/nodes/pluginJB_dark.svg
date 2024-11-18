@@ -1,0 +1,8 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg fill="none" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <g fill-rule="evenodd">
+    <path d="m11 4h-4c-1.66 0-3 1.34-3 3v2c0 1.66 1.34 3 3 3h4v-8zm1 1v-1c0-0.552-0.448-1-1-1h-4c-1.86 0-3.43 1.27-3.87 3h-2.13c-0.552 0-1 0.448-1 1v2c0 0.552 0.448 1 1 1h2.13c0.444 1.73 2.01 3 3.87 3h4c0.552 0 1-0.448 1-1v-1h3.5c0.276 0 0.5-0.224 0.5-0.5s-0.224-0.5-0.5-0.5h-3.5v-4h3.5c0.276 0 0.5-0.224 0.5-0.5s-0.224-0.5-0.5-0.5h-3.5zm-9 2v2h-2v-2h2z" clip-rule="evenodd" fill="#CED0D6"/>
+    <polygon points="10 10 10 16 16 16 16 10" fill="#231f20"/>
+    <polygon points="11 14 11 15 14 15 14 14" fill="#e0e0e0"/>
+  </g>
+</svg>
