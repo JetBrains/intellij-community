@@ -1000,7 +1000,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public void navigate(boolean requestFocus) {
-    assert canNavigate() : this;
+    assert canNavigate() : "Couldn't navigate to "+this+": isValid="+isValid()+"; getVirtualFile()="+getVirtualFile()+"; getOriginalFile()="+getOriginalFile();
     //noinspection ConstantConditions
     PsiNavigationSupport.getInstance().getDescriptor(this).navigate(requestFocus);
   }
