@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.NeedsIndex
-import java.util.Arrays
 
 class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
   @NeedsIndex.SmartMode(reason = "require highlighting")
@@ -101,6 +100,29 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       class A { 
         void foo() {
       //    int y = 10L
+        } 
+      }
+    """.trimIndent())
+  }
+
+  @NeedsIndex.SmartMode(reason = "require highlighting")
+  fun testFlipIntention() {
+    Registry.get("java.completion.command.enabled").setValue(true, getTestRootDisposable());
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A { 
+        void foo() {
+          if(1==2<caret>){}
+        } 
+      }
+      """.trimIndent())
+    myFixture.doHighlighting()
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("flip '=='", ignoreCase = true) })
+    myFixture.checkResult("""
+      class A { 
+        void foo() {
+          if(2 == 1){}
         } 
       }
     """.trimIndent())

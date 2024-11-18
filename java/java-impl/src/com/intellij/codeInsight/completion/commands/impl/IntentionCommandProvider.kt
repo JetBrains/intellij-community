@@ -1,14 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.core.CommandCompletionService
+import com.intellij.codeInsight.completion.commands.core.CommandCompletionUnsupportedOperationException
 import com.intellij.codeInsight.completion.commands.core.HighlightingContainer
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.IntentionsInfo
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.IntentionManager
+import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.icons.AllIcons
 import com.intellij.modcommand.ModHighlight
@@ -23,10 +29,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-//todo new points
-
-//find usages
-//comment/uncomment
 class IntentionCommandProvider : CommandProvider {
   override fun getCommands(
     project: Project,
@@ -56,12 +58,14 @@ class IntentionCommandProvider : CommandProvider {
   ): List<IntentionCompletionCommand> {
     val container: HighlightingContainer = getPreviousHighlighters(originalEditor, psiFile.fileDocument, offset) ?: return emptyList()
 
+    val intentionsCache = getIntentions(editor, psiFile, originalFile)
+
     val intentions = mutableListOf<IntentionActionWithTextCaching>()
-    val errorFixes = container.cachedIntentions.errorFixes.map { it }
+    val errorFixes = container.cachedIntentions.errorFixes
     intentions.addAll(errorFixes)
-    val inspectionFixes = container.cachedIntentions.inspectionFixes.map { it }
+    val inspectionFixes = container.cachedIntentions.inspectionFixes
     intentions.addAll(inspectionFixes)
-    intentions.addAll(container.cachedIntentions.intentions.map { it })
+    intentions.addAll(intentionsCache.intentions)
 
     val result: MutableList<IntentionCompletionCommand> = ArrayList()
     for (intention in intentions) {
@@ -90,14 +94,53 @@ class IntentionCommandProvider : CommandProvider {
       }
       result.add(IntentionCompletionCommand(intention, priority, icon,
                                             attributesKey?.let {
-                                    highlighting?.let {
-                                      ModHighlight.HighlightInfo(TextRange(it.startOffset, it.endOffset),
-                                                                 attributesKey, false)
-                                    } ?: intention.fixRange?.let { ModHighlight.HighlightInfo(it, attributesKey, false) }
-                                  }
+                                              highlighting?.let {
+                                                ModHighlight.HighlightInfo(TextRange(it.startOffset, it.endOffset),
+                                                                           attributesKey, false)
+                                              } ?: intention.fixRange?.let { ModHighlight.HighlightInfo(it, attributesKey, false) }
+                                            }
       ))
     }
     return result
+  }
+
+  private fun getIntentions(
+    editor: Editor,
+    psiFile: PsiFile,
+    originalFile: PsiFile,
+  ): CachedIntentions {
+
+    val availableIntentions = IntentionManager.getInstance().getAvailableIntentions(mutableListOf(originalFile.language.id))
+
+    val actionsToShow = IntentionsInfo()
+    for (action in availableIntentions) {
+      val descriptor =
+        HighlightInfo.IntentionActionDescriptor(action, null, null, null, null, null, null, null);
+      actionsToShow.intentionsToShow.add(descriptor)
+    }
+
+    val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
+
+    var toRemove = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
+    for (intention in actionsToShow.intentionsToShow) {
+      try {
+        if (!intention.action.isAvailable(originalFile.project, editor, psiFile)) {
+          toRemove.add(intention)
+        }
+      }
+      catch (_: UnsupportedOperationException) {
+        toRemove.add(intention)
+      }
+      catch (_: CommandCompletionUnsupportedOperationException) {
+        toRemove.add(intention)
+      }
+      catch (_: IntentionPreviewUnsupportedOperationException) {
+        toRemove.add(intention)
+      }
+    }
+    actionsToShow.intentionsToShow.removeAll(toRemove)
+    intentionsCache.wrapAndUpdateActions(actionsToShow, false)
+    return intentionsCache
   }
 }
 
