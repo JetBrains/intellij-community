@@ -74,6 +74,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/classInSameFile.kt");
             }
 
+            @TestMetadata("dblShorterned.kt")
+            public void testDblShorterned() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/calls/dblShorterned.kt");
+            }
+
             @TestMetadata("explicitlyImportedFunctionFromLocalObject.kt")
             public void testExplicitlyImportedFunctionFromLocalObject() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/explicitlyImportedFunctionFromLocalObject.kt");
