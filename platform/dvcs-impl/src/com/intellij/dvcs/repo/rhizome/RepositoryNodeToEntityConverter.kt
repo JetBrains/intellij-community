@@ -14,8 +14,8 @@ import com.intellij.vcs.impl.shared.rhizome.RepositoryNodeEntity
 import fleet.kernel.change
 import fleet.kernel.shared
 
-internal class RepositoryNodeToEntityConverter : NodeToEntityConverter<RepositoryChangesBrowserNode, RepositoryNodeEntity>(RepositoryChangesBrowserNode::class) {
-  override suspend fun convert(node: RepositoryChangesBrowserNode, tree: ShelfTree, orderInParent: Int, project: Project): RepositoryNodeEntity {
+internal class RepositoryNodeToEntityConverter : NodeToEntityConverter<RepositoryChangesBrowserNode>(RepositoryChangesBrowserNode::class) {
+  override suspend fun convert(node: RepositoryChangesBrowserNode, orderInParent: Int, project: Project): NodeEntity {
     return withKernel {
       change {
         shared {

@@ -20,29 +20,28 @@ import kotlin.reflect.KClass
 suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity? {
   val converter = NodeToEntityConverter.getConverter(this)
   if (converter == null) {
-    println("converter for $this not found")
     return null
   }
   @Suppress("UNCHECKED_CAST")
-  return (converter as NodeToEntityConverter<T, NodeEntity>).convert(this@convertToEntity, tree, orderInParent, project)
+  return (converter as NodeToEntityConverter<T>).convert(this@convertToEntity, tree, orderInParent, project)
 }
 
 @ApiStatus.Internal
-abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>, E : NodeEntity>(private val nodeClass: KClass<N>) {
-  abstract suspend fun convert(node: N, tree: ShelfTree, orderInParent: Int, project: Project): E
+abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>>(private val nodeClass: KClass<N>) {
+  abstract suspend fun convert(node: N, tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity
 
   fun isNodeAcceptable(node: ChangesBrowserNode<*>): Boolean = nodeClass.isInstance(node)
 
   companion object {
-    val EP_NAME: ExtensionPointName<NodeToEntityConverter<*, *>> = ExtensionPointName("com.intellij.vcs.impl.backend.treeNodeConverter")
+    val EP_NAME: ExtensionPointName<NodeToEntityConverter<*>> = ExtensionPointName("com.intellij.vcs.impl.backend.treeNodeConverter")
 
-    fun getConverter(node: ChangesBrowserNode<*>): NodeToEntityConverter<*, *>? {
+    fun getConverter(node: ChangesBrowserNode<*>): NodeToEntityConverter<*>? {
       return EP_NAME.extensionList.firstOrNull { it.isNodeAcceptable(node) }
     }
   }
 }
 
-internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<ShelvedListNode, ShelvedChangeListEntity>(ShelvedListNode::class) {
+internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<ShelvedListNode>(ShelvedListNode::class) {
   override suspend fun convert(node: ShelvedListNode, tree: ShelfTree, orderInParent: Int, project: Project): ShelvedChangeListEntity {
     return withKernel {
       change {
@@ -62,7 +61,7 @@ internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<Shelve
   }
 }
 
-internal class ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeNode, ShelvedChangeEntity>(ShelvedChangeNode::class) {
+internal class ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeNode>(ShelvedChangeNode::class) {
   override suspend fun convert(node: ShelvedChangeNode, tree: ShelfTree, orderInParent: Int, project: Project): ShelvedChangeEntity {
     return withKernel {
       change {
@@ -80,7 +79,7 @@ internal class ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeN
 }
 
 
-internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowserNode, TagNodeEntity>(TagChangesBrowserNode::class) {
+internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowserNode>(TagChangesBrowserNode::class) {
   override suspend fun convert(node: TagChangesBrowserNode, tree: ShelfTree, orderInParent: Int, project: Project): TagNodeEntity {
     return withKernel {
       change {
@@ -95,7 +94,7 @@ internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowse
   }
 }
 
-internal class ModuleNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserModuleNode, ModuleNodeEntity>(ChangesBrowserModuleNode::class) {
+internal class ModuleNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserModuleNode>(ChangesBrowserModuleNode::class) {
   override suspend fun convert(node: ChangesBrowserModuleNode, tree: ShelfTree, orderInParent: Int, project: Project): ModuleNodeEntity {
     return withKernel {
       change {
@@ -114,7 +113,7 @@ internal class ModuleNodeToEntityConverter : NodeToEntityConverter<ChangesBrowse
 }
 
 
-internal class FilePathNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserFilePathNode, FilePathNodeEntity>(ChangesBrowserFilePathNode::class) {
+internal class FilePathNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserFilePathNode>(ChangesBrowserFilePathNode::class) {
   override suspend fun convert(node: ChangesBrowserFilePathNode, tree: ShelfTree, orderInParent: Int, project: Project): FilePathNodeEntity {
     return withKernel {
       change {
