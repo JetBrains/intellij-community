@@ -43,12 +43,6 @@ fun computeBleuScore(candidateText: String, referenceText: String): Double {
 
   val brevityPenalty = calculateBrevityPenalty(referenceTokens.size, candidateTokens.size)
   val bleuScore = brevityPenalty * exp(logScore)
-  println("CandidateText:")
-  println(candidateText)
-  println("ReferenceText:")
-  println(referenceText)
-  println("Bleu Score:")
-  println(bleuScore)
   return if (bleuScore.isNaN() || bleuScore.isInfinite()) 0.0 else bleuScore
 }
 
