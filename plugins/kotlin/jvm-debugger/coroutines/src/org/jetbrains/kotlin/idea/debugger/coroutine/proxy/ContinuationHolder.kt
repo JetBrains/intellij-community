@@ -4,41 +4,35 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
+import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.StringReference
+import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStacksInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackTraceData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfBaseContinuationImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfStackFrame
+
+private val LOG by lazy { fileLogger() }
 
 internal class ContinuationHolder private constructor(val context: DefaultExecutionContext) {
-    private val debugMetadata: DebugMetadata? = DebugMetadata.instance(context)
-    private val locationCache = LocationCache(context)
-    private val debugProbesImpl = DebugProbesImpl.instance(context)
+    internal val locationCache = LocationCache(context)
 
     internal fun extractCoroutineStacksInfoData(continuation: ObjectReference): CoroutineStacksInfoData? {
-        try {
-            val continuationStack = debugMetadata?.fetchContinuationStack(continuation, context) ?: return null
-            val continuationStackFrames = continuationStack.mapNotNull { it.toCoroutineStackFrameItem(context, locationCache) }
-            val lastRestoredFrame = continuationStack.lastOrNull()
-            return findCoroutineInformation(lastRestoredFrame?.baseContinuationImpl?.coroutineOwner, continuationStackFrames)
+        return try {
+            fetchContinuationStack(continuation, context, locationCache)
         } catch (e: Exception) {
             logError("Error while looking for stack frame", e)
+            null
         }
-        return null
-    }
-
-    private fun findCoroutineInformation(
-        coroutineOwner: ObjectReference?,
-        continuationStackFrames: List<CoroutineStackFrameItem>
-    ): CoroutineStacksInfoData {
-        val coroutineInfo = debugProbesImpl?.getCoroutineInfo(coroutineOwner, context)
-        val creationStackFrames = coroutineInfo?.creationStackTraceProvider?.getStackTrace()?.mapIndexed { index, ste ->
-            CreationCoroutineStackFrameItem(locationCache.createLocation(ste.stackTraceElement()), index == 0)
-        } ?: emptyList()
-        return CoroutineStacksInfoData(continuationStackFrames, creationStackFrames)
     }
 
     companion object {
@@ -67,4 +61,38 @@ private fun FieldVariable.toJavaValue(continuation: ObjectReference, context: De
         context.debugProcess.xdebugProcess!!.nodeManager,
         false
     )
+}
+
+private fun fetchContinuationStack(
+    continuation: ObjectReference?,
+    context: DefaultExecutionContext,
+    locationCache: LocationCache
+): CoroutineStacksInfoData? {
+    if (continuation == null) return null
+    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation))
+
+    val values = (array as? ArrayReference)?.values ?: return null
+    val json = (values[0] as StringReference).value()
+    val continuations = (values[1] as ArrayReference).values.mapNotNull { it as? ObjectReference }
+    val coroutineStackTraceData = Json.decodeFromString<CoroutineStackTraceData>(json)
+    LOG.assertTrue(
+        continuations.size == coroutineStackTraceData.continuationFrames.size,
+        "Size of continuations and coroutineStackTraceData must be equal."
+    )
+    val coroutineStack = mutableListOf<MirrorOfStackFrame>()
+    for ((i, continuationMirror) in continuations.withIndex()) {
+        val data = coroutineStackTraceData.continuationFrames[i]
+        coroutineStack += MirrorOfStackFrame(
+            MirrorOfBaseContinuationImpl(
+                continuationMirror,
+                data.stackTraceElement?.stackTraceElement(),
+                data.spilledVariables.map { FieldVariable(it.fieldName, it.variableName) },
+            )
+        )
+    }
+    val continuationStackFrames = coroutineStack.mapNotNull { it.toCoroutineStackFrameItem(context, locationCache) }
+    val creationStackFrames = coroutineStackTraceData.creationStack?.mapIndexed { index, ste ->
+        CreationCoroutineStackFrameItem(locationCache.createLocation(ste.stackTraceElement()), index == 0)
+    } ?: emptyList()
+    return CoroutineStacksInfoData(continuationStackFrames, creationStackFrames)
 }

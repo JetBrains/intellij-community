@@ -3,25 +3,25 @@ Run Java
 Connected to the target VM
 coroutineStepping.kt:17
 coroutineStepping.kt:18
-Packets sent: 76, methods called: 18
+Packets sent: 36, methods called: 5
 coroutineStepping.kt:19
-Packets sent: 68, methods called: 17
+Packets sent: 33, methods called: 5
 coroutineStepping.kt:18
-Packets sent: 80, methods called: 18
+Packets sent: 40, methods called: 6
 coroutineStepping.kt:19
-Packets sent: 70, methods called: 17
+Packets sent: 34, methods called: 5
 coroutineStepping.kt:18
-Packets sent: 77, methods called: 18
+Packets sent: 39, methods called: 6
 coroutineStepping.kt:19
-Packets sent: 70, methods called: 17
+Packets sent: 34, methods called: 5
 coroutineStepping.kt:18
-Packets sent: 77, methods called: 18
+Packets sent: 39, methods called: 6
 coroutineStepping.kt:19
-Packets sent: 70, methods called: 17
+Packets sent: 34, methods called: 5
 coroutineStepping.kt:18
-Packets sent: 77, methods called: 18
+Packets sent: 39, methods called: 6
 coroutineStepping.kt:19
-Packets sent: 70, methods called: 17
+Packets sent: 34, methods called: 5
 Disconnected from the target VM
 
 Process finished with exit code 0

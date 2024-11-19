@@ -1,24 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.LocationCache
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ContinuationHolder
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineInfo
 
-class CoroutineStackFramesProvider(private val executionContext: DefaultExecutionContext) {
-  
-    private val locationCache = LocationCache(executionContext)
-    private val debugMetadata: DebugMetadata? = DebugMetadata.instance(executionContext)
+class CoroutineStackFramesProvider(executionContext: DefaultExecutionContext) {
+    private val continuationHolder = ContinuationHolder.instance(executionContext)
     
     fun getContinuationStack(mirror: MirrorOfCoroutineInfo): List<CoroutineStackFrameItem> {
-        if (debugMetadata == null || mirror.lastObservedFrame == null) return emptyList()
-        return debugMetadata.fetchContinuationStack(mirror.lastObservedFrame, executionContext).mapNotNull { 
-            it.toCoroutineStackFrameItem(executionContext, locationCache) 
-        }
+        val continuation = mirror.lastObservedFrame ?: return emptyList()
+        return continuationHolder.extractCoroutineStacksInfoData(continuation)?.continuationStackFrames
+            ?: emptyList()
     }
     
     fun getCreationStackTrace(mirror: MirrorOfCoroutineInfo): List<CreationCoroutineStackFrameItem> =
         mirror.creationStackTraceProvider.getStackTrace().mapIndexed { index, frame ->
-            CreationCoroutineStackFrameItem(locationCache.createLocation(frame.stackTraceElement()), index == 0)
+            CreationCoroutineStackFrameItem(continuationHolder.locationCache.createLocation(frame.stackTraceElement()), index == 0)
         }
 }

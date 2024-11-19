@@ -186,17 +186,6 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
     }
 
-    private fun callMethodFromHelper(helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>): Value? {
-        try {
-            return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args)
-        } catch (e: Exception) {
-            val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
-            DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
-                                       *listOfNotNull(helperExceptionStackTrace).toTypedArray()) // log helper exception if available
-        }
-        return null
-    }
-
     private fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
         val suspendExitMode = frameProxy.location().getSuspendExitMode()
         return when (suspendExitMode) {
@@ -262,4 +251,15 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
         override val coroutineFilterName: String get() = reference.toString()
     }
+}
+
+internal fun callMethodFromHelper(helperClass: Class<*>, context: DefaultExecutionContext, methodName: String, args: List<Value?>): Value? {
+    try {
+        return DebuggerUtilsImpl.invokeHelperMethod(context.evaluationContext, helperClass, methodName, args)
+    } catch (e: Exception) {
+        val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
+        DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
+                                   *listOfNotNull(helperExceptionStackTrace).toTypedArray()) // log helper exception if available
+    }
+    return null
 }

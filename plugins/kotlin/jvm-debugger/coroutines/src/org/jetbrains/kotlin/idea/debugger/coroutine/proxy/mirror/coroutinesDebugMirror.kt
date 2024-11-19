@@ -15,7 +15,6 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     private val javaLangListMirror = JavaUtilAbstractCollection(context)
     private val coroutineInfo =
             CoroutineInfo.instance(context) ?: throw IllegalStateException("CoroutineInfo implementation not found.")
-    private val debugProbesCoroutineOwner = DebugProbesImplCoroutineOwner(coroutineInfo, context)
 
     private val isInstalledInCoreMethod by MethodDelegate<BooleanValue>("isInstalled\$kotlinx_coroutines_debug", "()Z")
     private val isInstalledInDebugMethod by MethodDelegate<BooleanValue>("isInstalled\$kotlinx_coroutines_core", "()Z")
@@ -71,11 +70,6 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
             lastObservedThread,
             lastObservedFrame
         )
-    }
-
-    fun getCoroutineInfo(value: ObjectReference?, context: DefaultExecutionContext): MirrorOfCoroutineInfo? {
-        val coroutineOwner = debugProbesCoroutineOwner.mirror(value, context)
-        return coroutineOwner?.coroutineInfo
     }
 
     fun getObject() = instance

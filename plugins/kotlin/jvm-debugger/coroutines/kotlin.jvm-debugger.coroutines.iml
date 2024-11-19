@@ -12,6 +12,12 @@
             <stringArg name="apiVersion" arg="2.0" />
             <stringArg name="languageVersion" arg="2.0" />
           </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -49,5 +55,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
   </component>
 </module>
