@@ -618,12 +618,6 @@ public final class IterationState {
   }
 
   private @Nullable TextAttributes getSelectionAttributes(boolean isInSelection) {
-    if (myEditor instanceof EditorImpl editor) {
-      if (editor.isStickyLinePainting()) {
-        // suppress caret selection on sticky lines panel
-        return null;
-      }
-    }
     return isInSelection ? mySelectionAttributes : null;
   }
 
