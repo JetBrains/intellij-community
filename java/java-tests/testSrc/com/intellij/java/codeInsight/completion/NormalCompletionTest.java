@@ -3021,7 +3021,12 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.type("n");
     myFixture.type("g");
     myFixture.type("t");
-    assertTrue(ContainerUtil.exists(myFixture.getLookupElements(), t -> t.getLookupString().equals("size")));
+    LookupElement element = ContainerUtil.find(myFixture.getLookupElements(), t -> t.getLookupString().equals("size"));
+    assertNotNull(element);
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    element.renderElement(presentation);
+    assertEquals("size() Tag: length", presentation.getItemText());
+    assertEquals("int", presentation.getTypeText());
   }
 
   @NeedsIndex.Full
