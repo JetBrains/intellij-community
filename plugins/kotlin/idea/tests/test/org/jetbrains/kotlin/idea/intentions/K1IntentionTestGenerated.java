@@ -2516,6 +2516,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/anonymousFunctionToLambda/expressionBody.kt");
         }
 
+        @TestMetadata("extensionFunction.kt")
+        public void testExtensionFunction() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/extensionFunction.kt");
+        }
+
         @TestMetadata("fullParam.kt")
         public void testFullParam() throws Exception {
             runTest("testData/intentions/anonymousFunctionToLambda/fullParam.kt");

@@ -9984,6 +9984,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/expressionBody.kt");
         }
 
+        @TestMetadata("extensionFunction.kt")
+        public void testExtensionFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/extensionFunction.kt");
+        }
+
         @TestMetadata("fullParam.kt")
         public void testFullParam() throws Exception {
             runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/fullParam.kt");
