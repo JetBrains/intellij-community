@@ -112,6 +112,9 @@ fun checkNameClashConflicts(
     allDeclarationsToMove
         .forEach { declaration ->
             analyze(targetKaModule) {
+                // TODO(KTIJ-32265): logic should rewritten to support unrelated modules
+                if (!declaration.canBeAnalysed()) return@analyze
+
                 val declarationSymbol = declaration.symbol
                 val packageSymbol = findPackage(targetPkg) ?: return@analyze
                 walkDeclarations(packageSymbol, declarationSymbol) { conflictingSymbol, conflictingScope ->
