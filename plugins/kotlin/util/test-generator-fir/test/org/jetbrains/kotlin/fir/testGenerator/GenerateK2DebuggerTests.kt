@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator
 
-import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.*
+import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeDebuggerEvaluationTest
+import org.jetbrains.kotlin.idea.compose.k2.debugger.test.cases.AbstractK2ComposeSteppingTest
 import org.jetbrains.kotlin.idea.fir.debugger.evaluate.*
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
 import org.jetbrains.kotlin.idea.parcelize.k2.debugger.test.cases.AbstractK2ParcelizeDebuggerEvaluationTest
@@ -32,6 +33,7 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
         testClass<AbstractK2IdeK2CodeKotlinEvaluateExpressionTest> {
             model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractK2IdeK2MultiplatformCodeKotlinEvaluateExpressionTest> {

@@ -2687,4 +2687,46 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/evaluation/jvmMultiModule")
+    public abstract static class JvmMultiModule extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/jvmMultiModule/delegates")
+        public static class Delegates extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("multiModuleDelegateInlineAccessor.kt")
+            public void testMultiModuleDelegateInlineAccessor() throws Exception {
+                runTest("../testData/evaluation/jvmMultiModule/delegates/multiModuleDelegateInlineAccessor.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/jvmMultiModule")
+        public static class Uncategorized extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("inlineFunWithSamFromOtherModule.kt")
+            public void testInlineFunWithSamFromOtherModule() throws Exception {
+                runTest("../testData/evaluation/jvmMultiModule/inlineFunWithSamFromOtherModule.kt");
+            }
+        }
+    }
 }
