@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.analysis.canAddRootPrefix
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.restoreInternalUsages
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.resolve.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
 
 /**
  * A usage from the K2 move refactoring. Not all usages need to be updated, some are only used for conflict checking.
@@ -119,16 +121,37 @@ sealed class K2MoveRenameUsageInfo(
             return Source(element, reference, referencedElement, isInternal)
         }
 
+        private fun KtDotQualifiedExpression.addRootPrefix(factory: KtPsiFactory) {
+            val receiverExpr = receiverExpression
+            if (receiverExpr is KtReferenceExpression) {
+                if (receiverExpression.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) return // already has root prefix
+                val replaced = factory.createExpressionByPattern("$0.$1", ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE, receiverExpr)
+                receiverExpr.replace(replaced)
+            } else if (receiverExpr is KtDotQualifiedExpression) {
+                receiverExpr.addRootPrefix(factory)
+            }
+        }
+
         override fun retarget(to: PsiNamedElement): PsiElement? {
             // Cannot qualify labels
             if (element is KtLabelReferenceExpression) return null
             val reference = element?.reference as? KtReference ?: return null
-            if (reference is KtSimpleNameReference) {
+            val qualifiedElement = if (reference is KtSimpleNameReference) {
                 // shortening will be done later when all references are updated and the code isn't broken anymore
-                return reference.bindToElement(to, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
+                val boundElement = reference.bindToElement(to, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
+                // The fully qualified bound element might now capture local variables, at which point the semantics would be altered as
+                // the element will not refer to the correct symbol anymore.
+                // To avoid this, we add the special reserved root package prefix to qualified names.
+                // The prefix will be removed later after shortening has taken place.
+                if (boundElement is KtDotQualifiedExpression && boundElement.canAddRootPrefix()) {
+                    val psiFactory = KtPsiFactory(boundElement.project)
+                    boundElement.addRootPrefix(psiFactory)
+                    boundElement
+                } else boundElement
             } else {
-                return reference.bindToElement(to)
+                reference.bindToElement(to)
             }
+            return qualifiedElement
         }
     }
 
@@ -423,12 +446,33 @@ sealed class K2MoveRenameUsageInfo(
             }.toMap()
         }
 
+        private fun KtDotQualifiedExpression.removeRootPrefix() {
+            val selectorExpression = selectorExpression
+            val receiverExpression = receiverExpression
+            if (selectorExpression != null &&
+                receiverExpression is KtReferenceExpression &&
+                receiverExpression.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
+            ) {
+                this.replace(selectorExpression)
+            } else if (receiverExpression is KtDotQualifiedExpression) {
+                receiverExpression.removeRootPrefix()
+            }
+        }
+
         private fun shortenUsages(qualifiedUsages: Map<PsiFile, Map<PsiElement, PsiNamedElement>>) {
             val fileCount = qualifiedUsages.size
             val progress = ProgressManager.getInstance().progressIndicator
             qualifiedUsages.forEach { (file, usageMap) ->
+                // We create pointers to the qualified elements here because they might get invalidated by shortening.
+                val qualifiedExpressionPointers = usageMap.keys.filterIsInstance<KtDotQualifiedExpression>().map { it.createSmartPointer() }
                 if (file is KtFile) {
                     shortenReferences(usageMap.keys.filterIsInstance<KtElement>())
+                }
+                // There are some circumstances where the reference shortener does not shorten an expression we added the root prefix to.
+                // For those cases, we want to ensure that no root prefixes are left in any of the elements.
+                for (pointer in qualifiedExpressionPointers) {
+                    val qualifiedExpression = pointer.element ?: continue
+                    qualifiedExpression.removeRootPrefix()
                 }
                 progress.text2 = file.virtualFile.presentableUrl
                 progress.fraction += 1 / (fileCount * 2).toDouble()

@@ -35,6 +35,16 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/java/moveTopLevelClassToAnotherPackage/moveTopLevelClassToAnotherPackage.test");
     }
 
+    @TestMetadata("kotlin/avoidCapturingPackageNameNested/avoidCapturingPackageNameNested.test")
+    public void testKotlin_avoidCapturingPackageNameNested_AvoidCapturingPackageNameNested() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/avoidCapturingPackageNameNested/avoidCapturingPackageNameNested.test");
+    }
+
+    @TestMetadata("kotlin/avoidCapturingPackageName/avoidCapturingPackageName.test")
+    public void testKotlin_avoidCapturingPackageName_AvoidCapturingPackageName() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/avoidCapturingPackageName/avoidCapturingPackageName.test");
+    }
+
     @TestMetadata("kotlin/callableReference/callableReference.test")
     public void testKotlin_callableReference_CallableReference() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/callableReference/callableReference.test");
