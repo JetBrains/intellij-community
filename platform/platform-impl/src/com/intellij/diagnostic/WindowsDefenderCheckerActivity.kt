@@ -44,17 +44,19 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
         WindowsDefenderStatisticsCollector.configured(project, success)
 
-        if (project == null) return@launch //notification will be sent after project opening
-        notify(project, success)
+        //otherwise notification will be sent after project opening
+        if (project != null) {
+          notify(project, success)
+        }
       }
     }
 
-    private fun notify(project: Project, success: Boolean) {
-      if (success) {
+    private fun notify(project: Project, success: Boolean?) {
+      if (success == true) {
         Notification("WindowsDefender", DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
           .notify(project)
       }
-      else {
+      else if ( success == false){
         Notification("WindowsDefender", DiagnosticBundle.message("defender.config.failed"), NotificationType.ERROR)
           .addAction(ShowLogAction.notificationAction())
           .notify(project)
@@ -71,7 +73,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
-    val alreadyProcessed = checker.isAlreadyProcessed(project) { success: Boolean -> notify(project, success) }
+    val alreadyProcessed = checker.isAlreadyProcessed(project) { success: Boolean? -> notify(project, success) }
     if (checker.isStatusCheckIgnored(project) || alreadyProcessed) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
