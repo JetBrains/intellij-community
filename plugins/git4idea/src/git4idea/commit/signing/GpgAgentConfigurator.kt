@@ -19,6 +19,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import git4idea.commands.GitScriptGenerator
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_BACKUP_FILE_NAME
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_AGENT_CONF_FILE_NAME
@@ -53,7 +55,7 @@ import kotlin.io.path.readLines
 private val LOG = logger<GpgAgentConfigurator>()
 
 @Service(Service.Level.PROJECT)
-internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineScope): Disposable {
+internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope): Disposable {
   companion object {
     const val GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY = "pinentry-program"
 
@@ -73,18 +75,36 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     }
   }
 
-  init {
+  private val updateLauncherQueue = MergingUpdateQueue("update pinentry launcher queue", 100, true, null, this, null, false)
+
+  fun init() {
     val connection = application.messageBus.connect(this)
-    connection.subscribe(GitExecutableManager.TOPIC, GitExecutableListener { cs.launch { configure() }})
+    connection.subscribe(GitExecutableManager.TOPIC, GitExecutableListener {
+      project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = false)
+      emitUpdateLauncherEvent()
+    })
     project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, object: GitConfigListener {
       override fun notifyConfigChanged(repository: GitRepository) {
-        cs.launch { configure() }
+        project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = false)
+        emitUpdateLauncherEvent()
       }
     })
+
+    emitUpdateLauncherEvent()
   }
 
-  suspend fun configure() {
-    withContext(Dispatchers.IO) { ProjectLevelVcsManager.getInstance(project).runAfterInitialization { doConfigure() } }
+  @RequiresBackgroundThread
+  fun isConfigured(project: Project): Boolean {
+    val executable = GitExecutableManager.getInstance().getExecutable(project)
+    val gpgAgentPaths = createPathLocator(executable).resolvePaths() ?: return false
+
+    return gpgAgentPaths.gpgPinentryAppLauncher.exists()
+           && readConfig(gpgAgentPaths.gpgAgentConf)
+             ?.content[GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY] == gpgAgentPaths.gpgPinentryAppLauncherConfigPath
+  }
+
+  fun configure() {
+    cs.launch { withContext(Dispatchers.IO) { doConfigure() } }
   }
 
   private fun createPathLocator(executor: GitExecutable): GpgAgentPathsLocator {
@@ -122,18 +142,11 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
       return
     }
 
-    if (needBackup) {
-      val gpgAgentConfBackup = gpgAgentPaths.gpgAgentConfBackup
-      if (gpgAgentConfBackup.exists()) {
-        LOG.debug("$gpgAgentConfBackup already exist, skipping configuration backup")
-      }
-      else if (backupExistingConfig(gpgAgentPaths, config)) {
-        writeAgentConfig(gpgAgentPaths, config)
-        restartAgent(executable)
-      }
+    if (needBackup && backupExistingConfig(gpgAgentPaths, config)) {
+      writeAgentConfig(gpgAgentPaths, config)
+      restartAgent(executable)
     }
 
-    //always regenerate the launcher to be up to date (e.g., java.home could be changed between versions)
     generatePinentryLauncher(executable, gpgAgentPaths)
   }
 
@@ -163,6 +176,25 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     return GpgAgentConfig(gpgAgentConf, config)
   }
 
+  private fun emitUpdateLauncherEvent() {
+    updateLauncherQueue.queue(Update.create(GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY) {
+      updateExistingPinentryLauncher()
+    })
+  }
+
+  private fun updateExistingPinentryLauncher() {
+    val executable = GitExecutableManager.getInstance().getExecutable(project)
+    if (isEnabled(project, executable) && isConfigured(project)) {
+      val gpgAgentPaths = createPathLocator(executable).resolvePaths()
+
+      if (gpgAgentPaths != null) {
+        //always regenerate the launcher to be up to date (e.g., java.home could be changed between versions)
+        generatePinentryLauncher(executable, gpgAgentPaths)
+      }
+    }
+  }
+
+  @Synchronized
   private fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths) {
     val gpgAgentConfBackup = gpgAgentPaths.gpgAgentConfBackup
     val pinentryFallback = when {
@@ -398,6 +430,9 @@ private data class GpgAgentConfig(val path: Path, val content: Map<String, Strin
 
 private class GpgAgentConfiguratorStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    project.service<GpgAgentConfigurator>().configure()
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
+      project.service<GpgAgentConfigurator>().init()
+      project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
+    }
   }
 }

@@ -14,6 +14,10 @@ class GitActionIdsHolder : ActionIdsHolder {
     RESOLVE("git4idea.rebase.resolve"),
 
     GPG_AGENT_CONFIGURATION_SUCCESS_MANUAL("git.gpg.agent.configuration.success.manual.action"),
+    GPG_AGENT_CONFIGURATION_PROPOSE_MANUAL("git.gpg.agent.configuration.propose.manual.action"),
+    GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_MANUAL("git.gpg.agent.configuration.propose.suggestion.manual.action"),
+    GPG_AGENT_CONFIGURATION_PROPOSE_CONFIGURE("git.gpg.agent.configuration.propose.configure.action"),
+    GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_CONFIGURE("git.gpg.agent.configuration.propose.suggestion.configure.action"),
   }
 
   override fun getActionsIds(): List<String> = Id.entries.map(Id::id).toList()
