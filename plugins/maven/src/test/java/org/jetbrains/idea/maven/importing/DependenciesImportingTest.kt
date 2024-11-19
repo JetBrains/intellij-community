@@ -2633,4 +2633,59 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     assertModuleLibDep("m1", "Maven: ATTACHED-JAR: test:m2:1", "jar://" + FileUtil.toSystemIndependentName(jarPath) + "!/")
     assertModuleLibDeps("m2")
   }
+
+  @Test
+  fun testTwoLinkedProjectsFromDifferentBasedirsShouldBeResolvedInDifferentEmbedders() = runBlocking {
+    assumeMaven3()
+    val project1 = createModulePom("project1",
+                                   """
+                    <groupId>org.example</groupId>
+                    <artifactId>project1</artifactId>
+                    <version>1.0</version>
+                
+                    <properties>
+                        <maven.compiler.source>17</maven.compiler.source>
+                        <maven.compiler.target>17</maven.compiler.target>
+                        <pom.myversion>${'$'}{myversion}</pom.myversion>
+                    </properties>
+                
+                    <dependencies>
+                        <dependency>
+                            <groupId>test</groupId>
+                            <artifactId>test</artifactId>
+                            <version>${'$'}{pom.myversion}</version>
+                        </dependency>
+                    </dependencies>
+""")
+
+    createProjectSubFile("project1/.mvn/jvm.config", "-Dmyversion=1")
+
+    val project2 = createModulePom("project2",
+                                   """
+                    <groupId>org.example</groupId>
+                    <artifactId>project2</artifactId>
+                    <version>1.0</version>
+                
+                    <properties>
+                        <maven.compiler.source>17</maven.compiler.source>
+                        <maven.compiler.target>17</maven.compiler.target>
+                        <pom.myversion>${'$'}{myversion}</pom.myversion>
+                    </properties>
+                
+                    <dependencies>
+                        <dependency>
+                            <groupId>test</groupId>
+                            <artifactId>test</artifactId>
+                            <version>${'$'}{pom.myversion}</version>
+                        </dependency>
+                    </dependencies>
+""")
+
+    createProjectSubFile("project2/.mvn/jvm.config", "-Dmyversion=2")
+
+    importProjectsAsync(project1, project2)
+    assertModules("project1", "project2")
+    assertModuleLibDeps("project1", "Maven: test:test:1")
+    assertModuleLibDeps("project2", "Maven: test:test:2")
+  }
 }
