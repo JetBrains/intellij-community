@@ -8530,6 +8530,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testSet() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/operatorCalls/set.kt");
             }
+
+            @TestMetadata("unaryPlus.kt")
+            public void testUnaryPlus() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/operatorCalls/unaryPlus.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
