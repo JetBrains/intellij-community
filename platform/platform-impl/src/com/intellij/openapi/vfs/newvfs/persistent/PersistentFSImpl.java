@@ -154,7 +154,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     setupOTelMonitoring(TelemetryManager.getInstance().getMeter(PlatformScopesKt.VFS));
 
-    LOG.info("VFS.maxFileLengthToCache: " + PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
+    LOG.info("VFS.MAX_FILE_LENGTH_TO_CACHE: " + PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE);
   }
 
   @ApiStatus.Internal
@@ -908,7 +908,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static boolean shouldCacheFileContentInVFS(long fileLength) {
-    return fileLength <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    return fileLength <= PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE;
   }
 
   private @NotNull InputStream createReplicatorAndStoreContent(@NotNull VirtualFile file,
@@ -1540,8 +1540,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (!(vf instanceof VirtualDirectoryImpl)) {
       return;
     }
-    parent =
-      (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
+    parent = (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
     NewVirtualFileSystem fs = getFileSystem(parent);
 
     List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
@@ -1558,8 +1557,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
     vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive));
-    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {
-    });
+    parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {});
 
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
   }
