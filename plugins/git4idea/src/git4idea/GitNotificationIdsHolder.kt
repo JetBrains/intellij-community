@@ -119,6 +119,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       IGNORE_FILE_GENERATION_ERROR,
       GPG_AGENT_CONFIGURATION_SUCCESS,
       GPG_AGENT_CONFIGURATION_ERROR,
+      GPG_AGENT_CONFIGURATION_PROPOSE,
+      GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION,
     )
   }
 
@@ -236,5 +238,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val IGNORE_FILE_GENERATION_ERROR: String = "git.ignore.file.generation.error"
     const val GPG_AGENT_CONFIGURATION_SUCCESS = "git.gpg.agent.configuration.success"
     const val GPG_AGENT_CONFIGURATION_ERROR = "git.gpg.agent.configuration.error"
+    const val GPG_AGENT_CONFIGURATION_PROPOSE = "git.gpg.agent.configuration.propose"
+    const val GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION = "git.gpg.agent.configuration.propose.suggestion"
   }
 }

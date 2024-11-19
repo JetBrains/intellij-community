@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.notification.NotificationAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -19,7 +20,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineEventDetector
 import git4idea.commands.GitLineHandler
-import git4idea.commands.GitLineHandlerListener
+import git4idea.commit.signing.GpgAgentConfigurationNotificator
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.io.File
@@ -54,11 +55,13 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
 
   @Throws(VcsException::class)
   fun commitStaged(messageFile: File) {
+    val pinentryProblemDetector = GitPinentryProblemDetector()
     val gpgProblemDetector = GitGpgProblemDetector()
     val emptyCommitProblemDetector = GitEmptyCommitProblemDetector()
     val handler = GitLineHandler(project, root, GitCommand.COMMIT)
     handler.setStdoutSuppressed(false)
     handler.addLineListener(gpgProblemDetector)
+    handler.addLineListener(pinentryProblemDetector)
     handler.addLineListener(emptyCommitProblemDetector)
 
     handler.setCommitMessage(messageFile)
@@ -71,6 +74,9 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
       command.throwOnError()
     }
     catch (e: VcsException) {
+      if (pinentryProblemDetector.isDetected) {
+        project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = false)
+      }
       if (gpgProblemDetector.isDetected) {
         throw GitGpgCommitException(e)
       }
@@ -97,6 +103,21 @@ private fun GitLineHandler.setCommitMessage(messageFile: File) {
   addAbsoluteFile(messageFile)
 }
 
+private class GitPinentryProblemDetector : GitLineEventDetector {
+  override var isDetected = false
+    private set
+
+  override fun onLineAvailable(line: String, outputType: Key<*>) {
+    if (outputType === ProcessOutputTypes.STDERR && PATTERNS.any(line::contains)) {
+      isDetected = true
+    }
+  }
+
+  companion object {
+    private val PATTERNS = arrayOf(GitGpgProblemDetector.PATTERN, "No pinentry", "pinentry", "signing failed")
+  }
+}
+
 private class GitGpgProblemDetector : GitLineEventDetector {
   override var isDetected = false
     private set
@@ -108,7 +129,7 @@ private class GitGpgProblemDetector : GitLineEventDetector {
   }
 
   companion object {
-    private const val PATTERN = "gpg failed to sign the data"
+    const val PATTERN = "gpg failed to sign the data"
   }
 }
 
