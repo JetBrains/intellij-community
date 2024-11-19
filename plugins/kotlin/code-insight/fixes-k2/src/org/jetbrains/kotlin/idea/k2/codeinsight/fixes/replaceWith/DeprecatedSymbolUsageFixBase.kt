@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -132,13 +133,15 @@ abstract class DeprecatedSymbolUsageFixBase(
 ) : KotlinPsiOnlyQuickFixAction<KtReferenceExpression>(element) {
 
     internal val isAvailable: Boolean
+    private val isUnitTypeReplacement: Boolean?
 
     init {
         assert(!isDispatchThread()) {
             "${javaClass.name} should not be created on EDT"
         }
+        isUnitTypeReplacement = createReplacementExpression(element.project, replaceWith, element)?.let { analyze(element) { it.expressionType?.isUnitType } }
         isAvailable = buildUsageReplacementStrategy(
-            element, replaceWith
+            element, replaceWith, isUnitTypeReplacement
         )?.let { it.createReplacer(element) != null } == true
     }
 
@@ -146,7 +149,7 @@ abstract class DeprecatedSymbolUsageFixBase(
 
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val strategy = buildUsageReplacementStrategy(expression, replaceWith) ?: return
+        val strategy = buildUsageReplacementStrategy(expression, replaceWith, isUnitTypeReplacement) ?: return
         invoke(strategy, project, editor)
     }
 
@@ -157,6 +160,7 @@ abstract class DeprecatedSymbolUsageFixBase(
         private fun buildUsageReplacementStrategy(
             element: KtReferenceExpression,
             replaceWith: ReplaceWithData,
+            isUnitType: Boolean?,
         ): UsageReplacementStrategy? {
 
             val target = element.mainReference.resolve()?.let { it.navigationElement ?: it }
@@ -178,7 +182,7 @@ abstract class DeprecatedSymbolUsageFixBase(
                         (codeFragment.getContentElement() as? KtIsExpression)?.typeReference
                     } catch (e: Exception) {
                         if (e is ControlFlowException) throw e
-                        val replacement = createReplacement(target as KtDeclaration, element, replaceWith) ?: return null
+                        val replacement = createReplacement(target as KtDeclaration, element, replaceWith, isUnitType) ?: return null
 
                         return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
                     }
@@ -189,7 +193,7 @@ abstract class DeprecatedSymbolUsageFixBase(
                 }
 
                 is KtCallableDeclaration -> {
-                    val replacement = createReplacement(target, element, replaceWith) ?: return null
+                    val replacement = createReplacement(target, element, replaceWith, isUnitType) ?: return null
 
                     return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
                 }
@@ -201,20 +205,30 @@ abstract class DeprecatedSymbolUsageFixBase(
         private fun createReplacement(
             target: KtDeclaration,
             element: KtReferenceExpression,
-            replaceWith: ReplaceWithData
+            replaceWith: ReplaceWithData,
+            isUnitType: Boolean?
         ): CodeToInline? {
             val context = retrieveContext(target)
             val project = element.project
 
-            //include imports
-            val codeFragment = KtExpressionCodeFragment(project, "fragment.kt", replaceWith.pattern, replaceWith.imports.joinToString().takeIf { it.isNotEmpty() }, context)
+            val expression = createReplacementExpression(project, replaceWith, context) ?: return null
 
-            val expression = codeFragment.getContentElement() ?: return null
-
-            return buildCodeToInline(target, expression, false, null, object : CodeToInlineBuilder(original = target) {
+            return buildCodeToInline(target, expression, isUnitType != false, null, object : CodeToInlineBuilder(original = target) {
                 override fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {}
             })
         }
+
+        private fun createReplacementExpression(
+            project: Project,
+            replaceWith: ReplaceWithData,
+            context: KtExpression
+        ): KtExpression? = KtExpressionCodeFragment(
+            project,
+            "fragment.kt",
+            replaceWith.pattern,
+            replaceWith.imports.joinToString().takeIf { it.isNotEmpty() },
+            context
+        ).getContentElement()
 
         private fun retrieveContext(target: KtDeclaration): KtExpression {
             val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression

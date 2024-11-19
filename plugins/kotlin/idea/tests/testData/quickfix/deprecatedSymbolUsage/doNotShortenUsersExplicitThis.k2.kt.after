@@ -10,7 +10,7 @@ class X {
 }
 
 fun X.foo() {
-    <caret>newFun(toString())
+    newFun(<caret>toString())
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -61,8 +61,8 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val facility = ShortenReferencesFacility.getInstance()
         return pointers.mapNotNull { p ->
             val ktElement = p.element ?: return@mapNotNull null
-            facility.shorten(ktElement, ShortenOptions.ALL_ENABLED)
-            p.element
+            val shorten = facility.shorten(ktElement, ShortenOptions.ALL_ENABLED)
+            p.element ?: shorten as? KtElement
         }
     }
 
