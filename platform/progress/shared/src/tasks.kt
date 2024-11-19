@@ -64,6 +64,9 @@ suspend fun <T> withBackgroundProgress(
  *
  * @param project in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
+ * @param suspender provides an ability to pause running coroutine and displays suspension status in UI
+ * If null, the suspender is going to be retrieved from the coroutine context.
+ * If no suspender in the context, the task won't be suspendable.
  * @throws CancellationException if the calling coroutine was canceled, or if the indicator was canceled by the user in the UI
  */
 suspend fun <T> withBackgroundProgress(
