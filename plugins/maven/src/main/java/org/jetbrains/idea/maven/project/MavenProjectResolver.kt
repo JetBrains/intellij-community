@@ -90,7 +90,6 @@ class MavenProjectResolver(private val myProject: Project) {
   ): MavenProjectResolutionResult {
     val updateSnapshots = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots || generalSettings.isAlwaysUpdateSnapshots
     val projectsWithUnresolvedPlugins = HashMap<String, Collection<MavenProject>>()
-    val pomToDependencyHash = tree.projects.associate { it.file to if (incrementally) it.dependencyHash else null }
     val projectMultiMap = MavenUtil.groupByBasedir(mavenProjects, tree)
     for ((baseDir, mavenProjectsInBaseDir) in projectMultiMap.entrySet()) {
       val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir)
@@ -102,6 +101,7 @@ class MavenProjectResolver(private val myProject: Project) {
             mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
           }
         }
+        val pomToDependencyHash = mavenProjectsInBaseDir.associate { it.file to if (incrementally) it.dependencyHash else null }
         val projectsWithUnresolvedPluginsChunk = tracer.spanBuilder("doResolveMavenProject")
           .useWithScope {
             doResolve(
@@ -127,6 +127,7 @@ class MavenProjectResolver(private val myProject: Project) {
     }
     MavenUtil.restartConfigHighlighting(mavenProjects)
 
+    val pomToDependencyHash = tree.projects.associate { it.file to if (incrementally) it.dependencyHash else null }
     if (incrementally && updateSnapshots) {
       updateSnapshotsAfterIncrementalSync(tree, pomToDependencyHash, embeddersManager, progressReporter, eventHandler)
     }
