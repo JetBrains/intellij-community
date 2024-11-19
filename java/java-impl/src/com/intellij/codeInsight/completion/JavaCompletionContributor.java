@@ -59,6 +59,7 @@ import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -88,6 +89,16 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
       // dot at the statement beginning
       psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
+      //example: class A{ .something }
+      psiElement().afterLeaf(".")
+        .insideStarting(psiElement(JavaElementType.TYPE))
+        .afterLeafSkipping(psiElement().andOr(
+                             psiElement().whitespace(),
+                             psiElement().withText("")),
+                           psiElement().withParent(PsiErrorElement.class))
+        .withParent(PsiJavaCodeReferenceElement.class)
+        .withSuperParent(2, PsiTypeElement.class)
+        .withSuperParent(3, PsiClass.class),
       // like `call(Cls::methodRef.<caret>`
       psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
         psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))),

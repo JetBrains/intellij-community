@@ -3276,4 +3276,12 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       }
       """);
   }
+
+  public void testNoSuggestionsAfterDotAtClassLevel() { doAntiTest(); }
+
+  public void testSuggestionsAfterDotAtClassLevel() {
+    configureByTestName();
+    myFixture.completeBasic();
+    assertTrue(myFixture.getLookupElementStrings().contains("A"));
+  }
 }
