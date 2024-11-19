@@ -10,12 +10,12 @@ import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.utils.vfs.getDirectory
-import org.jetbrains.kotlin.idea.base.util.MAVEN_PROJECT_SYSTEM_ID
 import org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.util.getSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.idea.maven.utils.MavenUtil as IntellijMavenUtil
 
 abstract class GradleOpenProjectTestCase : GradleTestCase() {
 
@@ -43,7 +43,7 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
   suspend fun attachMavenProject(project: Project, relativePath: String) {
     val projectPath = testRoot.getDirectory(relativePath).toNioPath().toString()
     EP_NAME.forEachExtensionSafeAsync { extension ->
-      if (extension.systemId == MAVEN_PROJECT_SYSTEM_ID) {
+      if (extension.systemId == IntellijMavenUtil.SYSTEM_ID) {
         extension.linkAndLoadProjectAsync(project, projectPath)
       }
     }

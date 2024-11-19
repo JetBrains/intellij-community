@@ -185,5 +185,3 @@ private val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
 
 val Module.isMavenModule: Boolean
     get() = ExternalSystemApiUtil.isExternalSystemAwareModule(MAVEN_SYSTEM_ID, this)
-
-val MAVEN_PROJECT_SYSTEM_ID: ProjectSystemId = ProjectSystemId("MAVEN")
