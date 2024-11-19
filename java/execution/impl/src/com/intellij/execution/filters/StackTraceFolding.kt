@@ -3,8 +3,11 @@ package com.intellij.execution.filters
 
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.getParentOfType
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.unscramble.ThreadDumpPanel
 
 private const val STACK_TRACE_ELEMENT_PREFIX = "\tat "
 private const val ASYNC_STACK_TRACE_PREFIX = "\tat --- Async.Stack.Trace --- "
@@ -38,7 +41,11 @@ class StackTraceFolding : ConsoleFolding() {
     return "\t$msg"
   }
 
-  override fun shouldBeAttachedToThePreviousLine(): Boolean {
-    return false
-  }
+  override fun shouldBeAttachedToThePreviousLine(): Boolean =
+    false
+
+  override fun isEnabledForConsole(consoleView: ConsoleView): Boolean =
+    super.isEnabledForConsole(consoleView) &&
+      // We want unfolded stack traces inside ThreadDumpPanel.
+      consoleView.component.getParentOfType<ThreadDumpPanel>() == null
 }
