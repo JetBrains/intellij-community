@@ -74,6 +74,7 @@ public final class PyDefUseUtil {
       return Collections.emptyList();
     }
 
+    LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(anchor.getContainingFile());
     final Collection<Instruction> result = new LinkedHashSet<>();
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
@@ -113,7 +114,7 @@ public final class PyDefUseUtil {
                                     if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
                                       final String name = elementName(element);
                                       if (Comparing.strEqual(name, varName)) {
-                                        if (isReachableWithVersionChecks(rwInstruction)) {
+                                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
                                           result.add(rwInstruction);
                                         }
                                         return ControlFlowUtil.Operation.CONTINUE;
@@ -122,7 +123,7 @@ public final class PyDefUseUtil {
                                   }
                                   else if (acceptImplicitImports && element instanceof PyImplicitImportNameDefiner implicit) {
                                     if (!implicit.multiResolveName(varName).isEmpty()) {
-                                      if (isReachableWithVersionChecks(instruction)) {
+                                      if (isReachableWithVersionChecks(instruction, languageLevel)) {
                                         result.add(instruction);
                                       }
                                       return ControlFlowUtil.Operation.CONTINUE;
@@ -152,10 +153,9 @@ public final class PyDefUseUtil {
     return instr;
   }
 
-  private static boolean isReachableWithVersionChecks(@NotNull Instruction instruction) {
+  private static boolean isReachableWithVersionChecks(@NotNull Instruction instruction, @NotNull LanguageLevel languageLevel) {
     PsiElement element = instruction.getElement();
     if (element == null) return true;
-    LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(element.getContainingFile());
     Version version = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
     return evaluateVersionsForElement(element).contains(version);
   }
