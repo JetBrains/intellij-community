@@ -17,5 +17,9 @@
     <intentionAction>
       <className>MyQuickFixIntentionAction</className>
     </intentionAction>
+
+    <java.error.fix errorCode="unhandled.exceptions"
+                    implementationClass="MyJavaErrorFix"/>
+
   </extensions>
 </idea-plugin>

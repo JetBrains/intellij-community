@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.daemon.impl.analysis.ErrorFixExtensionPoint;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +30,7 @@ public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightF
     moduleBuilder.addLibrary("analysis-api", PathUtil.getJarPathForClass(IntentionActionBean.class));
     moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable.class));
+    moduleBuilder.addLibrary("java-analysis-impl", PathUtil.getJarPathForClass(ErrorFixExtensionPoint.class));
   }
 
   @Override
@@ -44,6 +46,10 @@ public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightF
 
   public void testHighlightingNotRegisteredInPluginXml() {
     myFixture.testHighlighting("MyIntentionActionNotRegisteredInPluginXml.java");
+  }
+
+  public void testHighlightingJavaErrorFixExtension() {
+    myFixture.testHighlighting("MyJavaErrorFix.java");
   }
 
   public void testNoHighlighting() {
