@@ -69,7 +69,12 @@ class PublicApiImplicitTypeInspection(
                 ) {
                     return true
                 }
-                return declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED && isPublicApi(declarationSymbol)
+
+                // To avoid reporting public declarations multiple times (by IDE inspection and by compiler diagnostics),
+                // we want to report them only when Explicit API is disabled in the compiler.
+                val reportPublic = declaration.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED
+
+                return reportPublic && isPublicApi(declarationSymbol)
             }
         }
     }
