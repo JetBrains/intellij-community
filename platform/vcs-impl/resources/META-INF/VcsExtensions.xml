@@ -366,6 +366,8 @@
                  description="Enables AI generated shelve change list title"
                  defaultValue="true"/>
 
+    <editorNotificationProvider implementation="com.intellij.openapi.vcs.actions.AnnotateWarningsProvider"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

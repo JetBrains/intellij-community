@@ -788,6 +788,7 @@ com.intellij.openapi.vcs.annotate.AnnotationProvider
 - a:annotate(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.annotate.FileAnnotation
 - a:annotate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.history.VcsFileRevision):com.intellij.openapi.vcs.annotate.FileAnnotation
 - getActionName():java.lang.String
+- getAnnotationWarnings(com.intellij.openapi.vcs.annotate.FileAnnotation):com.intellij.openapi.vcs.annotate.AnnotationWarning
 - isAnnotationValid(com.intellij.openapi.vcs.history.VcsFileRevision):Z
 e:com.intellij.openapi.vcs.annotate.AnnotationSource
 - java.lang.Enum
@@ -805,6 +806,28 @@ com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher
 - a:getRevisionAspect():com.intellij.openapi.vcs.annotate.LineAnnotationAspect
 - a:mergeSourceAvailable(I):Z
 - a:switchTo(com.intellij.openapi.vcs.annotate.AnnotationSource):V
+f:com.intellij.openapi.vcs.annotate.AnnotationWarning
+- sf:Companion:com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion
+- sf:error(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- sf:error(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:getActions():java.util.List
+- f:getBackgroundColor():java.awt.Color
+- f:getMessage():java.lang.String
+- f:getShowAnnotation():Z
+- f:getStatus():com.intellij.ui.EditorNotificationPanel$Status
+- sf:warning(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- sf:warning(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+a:com.intellij.openapi.vcs.annotate.AnnotationWarning$Action
+- <init>(java.lang.String):V
+- a:doAction(java.lang.Runnable):V
+- f:getText():java.lang.String
+f:com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion
+- f:error(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:error(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- bs:error$default(com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:warning(java.lang.String):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- f:warning(java.lang.String,java.util.List):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- bs:warning$default(com.intellij.openapi.vcs.annotate.AnnotationWarning$Companion,java.lang.String,java.util.List,I,java.lang.Object):com.intellij.openapi.vcs.annotate.AnnotationWarning
 a:com.intellij.openapi.vcs.annotate.FileAnnotation
 - p:<init>(com.intellij.openapi.project.Project):V
 - f:close():V

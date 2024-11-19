@@ -41,17 +41,22 @@ internal class GitUnshallowRepositoryAction : DumbAwareAction() {
     const val ACTION_ID = "Git.Unshallow"
 
     @JvmStatic
-    fun unshallowRepository(repository: GitRepository) {
-      val fetcher = GitFetchSupport.fetchSupport(repository.project)
+    fun unshallowRepository(repository: GitRepository, afterFetch: () -> Unit = {}) {
+      val project = repository.project
+      val fetcher = GitFetchSupport.fetchSupport(project)
       val remote = fetcher.getDefaultRemoteToFetch(repository) ?: return
 
       NotificationsManager.getNotificationsManager()
-        .getNotificationsOfType(ShallowRepositoryNotification::class.java, repository.project)
+        .getNotificationsOfType(ShallowRepositoryNotification::class.java, project)
         .forEach(ShallowRepositoryNotification::expire)
 
-      GitVcs.runInBackground(object : Task.Backgroundable(repository.project, GitBundle.message("action.Git.Unshallow.progress.title")) {
+      GitVcs.runInBackground(object : Task.Backgroundable(project, GitBundle.message("action.Git.Unshallow.progress.title")) {
         override fun run(indicator: ProgressIndicator) {
-          fetcher.fetchUnshallow(repository, remote).showNotificationIfFailed(GitBundle.message("action.Git.Unshallow.failure.title"))
+          val fetched = fetcher.fetchUnshallow(repository, remote).showNotificationIfFailed(GitBundle.message("action.Git.Unshallow.failure.title"))
+          if (fetched) {
+            ProjectLevelVcsManagerEx.getInstance(project).annotationLocalChangesListener.reloadAnnotationsForVcs(GitVcs.getKey())
+            afterFetch()
+          }
         }
       })
     }
