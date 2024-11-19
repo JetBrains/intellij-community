@@ -225,11 +225,11 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
 
   private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification {
     return when(manager) {
-      is PipPythonPackageManager -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
       is CondaPackageManager -> when {
         useConda -> CondaPackageSpecification(packageName, version)
         else -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
       }
+      is PipPythonPackageManager -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
       else -> error("Unknown package manager")
     }
   }
