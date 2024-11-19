@@ -53,7 +53,7 @@ public final class PyDefUseUtil {
   @NotNull
   public static List<Instruction> getLatestDefs(@NotNull ScopeOwner block,
                                                 @NotNull String varName,
-                                                PsiElement anchor,
+                                                @NotNull PsiElement anchor,
                                                 boolean acceptTypeAssertions,
                                                 boolean acceptImplicitImports,
                                                 @NotNull TypeEvalContext context) {
@@ -64,7 +64,7 @@ public final class PyDefUseUtil {
   @NotNull
   public static List<Instruction> getLatestDefs(@NotNull ControlFlow controlFlow,
                                                 @NotNull String varName,
-                                                PsiElement anchor,
+                                                @NotNull PsiElement anchor,
                                                 boolean acceptTypeAssertions,
                                                 boolean acceptImplicitImports,
                                                 @NotNull TypeEvalContext context) {
