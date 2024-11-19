@@ -4687,6 +4687,8 @@ f:com.intellij.ide.trustedProjects.TrustedProjectsLocator$Companion
 com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject
 - a:getProject():com.intellij.openapi.project.Project
 - a:getProjectRoots():java.util.List
+f:com.intellij.ide.ui.IconMapperBean
+- mappingFile:java.lang.String
 com.intellij.ide.ui.OptionsSearchTopHitProvider
 - a:getId():java.lang.String
 com.intellij.ide.ui.OptionsSearchTopHitProvider$ApplicationLevelProvider
