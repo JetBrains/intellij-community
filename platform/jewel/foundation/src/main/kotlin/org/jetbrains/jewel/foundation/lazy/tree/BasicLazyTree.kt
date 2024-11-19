@@ -115,7 +115,7 @@ public fun <T> BasicLazyTree(
         selectionMode = selectionMode,
         keyActions = keyActions,
         pointerEventActions = pointerEventScopedActions,
-        onSelectedIndexesChanged = {
+        onSelectedIndexesChange = {
             onSelectionChange(it.map { element -> flattenedTree[element] as Tree.Element<T> })
         },
         interactionSource = remember { MutableInteractionSource() },

@@ -49,7 +49,7 @@ public fun SelectableLazyColumn(
     state: SelectableLazyListState = rememberSelectableLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     reverseLayout: Boolean = false,
-    onSelectedIndexesChanged: (List<Int>) -> Unit = {},
+    onSelectedIndexesChange: (List<Int>) -> Unit = {},
     verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
@@ -64,7 +64,7 @@ public fun SelectableLazyColumn(
     val keys = remember(container) { container.getKeys() }
     var isFocused by remember { mutableStateOf(false) }
 
-    val latestOnSelectedIndexesChanged = rememberUpdatedState(onSelectedIndexesChanged)
+    val latestOnSelectedIndexesChanged = rememberUpdatedState(onSelectedIndexesChange)
     LaunchedEffect(state, container) {
         snapshotFlow { state.selectedKeys }
             .collect { selectedKeys ->

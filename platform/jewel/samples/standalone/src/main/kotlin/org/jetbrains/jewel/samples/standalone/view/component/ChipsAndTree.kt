@@ -81,9 +81,10 @@ fun SelectableLazyColumnSample() {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
         } else {
             SelectableLazyColumn(
-                selectionMode = SelectionMode.Multiple,
                 modifier = Modifier.focusable(interactionSource = interactionSource),
+                selectionMode = SelectionMode.Multiple,
                 state = state,
+                interactionSource = remember { MutableInteractionSource() },
                 content = {
                     items(count = listOfItems.size, key = { index -> listOfItems[index] }) { index ->
                         Text(
@@ -101,7 +102,6 @@ fun SelectableLazyColumnSample() {
                         )
                     }
                 },
-                interactionSource = remember { MutableInteractionSource() },
             )
             VerticalScrollbar(
                 rememberScrollbarAdapter(state.lazyListState),

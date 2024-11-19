@@ -76,6 +76,19 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiCircularPro
 	public static synthetic fun light-O7O2-qc$default (Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle$Companion;JJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;
 }
 
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiComboBoxStylingKt {
+	public static final fun default-EfrW7C0 (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics$Companion;JJLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FF)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;
+	public static synthetic fun default-EfrW7C0$default (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics$Companion;JJLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;
+	public static final fun defaults (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons$Companion;Lorg/jetbrains/jewel/ui/icon/IconKey;)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons;
+	public static synthetic fun defaults$default (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons$Companion;Lorg/jetbrains/jewel/ui/icon/IconKey;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons;
+	public static final fun getDefault (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultComboBoxColorsFactory;
+	public static final fun getDefault (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultComboBoxStyleFactory;
+	public static final fun getUndecorated (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedComboBoxColorsFactory;
+	public static final fun getUndecorated (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedComboBoxStyleFactory;
+	public static final fun undecorated-EfrW7C0 (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics$Companion;JJLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FF)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;
+	public static synthetic fun undecorated-EfrW7C0$default (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics$Companion;JJLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButtonColorFactory {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButtonColorFactory;
@@ -90,6 +103,20 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButt
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
 }
 
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultComboBoxColorsFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultComboBoxColorsFactory;
+	public final fun dark-V1nXRL4 (JJJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;
+	public final fun light-V1nXRL4 (JJJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultComboBoxStyleFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultComboBoxStyleFactory;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultDropdownColorsFactory {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultDropdownColorsFactory;
@@ -102,6 +129,13 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultDrop
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultDropdownStyleFactory;
 	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/DropdownColors;Lorg/jetbrains/jewel/ui/component/styling/DropdownMetrics;Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/DropdownColors;Lorg/jetbrains/jewel/ui/component/styling/DropdownMetrics;Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSimpleListItemLazyTreeStyleFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultSimpleListItemLazyTreeStyleFactory;
+	public final fun dark-69fazGs (JJJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemColors;
+	public final fun light-69fazGs (JJJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultTabColorsFactory {
@@ -183,14 +217,12 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiIconButtonS
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiLazyTreeStylingKt {
-	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeColors;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;
-	public static final fun dark-v1fvUNM (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeColors$Companion;JJJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeColors;
+	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemColors;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;
 	public static final fun defaults (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons$Companion;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons;
 	public static synthetic fun defaults$default (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons$Companion;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons;
 	public static final fun defaults-hRm7RI8 (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics$Companion;FLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FF)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics;
 	public static synthetic fun defaults-hRm7RI8$default (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics$Companion;FLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics;
-	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeColors;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;
-	public static final fun light-v1fvUNM (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeColors$Companion;JJJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeColors;
+	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemColors;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeMetrics;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiLinkStylingKt {
@@ -237,6 +269,15 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiOutlinedBut
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiOutlinedButtonStyleFactory;
 	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
 	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiPopupContainerStylingKt {
+	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerColors;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;
+	public static final fun dark-GyCwops (Lorg/jetbrains/jewel/ui/component/styling/PopupContainerColors$Companion;JJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/PopupContainerColors;
+	public static final fun defaults-Dd3ibrk (Lorg/jetbrains/jewel/ui/component/styling/PopupContainerMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JFF)Lorg/jetbrains/jewel/ui/component/styling/PopupContainerMetrics;
+	public static synthetic fun defaults-Dd3ibrk$default (Lorg/jetbrains/jewel/ui/component/styling/PopupContainerMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JFFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/PopupContainerMetrics;
+	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerColors;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;
+	public static final fun light-GyCwops (Lorg/jetbrains/jewel/ui/component/styling/PopupContainerColors$Companion;JJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/PopupContainerColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiRadioButtonStylingKt {
@@ -300,6 +341,22 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiSegmentedCo
 	public static synthetic fun defaults-wH6b6FI$default (Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;FILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics;
 	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlColors$Companion;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlColors;
 	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlColors;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiSelectableLazyColumnStylingKt {
+	public static final fun dark-V6-xPKs (Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle$Companion;FJLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;
+	public static final fun light-V6-xPKs (Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle$Companion;FJLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiSimpleListItemStylingKt {
+	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
+	public static final fun darkFullWidth-iLRpYWo (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;JJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
+	public static synthetic fun darkFullWidth-iLRpYWo$default (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;JJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
+	public static final fun default (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
+	public static final fun fullWidth (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
+	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
+	public static final fun lightFullWidth-iLRpYWo (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;JJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
+	public static synthetic fun lightFullWidth-iLRpYWo$default (Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle$Companion;JJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiSliderStylingKt {
@@ -369,6 +426,20 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiTooltipStyl
 	public static final fun light-zf8z9n0 (Lorg/jetbrains/jewel/ui/component/styling/TooltipColors$Companion;JJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/TooltipColors;
 }
 
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedComboBoxColorsFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedComboBoxColorsFactory;
+	public final fun dark-HlaysQ4 (JJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;
+	public final fun light-HlaysQ4 (JJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;
+}
+
+public final class org/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedComboBoxStyleFactory {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedComboBoxStyleFactory;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ComboBoxColors;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxMetrics;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedDropdownColorsFactory {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiUndecoratedDropdownColorsFactory;
@@ -402,10 +473,10 @@ public final class org/jetbrains/jewel/intui/standalone/theme/IntUiGlobalMetrics
 public final class org/jetbrains/jewel/intui/standalone/theme/IntUiThemeKt {
 	public static final fun IntUiTheme (Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;Lorg/jetbrains/jewel/ui/ComponentStyling;ZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun IntUiTheme (ZZLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun dark (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public static final fun dark (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
 	public static final fun darkThemeDefinition-VRxQTpk (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Lorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;JLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;
 	public static final fun default (Lorg/jetbrains/jewel/ui/ComponentStyling;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/ComponentStyling;
-	public static final fun light (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
+	public static final fun light (Lorg/jetbrains/jewel/ui/ComponentStyling;Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/PopupContainerStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/SelectableLazyColumnStyle;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Landroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/ComponentStyling;
 	public static final fun lightThemeDefinition-VRxQTpk (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Lorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;JLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/foundation/theme/ThemeDefinition;
 }
 

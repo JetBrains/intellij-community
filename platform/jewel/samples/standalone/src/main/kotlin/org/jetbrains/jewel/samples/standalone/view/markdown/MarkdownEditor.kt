@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -24,13 +23,12 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import com.darkrockstudios.libraries.mpfilepicker.JvmFile
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.ComboBox
 import org.jetbrains.jewel.ui.component.Divider
-import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.PopupMenu
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
-import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
 internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
@@ -66,43 +64,34 @@ private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) 
         OutlinedButton(onClick = { onLoadMarkdown("") }) { Text("Clear") }
 
         Box {
-            var showPresets by remember { mutableStateOf(false) }
-            OutlinedButton(onClick = { showPresets = true }) {
-                Text("Load preset")
-                Spacer(Modifier.width(8.dp))
-                Icon(AllIconsKeys.General.ChevronDown, contentDescription = null)
-            }
+            var selected by remember { mutableStateOf("Jewel readme") }
+            ComboBox(
+                modifier = Modifier.width(140.dp),
+                labelText = selected,
+                popupContent = {
+                    PopupMenu(horizontalAlignment = Alignment.Start, onDismissRequest = { true }) {
+                        selectableItem(
+                            selected = selected == "Jewel readme",
+                            onClick = {
+                                selected = "Jewel readme"
+                                onLoadMarkdown(JewelReadme)
+                            },
+                        ) {
+                            Text("Jewel readme")
+                        }
 
-            if (showPresets) {
-                var selected by remember { mutableStateOf("Jewel readme") }
-                PopupMenu(
-                    onDismissRequest = {
-                        showPresets = false
-                        false
-                    },
-                    horizontalAlignment = Alignment.Start,
-                ) {
-                    selectableItem(
-                        selected = selected == "Jewel readme",
-                        onClick = {
-                            selected = "Jewel readme"
-                            onLoadMarkdown(JewelReadme)
-                        },
-                    ) {
-                        Text("Jewel readme")
+                        selectableItem(
+                            selected = selected == "Markdown catalog",
+                            onClick = {
+                                selected = "Markdown catalog"
+                                onLoadMarkdown(MarkdownCatalog)
+                            },
+                        ) {
+                            Text("Markdown catalog")
+                        }
                     }
-
-                    selectableItem(
-                        selected = selected == "Markdown catalog",
-                        onClick = {
-                            selected = "Markdown catalog"
-                            onLoadMarkdown(MarkdownCatalog)
-                        },
-                    ) {
-                        Text("Markdown catalog")
-                    }
-                }
-            }
+                },
+            )
         }
     }
 }

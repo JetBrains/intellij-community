@@ -19,6 +19,8 @@ dependencies {
     implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
     implementation(compose.components.resources)
     implementation(libs.intellijPlatform.icons)
+    testImplementation(compose.desktop.uiTestJUnit4)
+    testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }
 
 val jdkLevel = project.property("jdk.level") as String

@@ -2,7 +2,6 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.takeOrElse
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -17,6 +16,7 @@ import org.jetbrains.jewel.foundation.lazy.tree.rememberTreeState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
+import org.jetbrains.jewel.ui.component.styling.contentFor
 import org.jetbrains.jewel.ui.theme.treeStyle
 
 @ExperimentalJewelApi
@@ -38,13 +38,13 @@ public fun <T> LazyTree(
     BasicLazyTree(
         tree = tree,
         onElementClick = onElementClick,
-        elementBackgroundFocused = colors.elementBackgroundFocused,
-        elementBackgroundSelectedFocused = colors.elementBackgroundSelectedFocused,
-        elementBackgroundSelected = colors.elementBackgroundSelected,
+        elementBackgroundFocused = colors.backgroundFocused,
+        elementBackgroundSelectedFocused = colors.backgroundSelectedFocused,
+        elementBackgroundSelected = colors.backgroundSelected,
         indentSize = metrics.indentSize,
-        elementBackgroundCornerSize = metrics.elementBackgroundCornerSize,
-        elementPadding = metrics.elementPadding,
-        elementContentPadding = metrics.elementContentPadding,
+        elementBackgroundCornerSize = metrics.simpleListItemMetrics.selectionBackgroundCornerSize,
+        elementPadding = metrics.simpleListItemMetrics.outerPadding,
+        elementContentPadding = metrics.simpleListItemMetrics.innerPadding,
         elementMinHeight = metrics.elementMinHeight,
         chevronContentGap = metrics.chevronContentGap,
         treeState = treeState,

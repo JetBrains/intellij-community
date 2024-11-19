@@ -46,6 +46,7 @@ include(
     ":samples:ide-plugin",
     ":samples:standalone",
     ":ui",
+    ":ui-test",
 )
 
 gradleEnterprise {
@@ -99,3 +100,4 @@ gitHooks {
 
     createHooks(overwriteExisting = true)
 }
+include("ui-tests")

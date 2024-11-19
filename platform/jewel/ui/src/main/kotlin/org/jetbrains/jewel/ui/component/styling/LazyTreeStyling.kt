@@ -1,7 +1,5 @@
 package org.jetbrains.jewel.ui.component.styling
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -15,50 +13,35 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
 import org.jetbrains.jewel.ui.icon.IconKey
 
+// TODO: Composition with SimpleItemStyle
 @Stable
 @GenerateDataFunctions
 public class LazyTreeStyle(
-    public val colors: LazyTreeColors,
+    public val colors: SimpleListItemColors,
     public val metrics: LazyTreeMetrics,
     public val icons: LazyTreeIcons,
 ) {
     public companion object
 }
 
-@Immutable
-@GenerateDataFunctions
-public class LazyTreeColors(
-    public val elementBackgroundFocused: Color,
-    public val elementBackgroundSelected: Color,
-    public val elementBackgroundSelectedFocused: Color,
-    public val content: Color,
-    public val contentFocused: Color,
-    public val contentSelected: Color,
-    public val contentSelectedFocused: Color,
-) {
-    @Composable
-    public fun contentFor(state: TreeElementState): State<Color> =
-        rememberUpdatedState(
-            when {
-                state.isSelected && state.isFocused -> contentSelectedFocused
-                state.isFocused -> contentFocused
-                state.isSelected -> contentSelected
-                else -> content
-            }
-        )
-
-    public companion object
-}
+@Composable
+public fun SimpleListItemColors.contentFor(state: TreeElementState): State<Color> =
+    rememberUpdatedState(
+        when {
+            state.isSelected && state.isFocused -> contentSelectedFocused
+            state.isFocused -> contentFocused
+            state.isSelected -> contentSelected
+            else -> content
+        }
+    )
 
 @Stable
 @GenerateDataFunctions
 public class LazyTreeMetrics(
     public val indentSize: Dp,
-    public val elementBackgroundCornerSize: CornerSize,
-    public val elementPadding: PaddingValues,
-    public val elementContentPadding: PaddingValues,
     public val elementMinHeight: Dp,
     public val chevronContentGap: Dp,
+    public val simpleListItemMetrics: SimpleListItemMetrics,
 ) {
     public companion object
 }
