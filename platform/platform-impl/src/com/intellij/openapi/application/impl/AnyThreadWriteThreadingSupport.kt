@@ -7,13 +7,11 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.core.rwmutex.*
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -27,15 +25,12 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.lang.Deprecated
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BooleanSupplier
-import java.util.function.Consumer
-import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -367,6 +362,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myWriteActionListener = null
   }
 
+  override fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T {
+    return runWriteAction(clazz, ThrowableComputable(action))
+  }
+
   override fun runWriteAction(action: Runnable) = runWriteAction<Unit, Throwable>(action.javaClass) { action.run() }
 
   override fun <T> runWriteAction(computation: Computable<T>): T = runWriteAction<T, Throwable>(computation.javaClass) { computation.compute() }
@@ -459,31 +458,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   override fun isWriteActionPending(): Boolean = myWriteActionPending.get() > 0
 
   override fun isWriteAccessAllowed(): Boolean = myWriteAcquired == Thread.currentThread()
-
-  @ApiStatus.Experimental
-  override fun runWriteActionWithNonCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
-                                                                        project: Project?,
-                                                                        parentComponent: JComponent?,
-                                                                        action: Consumer<in ProgressIndicator?>): Boolean =
-    runEdtProgressWriteAction(title, project, parentComponent, null, action)
-
-  @ApiStatus.Experimental
-  override fun runWriteActionWithCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
-                                                                     project: Project?,
-                                                                     parentComponent: JComponent?,
-                                                                     action: Consumer<in ProgressIndicator?>): Boolean =
-    runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action)
-
-  private fun runEdtProgressWriteAction(title: @NlsContexts.ProgressTitle String,
-                                        project: Project?,
-                                        parentComponent: JComponent?,
-                                        @Nls(capitalization = Nls.Capitalization.Title) cancelText: String?,
-                                        action: Consumer<in ProgressIndicator?>) =
-    runWriteAction (action.javaClass, ThrowableComputable {
-      val indicator = PotemkinProgress(title, project, parentComponent, cancelText)
-      indicator.runInSwingThread { action.accept(indicator) }
-      !indicator.isCanceled
-    })
 
   override fun hasWriteAction(actionClass: Class<*>): Boolean {
     ThreadingAssertions.softAssertReadAccess()

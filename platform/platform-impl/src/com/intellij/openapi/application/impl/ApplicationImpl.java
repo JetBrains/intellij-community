@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.ProgressResult;
 import com.intellij.openapi.progress.impl.ProgressRunner;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -864,7 +865,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
                                                                           @Nullable Project project,
                                                                           @Nullable JComponent parentComponent,
                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
-    return getThreadingSupport().runWriteActionWithNonCancellableProgressInDispatchThread(title, project, parentComponent, action);
+    return runEdtProgressWriteAction(title, project, parentComponent, null, action);
   }
 
   @Override
@@ -872,8 +873,24 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
                                                                        @Nullable Project project,
                                                                        @Nullable JComponent parentComponent,
-                                                                       @NotNull java.util.function.Consumer<? super ProgressIndicator> action) {
-    return getThreadingSupport().runWriteActionWithCancellableProgressInDispatchThread(title, project, parentComponent, action);
+                                                                       @NotNull Consumer<? super ProgressIndicator> action) {
+    return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
+  }
+
+  private static boolean runEdtProgressWriteAction(
+    @NlsContexts.ProgressTitle String title,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @Nls(capitalization = Nls.Capitalization.Title) @Nullable String cancelText,
+    @NotNull Consumer<? super @Nullable ProgressIndicator> action
+  ) {
+    return getThreadingSupport().runWriteAction(action.getClass(), () -> {
+      var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+      indicator.runInSwingThread(() -> {
+        action.accept(indicator);
+      });
+      return !indicator.isCanceled();
+    });
   }
 
   @Override

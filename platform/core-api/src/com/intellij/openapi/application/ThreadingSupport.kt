@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
@@ -13,13 +12,7 @@ import java.lang.Deprecated
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.function.BooleanSupplier
-import java.util.function.Consumer
-import javax.swing.JComponent
-import kotlin.Boolean
-import kotlin.String
-import kotlin.Throwable
 import kotlin.coroutines.CoroutineContext
-import kotlin.run
 
 @ApiStatus.Internal
 interface ThreadingSupport {
@@ -205,6 +198,9 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun removeWriteActionListener(listener: WriteActionListener)
 
+  @RequiresBlockingContext
+  fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T
+
   /**
    * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
    * immediately if no read actions are currently running, or blocked until all read actions complete.
@@ -282,19 +278,6 @@ interface ThreadingSupport {
    */
   @Contract(pure = true)
   fun isWriteAccessAllowed(): Boolean
-
-
-  @ApiStatus.Experimental
-  fun runWriteActionWithCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
-                                                            project: Project?,
-                                                            parentComponent: JComponent?,
-                                                            action: Consumer<in ProgressIndicator?>): Boolean
-
-  @ApiStatus.Experimental
-  fun runWriteActionWithNonCancellableProgressInDispatchThread(title: @NlsContexts.ProgressTitle String,
-                                                               project: Project?,
-                                                               parentComponent: JComponent?,
-                                                               action: Consumer<in ProgressIndicator?>): Boolean
 
   /**
    * Use [runReadAction] instead
