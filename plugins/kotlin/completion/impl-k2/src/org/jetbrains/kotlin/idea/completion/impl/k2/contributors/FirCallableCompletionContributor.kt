@@ -240,31 +240,50 @@ internal open class FirCallableCompletionContributor(
             val prefix = prefixMatcher.prefix
             val invocationCount = parameters.invocationCount
 
-            val expectedType = expectedType?.withNullability(KaTypeNullability.NON_NULLABLE)
+            val expectedType = expectedType?.takeUnless { it is KaErrorType }
+                ?.withNullability(KaTypeNullability.NON_NULLABLE)
+                ?.takeUnless { it.isAnyType }
+                ?.takeUnless { it.isNothingType }
 
-            yieldAll(symbolFromIndexProvider.getKotlinEnumEntriesByNameFilter(scopeNameFilter) { enumEntry ->
-                if (invocationCount > 2) true
-                else if (visibilityChecker.isDefinitelyInvisibleByPsi(enumEntry)) false
-                else if (invocationCount > 1) prefix.isNotEmpty()
-                else expectedType != null && runCatchingNSEE { enumEntry.returnType }
-                    ?.withNullability(KaTypeNullability.NON_NULLABLE)
-                    ?.semanticallyEquals(expectedType) == true
+            yieldAll(sequence {
+                val psiFilter: (KtEnumEntry) -> Boolean = if (invocationCount > 2) { _ -> true }
+                else if (invocationCount > 1 && prefix.isNotEmpty()) { enumEntry ->
+                    !visibilityChecker.isDefinitelyInvisibleByPsi(enumEntry)
+                }
+                else if (expectedType != null) { enumEntry ->
+                    !visibilityChecker.isDefinitelyInvisibleByPsi(enumEntry)
+                            && runCatchingNSEE { enumEntry.returnType }
+                        ?.withNullability(KaTypeNullability.NON_NULLABLE)
+                        ?.semanticallyEquals(expectedType) == true
+                }
+                else return@sequence
+
+                val enumEntries = symbolFromIndexProvider.getKotlinEnumEntriesByNameFilter(
+                    nameFilter = scopeNameFilter,
+                    psiFilter = psiFilter,
+                )
+                yieldAll(enumEntries)
             })
 
-            yieldAll(
-                symbolFromIndexProvider.getJavaFieldsByNameFilter(scopeNameFilter) {
+            yieldAll(sequence {
+                // todo KtCodeFragments
+                if (invocationCount <= 2
+                    && (invocationCount <= 1 || prefix.isEmpty())
+                    && expectedType == null
+                ) return@sequence
+
+                val enumConstants = symbolFromIndexProvider.getJavaFieldsByNameFilter(scopeNameFilter) {
                     it is PsiEnumConstant
                 }.filterIsInstance<KaEnumEntrySymbol>()
                     .filter { enumEntrySymbol ->
-                        if (invocationCount > 2) true
-                        //else if (visibilityChecker.isDefinitelyInvisibleByPsi(enumEntrySymbol)) false // todo KtCodeFragments
-                        else if (invocationCount > 1) prefix.isNotEmpty()
-                        else expectedType != null && runCatchingNSEE { enumEntrySymbol.returnType }
+                        expectedType == null || runCatchingNSEE { enumEntrySymbol.returnType }
                             ?.withNullability(KaTypeNullability.NON_NULLABLE)
                             ?.semanticallyEquals(expectedType) == true
-                    })
+                    }
+                yieldAll(enumConstants)
+            })
 
-            if (prefixMatcher.prefix.isEmpty()) return@sequence
+            if (prefix.isEmpty()) return@sequence
 
             val callables = if (invocationCount > 1) {
                 symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
