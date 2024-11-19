@@ -83,8 +83,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                     commitCount: CommitCountStage): RevisionCollectorTask<CommitMetadataWithPath> {
     val oldHistoryTask = fileHistoryTask
     val oldCollector = oldHistoryTask?.collector
-    if (!commitCount.isInitial &&
-        oldHistoryTask != null && !oldHistoryTask.isCancelled && oldCollector is FileHistoryCollector &&
+    if (oldHistoryTask != null && !oldHistoryTask.isCancelled && oldCollector is FileHistoryCollector &&
         oldCollector.filePath == filePath &&
         oldCollector.hash == hash &&
         oldCollector.filters == filters) {
