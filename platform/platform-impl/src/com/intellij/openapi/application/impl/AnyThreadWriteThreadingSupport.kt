@@ -23,7 +23,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.Stack
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
-import java.lang.Deprecated
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -467,7 +466,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return false
   }
 
-  @Deprecated
+  @Deprecated("Use `runReadAction` instead")
   override fun acquireReadActionLock(): AccessToken {
     PluginException.reportDeprecatedUsage("ThreadingSupport.acquireReadActionLock", "Use `runReadAction()` instead")
     val ts = getThreadState()
@@ -481,7 +480,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return ReadAccessToken()
   }
 
-  @Deprecated
+  @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
   override fun acquireWriteActionLock(marker: Class<*>): AccessToken {
     PluginException.reportDeprecatedUsage("ThreadingSupport.acquireWriteActionLock", "Use `runWriteAction()` instead")
     return WriteAccessToken(marker)
@@ -662,7 +661,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return lock.tryAcquireReadPermit()
   }
 
-  @Deprecated
+  @Deprecated("")
   private class ReadAccessToken : AccessToken() {
     private val myPermit = run {
       fireBeforeReadActionStart(javaClass)
@@ -678,7 +677,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  @Deprecated
+  @Deprecated("")
   private class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
     val ts = getThreadState()
     val release = startWrite(ts, clazz)

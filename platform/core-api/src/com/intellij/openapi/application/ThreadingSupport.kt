@@ -6,7 +6,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.lang.Deprecated
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.function.BooleanSupplier
@@ -277,17 +276,10 @@ interface ThreadingSupport {
   @Contract(pure = true)
   fun isWriteAccessAllowed(): Boolean
 
-  /**
-   * Use [runReadAction] instead
-   */
-  @Deprecated
+  @Deprecated("Use `runReadAction` instead")
   fun acquireReadActionLock(): AccessToken
 
-
-  /**
-   * Use [runWriteAction], [WriteAction.run], or [WriteAction.compute] instead
-   */
-  @Deprecated
+  @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
   fun acquireWriteActionLock(marker: Class<*>): AccessToken
 
   /**
