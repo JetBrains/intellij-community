@@ -73,9 +73,7 @@ public class GitImpl extends GitImplBase {
   @Override
   public @NotNull GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, GitLineHandlerListener @NotNull ... listeners) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
     return runCommand(h);
@@ -271,9 +269,7 @@ public class GitImpl extends GitImplBase {
     if (additionalParams != null) {
       mergeHandler.addParameters(additionalParams);
     }
-    for (GitLineHandlerListener listener : listeners) {
-      mergeHandler.addLineListener(listener);
-    }
+    addListeners(mergeHandler, listeners);
     return runCommand(mergeHandler);
   }
 
@@ -319,9 +315,7 @@ public class GitImpl extends GitImplBase {
       h.addParameters(withReset ? "-B" : "-b", newBranch, reference);
     }
     h.endOptions();
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     return runCommand(h);
   }
 
@@ -365,9 +359,7 @@ public class GitImpl extends GitImplBase {
     h.setSilent(false);
     h.addParameters("-d");
     h.addParameters(tagName);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     return runCommand(h);
   }
 
@@ -384,9 +376,7 @@ public class GitImpl extends GitImplBase {
     h.setStdoutSuppressed(false);
     h.addParameters(force ? "-D" : "-d");
     h.addParameters(branchName);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     return runCommand(h);
   }
 
