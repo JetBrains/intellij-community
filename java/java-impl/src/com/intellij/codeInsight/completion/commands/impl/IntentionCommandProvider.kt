@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
@@ -56,15 +58,15 @@ class IntentionCommandProvider : CommandProvider {
     editor: Editor,
     psiFile: PsiFile,
   ): List<IntentionCompletionCommand> {
-    val container: HighlightingContainer = getPreviousHighlighters(originalEditor, psiFile.fileDocument, offset) ?: return emptyList()
+    val container: HighlightingContainer? = getPreviousHighlighters(originalEditor, psiFile.fileDocument, offset)
 
     val intentionsCache = getIntentions(editor, psiFile, originalFile)
 
     val intentions = mutableListOf<IntentionActionWithTextCaching>()
-    val errorFixes = container.cachedIntentions.errorFixes
-    intentions.addAll(errorFixes)
-    val inspectionFixes = container.cachedIntentions.inspectionFixes
-    intentions.addAll(inspectionFixes)
+    val errorFixes = container?.cachedIntentions?.errorFixes
+    errorFixes?.let { intentions.addAll(it) }
+    val inspectionFixes = container?.cachedIntentions?.inspectionFixes
+    inspectionFixes?.let { intentions.addAll(it) }
     intentions.addAll(intentionsCache.intentions)
 
     val result: MutableList<IntentionCompletionCommand> = ArrayList()
@@ -72,18 +74,19 @@ class IntentionCommandProvider : CommandProvider {
       if (intention.action is EmptyIntentionAction) continue
       if (intention.action.asModCommandAction() == null &&
           IntentionActionDelegate.unwrap(intention.action) !is LocalQuickFixAndIntentionActionOnPsiElement &&
-          IntentionActionDelegate.unwrap(intention.action) !is CreateFromUsageBaseFix) continue
-      val highlighting: RangeHighlighterEx? = container.map[intention]
+          IntentionActionDelegate.unwrap(intention.action) !is CreateFromUsageBaseFix &&
+          intention !in intentionsCache.intentions) continue
+      val highlighting: RangeHighlighterEx? = container?.map[intention]
       var icon: Icon? = intention.icon
       var priority: Int? = null
       var attributesKey: TextAttributesKey? = null
       if (icon == null) {
-        if (intention in errorFixes) {
+        if (errorFixes?.contains(intention) == true) {
           icon = AllIcons.Actions.QuickfixBulb
           priority = 100
           attributesKey = CodeInsightColors.ERRORS_ATTRIBUTES
         }
-        else if (intention in inspectionFixes) {
+        else if (inspectionFixes?.contains(intention) == true) {
           icon = AllIcons.Actions.IntentionBulb
           priority = 90
           attributesKey = CodeInsightColors.WARNINGS_ATTRIBUTES
@@ -115,16 +118,21 @@ class IntentionCommandProvider : CommandProvider {
     val actionsToShow = IntentionsInfo()
     for (action in availableIntentions) {
       val descriptor =
-        HighlightInfo.IntentionActionDescriptor(action, null, null, null, null, null, null, null);
+        HighlightInfo.IntentionActionDescriptor(action, null, null, null, null, null, null, null)
       actionsToShow.intentionsToShow.add(descriptor)
     }
+
+    val dumbService = DumbService.getInstance(originalFile.project)
 
     val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
 
     var toRemove = mutableListOf<HighlightInfo.IntentionActionDescriptor>()
     for (intention in actionsToShow.intentionsToShow) {
       try {
-        if (!intention.action.isAvailable(originalFile.project, editor, psiFile)) {
+        ProgressManager.checkCanceled()
+        if (!dumbService.isUsableInCurrentContext(intention) ||
+            !intention.action.isAvailable(originalFile.project, editor, psiFile) &&
+            intention.action.familyName !in ("AI Actions…")) {
           toRemove.add(intention)
         }
       }
@@ -139,6 +147,7 @@ class IntentionCommandProvider : CommandProvider {
       }
     }
     actionsToShow.intentionsToShow.removeAll(toRemove)
+
     intentionsCache.wrapAndUpdateActions(actionsToShow, false)
     return intentionsCache
   }
