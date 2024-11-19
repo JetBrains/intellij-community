@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ import org.yaml.snakeyaml.nodes.Node
 import org.yaml.snakeyaml.representer.Representer
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -27,6 +29,7 @@ private val CACHE_TTL_MS = 8.hours.inWholeMilliseconds
 @Service(Level.APP)
 internal class DocumentationContentProvider(private val coroutineScope: CoroutineScope) {
 
+  private val downloadInitialized = AtomicBoolean()
   private val contentCache = ConcurrentHashMap<DocumentationDataCoordinates, Pair<DocumentationContent, /*last updated*/ Long>?>()
 
   /**
@@ -62,7 +65,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     }?.first
   }
 
-  private fun loadLocallyCachedContent(relativeCachePath: String): DocumentationContent? {
+  fun loadLocallyCachedContent(relativeCachePath: String): DocumentationContent? {
     return parseDocumentationContent {
       getCachedFile(relativeCachePath)
         .takeIf { it.exists() }
@@ -86,7 +89,8 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
           writeText(yamlContent)
           contentCache.remove(coordinates) // so it is refreshed on the next content request
         }
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         logger<DocumentationContentProvider>().warn("Could not download documentation content from ${coordinates.url}", e)
       }
     }
@@ -120,6 +124,14 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     // DumperOptions pointed in the deprecation message doesn't support skipping missing properties
     return Yaml(constructor, representer).load<DocumentationContent>(yamlContent)
       ?.takeIf { it.elements.isNotEmpty() == true }
+  }
+
+  fun initializeContentDownload() {
+    if (downloadInitialized.compareAndSet(false, true)) {
+      PsiDocumentationTargetProvider.EP_NAME.extensionList
+        .filterIsInstance<AbstractXmlDescriptorDocumentationTargetProvider>()
+        .forEach { downloadContentAsync(it.docYamlCoordinates) }
+    }
   }
 
   companion object {

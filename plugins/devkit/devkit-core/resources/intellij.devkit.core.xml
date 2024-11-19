@@ -584,6 +584,7 @@
       implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
       implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+    <postStartupActivity implementation="org.jetbrains.idea.devkit.documentation.InitDescriptorDocumentationsDownloadActivity"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.KotlinTestGeneratedSourcesFilter"/>
