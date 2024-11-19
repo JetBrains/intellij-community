@@ -988,9 +988,7 @@ fping
 free
 fsck
 fsharp
-fsharp dotnet fsi
-fsharp dotnet new
-fsharp dotnet run
+fsharp dotnet
 fsharp fsi
 fswatch
 ftp
