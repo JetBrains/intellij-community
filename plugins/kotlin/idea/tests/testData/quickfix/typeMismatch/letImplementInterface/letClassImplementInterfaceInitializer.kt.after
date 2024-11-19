@@ -3,11 +3,7 @@
 package let.implement
 
 fun bar() {
-    foo(B())
-}
-
-
-fun foo(a: A) {
+    val a: A = B()
 }
 
 interface A {

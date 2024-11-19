@@ -1,15 +1,9 @@
-// "Let 'B' implement interface 'A'" "true"
-package let.implement
+// "Let the anonymous object implement interface 'Runnable'" "true"
 
-fun bar() {
-    foo(B()<caret>)
+fun bar(): Runnable {
+    return object: Runnable {}<caret>
 }
 
-
-fun foo(a: A?) {
-}
-
-interface A
-class B
+interface Runnable
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.LetImplementInterfaceFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.LetImplementInterfaceFixFactories$LetImplementInterfaceFix

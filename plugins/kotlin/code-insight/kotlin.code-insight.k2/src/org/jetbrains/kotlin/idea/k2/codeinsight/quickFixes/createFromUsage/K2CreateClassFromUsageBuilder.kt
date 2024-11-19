@@ -13,10 +13,10 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
@@ -279,16 +279,7 @@ object K2CreateClassFromUsageBuilder {
     }
 
     context(KaSession)
-    private fun KaType.isInterface(): Boolean {
-        if (this !is KaClassType) return false
-        val classSymbol = symbol
-        return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.INTERFACE
-    }
-
-    context(KaSession)
     private fun isInheritable(type: KaType): Boolean {
         return type.convertToClass()?.isInheritable() == true
     }
-
-    private fun KaType.containsStarProjections(): Boolean = this is KaClassType && typeArguments.any { it is KaStarTypeProjection || it.type?.containsStarProjections() == true}
 }

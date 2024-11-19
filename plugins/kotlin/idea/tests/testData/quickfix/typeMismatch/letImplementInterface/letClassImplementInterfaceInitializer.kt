@@ -3,20 +3,12 @@
 package let.implement
 
 fun bar() {
-    foo(B())
-}
-
-
-fun foo(a: A) {
+    val a: A = B()<caret>
 }
 
 interface A {
     fun gav()
 }
-class B : A {
-    override fun gav() {
-        TODO("Not yet implemented")
-    }
-}
+class B
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.LetImplementInterfaceFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.LetImplementInterfaceFixFactories$LetImplementInterfaceFix

@@ -4359,6 +4359,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementGenericInterface.kt");
         }
 
+        @TestMetadata("letClassImplementGenericInterfaceAssignment.kt")
+        public void testLetClassImplementGenericInterfaceAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementGenericInterfaceAssignment.kt");
+        }
+
         @TestMetadata("letClassImplementGenericInterfaceTwice.kt")
         public void testLetClassImplementGenericInterfaceTwice() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementGenericInterfaceTwice.kt");
@@ -4379,6 +4384,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementInterface.kt");
         }
 
+        @TestMetadata("letClassImplementInterfaceInitializer.kt")
+        public void testLetClassImplementInterfaceInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementInterfaceInitializer.kt");
+        }
+
         @TestMetadata("letClassImplementInterfaceNullable.kt")
         public void testLetClassImplementInterfaceNullable() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letClassImplementInterfaceNullable.kt");
@@ -4397,6 +4407,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("letObjectLiteralImplementInterface.kt")
         public void testLetObjectLiteralImplementInterface() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letObjectLiteralImplementInterface.kt");
+        }
+
+        @TestMetadata("letObjectLiteralImplementInterfaceReturn.kt")
+        public void testLetObjectLiteralImplementInterfaceReturn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/letImplementInterface/letObjectLiteralImplementInterfaceReturn.kt");
         }
 
         @TestMetadata("letStringImplementInterface.kt")
