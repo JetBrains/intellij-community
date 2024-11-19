@@ -20,8 +20,10 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
+import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.ExperimentalUI;
@@ -29,14 +31,17 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+
+import static com.intellij.openapi.vcs.actions.AnnotateActionGroup.revalidateMarkupInEditors;
 
 /**
  * @author Konstantin Bulenkov

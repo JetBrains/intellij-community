@@ -406,6 +406,8 @@
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManagerShelfManagerListener"
               topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.actions.AnnotationsLineStatusTrackerListener"
+              topic="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener"/>
   </projectListeners>
 </idea-plugin>
 

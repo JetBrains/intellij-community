@@ -3879,9 +3879,11 @@ f:com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory
 f:com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI
 - f:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+- f:getTOPIC():com.intellij.util.messages.Topic
 com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener
 - java.util.EventListener
 - onTrackerAdded(com.intellij.openapi.vcs.ex.LineStatusTracker):V
+- onTrackerBecomeValid(com.intellij.openapi.vcs.ex.LineStatusTracker):V
 - onTrackerRemoved(com.intellij.openapi.vcs.ex.LineStatusTracker):V
 c:com.intellij.openapi.vcs.impl.LineStatusTrackerManager$ListenerAdapter
 - com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener
