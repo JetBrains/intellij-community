@@ -62,7 +62,8 @@ sealed class CoroutineSuspenderState {
  * The code which calls [coroutineSuspender] must store the reference somewhere,
  * because this code is responsible for pausing/resuming.
  */
-internal object CoroutineSuspenderElementKey : CoroutineContext.Key<CoroutineSuspenderElement>
+@ApiStatus.Internal
+object CoroutineSuspenderElementKey : CoroutineContext.Key<CoroutineSuspenderElement>
 
 @ApiStatus.Internal
 class CoroutineSuspenderElement(active: Boolean)

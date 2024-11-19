@@ -3,17 +3,13 @@ package com.intellij.platform.ide.progress.suspender
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Interface for suspending and resuming running tasks.
  * To assign suspender to a task use [withBackgroundProgress]
  */
 interface TaskSuspender {
-
-  /**
-   * Adds a listener to observe task suspension events.
-   */
-  fun addListener(listener: TaskSuspenderListener)
 
   /**
    * Checks if the tasks assigned to this suspender are currently paused.
@@ -34,6 +30,16 @@ interface TaskSuspender {
    * This method resumes the operation of the previously paused tasks.
    */
   fun resume()
+
+  /**
+   * Converts this instance to a CoroutineContext element.
+   *
+   * This function is useful for integrating existing types or values
+   * into coroutine-based APIs by converting them to coroutine context elements.
+   *
+   * @return a CoroutineContext element representing this instance.
+   */
+  fun asContextElement(): CoroutineContext
 
   companion object {
     /**
