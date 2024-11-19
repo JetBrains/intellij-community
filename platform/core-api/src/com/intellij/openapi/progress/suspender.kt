@@ -19,7 +19,7 @@ import kotlin.coroutines.resume
  * Example:
  * ```
  * val suspender = coroutineSuspender()
- * launch(Dispatchers.Default + suspender) {
+ * launch(Dispatchers.Default + suspender.asContextElement()) {
  *   for (item in data) {
  *     checkCanceled()
  *     // process data
@@ -34,13 +34,15 @@ import kotlin.coroutines.resume
  * @return handle which can be used to pause and resume the coroutine
  * @see checkCanceled
  */
-fun coroutineSuspender(active: Boolean = true): CoroutineSuspender = CoroutineSuspenderElement(active)
+fun coroutineSuspender(active: Boolean = true): CoroutineSuspender = CoroutineSuspenderImpl(active)
+
+fun CoroutineSuspender.asContextElement(): CoroutineContext.Element = CoroutineSuspenderElement(this)
 
 /**
  * Implementation of this interface is thread-safe.
  */
 @ApiStatus.NonExtendable
-interface CoroutineSuspender : CoroutineContext {
+interface CoroutineSuspender {
 
   fun isPaused(): Boolean
 
@@ -66,9 +68,10 @@ sealed class CoroutineSuspenderState {
 object CoroutineSuspenderElementKey : CoroutineContext.Key<CoroutineSuspenderElement>
 
 @ApiStatus.Internal
-class CoroutineSuspenderElement(active: Boolean)
-  : AbstractCoroutineContextElement(CoroutineSuspenderElementKey),
-    CoroutineSuspender {
+class CoroutineSuspenderElement(val coroutineSuspender: CoroutineSuspender): AbstractCoroutineContextElement(CoroutineSuspenderElementKey)
+
+@ApiStatus.Internal
+class CoroutineSuspenderImpl(active: Boolean) : CoroutineSuspender {
 
   private val myState: MutableStateFlow<CoroutineSuspenderState> = MutableStateFlow(
     if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE

@@ -184,7 +184,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
   }
 
   private suspend fun retrieveSuspender(providedSuspender: TaskSuspender?): TaskSuspender? {
-    val coroutineSuspender = coroutineContext[CoroutineSuspenderElementKey]
+    val coroutineSuspender = coroutineContext[CoroutineSuspenderElementKey]?.coroutineSuspender as? CoroutineSuspenderImpl
     return when {
       providedSuspender != null -> providedSuspender
       // If suspender is not provided - retrieve coroutineSuspender from context

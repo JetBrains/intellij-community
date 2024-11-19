@@ -5,6 +5,7 @@ import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertiesTreeViewMod
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.openapi.project.Project
@@ -24,7 +25,7 @@ class PsiViewerPropertiesTabViewModel(
 ) {
   private val coroutineSuspender = coroutineSuspender(active = false)
 
-  private val scope: CoroutineScope = _scope + coroutineSuspender
+  private val scope: CoroutineScope = _scope + coroutineSuspender.asContextElement()
 
   private class ContextHolder(val context: PsiViewerPropertyNode.Context)
 

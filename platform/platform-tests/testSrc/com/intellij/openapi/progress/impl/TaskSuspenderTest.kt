@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.CoroutineSuspender
+import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -95,7 +96,7 @@ class TaskSuspenderTest : BasePlatformTestCase() {
     val mayStop = CompletableDeferred<Unit>()
 
     val coroutineSuspender = coroutineSuspender(false)
-    val task = launch(Dispatchers.Default + coroutineSuspender) {
+    val task = launch(Dispatchers.Default + coroutineSuspender.asContextElement()) {
       startBackgroundTask(taskSuspender = null) {
         workUntilStopped(mayStop)
       }

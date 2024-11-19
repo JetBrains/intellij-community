@@ -2,7 +2,9 @@
 package com.intellij.platform.ide.progress.suspender
 
 import com.intellij.openapi.progress.CoroutineSuspenderElement
+import com.intellij.openapi.progress.CoroutineSuspenderImpl
 import com.intellij.openapi.progress.CoroutineSuspenderState
+import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,7 +24,7 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Internal
 class TaskSuspenderImpl(
   @NlsContexts.ProgressText val defaultSuspendedText: String,
-  private val coroutineSuspender: CoroutineSuspenderElement = CoroutineSuspenderElement(true),
+  private val coroutineSuspender: CoroutineSuspenderImpl = CoroutineSuspenderImpl(true),
 ) : TaskSuspender {
   @Volatile
   private var temporarySuspendedText: @NlsContexts.ProgressText String? = null
@@ -60,6 +62,6 @@ class TaskSuspenderImpl(
   }
 
   override fun asContextElement(): CoroutineContext {
-    return coroutineSuspender
+    return coroutineSuspender.asContextElement()
   }
 }

@@ -41,7 +41,8 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
 suspend fun checkCanceled() {
   val ctx = coroutineContext
   ctx.ensureActive() // standard check first
-  ctx[CoroutineSuspenderElementKey]?.checkPaused() // will suspend if paused
+  val coroutineSuspender = ctx[CoroutineSuspenderElementKey]?.coroutineSuspender
+  (coroutineSuspender as? CoroutineSuspenderImpl)?.checkPaused() // will suspend if paused
 }
 
 /**
