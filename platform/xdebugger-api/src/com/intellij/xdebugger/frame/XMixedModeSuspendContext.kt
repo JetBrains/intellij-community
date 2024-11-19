@@ -3,14 +3,8 @@ package com.intellij.xdebugger.frame
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.time.measureTime
+import kotlinx.coroutines.*
 import kotlin.time.measureTimedValue
 
 private val logger = com.intellij.openapi.diagnostic.logger<XMixedModeSuspendContext>()
@@ -19,7 +13,7 @@ class XMixedModeSuspendContext(
   val session: XDebugSession,
   val lowLevelDebugSuspendContext: XSuspendContext,
   val highLevelDebugSuspendContext: XSuspendContext,
-  val highLevelDebugProcess: XDebugProcess,
+  val highLevelDebugProcess: XMixedModeHighLevelDebugProcess,
   val coroutineScope: CoroutineScope,
 ) : XSuspendContext() {
 
@@ -34,7 +28,7 @@ class XMixedModeSuspendContext(
       session,
       lowLevelExecutionStack,
       highLevelDebugSuspendContext.activeExecutionStack,
-      highLevelDebugProcess.asHighLevel().getFramesMatcher(),
+      highLevelDebugProcess.getFramesMatcher(),
       coroutineScope)
   }
 
@@ -58,7 +52,7 @@ class XMixedModeSuspendContext(
         session,
         threadIdToHighLevelStackMap,
         container,
-        highLevelDebugProcess.asHighLevel().getFramesMatcher(),
+        highLevelDebugProcess.getFramesMatcher(),
         coroutineScope)
 
       lowLevelDebugSuspendContext.computeExecutionStacks(combinedContainer)
@@ -102,7 +96,4 @@ class XMixedModeSuspendContext(
     }
   }
 }
-
-private fun XDebugProcess.asHighLevel() = this as XMixedModeHighLevelDebugProcess
-
 

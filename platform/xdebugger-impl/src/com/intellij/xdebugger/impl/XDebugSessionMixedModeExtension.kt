@@ -2,29 +2,24 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.EDT
-import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
-import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothRunning
-import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothStopped
-import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.StepType
+import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
-import kotlin.jvm.javaClass
 
 private val logger = com.intellij.openapi.diagnostic.logger<XDebugProcessDebuggeeInForeground>()
 
 abstract class XDebugSessionMixedModeExtension(
   private val coroutineScope: CoroutineScope,
-  private val high: XDebugProcess,
-  private val low: XDebugProcess,
+  private val high: XMixedModeHighLevelDebugProcess,
+  private val low: XMixedModeLowLevelDebugProcess,
 ) {
-  private val stateMachine = MixedModeProcessTransitionStateMachine(low as XMixedModeDebugProcess, high as XMixedModeDebugProcess, coroutineScope)
-  private val session = (high.session as XDebugSessionImpl)
+  private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
+  private val session = (high.asXDebugProcess.session as XDebugSessionImpl)
 
 
   abstract fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean
@@ -51,23 +46,31 @@ abstract class XDebugSessionMixedModeExtension(
 
   fun resume() {
     coroutineScope.launch(Dispatchers.EDT) {
-      stateMachine.set(MixedModeProcessTransitionStateMachine.ResumeRequested)
+      stateMachine.set(ResumeRequested)
       stateMachine.waitFor(BothRunning::class)
     }
   }
 
   fun stepInto(suspendContext: XSuspendContext) {
     if (isLowSuspendContext(suspendContext)) {
-      this.low.startStepInto(suspendContext)
+      this.low.asXDebugProcess.startStepInto(suspendContext)
     }
     else {
-      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Into))
+      coroutineScope.launch(Dispatchers.EDT) {
+        val stepType =
+          if (high.isStepWillBringIntoNativeCode(suspendContext))
+            StepType.IntoFromManagedToNative
+          else
+            StepType.Into
+
+        this@XDebugSessionMixedModeExtension.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, stepType))
+      }
     }
   }
 
   fun stepOver(suspendContext: XSuspendContext) {
     if (isLowSuspendContext(suspendContext)) {
-      this.low.startStepOver(suspendContext)
+      this.low.asXDebugProcess.startStepOver(suspendContext)
     }
     else {
       this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Over))
@@ -76,7 +79,7 @@ abstract class XDebugSessionMixedModeExtension(
 
   fun stepOut(suspendContext: XSuspendContext) {
     if (isLowSuspendContext(suspendContext)) {
-      this.low.startStepOut(suspendContext)
+      this.low.asXDebugProcess.startStepOut(suspendContext)
     }
     else {
       this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Out))
@@ -94,7 +97,7 @@ abstract class XDebugSessionMixedModeExtension(
 }
 
 
-class MonoXDebugSessionMixedModeExtension(coroutineScope: CoroutineScope, high: XDebugProcess, low: XDebugProcess)
+class MonoXDebugSessionMixedModeExtension(coroutineScope: CoroutineScope, high: XMixedModeHighLevelDebugProcess, low: XMixedModeLowLevelDebugProcess)
   : XDebugSessionMixedModeExtension(coroutineScope, high, low) {
   override fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean {
     return suspendContext.javaClass.name.contains("Cidr")

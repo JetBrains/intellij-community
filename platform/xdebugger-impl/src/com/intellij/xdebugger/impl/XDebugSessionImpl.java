@@ -334,7 +334,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     myMixedModeLowLevelDebugProcess = mixedModeLowLevelProcess;
     myMixedModeExtension =
       /*TODO[merge blocker]: move to rider cpp plugin*/
-      new MonoXDebugSessionMixedModeExtension(this.myCoroutineScope, process, mixedModeLowLevelProcess);
+      new MonoXDebugSessionMixedModeExtension(this.myCoroutineScope, (XMixedModeHighLevelDebugProcess)process, (XMixedModeLowLevelDebugProcess)mixedModeLowLevelProcess);
     init(process, contentToReuse);
   }
 
