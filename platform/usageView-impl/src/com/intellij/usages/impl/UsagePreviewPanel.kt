@@ -500,6 +500,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     @JvmStatic
     fun getNameElementTextRange(psiElement: PsiElement): TextRange {
       val psiFile = psiElement.containingFile
+      if (psiElement.textOffset == 0 && psiElement.textRange == TextRange.EMPTY_RANGE /*reference equals!!*/)
+        return TextRange.EMPTY_RANGE
       val nameElement = psiFile.findElementAt(psiElement.textOffset)
       return if (nameElement != null) {
         nameElement.textRange
