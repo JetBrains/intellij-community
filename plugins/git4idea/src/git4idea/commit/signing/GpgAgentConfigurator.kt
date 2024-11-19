@@ -4,7 +4,6 @@ package git4idea.commit.signing
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -62,7 +61,7 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean {
       return Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) &&
-             ((AppMode.isRemoteDevHost() && SystemInfo.isUnix)
+             (SystemInfo.isUnix
               || executable is GitExecutable.Wsl
               || application.isUnitTestMode)
              && // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
