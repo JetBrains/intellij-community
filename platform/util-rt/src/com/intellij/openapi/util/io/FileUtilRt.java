@@ -30,6 +30,11 @@ public final class FileUtilRt {
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
 
   /**
+   * This threshold has a mixed semantics, it is used in at least 2 roles:
+   * 1. Max file size to store ('cache') in VFS (i.e. PersistentFSImpl)
+   * 2. Just 'big enough' file size, to switch from simple one-chunk loading to incremental loading, or not load it at all
+   *    (e.g. {@linkplain #isTooLarge(long)}, JupyterFileUtils, JBZipEntry)
+   * TODO RC: those roles are different enough to split them into independent thresholds
    * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getContentLoadLimit}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
