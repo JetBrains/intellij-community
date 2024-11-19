@@ -74,8 +74,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
@@ -115,8 +115,8 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -393,6 +393,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       }
 
       AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
+      if (old != null) {
+        clip = g.getClipBounds();
+      }
 
       EditorUIUtil.setupAntialiasing(g);
       g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
@@ -443,12 +446,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         if (focusModeRange != null) {
           int startY = Math.max(myEditor.visualLineToY(startVisualLine), clip.y);
           int endY = Math.min(myEditor.visualLineToY(endVisualLine), clip.y + clip.height);
+          //noinspection GraphicsSetClipInspection
           g.setClip(clip.x, startY, clip.width, endY - startY);
         }
 
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
 
-        g.setClip(clip);
+        if (focusModeRange != null) {
+          //noinspection GraphicsSetClipInspection
+          g.setClip(clip);
+        }
 
         paintFoldingLines(g, clip);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
