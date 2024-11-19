@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
+import com.intellij.ide.trustedProjects.impl.TrustedProjectUtil.findAllIndexesOfSymbol
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -193,7 +194,7 @@ internal class TrustedProjectStartupDialog(
         checkBox.toolTipText = null
         return
       }
-      val quotePositions = StringUtil.findAllIndexesOfSymbol(textWithMarkedElements, '\'')
+      val quotePositions = findAllIndexesOfSymbol(textWithMarkedElements, '\'')
       // Estimate the character position based on mouse x-coordinate relative to bounds
       val positionX = ceil(mousePosition / (bounds.width / text.length)).toInt().coerceIn(0, text.length - 1)
 
