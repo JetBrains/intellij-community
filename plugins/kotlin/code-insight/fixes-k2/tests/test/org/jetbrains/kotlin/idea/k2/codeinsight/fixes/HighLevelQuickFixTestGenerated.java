@@ -8491,6 +8491,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/operatorCalls/get.kt");
             }
 
+            @TestMetadata("implicitInvoke.kt")
+            public void testImplicitInvoke() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/operatorCalls/implicitInvoke.kt");
+            }
+
             @TestMetadata("in.kt")
             public void testIn() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/operatorCalls/in.kt");

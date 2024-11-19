@@ -8356,6 +8356,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/operatorCalls/get.kt");
             }
 
+            @TestMetadata("implicitInvoke.kt")
+            public void testImplicitInvoke() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/operatorCalls/implicitInvoke.kt");
+            }
+
             @TestMetadata("in.kt")
             public void testIn() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/operatorCalls/in.kt");
