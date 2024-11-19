@@ -1,9 +1,9 @@
 package com.intellij.notebooks.ui.jupyterToolbar
 
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -169,20 +169,24 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
     }
   }
 
-  private fun getActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ACTION_GROUP_ID) as? ActionGroup
-  private fun getAdditionalActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_ACTION_GROUP_ID) as? ActionGroup
+  private fun getActionGroup(): ActionGroup? = ActionManager.getInstance().getAction(ACTION_GROUP_ID) as? ActionGroup
+  private fun getAdditionalActionGroup(): ActionGroup? = ActionManager.getInstance().getAction(ADDITIONAL_ACTION_GROUP_ID) as? ActionGroup
 
   override fun dispose() {
     showToolbarJob?.cancel()
-    currentEditor?.contentComponent?.removeComponentListener(editorComponentListener)
-    currentEditor?.contentComponent?.removeKeyListener(editorKeyListener)
+    currentEditor?.contentComponent?.apply {
+      removeComponentListener(editorComponentListener)
+      removeKeyListener(editorKeyListener)
+    }
 
     hideAllToolbarsUnconditionally()
   }
 
   private fun forceUIUpdate() {
-    currentEditor?.contentComponent?.revalidate()
-    currentEditor?.contentComponent?.repaint()
+    currentEditor?.contentComponent?.apply {
+      revalidate()
+      repaint()
+    }
   }
 
   companion object {
