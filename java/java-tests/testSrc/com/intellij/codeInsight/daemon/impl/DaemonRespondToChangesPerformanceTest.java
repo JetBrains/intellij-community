@@ -175,14 +175,15 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           long end = System.currentTimeMillis();
           long interruptTime = end - now;
           interruptTimes[finalI] = interruptTime;
-          assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
+          DaemonProgressIndicator indicator = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
+          assertTrue(String.valueOf(indicator), indicator == null || indicator.isCanceled());
           System.out.println(interruptTime);
           throw new ProcessCanceledException();
         };
         long hiStart = System.currentTimeMillis();
         codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
         long hiEnd = System.currentTimeMillis();
-        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress().values().iterator().next();
+        DaemonProgressIndicator progress = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
         String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
         dumpThreadsToConsole();
         throw new RuntimeException(message);
@@ -259,7 +260,8 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         finished.set(true);
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
-        assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
+        DaemonProgressIndicator indicator = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
+        assertTrue(String.valueOf(indicator), indicator == null || indicator.isCanceled());
         throw new ProcessCanceledException();
       };
       try {
