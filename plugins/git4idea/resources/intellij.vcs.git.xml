@@ -807,7 +807,7 @@
                         isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
-    <postStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
+    <backgroundPostStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
@@ -14,13 +15,43 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
 import git4idea.GitActionIdsHolder.Id.*
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_ERROR
+import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_PROPOSE
+import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION
 import git4idea.GitNotificationIdsHolder.Companion.GPG_AGENT_CONFIGURATION_SUCCESS
+import git4idea.config.GitExecutableManager
 import git4idea.i18n.GitBundle
 import kotlin.io.path.exists
 
 @Service(Service.Level.PROJECT)
 internal class GpgAgentConfigurationNotificator(private val project: Project) {
+
+  @RequiresBackgroundThread
+  fun proposeCustomPinentryAgentConfiguration(isSuggestion: Boolean) {
+    val executable = GitExecutableManager.getInstance().getExecutable(project)
+    if (!GpgAgentConfigurator.isEnabled(project, executable)) return
+    if (project.service<GpgAgentConfigurator>().isConfigured(project)) return
+
+    val displayId = if (isSuggestion) GPG_AGENT_CONFIGURATION_PROPOSE else GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION
+    GpgAgentConfiguratorNotification(displayId,
+                                     GitBundle.message("pgp.pinentry.configuration.proposal.title"),
+                                     GitBundle.message("pgp.pinentry.configuration.proposal.message"), isSuggestion = isSuggestion).apply {
+      val configureActionId =
+        if (isSuggestion) GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_CONFIGURE.id else GPG_AGENT_CONFIGURATION_PROPOSE_CONFIGURE.id
+      addAction(NotificationAction.createSimple(GitBundle.message("pgp.pinentry.configuration.proposal.configure"),
+                                                configureActionId) {
+        expire()
+        project.service<GpgAgentConfigurator>().configure()
+      })
+      val manualActionId =
+        if (isSuggestion) GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION_MANUAL.id else GPG_AGENT_CONFIGURATION_PROPOSE_MANUAL.id
+      addAction(NotificationAction.createSimple(GitBundle.message("gpg.error.see.documentation.link.text"),
+                                                manualActionId) {
+        HelpManager.getInstance().invokeHelp(GitBundle.message("gpg.pinentry.jb.manual.link"))
+      })
+    }.notifyExpirePrevious(project)
+  }
 
   fun notifyConfigurationSuccessful(paths: GpgAgentPaths) {
     val message: String
@@ -57,10 +88,12 @@ internal class GpgAgentConfigurationNotificator(private val project: Project) {
     title: @NotificationTitle String,
     content: @NotificationContent String,
     type: NotificationType = NotificationType.INFORMATION,
+    isSuggestion: Boolean = false,
   ) : Notification(VcsNotifier.importantNotification().displayId, title, content, type) {
 
     init {
       setDisplayId(displayId)
+      setSuggestionType(isSuggestion)
     }
 
     fun notifyExpirePrevious(project: Project) {
