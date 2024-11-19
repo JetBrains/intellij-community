@@ -26,12 +26,12 @@ internal class CompletionVisibilityChecker(
     private val parameters: KotlinFirCompletionParameters, // should be the only parameter
 ) {
 
-    fun isDefinitelyInvisibleByPsi(declaration: KtDeclaration): Boolean = forbidAnalysis("isDefinitelyInvisibleByPsi") {
+    fun canBeVisible(declaration: KtDeclaration): Boolean = forbidAnalysis("canBeVisible") {
         val originalFile = parameters.originalFile
-        if (originalFile is KtCodeFragment) return false
+        if (originalFile is KtCodeFragment) return true
 
         // todo should be > 2
-        if (parameters.invocationCount >= 2) return false
+        if (parameters.invocationCount >= 2) return true
 
         val declarationContainingFile = declaration.containingKtFile
         // todo
@@ -42,18 +42,13 @@ internal class CompletionVisibilityChecker(
         //   }
         //  in this example the member itself if neither private or internal,
         //  but the parent is.
-        if (declaration.isPrivate()
+        return if (declaration.isPrivate()
             && declarationContainingFile != originalFile
             && declarationContainingFile != parameters.completionFile
-        ) {
-            return true
-        }
-
-        if (declaration.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
-            return !canAccessInternalDeclarationsFromFile(declarationContainingFile)
-        }
-
-        return false
+        ) false
+        else if (declaration.hasModifier(KtTokens.INTERNAL_KEYWORD))
+            canAccessInternalDeclarationsFromFile(declarationContainingFile)
+        else true
     }
 
     private fun canAccessInternalDeclarationsFromFile(file: KtFile): Boolean {

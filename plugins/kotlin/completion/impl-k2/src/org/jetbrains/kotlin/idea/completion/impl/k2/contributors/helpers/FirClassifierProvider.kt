@@ -63,7 +63,7 @@ private fun completeKotlinClasses(
     psiFilter = { ktClass ->
         if (ktClass is KtEnumEntry) return@getKotlinClassesByNameFilter false
         if (ktClass.getClassId() == null) return@getKotlinClassesByNameFilter true
-        !visibilityChecker.isDefinitelyInvisibleByPsi(ktClass)
+        visibilityChecker.canBeVisible(ktClass)
     }
 )
 

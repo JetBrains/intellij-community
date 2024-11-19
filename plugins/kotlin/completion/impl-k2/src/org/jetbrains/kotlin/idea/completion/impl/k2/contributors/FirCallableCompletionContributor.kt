@@ -247,11 +247,9 @@ internal open class FirCallableCompletionContributor(
 
             yieldAll(sequence {
                 val psiFilter: (KtEnumEntry) -> Boolean = if (invocationCount > 2) { _ -> true }
-                else if (invocationCount > 1 && prefix.isNotEmpty()) { enumEntry ->
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(enumEntry)
-                }
+                else if (invocationCount > 1 && prefix.isNotEmpty()) visibilityChecker::canBeVisible
                 else if (expectedType != null) { enumEntry ->
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(enumEntry)
+                    visibilityChecker.canBeVisible(enumEntry)
                             && runCatchingNSEE { enumEntry.returnType }
                         ?.withNullability(KaTypeNullability.NON_NULLABLE)
                         ?.semanticallyEquals(expectedType) == true
@@ -287,11 +285,11 @@ internal open class FirCallableCompletionContributor(
 
             val callables = if (invocationCount > 1) {
                 symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
+                    visibilityChecker.canBeVisible(it)
                 }
             } else {
                 symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
+                    visibilityChecker.canBeVisible(it)
                 }
             }
             yieldAll(callables)
@@ -516,7 +514,7 @@ internal open class FirCallableCompletionContributor(
         val extensionsFromIndex = symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(
             scopeNameFilter,
             receiverTypes,
-        ) { !visibilityChecker.isDefinitelyInvisibleByPsi(it) && it.canBeAnalysed() }
+        ) { visibilityChecker.canBeVisible(it) && it.canBeAnalysed() }
 
         return extensionsFromIndex
             .filter { filter(it) }
