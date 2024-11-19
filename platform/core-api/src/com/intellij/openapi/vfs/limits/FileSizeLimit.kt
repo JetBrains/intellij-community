@@ -21,6 +21,7 @@ interface FileSizeLimit {
 
     private val limitsByExtension: AtomicReference<Map<String, ExtensionSizeLimitInfo>?> = AtomicReference(null)
 
+    /** Max file size to cache inside VFS */
     @JvmStatic
     @ApiStatus.Internal
     fun getFileLengthToCacheThreshold(): Int = FileUtilRt.LARGE_FOR_CONTENT_LOADING
