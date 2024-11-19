@@ -135,7 +135,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
         mutex.withLock {
-          disposeLogInternal(useRawSwingDispatcher = useRawSwingDispatcher)
+          disposeLogInternal(useRawSwingDispatcher, notify = false)
         }
       }
     }
@@ -169,7 +169,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   private fun launchDisposeLog(useRawSwingDispatcher: Boolean = false): Job {
     return launchWithAnyModality {
       mutex.withLock {
-        disposeLogInternal(useRawSwingDispatcher)
+        disposeLogInternal(useRawSwingDispatcher, notify = true)
       }
     }
   }
@@ -177,7 +177,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   private fun launchRecreateLog(beforeCreateLog: (suspend () -> Unit)? = null): Job {
     return launchWithAnyModality {
       mutex.withLock {
-        disposeLogInternal(false)
+        disposeLogInternal(useRawSwingDispatcher = false, notify = true)
 
         try {
           beforeCreateLog?.invoke()
@@ -191,9 +191,9 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     }
   }
 
-  private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean) {
+  private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean, notify: Boolean) {
     val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT) {
-      dropLogManager()?.also { it.disposeUi() }
+      dropLogManager(notify)?.also { it.disposeUi() }
     }
     if (logManager != null) Disposer.dispose(logManager)
   }
@@ -231,12 +231,14 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   }
 
   @RequiresEdt
-  private fun dropLogManager(): VcsLogManager? {
+  private fun dropLogManager(notify: Boolean): VcsLogManager? {
     ThreadingAssertions.assertEventDispatchThread()
     val oldValue = cachedLogManager ?: return null
     cachedLogManager = null
     LOG.debug { "Disposing ${oldValue.name}" }
-    project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
+    if (notify) {
+      project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
+    }
     return oldValue
   }
 
