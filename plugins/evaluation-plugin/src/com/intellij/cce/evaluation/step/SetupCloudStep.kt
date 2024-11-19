@@ -16,7 +16,7 @@ class SetupCloudStep : UndoableEvaluationStep {
 
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
     Registry.get(TOKEN_FROM_ENV).also { tokenFromEnvOriginalValue = it.asBoolean() }.setValue(true)
-    Registry.get(ENDPOINT_TYPE).also { endpointTypeOriginalValue = it.selectedOption ?: "User" }.selectedOption = System.getenv(EVAL_ENDPOINT_TYPE) ?: "Service"
+    Registry.get(ENDPOINT_TYPE).also { endpointTypeOriginalValue = it.selectedOption ?: "User" }.selectedOption = System.getenv(EVAL_ENDPOINT_TYPE) ?: "Application"
     Registry.get(USE_STAGING_URL).also { stagingOriginalValue = it.asBoolean() }.setValue(true)
     println("Cloud Authentication is set up. \n $ENDPOINT_TYPE = ${Registry.stringValue(ENDPOINT_TYPE)} \n $USE_STAGING_URL = ${Registry.stringValue(USE_STAGING_URL)}")
     return workspace
