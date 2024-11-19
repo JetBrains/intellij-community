@@ -37,7 +37,7 @@ try {
   # returns `$true` when a path is already covered by the exclusion list
   function Test-Excluded ([string] $path, [string[]] $exclusions) {
     foreach ($exclusion in $exclusions) {
-      if ([cultureinfo]::InvariantCulture.CompareInfo.IsPrefix($path, $exclusion, @("IgnoreCase"))) {
+      if (((Get-Item -Path $exclusion) -is [System.IO.DirectoryInfo])  -and ([cultureinfo]::InvariantCulture.CompareInfo.IsPrefix($path, $exclusion, @("IgnoreCase"))) -and ($exclusion.TrimEnd('\').split('\').Count -gt $path.TrimEnd('\').Split('\').Count)) {
         return $true
       }
     }
