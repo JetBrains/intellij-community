@@ -3,24 +3,35 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.limits.FileSizeLimit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
+
+import static com.intellij.util.SystemProperties.getIntProperty;
 
 public final class PersistentFSConstants {
 
-  /** Max file size to cache inside VFS */
-  public static final long FILE_LENGTH_TO_CACHE_THRESHOLD = FileSizeLimit.getFileLengthToCacheThreshold();
+  /**
+   * Max file size to cache inside VFS.
+   * Cache huge files is rarely useful, but time-consuming (freeze-prone), and could quickly overflow VFS content storage capacity
+   */
+  @ApiStatus.Internal
+  public static final int MAX_FILE_LENGTH_TO_CACHE = getIntProperty(
+    "idea.vfs.max-file-length-to-cache",
+    FileUtilRt.MEGABYTE
+  );
 
   /**
-   * Must always be in range [0, {@link #FILE_LENGTH_TO_CACHE_THRESHOLD}]
+   * Must always be in range [0, {@link FileUtilRt#LARGE_FOR_CONTENT_LOADING}]
    * <p>
    * Currently, this is always true, because
-   * <pre>FILE_LENGTH_TO_CACHE_THRESHOLD = ... = max(20Mb, userFileSizeLimit, userContentLoadLimit)</pre>
+   * <pre>LARGE_FOR_CONTENT_LOADING = ... = max(20Mb, userFileSizeLimit, userContentLoadLimit)</pre>
    * but could be changed in the future, hence .min(...) here is to ensure that.
+   * TODO: move into FileSizeLimit
    */
-  private static int ourMaxIntellisenseFileSize = Math.min(FileUtilRt.getUserFileSizeLimit(), (int)FILE_LENGTH_TO_CACHE_THRESHOLD);
+  private static int ourMaxIntellisenseFileSize = Math.min(FileUtilRt.getUserFileSizeLimit(), FileUtilRt.LARGE_FOR_CONTENT_LOADING);
 
   /** @deprecated Prefer using {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getIntellisenseLimit(String)} */
+  //TODO: move into FileSizeLimit
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated()
   public static int getMaxIntellisenseFileSize() {

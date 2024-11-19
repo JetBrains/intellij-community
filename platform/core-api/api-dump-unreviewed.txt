@@ -2662,7 +2662,6 @@ c:com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 com.intellij.openapi.vfs.LocalFileProvider
 com.intellij.openapi.vfs.NonPhysicalFileSystem
 f:com.intellij.openapi.vfs.PersistentFSConstants
-- sf:FILE_LENGTH_TO_CACHE_THRESHOLD:J
 - s:getMaxIntellisenseFileSize():I
 - s:setMaxIntellisenseFileSize(I):V
 a:com.intellij.openapi.vfs.ReadonlyStatusHandler

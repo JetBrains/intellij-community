@@ -64,7 +64,7 @@ public final class VcsUtil {
   }
 
   private static int computeLoadedFileSize() {
-    long result = PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    long result = PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE;
     try {
       String userLimitKb = System.getProperty(MAX_VCS_LOADED_SIZE_KB);
       if (userLimitKb != null) {

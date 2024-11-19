@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -66,6 +67,7 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.*;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -73,7 +75,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -1021,14 +1022,17 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   @Test
   public void testContentReadingWhileModification() throws IOException {
-    byte[] initialContent = StringUtil.repeat("one_two", 500_000).getBytes(UTF_8);
+    byte[] initialContent = StringUtil.repeat(
+      "one_two",
+      PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE / "one_two".length() - 1
+    ).getBytes(UTF_8);
     File file = tempDirectory.newFile("test.txt", initialContent);
     VirtualFile vFile = refreshAndFind(file);
     int id = ((VirtualFileWithId)vFile).getId();
     vFile.contentsToByteArray();
 
     InputStream stream = FSRecords.getInstance().readContent(id);
-    assertNotNull(stream);
+    assertNotNull("Content must be cached", stream);
     byte[] bytes = stream.readNBytes(initialContent.length);
     assertArrayEquals(initialContent, bytes);
     InputStream stream2 = FSRecords.getInstance().readContent(id);
@@ -1038,6 +1042,38 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertEquals(-1, stream3.read());
     byte[] portion2 = stream2.readNBytes(initialContent.length - 40);
     assertArrayEquals(initialContent, ArrayUtil.mergeArrays(portion1, portion2));
+  }
+
+  @Test
+  public void testHugeFileContentIsNotCachedInVFS() throws IOException {
+    byte[] hugeContent = StringUtil.repeat(
+      "anything",
+      PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE / "anything".length() + 1
+    ).getBytes(UTF_8);
+    assertTrue("Content must be larger than limit",
+               hugeContent.length > PersistentFSConstants.MAX_FILE_LENGTH_TO_CACHE);
+
+    File file = tempDirectory.newFile("test.txt", hugeContent);
+    VirtualFile vFile = refreshAndFind(file);
+    int id = ((VirtualFileWithId)vFile).getId();
+
+    //load content: for smaller files this should trigger file content caching, but not for huge files
+    vFile.contentsToByteArray();
+
+    assertNull("Content must NOT be cached in VFS during reading",
+               FSRecords.getInstance().readContent(id));
+
+    //save content: for smaller files this should trigger file content caching, but not for huge files
+    hugeContent[10] = 'A';//introduce a change
+    ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
+      try (var out = vFile.getOutputStream(this)) {
+        out.write(hugeContent);
+      }
+      return null;
+    });
+
+    assertNull("Content must NOT be cached in VFS during saving",
+               FSRecords.getInstance().readContent(id));
   }
 
   @Test
