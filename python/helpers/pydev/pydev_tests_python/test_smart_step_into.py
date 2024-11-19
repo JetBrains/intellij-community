@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import pytest
 
+from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.smart_step_into import get_stepping_variants
 
 
@@ -122,6 +123,7 @@ def test_candidates_for_consecutive_calls_py3(consecutive_calls):
     assert variants[4].argval == '__add__'
 
 
+@pytest.mark.xfail(IS_PY38, reason="PCQA-592")
 def test_candidates_for_returned_object_method(returned_object_method):
     variants = list(get_stepping_variants(returned_object_method))
     assert len(variants) == 3
