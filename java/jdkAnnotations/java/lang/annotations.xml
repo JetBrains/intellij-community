@@ -1035,6 +1035,9 @@
   <item name="java.lang.Readable int read(java.nio.CharBuffer) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name='java.lang.Record java.lang.String toString()'>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.Runtime java.lang.Process exec(java.lang.String[]) 0">
     <annotation name="org.jetbrains.annotations.NonNls"/>
   </item>
