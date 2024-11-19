@@ -21,6 +21,7 @@ val Finder.toolbar: UiComponent
 
 class MainToolbarUI(data: ComponentData) : UiComponent(data) {
   val vcsWidget: UiComponent get() = x { and(byClass("ToolbarComboButton"), contains(byVisibleText("Version"))) }
+  val buildButton: UiComponent get() = x("//div[@myicon='build.svg']")
   val runButton: UiComponent get() = x("//div[@myicon='run.svg']")
   val debugButton: UiComponent get() = x("//div[@myicon='debug.svg']")
   val moreButton: UiComponent get() = x("//div[@myicon='moreVertical.svg']")
