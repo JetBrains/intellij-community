@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
@@ -20,7 +21,7 @@ internal class DescriptorDocumentationYamlSchemaProviderFactory : JsonSchemaProv
     override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
 
     override fun isAvailable(file: VirtualFile): Boolean {
-      return isDescriptorDocumentationFile(file)
+      return IntelliJProjectUtil.isIntelliJPlatformProject(project) && isDescriptorDocumentationFile(file)
     }
 
     private fun isDescriptorDocumentationFile(file: VirtualFile): Boolean {
