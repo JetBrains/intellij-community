@@ -562,10 +562,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
     int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
 
-    AffineTransform old = setMirrorTransformIfNeeded(g, x, w);
+    Graphics2D g2 = (Graphics2D)g.create();
+    g2.clipRect(x, 0, w, getHeight()); // avoid annotations painting out of their area
+    setMirrorTransformIfNeeded(g2, x, w);
+
     try {
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
-      g.setColor(color != null ? color : JBColor.blue);
+      g2.setColor(color != null ? color : JBColor.blue);
 
       for (TextAnnotationGutterProviderInfo info : myTextAnnotationGutterProviders) {
         TextAnnotationGutterProvider gutterProvider = info.provider();
@@ -602,11 +605,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               bg = gutterProvider.getBgColor(logicalLine, myEditor);
             }
             if (bg != null) {
-              g.setColor(bg);
-              g.fillRect(x, y, annotationSize, bgLineHeight);
+              g2.setColor(bg);
+              g2.fillRect(x, y, annotationSize, bgLineHeight);
             }
             if (paintText) {
-              paintAnnotationLine(g, gutterProvider, logicalLine, x, y);
+              paintAnnotationLine(g2, gutterProvider, logicalLine, x, y);
             }
           }
           visLinesIterator.advance();
@@ -616,7 +619,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       }
     }
     finally {
-      if (old != null) g.setTransform(old);
+      g2.dispose();
     }
   }
 
