@@ -1,6 +1,5 @@
 <idea-plugin package="org.jetbrains.plugins.gitlab"
-             allow-bundled-update="true"
-             xmlns:xi="http://www.w3.org/2001/XInclude">
+             allow-bundled-update="true">
 
   <!-- Warn: remember to sync the following {name, id, vendor, category, description} tags
              with plugin.xml in intellij.vcs.gitlab.ultimate module-->
@@ -41,8 +40,9 @@
 
   <incompatible-with>com.intellij.modules.ultimate</incompatible-with>
 
-  <!-- TODO Replace by <content><module name="intellij.vcs.gitlab"/></content> when IJPL-171832 is fixed.
-            Consider that the "included" xml by this way is not allowed to have <content> blocks -->
-  <xi:include href="/intellij.vcs.gitlab.xml"/>
+  <content>
+    <module name="intellij.vcs.gitlab" loading="required"/>
+    <module name="intellij.vcs.gitlab.yaml"/>
+  </content>
 
 </idea-plugin>
