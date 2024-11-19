@@ -223,7 +223,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
       if (!state.isValid()) {
         if (validateRequest != null && validateRequest.validate) {
           state = state.withValid(true);
-          return refresh(state, CommitCountUpdate.create(filterRequest != null, requestMoreCommits));
+          return refresh(state, getCommitCountUpdate(filterRequest != null, requestMoreCommits));
         }
         else { // validateRequest == null || !validateRequest.validate
           // remember filters
@@ -251,22 +251,18 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
         );
         if (hasUnprocessedRequest || indexingFinished) {
           // "more commits needed" has no effect if filter changes; it also can't come after filter change request
-          return refresh(state, CommitCountUpdate.create(filterRequest != null, requestMoreCommits));
+          return refresh(state, getCommitCountUpdate(filterRequest != null, requestMoreCommits));
         }
         return state;
       }
     }
 
-    /**
-     * Requests to increase loaded commits count can be skipped if the number of commits to load is already greater than
-     * the number of displayed commits
-     */
     private @NotNull List<MoreCommitsRequest> filterMoreCommitsRequests(@NotNull List<? extends Request> requests) {
       List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
-      int visibleCommitCount = myState.myVisiblePack.getVisibleGraph().getVisibleCommitCount();
-      int requestCount = myState.myCommitCount.getCount();
-      if (!moreCommitsRequests.isEmpty() && requestCount > visibleCommitCount) {
-        LOG.debug(String.format("Requested to load more commits than currently can be displayed. " +
+      if (!moreCommitsRequests.isEmpty() && !myState.myVisiblePack.canRequestMore()) {
+        int visibleCommitCount = myState.myVisiblePack.getVisibleGraph().getVisibleCommitCount();
+        int requestCount = myState.myCommitCount.getCount();
+        LOG.debug(String.format("Requested to load more commits, however visible pack indicates that more commits can't be loaded " +
                                 "Displaying %d commits, request count - %d", visibleCommitCount, requestCount));
         moreCommitsRequests = Collections.emptyList();
       }
@@ -317,13 +313,23 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   private enum CommitCountUpdate {
-    KEEP, RESET, INCREASE;
+    KEEP, RESET, INCREASE
+  }
 
-    static @NotNull CommitCountUpdate create(boolean filterRequest, boolean moreCommitsRequest) {
-      if (filterRequest) return RESET;
-      else if (moreCommitsRequest) return INCREASE;
-      else return KEEP;
+  private @NotNull CommitCountUpdate getCommitCountUpdate(boolean filterRequest, boolean moreCommitsRequest) {
+    if (filterRequest) return CommitCountUpdate.RESET;
+    else if (moreCommitsRequest) {
+      int visibleCommitCount = myState.myVisiblePack.getVisibleGraph().getVisibleCommitCount();
+      int requestCount = myState.myCommitCount.getCount();
+      if (requestCount > visibleCommitCount) {
+        LOG.debug(String.format("Requested to load more commits than can be displayed. " +
+                                "Displaying %d commits, request count - %d", visibleCommitCount, requestCount));
+        return CommitCountUpdate.KEEP;
+      } else {
+        return CommitCountUpdate.INCREASE;
+      }
     }
+    else return CommitCountUpdate.KEEP;
   }
 
   private static class State {
