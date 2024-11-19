@@ -21,6 +21,7 @@ import kotlin.Throwable
 import kotlin.coroutines.CoroutineContext
 import kotlin.run
 
+@ApiStatus.Internal
 interface ThreadingSupport {
 
   /**
