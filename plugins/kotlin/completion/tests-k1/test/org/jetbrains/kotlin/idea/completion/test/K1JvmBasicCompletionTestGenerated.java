@@ -1580,6 +1580,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("KTIJ-32210.kt")
+            public void testKTIJ_32210() throws Exception {
+                runTest("../testData/basic/common/lambdaSignature/KTIJ-32210.kt");
+            }
+
             @TestMetadata("ParameterName1.kt")
             public void testParameterName1() throws Exception {
                 runTest("../testData/basic/common/lambdaSignature/ParameterName1.kt");
