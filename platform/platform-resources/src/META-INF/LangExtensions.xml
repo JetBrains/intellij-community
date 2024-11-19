@@ -390,7 +390,6 @@
                     serviceImplementation="com.intellij.find.impl.FindManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager" client="all"/>
-    <toolWindowExtractorMode id="Hierarchy" mode="per_client"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>
 
