@@ -91,7 +91,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                           parameters.originalFile) { commands ->
       withPrefixMatcher.addAllElements(commands.map { command ->
         var element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name)
-                                                                      .withIcon(command.icon)
+                                                                      .withIcon(command.icon ?: Lightning)
                                                                       .withInsertHandler(CommandInsertHandler(command))
                                                                       .withBoldness(true),
                                                                     adjustedParameters.offset,
