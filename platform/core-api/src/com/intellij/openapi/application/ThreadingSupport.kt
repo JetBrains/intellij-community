@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
@@ -241,13 +239,13 @@ interface ThreadingSupport {
   fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T, E>): T
 
   /**
-   * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g., to allow for read-action
-   * parallelization).
+   * If called inside a write-action, executes the given [action] with write-lock released
+   * (e.g., to allow for read-action parallelization).
    * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
    * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write-actions itself;
    * callers should be ready for those.
    */
-  fun executeSuspendingWriteAction(project: Project?, title: @NlsContexts.DialogTitle String, runnable: Runnable)
+  fun executeSuspendingWriteAction(action: () -> Unit)
 
   /**
    * Returns `true` if there is currently executing write action of the specified class.

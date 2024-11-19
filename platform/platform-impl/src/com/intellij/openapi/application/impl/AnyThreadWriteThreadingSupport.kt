@@ -13,9 +13,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.internal.runSuspend
@@ -427,13 +425,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  override fun executeSuspendingWriteAction(project: Project?,
-                                            title: @NlsContexts.DialogTitle String,
-                                            runnable: Runnable) {
+  override fun executeSuspendingWriteAction(action: () -> Unit) {
     ThreadingAssertions.assertWriteIntentReadAccess()
     val ts = getThreadState()
     if (ts.hasWriteIntent) {
-      runModalProgress(project, title, runnable)
+      action()
       return
     }
 
@@ -443,7 +439,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myWriteAcquired = null
     ts.release()
     try {
-      runModalProgress(project, title, runnable)
+      action()
     }
     finally {
       ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite()
@@ -631,14 +627,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     finally {
       ts.inListener = false
     }
-  }
-
-  private fun runModalProgress(project: Project?, title: @NlsContexts.DialogTitle String, runnable: Runnable) {
-    ProgressManager.getInstance().run(object : Task.Modal(project, title, false) {
-      override fun run(indicator: ProgressIndicator) {
-        runnable.run()
-      }
-    })
   }
 
   private fun getWriteIntentPermit(): WriteIntentPermit {
