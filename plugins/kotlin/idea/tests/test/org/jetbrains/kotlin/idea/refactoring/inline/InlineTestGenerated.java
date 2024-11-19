@@ -1194,6 +1194,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
             runTest("testData/refactoring/inline/lambdaExpression/lambdaWithReceiverAsParameter3.kt");
         }
 
+        @TestMetadata("receiverBasedLambda.kt")
+        public void testReceiverBasedLambda() throws Exception {
+            runTest("testData/refactoring/inline/lambdaExpression/receiverBasedLambda.kt");
+        }
+
         @TestMetadata("unnamedParameter.kt")
         public void testUnnamedParameter() throws Exception {
             runTest("testData/refactoring/inline/lambdaExpression/unnamedParameter.kt");

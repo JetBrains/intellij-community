@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -157,6 +158,8 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
             }
         }
     }
+
+    override fun convertFunctionToLambdaAndMoveOutsideParentheses(function: KtNamedFunction) {}
 
     override fun simplifySpreadArrayOfArguments(pointer: SmartPsiElementPointer<KtElement>) {
         val result = pointer.element ?: return
