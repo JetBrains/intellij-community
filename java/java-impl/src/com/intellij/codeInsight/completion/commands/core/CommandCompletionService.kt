@@ -84,7 +84,7 @@ class CommandCompletionService(
     val offsetOfFullIndex = lookup.lookupOriginalStart - index
     if (offsetOfFullIndex < 0 ||
         offsetOfFullIndex >= lookup.editor.document.textLength ||
-        lookup.editor.document.immutableCharSequence.substring(offsetOfFullIndex) != fullSuffix) return
+        lookup.editor.document.immutableCharSequence.substring(offsetOfFullIndex, offsetOfFullIndex + fullSuffix.length) != fullSuffix) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
     lookup.arranger.prefixChanged(lookup);
@@ -250,6 +250,9 @@ private class CommandCompletionHighlightingListener(
   }
 
   private fun updateIcon(lookup: LookupImpl, element: CommandCompletionLookupElement) {
+    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true) {
+      return
+    }
     val renderer = lookup.getUserData(ICON_RENDER)
     renderer?.let { Disposer.dispose(it) }
     if (element.icon != null) {
