@@ -359,13 +359,10 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - <init>(Z):V
 - p:paintComponent(java.awt.Graphics):V
 *f:com.intellij.collaboration.ui.ListenableProgressIndicator
-- com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
-- com.intellij.openapi.progress.StandardProgressIndicator
+- com.intellij.openapi.progress.util.ProgressIndicatorBase
 - <init>():V
 - f:addAndInvokeListener(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
 - f:addAndInvokeListener(kotlin.jvm.functions.Function0):V
-- cancel():V
-- isCanceled():Z
 *:com.intellij.collaboration.ui.SimpleEventListener
 - java.util.EventListener
 - *sf:Companion:com.intellij.collaboration.ui.SimpleEventListener$Companion
