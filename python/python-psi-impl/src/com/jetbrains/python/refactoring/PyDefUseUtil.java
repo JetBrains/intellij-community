@@ -69,30 +69,11 @@ public final class PyDefUseUtil {
                                                 boolean acceptImplicitImports,
                                                 @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
-    final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(anchor);
-    if (augAssignment != null) {
-      anchor = augAssignment;
-    }
-    int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
-    if (instr < 0) {
+    int startNum = findStartInstructionId(anchor, instructions);
+    if (startNum < 0) {
       return Collections.emptyList();
     }
-    if (anchor instanceof PyTargetExpression) {
-      Collection<Instruction> pred = instructions[instr].allPred();
-      if (!pred.isEmpty()) {
-        instr = pred.iterator().next().num();
-      }
-    }
-    final Collection<Instruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions, acceptImplicitImports, context);
-    return new ArrayList<>(result);
-  }
 
-  private static @NotNull Collection<Instruction> getLatestDefs(final @NotNull String varName,
-                                                                final Instruction @NotNull [] instructions,
-                                                                final int startNum,
-                                                                final boolean acceptTypeAssertions,
-                                                                final boolean acceptImplicitImports,
-                                                                @NotNull final TypeEvalContext context) {
     final Collection<Instruction> result = new LinkedHashSet<>();
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
@@ -104,7 +85,8 @@ public final class PyDefUseUtil {
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
                                     // not a back edge
-                                    if (instruction.num() < startNum && context.getOrigin() == callInstruction.getElement().getContainingFile()) {
+                                    if (instruction.num() < startNum &&
+                                        context.getOrigin() == callInstruction.getElement().getContainingFile()) {
                                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                         ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
                                         : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
@@ -148,7 +130,26 @@ public final class PyDefUseUtil {
                                   }
                                   return ControlFlowUtil.Operation.NEXT;
                                 });
-    return result;
+    return new ArrayList<>(result);
+  }
+
+  private static int findStartInstructionId(@NotNull PsiElement startAnchor, Instruction @NotNull [] instructions) {
+    PsiElement realCfgAnchor = startAnchor;
+    final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(startAnchor);
+    if (augAssignment != null) {
+      realCfgAnchor = augAssignment;
+    }
+    int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, realCfgAnchor);
+    if (instr < 0) {
+      return instr;
+    }
+    if (startAnchor instanceof PyTargetExpression) {
+      Collection<Instruction> pred = instructions[instr].allPred();
+      if (!pred.isEmpty()) {
+        instr = pred.iterator().next().num();
+      }
+    }
+    return instr;
   }
 
   private static boolean isReachableWithVersionChecks(@NotNull Instruction instruction) {
