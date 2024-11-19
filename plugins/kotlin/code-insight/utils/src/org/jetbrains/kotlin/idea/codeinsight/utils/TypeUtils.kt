@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
 context(KaSession)
-fun KaType.isNullableAnyType() = isAnyType && isMarkedNullable
+fun KaType.isNullableAnyType(): Boolean = isAnyType && isMarkedNullable
 
 context(KaSession)
-fun KaType.isNonNullableBooleanType() = isBooleanType && !isMarkedNullable
+fun KaType.isNonNullableBooleanType(): Boolean = isBooleanType && !isMarkedNullable
 
 context(KaSession)
 fun KaType.isEnum(): Boolean {
