@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.browsers.BrowserLauncher;
@@ -23,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class BrowserUtil {
@@ -41,7 +41,7 @@ public final class BrowserUtil {
   }
 
   public static String getDocURL(String url) {
-    Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
+    var anchorMatcher = ourAnchorSuffix.matcher(url);
     return anchorMatcher.find() ? anchorMatcher.reset().replaceAll("") : url;
   }
 
@@ -109,7 +109,7 @@ public final class BrowserUtil {
         }
       }
       else if (SystemInfo.isWindows) {
-        command.addAll(List.of(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
+        command.addAll(List.of(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
         command.addAll(parameters);
         if (url != null) {
           command.add(url);

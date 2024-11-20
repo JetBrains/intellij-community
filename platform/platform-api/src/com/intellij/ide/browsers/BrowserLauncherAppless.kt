@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
+import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -95,7 +96,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
 
     val signedUrl = signUrl(url.trim { it <= ' ' })
-    LOG.debug { "opening [$signedUrl]" }
+    LOG.debug { "opening [${signedUrl}]" }
 
     if (processWithUrlOpener(browser, signedUrl, project)) {
       return
@@ -256,7 +257,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   private val defaultBrowserCommand: List<String>?
     get() = when {
-      SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+      SystemInfo.isWindows -> listOf(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
       SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
       SystemInfo.hasXdgOpen() -> listOf("xdg-open")
       else -> null
