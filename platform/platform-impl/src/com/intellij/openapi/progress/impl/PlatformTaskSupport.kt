@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.ide.progress.suspender.TaskSuspender
+import com.intellij.platform.ide.progress.suspender.TaskSuspenderElementKey
 import com.intellij.platform.ide.progress.suspender.TaskSuspenderImpl
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
@@ -185,9 +186,12 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
 
   private suspend fun retrieveSuspender(providedSuspender: TaskSuspender?): TaskSuspender? {
     val coroutineSuspender = coroutineContext[CoroutineSuspenderElementKey]?.coroutineSuspender as? CoroutineSuspenderImpl
+    val taskSuspender = coroutineContext[TaskSuspenderElementKey]?.taskSuspender
     return when {
       providedSuspender != null -> providedSuspender
-      // If suspender is not provided - retrieve coroutineSuspender from context
+      // If taskSuspender is not provided, but there is one in context - use it
+      taskSuspender != null -> taskSuspender
+      // If taskSuspender is not provided and not in context - retrieve coroutineSuspender
       coroutineSuspender != null -> TaskSuspenderImpl(IdeBundle.message("progress.text.paused"), coroutineSuspender)
       else -> null
     }

@@ -62,6 +62,6 @@ class TaskSuspenderImpl(
   }
 
   override fun asContextElement(): CoroutineContext {
-    return coroutineSuspender.asContextElement()
+    return TaskSuspenderElement(this) + coroutineSuspender.asContextElement()
   }
 }
