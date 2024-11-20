@@ -156,6 +156,10 @@ public final class PyTypeChecker {
       return Optional.of(match((PyParamSpecType)expected, actual, context));
     }
 
+    if (expected instanceof PyCallableParameterListType callableParameterListType) {
+      return Optional.of(match(callableParameterListType, actual, context));
+    }
+    
     if (expected == null || actual == null || isUnknown(actual, context.context)) {
       return Optional.of(true);
     }
@@ -366,6 +370,12 @@ public final class PyTypeChecker {
     if (!(actual instanceof PyCallableParameterListType actualParameters)) return false;
     context.mySubstitutions.paramSpecs.put(expected, actualParameters);
     return true;
+  }
+
+  private static boolean match(@NotNull PyCallableParameterListType expectedParameters, @Nullable PyType actual, @NotNull MatchContext context) {
+    if (actual == null) return true;
+    if (!(actual instanceof PyCallableParameterListType actualParameters)) return false;
+    return matchCallableParameters(expectedParameters.getParameters(), actualParameters.getParameters(), context);
   }
 
   private static boolean match(@NotNull PyType expected, @NotNull PyUnionType actual, @NotNull MatchContext context) {

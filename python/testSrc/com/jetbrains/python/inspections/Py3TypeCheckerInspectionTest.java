@@ -2374,6 +2374,19 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-77539
+  public void testMatchingCallableParameterLists() {
+    doTestByText("""
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   compatible: MyCallable[[int], object] = MyCallable[[object], str]()
+                   incompatible1: MyCallable[[object], object] = <warning descr="Expected type 'MyCallable[[object], object]', got 'MyCallable[[int], str]' instead">MyCallable[[int], str]()</warning>
+                   incompatible2: MyCallable[[int], str] = <warning descr="Expected type 'MyCallable[[int], str]', got 'MyCallable[[object], object]' instead">MyCallable[[object], object]()</warning>
+                   """);    
+  }
+
+
   // PY-23067
   public void testFunctoolsWrapsMultiFile() {
     doMultiFileTest();
