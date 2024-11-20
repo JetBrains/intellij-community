@@ -72,8 +72,10 @@ internal object FunctionLookupElementFactory {
         val valueParameters = signature.valueParameters
 
         val trailingFunctionSignature = valueParameters.lastOrNull()
-            ?.takeUnless { it.symbol.hasDefaultValue }
+            ?.takeUnless { it.symbol.isVararg }
             ?: return null
+
+        if (!valueParameters.dropLast(1).all { it.symbol.hasDefaultValue }) return null
 
         val trailingFunctionDescriptor = when (val type = trailingFunctionSignature.returnType.lowerBoundIfFlexible()) {
             is KaFunctionType -> TrailingFunctionDescriptor(type)
@@ -114,21 +116,18 @@ internal object FunctionLookupElementFactory {
             else -> return null
         }
 
+        val trailingFunctionType = trailingFunctionDescriptor.functionType
         val trailingFunctionTemplate = TemplateManager.getInstance(useSiteModule.project)
             .createTemplate("", "")
             .build(
-                parametersCount = valueParameters.size - 1,
-                trailingFunctionType = trailingFunctionDescriptor.functionType,
+                trailingFunctionType = trailingFunctionType,
                 suggestedParameterNames = trailingFunctionDescriptor.suggestedParameterNames,
             )
 
         val lookupObject = FunctionCallLookupObject(
             shortName = shortName,
             options = options,
-            renderedDeclaration = CompletionShortNamesRenderer.renderFunctionParameters(
-                parameters = valueParameters,
-                trailingFunctionType = trailingFunctionDescriptor.functionType,
-            ),
+            renderedDeclaration = CompletionShortNamesRenderer.renderTrailingFunction(trailingFunctionSignature, trailingFunctionType),
             trailingLambdaTemplate = trailingFunctionTemplate,
         )
 

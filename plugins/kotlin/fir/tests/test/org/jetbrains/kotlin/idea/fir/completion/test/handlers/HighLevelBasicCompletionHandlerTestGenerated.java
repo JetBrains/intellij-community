@@ -481,6 +481,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithArgs3.kt");
             }
 
+            @TestMetadata("HigherOrderFunctionWithDefaultArgs.kt")
+            public void testHigherOrderFunctionWithDefaultArgs() throws Exception {
+                runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithDefaultArgs.kt");
+            }
+
             @TestMetadata("HigherOrderSuspendFunctionWithArgs.kt")
             public void testHigherOrderSuspendFunctionWithArgs() throws Exception {
                 runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderSuspendFunctionWithArgs.kt");

@@ -24,26 +24,12 @@ private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 fun Template.build(
-    parametersCount: Int,
     trailingFunctionType: KaFunctionType,
     suggestedParameterNames: List<Name?> = emptyList(),
 ): Template = apply {
     isToShortenLongNames = true
     // isToReformat = true //TODO
 
-    //for (index in 0 until parametersCount) {
-    //    if (index == 0) {
-    //        addTextSegment("(")
-    //    }
-    //
-    //    addVariable(
-    //        /* expression = */ EmptyExpression(),
-    //        /* isAlwaysStopAt = */ true,
-    //    )
-    //
-    //    addTextSegment(if (index == parametersCount - 1) ")" else ", ")
-    //}
-    //
     //val typeNames = mutableMapOf<KaType, MutableSet<String>>()
     //val kotlinNameSuggester = KotlinNameSuggester()
 
