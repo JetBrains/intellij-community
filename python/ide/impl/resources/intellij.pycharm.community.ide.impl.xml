@@ -2,7 +2,7 @@
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
     <plugin id="PythonCore"/>
-    <module name="intellij.platform.whatsNew" />
+    <module name="intellij.platform.whatsNew"/>
   </dependencies>
 
   <projectListeners>
@@ -11,7 +11,17 @@
               topic="com.intellij.workspaceModel.ide.JpsProjectLoadedListener"/>
   </projectListeners>
 
+  <extensionPoints>
+    <extensionPoint interface="com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType"
+                    qualifiedName="Pythonid.miscFileType" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
+    <refactoring.elementListenerProvider implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector"/>
+    <experiment.abExperimentOption implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyMiscProjectExperimentOption"/>
+    <registryKey defaultValue="5" description="Number of primary buttons on welcome screen (other go to 'more actions')"
+                 key="welcome.screen.primaryButtonsCount" restartRequired="true" overrides="true"/>
     <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmPythonIdeLanguageCustomization"
@@ -71,7 +81,8 @@
     <directoryIndexExcludePolicy implementation="com.intellij.pycharm.community.ide.impl.PyDirectoryIndexExcludePolicy"/>
 
     <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector"/>
     <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
                        bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
@@ -103,11 +114,14 @@
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">
+      <group id="WelcomeScreen.PyScratchFileActionGroup"
+             class="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyMiscFileActionGroup" compact="true"/>
       <group id="WelcomeScreen.CreateDirectoryProject"
-              class="com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.PyV3NewProjectStepAction"/>
+             class="com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.PyV3NewProjectStepAction"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
   </actions>
+
 </idea-plugin>
