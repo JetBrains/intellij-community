@@ -5,7 +5,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -16,8 +15,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
 import git4idea.config.GitConfigUtil
-import git4idea.config.GitExecutableListener
-import git4idea.config.GitExecutableManager
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
@@ -45,11 +42,6 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
     connection.subscribe<VcsRepositoryMappingListener>(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
       clearInvalidKeys()
     })
-    connection.subscribe(GitConfigListener.TOPIC, object : GitConfigListener {
-      override fun notifyConfigChanged(repository: GitRepository) {
-        clearForRepo(repository)
-      }
-    })
   }
 
   @RequiresBackgroundThread
@@ -65,7 +57,7 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
     }
   }
 
-  private fun clearForRepo(repository: GitRepository) {
+  fun clearForRepo(repository: GitRepository) {
     cache.keys.removeIf {
       it is GitRepositoryConfigKey && it.repository == repository
     }
@@ -82,11 +74,6 @@ class GitProjectConfigurationCache(val project: Project) : GitConfigurationCache
 
 abstract class GitConfigurationCacheBase : Disposable {
   protected val cache: MutableMap<GitConfigKey<*>, CompletableFuture<*>> = ConcurrentCollectionFactory.createConcurrentMap()
-
-  init {
-    val connection: MessageBusConnection = ApplicationManager.getApplication().messageBus.connect(this)
-    connection.subscribe<GitExecutableListener>(GitExecutableManager.TOPIC, GitExecutableListener { clearCache() })
-  }
 
   @RequiresBackgroundThread
   fun <T> computeCachedValue(configKey: GitConfigKey<T>, computeValue: () -> T): T {
