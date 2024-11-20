@@ -229,10 +229,16 @@ public interface GitBrancher {
              @NotNull DeleteOnMergeOption deleteOnMerge,
              @NotNull List<? extends @NotNull GitRepository> repositories);
 
+
   /**
-   * Call {@code git rebase <branchName>} for each of the given repositories.
+   * Call {@code git rebase <reference.name>} for each of the given repositories.
    */
-  void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull String branchName);
+  void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull GitReference reference);
+
+  /**
+   * Call {@code git rebase <reference>} for each of the given repositories.
+   */
+  void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull String reference);
 
   /**
    * Call {@code git rebase <upstream> <branchName>} for each of the given repositories
