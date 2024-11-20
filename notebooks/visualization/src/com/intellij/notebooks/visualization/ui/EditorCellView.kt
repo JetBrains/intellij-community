@@ -364,6 +364,12 @@ class EditorCellView(
     input.runCellButton?.updateGutterAction(progressStatus)
   }
 
+  fun highlightAbovePanel() =
+    _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.addHighlight()
+
+  fun removeHighlightAbovePanel() =
+    _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.removeHighlight()
+
   internal data class NotebookCellDataProvider(
     val editor: Editor,
     val component: JComponent,

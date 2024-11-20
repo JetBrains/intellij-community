@@ -6,9 +6,12 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.uiDesigner.UIFormXmlConstants
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiff
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.ui.JBColor
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.JPanel
 
 class NotebookAboveCellDelimiterPanel(
@@ -16,8 +19,12 @@ class NotebookAboveCellDelimiterPanel(
   val isCodeCell: Boolean,
   isFirstCell: Boolean
 ) : JPanel(BorderLayout()) {
+  private var delimiterPanel: JPanel? = null
+  private var roofPanel: JPanel? = null
+
   private var backgroundColor: Color = editor.colorsScheme.defaultBackground
   private var cellRoofColor: Color? = null
+  private var isHighlighted: Boolean = false
   private val standardDelimiterHeight = editor.notebookAppearance.cellBorderHeight / 2
   private val delimiterPanelHeight = when (isFirstCell) {
     true -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
@@ -29,23 +36,43 @@ class NotebookAboveCellDelimiterPanel(
   init {
     if (!editor.editorKind.isDiff()) {
       refreshColorScheme()
-      val (delimiterPanel, roofPanel) = createRoofAndDelimiterPanels(cellRoofColor)
-      add(delimiterPanel, BorderLayout.NORTH)
-      add(roofPanel, BorderLayout.SOUTH)
+      createRoofAndDelimiterPanels(cellRoofColor)
+      delimiterPanel?.let { add(it, BorderLayout.NORTH) }
+      roofPanel?.let { add(it, BorderLayout.SOUTH) }
       listenForColorSchemeChanges()
     }
   }
 
-  private fun createRoofAndDelimiterPanels(cellRoofColor: Color?): Pair<JPanel, JPanel> {
-    val delimiterPanel = JPanel()
-    delimiterPanel.background = backgroundColor
-    delimiterPanel.preferredSize = Dimension(JBUIScale.scale(1), delimiterPanelHeight)
+  fun addHighlight() {
+    isHighlighted = true
+    delimiterPanel?.repaint()
+  }
 
-    val roofPanel = JPanel()
-    roofPanel.background = cellRoofColor
-    roofPanel.preferredSize = Dimension(JBUIScale.scale(1), standardDelimiterHeight)
+  fun removeHighlight() {
+    isHighlighted = false
+    delimiterPanel?.repaint()
+  }
 
-    return Pair(delimiterPanel, roofPanel)
+  private fun createRoofAndDelimiterPanels(cellRoofColor: Color?) {
+    delimiterPanel = object : JPanel() {
+      override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+        if (isHighlighted) {
+          val g2d = g as Graphics2D
+          g2d.color = JBColor.BLUE
+          val y = height / 2
+          g2d.fillRect(0, y - 1, width, 2)
+        }
+      }
+    }.also {
+      it.background = backgroundColor
+      it.preferredSize = Dimension(JBUIScale.scale(1), delimiterPanelHeight)
+    }
+
+    roofPanel = JPanel().also {
+      it.background = cellRoofColor
+      it.preferredSize = Dimension(JBUIScale.scale(1), standardDelimiterHeight)
+    }
   }
 
   private fun listenForColorSchemeChanges() = addPropertyChangeListener(UIFormXmlConstants.ELEMENT_BORDER) { updateComponentColors() }
@@ -58,9 +85,6 @@ class NotebookAboveCellDelimiterPanel(
   private fun updateComponentColors() {
     refreshColorScheme()
     if (components.isNotEmpty()) {
-      val delimiterPanel = components[0] as? JPanel
-      val roofPanel = components[1] as? JPanel
-
       delimiterPanel?.background = backgroundColor
       roofPanel?.background = cellRoofColor
     }
