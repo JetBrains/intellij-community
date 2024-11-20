@@ -1844,6 +1844,8 @@
 
     <postStartupActivity implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentInProjectStarter"
                          os="windows"/>
+    <applicationActivity implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslFileSystemApplicationActivity"
+                         os="windows"/>
     <applicationActivity implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
     <registryKey key="rhizome.progress"
                  defaultValue="false"
