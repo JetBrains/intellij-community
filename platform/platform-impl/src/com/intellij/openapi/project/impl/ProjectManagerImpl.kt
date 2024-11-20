@@ -1479,7 +1479,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   return confirmOpeningOrLinkingUntrustedProject(
     projectRoot = projectStoreBaseDir,
     project = null,
-    title = IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName)
+    title = IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName ?: projectStoreBaseDir.toString())
   )
 }
 
