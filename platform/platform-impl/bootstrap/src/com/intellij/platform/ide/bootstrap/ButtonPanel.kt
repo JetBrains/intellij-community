@@ -8,8 +8,8 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.Graphics
+import java.awt.*
+import java.awt.event.AWTEventListener
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -26,11 +26,31 @@ internal class ButtonPanel(@JvmField val button: JButton) : JPanel(BorderLayout(
 }
 
 internal fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon? = null, onClick: (JButton) -> Unit): JButton {
-  val btn = object : JButton() {
+  class MyButton : JButton() {
+    var isPressed = false
+
+    init {
+      Toolkit.getDefaultToolkit().addAWTEventListener(AWTEventListener { event ->
+        if (event.id == MouseEvent.MOUSE_CLICKED) {
+          val me = event as MouseEvent
+          val source = me.source
+          if (source is Component) {
+            val bounds = this@MyButton.bounds
+            val location = SwingUtilities.convertPoint(source, me.point, this@MyButton.parent)
+            if (!bounds.contains(location)) {
+              isPressed = false
+            }
+          }
+        }
+      }, AWTEvent.MOUSE_EVENT_MASK)
+    }
+
     override fun getComponentGraphics(g: Graphics?): Graphics {
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
     }
+
   }
+  val btn = MyButton()
   btn.putClientProperty("ActionToolbar.smallVariant", true)
   btn.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, isDefault)
   btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_BORDER_GRAPHICS, true)
@@ -49,7 +69,10 @@ internal fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon? = n
   btn.addMouseListener(listener)
   btn.action = object : AbstractAction(text, null) {
     override fun actionPerformed(e: ActionEvent) {
-      onClick.invoke(btn)
+      btn.isPressed = !btn.isPressed
+      if (btn.isPressed) {
+        onClick.invoke(btn)
+      }
     }
   }
   btn.icon = icon
