@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
@@ -171,11 +170,11 @@ internal class OptimizedImportsBuilder(
                     val originalUsedReference = UsedReference.run { createFrom(originalReference) }
                     val alternativeUsedReference = UsedReference.run { createFrom(alternativeReference) }
 
-                    val originalSymbols = originalUsedReference?.run { resolveToReferencedSymbols() }
-                    val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }
+                    val originalSymbols = originalUsedReference?.run { resolveToReferencedSymbols() }.orEmpty()
+                    val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }.orEmpty()
 
                     if (!areTargetsEqual(originalSymbols, alternativeSymbols)) {
-                        val conflictingSymbols = originalSymbols.orEmpty() + alternativeSymbols.orEmpty()
+                        val conflictingSymbols = originalSymbols + alternativeSymbols
 
                         for (conflictingSymbol in conflictingSymbols) {
                             lockImportForSymbol(conflictingSymbol.run { toSymbolInfo() }, names)
@@ -187,13 +186,9 @@ internal class OptimizedImportsBuilder(
     }
 
     private fun KaSession.areTargetsEqual(
-        originalSymbols: Collection<ReferencedSymbol>?,
-        alternativeSymbols: Collection<ReferencedSymbol>?
+        originalSymbols: Collection<ReferencedSymbol>,
+        alternativeSymbols: Collection<ReferencedSymbol>
     ): Boolean {
-        if (originalSymbols == null || alternativeSymbols == null) {
-            return originalSymbols == alternativeSymbols
-        }
-
         if (originalSymbols.size != alternativeSymbols.size) return false
 
         return originalSymbols.zip(alternativeSymbols).all { (originalSymbol, newSymbol) -> areTargetsEqual(originalSymbol, newSymbol) }
@@ -203,11 +198,11 @@ internal class OptimizedImportsBuilder(
         originalSymbol: ReferencedSymbol,
         alternativeSymbol: ReferencedSymbol,
     ): Boolean {
-        val originalSymbol = originalSymbol.run { toSymbolInfo() }
-        val newSymbol = alternativeSymbol.run { toSymbolInfo() }
+        val originalSymbolInfo = originalSymbol.run { toSymbolInfo() }
+        val alternativeSymbolInfo = alternativeSymbol.run { toSymbolInfo() }
 
-        return originalSymbol == newSymbol ||
-                importSymbolWithMapping(originalSymbol) == importSymbolWithMapping(newSymbol)
+        return originalSymbolInfo == alternativeSymbolInfo ||
+                importSymbolWithMapping(originalSymbolInfo) == importSymbolWithMapping(alternativeSymbolInfo)
     }
 
     private fun KaSession.lockImportForSymbol(symbol: SymbolInfo, existingNames: Collection<Name>) {
