@@ -97,12 +97,14 @@ class InstallAllRequirementsQuickFix(requirements: List<Requirement>) : LocalQui
   }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val confirmedPackages = getConfirmedPackages(requirements.mapNotNull { it.element?.displayName })
-    requirements.filter { it.element?.displayName in confirmedPackages }
-      .mapNotNull { it.element }
-      .forEach {
-        InstallRequirementQuickFix.installPackage(project, descriptor, it)
-      }
+    fun Requirement.presentableName(): String {
+      return if (this is NameReq) this.displayName + (this.versionspec?.text ?: "") else this.displayName
+    }
+
+    val requirementElements =  requirements.mapNotNull { it.element }
+    val confirmedPackages = getConfirmedPackages(requirementElements.map(Requirement::presentableName), project)
+
+    InstallRequirementQuickFix.installPackages(project, descriptor, requirementElements.filter { it.presentableName() in confirmedPackages })
   }
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
@@ -153,12 +155,30 @@ class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickFix {
       val manager = PythonPackageManager.forSdk(project, sdk)
       val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
       val name = requirement.displayName
+      val specification = manager.repositoryManager.createSpecification(name, versionSpec) ?: return
 
       project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
-        val specification = manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch
         runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
-          manager.installPackage(specification, emptyList<String>())
+          manager.installPackage(specification, emptyList())
         }
+        DaemonCodeAnalyzer.getInstance(project).restart(file)
+      }
+    }
+
+    fun installPackages(project: Project, descriptor: ProblemDescriptor, requirements: List<Requirement>) {
+      val element = descriptor.psiElement
+      val file = descriptor.psiElement.containingFile ?: return
+      val sdk = ModuleUtilCore.findModuleForPsiElement(element)?.pythonSdk ?: return
+      val manager = PythonPackageManager.forSdk(project, sdk)
+
+      val specifications = requirements.mapNotNull { requirement ->
+        val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
+        val name = requirement.displayName
+        manager.repositoryManager.createSpecification(name, versionSpec)
+      }
+
+      project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
+        manager.installPackagesWithDialogOnError(specifications, emptyList())
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }
     }

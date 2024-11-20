@@ -11,15 +11,11 @@ import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Version
-import com.intellij.ui.components.dialog
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -99,8 +95,7 @@ object PyPackageInstallUtils {
   }
 }
 
-@Suppress("HardCodedStringLiteral")
-fun getConfirmedPackages(packageNames: List<String>): List<String> {
+fun getConfirmedPackages(packageNames: List<String>, project: Project): List<String> {
   val confirmationEnabled = PropertiesComponent.getInstance().getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
   if (!confirmationEnabled) {
     return packageNames
@@ -118,26 +113,11 @@ fun getConfirmedPackages(packageNames: List<String>): List<String> {
     return packageNames
   }
 
-  val packagesToInstall = ArrayList(packageNames)
-  val panel = panel {
-    packageNames.forEach {
-      row {
-        checkBox(it).bindSelected({ true }, { isSelected ->
-          if (isSelected)
-            packagesToInstall.add(it)
-          else
-            packagesToInstall.remove(it)
-        })
-      }
-    }
-  }
-
-  val dialog = dialog(PyBundle.message("python.packaging.dialog.title.install.package.confirmation"), panel, resizable = true)
-  dialog.contentPanel.preferredSize = JBUI.size(maxOf(dialog.contentPanel.preferredSize.width, 600), dialog.preferredSize.height)
+  val dialog = PyChooseRequirementsDialog(project, packageNames) { it }
 
   val isOk = dialog.showAndGet()
   if (!isOk) {
     return emptyList()
   }
-  return knownPackages + packagesToInstall
+  return knownPackages + dialog.markedElements
 }

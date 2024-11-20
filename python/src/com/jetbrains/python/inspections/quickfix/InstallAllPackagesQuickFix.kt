@@ -22,7 +22,7 @@ class InstallAllPackagesQuickFix : LocalQuickFix {
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
     val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
 
-    val confirmedPackages = getConfirmedPackages(packageNames)
+    val confirmedPackages = getConfirmedPackages(packageNames, project)
     if (confirmedPackages.isEmpty()) {
       return
     }

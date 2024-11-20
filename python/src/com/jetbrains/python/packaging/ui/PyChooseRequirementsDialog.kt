@@ -13,55 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.packaging.ui;
+package com.jetbrains.python.packaging.ui
 
-import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.components.JBLabel;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.packaging.PyRequirement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.util.ElementsChooser
+import com.intellij.ide.util.ElementsChooser.ElementsMarkListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.components.JBLabel
+import com.jetbrains.python.PyBundle
+import java.awt.BorderLayout
+import java.awt.Dimension
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
+class PyChooseRequirementsDialog<T : Any>(project: Project,
+                                          requirements: List<T>,
+                                          presenter: (T) -> String) : DialogWrapper(project, false) {
+  private val myRequirementsChooser: ElementsChooser<T>
 
-public class PyChooseRequirementsDialog extends DialogWrapper {
-  private final ElementsChooser<PyRequirement> myRequirementsChooser;
-
-  public PyChooseRequirementsDialog(@NotNull Project project, @NotNull List<PyRequirement> requirements) {
-    super(project, false);
-    setTitle(PyBundle.message("python.packaging.choose.packages.to.install"));
-    setOKButtonText(PyBundle.message("python.packaging.install"));
-    myRequirementsChooser = new ElementsChooser<>(true) {
-      @Override
-      public String getItemText(@NotNull PyRequirement requirement) {
-        return requirement.getPresentableText();
+  init {
+    title = PyBundle.message("python.packaging.choose.packages.to.install")
+    setOKButtonText(PyBundle.message("python.packaging.install"))
+    myRequirementsChooser = object : ElementsChooser<T>(true) {
+      public override fun getItemText(requirement: T): String {
+        @Suppress("HardCodedStringLiteral") // it's package name
+        return presenter(requirement)
       }
-    };
-    myRequirementsChooser.setElements(requirements, true);
-    myRequirementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
-      @Override
-      public void elementMarkChanged(PyRequirement element, boolean isMarked) {
-        setOKActionEnabled(!myRequirementsChooser.getMarkedElements().isEmpty());
+    }
+    myRequirementsChooser.setElements(requirements, true)
+    myRequirementsChooser.addElementsMarkListener(object : ElementsMarkListener<T> {
+      override fun elementMarkChanged(element: T, isMarked: Boolean) {
+        isOKActionEnabled = !myRequirementsChooser.getMarkedElements().isEmpty()
       }
-    });
-    init();
+    })
+    init()
   }
 
-  @Override
-  protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.setPreferredSize(new Dimension(400, 300));
-    final JBLabel label = new JBLabel(PyBundle.message("choose.packages.to.install"));
-    label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-    panel.add(label, BorderLayout.NORTH);
-    panel.add(myRequirementsChooser, BorderLayout.CENTER);
-    return panel;
+  override fun createCenterPanel(): JComponent? {
+    val panel = JPanel(BorderLayout())
+    panel.preferredSize = Dimension(400, 300)
+    val label = JBLabel(PyBundle.message("choose.packages.to.install"))
+    label.border = BorderFactory.createEmptyBorder(0, 0, 5, 0)
+    panel.add(label, BorderLayout.NORTH)
+    panel.add(myRequirementsChooser, BorderLayout.CENTER)
+    return panel
   }
 
-  public List<PyRequirement> getMarkedElements() {
-    return myRequirementsChooser.getMarkedElements();
-  }
+  val markedElements: List<T>
+    get() = myRequirementsChooser.markedElements
 }

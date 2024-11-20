@@ -417,7 +417,9 @@ public final class PyPackageRequirementsInspection extends PyInspection {
       }
       final List<PyRequirement> chosen;
       if (myUnsatisfied.size() > 1) {
-        final PyChooseRequirementsDialog dialog = new PyChooseRequirementsDialog(project, myUnsatisfied);
+        final PyChooseRequirementsDialog<PyRequirement> dialog = new PyChooseRequirementsDialog<>(project,
+                                                                                                  myUnsatisfied,
+                                                                                                  PyRequirement::getPresentableText);
         if (dialog.showAndGet()) {
           chosen = dialog.getMarkedElements();
         }

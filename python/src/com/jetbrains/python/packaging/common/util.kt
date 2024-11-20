@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.common
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -93,12 +94,14 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(
     if (!PythonPackageManagementServiceBridge.runningUnderOldUI) {
       // todo[akniazev] this check is used for legacy package management only, remove when it's not needed anymore
       withContext(Dispatchers.Main) {
-        if (packageName != null) {
-          PyPackagesUsageCollector.failInstallSingleEvent.log()
-          PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
-        }
-        else {
-          PackagesNotificationPanel.showError(title, description!!)
+        writeIntentReadAction {
+          if (packageName != null) {
+            PyPackagesUsageCollector.failInstallSingleEvent.log()
+            PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
+          }
+          else {
+            PackagesNotificationPanel.showError(title, description!!)
+          }
         }
       }
     }

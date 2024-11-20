@@ -9,11 +9,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.common.PackageManagerHolder
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,6 +20,22 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract var installedPackages: List<PythonPackage>
 
   abstract val repositoryManager: PythonRepositoryManager
+
+
+  /**
+   * Install all specified packages, stop on the first error
+   */
+  suspend fun installPackagesWithDialogOnError(packages: List<PythonPackageSpecification>, options: List<String>): Result<List<PythonPackage>> {
+    packages.forEach { specification ->
+      runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
+        installPackageCommand(specification, options)
+      }.onFailure {
+        return Result.failure(it)
+      }
+    }
+    refreshPaths()
+    return reloadPackages()
+  }
 
   suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
     installPackageCommand(specification, options).onFailure { return Result.failure(it) }
