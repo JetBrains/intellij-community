@@ -39,14 +39,16 @@ internal class StructureViewFloatingToolbar(
   }
 
   fun repaintOnYWithDy(y: Int, scrollingDy: Int) {
-    hideImmediately()
-    boundsWithoutScrolling = bounds
     boundsWithoutScrolling = Rectangle(0, y, minimumButtonSize.width, minimumButtonSize.height)
-    if (scrollingDy <= 0)
-      bounds = boundsWithoutScrolling!!
+    val newBounds = if (scrollingDy <= 0)
+      boundsWithoutScrolling!!
     else
-      setBounds(0, y - scrollingDy, minimumButtonSize.width, minimumButtonSize.height)
-    scheduleShow()
+      Rectangle(0, y - scrollingDy, minimumButtonSize.width, minimumButtonSize.height)
+    if (newBounds != bounds) {
+      hideImmediately()
+      bounds = newBounds
+      scheduleShow()
+    }
   }
 
   fun setScrollingDy(scrollingDy: Int) {

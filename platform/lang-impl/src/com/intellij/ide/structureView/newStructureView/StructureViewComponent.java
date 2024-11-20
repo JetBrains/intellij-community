@@ -300,6 +300,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   private void addTreeSelectionListener() {
+    if (Registry.is("logical.structure.actions.on.hover", false)) return;
     getTree().addTreeSelectionListener((TreeSelectionEvent e) -> {
       Optional.ofNullable(e.getPath())
         .map(path -> getTree().getPathBounds(path))
@@ -788,6 +789,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         .toList();
     });
     sink.lazy(LogicalStructureDataKeys.STRUCTURE_TREE_ELEMENT, () -> {
+      if (Registry.is("logical.structure.actions.on.hover", false)) {
+        return Optional.of(myTree)
+          .filter(tree -> tree instanceof MyTree)
+          .map(tree -> ((MyTree) tree).getLastHoveredPath())
+          .map(path -> path.getLastPathComponent())
+          .map(component -> {
+            return getStructureTreeElement(component);
+          })
+          .orElse(null);
+      }
       for (Object o : selection) {
         StructureViewTreeElement element = getStructureTreeElement(o);
         if (element != null) return element;
@@ -978,6 +989,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private final class MyTree extends DnDAwareTree implements PlaceProvider {
 
+    private volatile TreePath lastHoveredPath = null;
+
     MyTree(javax.swing.tree.TreeModel model) {
       super(model);
       ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_FILTER, node -> !isSmartExpand(node));
@@ -1000,6 +1013,26 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         }
       }
       super.processMouseEvent(event);
+    }
+
+    @Override
+    protected void processEvent(AWTEvent e) {
+      if (!Registry.is("logical.structure.actions.on.hover", false) || e.getID() != MouseEvent.MOUSE_MOVED) {
+        super.processEvent(e);
+        return;
+      }
+      if (e instanceof MouseEvent event) {
+        if (!(getContent() instanceof MyLayeredPane myLayeredPane)) return;
+        TreePath path = getPathForLocation(event.getX(), event.getY());
+        if (path == null) return;
+        Rectangle pathBounds = getPathBounds(path);
+        lastHoveredPath = path;
+        myLayeredPane.repaintFloatingToolbar(pathBounds.y);
+      }
+    }
+
+    public TreePath getLastHoveredPath() {
+      return lastHoveredPath;
     }
 
     private boolean processCustomEventHandler(StructureViewModel.ActionHandler actionHandler, MouseEvent event) {
