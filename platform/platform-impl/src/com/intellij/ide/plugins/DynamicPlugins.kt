@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.DynamicBundle.LanguageBundleEP
+import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -550,6 +551,7 @@ object DynamicPlugins {
 
           jdomSerializer.clearSerializationCaches()
           clearPropertyCollectorCache()
+          InspectionVisitorOptimizer.clearCache()
           TypeFactory.defaultInstance().clearCache()
           TopHitCache.getInstance().clear()
           ActionToolbarImpl.resetAllToolbars()
