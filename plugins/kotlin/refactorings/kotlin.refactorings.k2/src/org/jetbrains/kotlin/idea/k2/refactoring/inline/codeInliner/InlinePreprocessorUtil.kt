@@ -255,11 +255,12 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val isLocalInline =
             originalDeclaration is KtProperty && originalDeclaration.isLocal || originalDeclaration is KtFunction && originalDeclaration.isLocal
         if (!isLocalInline && (targetParent is KtFile ||
+                    target is KtConstructor<*> ||
                     (target as? KtCallableDeclaration)?.receiverTypeReference != null ||
                     target != null && isImportable(target))
         ) {
             val importableFqName =
-                (target as? KtNamedDeclaration)?.fqName ?: (target as? PsiMember)?.kotlinFqName ?: return@forEachDescendantOfType
+                (target as? KtConstructor<*>)?.containingClass()?.fqName ?: (target as? KtNamedDeclaration)?.fqName ?: (target as? PsiMember)?.kotlinFqName ?: return@forEachDescendantOfType
             val shortName = importableFqName.shortName()
             val ktFile = expression.containingKtFile
             val aliasName = if (shortName.asString() != expression.getReferencedName())
