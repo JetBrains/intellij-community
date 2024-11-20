@@ -143,6 +143,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     else if (element instanceof Action) {
       annotateAction((Action)element, holder);
     }
+    else if (element instanceof Reference) {
+      annotateReference((Reference)element, holder);
+    }
     else if (element instanceof Synonym) {
       annotateSynonym((Synonym)element, holder);
     }
@@ -1006,6 +1009,15 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     final GenericAttributeValue<String> iconAttribute = action.getIcon();
     if (DomUtil.hasXml(iconAttribute)) {
       annotateResolveProblems(holder, iconAttribute);
+    }
+  }
+
+  private static void annotateReference(Reference reference, DomElementAnnotationHolder holder) {
+    @SuppressWarnings("deprecation") GenericAttributeValue<ActionOrGroup> id = reference.getId();
+    if (id.exists()) {
+      highlightDeprecated(id,
+                          DevKitBundle.message("inspections.plugin.xml.reference.id.deprecated.use.ref"),
+                          holder, false, true);
     }
   }
 
