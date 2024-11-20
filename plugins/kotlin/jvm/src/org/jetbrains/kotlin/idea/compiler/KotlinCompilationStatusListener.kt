@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.config.CompilerRunnerConstants
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.js.JavaScript
 import java.io.PrintStream
 import java.io.PrintWriter
 
@@ -75,6 +74,6 @@ internal class KotlinCompilationStatusListener : CompilationStatusListener {
         // Comes from external make
         private const val PREFIX_WITH_COMPILER_NAME =
             CompilerRunnerConstants.KOTLIN_COMPILER_NAME + ": " + CompilerRunnerConstants.INTERNAL_ERROR_PREFIX
-        private val FILE_EXTS_WHICH_NEEDS_REFRESH = setOf(JavaScript.DOT_EXTENSION, ".map")
+        private val FILE_EXTS_WHICH_NEEDS_REFRESH = setOf(".js", ".map")
     }
 }

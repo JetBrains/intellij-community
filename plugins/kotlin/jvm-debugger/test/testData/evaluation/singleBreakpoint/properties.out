@@ -1,7 +1,7 @@
-LineBreakpoint created at properties.kt:50
+LineBreakpoint created at properties.kt:56
 Run Java
 Connected to the target VM
-properties.kt:50
+properties.kt:56
 Compile bytecode for A().p1
 Compile bytecode for A().p2
 Compile bytecode for A().p3
@@ -11,6 +11,8 @@ Compile bytecode for A().p6
 Compile bytecode for A().let { it.p7 = 7; it.p7 }
 Compile bytecode for A().let { it.p8 = 8; it.p8 }
 Compile bytecode for A().let { it.p9 = 9; it.p9 }
+Compile bytecode for A().p10
+Compile bytecode for A().p11
 Compile bytecode for A.op1
 Compile bytecode for A.op2
 Compile bytecode for A.op3

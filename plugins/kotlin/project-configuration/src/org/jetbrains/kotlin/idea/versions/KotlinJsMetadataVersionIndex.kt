@@ -11,7 +11,6 @@ import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.hints.BinaryFileTypePolicy
 import com.intellij.util.indexing.hints.FileNameExtensionInputFilter
 import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
-import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.utils.JsMetadataVersion
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadata
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
@@ -33,8 +32,8 @@ class KotlinJsMetadataVersionIndex internal constructor() : KotlinMetadataVersio
     override fun getLogger() = LOG
 
     override fun getInputFilter(): FileBasedIndex.InputFilter {
-        return when (val fileType = FileTypeManager.getInstance().findFileTypeByName(JavaScript.NAME)) {
-            null -> FileNameExtensionInputFilter(JavaScript.EXTENSION, ignoreCase = false, BinaryFileTypePolicy.NON_BINARY)
+        return when (val fileType = FileTypeManager.getInstance().findFileTypeByName("JS")) {
+            null -> FileNameExtensionInputFilter(extension = "js", ignoreCase = false, BinaryFileTypePolicy.NON_BINARY)
             else -> FileTypeInputFilterPredicate(fileType)
         }
     }

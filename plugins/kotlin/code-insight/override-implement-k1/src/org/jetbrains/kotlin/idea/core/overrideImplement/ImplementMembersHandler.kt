@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
-import org.jetbrains.kotlin.js.descriptorUtils.hasPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -35,6 +34,8 @@ open class ImplementMembersHandler : GenerateMembersHandler(true), IntentionActi
 
 class ImplementAsConstructorParameter : ImplementMembersHandler() {
     override fun getText() = KotlinIdeaCoreBundle.message("action.text.implement.as.constructor.parameters")
+
+    private fun ClassDescriptor.hasPrimaryConstructor(): Boolean = unsubstitutedPrimaryConstructor != null
 
     override fun isValidForClass(classOrObject: KtClassOrObject): Boolean {
         if (classOrObject !is KtClass || classOrObject is KtEnumEntry || classOrObject.isInterface()) return false

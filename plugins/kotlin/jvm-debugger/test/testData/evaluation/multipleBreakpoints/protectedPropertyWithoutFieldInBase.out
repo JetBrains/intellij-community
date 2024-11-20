@@ -1,0 +1,11 @@
+LineBreakpoint created at protectedPropertyWithoutFieldInBase.kt:8
+LineBreakpoint created at protectedPropertyWithoutFieldInBase.kt:16
+Run Java
+Connected to the target VM
+protectedPropertyWithoutFieldInBase.kt:8
+Compile bytecode for derived.megaProperty
+protectedPropertyWithoutFieldInBase.kt:16
+Compile bytecode for megaProperty
+Disconnected from the target VM
+
+Process finished with exit code 0
