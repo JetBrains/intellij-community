@@ -207,13 +207,6 @@ def test_get_info_format(setup_dataframe):
               pandas_tables_helpers.get_column_types(df)]
     actual = '\n'.join(actual)
 
-    print("GET INFO: START")
-    print()
-    pandas_tables_helpers.get_head(df)
-    print()
-    print("GET INFO: END")
-    print()
-
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
         expected_file='test_data/pandas/getInfo_result.txt'
