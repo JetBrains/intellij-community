@@ -16,9 +16,11 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.FocusUtil
+import com.intellij.util.ui.JBUI
 import java.awt.Font
 import javax.swing.JComponent
 
@@ -28,15 +30,15 @@ internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel 
   row {
     label(WelcomeScreenComponentFactory.getApplicationTitle()).applyToComponent {
       font = font.deriveFont(font.getSize() + scale(13).toFloat()).deriveFont(Font.BOLD)
-    }.customize(UnscaledGaps(top = 103, bottom = 17))
+    }.customize(UnscaledGaps(top = 105, bottom = 21))
       .align(AlignX.CENTER)
   }
   for (text in arrayOf(
     IdeBundle.message("welcome.screen.empty.projects.create.comment"),
     IdeBundle.message("welcome.screen.empty.projects.open.comment"))) {
     row {
-      comment(text).align(AlignX.CENTER).customize(UnscaledGaps(2))
-    }
+      text(text).align(AlignX.CENTER).customize(UnscaledGaps(0)).applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
+    }.customize(UnscaledGapsY(bottom = 7))
   }
   val (mainActions, moreActions) = createActionToolbars(disposable)
   panel {
