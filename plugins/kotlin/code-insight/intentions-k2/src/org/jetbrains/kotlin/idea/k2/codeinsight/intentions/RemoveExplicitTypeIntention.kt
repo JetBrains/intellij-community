@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.typeRefere
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RemoveExplicitTypeIntention :
@@ -120,7 +121,7 @@ internal class RemoveExplicitTypeIntention :
         // `val n: Int = 1` - type of `1` is context-independent
         // `val n: Long = 1` - type of `1` is context-dependent
         is KtConstantExpression -> {
-            val classId = initializer.getClassId()
+            val classId = initializer.inferClassIdByPsi()
             val let = classId?.let { buildClassType(it) }
             val superType = typeReference.type
             val subTypeOf = let?.isSubtypeOf(superType)

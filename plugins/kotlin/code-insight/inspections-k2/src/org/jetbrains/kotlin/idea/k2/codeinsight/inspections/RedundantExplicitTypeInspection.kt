@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeDeclarationTypeReference
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 
 internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.Simple<KtProperty, Unit>() {
 
@@ -39,7 +39,7 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
 
         when (initializer) {
             is KtConstantExpression -> {
-                val fqName = initializer.getClassId()?.asSingleFqName() ?: return false
+                val fqName = initializer.inferClassIdByPsi()?.asSingleFqName() ?: return false
                 val classType = type as? KaClassType ?: return false
                 val typeFqName = classType.symbol.classId?.asSingleFqName() ?: return false
                 if (typeFqName != fqName || type.isMarkedNullable) return false
