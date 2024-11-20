@@ -49,6 +49,7 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
@@ -160,8 +161,8 @@ public class GradleExecutionHelper {
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable BuildEnvironment buildEnvironment
   ) {
-    String buildRootDir = getBuildRoot(buildEnvironment);
-    GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
+    var buildRootDir = getBuildRoot(buildEnvironment);
+    var progressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(
       progressListener,
@@ -368,12 +369,12 @@ public class GradleExecutionHelper {
     return null;
   }
 
-  public static @Nullable String getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
+  public static @Nullable Path getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
     if (buildEnvironment == null) {
       return null;
     }
     BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
-    return buildIdentifier == null ? null : buildIdentifier.getRootDir().getPath();
+    return buildIdentifier == null ? null : buildIdentifier.getRootDir().toPath();
   }
 
   private static void setupEnvironment(
