@@ -94,6 +94,9 @@ import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+import kotlin.time.Duration;
+import kotlin.time.DurationKt;
+import kotlin.time.DurationUnit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -102,6 +105,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.time.Instant;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -126,10 +130,12 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
+  @ApiStatus.Internal
+  public static final Topic<PreviewListener> PREVIEW_EVENTS = Topic.create("Search everywhere preview events", PreviewListener.class);
 
   public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
 
-  static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
+  @ApiStatus.Internal public static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
@@ -155,6 +161,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private JComponent myExtendedInfoPanel;
   private @Nullable ExtendedInfoComponent myExtendedInfoComponent;
   private final SearchListener topicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(SEARCH_EVENTS);
+  private final PreviewListener myPreviewTopicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(PREVIEW_EVENTS);
 
   private UsagePreviewPanel myUsagePreviewPanel;
   private final List<Disposable> myUsagePreviewDisposableList = new ArrayList<>();
@@ -671,6 +678,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
             onFocusLost(e);
           }
         });
+
+        myPreviewTopicPublisher.onPreviewEditorCreated(SearchEverywhereUI.this, editor);
       }
     };
     Disposer.register(this, myUsagePreviewPanel);
@@ -1033,9 +1042,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     new Task.Backgroundable(myProject, IdeBundle.message("search.everywhere.preview.showing"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        final var start = System.nanoTime();
         UsageInfo usageInfo = ReadAction.compute(() -> {
           return findFirstChild();
         });
+        final var elapsed = System.nanoTime() - start;
+
+        myPreviewTopicPublisher.onPreviewDataReady(myProject, selectedValue, elapsed / 1_000_000);
 
         List<UsageInfo2UsageAdapter> usages = new ArrayList<>();
         if (usageInfo != null) {
