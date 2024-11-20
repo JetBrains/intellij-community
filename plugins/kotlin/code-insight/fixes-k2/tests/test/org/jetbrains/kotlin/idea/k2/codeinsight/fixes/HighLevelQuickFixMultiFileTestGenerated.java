@@ -1200,6 +1200,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/annotation.before.Main.kt");
         }
 
+        @TestMetadata("classUsage.before.Main.kt")
+        public void testClassUsage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/classUsage.before.Main.kt");
+        }
+
         @TestMetadata("noParenthesesAnnotation.before.Main.kt")
         public void testNoParenthesesAnnotation() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/noParenthesesAnnotation.before.Main.kt");

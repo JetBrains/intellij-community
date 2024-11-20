@@ -2102,6 +2102,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                     runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/annotation.before.Main.kt");
                 }
 
+                @TestMetadata("classUsage.before.Main.kt")
+                public void testClassUsage() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/classUsage.before.Main.kt");
+                }
+
                 @TestMetadata("noParenthesesAnnotation.before.Main.kt")
                 public void testNoParenthesesAnnotation() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/noParenthesesAnnotation.before.Main.kt");
