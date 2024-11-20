@@ -42,13 +42,13 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
 
   val isAvailable: Boolean get() = strategy != null
 
-  suspend fun enableForAllWslDistributions() {
+  fun enableForAllWslDistributions() {
     logErrorIfNotWindows()
     strategy?.enableForAllWslDistributions()
   }
 
   @TestOnly
-  suspend fun switchToIjentFs(distro: WSLDistribution) {
+  fun switchToIjentFs(distro: WSLDistribution) {
     logErrorIfNotWindows()
     strategy ?: error("Not available")
     strategy.switchToIjentFs(distro)
