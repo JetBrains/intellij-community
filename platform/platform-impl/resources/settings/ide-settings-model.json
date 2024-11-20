@@ -170,70 +170,6 @@
       ]
     },
     {
-      "name": "DlvSettings",
-      "scope": "app",
-      "pluginId": "org.jetbrains.plugins.go",
-      "classFqn": "com.goide.dlv.DlvSettings",
-      "storage": "dlv.xml",
-      "properties": [
-        {
-          "name": "rebuildTransitivePackages",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "stacktraceDepth",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "integerFormat",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "goroutinesLimit",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "showTypes",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "showPointerAddresses",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "useCustomDelveSettings",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "maxStructFields",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "maxStringLen",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "maxStringLenInCall",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "maxArrayValues",
-          "type": "Integer",
-          "javaType": "int"
-        }
-      ]
-    },
-    {
       "name": "GoFoldingSettings",
       "scope": "app",
       "pluginId": "org.jetbrains.plugins.go",
@@ -1505,6 +1441,29 @@
           "name": "disable-grid-floating-toolbar",
           "type": "Boolean",
           "javaType": "boolean"
+        },
+        {
+          "name": "paging-display-mode",
+          "type": "Enum",
+          "javaType": "com.intellij.database.settings.DataGridSettings$PagingDisplayMode",
+          "variants": [
+            {
+              "value": "data_editor_toolbar",
+              "mapTo": "DATA_EDITOR_TOOLBAR"
+            },
+            {
+              "value": "grid_center_floating",
+              "mapTo": "GRID_CENTER_FLOATING"
+            },
+            {
+              "value": "grid_left_floating",
+              "mapTo": "GRID_LEFT_FLOATING"
+            },
+            {
+              "value": "grid_right_floating",
+              "mapTo": "GRID_RIGHT_FLOATING"
+            }
+          ]
         },
         {
           "name": "enable-immediate-completion-in-grid-cells",
@@ -4206,6 +4165,13 @@
       "storage": "other.xml"
     },
     {
+      "name": "ShownTips",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.ide.util.TipsUsageManager",
+      "storage": "other.xml"
+    },
+    {
       "name": "SelectProjectTemplateSettings",
       "scope": "app",
       "pluginId": "com.intellij.java",
@@ -4758,6 +4724,21 @@
           "javaType": "java.lang.String"
         },
         {
+          "name": "logEditorUpdateDebounce",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "maxCacheLogSize",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "maxPresentableInEditorLogSize",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
           "name": "namespaces",
           "type": "StringList",
           "javaType": "java.util.List"
@@ -5037,15 +5018,8 @@
       "name": "AipLicense",
       "scope": "app",
       "pluginId": "com.intellij.ml.llm",
-      "classFqn": "com.intellij.ml.llm.aiaState.data.AipLicenseStorage",
-      "storage": "other.xml",
-      "properties": [
-        {
-          "name": "licenseId",
-          "type": "String",
-          "javaType": "java.lang.String"
-        }
-      ]
+      "classFqn": "com.intellij.ml.llm.aiaState.data.AipLicensePreferencesRepositoryImpl",
+      "storage": "other.xml"
     },
     {
       "name": "AINaturalLanguagePromotionState",
@@ -5068,20 +5042,6 @@
           "name": "wasChatNaturalLanguageAutomaticallyChanged",
           "type": "Boolean",
           "javaType": "boolean"
-        }
-      ]
-    },
-    {
-      "name": "AICodeGenerationPromoState",
-      "scope": "app",
-      "pluginId": "com.intellij.ml.llm",
-      "classFqn": "com.intellij.ml.llm.core.codeGeneration.promo.AICodeGenerationPromoState",
-      "storage": "llm.code.generation.xml",
-      "properties": [
-        {
-          "name": "generationStartedCnt",
-          "type": "Integer",
-          "javaType": "int"
         }
       ]
     },
@@ -5115,6 +5075,124 @@
               "mapTo": "PRO"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "LLMThirdPartyAIProvidersSettings",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.llm",
+      "classFqn": "com.intellij.ml.llm.core.providers.ThirdPartyAIProvidersSettingsManager",
+      "storage": "llm.third.party.ai.providers.xml",
+      "properties": [
+        {
+          "name": "enabledThirdPartyAIProviders",
+          "type": "StringSet",
+          "javaType": "java.util.Set"
+        }
+      ]
+    },
+    {
+      "name": "LLMSettings",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.llm",
+      "classFqn": "com.intellij.ml.llm.core.settings.LLMSettingsManager",
+      "storage": "llm.for.code.xml",
+      "properties": [
+        {
+          "name": "chat_natural_language",
+          "type": "Unsupported",
+          "javaType": "com.intellij.ml.llm.privacy.PSString"
+        },
+        {
+          "name": "chat_natural_language_selection",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "chat_preferred_llm",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "inline_completion_fallback",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "data_sharing",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "data_sharing_v2_initialized",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "database_context",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "file_commit_generate_summary",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "commit_generate_summary",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "inline_completion_extension_filter",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "inline_completion",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "name_suggestions",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "paste_convert",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "selection_commit_summary_enabled",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "semantic_search",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "shelve_title_generation",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "smart_chat",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "toolwindow_font_scale",
+          "type": "Unsupported",
+          "javaType": "float"
+        },
+        {
+          "name": "update_commit_generate_summary",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },
@@ -5168,21 +5246,30 @@
       ]
     },
     {
-      "name": "LlmProviderOllamaSettings",
+      "name": "AICodeGenerationPromoState",
       "scope": "app",
       "pluginId": "com.intellij.ml.llm",
-      "classFqn": "com.intellij.ml.llm.provider.ollama.settings.OllamaSettingsManager",
-      "storage": "llm.provider.ollama.xml",
+      "classFqn": "com.intellij.ml.llm.inlinePromptDetector.promo.AICodeGenerationPromoState",
+      "storage": "llm.code.generation.xml",
       "properties": [
         {
-          "name": "baseUrl",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
+          "name": "generationStartedCnt",
+          "type": "Integer",
+          "javaType": "int"
+        }
+      ]
+    },
+    {
+      "name": "NotebookSettings",
+      "scope": "app",
+      "pluginId": "com.intellij.notebooks.core",
+      "classFqn": "com.intellij.notebooks.visualization.settings.NotebookSettings",
+      "storage": "notebook-settings.xml",
+      "properties": [
         {
-          "name": "providerEnabled",
-          "type": "Boolean",
-          "javaType": "boolean"
+          "name": "outputMaxHeightInEditorLines",
+          "type": "Integer",
+          "javaType": "int"
         }
       ]
     },
@@ -5942,6 +6029,20 @@
       ]
     },
     {
+      "name": "JdkInstallerHistory",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore",
+      "storage": "other.xml",
+      "properties": [
+        {
+          "name": "installedItems",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        }
+      ]
+    },
+    {
       "name": "ProjectStructureProblems",
       "scope": "app",
       "pluginId": "com.intellij.java",
@@ -6359,6 +6460,11 @@
       "classFqn": "com.intellij.plugins.watcher.model.ApplicationTasksOptions",
       "storage": "watcherDefaultTasks.xml",
       "properties": [
+        {
+          "name": "attributes",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        },
         {
           "name": "name",
           "type": "String",
@@ -7597,13 +7703,6 @@
           "javaType": "java.lang.String"
         }
       ]
-    },
-    {
-      "name": "ToolWindowLayout",
-      "scope": "app",
-      "pluginId": "com.intellij",
-      "classFqn": "com.intellij.toolWindow.ToolWindowDefaultLayoutManager",
-      "storage": "window.layouts.xml"
     },
     {
       "name": "tracing",
@@ -9251,10 +9350,6 @@
               "mapTo": "PLAIN"
             },
             {
-              "value": "epytext",
-              "mapTo": "EPYTEXT"
-            },
-            {
               "value": "rest",
               "mapTo": "REST"
             },
@@ -9396,6 +9491,25 @@
       ]
     },
     {
+      "name": "PyPackageRepositories",
+      "scope": "app",
+      "pluginId": "PythonCore",
+      "classFqn": "com.jetbrains.python.packaging.repository.PyPackageRepositories",
+      "storage": "python-repositories.xml",
+      "properties": [
+        {
+          "name": "repositories",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        },
+        {
+          "name": "invalidRepositories",
+          "type": "Unsupported",
+          "javaType": "java.util.Set"
+        }
+      ]
+    },
+    {
       "name": "PySdkSettings",
       "scope": "app",
       "pluginId": "PythonCore",
@@ -9423,6 +9537,20 @@
         {
           "name": "preferred_virtualenv_base_sdk",
           "mapTo": "PREFERRED_VIRTUALENV_BASE_SDK",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PythonJobSurveyService",
+      "scope": "app",
+      "pluginId": "PythonCore",
+      "classFqn": "com.jetbrains.python.statistics.feedback.PythonJobSurveyService",
+      "storage": "pycharm-job-survey-service.xml",
+      "properties": [
+        {
+          "name": "firstLaunch",
           "type": "String",
           "javaType": "java.lang.String"
         }
@@ -9893,6 +10021,30 @@
       ]
     },
     {
+      "name": "ExplicitFeedbackState",
+      "scope": "app",
+      "pluginId": "org.jetbrains.completion.full.line",
+      "classFqn": "org.jetbrains.completion.full.line.feedback.ExplicitFeedbackStateComponent",
+      "storage": "full.line.feedback.xml",
+      "properties": [
+        {
+          "name": "languageToSessions",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        },
+        {
+          "name": "isNotificationShown",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "acceptedCompletionsCnt",
+          "type": "Integer",
+          "javaType": "int"
+        }
+      ]
+    },
+    {
       "name": "DownloadModelConsentState",
       "scope": "app",
       "pluginId": "org.jetbrains.completion.full.line",
@@ -10056,6 +10208,39 @@
           "name": "text",
           "type": "String",
           "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "IdeaDecompilerSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.java.decompiler",
+      "classFqn": "org.jetbrains.java.decompiler.IdeaDecompilerSettings",
+      "storage": "other.xml",
+      "properties": [
+        {
+          "name": "options",
+          "type": "StringMap",
+          "javaType": "java.util.Map"
+        },
+        {
+          "name": "preset",
+          "type": "Enum",
+          "javaType": "org.jetbrains.java.decompiler.DecompilerPreset",
+          "variants": [
+            {
+              "value": "high",
+              "mapTo": "HIGH"
+            },
+            {
+              "value": "medium",
+              "mapTo": "MEDIUM"
+            },
+            {
+              "value": "low",
+              "mapTo": "LOW"
+            }
+          ]
         }
       ]
     },
@@ -11104,11 +11289,6 @@
       "storage": "$CACHE_FILE$",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -11278,11 +11458,6 @@
       "storage": "ruby-debugger-type-renderers-settings.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -11379,6 +11554,34 @@
           "name": "myHistoryFileInfoList",
           "type": "Unsupported",
           "javaType": "java.util.List"
+        }
+      ]
+    },
+    {
+      "name": "BlockTerminalOptions",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.terminal",
+      "classFqn": "org.jetbrains.plugins.terminal.block.BlockTerminalOptions",
+      "storage": "terminal.xml",
+      "properties": [
+        {
+          "name": "promptStyle",
+          "type": "Enum",
+          "javaType": "org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle",
+          "variants": [
+            {
+              "value": "single_line",
+              "mapTo": "SINGLE_LINE"
+            },
+            {
+              "value": "double_line",
+              "mapTo": "DOUBLE_LINE"
+            },
+            {
+              "value": "shell",
+              "mapTo": "SHELL"
+            }
+          ]
         }
       ]
     },
