@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal fun KaSession.buildOptimizedImports(
@@ -174,9 +175,16 @@ internal class OptimizedImportsBuilder(
                     val alternativeSymbols = alternativeUsedReference?.run { resolveToReferencedSymbols() }.orEmpty()
 
                     if (!areTargetsEqual(originalSymbols, alternativeSymbols)) {
-                        val conflictingSymbols = originalSymbols + alternativeSymbols
+                        val isTypePosition = originalReference.element.parent is KtUserType
 
-                        for (conflictingSymbol in conflictingSymbols) {
+                        val symbolsToLock = if (isTypePosition) {
+                            originalSymbols
+                        } else {
+                            // TODO this can still lead to incorrect optimizations, see KTIJ-32231
+                            originalSymbols + alternativeSymbols
+                        }
+
+                        for (conflictingSymbol in symbolsToLock) {
                             lockImportForSymbol(conflictingSymbol.run { toSymbolInfo() }, names)
                         }
                     }
