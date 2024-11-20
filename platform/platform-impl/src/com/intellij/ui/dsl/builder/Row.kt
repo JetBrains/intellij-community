@@ -109,7 +109,7 @@ interface Row {
   fun resizableRow(): Row
 
   /**
-   * Adds comment after the row with the appropriate color and font size (macOS and Linux use smaller font).
+   * Adds comment after the row with the appropriate color and font size.
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in HTML, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
@@ -249,7 +249,7 @@ interface Row {
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
-   * Adds comment with the appropriate color and font size (macOS and Linux use smaller font).
+   * Adds comment with the appropriate color and font size.
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
