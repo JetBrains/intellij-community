@@ -25,7 +25,7 @@ import java.nio.file.Path
 
 @Internal
 abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
-  protected lateinit var basePythonComboBox: PythonInterpreterComboBox
+  internal lateinit var basePythonComboBox: PythonInterpreterComboBox
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
