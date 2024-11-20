@@ -35,7 +35,7 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
   /**
    * Flow emits project file name only when project path is valid
    */
-  val projectName: Flow<@NlsSafe String> = projectPath.filterNotNull().map { it.name }
+  val projectName: Flow<@NlsSafe String> = projectPath.filterNotNull().map { it.name.replace(" ", "_") }
 
 
   companion object {
@@ -71,7 +71,7 @@ class ProjectPathFlows private constructor(val projectPath: Flow<Path?>) {
         return Result.Failure(PyBundle.message("python.sdk.new.error.no.absolute"))
       }
 
-      for (validator in arrayOf(CHECK_NON_EMPTY, CHECK_NO_WHITESPACES, CHECK_NO_RESERVED_WORDS)) {
+      for (validator in arrayOf(CHECK_NON_EMPTY, CHECK_NO_RESERVED_WORDS)) {
         validator.curry { pathAsString }.validate()?.let {
           return Result.Failure(it.message)
         }
