@@ -31,20 +31,24 @@ import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class FormsBindingManager extends FormsBuilder {
+public final class FormsBindingManager extends ModuleLevelBuilder {
+  private static final String FORM_EXTENSION = "form";
+  private static final FileFilter FORM_SOURCES_FILTER = FileFilters.withExtension(FORM_EXTENSION);
+  private static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension("java");
   private static final @NlsSafe String BUILDER_NAME = "form-bindings";
   private static final String JAVA_EXTENSION = ".java";
   private static final Key<Boolean> FORCE_FORMS_REBUILD_FLAG = Key.create("_forms_rebuild_flag_");
   private static final Key<Boolean> FORMS_REBUILD_FORCED = Key.create("_forms_rebuild_forced_flag_");
 
   public FormsBindingManager() {
-    super(BuilderCategory.SOURCE_PROCESSOR, BUILDER_NAME);
+    super(BuilderCategory.SOURCE_PROCESSOR);
   }
 
   @Override
@@ -72,6 +76,12 @@ public final class FormsBindingManager extends FormsBuilder {
         FileUtil.delete(marker);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return BUILDER_NAME;
   }
 
   @NotNull
@@ -137,7 +147,7 @@ public final class FormsBindingManager extends FormsBuilder {
           for (File boundSource : sources) {
             if (!excludes.isExcluded(boundSource)) {
               isFormBound = true;
-              addBinding(boundSource, form, srcToForms);
+              FormBindings.addBinding(boundSource, form, srcToForms);
               holderBuilder.markDirtyFile(target, boundSource);
               context.getScope().markIndirectlyAffected(target, boundSource);
               filesToCompile.put(boundSource, target);
@@ -170,7 +180,7 @@ public final class FormsBindingManager extends FormsBuilder {
         for (String formPath : boundForms) {
           File formFile = new File(formPath);
           if (!excludes.isExcluded(formFile) && formFile.exists()) {
-            addBinding(srcFile, formFile, srcToForms);
+            FormBindings.addBinding(srcFile, formFile, srcToForms);
             holderBuilder.markDirtyFile(target, formFile);
 
             context.getScope().markIndirectlyAffected(target, formFile);
@@ -183,7 +193,7 @@ public final class FormsBindingManager extends FormsBuilder {
       BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holderBuilder.create());
     }
 
-    FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
+    FormBindings.setFormsToCompile(context, srcToForms);
 
     if (config.isCopyFormsRuntimeToOutput() && containsValidForm(formsToCompile.keySet())) {
       for (ModuleBuildTarget target : chunk.getTargets()) {
