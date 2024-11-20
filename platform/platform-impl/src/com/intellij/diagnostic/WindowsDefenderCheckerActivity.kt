@@ -44,19 +44,19 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
         WindowsDefenderStatisticsCollector.configured(project, success)
 
-        //otherwise notification will be sent after project opening
+        // otherwise, the notification will be shown on project opening
         if (project != null) {
           notify(project, success)
         }
       }
     }
 
-    private fun notify(project: Project, success: Boolean?) {
+    private fun notify(project: Project, success: Boolean) {
       if (success == true) {
         Notification("WindowsDefender", DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
           .notify(project)
       }
-      else if ( success == false){
+      else {
         Notification("WindowsDefender", DiagnosticBundle.message("defender.config.failed"), NotificationType.ERROR)
           .addAction(ShowLogAction.notificationAction())
           .notify(project)
@@ -73,10 +73,17 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
-    val alreadyProcessed = checker.isAlreadyProcessed(project) { success: Boolean? -> notify(project, success) }
-    if (checker.isStatusCheckIgnored(project) || alreadyProcessed) {
+
+    if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
+      return
+    }
+
+    val alreadyProcessed = checker.isAlreadyProcessed(project)
+    if (alreadyProcessed != null) {
+      notify(project, success = alreadyProcessed)
+      LOG.info("requested from the \"trust project\" dialog; success=${alreadyProcessed}")
       return
     }
 
