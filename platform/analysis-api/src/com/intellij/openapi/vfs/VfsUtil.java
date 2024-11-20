@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -213,20 +213,10 @@ public final class VfsUtil extends VfsUtilCore {
     return findFileByIoFile(new File(virtualToIoFile(directory), name), true);
   }
 
-  /**
-   * @return correct URL; must be used only for external communication
-   */
+  /** @deprecated use {@code file.toPath().toUri()} instead */
+  @Deprecated(forRemoval = true)
   public static @NotNull URI toUri(@NotNull File file) {
-    String path = file.toURI().getPath();
-    try {
-      if (SystemInfo.isWindows && path.charAt(0) != '/') {
-        path = '/' + path;
-      }
-      return new URI(StandardFileSystems.FILE_PROTOCOL, "", path, null, null);
-    }
-    catch (URISyntaxException e) {
-      throw new IllegalArgumentException(e);
-    }
+    return file.toPath().toUri();
   }
 
   /**

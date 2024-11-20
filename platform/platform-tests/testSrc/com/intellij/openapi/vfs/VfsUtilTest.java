@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -154,11 +154,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testToUri() {
-    if (!SystemInfo.isWindows) {
-      assertEquals("file:///asd", VfsUtil.toUri(new File("/asd")).toASCIIString());
-      assertEquals("file:///asd%20/sd", VfsUtil.toUri(new File("/asd /sd")).toASCIIString());
-    }
-
     URI uri = VfsUtil.toUri("file:///asd");
     assertNotNull(uri);
     assertEquals("file", uri.getScheme());
