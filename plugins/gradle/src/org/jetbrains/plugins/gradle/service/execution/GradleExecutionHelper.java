@@ -30,8 +30,6 @@ import org.gradle.api.logging.LogLevel;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
-import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.*;
@@ -197,28 +195,23 @@ public class GradleExecutionHelper {
     @NotNull GradleExecutionSettings settings,
     @Nullable BuildEnvironment buildEnvironment
   ) {
-    List<String> jvmArgs = settings.getJvmArguments();
-    if (!jvmArgs.isEmpty()) {
-      // merge gradle args e.g. defined in gradle.properties
-      Collection<String> merged;
-      if (buildEnvironment != null) {
-        // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
-        // to avoid spawning of the second gradle daemon
-        BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
-        List<String> buildJvmArguments = buildIdentifier == null || "buildSrc".equals(buildIdentifier.getRootDir().getName())
-                                         ? ContainerUtil.emptyList()
-                                         : buildEnvironment.getJava().getJvmArguments();
-        merged = mergeBuildJvmArguments(buildJvmArguments, jvmArgs);
-      }
-      else {
-        merged = jvmArgs;
-      }
+    var jvmArgs = ContainerUtil.filter(settings.getJvmArguments(), it -> !StringUtil.isEmpty(it));
 
-      // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(merged, s -> StringUtil.isEmpty(s) ? null : s);
-
-      operation.setJvmArguments(ArrayUtilRt.toStringArray(filteredArgs));
+    if (jvmArgs.isEmpty()) {
+      return;
     }
+
+    var buildEnvironmentRoot = getBuildRoot(buildEnvironment);
+    var buildEnvironmentJvmArgs = getJvmArgs(buildEnvironment);
+
+    // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
+    // to avoid spawning of the second Gradle daemon
+    if (buildEnvironmentRoot != null && !"buildSrc".equals(buildEnvironmentRoot.getFileName().toString())) {
+      // merge gradle args e.g. defined in gradle.properties
+      jvmArgs = mergeBuildJvmArguments(buildEnvironmentJvmArgs, jvmArgs);
+    }
+
+    operation.setJvmArguments(ArrayUtilRt.toStringArray(jvmArgs));
   }
 
   private static void setupJavaHome(
@@ -360,22 +353,19 @@ public class GradleExecutionHelper {
     }
   }
 
-  @Nullable
-  private static BuildIdentifier getBuildIdentifier(@NotNull BuildEnvironment buildEnvironment) {
-    try {
-      return buildEnvironment.getBuildIdentifier();
-    }
-    catch (UnsupportedMethodException ignore) {
-    }
-    return null;
-  }
-
   public static @Nullable Path getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
     if (buildEnvironment == null) {
       return null;
     }
-    BuildIdentifier buildIdentifier = getBuildIdentifier(buildEnvironment);
-    return buildIdentifier == null ? null : buildIdentifier.getRootDir().toPath();
+    return buildEnvironment.getBuildIdentifier().getRootDir().toPath();
+  }
+
+  private static @NotNull List<String> getJvmArgs(@Nullable BuildEnvironment buildEnvironment) {
+    if (buildEnvironment == null) {
+      return Collections.emptyList();
+    }
+    var jvmArgs = buildEnvironment.getJava().getJvmArguments();
+    return ContainerUtil.filter(jvmArgs, it -> !StringUtil.isEmpty(it));
   }
 
   private static void setupEnvironment(
