@@ -97,9 +97,6 @@
     <applicationService serviceInterface="com.intellij.injected.editor.InjectionEditService"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.InjectionEditServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
-                        serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
-
     <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.ProjectFileBasedIndexStartupActivity" order="first"
                                          id="projectIndexStartup"/>
     <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.DumbModeWhileScanningSubscriber"/>
