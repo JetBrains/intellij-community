@@ -545,7 +545,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     // skip some known offenders in IJ project
     if (name != null
         && (StringUtil.startsWith(name, "Pythonid.") ||
-            StringUtil.startsWith(name, "DevKit."))) {
+            StringUtil.startsWith(name, "DevKit.") ||
+            StringUtil.startsWith(name, "Git4Idea."))) {
       if (IntelliJProjectUtil.isIntelliJPlatformProject(nameAttrValue.getManager().getProject())) {
         return true;
       }
