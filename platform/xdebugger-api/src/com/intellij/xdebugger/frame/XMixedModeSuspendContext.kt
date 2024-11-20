@@ -17,19 +17,10 @@ class XMixedModeSuspendContext(
   val coroutineScope: CoroutineScope,
 ) : XSuspendContext() {
 
-  override fun getActiveExecutionStack(): XExecutionStack? {
-    val lowLevelExecutionStack = lowLevelDebugSuspendContext.activeExecutionStack
-    if (lowLevelExecutionStack == null) {
-      // If we don't have a low-level execution stack, we are not supposed to show any frames
-      return null
-    }
+  private val activeExecutionStack by lazy { createActiveExecutionStack() }
 
-    return XMixedModeExecutionStack(
-      session,
-      lowLevelExecutionStack,
-      highLevelDebugSuspendContext.activeExecutionStack,
-      highLevelDebugProcess.getFramesMatcher(),
-      coroutineScope)
+  override fun getActiveExecutionStack(): XExecutionStack? {
+    return activeExecutionStack
   }
 
   override fun getExecutionStacks(): Array<out XExecutionStack?> {
@@ -49,6 +40,7 @@ class XMixedModeSuspendContext(
       val threadIdToHighLevelStackMap = highLevelStacks.associateBy { (it as XExecutionStackWithNativeThreadId).getNativeThreadId() }
 
       val combinedContainer = MyMixedModeCombinedContainer(
+        activeExecutionStack,
         session,
         threadIdToHighLevelStackMap,
         container,
@@ -57,6 +49,21 @@ class XMixedModeSuspendContext(
 
       lowLevelDebugSuspendContext.computeExecutionStacks(combinedContainer)
     }
+  }
+
+  private fun createActiveExecutionStack(): XMixedModeExecutionStack? {
+    val lowLevelExecutionStack = lowLevelDebugSuspendContext.activeExecutionStack
+    if (lowLevelExecutionStack == null) {
+      // If we don't have a low-level execution stack, we are not supposed to show any frames
+      return null
+    }
+
+    return XMixedModeExecutionStack(
+      session,
+      lowLevelExecutionStack,
+      highLevelDebugSuspendContext.activeExecutionStack,
+      highLevelDebugProcess.getFramesMatcher(),
+      coroutineScope)
   }
 
   private class MyAccumulatingContainer : XExecutionStackContainer {
@@ -75,6 +82,7 @@ class XMixedModeSuspendContext(
   }
 
   private class MyMixedModeCombinedContainer(
+    private val activeExecutionStack: XMixedModeExecutionStack?,
     val session: XDebugSession,
     val highLevelExecutionStacks: Map<Long, XExecutionStack>,
     val resultContainer: XExecutionStackContainer,
@@ -84,8 +92,13 @@ class XMixedModeSuspendContext(
     override fun addExecutionStack(executionStacks: List<XExecutionStack?>, last: Boolean) {
       val mixedStacks = executionStacks.filterNotNull().map {
         if (it !is XExecutionStackWithNativeThreadId) error("Expected XExecutionStackWithNativeThreadId")
-        val correspondedHighLevelStack = highLevelExecutionStacks[it.getNativeThreadId()]
-        XMixedModeExecutionStack(session, it, correspondedHighLevelStack, mixedModeFramesMatcher, coroutineScope)
+        if (activeExecutionStack?.lowLevelExecutionStack == it) {
+          activeExecutionStack
+        }
+        else {
+          val correspondedHighLevelStack = highLevelExecutionStacks[it.getNativeThreadId()]
+          XMixedModeExecutionStack(session, it, correspondedHighLevelStack, mixedModeFramesMatcher, coroutineScope)
+        }
       }
 
       resultContainer.addExecutionStack(mixedStacks, last)
