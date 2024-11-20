@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 @ApiStatus.Experimental
@@ -16,6 +17,7 @@ abstract class CompletionCommand {
   }
 
   abstract val name: String
+  abstract val i18nName: @Nls String
   abstract val icon: Icon?
   open val priority: Int? = null
   abstract fun isApplicable(offset: Int, psiFile: PsiFile): Boolean

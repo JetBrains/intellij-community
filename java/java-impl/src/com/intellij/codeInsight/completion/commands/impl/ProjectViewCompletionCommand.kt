@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.ide.actions.ActivateToolWindowAction.Manager
+import com.intellij.java.JavaBundle
 
 class ProjectViewCompletionCommand : AbstractActionCompletionCommand(Manager.getActionIdForToolWindow("Project"),
-                                                                     "Project tree",
+                                                                     "Project tool",
+                                                                     JavaBundle.message("command.completion.project.tool.text"),
                                                                      null,
                                                                      -150)

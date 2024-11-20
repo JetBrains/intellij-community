@@ -4,16 +4,21 @@ package com.intellij.codeInsight.completion.commands.impl
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.icons.AllIcons
+import com.intellij.idea.ActionsBundle
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.util.parents
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 class FormatCodeCompletionCommand : CompletionCommand() {
   override val name: String
     get() = "format"
+
+  override val i18nName: @Nls String
+    get() = ActionsBundle.message("action.ReformatCode.text")
 
   override val icon: Icon
     get() = AllIcons.Actions.ReformatCode // Use the reformat icon

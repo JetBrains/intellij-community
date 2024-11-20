@@ -3,17 +3,22 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
 import com.intellij.icons.AllIcons
+import com.intellij.java.JavaBundle
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 class InlineVariableCompletionCommand : OldCompletionCommand() {
   override val name: String
     get() = "inline"
+
+  override val i18nName: @Nls String
+    get() = JavaBundle.message("command.completion.inline.text")
 
   override val icon: Icon
     get() = AllIcons.Actions.RefactoringBulb // Use an appropriate icon from IntelliJ's icon set

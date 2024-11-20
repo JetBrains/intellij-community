@@ -90,7 +90,10 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                           parameters.offset,
                           parameters.originalFile) { commands ->
       withPrefixMatcher.addAllElements(commands.map { command ->
+        val i18nName = command.i18nName.replace("_", "").replace("...", "")
+        val tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " ($i18nName)"
         var element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name)
+                                                                      .withTypeText(tailText)
                                                                       .withIcon(command.icon ?: Lightning)
                                                                       .withInsertHandler(CommandInsertHandler(command))
                                                                       .withBoldness(true),

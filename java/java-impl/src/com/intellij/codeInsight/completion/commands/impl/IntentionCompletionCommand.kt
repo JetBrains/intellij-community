@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.core.CommandCompletionService
 import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
+import com.intellij.codeInsight.completion.commands.core.CommandCompletionService
 import com.intellij.codeInsight.completion.commands.core.PREVIOUS_HIGHLIGHT_CACHED_CONTAINER_INFO_CONTAINER_KEY
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.daemon.impl.quickfix.ExpensivePsiIntentionAction
@@ -16,6 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 class IntentionCompletionCommand(
@@ -26,6 +27,9 @@ class IntentionCompletionCommand(
 ) : OldCompletionCommand() {
 
   override val name: String
+    get() = intentionAction.text
+
+  override val i18nName: @Nls String
     get() = intentionAction.text
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {

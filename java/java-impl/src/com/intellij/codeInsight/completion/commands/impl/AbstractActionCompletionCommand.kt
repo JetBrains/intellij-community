@@ -11,11 +11,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 abstract class AbstractActionCompletionCommand(
   var actionId: String,
   override val name: String,
+  override val i18nName: @Nls String,
   override val icon: Icon?,
   override val priority: Int? = null
 ) : OldCompletionCommand() {
