@@ -15,7 +15,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-/** Starts the IJent if a project on WSL is opened. */
+/**
+ * Starts the IJent if a project on WSL is opened.
+ *
+ * At the moment of writing this string,
+ * this class was just an optimization handler that speeds up sometimes the first request to the IJent.
+ * It was not necessary for running the IDE.
+ *
+ * See also [IjentWslFileSystemApplicationActivity].
+ */
 internal class IjentInProjectStarter : ProjectActivity {
   override suspend fun execute(project: Project): Unit = coroutineScope {
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
@@ -25,10 +33,6 @@ internal class IjentInProjectStarter : ProjectActivity {
     val ijentWslNioFsToggler = IjentWslNioFsToggler.instanceAsync()
     if (!ijentWslNioFsToggler.isAvailable) {
       return@coroutineScope
-    }
-
-    launch {
-      ijentWslNioFsToggler.enableForAllWslDistributions()
     }
 
     val allWslDistributions = async(Dispatchers.IO) {
