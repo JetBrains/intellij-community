@@ -105,17 +105,22 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
 
+    val uri = VfsUtil.toUri(signedUrl)
+    if (uri == null) {
+      showError(IdeBundle.message("error.malformed.url", signedUrl), project)
+      return
+    }
+    if (uri.scheme.equals(StandardFileSystems.FILE_PROTOCOL, ignoreCase = true) && uri.host != null) {
+      showError(IdeBundle.message("error.unc.not.supported", signedUrl), project)
+      return
+    }
+
     val settings = generalSettings
     if (settings.useDefaultBrowser) {
       if (!canBrowse(project, signedUrl)) {
         return
       }
       if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
-        val uri = VfsUtil.toUri(signedUrl)
-        if (uri == null) {
-          showError(IdeBundle.message("error.malformed.url", signedUrl), project)
-          return
-        }
         openWithDesktopApi(uri, project)
       }
       else {
