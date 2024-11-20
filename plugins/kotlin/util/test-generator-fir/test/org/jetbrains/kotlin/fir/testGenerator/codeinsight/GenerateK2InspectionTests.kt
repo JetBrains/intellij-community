@@ -70,6 +70,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/floatingPointLiteralPrecision")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
             model("${idea}/inspectionsLocal/replaceIsEmptyWithIfEmpty")
+            model("${idea}/inspectionsLocal/booleanLiteralArgument")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
