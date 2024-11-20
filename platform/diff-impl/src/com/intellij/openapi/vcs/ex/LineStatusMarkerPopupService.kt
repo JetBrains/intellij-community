@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.HintHint
@@ -32,7 +33,7 @@ import java.awt.event.MouseAdapter
 
 @Service(Service.Level.APP)
 class LineStatusMarkerPopupService {
-  private var activePopupDisposable: Disposable? = null
+  private var activePopupDisposable: CheckedDisposable? = null
 
   @RequiresEdt
   fun buildAndShowPopup(parentDisposable: Disposable, editor: Editor, mousePosition: Point?, builder: (popupDisposable: Disposable) -> LineStatusMarkerPopupPanel) {
@@ -41,9 +42,9 @@ class LineStatusMarkerPopupService {
     showPopupAt(editor, markerPopupPanel, mousePosition, popupDisposable)
   }
 
-  private fun getNextPopupDisposable(parentDisposable: Disposable): Disposable {
+  private fun getNextPopupDisposable(parentDisposable: Disposable): CheckedDisposable {
     closeActivePopup()
-    activePopupDisposable = Disposer.newDisposable(parentDisposable, "LineStatusMarkerPopup")
+    activePopupDisposable = Disposer.newCheckedDisposable(parentDisposable, "LineStatusMarkerPopup")
 
     return activePopupDisposable!!
   }
@@ -57,8 +58,10 @@ class LineStatusMarkerPopupService {
     editor: Editor,
     panel: LineStatusMarkerPopupPanel,
     mousePosition: Point?,
-    popupDisposable: Disposable,
+    popupDisposable: CheckedDisposable,
   ) {
+    if (popupDisposable.isDisposed) return
+
     val hint = LightweightHint(panel)
     Disposer.register(popupDisposable, Disposable {
       UIUtil.invokeLaterIfNeeded {
