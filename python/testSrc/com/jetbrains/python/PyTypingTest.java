@@ -6163,6 +6163,38 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-77541
+  public void testParamSpecBoundToAnotherParamSpecInCustomGeneric() {
+      doTest("MyCallable[ParamSpec(\"P2\"), R2]", """
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   
+                   def f[**P, R](callback: MyCallable[P, R]) -> MyCallable[P, R]:
+                       ...
+                   
+                   def g[**P2, R2](callback: MyCallable[P2, R2]) -> MyCallable[P2, R2]:
+                       expr = f(callback)
+                   """);
+  }
+
+  // PY-77541
+  public void testParamSpecBoundToConcatenateInCustomGeneric() {
+    doTest("MyCallable[Concatenate(int, ParamSpec(\"P2\")), R2]", """
+                   from typing import Concatenate
+                   
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   
+                   def f[**P, R](callback: MyCallable[P, R]) -> MyCallable[P, R]:
+                       ...
+                   
+                   def g[**P2, R2](callback: MyCallable[Concatenate[int, P2], R2]) -> MyCallable[P2, R2]:
+                       expr = f(callback)
+                   """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

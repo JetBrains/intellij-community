@@ -2386,6 +2386,20 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);    
   }
 
+  // PY-77541
+  public void testMatchingUnboundParamSpecWithAnotherParamSpecInCustomGeneric() {
+    doTestByText("""
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   
+                   def f[**P, R](callback: MyCallable[P, R]) -> MyCallable[P, R]:
+                       ...
+                   
+                   def g[**P2, R2](callback: MyCallable[P2, R2]) -> MyCallable[P2, R2]:
+                       return f(callback)
+                   """);
+  }
 
   // PY-23067
   public void testFunctoolsWrapsMultiFile() {

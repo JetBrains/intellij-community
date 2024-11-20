@@ -367,7 +367,7 @@ public final class PyTypeChecker {
 
   private static boolean match(@NotNull PyParamSpecType expected, @Nullable PyType actual, @NotNull MatchContext context) {
     if (actual == null) return true;
-    if (!(actual instanceof PyCallableParameterListType actualParameters)) return false;
+    if (!(actual instanceof PyCallableParameterVariadicType actualParameters)) return false;
     context.mySubstitutions.paramSpecs.put(expected, actualParameters);
     return true;
   }
