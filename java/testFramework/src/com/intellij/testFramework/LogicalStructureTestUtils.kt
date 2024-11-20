@@ -3,8 +3,10 @@ package com.intellij.testFramework
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.structureView.StructureViewTreeElement
+import com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 import com.intellij.ide.structureView.logical.impl.LogicalStructureViewService
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.SimpleTextAttributes
 import junit.framework.AssertionFailedError
@@ -28,7 +30,7 @@ object LogicalStructureTestUtils {
     val expectedRoot = LogicalStructureNode(null, "", "")
     expectedRoot.expectedStructureInitializer()
     if (!expectedRoot.isEqualTo(actualRoot, false)) {
-      expectedRoot.applyChildrenDontMatterToOther(actualRoot)
+      expectedRoot.synchronizeImportantElements(actualRoot)
       throw ComparisonFailure("The models are not equals: ",
                               expectedRoot.print("", false),
                               actualRoot.print("", false))
@@ -47,6 +49,7 @@ object LogicalStructureTestUtils {
       if (child !is StructureViewTreeElement) continue
       node.subNode(createActualNode(child))
     }
+    node.navigationElement { (element as? PsiTreeElementBase<*>)?.element }
     return node
   }
 
@@ -59,6 +62,7 @@ object LogicalStructureTestUtils {
 
     private val subNodes = mutableListOf<LogicalStructureNode>()
     private var childrenDontMatter = false
+    private var navigationElementSupplier: (() -> PsiElement?)? = null
 
     fun subNode(subNode: LogicalStructureNode) {
       subNodes.add(subNode)
@@ -81,15 +85,26 @@ object LogicalStructureTestUtils {
       childrenDontMatter = true
     }
 
-    fun applyChildrenDontMatterToOther(other: LogicalStructureNode) {
+    fun navigationElement(element: PsiElement) {
+      navigationElementSupplier =  { element }
+    }
+
+    fun navigationElement(supplier: () -> PsiElement?) {
+      navigationElementSupplier = supplier
+    }
+
+    fun synchronizeImportantElements(other: LogicalStructureNode) {
       if (name != other.name) return
+      if (navigationElementSupplier == null) {
+        other.navigationElementSupplier = null
+      }
       if (childrenDontMatter) {
         other.anyNodes()
         return
       }
       if (subNodes.size != other.subNodes.size) return
       for (i in subNodes.indices) {
-        subNodes[i].applyChildrenDontMatterToOther(other.subNodes[i])
+        subNodes[i].synchronizeImportantElements(other.subNodes[i])
       }
     }
 
@@ -104,6 +119,7 @@ object LogicalStructureTestUtils {
         } else {
           if (icon != other.icon || name != other.name || location != other.location) return false
         }
+        if (navigationElementSupplier != null && navigationElementSupplier!!.invoke() != other.navigationElementSupplier?.invoke()) return false
       }
       if (!childrenDontMatter) {
         if (subNodes.size != other.subNodes.size) return false
@@ -122,6 +138,9 @@ object LogicalStructureTestUtils {
       } else {
         result += name
         if (location.isNotEmpty()) result += " | $location"
+      }
+      if (navigationElementSupplier != null) {
+        result += "\n$indent navigation to: ${navigationElementSupplier!!.invoke()}"
       }
       if (childrenDontMatter) {
         result += "\n$indent  some nodes..."
