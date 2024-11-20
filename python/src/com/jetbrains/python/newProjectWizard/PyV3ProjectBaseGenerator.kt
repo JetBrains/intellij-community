@@ -3,6 +3,7 @@ package com.jetbrains.python.newProjectWizard
 
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
@@ -32,6 +33,7 @@ import kotlinx.coroutines.withContext
  * [typeSpecificUI] is a UI to display these settings and bind then using Kotlin DSL UI
  * [allowedInterpreterTypes] limits a list of allowed interpreters (all interpreters are allowed by default)
  * [newProjectName] is a default name of the new project ([getName]Project is default)
+ * [expandProjectAfterCreation]: expand project tree view on the left side of IDE
  */
 abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   private val typeSpecificSettings: TYPE_SPECIFIC_SETTINGS,
@@ -39,6 +41,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val errorSink: ErrorSink = ShowingMessageErrorSync,
   private val _newProjectName: @NlsSafe String? = null,
+  private val expandProjectAfterCreation: Boolean = !ApplicationManager.getApplication().isHeadlessEnvironment,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings> {
   private val baseSettings = PyV3BaseProjectSettings()
   val newProjectName: @NlsSafe String get() = _newProjectName ?: "${name.replace(" ", "")}Project"
@@ -50,9 +53,9 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     coroutineScope.launch {
       val sdk = settings.generateAndGetSdk(module, baseDir).getOrElse {
         withContext(Dispatchers.EDT) {
-          errorSink.emit(it.localizedMessage)
+          errorSink.emit(it.localizedMessage) // Show error generation to user
         }
-        throw it
+        return@launch // Since we failed to generate project, we do not need to go any further
       }
 
       withContext(Dispatchers.EDT) {
@@ -71,6 +74,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   }
 
   private suspend fun ensureProjectViewExpanded(project: Project): Unit = withContext(Dispatchers.EDT) {
+    if (!expandProjectAfterCreation) return@withContext
     AbstractProjectViewPane.EP.getExtensions(project).firstNotNullOf { pane -> pane.tree }.expandRow(0)
   }
 
@@ -82,7 +86,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       is Result.Success -> {
         ValidationResult.OK
       }
-      is Result.Failure-> ValidationResult(pathOrError.error)
+      is Result.Failure -> ValidationResult(pathOrError.error)
     }
 
 
