@@ -99,7 +99,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   private val widgetMap = LinkedHashMap<String, WidgetBean>()
   private var leftPanel: JPanel? = null
 
-  private val rightPanelLayout = GridBagLayout()
+  private var rightPanelLayout = GridBagLayout()
   private val rightPanel: JPanel
 
   private val centerPanel: JPanel
@@ -747,12 +747,24 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
         val targetPanel = getTargetPanel(bean.position)
         targetPanel.remove(bean.component)
+        recreateLayoutIfIsEmptyRightPanel(targetPanel)
         targetPanel.revalidate()
         Disposer.dispose(bean.widget)
         fireWidgetRemoved(id)
       }
       updateChildren { it.removeWidget(id) }
     }
+  }
+
+  private fun recreateLayoutIfIsEmptyRightPanel(panel: JPanel) {
+    if (panel !== rightPanel && panel.components.none { it.isVisible }) return
+
+    // Workaround of a bug in AWT:
+    // GridBagLayout.componentAdjusting is not set to NULL after removing the last visible child component.
+    // That leads to a leak of the StatusBarWidget component, and that leads to a situation when the plugin can't be properly unloaded.
+    rightPanelLayout = GridBagLayout()
+    panel.layout = rightPanelLayout
+    sortRightWidgets()
   }
 
   override fun updateWidget(id: String) {
