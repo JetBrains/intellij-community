@@ -14,6 +14,7 @@ private val logger = com.intellij.openapi.diagnostic.logger<XMixedModeExecutionS
 class XMixedModeExecutionStack(
   val session: XDebugSession,
   val lowLevelExecutionStack: XExecutionStack,
+  // Null if there's no managed stack frames on the stack
   val highLevelExecutionStack: XExecutionStack?,
   val framesMatcher: MixedModeFramesBuilder,
   val coroutineScope: CoroutineScope,
@@ -31,11 +32,17 @@ class XMixedModeExecutionStack(
       val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
 
       val highLevelAcc = MyAccumulatingContainer()
-      requireNotNull(highLevelExecutionStack).computeStackFrames(firstFrameIndex, highLevelAcc)
-      val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
+      if (highLevelExecutionStack == null) {
+        logger.trace("No high level stack, adding low level frames")
+        container.addStackFrames(lowLevelFrames, true)
+      }
+      else {
+        requireNotNull(highLevelExecutionStack).computeStackFrames(firstFrameIndex, highLevelAcc)
+        val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
 
-      val combinedFrames = measureTimedValue { framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames) }.also { logger.info("Mixed stack built in ${it.duration}") }.value
-      container.addStackFrames(combinedFrames, true)
+        val combinedFrames = measureTimedValue { framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames) }.also { logger.info("Mixed stack built in ${it.duration}") }.value
+        container.addStackFrames(combinedFrames, true)
+      }
     }
   }
 
