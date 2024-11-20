@@ -36,6 +36,13 @@ import kotlin.test.assertFailsWith
 @RunWith(value = Parameterized::class)
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
+    companion object {
+        @JvmStatic
+        @Suppress("ACCIDENTAL_OVERRIDE")
+        @Parameters(name = "{index}: with Gradle-{0}")
+        fun data(): Collection<Array<Any?>> = listOf(arrayOf("6.0.1"))
+    }
+
     val projectDir: File get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
 
     internal val scriptConfigurationManager: CompositeScriptConfigurationManager
@@ -111,7 +118,7 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
 
             val expectedErrorMessage = "Unresolved reference: unresolved"
             val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
-            val buildScriptErrors = errors.filter { it.message.contains(expectedErrorMessage) }
+            val buildScriptErrors = errors.filter { it.message == expectedErrorMessage }
             assertTrue(
                 "$expectedErrorMessage error has not been reported among other errors: $errors",
                 buildScriptErrors.isNotEmpty()
