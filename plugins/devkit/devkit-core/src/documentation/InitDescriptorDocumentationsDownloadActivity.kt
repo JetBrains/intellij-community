@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.documentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 
-class InitDescriptorDocumentationsDownloadActivity : ProjectActivity {
+internal class InitDescriptorDocumentationsDownloadActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     DocumentationContentProvider.getInstance().initializeContentDownload()
   }
