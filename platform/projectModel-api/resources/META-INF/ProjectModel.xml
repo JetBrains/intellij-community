@@ -15,5 +15,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.openapi.roots.libraries.LibraryKindRegistry"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
+                        serviceImplementation="com.intellij.openapi.roots.impl.EmptyProjectSystemRegistry"/>
   </extensions>
 </idea-plugin>

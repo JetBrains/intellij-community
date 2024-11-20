@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public final class ExternalProjectSystemRegistryImpl implements ExternalProjectSystemRegistry {
+public final class EmptyProjectSystemRegistry implements ExternalProjectSystemRegistry {
   @Override
   public ProjectModelExternalSource getExternalSource(@NotNull Module module) {
     return null;
