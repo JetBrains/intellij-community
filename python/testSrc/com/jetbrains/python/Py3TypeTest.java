@@ -1275,7 +1275,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecUserGenericClass() {
-    doTest("Y[int, [int, str, bool]]",
+    doTest("Y[int, [q: int, p: str, r: bool]]",
            """
              from typing import TypeVar, Generic, Callable, ParamSpec
 
@@ -2594,7 +2594,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-61883
   public void testParamSpecUserGenericClassWithPEP695Syntax() {
-    doTest("Y[int, [int, str, bool]]",
+    doTest("Y[int, [q: int, p: str, r: bool]]",
            """
              from typing import Callable
 

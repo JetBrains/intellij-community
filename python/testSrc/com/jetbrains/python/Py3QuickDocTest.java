@@ -852,6 +852,14 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  public void testExplicitCallableParameterListRendering() {
+    checkHTMLOnly();
+  }
+
+  public void testInferredCallableParameterListRendering() {
+    checkHTMLOnly();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";
