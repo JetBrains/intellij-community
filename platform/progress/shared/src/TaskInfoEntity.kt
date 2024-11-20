@@ -2,6 +2,8 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.asProject
+import com.intellij.platform.project.asProjectOrNull
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.Entity
@@ -9,8 +11,6 @@ import com.jetbrains.rhizomedb.RefFlags
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.platform.project.asProjectOrNull
-import com.intellij.platform.project.asProject
 
 /**
  * Represents the information of a task in the system.
@@ -77,11 +77,10 @@ data class TaskInfoEntity(override val eid: EID) : Entity {
     "com.intellij.platform.ide.progress",
     ::TaskInfoEntity
   ) {
-    var Title = requiredValue("title", String.serializer())
-    var TaskCancellationType = requiredValue("taskCancellation", TaskCancellation.serializer())
-    var ProgressStateType = optionalValue("progressState", ProgressState.serializer())
-    var TaskStatusType = requiredValue("taskStatus", TaskStatus.serializer())
-    val ProjectEntityType = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
+    var Title: Required<String> = requiredValue("title", String.serializer())
+    var TaskCancellationType: Required<TaskCancellation> = requiredValue("taskCancellation", TaskCancellation.serializer())
+    var ProgressStateType: Optional<ProgressState> = optionalValue("progressState", ProgressState.serializer())
+    var TaskStatusType: Required<TaskStatus> = requiredValue("taskStatus", TaskStatus.serializer())
+    val ProjectEntityType: Optional<ProjectEntity> = optionalRef<ProjectEntity>("project", RefFlags.CASCADE_DELETE_BY)
   }
 }
-
