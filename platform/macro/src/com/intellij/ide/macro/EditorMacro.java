@@ -6,30 +6,21 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.LogicalPosition;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public abstract class EditorMacro extends Macro {
   private final String myName;
-  private final @Nls String myDescription;
 
-  public EditorMacro(@NotNull String name, @NotNull @Nls String description) {
+  public EditorMacro(@NotNull String name) {
     myName = name;
-    myDescription = description;
   }
 
   @NotNull
   @Override
   public String getName() {
     return myName;
-  }
-
-  @NotNull
-  @Override
-  public String getDescription() {
-    return myDescription;
   }
 
   @Override

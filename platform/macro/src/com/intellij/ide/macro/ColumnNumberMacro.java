@@ -18,10 +18,17 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 public final class ColumnNumberMacro extends EditorMacro {
   public ColumnNumberMacro() {
-    super("ColumnNumber", IdeCoreBundle.message("macro.column.number"));
+    super("ColumnNumber");
+  }
+
+  @Override
+  @NotNull
+  public String getDescription() {
+    return IdeCoreBundle.message("macro.column.number");
   }
 
   @Override

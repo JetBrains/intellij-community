@@ -3,11 +3,18 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 
 public class SelectedTextMacro extends EditorMacro {
   public SelectedTextMacro() {
-    super("SelectedText", IdeCoreBundle.message("ide.macro.text.selected.in.the.editor"));
+    super("SelectedText");
+  }
+
+  @Override
+  @NotNull
+  public String getDescription() {
+    return IdeCoreBundle.message("ide.macro.text.selected.in.the.editor");
   }
 
   @Override
