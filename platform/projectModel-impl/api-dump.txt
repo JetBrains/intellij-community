@@ -436,3 +436,4 @@ f:com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt
 f:com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges
 - sf:findModule(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.openapi.module.Module
 - sf:findModuleEntity(com.intellij.openapi.module.Module,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.jps.entities.ModuleEntity
+- sf:findSnapshotModuleEntity(com.intellij.openapi.module.Module):com.intellij.platform.workspace.jps.entities.ModuleEntity
