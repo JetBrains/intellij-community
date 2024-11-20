@@ -219,6 +219,16 @@ public abstract class K2JvmOptimizeImportsTestGenerated extends AbstractK2JvmOpt
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/FromCompanionObjectGeneric.kt");
             }
 
+            @TestMetadata("JavaLangDeprecated_annotationPosition.kt")
+            public void testJavaLangDeprecated_annotationPosition() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/JavaLangDeprecated_annotationPosition.kt");
+            }
+
+            @TestMetadata("JavaLangDeprecated_expressionPosition.kt")
+            public void testJavaLangDeprecated_expressionPosition() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/JavaLangDeprecated_expressionPosition.kt");
+            }
+
             @TestMetadata("JavaStaticField.kt")
             public void testJavaStaticField() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/JavaStaticField.kt");
