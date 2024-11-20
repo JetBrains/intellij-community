@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -371,11 +371,6 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
 private fun invokeInSuspendContext(
     suspendContext: SuspendContextImpl,
     command: (SuspendContextImpl) -> Unit
-): Unit =
-    suspendContext.managerThread.invoke(object : SuspendContextCommandImpl(suspendContext) {
-        override fun getPriority() =
-            PrioritizedTask.Priority.NORMAL
-
-        override fun contextAction(suspendContext: SuspendContextImpl): Unit =
-            command(suspendContext)
-    })
+): Unit = executeOnDMT(suspendContext, PrioritizedTask.Priority.NORMAL) {
+    command(suspendContext)
+}

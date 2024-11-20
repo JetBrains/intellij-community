@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory
 import com.intellij.debugger.engine.evaluation.TextWithImports
-import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.runReadAction
@@ -28,12 +28,12 @@ import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugForeignPropertyDescriptorProvider
-import org.jetbrains.kotlin.j2k.OldJ2kPostProcessor
 import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.j2k.AfterConversionPass
+import org.jetbrains.kotlin.j2k.OldJ2kPostProcessor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.KotlinType
@@ -146,8 +146,9 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
 
         var frameInfo: FrameInfo? = null
 
-        val worker = object : DebuggerCommandImpl() {
-            override fun action() {
+        val managerThread = debuggerContext.managerThread
+        if (managerThread != null) {
+            executeOnDMT(managerThread) {
                 try {
                     val frameProxy = hopelessAware {
                         if (isUnitTestMode()) {
@@ -158,17 +159,15 @@ class KotlinK1CodeFragmentFactory : JavaDebuggerCodeFragmentFactory() {
                     }
 
                     frameInfo = FrameInfo.from(debuggerContext.project, frameProxy)
-                } catch (ignored: AbsentInformationException) {
+                } catch (_: AbsentInformationException) {
                     // Debug info unavailable
-                } catch (ignored: InvalidStackFrameException) {
+                } catch (_: InvalidStackFrameException) {
                     // Thread is resumed, the frame we have is not valid anymore
                 } finally {
                     semaphore.up()
                 }
             }
         }
-
-        debuggerContext.managerThread?.invoke(worker)
 
         for (i in 0..50) {
             if (semaphore.waitFor(20)) break
