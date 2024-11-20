@@ -7,8 +7,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil
 internal class ProductModulesDescriptorDocumentationTargetProvider : AbstractXmlDescriptorDocumentationTargetProvider() {
 
   override val docYamlCoordinates = DocumentationDataCoordinates(
-    // https://raw.githubusercontent.com/JetBrains/intellij-community/refs/heads/master/plugins/devkit/devkit-core/resources/documentation/product-modules-descriptor.yaml
-    "https://jb.gg/sdk-docs/product-modules-descriptor.yaml",
+    "https://jb.gg/sdk-docs/product-modules-descriptor.yaml", // -> https://raw.githubusercontent.com/JetBrains/intellij-community/refs/heads/master/plugins/devkit/devkit-core/resources/documentation/product-modules-descriptor.yaml
     "/documentation/product-modules-descriptor.yaml"
   )
 
