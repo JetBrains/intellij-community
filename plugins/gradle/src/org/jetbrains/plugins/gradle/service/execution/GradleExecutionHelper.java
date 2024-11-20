@@ -38,7 +38,6 @@ import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradleProperties;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
-import org.jetbrains.plugins.gradle.properties.models.Property;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -313,21 +312,18 @@ public class GradleExecutionHelper {
     var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
     var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
 
+    if (ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+      return;
+    }
+
     // workaround for https://github.com/gradle/gradle/issues/19340
     // when using TAPI, user-defined log level option in gradle.properties is ignored by Gradle.
     // try to read this file manually and apply log level explicitly
-    if (buildEnvironment == null || !isRootDirAvailable(buildEnvironment)) {
-      return;
-    }
-    GradleProperties properties = GradlePropertiesFile.INSTANCE.getProperties(settings.getServiceDirectory(),
-                                                                              buildEnvironment.getBuildIdentifier().getRootDir().toPath());
-    Property<String> loggingLevelProperty = properties.getGradleLoggingLevel();
-    @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
-
-    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
-        && gradleLogLevel != null) {
-      try {
-        LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
+    var buildRoot = getBuildRoot(buildEnvironment);
+    if (buildRoot != null) {
+      var properties = GradlePropertiesFile.getProperties(settings.getServiceDirectory(), buildRoot);
+      var logLevel = getGradleLoggingLevel(properties);
+      if (logLevel != null) {
         switch (logLevel) {
           case DEBUG -> settings.withArgument("-d");
           case INFO -> settings.withArgument("-i");
@@ -335,28 +331,33 @@ public class GradleExecutionHelper {
           case QUIET -> settings.withArgument("-q");
         }
       }
-      catch (IllegalArgumentException e) {
-        LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
-      }
+    }
+
+    if (ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+      return;
     }
 
     // Default logging level for integration tests
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
-        settings.withArgument("--info");
-      }
+      settings.withArgument("--info");
     }
   }
 
-  private static boolean isRootDirAvailable(@NotNull BuildEnvironment environment) {
+  private static @Nullable LogLevel getGradleLoggingLevel(@NotNull GradleProperties properties) {
+    var property = properties.getGradleLoggingLevel();
+    if (property == null) {
+      return null;
+    }
+    var value = property.getValue();
+    var name = value.toUpperCase(Locale.ROOT);
     try {
-      environment.getBuildIdentifier().getRootDir();
+      return LogLevel.valueOf(name);
     }
-    catch (UnsupportedMethodException e) {
-      return false;
+    catch (IllegalArgumentException e) {
+      LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
+      return null;
     }
-    return true;
   }
 
   @Nullable

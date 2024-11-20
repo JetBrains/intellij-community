@@ -27,6 +27,7 @@ object GradlePropertiesFile {
   fun getProperties(project: Project, projectPath: Path) =
     findAndMergeProperties(getPossiblePropertiesFiles(project, projectPath))
 
+  @JvmStatic
   fun getProperties(serviceDirectoryStr: String?, projectPath: Path) =
     findAndMergeProperties(getPossiblePropertiesFiles(serviceDirectoryStr, projectPath))
 
