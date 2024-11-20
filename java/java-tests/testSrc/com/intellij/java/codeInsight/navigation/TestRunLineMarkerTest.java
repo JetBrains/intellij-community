@@ -178,58 +178,6 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
      """);
   }
 
-  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount, String testClass) {
-    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
-    myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
-
-    RunManager manager = RunManager.getInstance(myFixture.getProject());
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-      new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager,configuration);
-    manager.addConfiguration(runnerAndConfigurationSettings);
-    myTempSettings.add(runnerAndConfigurationSettings);
-    manager.setSelectedConfiguration(runnerAndConfigurationSettings);
-
-    myFixture.configureByText("DisabledMethodTest.java", testClass);
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
-    assertEquals(marksCount, marks.size());
-  }
-
-  private void doTestClassWithMain(Runnable setupExisting) {
-    myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", """
-      public class <caret>MainTest extends junit.framework.TestCase {
-          public static void main(String[] args) {
-          }
-          public void testFoo() {
-          }
-      }""");
-    if (setupExisting != null) {
-      setupExisting.run();
-    }
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
-    assertEquals(1, marks.size());
-    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    ActionGroup group = mark.getPopupMenuActions();
-    assertNotNull(group);
-    AnActionEvent event = TestActionEvent.createTestEvent();
-    PresentationFactory factory = new PresentationFactory();
-    List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
-      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN, ActionUiKind.NONE), action -> {
-      String text = factory.getPresentation(action).getText();
-      return text != null && text.startsWith("Run '") && text.endsWith("'");
-    });
-    assertEquals(list.toString(), 2, list.size());
-    list.get(0).update(event);
-    assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
-    list.get(1).update(event);
-    assertEquals("Run 'MainTest'", event.getPresentation().getText());
-    myFixture.testAction(list.get(1));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
-    myTempSettings.add(selectedConfiguration);
-    assertEquals("MainTest", selectedConfiguration.getName());
-  }
-
   public void testClassInDumbMode() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     PsiFile file = myFixture.configureByText("MyTest.java", """
@@ -283,5 +231,57 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     List<GutterMark> markList = myFixture.findGuttersAtCaret();
     assertSize(1, markList);
     assertEquals(ExecutionBundle.message("run.text"), ContainerUtil.getOnlyItem(markList).getTooltipText());
+  }
+
+  private void doTestClassWithMain(Runnable setupExisting) {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    myFixture.configureByText("MainTest.java", """
+      public class <caret>MainTest extends junit.framework.TestCase {
+          public static void main(String[] args) {
+          }
+          public void testFoo() {
+          }
+      }""");
+    if (setupExisting != null) {
+      setupExisting.run();
+    }
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+    GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
+    ActionGroup group = mark.getPopupMenuActions();
+    assertNotNull(group);
+    AnActionEvent event = TestActionEvent.createTestEvent();
+    PresentationFactory factory = new PresentationFactory();
+    List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
+      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN, ActionUiKind.NONE), action -> {
+      String text = factory.getPresentation(action).getText();
+      return text != null && text.startsWith("Run '") && text.endsWith("'");
+    });
+    assertEquals(list.toString(), 2, list.size());
+    list.get(0).update(event);
+    assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
+    list.get(1).update(event);
+    assertEquals("Run 'MainTest'", event.getPresentation().getText());
+    myFixture.testAction(list.get(1));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
+    myTempSettings.add(selectedConfiguration);
+    assertEquals("MainTest", selectedConfiguration.getName());
+  }
+
+  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount, String testClass) {
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
+    myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
+
+    RunManager manager = RunManager.getInstance(myFixture.getProject());
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
+      new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager,configuration);
+    manager.addConfiguration(runnerAndConfigurationSettings);
+    myTempSettings.add(runnerAndConfigurationSettings);
+    manager.setSelectedConfiguration(runnerAndConfigurationSettings);
+
+    myFixture.configureByText("DisabledMethodTest.java", testClass);
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(marksCount, marks.size());
   }
 }
