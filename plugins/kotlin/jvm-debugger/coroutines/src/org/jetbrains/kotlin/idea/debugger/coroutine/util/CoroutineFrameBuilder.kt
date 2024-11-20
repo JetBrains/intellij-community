@@ -72,14 +72,14 @@ class CoroutineFrameBuilder {
                 })
             }
 
-            return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineInfoData.creationStackFrames)
+            return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineStacksInfoData.creationStackFrames)
         }
 
         private fun restoredStackTrace(
             preflightFrame: CoroutinePreflightFrame,
         ): Pair<List<CoroutineStackFrameItem>, List<XNamedValue>> {
             val preflightFrameLocation = preflightFrame.stackFrameProxy.location()
-            val coroutineStackFrame = preflightFrame.coroutineInfoData.continuationStackFrames
+            val coroutineStackFrame = preflightFrame.coroutineStacksInfoData.continuationStackFrames
             val preCoroutineTopFrameLocation = preflightFrame.threadPreCoroutineFrames.firstOrNull()?.location()
 
             val variablesRemovedFromTopRestoredFrame = mutableListOf<XNamedValue>()
@@ -149,12 +149,12 @@ class CoroutineFrameBuilder {
             val (theFollowingFrames, _) = theFollowingFrames(frame)
             val context = DefaultExecutionContext(suspendContext, frame)
             val continuationHolder = ContinuationHolder.instance(context)
-            val coroutineInfo = continuationHolder.extractCoroutineInfoData(continuation) ?: return null
+            val coroutineStacksInfo = continuationHolder.extractCoroutineStacksInfoData(continuation) ?: return null
             return CoroutinePreflightFrame(
-                coroutineInfo,
+                coroutineStacksInfo,
                 frame,
                 theFollowingFrames,
-                coroutineInfo.topFrameVariables
+                coroutineStacksInfo.topFrameVariables
             )
         }
 

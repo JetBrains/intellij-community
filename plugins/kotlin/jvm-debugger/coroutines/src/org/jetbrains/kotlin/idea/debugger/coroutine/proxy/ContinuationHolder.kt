@@ -18,7 +18,7 @@ internal class ContinuationHolder private constructor(val context: DefaultExecut
     private val locationCache = LocationCache(context)
     private val debugProbesImpl = DebugProbesImpl.instance(context)
 
-    internal fun extractCoroutineInfoData(continuation: ObjectReference): CompleteCoroutineInfoData? {
+    internal fun extractCoroutineStacksInfoData(continuation: ObjectReference): CoroutineStacksInfoData? {
         try {
             val continuationStack = debugMetadata?.fetchContinuationStack(continuation, context) ?: return null
             val continuationStackFrames = continuationStack.mapNotNull { it.toCoroutineStackFrameItem(context, locationCache) }
@@ -33,24 +33,12 @@ internal class ContinuationHolder private constructor(val context: DefaultExecut
     private fun findCoroutineInformation(
         coroutineOwner: ObjectReference?,
         continuationStackFrames: List<CoroutineStackFrameItem>
-    ): CompleteCoroutineInfoData {
+    ): CoroutineStacksInfoData {
         val coroutineInfo = debugProbesImpl?.getCoroutineInfo(coroutineOwner, context)
-        return if (coroutineInfo != null) {
-            val creationStackFrames = coroutineInfo.creationStackTraceProvider.getStackTrace().mapIndexed { index, ste ->
-                CreationCoroutineStackFrameItem(locationCache.createLocation(ste.stackTraceElement()), index == 0)
-            }
-            CompleteCoroutineInfoData(
-                descriptor = CoroutineDescriptor.instance(coroutineInfo),
-                continuationStackFrames = continuationStackFrames,
-                creationStackFrames = creationStackFrames,
-            )
-        } else {
-            CompleteCoroutineInfoData(
-                descriptor = CoroutineDescriptor(CoroutineInfoData.DEFAULT_COROUTINE_NAME, "-1", State.UNKNOWN, null, null),
-                continuationStackFrames = continuationStackFrames,
-                creationStackFrames = emptyList(),
-            )
-        }
+        val creationStackFrames = coroutineInfo?.creationStackTraceProvider?.getStackTrace()?.mapIndexed { index, ste ->
+            CreationCoroutineStackFrameItem(locationCache.createLocation(ste.stackTraceElement()), index == 0)
+        } ?: emptyList()
+        return CoroutineStacksInfoData(continuationStackFrames, creationStackFrames)
     }
 
     companion object {

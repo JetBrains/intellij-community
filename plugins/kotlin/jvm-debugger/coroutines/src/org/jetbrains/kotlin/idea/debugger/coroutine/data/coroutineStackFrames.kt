@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
  */
 @ApiStatus.Internal
 class CoroutinePreflightFrame(
-    val coroutineInfoData: CoroutineInfoData,
-    val frame: StackFrameProxyImpl,
+    val coroutineStacksInfoData: CoroutineStacksInfoData,
+    frame: StackFrameProxyImpl,
     val threadPreCoroutineFrames: List<StackFrameProxyImpl>,
     firstFrameVariables: List<JavaValue>
 ) : CoroutineStackFrame(frame, null, firstFrameVariables) {

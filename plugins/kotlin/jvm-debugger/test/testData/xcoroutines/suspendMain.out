@@ -5,7 +5,6 @@ suspendMain.kt:16
 Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendMainKt$main$2 (continuation)
 		($result, $this$coroutineScope, this)
-CoroutineInfo: -1 coroutine UNKNOWN
 	KotlinStackFrame FRAME:invoke:-1, SuspendMainKt$main$2 (continuation)
 		(p1, p2, this)
 	KotlinStackFrame FRAME:invoke:-1, SuspendMainKt$main$2 (continuation)
