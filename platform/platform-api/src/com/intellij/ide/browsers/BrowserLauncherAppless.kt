@@ -129,7 +129,9 @@ open class BrowserLauncherAppless : BrowserLauncher() {
         openWithBrowser(signedUrl, substitutedBrowser, project)
       }
       else {
-        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, signedUrl, emptyList(), false)), project)
+        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, signedUrl, emptyList(), false)), project, retry = {
+          browse(url, browser = null, project)
+        })
       }
     }
   }
@@ -188,12 +190,15 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun openWithDefaultBrowserCommand(url: String, project: Project?) {
+    val retry = { browse(url, browser = null, project) }
+
     val command = defaultBrowserCommand
     if (command == null) {
-      showError(IdeBundle.message("browser.default.not.supported"), project)
+      showError(IdeBundle.message("browser.default.not.supported"), project, browser = null, retry)
       return
     }
-    spawn(GeneralCommandLine(command).withParameters(url), project)
+
+    spawn(GeneralCommandLine(command).withParameters(url), project, browser = null, retry)
   }
 
   private fun openWithBrowser(url: String, browser: WebBrowser, project: Project?) {

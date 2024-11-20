@@ -70,15 +70,20 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun showError(message: @NotificationContent String?, project: Project?, browser: WebBrowser?, retry: (() -> Unit)?) {
+    val title = IdeBundle.message(if (retry != null) "notification.title.browser.config.problem" else "notification.title.cannot.open")
     val content = message ?: IdeBundle.message("unknown.error")
-    Notification("BrowserCfgProblems", IdeBundle.message("notification.title.browser.config.problem"), content, NotificationType.WARNING)
-      .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("button.fix")) {
-        val browserSettings = BrowserSettings()
-        val initializer = browser?.let { Runnable { browserSettings.selectBrowser(it) } }
-        if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, initializer)) {
-          retry?.invoke()
+    Notification("BrowserCfgProblems", title, content, NotificationType.WARNING)
+      .apply {
+        if (retry != null) {
+          addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("button.fix")) {
+            val browserSettings = BrowserSettings()
+            val initializer = browser?.let { Runnable { browserSettings.selectBrowser(it) } }
+            if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, initializer)) {
+              retry.invoke()
+            }
+          })
         }
-      })
+      }
       .notify(project)
   }
 }
