@@ -244,7 +244,8 @@ internal fun Row.pythonInterpreterComboBox(
       preferredHeight = 30
       isEditable = true
     }.validationOnApply {
-      if (comboBox.isBusy) {
+      // This component must set sdk: clients expect it not to be null (PY-77463)
+      if (comboBox.isBusy || (comboBox.isVisible && selectedSdkProperty.get() == null)) {
         ValidationInfo(message("python.add.sdk.panel.wait"))
       }
       else null
