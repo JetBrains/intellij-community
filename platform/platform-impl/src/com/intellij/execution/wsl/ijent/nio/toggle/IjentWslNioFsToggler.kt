@@ -47,12 +47,12 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
 
   val isAvailable: Boolean get() = strategy != null
 
-  suspend fun enableForAllWslDistributions() {
+  fun enableForAllWslDistributions() {
     strategy?.enableForAllWslDistributions()
   }
 
   @TestOnly
-  suspend fun switchToIjentFs(distro: WSLDistribution) {
+  fun switchToIjentFs(distro: WSLDistribution) {
     strategy ?: error("Not available")
     strategy.switchToIjentFs(distro)
   }

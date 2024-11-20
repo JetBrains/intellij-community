@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference
  *  In order to solve this problem, IjentFileSystemApi MUST guarantee idempotency of every call.
  */
 @Suppress("FunctionName")
-suspend fun IjentFailSafeFileSystemPosixApi(
+fun IjentFailSafeFileSystemPosixApi(
   coroutineScope: CoroutineScope,
   delegateFactory: suspend () -> IjentPosixApi,
 ): IjentFileSystemApi {
