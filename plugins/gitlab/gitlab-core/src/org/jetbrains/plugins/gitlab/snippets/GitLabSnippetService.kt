@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
+import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
@@ -91,7 +92,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         VcsNotifier.getInstance(project)
           .notifyError(GL_NOTIFICATION_CREATE_SNIPPET_ERROR,
                        message("snippet.create.action.error.title"),
-                       e.localizedMessage)
+                       e.localizedMessageOrClassName())
       }
     }
   }

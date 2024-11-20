@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
+import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -237,7 +238,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
       .append(HtmlChunk.p().addText(GitLabBundle.message("merge.request.timeline.discussion.cant.load.diff")))
       .apply {
         if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkResult.Error) {
-          append(HtmlChunk.p().addText(hunkState.error.localizedMessage))
+          append(HtmlChunk.p().addText(hunkState.error.localizedMessageOrClassName()))
         }
       }
 

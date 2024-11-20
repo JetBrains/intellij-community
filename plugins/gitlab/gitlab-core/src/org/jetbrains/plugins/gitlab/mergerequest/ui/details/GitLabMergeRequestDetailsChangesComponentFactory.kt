@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -31,7 +32,7 @@ internal object GitLabMergeRequestDetailsChangesComponentFactory {
           it.fold(onSuccess = {
             createChangesTree(it)
           }, onFailure = {
-            SimpleHtmlPane(it.localizedMessage ?: it.message ?: "${it.javaClass.name} occurred")
+            SimpleHtmlPane(it.localizedMessageOrClassName())
           })
         } ?: LoadingLabel()
       }
