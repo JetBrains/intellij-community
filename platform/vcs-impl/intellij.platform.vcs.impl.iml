@@ -74,7 +74,5 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.microba" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl.exec" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang.actions" scope="RUNTIME" />
   </component>
 </module>
