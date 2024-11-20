@@ -416,40 +416,46 @@ public class JavaExecutionStack extends XExecutionStack {
           mySeparator = true;
           continue;
         }
-        XStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
-        if (newFrame != null) {
-          if (showFrame(newFrame)) {
-            if (mySeparator) {
-              flushHiddenFrames();
-              StackFrameItem.setWithSeparator(newFrame);
-            }
-            if (addFrameIfNeeded(newFrame, false)) {
-              // No need to propagate the separator further, because it was added.
-              mySeparator = false;
-            }
-          }
-          else { // Hidden frame case.
-            var frameHasSeparator = StackFrameItem.hasSeparatorAbove(newFrame);
-            if (XFramesView.shouldFoldHiddenFrames()) {
-              if (mySeparator || frameHasSeparator) {
-                flushHiddenFrames();
-                if (!frameHasSeparator) {
-                  // The separator for this hidden frame will be used as the placeholder separator.
-                  StackFrameItem.setWithSeparator(newFrame);
-                }
-                mySeparator = false;
-              }
-              rememberHiddenFrame(newFrame);
-            }
-            else if (!mySeparator && frameHasSeparator) {
-              // Frame has a separator, but it wasn't added; we need to propagate the separator further.
-              mySeparator = true;
-            }
-          }
-        }
-        schedule(suspendContext, null, myAsyncStack, myCreationStack, mySeparator);
+        myDebugProcess.getPositionManager().getSourcePositionFuture(stackFrame.location()).thenAccept(sourcePosition -> {
+          XStackFrame newFrame = stackFrame.createFrame(myDebugProcess, sourcePosition);
+          appendFrame(suspendContext, newFrame);
+        });
         return;
       }
+    }
+
+    private void appendFrame(@NotNull SuspendContextImpl suspendContext, XStackFrame newFrame) {
+      if (newFrame != null) {
+        if (showFrame(newFrame)) {
+          if (mySeparator) {
+            flushHiddenFrames();
+            StackFrameItem.setWithSeparator(newFrame);
+          }
+          if (addFrameIfNeeded(newFrame, false)) {
+            // No need to propagate the separator further, because it was added.
+            mySeparator = false;
+          }
+        }
+        else { // Hidden frame case.
+          var frameHasSeparator = StackFrameItem.hasSeparatorAbove(newFrame);
+          if (XFramesView.shouldFoldHiddenFrames()) {
+            if (mySeparator || frameHasSeparator) {
+              flushHiddenFrames();
+              if (!frameHasSeparator) {
+                // The separator for this hidden frame will be used as the placeholder separator.
+                StackFrameItem.setWithSeparator(newFrame);
+              }
+              mySeparator = false;
+            }
+            rememberHiddenFrame(newFrame);
+          }
+          else if (!mySeparator && frameHasSeparator) {
+            // Frame has a separator, but it wasn't added; we need to propagate the separator further.
+            mySeparator = true;
+          }
+        }
+      }
+      schedule(suspendContext, null, myAsyncStack, myCreationStack, mySeparator);
     }
   }
 

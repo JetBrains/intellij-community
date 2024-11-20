@@ -2,6 +2,7 @@
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -18,7 +19,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
@@ -225,8 +225,16 @@ public class StackFrameItem {
     }
   }
 
-  public XStackFrame createFrame(DebugProcessImpl debugProcess) {
-    return new CapturedStackFrame(debugProcess, this);
+  /**
+   * @deprecated Use {@link #createFrame(DebugProcessImpl, SourcePosition)} instead
+   */
+  @Deprecated
+  public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess) {
+    return createFrame(debugProcess, debugProcess.getPositionManager().getSourcePosition(myLocation));
+  }
+
+  public XStackFrame createFrame(@NotNull DebugProcessImpl debugProcess, @Nullable SourcePosition sourcePosition) {
+    return new CapturedStackFrame(debugProcess, this, sourcePosition);
   }
 
   public static boolean hasSeparatorAbove(XStackFrame frame) {
@@ -260,7 +268,7 @@ public class StackFrameItem {
 
     private volatile boolean myWithSeparator;
 
-    public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item) {
+    public CapturedStackFrame(DebugProcessImpl debugProcess, StackFrameItem item, SourcePosition sourcePosition) {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       myPath = item.path();
       myMethodName = item.method();
@@ -268,7 +276,7 @@ public class StackFrameItem {
       myVariables = item.myVariables;
 
       Location location = item.myLocation;
-      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(debugProcess.getPositionManager().getSourcePosition(location));
+      mySourcePosition = DebuggerUtilsEx.toXSourcePosition(sourcePosition);
       myIsSynthetic = DebuggerUtils.isSynthetic(location.method());
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
