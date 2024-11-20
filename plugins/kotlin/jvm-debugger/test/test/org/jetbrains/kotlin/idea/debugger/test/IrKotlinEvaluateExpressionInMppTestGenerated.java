@@ -2636,6 +2636,16 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/multipleBreakpoints/privateMembersPriority.kt");
             }
 
+            @TestMetadata("protectedDerivedPropertyWithField.kt")
+            public void testProtectedDerivedPropertyWithField() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/protectedDerivedPropertyWithField.kt");
+            }
+
+            @TestMetadata("protectedPropertyWithoutFieldInBase.kt")
+            public void testProtectedPropertyWithoutFieldInBase() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/protectedPropertyWithoutFieldInBase.kt");
+            }
+
             @TestMetadata("remappedParameterInInline.kt")
             public void testRemappedParameterInInline() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/remappedParameterInInline.kt");

@@ -1,4 +1,4 @@
-// ERROR: Class 'A' is not abstract and does not implement abstract member 'run'.
+// ERROR: Class 'A' is not abstract and does not implement abstract member: fun run(): Unit
 package foo // we use package 'foo'
 // imports:
 

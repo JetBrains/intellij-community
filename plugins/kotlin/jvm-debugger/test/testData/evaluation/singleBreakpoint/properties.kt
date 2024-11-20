@@ -22,6 +22,12 @@ class A {
         inline get() = p7 + 1
         inline set(value) { p7 = value; }
 
+    @JvmField
+    protected val p10 = 10
+
+    @JvmField
+    internal val p11 = 11
+
     companion object {
         @JvmStatic
         private val op1 = 101
@@ -76,6 +82,12 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: A().let { it.p9 = 9; it.p9 }
 // RESULT: 10: I
+
+// EXPRESSION: A().p10
+// RESULT: 10: I
+
+// EXPRESSION: A().p11
+// RESULT: 11: I
 
 // EXPRESSION: A.op1
 // RESULT: 101: I
