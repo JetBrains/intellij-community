@@ -5748,7 +5748,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setStatusComponent(JComponent statusComponent) {
-      if (true) return;
       if (myStickyLinesManager == null) {
         super.setStatusComponent(statusComponent);
       }

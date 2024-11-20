@@ -2,21 +2,20 @@
 package org.jetbrains.intellij.plugins.journey.editor;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.journey.JourneyLeftovers;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.Gray;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.EventListener;
 import java.util.Map;
@@ -29,13 +28,7 @@ import java.util.function.Consumer;
  */
 public final class JourneyEditorManager implements Disposable {
 
-  /**
-   * Steal editor from other tab (old variant) or create custom editor component (correct variant)
-   * Stolen editor is more feature-rich, used until feature parity with custom editor.
-   */
-  private static final boolean STEAL_EDITOR = false;
-
-  public static interface GenericCallback<T> extends Consumer<T>, EventListener {
+  public interface GenericCallback<T> extends Consumer<T>, EventListener {
   }
 
   public final EventDispatcher<GenericCallback<Editor>> closeEditor =
@@ -52,8 +45,32 @@ public final class JourneyEditorManager implements Disposable {
 
   public final Map<PsiElement, Editor> OPENED_JOURNEY_EDITORS = new ConcurrentHashMap<>();
 
-  public Editor getOpenedJourneyEditor(PsiElement psiKey) {
-    return OPENED_JOURNEY_EDITORS.get(psiKey);
+  public void showOnlyRange(Editor editor, PsiElement psiElement) {
+    FoldingModel foldingModel = editor.getFoldingModel();
+    int documentLength = editor.getDocument().getTextLength();
+
+    TextRange range = psiElement.getTextRange();
+    int lineStartOffset = editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(range.getStartOffset()));
+    int lineEndOffset = editor.getDocument().getLineEndOffset(editor.getDocument().getLineNumber(range.getEndOffset()));
+
+    // Run folding operations within a batch to ensure atomic updates
+    foldingModel.runBatchFoldingOperation(() -> {
+      // Create a fold region before the visible range
+      if (lineStartOffset > 0) {
+        FoldRegion beforeRegion = foldingModel.addFoldRegion(0, lineStartOffset, "");
+        if (beforeRegion != null) {
+          beforeRegion.setExpanded(false);
+        }
+      }
+
+      // Create a fold region after the visible range
+      if (lineEndOffset < documentLength) {
+        FoldRegion afterRegion = foldingModel.addFoldRegion(lineEndOffset, documentLength, "");
+        if (afterRegion != null) {
+          afterRegion.setExpanded(false);
+        }
+      }
+    });
   }
 
   @RequiresEdt
@@ -62,36 +79,15 @@ public final class JourneyEditorManager implements Disposable {
     if (psiFile == null) {
       return null;
     }
-    int startOffset = psiElement.getTextRange().getStartOffset();
-    Editor editor;
-    if (JourneyLeftovers.IS_PENDING) {
-      System.out.println("ERROR PENDING WHILE PENDING");
-    }
-    JourneyLeftovers.IS_PENDING = true;
-    try {
-      if (STEAL_EDITOR) {
-        editor = JourneyEditorFactory.stealEditor(psiElement);
-      }
-      else {
-        editor = JourneyEditorFactory.createEditor(psiElement.getProject(), psiFile.getFileDocument(), psiFile.getViewProvider().getVirtualFile());
-      }
-    } finally {
-      JourneyLeftovers.IS_PENDING = false;
-    }
-
+    Editor editor = JourneyEditorFactory.createEditor(psiElement.getProject(), psiFile.getFileDocument(),
+                                                      psiFile.getViewProvider().getVirtualFile());
     registerEditor(psiElement, editor);
-
-    EditorUtils.scrollToOffset(editor, startOffset);
-    ((EditorEx) editor).setBackgroundColor(com.intellij.ui.Gray._249);
-    JComponent component = editor.getComponent();
-    TextRange range = psiElement.getTextRange();
-    Point p1 = editor.offsetToXY(range.getStartOffset());
-    Point p2 = editor.offsetToXY(range.getEndOffset());
-    int h = p2.y - p1.y;
-    h = Math.min(h, 650);
-    h = Math.max(h, 250);
-    component.setSize(650, h);
-    component.setPreferredSize(new Dimension(650, h));
+    ((EditorEx) editor).setBackgroundColor(Gray._249);
+    AsyncEditorLoader.Companion.performWhenLoaded(editor, () -> {
+      editor.getCaretModel().moveToOffset(psiElement.getTextRange().getStartOffset());
+      showOnlyRange(editor, psiElement);
+    });
+    editor.getComponent().setSize(new Dimension(600, 400));
     return editor;
   }
 

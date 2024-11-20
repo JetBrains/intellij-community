@@ -4,6 +4,7 @@ import com.intellij.diagram.DiagramVfsResolver;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -34,6 +35,7 @@ class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNodeIdentit
     });
   }
 
+  @NlsContexts.Label
   public static @Nullable String getQualifiedName(@NotNull PsiElement element) {
     if (element instanceof PsiMethod psiMethod) {
       if (psiMethod.getContainingClass() != null) return psiMethod.getContainingClass().getQualifiedName() + METHOD_DELIMITER + psiMethod.getName();

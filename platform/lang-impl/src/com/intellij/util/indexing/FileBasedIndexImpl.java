@@ -807,7 +807,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     ProgressManager.checkCanceled();
-    //SlowOperations.assertSlowOperationsAreAllowed();
+    SlowOperations.assertSlowOperationsAreAllowed();
     getChangedFilesCollector().ensureUpToDate();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     NoAccessDuringPsiEvents.checkCallContext(indexId);

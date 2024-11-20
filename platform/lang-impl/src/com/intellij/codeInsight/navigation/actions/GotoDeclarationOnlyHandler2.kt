@@ -7,17 +7,15 @@ import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
+import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.ui.list.createTargetPopup
 
@@ -52,14 +50,19 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
           }
           navigateRequestLazy(project, actionResult.requestor)
 
-          ApplicationManager.getApplication().executeOnPooledThread {
-            val navigationRequest = ApplicationManager.getApplication().runReadAction(Computable {
-              actionResult.requestor.navigationRequest()
-            })
+          val isJourney = editor.getUserData(Project.JOURNEY_DIAGRAM_DATA_MODEL) != null
+          if (isJourney) {
+            val navigationInterceptor = project.getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR)
+            if (navigationInterceptor != null) {
+              val navigationRequest = underModalProgress(project, "Journey goto declaration.") {
+                actionResult.requestor.navigationRequest()
+              }
 
-            project.getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR)
-              ?.apply(navigationRequest, editor)
-            return@executeOnPooledThread
+              val stopNavigation = navigationInterceptor.apply(navigationRequest, editor)
+              if (stopNavigation) {
+                return
+              }
+            }
           }
 
           // Ascend the tree to find the enclosing PsiMethod

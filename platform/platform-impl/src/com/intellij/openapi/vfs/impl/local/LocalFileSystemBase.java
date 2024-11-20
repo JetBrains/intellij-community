@@ -83,7 +83,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   private Path convertToNioFileAndCheck(VirtualFile file, boolean assertSlowOp) throws NoSuchFileException {
     if (assertSlowOp) { // remove condition when writes are moved to BGT
-      //SlowOperations.assertSlowOperationsAreAllowed(); TODO: отсюда летит исключение, это отвлекает
+      SlowOperations.assertSlowOperationsAreAllowed();
     }
     if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
       throw new NoSuchFileException(file.getPath(), null, "Not a file");

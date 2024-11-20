@@ -36,7 +36,7 @@ public final class JourneyNavigationUtils {
     return result != null ? result : psiFile;
   }
 
-  public static PsiMethod editorToPsiMethod(Project project, Editor editor) {
+  public static PsiMember editorToPsiMethod(Project project, Editor editor) {
     // Get current caret offset
     CaretModel caretModel = editor.getCaretModel();
     int caretOffset = caretModel.getOffset();
@@ -51,7 +51,7 @@ public final class JourneyNavigationUtils {
     PsiElement elementAtCaret = psiFile != null ? psiFile.findElementAt(caretOffset) : null;
 
     // Ascend the tree to find the enclosing PsiMethod
-    return PsiTreeUtil.getParentOfType(elementAtCaret, PsiMethod.class);
+    return PsiTreeUtil.getParentOfType(elementAtCaret, PsiMember.class);
   }
 
   public static PsiElement findPsiElement(Project project, Object element) {

@@ -35,10 +35,15 @@ internal fun navigateAndHint(project: Project,
       }
 
       if (Registry.`is`("ide.journey.enabled")) { // TODO Journey Hack
-        project.getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR)
-          ?.apply(curEditor, newEditor)
-        onReady.run()
-        return@writeIntentReadAction
+        val navigationInterceptor = project.getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR)
+        val isJourney = (curEditor != null && curEditor.getUserData(Project.JOURNEY_DIAGRAM_DATA_MODEL) != null) ||
+                        (newEditor != null && newEditor.getUserData(Project.JOURNEY_DIAGRAM_DATA_MODEL) != null)
+        if (isJourney && navigationInterceptor != null) {
+          println("JOURNEY ShowUsagesUtil navigation")
+          navigationInterceptor.apply(curEditor, newEditor)
+          onReady.run()
+          return@writeIntentReadAction
+        }
       }
 
       ShowUsagesAction.hint(false, hint, parameters.withEditor(newEditor), actionHandler)

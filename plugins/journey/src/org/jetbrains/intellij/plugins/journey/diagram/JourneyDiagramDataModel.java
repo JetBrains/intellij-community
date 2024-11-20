@@ -29,7 +29,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   private final Collection<JourneyNode> myNodes = new HashSet<>();
   private @NotNull List<JourneyEdge> myEdges = new ArrayList<>();
   public final JourneyEditorManager myEditorManager;
-  private static final double LAYOUT_OFFSET = 600;
+  private static final double LAYOUT_OFFSET = 400;
 
   public JourneyDiagramDataModel(@NotNull Project project,
                                  @NotNull DiagramProvider<JourneyNodeIdentity> provider) {
@@ -156,6 +156,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     myEdges.removeIf(it -> it.getSource().equals(node) ||
                            it.getTarget().equals(node));
     myEditorManager.closeNode(node.getIdentifyingElement().element());
+    queryUpdate(() -> {});
   }
 
   @Override

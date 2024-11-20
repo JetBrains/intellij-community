@@ -1,4 +1,4 @@
-package org.jetbrains.intellij.plugins.journey.diagram;
+package org.jetbrains.intellij.plugins.journey.diagram.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -13,7 +13,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 public class JourneyTitleBar extends JBPanel<JBPanel> {
-  public JourneyTitleBar(@NlsContexts.Label String title, JComponent component) {
+  public JourneyTitleBar(@NlsContexts.Label String title, JComponent editor) {
     super(new BorderLayout());
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
@@ -34,13 +34,14 @@ public class JourneyTitleBar extends JBPanel<JBPanel> {
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLBAR, actionGroup, true
     );
-    actionToolbar.setTargetComponent(component);
+    actionToolbar.setTargetComponent(editor);
     actionToolbar.getComponent().setOpaque(true);
 
     JBLabel titleLabel = new JBLabel(title);
-    Border offsetBorder = BorderFactory.createEmptyBorder(0, 5, 0, 0);
+    Border offsetBorder = BorderFactory.createEmptyBorder(0, 5, 5, 0);
     titleLabel.setBorder(offsetBorder);
     titleLabel.setOpaque(true);
+    titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
     add(titleLabel, BorderLayout.CENTER);
     add(actionToolbar.getComponent(), BorderLayout.EAST);
   }
