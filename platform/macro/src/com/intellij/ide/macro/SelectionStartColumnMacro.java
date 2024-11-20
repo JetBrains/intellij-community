@@ -3,11 +3,18 @@ package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 
 public class SelectionStartColumnMacro extends EditorMacro {
   public SelectionStartColumnMacro() {
-    super("SelectionStartColumn", ExecutionBundle.message("ide.macro.selected.text.start.column.number"));
+    super("SelectionStartColumn");
+  }
+
+  @Override
+  @NotNull
+  public String getDescription() {
+    return ExecutionBundle.message("ide.macro.selected.text.start.column.number");
   }
 
   @Override

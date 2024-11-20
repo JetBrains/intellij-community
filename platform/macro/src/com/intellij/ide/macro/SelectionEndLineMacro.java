@@ -3,11 +3,18 @@ package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 
 public class SelectionEndLineMacro extends EditorMacro {
   public SelectionEndLineMacro() {
-    super("SelectionEndLine", ExecutionBundle.message("ide.macro.selected.text.end.line.number"));
+    super("SelectionEndLine");
+  }
+
+  @Override
+  @NotNull
+  public String getDescription() {
+    return ExecutionBundle.message("ide.macro.selected.text.end.line.number");
   }
 
   @Override
