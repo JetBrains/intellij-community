@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.TestStateStorage;
@@ -242,5 +243,45 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
       RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
       assertNotNull(info);
     });
+  }
+
+  public void testRetryingTestAnnotationSingle() {
+    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
+    myFixture.configureByText("ClassWithRetryingTest.java", """
+      import org.junitpioneer.jupiter.RetryingTest;
+      
+      public class ClassWithRetryingTst {
+          @RetryingTest(value = 2)
+          void <caret>retryingTest() {
+          }
+      }
+      """);
+    doTest();
+  }
+
+  public void testRetryingTestAnnotationWithRegularTest() {
+    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
+    myFixture.configureByText("ClassWithRetryingTest.java", """
+      import org.junit.jupiter.api.Test;
+      import org.junitpioneer.jupiter.RetryingTest;
+      
+      public class ClassWithRetryingTEst {
+          @RetryingTest(value = 2)
+          void <caret>retryingTest() {
+          }
+      
+          @Test
+          void regularTest() {
+          }
+      }
+      """);
+
+    doTest();
+  }
+
+  private void doTest() {
+    List<GutterMark> markList = myFixture.findGuttersAtCaret();
+    assertSize(1, markList);
+    assertEquals(ExecutionBundle.message("run.text"), ContainerUtil.getOnlyItem(markList).getTooltipText());
   }
 }

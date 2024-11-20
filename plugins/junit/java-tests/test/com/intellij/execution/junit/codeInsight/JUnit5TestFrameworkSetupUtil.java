@@ -108,4 +108,26 @@ public final class JUnit5TestFrameworkSetupUtil {
                        """);
     return fixture;
   }
+
+  /**
+   * Adds to the fixture JUnit5 and Junit Pioneer libraries.
+   *
+   * @see <a href="https://junit-pioneer.org/">Junit Pioneer</a>
+   */
+  public static JavaCodeInsightTestFixture setupJunit5WithExtensionLibrary(JavaCodeInsightTestFixture fixture) {
+    setupJUnit5Library(fixture);
+
+    fixture.addClass("""
+                       package org.junitpioneer.jupiter;
+                       import org.junit.platform.commons.annotation.Testable;
+                       
+                       @Testable
+                       @Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
+                       public @interface RetryingTest {
+                         int value() default 0;
+                       }
+                       """);
+
+    return fixture;
+  }
 }
