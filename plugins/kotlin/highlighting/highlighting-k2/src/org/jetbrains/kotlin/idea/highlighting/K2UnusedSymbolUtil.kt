@@ -596,6 +596,8 @@ object K2UnusedSymbolUtil {
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {
               is KtClassOrObject -> {
+                  if (!element.canBeAnalysed()) return@any false
+
                   val overridingCallableSymbol = element.classSymbol?.memberScope
                       ?.callables { name -> name == callableSymbol.callableId?.callableName }?.filter {
                           it.fakeOverrideOriginal == callableSymbol
