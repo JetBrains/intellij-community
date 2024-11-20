@@ -21,5 +21,11 @@
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
 
     <projectService serviceImplementation="com.intellij.execution.configurations.RunConfigurationVcsSupport"/>
+
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
   </extensions>
+  <projectListeners>
+    <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+  </projectListeners>
 </idea-plugin>

@@ -273,8 +273,6 @@
 
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
               topic="com.intellij.notification.Notifications"/>
-    <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"
-              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageServiceFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 
