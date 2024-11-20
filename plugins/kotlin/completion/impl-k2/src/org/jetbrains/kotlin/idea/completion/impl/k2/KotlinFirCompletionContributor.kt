@@ -6,17 +6,13 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
@@ -76,37 +72,14 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         if (shouldSuppressCompletion(parameters, result.prefixMatcher)) return
         val positionContext = KotlinPositionContextDetector.detect(parameters.position)
 
-        val sink = result.withRelevanceSorter(parameters, positionContext)
+        val resultSet = result.withRelevanceSorter(parameters, positionContext)
             .withPrefixMatcher(parameters)
-            .let { LookupElementSink(it, parameters) }
 
-        val completionFile = parameters.completionFile
-        val originalFile = parameters.originalFile
-
-        analyze(completionFile) {
-            val completionDeclaration = when (positionContext) {
-                is KotlinSimpleParameterPositionContext -> positionContext.ktParameter
-                is KotlinClassifierNamePositionContext -> positionContext.classLikeDeclaration
-                else -> null
-            }
-
-            if (completionDeclaration != null) {
-                try {
-                    val originalDeclaration = PsiTreeUtil.findSameElementInCopy(completionDeclaration, originalFile)
-                    completionDeclaration.recordOriginalDeclaration(originalDeclaration)
-                } catch (_: IllegalStateException) {
-                    //declaration is written at empty space
-                }
-            }
-
-            completionFile.recordOriginalKtFile(originalFile)
-
-            Completions.complete(
-                parameters = parameters,
-                positionContext = positionContext,
-                sink = sink,
-            )
-        }
+        Completions.complete(
+            parameters = parameters,
+            positionContext = positionContext,
+            sink = LookupElementSink(resultSet, parameters),
+        )
     }
 
     private fun CompletionResultSet.withPrefixMatcher(

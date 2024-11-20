@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
@@ -18,12 +19,11 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
 
-    context(KaSession)
     fun complete(
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
         sink: LookupElementSink,
-    ) {
+    ): Unit = analyze(parameters.completionFile) {
         val weighingContext = when (positionContext) {
             is KotlinNameReferencePositionContext -> WeighingContext.create(parameters, positionContext)
             else -> WeighingContext.create(parameters, elementInCompletionFile = positionContext.position)
