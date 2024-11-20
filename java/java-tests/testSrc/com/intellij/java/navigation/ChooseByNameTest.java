@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
@@ -64,12 +64,12 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_annotation_syntax() {
     PsiClass match = myFixture.addClass("@interface Anno1 {}");
     myFixture.addClass("class Anno2 {}");
-    assertEquals(gotoClass("@Anno").get(0), match);
+    assertEquals(match, gotoClass("@Anno").get(0));
   }
 
   public void test_class_a_in_same_named_package_and_partially_matching_subpackage() {
     PsiClass c = myFixture.addClass("package com.intellij.codeInsight.template.impl; class TemplateListPanel {}");
-    assertEquals(gotoClass("templistpa").get(0), c);
+    assertEquals(c, gotoClass("templistpa").get(0));
   }
 
   public void test_no_result_for_empty_patterns() {
@@ -112,9 +112,9 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                                   }
                                                 }
                                               """).getInnerClasses()[0].getMethods();
-    assertEquals(gotoSymbol("pkg.Cls.Inner.paint"), List.of(method));
-    assertEquals(gotoSymbol("pkg.Cls$Inner.paint"), List.of(method));
-    assertEquals(gotoSymbol("pkg.Cls$Inner#paint"), List.of(method));
+    assertEquals(List.of(method), gotoSymbol("pkg.Cls.Inner.paint"));
+    assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner.paint"));
+    assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner#paint"));
   }
 
   public void test_goto_symbol_by_Copy_Reference_result() {
@@ -127,15 +127,15 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                                  void bar(boolean b) {}\s
                                                  void bar(List<String> l) {}\s
                                                }""").getMethods();
-    assertEquals(gotoSymbol("pkg.Cls.foo"), List.of(methods[0]));
-    assertEquals(gotoSymbol("pkg.Cls#foo"), List.of(methods[0]));
-    assertEquals(gotoSymbol("pkg.Cls#foo(int)"), List.of(methods[0]));
-    assertEquals(Set.copyOf(gotoSymbol("pkg.Cls.bar")), Set.of(methods[1], methods[2], methods[3]));
-    assertEquals(Set.copyOf(gotoSymbol("pkg.Cls#bar")), Set.of(methods[1], methods[2], methods[3]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(int)"), List.of(methods[1]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(boolean)"), List.of(methods[2]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(java.util.List)"), List.of(methods[3]));
-    assertEquals(gotoSymbol("pkg.Cls#bar(java.util.List<java.lang.String>)"), List.of(methods[3]));
+    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls.foo"));
+    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo"));
+    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo(int)"));
+    assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls.bar")));
+    assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls#bar")));
+    assertEquals(List.of(methods[1]), gotoSymbol("pkg.Cls#bar(int)"));
+    assertEquals(List.of(methods[2]), gotoSymbol("pkg.Cls#bar(boolean)"));
+    assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List)"));
+    assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List<java.lang.String>)"));
   }
 
   public void test_disprefer_underscore() {
@@ -430,7 +430,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_file_path_matching_with_spaces_instead_of_slashes() {
     PsiFile good = addEmptyFile("config/app.txt");
     addEmptyFile("src/Configuration/ManagesApp.txt");
-    assertEquals(gotoFile("config app.txt").get(0), good);
+    assertEquals(good, gotoFile("config app.txt").get(0));
   }
 
   public void test_multiple_slashes_in_goto_file() {
@@ -461,12 +461,12 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void test_fix_keyboard_layout() {
-    assertEquals(gotoClass("Ыекштп", true).get(0).getName(), "String");
+    assertEquals("String", gotoClass("Ыекштп", true).get(0).getName());
     @Nullable Object symbol =
       ContainerUtil.find(gotoSymbol("Ыекштп", true), sym -> sym instanceof PsiClass clazz && clazz.getName().equals("String"));
     assertNotNull(symbol);
-    assertEquals(gotoFile("Ыекштп", true).get(0).getName(), "String.class");
-    assertEquals(gotoFile("дфтпЫекштп", true).get(0).getName(), "String.class");
+    assertEquals("String.class", gotoFile("Ыекштп", true).get(0).getName());
+    assertEquals("String.class", gotoFile("дфтпЫекштп", true).get(0).getName());
   }
 
   public void test_prefer_exact_case_match() {
