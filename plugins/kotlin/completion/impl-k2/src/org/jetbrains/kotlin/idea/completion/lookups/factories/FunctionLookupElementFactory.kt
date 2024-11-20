@@ -3,12 +3,12 @@
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.endOffset
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.idea.completion.acceptOpeningBrace
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
-import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.build
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -62,25 +62,27 @@ internal object FunctionLookupElementFactory {
     }
 
     context(KaSession)
-    @ApiStatus.Experimental
-    @OptIn(KaExperimentalApi::class)
-    fun createLookupWithTrailingLambda(
-        shortName: Name,
+    internal fun getTrailingFunctionSignature(
         signature: KaFunctionSignature<*>,
-        options: CallableInsertionOptions,
-    ): LookupElementBuilder? {
+    ): KaVariableSignature<KaValueParameterSymbol>? {
         val valueParameters = signature.valueParameters
-
-        val trailingFunctionSignature = valueParameters.lastOrNull()
-            ?.takeUnless { it.symbol.isVararg }
-            ?: return null
-
         if (!valueParameters.dropLast(1).all { it.symbol.hasDefaultValue }) return null
 
-        val trailingFunctionDescriptor = when (val type = trailingFunctionSignature.returnType.lowerBoundIfFlexible()) {
+        return valueParameters.lastOrNull()
+            ?.takeUnless { it.symbol.isVararg }
+    }
+
+    context(KaSession)
+    internal fun createTrailingFunctionDescriptor(
+        trailingFunctionSignature: KaVariableSignature<KaValueParameterSymbol>,
+    ): TrailingFunctionDescriptor? {
+        return when (val type = trailingFunctionSignature.returnType.lowerBoundIfFlexible()) {
             is KaFunctionType -> TrailingFunctionDescriptor(type)
             is KaUsualClassType -> {
                 val functionClassSymbol = type.symbol as? KaNamedClassSymbol
+                    ?: return null
+
+                val samSymbol = functionClassSymbol.samSymbol
                     ?: return null
 
                 val samConstructor = functionClassSymbol.samConstructor
@@ -94,17 +96,15 @@ internal object FunctionLookupElementFactory {
 
                 // TODO this is a workaround
                 // FIX pass KaCallableMemberCall.typeArgumentsMapping from the resolve result
-                val functionType = type.typeArguments
+                val mappings = type.typeArguments
                     .mapNotNull { it.type }
                     .zip(samConstructor.typeParameters)
                     .associate { (parameterSymbol, typeProjection) ->
                         typeProjection to parameterSymbol
                     }
-                    .let { createSubstitutor(it) }
-                    .substitute(samConstructorType) as? KaFunctionType
-                    ?: return null
 
-                val samSymbol = functionClassSymbol.samSymbol
+                val functionType = (@OptIn(KaExperimentalApi::class) createSubstitutor(mappings)
+                    .substitute(samConstructorType)) as? KaFunctionType
                     ?: return null
 
                 TrailingFunctionDescriptor(
@@ -113,22 +113,28 @@ internal object FunctionLookupElementFactory {
                 )
             }
 
-            else -> return null
+            else -> null
         }
+    }
 
-        val trailingFunctionType = trailingFunctionDescriptor.functionType
-        val trailingFunctionTemplate = TemplateManager.getInstance(useSiteModule.project)
-            .createTemplate("", "")
-            .build(
-                trailingFunctionType = trailingFunctionType,
-                suggestedParameterNames = trailingFunctionDescriptor.suggestedParameterNames,
-            )
+    context(KaSession)
+    @ApiStatus.Experimental
+    fun createLookupWithTrailingLambda(
+        shortName: Name,
+        signature: KaFunctionSignature<*>,
+        options: CallableInsertionOptions,
+    ): LookupElementBuilder? {
+        val trailingFunctionSignature = getTrailingFunctionSignature(signature)
+            ?: return null
+
+        val (trailingFunctionType, _) = createTrailingFunctionDescriptor(trailingFunctionSignature)
+            ?: return null
 
         val lookupObject = FunctionCallLookupObject(
             shortName = shortName,
             options = options,
             renderedDeclaration = CompletionShortNamesRenderer.renderTrailingFunction(trailingFunctionSignature, trailingFunctionType),
-            trailingLambdaTemplate = trailingFunctionTemplate,
+            inputTrailingLambdaIsRequired = true,
         )
 
         return createLookupElement(signature, lookupObject).apply {
@@ -266,10 +272,11 @@ internal data class FunctionCallLookupObject(
     override val renderedDeclaration: String,
     val inputValueArgumentsAreRequired: Boolean = false,
     val inputTypeArgumentsAreRequired: Boolean = false,
-    val trailingLambdaTemplate: Template? = null,
+    val inputTrailingLambdaIsRequired: Boolean = false,
 ) : KotlinCallableLookupObject()
 
 internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
+
     private fun addArguments(context: InsertionContext, offsetElement: PsiElement, lookupObject: FunctionCallLookupObject) {
         val completionChar = context.completionChar
         if (completionChar == '(') { //TODO: more correct behavior related to braces type
@@ -290,8 +297,7 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 (isNormalCompletion || isReplaceCompletion || isSmartEnterCompletion)
 
         val preferParentheses = completionChar == '(' || isReplaceCompletion && chars.isCharAt(offset, '(')
-        val trailingLambdaTemplate = lookupObject.trailingLambdaTemplate
-        val insertLambda = !preferParentheses && trailingLambdaTemplate != null
+        val insertLambda = !preferParentheses && lookupObject.inputTrailingLambdaIsRequired
         val (openingBracket, closingBracket) = if (insertLambda) '{' to '}' else '(' to ')'
 
         if (isReplaceCompletion) {
@@ -323,43 +329,40 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
         var inBracketsShift = 0
 
         if (openingBracketOffset == null) {
-            if (insertLambda) {
+            val text = if (insertLambda) {
                 if (completionChar == ' ' || completionChar == '{') {
                     context.setAddCompletionChar(false)
                 }
 
-                TemplateManager.getInstance(project)
-                    .startTemplate(
-                        /* editor = */ editor,
-                        /* template = */ trailingLambdaTemplate!!,
-                        /* inSeparateCommand = */ false,
-                        /* predefinedVarValues = */ null,
-                        /* listener = */ null,
-                    )
+                inBracketsShift = 1
+                " {  }"
             } else {
-                if (isSmartEnterCompletion) {
-                    document.insertString(offset, "(")
-                } else {
-                    document.insertString(offset, "()")
-                }
+                if (isSmartEnterCompletion) "("
+                else "()"
             }
+            document.insertString(offset, text)
             context.commitDocument()
 
-            if (!insertLambda) {
-                openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)!!
-                closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
-            }
+            openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)!!
+            closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
         }
 
         if (!insertTypeArguments) {
             if (shouldPlaceCaretInBrackets(completionChar, lookupObject) || closeBracketOffset == null) {
-                if (!insertLambda) {
-                    caretModel.moveToOffset(openingBracketOffset!! + 1)
-                } else {
-                    // do nothing, everything is handled by the template itself
-                }
+                val additionalOffset = if (insertLambda) 2 else 1
+                caretModel.moveToOffset(openingBracketOffset + additionalOffset)
 
-                AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, offsetElement)
+                context.laterRunnable = if (insertLambda) Runnable {
+                    CodeCompletionHandlerBase(
+                        /* completionType = */ CompletionType.BASIC,
+                        /* invokedExplicitly = */ false,
+                        /* autopopup = */ true,
+                        /* synchronous = */ false,
+                    ).invokeCompletion(project, editor)
+                } else Runnable {
+                    AutoPopupController.getInstance(project)
+                        .autoPopupParameterInfo(editor, offsetElement)
+                }
             } else {
                 caretModel.moveToOffset(closeBracketOffset + 1)
             }
@@ -370,7 +373,7 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
         if (completionChar == ',' || completionChar == '.' || completionChar == '=') return false
         if (completionChar == '(') return true
         return lookupObject.inputValueArgumentsAreRequired
-                || lookupObject.trailingLambdaTemplate != null
+                || lookupObject.inputTrailingLambdaIsRequired
     }
 
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
@@ -406,7 +409,7 @@ internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
     }
 }
 
-private data class TrailingFunctionDescriptor(
+internal data class TrailingFunctionDescriptor(
     val functionType: KaFunctionType,
     val suggestedParameterNames: List<Name?> = functionType.parameterTypes.map { it.extractParameterName() },
 )

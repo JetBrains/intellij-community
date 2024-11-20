@@ -61,8 +61,6 @@ internal object VariableLookupElementFactory {
                     options = options,
                     renderedDeclaration = rendered,
                     inputValueArgumentsAreRequired = functionalType.parameterTypes.isNotEmpty(),
-                    inputTypeArgumentsAreRequired = false,
-                    trailingLambdaTemplate = null, // TODO
                 )
 
                 val tailText = getTailTextForVariableCall(functionalType, signature)

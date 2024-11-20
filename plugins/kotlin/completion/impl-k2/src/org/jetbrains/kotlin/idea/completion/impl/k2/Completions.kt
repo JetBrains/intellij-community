@@ -31,6 +31,8 @@ internal object Completions {
 
         when (positionContext) {
             is KotlinExpressionNameReferencePositionContext -> {
+                FirTrailingFunctionParameterNameCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
                 if (positionContext.allowsOnlyNamedArguments()) {
                     FirNamedArgumentCompletionContributor(parameters, sink)
                         .complete(positionContext, weighingContext)

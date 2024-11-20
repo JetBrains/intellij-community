@@ -1634,6 +1634,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             public void testParameterType5() throws Exception {
                 runTest("../testData/basic/common/lambdaSignature/ParameterType5.kt");
             }
+
+            @TestMetadata("TrailingLambdaParameterName1.kt")
+            public void testTrailingLambdaParameterName1() throws Exception {
+                runTest("../testData/basic/common/lambdaSignature/TrailingLambdaParameterName1.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

@@ -1634,6 +1634,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
             public void testParameterType5() throws Exception {
                 runTest("../../completion/testData/basic/common/lambdaSignature/ParameterType5.kt");
             }
+
+            @TestMetadata("TrailingLambdaParameterName1.kt")
+            public void testTrailingLambdaParameterName1() throws Exception {
+                runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName1.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
