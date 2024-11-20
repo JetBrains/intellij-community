@@ -70,6 +70,10 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
       }
       file = createPsiFileImpl(target);
       if (file == null) return null;
+      if (file.getLanguage() != target) {
+        file = createPsiFileImpl(target);
+        throw new IllegalStateException("Inconsistent view provider "+this +" ("+getClass()+") implementation. Its method createPsiFileImpl("+target+") returned "+ file +"("+file.getClass()+") with getLanguage()="+file.getLanguage());
+      }
       if (myOriginal != null) {
         PsiFile originalFile = myOriginal.getPsi(target);
         if (originalFile != null) {
