@@ -9272,6 +9272,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/propertyToSyntheticExtension.kt");
             }
 
+            @TestMetadata("qualifiedReference.kt")
+            public void testQualifiedReference() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/qualifiedReference.kt");
+            }
+
             @TestMetadata("replaceCallWithArgument.kt")
             public void testReplaceCallWithArgument() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/replaceCallWithArgument.kt");

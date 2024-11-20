@@ -79,6 +79,7 @@ object DeprecationFixFactory {
             }
             is KtConstructorCalleeExpression -> psiElement.constructorReferenceExpression
             is KtBinaryExpression -> psiElement.operationReference
+            is KtDotQualifiedExpression -> psiElement.selectorExpression as? KtSimpleNameExpression
             else -> null
         } ?: return emptyList()
         val expression = (referenceExpression.parent as? KtCallExpression)?.takeIf {

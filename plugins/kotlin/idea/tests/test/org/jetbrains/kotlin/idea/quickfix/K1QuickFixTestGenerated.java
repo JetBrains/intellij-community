@@ -9137,6 +9137,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/propertyToSyntheticExtension.kt");
             }
 
+            @TestMetadata("qualifiedReference.kt")
+            public void testQualifiedReference() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/qualifiedReference.kt");
+            }
+
             @TestMetadata("replaceCallWithArgument.kt")
             public void testReplaceCallWithArgument() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/replaceCallWithArgument.kt");
