@@ -177,7 +177,26 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       uri = VfsUtil.toUri("file://C:/p");
       assertNotNull(uri);
       assertEquals("file", uri.getScheme());
+      assertNull(uri.getHost());
       assertEquals("/C:/p", uri.getPath());
+
+      uri = VfsUtil.toUri("FILE://C:/p");
+      assertNotNull(uri);
+      assertEquals("FILE", uri.getScheme());
+      assertNull(uri.getHost());
+      assertEquals("/C:/p", uri.getPath());
+
+      uri = VfsUtil.toUri("file://host/path");
+      assertNotNull(uri);
+      assertEquals("file", uri.getScheme());
+      assertEquals("host", uri.getHost());
+      assertEquals("/path", uri.getPath());
+
+      uri = VfsUtil.toUri("FILE://host/path");
+      assertNotNull(uri);
+      assertEquals("FILE", uri.getScheme());
+      assertEquals("host", uri.getHost());
+      assertEquals("/path", uri.getPath());
     }
 
     uri = VfsUtil.toUri("file:///Users/S pace");

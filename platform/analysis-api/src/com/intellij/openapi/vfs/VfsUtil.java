@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -236,10 +237,10 @@ public final class VfsUtil extends VfsUtilCore {
       }
     }
 
-    if (SystemInfo.isWindows && uri.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-      int firstSlashIndex = index + "://".length();
-      if (uri.charAt(firstSlashIndex) != '/') {
-        uri = LocalFileSystem.PROTOCOL_PREFIX + '/' + uri.substring(firstSlashIndex);
+    if (SystemInfo.isWindows && StringUtil.startsWithIgnoreCase(uri, LocalFileSystem.PROTOCOL_PREFIX)) {
+      var pathStart = LocalFileSystem.PROTOCOL_PREFIX.length();
+      if (uri.length() > pathStart + 1 && uri.charAt(pathStart + 1) == ':' && OSAgnosticPathUtil.isDriveLetter(uri.charAt(pathStart))) {
+        uri = uri.substring(0, pathStart) + '/' + uri.substring(pathStart);
       }
     }
 
