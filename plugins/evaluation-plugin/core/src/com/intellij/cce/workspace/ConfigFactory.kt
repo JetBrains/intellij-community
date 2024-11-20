@@ -137,6 +137,7 @@ object ConfigFactory {
     map.getIfExists<Boolean?>("saveContent")?.let { builder.saveContent = it }
     map.getIfExists<Boolean?>("logLocationAndItemText")?.let { builder.logLocationAndItemText = it }
     map.getIfExists<Double?>("trainTestSplit")?.let { builder.trainTestSplit = it.toInt() }
+    map.getIfExists<String?>("registry")?.let { builder.registry = it }
   }
 
   private fun <T : EvaluationStrategy> deserializeStrategy(map: Map<String, Any>?,

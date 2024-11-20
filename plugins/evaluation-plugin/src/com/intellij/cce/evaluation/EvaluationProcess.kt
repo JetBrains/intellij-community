@@ -63,6 +63,7 @@ class EvaluationProcess private constructor (
 
       if (shouldInterpretActions) {
         factory.setupStatsCollectorStep()?.let { steps.add(it) }
+        steps.add(factory.setupRegistryStep())
         steps.addAll(factory.featureSpecificSteps())
       }
 

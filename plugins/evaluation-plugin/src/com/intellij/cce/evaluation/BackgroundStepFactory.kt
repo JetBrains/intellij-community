@@ -39,6 +39,8 @@ class BackgroundStepFactory(
       SetupStatsCollectorStep(config.interpret.experimentGroup, config.interpret.logLocationAndItemText)
     else null
 
+  override fun setupRegistryStep(): EvaluationStep = SetupRegistryStep(config.interpret.registry)
+
   override fun setupSdkStep(): EvaluationStep? = environment.setupSdk
 
   override fun checkSdkConfiguredStep(): EvaluationStep? = environment.checkSdk
