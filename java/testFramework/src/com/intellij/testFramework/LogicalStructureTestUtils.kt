@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.SimpleTextAttributes
 import junit.framework.AssertionFailedError
 import junit.framework.ComparisonFailure
+import junit.framework.TestCase.assertNotNull
 import javax.swing.Icon
 
 object LogicalStructureTestUtils {
@@ -21,6 +22,7 @@ object LogicalStructureTestUtils {
   ) {
     val project = psiFile.project
     val builder = LogicalStructureViewService.getInstance(project).getLogicalStructureBuilder(psiFile)
+    assertNotNull(builder)
     val structureView = builder!!.createStructureView(null, project)
     val actualRoot = createActualNode(structureView.treeModel.root)
     val expectedRoot = LogicalStructureNode(null, "", "")
