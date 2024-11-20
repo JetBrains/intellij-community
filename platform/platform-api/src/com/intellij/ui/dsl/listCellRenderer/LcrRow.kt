@@ -84,5 +84,5 @@ interface LcrRow<T> {
   /**
    * Adds separator above the row
    */
-  fun separator(init: (LcrSeparator.() -> Unit))
+  fun separator(init: LcrSeparator.() -> Unit)
 }

@@ -80,7 +80,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
-    val initParams = LcrTextInitParams(foreground)
+    val initParams = LcrTextInitParamsImpl(foreground)
     initParams.accessibleName = text
     if (init != null) {
       initParams.init()
@@ -89,7 +89,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
-  override fun separator(init: (LcrSeparator.() -> Unit)) {
+  override fun separator(init: LcrSeparator.() -> Unit) {
     if (separator != null) {
       throw UiDslException("Separator is defined already")
     }

@@ -703,7 +703,7 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 *:com.intellij.ui.dsl.listCellRenderer.LcrSeparator
 - a:getText():java.lang.String
 - a:setText(java.lang.String):V
-*f:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+*Fa:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - <init>(java.awt.Color):V
 - f:getAttributes():com.intellij.ui.SimpleTextAttributes
@@ -715,6 +715,12 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - f:setFont(java.awt.Font):V
 - f:setForeground(java.awt.Color):V
 - f:setSpeedSearchHighlighting(Z):V
+- a:speedSearch(kotlin.jvm.functions.Function1):V
+*f:com.intellij.ui.dsl.listCellRenderer.LcrTextSpeedSearchParams
+- com.intellij.ui.dsl.listCellRenderer.LcrInitParams
+- <init>():V
+- f:getRanges():java.lang.Iterable
+- f:setRanges(java.lang.Iterable):V
 *a:com.intellij.ui.hover.HoverListener
 - <init>():V
 - f:addTo(javax.swing.JComponent):V

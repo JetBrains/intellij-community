@@ -116,11 +116,15 @@ internal class LcrListPanel : UISandboxPanel {
           @Suppress("UNCHECKED_CAST")
           val list = jbList((1..99).toList(), listCellRenderer {
             text("Item $value") {
+              speedSearch { }
+              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_ITALIC, JBColor.BLUE)
+            }
+            text("Item $value") {
+              speedSearch { }
               align = LcrInitParams.Align.LEFT
             }
             text("Not searchable text") {
               foreground = greyForeground
-              speedSearchHighlighting = false
             }
           }).label("Speed search:", LabelPosition.TOP)
             .applyToComponent {
