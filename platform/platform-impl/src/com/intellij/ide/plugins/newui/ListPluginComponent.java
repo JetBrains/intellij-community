@@ -569,9 +569,9 @@ public final class ListPluginComponent extends JPanel {
           }
         }
 
-        myUpdateLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is"), true, false);
-        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor, true);
-        myUpdateLicensePanel.setVisible(true);
+        myUpdateLicensePanel.showBuyPluginWithText(IdeBundle.message("label.next.plugin.version.is"), true, false,
+                                                   () -> myUpdateDescriptor, true,
+                                                   true);
       }
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
