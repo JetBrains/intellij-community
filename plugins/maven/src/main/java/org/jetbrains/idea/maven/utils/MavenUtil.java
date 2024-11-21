@@ -944,25 +944,10 @@ public class MavenUtil {
     return getMavenVersion(Path.of(mavenHome));
   }
 
-  @Nullable
-  public static String getMavenVersion(Project project, String workingDir) {
-    MavenHomeType homeType = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings().getMavenHomeType();
-    if (homeType instanceof StaticResolvedMavenHomeType srmt) {
-      return getMavenVersion(srmt);
-    }
-    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getWrapper(workingDir);
-    if (distribution != null) return distribution.getVersion();
-    return null;
-  }
 
   @Nullable
   public static String getMavenVersion(StaticResolvedMavenHomeType mavenHomeType) {
     return getMavenVersion(getMavenHomePath(mavenHomeType));
-  }
-
-  public static boolean isMaven3(String mavenHome) {
-    String version = getMavenVersion(mavenHome);
-    return version != null && version.compareTo("3.0.0") >= 0;
   }
 
   @Nullable
@@ -1314,7 +1299,8 @@ public class MavenUtil {
           return result;
         }
       }
-      else if ((library.getFileName().toString().startsWith("maven-") && library.getFileName().getFileName().toString().endsWith("-uber.jar"))) {
+      else if ((library.getFileName().toString().startsWith("maven-") &&
+                library.getFileName().getFileName().toString().endsWith("-uber.jar"))) {
         //old maven versions
         VirtualFile result = tryReadFromLib(library, "org/apache/maven/project/" + superPomName);
         if (result != null) {
