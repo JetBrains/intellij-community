@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduc
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.ParseContext.*
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
@@ -187,16 +188,15 @@ class NewJavaToKotlinConverter(
             processor.updateState(fileIndex = i, phase = PRINT_CODE, phaseDescription)
             val (element, ast) = elementWithAst
             if (ast == null) return@mapIndexed null
-            val code = JKCodeBuilder(context).run { printCodeOut(ast) }
+
+            val code = JKCodeBuilder(context).printCodeOut(ast)
+            val importsToAdd = importStorage.getImports()
             val parseContext = when (element) {
-                is PsiStatement, is PsiExpression -> ParseContext.CODE_BLOCK
-                else -> ParseContext.TOP_LEVEL
+                is PsiStatement, is PsiExpression -> CODE_BLOCK
+                else -> TOP_LEVEL
             }
-            ElementResult(
-                code,
-                importsToAdd = importStorage.getImports(),
-                parseContext = parseContext
-            )
+
+            ElementResult(code, importsToAdd, parseContext)
         }
 
         return Result(
