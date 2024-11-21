@@ -58,6 +58,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
   @Override
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {
+    return getDisplayTextDefaultWithPathAndLine(breakpoint);
+  }
+
+  @ApiStatus.Internal
+  public final @Nls @NotNull String getDisplayTextDefaultWithPathAndLine(XLineBreakpoint<P> breakpoint) {
     // It's not expected to be really short like getShortText(), but too long is also bad.
     var path = breakpoint.getPresentableFilePath();
     var shortenedPath = StringUtil.shortenPathWithEllipsis(path, 50);
