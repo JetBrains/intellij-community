@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
@@ -29,33 +30,33 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 internal object OptInFixFactories {
 
-    val optInUsageFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsage ->
+    val optInUsageFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInUsage ->
         createQuickFix(diagnostic)
     }
 
-    val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsageError ->
+    val optInUsageErrorFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInUsageError ->
         createQuickFix(diagnostic)
     }
 
-    val optInToInheritanceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInToInheritance ->
+    val optInToInheritanceFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInToInheritance ->
         createQuickFix(diagnostic)
     }
 
-    val optInToInheritanceErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInToInheritanceError ->
+    val optInToInheritanceErrorFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInToInheritanceError ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverride ->
+    val optInOverrideFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInOverride ->
         createQuickFix(diagnostic)
     }
 
-    val optInOverrideErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInOverrideError ->
+    val optInOverrideErrorFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.OptInOverrideError ->
         createQuickFix(diagnostic)
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
-    private fun createQuickFix(diagnostic: KaFirDiagnostic<PsiElement>): List<AddAnnotationFix> {
+    private fun createQuickFix(diagnostic: KaFirDiagnostic<PsiElement>): List<ModCommandAction> {
         val element = diagnostic.psi.findParentOfType<KtElement>(strict = false) ?: return emptyList()
         val annotationClassId = OptInFixUtils.optInMarkerClassId(diagnostic) ?: return emptyList()
 
@@ -66,7 +67,7 @@ internal object OptInFixFactories {
         if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return emptyList()
 
         val applicableTargets = annotationSymbol.annotationApplicableTargets
-        val result = mutableListOf<AddAnnotationFix>()
+        val result = mutableListOf<ModCommandAction>()
 
         val candidates = OptInGeneralUtils.collectCandidates(element)
 

@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 internal object SubclassCantCallCompanionProtectedNonStaticFixFactory {
 
-    val addJvmStaticAnnotation = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.SubclassCantCallCompanionProtectedNonStatic ->
-        val nameReference = diagnostic.psi as? KtNameReferenceExpression ?: return@IntentionBased emptyList()
+    val addJvmStaticAnnotation = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SubclassCantCallCompanionProtectedNonStatic ->
+        val nameReference = diagnostic.psi as? KtNameReferenceExpression ?: return@ModCommandBased emptyList()
 
         listOfNotNull(
             AddJvmStaticAnnotationFix.createIfApplicable(nameReference)

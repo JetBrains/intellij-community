@@ -489,14 +489,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
             RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
         )
-        registerPsiQuickFixes(
-            KaFirDiagnostic.DataClassCopyVisibilityWillBeChangedWarning::class,
-            AddConsistentCopyVisibilityAnnotationFixFactory,
-        )
-        registerPsiQuickFixes(
-            KaFirDiagnostic.DataClassCopyVisibilityWillBeChangedError::class,
-            AddConsistentCopyVisibilityAnnotationFixFactory,
-        )
+
+        registerFactory(AddConsistentCopyVisibilityAnnotationFixFactories.errorFixFactory)
+        registerFactory(AddConsistentCopyVisibilityAnnotationFixFactories.warningFixFactory)
+
         registerPsiQuickFixes(KaFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations::class, RemoveAnnotationFix)

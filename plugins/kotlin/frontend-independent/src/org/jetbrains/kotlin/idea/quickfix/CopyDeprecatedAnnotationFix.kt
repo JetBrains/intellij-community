@@ -20,7 +20,7 @@ class CopyDeprecatedAnnotationFix(
     element,
     annotationClassId,
     kind,
-    arguments = argumentsData.toListOfStrings(),
+    annotationInnerText = argumentsData.toAnnotationInnerText(),
 ) {
     override fun renderArgumentsForIntentionName(): String = ""
 
@@ -29,11 +29,11 @@ class CopyDeprecatedAnnotationFix(
         val replaceWithData: ReplaceWithData?,
         val level: String?,
     ) {
-        fun toListOfStrings(): List<String> = listOfNotNull(
+        fun toAnnotationInnerText(): String = listOfNotNull(
             message,
             replaceWithData?.let { "replaceWith = ReplaceWith(${it.toListOfStrings().joinToString()})" },
             level?.let { "level = $it" },
-        )
+        ).joinToString()
 
         data class ReplaceWithData(
             val expression: String,

@@ -1,4 +1,5 @@
 // "Opt in for 'B' on containing class 'C'" "true"
+// PRIORITY: HIGH
 // ACTION: Opt in for 'B' in containing file 'hasOptInAnnotationForClass.kts'
 // ACTION: Opt in for 'B' in module 'light_idea_test_case'
 // ACTION: Opt in for 'B' on 'someFun'
@@ -26,4 +27,4 @@ class C {
         <caret>f2()
     }
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$ModifyOptInAnnotationFix
