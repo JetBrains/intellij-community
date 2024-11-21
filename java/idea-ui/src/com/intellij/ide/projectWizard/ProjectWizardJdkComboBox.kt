@@ -540,8 +540,21 @@ private fun computeHelperJdks(registered: List<ExistingJdk>): List<ProjectWizard
 
 // Suggests to download OpenJDK if nothing else is available in the IDE
 private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkComboBox): Job = launch {
+  val eel = if (Registry.`is`("java.home.finder.use.eel")) {
+    comboBox.projectLocation.takeIf { it.isNotEmpty() }?.let { Path(it).getEelApi() } ?: localEel
+  }
+  else {
+    null
+  }
+  val predicate = if (eel != null) {
+    JdkPredicate.forEel(eel)
+  }
+  else {
+    JdkPredicate.default()
+  }
+
   val item = JdkListDownloader.getInstance()
-    .downloadModelForJdkInstaller(null)
+    .downloadModelForJdkInstaller(null, predicate)
     .filter { it.matchesVendor("openjdk") }
     .filter { CpuArch.fromString(it.arch) == CpuArch.CURRENT }
     .maxByOrNull { it.jdkMajorVersion }
@@ -554,7 +567,7 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
   }
 
   val jdkInstaller = JdkInstaller.getInstance()
-  val request = JdkInstallRequestInfo(item, jdkInstaller.defaultInstallDir(item))
+  val request = JdkInstallRequestInfo(item, jdkInstaller.defaultInstallDir(item, eel))
   val task = JdkDownloaderBase.newDownloadTask(item, request, null)
 
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

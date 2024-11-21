@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
@@ -490,6 +491,7 @@ abstract class JdkInstallerBase {
       if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
       val predicate = when {
+        Registry.`is`("java.home.finder.use.eel") -> JdkPredicate.forEel(jdkPath.getEelApiBlocking())
         WslPath.isWslUncPath(jdkPath.toString()) -> JdkPredicate.forWSL()
         else -> JdkPredicate.default()
       }
