@@ -3,7 +3,6 @@
   "projectPath": "../../ml-eval/spyder",
   "outputDir": "ml-eval-chat-question-answering-python-output",
   "strategy": {
-    "behaviour": "DO_NOTHING",
     "collectContextOnly": false
   },
   "actions": {
