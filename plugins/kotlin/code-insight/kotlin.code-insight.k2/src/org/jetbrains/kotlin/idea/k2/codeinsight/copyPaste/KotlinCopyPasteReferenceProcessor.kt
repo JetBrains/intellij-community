@@ -43,6 +43,9 @@ import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.IOException
 import org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinReferenceRestoringHelper as Helper
 
+/**
+ * Tests: [org.jetbrains.kotlin.idea.k2.copyPaste.K2InsertImportOnPasteTestGenerated]
+ */
 class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
     override fun collectTransferableData(
         file: PsiFile,
