@@ -131,14 +131,12 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
       return GitRecentProjectCachedBranch.KnownBranch(branchName = GitBranchUtil.stripRefsPrefix(targetRef), headFilePath = headFile.absolutePathString())
     }
 
-    private fun findGitHead(projectPath: String): Path? {
-      val gitRoot = findGitRootFor(Path(projectPath)) ?: return null
-      // Note that git worktree scenario is not supported
-      return gitRoot.resolve(GitUtil.DOT_GIT).resolve(GitUtil.HEAD)
+    private suspend fun findGitHead(projectPath: String): Path? = withContext(Dispatchers.IO) {
+      findGitDir(Path(projectPath))?.resolve(GitUtil.HEAD)?.takeIf { Files.exists(it) }
     }
 
-    private fun findGitRootFor(path: Path): Path? =
-      generateSequence(path) { it.parent }.find { GitUtil.isGitRoot(it) }
+    private fun findGitDir(path: Path): Path? =
+      generateSequence(path) { it.parent }.mapNotNull { GitUtil.findGitDir(it) }.firstOrNull()
   }
 }
 

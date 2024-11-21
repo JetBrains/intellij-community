@@ -124,21 +124,26 @@ public final class GitUtil {
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
     if (pathToDir == null) return null;
-    File file = findRealRepositoryDir(rootDir.toNioPath(), pathToDir);
+    Path file = findRealRepositoryDir(rootDir.toNioPath(), pathToDir);
     if (file == null) return null;
-    return VcsUtil.getVirtualFileWithRefresh(file);
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
   }
 
-  private static @Nullable File findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
+  private static @Nullable Path findRealRepositoryDir(@NotNull @NonNls Path rootPath, @NotNull @NonNls String path) {
     if (!FileUtil.isAbsolute(path)) {
       String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath.toString(), path), true);
       path = FileUtil.toSystemIndependentName(canonicalPath);
     }
-    File file = new File(path);
-    return file.isDirectory() ? file : null;
+
+    Path file = Path.of(path);
+    if (!Files.isDirectory(file)) {
+      return null;
+    }
+    return file;
   }
 
-  private static @Nullable String parsePathToRepository(@NotNull @NonNls String content) {
+  @ApiStatus.Internal
+  public static @Nullable String parsePathToRepository(@NotNull @NonNls String content) {
     content = content.trim();
     if (content.startsWith(REPO_PATH_LINK_PREFIX)) {
       content = content.substring(REPO_PATH_LINK_PREFIX.length()).trim();
@@ -997,26 +1002,40 @@ public final class GitUtil {
    */
   @ApiStatus.Obsolete
   public static boolean isGitRoot(@NotNull Path rootDir) {
+    return findGitDir(rootDir) != null;
+  }
+
+  /**
+   * Check if the given root is a valid git root and return gitDir location
+   * For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/' folder.
+   * <p>
+   * See {@link #isGitRoot(Path)} for obsolete reason.
+   */
+  @ApiStatus.Obsolete
+  public static @Nullable Path findGitDir(@NotNull Path rootDir) {
     Path dotGit = rootDir.resolve(DOT_GIT);
     BasicFileAttributes attributes;
     try {
       attributes = Files.readAttributes(dotGit, BasicFileAttributes.class);
     }
     catch (IOException ignore) {
-      return false;
+      return null;
     }
 
     if (attributes.isDirectory()) {
       try {
         BasicFileAttributes headExists = Files.readAttributes(dotGit.resolve(HEAD_FILE), BasicFileAttributes.class);
-        return headExists.isRegularFile();
+        if (headExists.isRegularFile()) {
+          return dotGit;
+        }
+        return null;
       }
       catch (IOException ignore) {
-        return false;
+        return null;
       }
     }
     if (!attributes.isRegularFile()) {
-      return false;
+      return null;
     }
 
     String content;
@@ -1025,12 +1044,13 @@ public final class GitUtil {
     }
     catch (RepoStateException e) {
       LOG.error(e);
-      return false;
+      return null;
     }
 
     String pathToDir = parsePathToRepository(content);
-    if (pathToDir == null) return false;
-    return findRealRepositoryDir(rootDir, pathToDir) != null;
+    if (pathToDir == null) return null;
+
+    return findRealRepositoryDir(rootDir, pathToDir);
   }
 
   public static void generateGitignoreFileIfNeeded(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
