@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import java.util.Locale.getDefault
 
 object DeprecationFixFactory {
     val deprecatedWarning = IntentionBased { diagnostics: KaFirDiagnostic.Deprecation ->
@@ -222,7 +223,7 @@ abstract class DeprecatedSymbolUsageFixBase(
         private fun createReplacementExpression(
             project: Project,
             replaceWith: ReplaceWithData,
-            context: KtExpression
+            context: PsiElement
         ): KtExpression? = KtExpressionCodeFragment(
             project,
             "fragment.kt",
@@ -231,9 +232,8 @@ abstract class DeprecatedSymbolUsageFixBase(
             context
         ).getContentElement()
 
-        private fun retrieveContext(target: KtDeclaration): KtExpression {
-            val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression
-            ?: target.valueParameterList?.parameters?.lastOrNull()) else null)
+        private fun retrieveContext(target: KtDeclaration): PsiElement {
+            val context = (if (target is KtFunction) target.valueParameterList?.parameters?.lastOrNull() else null)
                         ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
                         ?: target
             return context
