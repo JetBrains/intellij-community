@@ -11,8 +11,6 @@ import com.intellij.openapi.util.NlsSafe
 
 private const val HEADER_LEVEL = "#####"
 
-// FIXME: group@class - class links don't work
-
 @Service(Level.PROJECT)
 internal class DocumentationRenderer(private val project: Project) {
 
