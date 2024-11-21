@@ -19,7 +19,7 @@ import kotlin.coroutines.CoroutineContext.Key
 abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW)
   : DebuggerTaskImpl(), CoroutineContext.Element {
   @Volatile
-  protected var myCoroutineScope: CoroutineScope? = null
+  private var myCoroutineScope: CoroutineScope? = null
   private val continuation = AtomicReference<Runnable>(null)
   private var myThread: DebuggerManagerThreadImpl? = null
   protected val commandManagerThread: DebuggerManagerThreadImpl

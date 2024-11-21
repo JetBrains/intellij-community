@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.events
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = Logger.getInstance(SuspendContextCommandImpl::class.java)
@@ -37,7 +36,7 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
       return
     }
 
-    invokeWithChecks(suspendContext) {
+    invokeWithChecks {
       if (LOG.isDebugEnabled) {
         LOG.debug("Executing suspend-context-command: $this")
       }
@@ -46,45 +45,39 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
     check(resetContinuation(null) == null) { "Continuation is not null after resume" }
   }
 
-  override fun invokeContinuation() {
-    val suspendContext = suspendContext ?: error("SuspendContext is null, while is must be checked at the command start")
-    runBlockingMaybeCancellable {
-      // no actual suspension inside
-      invokeWithChecks(suspendContext) {
-        executeContinuation()
-      }
-    }
+  override fun invokeContinuation() = invokeWithChecks {
+    executeContinuation()
   }
 
-  private suspend fun invokeWithChecks(suspendContext: SuspendContextImpl, operation: suspend () -> Unit) {
+  private inline fun invokeWithChecks(operation: () -> Unit) {
+    val suspendContext = suspendContext ?: error("SuspendContext is null, while is must be checked at the command start")
     if (suspendContext.myInProgress) {
       suspendContext.postponeCommand(this)
+      return
     }
-    else {
-      try {
-        if (!suspendContext.isResumed) {
-          if (suspendContext.myInProgress) {
-            LOG.error("Suspend context is already in progress", ThreadDumper.dumpThreadsToString())
-          }
-          suspendContext.myInProgress = true
-          mySuspendContextSetInProgress = true
-          operation()
-        }
-        else {
-          notifyCancelled()
-        }
+    try {
+      if (suspendContext.isResumed) {
+        notifyCancelled()
+        return
       }
-      finally {
-        suspendContext.myInProgress = false
-        mySuspendContextSetInProgress = false
-        if (suspendContext.isResumed) {
-          suspendContext.cancelAllPostponed()
-        }
-        else {
-          val postponed = suspendContext.pollPostponedCommand()
-          if (postponed != null) {
-            suspendContext.managerThread.pushBack(postponed)
-          }
+
+      if (suspendContext.myInProgress) {
+        LOG.error("Suspend context is already in progress", ThreadDumper.dumpThreadsToString())
+      }
+      suspendContext.myInProgress = true
+      mySuspendContextSetInProgress = true
+      operation()
+    }
+    finally {
+      suspendContext.myInProgress = false
+      mySuspendContextSetInProgress = false
+      if (suspendContext.isResumed) {
+        suspendContext.cancelAllPostponed()
+      }
+      else {
+        val postponed = suspendContext.pollPostponedCommand()
+        if (postponed != null) {
+          suspendContext.managerThread.pushBack(postponed)
         }
       }
     }
