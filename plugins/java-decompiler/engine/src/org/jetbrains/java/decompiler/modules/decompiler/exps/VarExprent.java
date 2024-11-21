@@ -65,6 +65,7 @@ public class VarExprent extends Exprent {
     this.addBytecodeOffsets(bytecode);
   }
 
+  @NotNull
   @Override
   public VarType getExprType() {
     return getVarType();
@@ -241,6 +242,7 @@ public class VarExprent extends Exprent {
     this.insideLVT = insideLVT;
   }
 
+  @NotNull
   public VarType getVarType() {
     if (inferredType != null) {
       return inferredType;

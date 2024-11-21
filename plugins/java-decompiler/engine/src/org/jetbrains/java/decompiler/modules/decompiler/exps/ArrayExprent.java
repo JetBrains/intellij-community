@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -32,6 +33,7 @@ public class ArrayExprent extends Exprent {
     return new ArrayExprent(array.copy(), index.copy(), hardType, bytecode);
   }
 
+  @NotNull
   @Override
   public VarType getExprType() {
     VarType exprType = array.getExprType();
