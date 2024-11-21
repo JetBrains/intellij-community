@@ -1267,6 +1267,15 @@ elements:
                                 required: yes
                               #language=Markdown
                               description: The ID of the action to add to a group.
+                          - attribute:
+                              name: id
+                              requirement:
+                                required: no
+                              #language=Markdown
+                              deprecationNote: |
+                                Use [`ref`](#attribute:idea-plugin__actions__reference__ref) instead.
+                              #language=Markdown
+                              description: The ID of the action to add to a group.
                         #language=Markdown
                         examples:
                           - |
