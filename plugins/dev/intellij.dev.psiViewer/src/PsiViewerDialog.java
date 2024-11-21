@@ -650,26 +650,7 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
 
   @Override
   protected Action @NotNull [] createActions() {
-    AbstractAction copyPsi = new AbstractAction(DevPsiViewerBundle.message("cop.y.psi")) {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        PsiElement element = parseText(myEditor.getDocument().getText());
-        setOriginalFiles(element);
-        List<PsiElement> allToParse = new ArrayList<>();
-        if (element instanceof PsiFile) {
-          allToParse.addAll(((PsiFile)element).getViewProvider().getAllFiles());
-        }
-        else if (element != null) {
-          allToParse.add(element);
-        }
-        StringBuilder data = new StringBuilder();
-        for (PsiElement psiElement : allToParse) {
-          data.append(DebugUtil.psiToString(psiElement, myShowWhiteSpacesBox.isSelected(), true));
-        }
-        CopyPasteManager.getInstance().setContents(new StringSelection(data.toString()));
-      }
-    };
-    return ArrayUtil.mergeArrays(new Action[]{copyPsi}, super.createActions());
+    return ArrayUtil.mergeArrays(new Action[]{new CopyAction()}, super.createActions());
   }
 
   @Override
@@ -1163,5 +1144,29 @@ public class PsiViewerDialog extends DialogWrapper implements UiDataProvider {
         return ReadAction.nonBlocking(callable).executeSynchronously();
       }
     });
+  }
+
+  private class CopyAction extends AbstractAction {
+    CopyAction() {
+      super(DevPsiViewerBundle.message("cop.y.psi"));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull ActionEvent e) {
+      PsiElement element = parseText(myEditor.getDocument().getText());
+      setOriginalFiles(element);
+      List<PsiElement> allToParse = new ArrayList<>();
+      if (element instanceof PsiFile) {
+        allToParse.addAll(((PsiFile)element).getViewProvider().getAllFiles());
+      }
+      else if (element != null) {
+        allToParse.add(element);
+      }
+      StringBuilder data = new StringBuilder();
+      for (PsiElement psiElement : allToParse) {
+        data.append(DebugUtil.psiToString(psiElement, myShowWhiteSpacesBox.isSelected(), true));
+      }
+      CopyPasteManager.getInstance().setContents(new StringSelection(data.toString()));
+    }
   }
 }
