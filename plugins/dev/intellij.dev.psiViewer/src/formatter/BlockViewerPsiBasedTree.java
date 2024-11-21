@@ -36,9 +36,9 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.dev.psiViewer.PsiViewerDialog.initTree;
@@ -129,11 +129,10 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     BlockTreeNode rootNode = new BlockTreeNode(rootBlock, null);
     StructureTreeModel treeModel = new StructureTreeModel<>(blockTreeStructure, myTreeModelDisposable);
     initMap(rootNode, rootElement);
-    assert myPsiToBlockMap != null;
 
     PsiElement rootPsi = rootNode.getBlock() instanceof ASTBlock ?
                          ((ASTBlock)rootNode.getBlock()).getNode().getPsi() : rootElement;
-    BlockTreeNode blockNode = myPsiToBlockMap.get(rootPsi);
+    BlockTreeNode blockNode = Objects.requireNonNull(myPsiToBlockMap).get(rootPsi);
 
     if (blockNode == null) {
       PsiViewerDialog.LOG.error("PsiViewer: rootNode not found\nCurrent language: " + rootElement.getContainingFile().getLanguage(),
@@ -289,7 +288,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   }
 
   private void initMap(BlockTreeNode rootBlockNode, PsiElement psiEl) {
-    myPsiToBlockMap = new HashMap<>();
+    HashMap<PsiElement, BlockTreeNode> psiToBlockMap = new HashMap<>();
     JBTreeTraverser<BlockTreeNode> traverser = JBTreeTraverser.of(BlockTreeNode::getChildren);
     for (BlockTreeNode block : traverser.withRoot(rootBlockNode)) {
       PsiElement currentElem = null;
@@ -304,17 +303,19 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
           InjectedLanguageUtil
             .findElementAtNoCommit(psiEl.getContainingFile(), block.getBlock().getTextRange().getStartOffset());
       }
-      myPsiToBlockMap.put(currentElem, block);
+      psiToBlockMap.put(currentElem, block);
 
       //nested PSI elements with same ranges will be mapped to one blockNode
       //    assert currentElem != null;      //for Scala-language plugin etc it can be null, because formatterBlocks is not instance of ASTBlock
       TextRange curTextRange = currentElem.getTextRange();
       PsiElement parentElem = currentElem.getParent();
       while (parentElem != null && parentElem.getTextRange().equals(curTextRange)) {
-        myPsiToBlockMap.put(parentElem, block);
+        psiToBlockMap.put(parentElem, block);
         parentElem = parentElem.getParent();
       }
     }
+
+    myPsiToBlockMap = psiToBlockMap;
   }
 
   @Nullable
