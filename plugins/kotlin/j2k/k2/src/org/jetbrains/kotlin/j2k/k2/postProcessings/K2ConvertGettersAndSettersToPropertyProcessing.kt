@@ -523,10 +523,10 @@ private class PropertiesDataFilter(
     private fun isNameShadowed(name: String, parent: KaSymbol?): Boolean {
         if (parent !is KaClassSymbol) return false
         val parentHasSameNamedVariable = parent.declaredMemberScope
-            .callables { it.asString() == name }
+            .callables(Name.identifier(name))
             .filterIsInstance<KaVariableSymbol>()
-            .toList()
-            .isNotEmpty()
+            .any()
+
         return parentHasSameNamedVariable || isNameShadowed(name, parent.containingSymbol)
     }
 

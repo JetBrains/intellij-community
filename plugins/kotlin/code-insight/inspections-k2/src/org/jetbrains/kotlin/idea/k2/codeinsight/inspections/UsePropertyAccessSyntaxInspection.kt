@@ -430,9 +430,10 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KaType, propertyName: String): Boolean {
-        val fieldWithSameName = receiverType.scope?.declarationScope?.callables
-            ?.filter { it is KaJavaFieldSymbol && it.name.toString() == propertyName && it.visibility != KaSymbolVisibility.PRIVATE }
+        val fieldWithSameName = receiverType.scope?.declarationScope?.callables(Name.identifier(propertyName))
+            ?.filter { it is KaJavaFieldSymbol && it.visibility != KaSymbolVisibility.PRIVATE }
             ?.singleOrNull()
+
         return fieldWithSameName != null
     }
 
