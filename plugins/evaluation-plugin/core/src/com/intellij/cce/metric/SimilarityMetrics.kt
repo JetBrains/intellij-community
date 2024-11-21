@@ -3,6 +3,8 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.evaluable.AIA_RESPONSE
+import com.intellij.cce.evaluable.chat.REFERENCE_PROPERTY
 import com.intellij.cce.metric.util.Bootstrap
 import computeBleuScore
 import org.apache.commons.lang3.StringUtils
@@ -117,9 +119,8 @@ class BleuScore(showByDefault: Boolean = true) : SimilarityMetric(showByDefault)
   override val description: String = "Calculates the BLEU score for the AIA response compared to the reference text."
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
-    val aiaResponse = lookup.additionalInfo["aia_response"] as? String ?: return null
-    val reference = lookup.additionalInfo["reference"] as? String ?: return null
-
+    val aiaResponse = lookup.additionalInfo[AIA_RESPONSE] as? String ?: return null
+    val reference = lookup.additionalInfo[REFERENCE_PROPERTY] as? String ?: return null
     val bleuScore = computeBleuScore(aiaResponse, reference)
 
     return bleuScore
