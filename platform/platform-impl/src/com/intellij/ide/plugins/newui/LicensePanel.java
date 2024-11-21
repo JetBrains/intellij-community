@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.ActionLink;
@@ -156,11 +157,13 @@ public final class LicensePanel extends NonOpaquePanel {
                                     @NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate,
                                     boolean makePanelVisible) {
     setText(text, warning, errorColor);
-    showBuyPlugin(getPlugin, forUpdate);
-    setVisible(makePanelVisible);
+    Ref<Boolean> enforceHidingPanel = new Ref<>(null);
+    showBuyPlugin(getPlugin, forUpdate, enforceHidingPanel);
+    setVisible(makePanelVisible && !Boolean.TRUE.equals(enforceHidingPanel.get()) );
   }
 
-  private void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate) {
+  private void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate,
+                             @NotNull Ref<Boolean> enforceHidingPanel) {
     IdeaPluginDescriptor plugin = getPlugin.get();
 
     setLink(IdeBundle.message("plugins.configurable.buy.the.license"), () ->
@@ -174,6 +177,9 @@ public final class LicensePanel extends NonOpaquePanel {
       List<String> tags = ((PluginNode)plugin).getTags();
       if (tags.contains(Tags.Freemium.name())) {
         updateLink(IdeBundle.message(forUpdate ? "label.plugin.freemium" : "plugins.configurable.activate.trial.for.full.access"), false);
+        if (forUpdate && "AIP".equals(plugin.getProductCode())) {
+          enforceHidingPanel.set(Boolean.TRUE);
+        }
         return;
       }
     }
