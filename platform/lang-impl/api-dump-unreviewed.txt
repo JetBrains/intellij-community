@@ -11894,6 +11894,10 @@ f:com.intellij.ide.ui.search.TraverseUIMode
 - f:isActive():Z
 f:com.intellij.ide.ui.search.TraverseUIMode$Companion
 - f:getInstance():com.intellij.ide.ui.search.TraverseUIMode
+f:com.intellij.ide.ui.search.TraverseUIStarter
+- com.intellij.openapi.application.ApplicationStarter
+- <init>():V
+- start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.ide.util.AbstractTreeClassChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.ide.util.TreeChooser

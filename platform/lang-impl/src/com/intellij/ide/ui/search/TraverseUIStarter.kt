@@ -58,7 +58,7 @@ import java.util.*
  *
  * Pass `true` as the second parameter to have searchable options split by modules.
  */
-private class TraverseUIStarter : ModernApplicationStarter() {
+class TraverseUIStarter : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     TraverseUIMode.getInstance().setActive(true)
     try {
