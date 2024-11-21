@@ -278,43 +278,43 @@
 
     <group id="Gradle.View.ActionsToolbar.LeftPanel">
       <separator/>
-      <reference id="Gradle.DownloadSources"/>
-      <reference id="Gradle.ExecuteTask"/>
+      <reference ref="Gradle.DownloadSources"/>
+      <reference ref="Gradle.ExecuteTask"/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel"/>
     </group>
 
     <group id="Gradle.View.ActionsToolbar.RightPanel">
-      <reference id="Gradle.ToggleOfflineAction"/>
+      <reference ref="Gradle.ToggleOfflineAction"/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
     </group>
 
     <group id="Gradle.View.ActionsToolbar.CenterPanel">
       <separator/>
-      <reference id="Gradle.OpenProjectCompositeConfiguration"/>
-      <reference id="Gradle.ToolbarDependencyAnalyzer"/>
+      <reference ref="Gradle.OpenProjectCompositeConfiguration"/>
+      <reference ref="Gradle.ToolbarDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="last"/>
     </group>
 
     <group id="Gradle.View.ProjectMenu">
       <separator/>
-      <reference id="Gradle.OpenProjectCompositeConfiguration"/>
-      <reference id="Gradle.RefreshDependencies"/>
-      <reference id="Gradle.ViewDependencyAnalyzer"/>
+      <reference ref="Gradle.OpenProjectCompositeConfiguration"/>
+      <reference ref="Gradle.RefreshDependencies"/>
+      <reference ref="Gradle.ViewDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
     </group>
 
     <group id="Gradle.View.ModuleMenu">
       <separator/>
-      <reference id="Gradle.ViewDependencyAnalyzer"/>
+      <reference ref="Gradle.ViewDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.ModuleMenu" anchor="last"/>
     </group>
 
     <group id="Gradle.View.DependencyMenu">
       <separator/>
-      <reference id="Gradle.ViewDependencyAnalyzer"/>
+      <reference ref="Gradle.ViewDependencyAnalyzer"/>
       <separator/>
       <add-to-group group-id="ExternalSystemView.DependencyMenu" anchor="last"/>
     </group>

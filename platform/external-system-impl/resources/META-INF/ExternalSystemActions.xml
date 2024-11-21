@@ -22,8 +22,8 @@
               class="com.intellij.openapi.externalSystem.action.ShowExternalSystemSettingsAction">
       </action>
       <group id="ExternalSystem.ShowSettingsGroup" popup="true" icon="AllIcons.General.Settings">
-        <reference id="ExternalSystem.ShowCommonSettings"/>
-        <reference id="ExternalSystem.ShowSettings"/>
+        <reference ref="ExternalSystem.ShowCommonSettings"/>
+        <reference ref="ExternalSystem.ShowSettings"/>
       </group>
       <action id="ExternalSystem.OpenTasksActivationManager"
               class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
@@ -90,52 +90,52 @@
     <group id="ExternalSystemView.BaseProjectMenu">
       <reference ref="ExternalSystem.OpenConfig"/>
       <separator/>
-      <reference id="ExternalSystem.RefreshProject"/>
+      <reference ref="ExternalSystem.RefreshProject"/>
       <separator/>
-      <reference id="ExternalSystem.DetachProject"/>
-      <reference id="ExternalSystem.IgnoreProject"/>
+      <reference ref="ExternalSystem.DetachProject"/>
+      <reference ref="ExternalSystem.IgnoreProject"/>
     </group>
 
     <group id="ExternalSystemView.ProjectMenu" popup="true">
       <reference ref="ExternalSystemView.BaseProjectMenu"/>
       <separator/>
-      <reference id="ExternalSystem.OpenTasksActivationManager"/>
+      <reference ref="ExternalSystem.OpenTasksActivationManager"/>
     </group>
 
     <group id="ExternalSystemView.ModuleMenu" popup="true">
       <reference ref="ExternalSystem.OpenConfig"/>
       <separator/>
-      <reference id="ExternalSystem.RefreshProject"/>
-      <reference id="ExternalSystem.IgnoreProject"/>
+      <reference ref="ExternalSystem.RefreshProject"/>
+      <reference ref="ExternalSystem.IgnoreProject"/>
       <separator/>
-      <reference id="ExternalSystem.OpenTasksActivationManager"/>
+      <reference ref="ExternalSystem.OpenTasksActivationManager"/>
     </group>
 
     <group id="ExternalSystemView.DependencyMenu" popup="true"/>
 
     <group id="ExternalSystemView.ActionsToolbar.LeftPanel">
-      <reference id="ExternalSystem.RefreshAllProjects"/>
-<!--      <reference id="ExternalSystem.AttachProject"/>-->
+      <reference ref="ExternalSystem.RefreshAllProjects"/>
+<!--      <reference ref="ExternalSystem.AttachProject"/>-->
       <reference ref="ExternalSystem.DetachProject"/>
-      <!--<reference id="ExternalSystem.Run/>-->
+      <!--<reference ref="ExternalSystem.Run/>-->
     </group>
     <group id="ExternalSystemView.ActionsToolbar.CenterPanel">
       <separator/>
-      <reference id="ExternalSystem.ExpandAll"/>
-      <reference id="ExternalSystem.CollapseAll"/>
-      <reference id="ExternalSystem.SelectProjectDataToImport"/>
+      <reference ref="ExternalSystem.ExpandAll"/>
+      <reference ref="ExternalSystem.CollapseAll"/>
+      <reference ref="ExternalSystem.SelectProjectDataToImport"/>
     </group>
     <group id="ExternalSystemView.ActionsToolbar.RightPanel">
     </group>
 
     <group id="ExternalSystemView.TaskActivationGroup">
-      <reference id="ExternalSystem.BeforeSync"/>
-      <reference id="ExternalSystem.AfterSync"/>
-      <reference id="ExternalSystem.BeforeCompile"/>
-      <reference id="ExternalSystem.AfterCompile"/>
-      <reference id="ExternalSystem.BeforeRebuild"/>
-      <reference id="ExternalSystem.AfterRebuild"/>
-      <!--<reference id="ExternalSystem.BeforeRun"/>-->
+      <reference ref="ExternalSystem.BeforeSync"/>
+      <reference ref="ExternalSystem.AfterSync"/>
+      <reference ref="ExternalSystem.BeforeCompile"/>
+      <reference ref="ExternalSystem.AfterCompile"/>
+      <reference ref="ExternalSystem.BeforeRebuild"/>
+      <reference ref="ExternalSystem.AfterRebuild"/>
+      <!--<reference ref="ExternalSystem.BeforeRun"/>-->
     </group>
 
     <group id="ExternalSystemView.ActionsToolbar">
@@ -145,18 +145,18 @@
       <separator/>
       <reference ref="ExternalSystemView.ActionsToolbar.RightPanel"/>
       <separator/>
-      <reference id="ExternalSystem.ShowSettingsGroup"/>
+      <reference ref="ExternalSystem.ShowSettingsGroup"/>
     </group>
 
     <group id="ExternalSystemView.TaskMenu" popup="true" class="com.intellij.openapi.externalSystem.action.task.ExternalSystemTaskMenu">
       <separator/>
       <group id="ExternalSystem.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>
-      <reference id="EditSource"/>
+      <reference ref="EditSource"/>
       <separator/>
       <reference ref="ExternalSystemView.TaskActivationGroup"/>
       <separator/>
-      <reference id="ExternalSystem.AssignShortcut"/>
+      <reference ref="ExternalSystem.AssignShortcut"/>
     </group>
 
     <group id="ExternalSystemView.RunConfigurationMenu" popup="true"  class="com.intellij.openapi.externalSystem.action.ExternalSystemRunConfigurationMenu">
@@ -170,7 +170,7 @@
       <separator/>
       <reference ref="ExternalSystemView.TaskActivationGroup"/>
       <separator/>
-      <reference id="ExternalSystem.AssignRunConfigurationShortcut"/>
+      <reference ref="ExternalSystem.AssignRunConfigurationShortcut"/>
     </group>
 
     <group id="ExternalSystem.ProjectRefreshActionGroup">

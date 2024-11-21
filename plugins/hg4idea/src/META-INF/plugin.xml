@@ -119,7 +119,7 @@
       <separator/>
       <action class="org.zmlx.hg4idea.action.mq.HgShowUnAppliedPatchesAction" id="hg4idea.mq.ShowUnAppliedPatches"
               icon="AllIcons.Debugger.Watch"/>
-      <reference id="ChangesView.Browse"/>
+      <reference ref="ChangesView.Browse"/>
       <separator/>
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
@@ -162,23 +162,23 @@
 
 
     <group id="Hg.Log.ContextMenu">
-      <reference id="hg4idea.UpdateToRevision"/>
-      <reference id="hg4idea.CreateNewBranch"/>
-      <reference id="hg4idea.CreateNewTag"/>
-      <reference id="hg4idea.MergeWithRevision"/>
+      <reference ref="hg4idea.UpdateToRevision"/>
+      <reference ref="hg4idea.CreateNewBranch"/>
+      <reference ref="hg4idea.CreateNewTag"/>
+      <reference ref="hg4idea.MergeWithRevision"/>
       <separator/>
-      <reference id="Hg.Mq"/>
+      <reference ref="Hg.Mq"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
     </group>
 
     <group id="Mq.Patches.Toolbar">
-      <reference id="Hg.MQ.Unapplied"/>
+      <reference ref="Hg.MQ.Unapplied"/>
     </group>
 
     <group id="Mq.Patches.ContextMenu">
-      <reference id="Hg.MQ.Unapplied"/>
+      <reference ref="Hg.MQ.Unapplied"/>
       <separator/>
-      <reference id="ChangesView.ApplyPatch"/>
+      <reference ref="ChangesView.ApplyPatch"/>
     </group>
 
     <action id="Hg.Commit.And.Push.Executor" class="org.zmlx.hg4idea.action.HgCommitAndPushExecutorAction">

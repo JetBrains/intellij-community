@@ -38,14 +38,14 @@
       <group id="ServiceViewItemPopupGroup"
              class="com.intellij.platform.execution.serviceView.ServiceViewActionProvider$ItemPopupActionGroup"/>
       <separator/>
-      <reference id="ServiceView.OpenInNewTab"/>
-      <reference id="ServiceView.OpenEachInNewTab"/>
-      <reference id="ServiceView.SplitByType"/>
+      <reference ref="ServiceView.OpenInNewTab"/>
+      <reference ref="ServiceView.OpenEachInNewTab"/>
+      <reference ref="ServiceView.SplitByType"/>
       <action id="ServiceView.OpenInToolWindow" class="com.intellij.platform.execution.serviceView.OpenInToolWindowAction"/>
       <separator/>
-      <reference id="$Delete"/>
+      <reference ref="$Delete"/>
       <separator/>
-      <reference id="EditSource"/>
+      <reference ref="EditSource"/>
       <action id="ServiceView.JumpToServices" use-shortcut-of="ShowNavBar"
               class="com.intellij.platform.execution.serviceView.JumpToServicesAction"/>
     </group>

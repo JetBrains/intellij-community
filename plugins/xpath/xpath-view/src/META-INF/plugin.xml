@@ -210,27 +210,27 @@
     </action>
 
     <!-- Toolbar -->
-    <!--<reference id="XPathView.Actions.Evaluate">-->
+    <!--<reference ref="XPathView.Actions.Evaluate">-->
       <!--<add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />-->
     <!--</reference>-->
 
     <group id="XPathView.MainMenu.Search">
       <separator />
-      <reference id="XPathView.Actions.Evaluate" />
-      <reference id="XPathView.Actions.FindByExpression" />
+      <reference ref="XPathView.Actions.Evaluate" />
+      <reference ref="XPathView.Actions.FindByExpression" />
 
       <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchActions" />
     </group>
 
-    <reference id="XPathView.Actions.ShowPath">
+    <reference ref="XPathView.Actions.ShowPath">
       <add-to-group group-id="CodeEditorViewGroup" anchor="after" relative-to-action="ShowErrorDescription" />
     </reference>
 
     <!-- Editor Popup -->
     <group id="XPathView.EditorPopup">
       <separator />
-      <reference id="XPathView.Actions.Evaluate" />
-      <reference id="XPathView.Actions.ShowPath" />
+      <reference ref="XPathView.Actions.Evaluate" />
+      <reference ref="XPathView.Actions.ShowPath" />
 
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RefactoringMenu" />
     </group>

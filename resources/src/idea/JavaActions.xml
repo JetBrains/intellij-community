@@ -345,7 +345,7 @@
     </action>
 
     <group id="RefactoringMenuRenameFile">
-      <reference id="RenameFile"/>
+      <reference ref="RenameFile"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
     </group>
 

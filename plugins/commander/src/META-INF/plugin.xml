@@ -25,12 +25,12 @@
     </action>
 
     <group id="ImagesCommanderActions1">
-      <reference id="Images.EditExternally"/>
+      <reference ref="Images.EditExternally"/>
       <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
     </group>
 
     <group id="ImagesCommanderActions2">
-      <reference id="Images.ShowThumbnails"/>
+      <reference ref="Images.ShowThumbnails"/>
       <add-to-group anchor="last" group-id="CommanderPopupMenu"/>
     </group>
   </actions>

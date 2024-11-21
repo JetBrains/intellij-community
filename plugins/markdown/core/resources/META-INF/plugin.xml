@@ -476,22 +476,22 @@
              class="com.intellij.ide.actions.NonTrivialActionGroup"
              popup="true"
              compact="true">
-        <reference id="Markdown.Table.InsertTableColumn.InsertBefore"/>
-        <reference id="Markdown.Table.InsertTableColumn.InsertAfter"/>
-        <reference id="Markdown.Table.InsertRow.InsertAbove"/>
-        <reference id="Markdown.Table.InsertRow.InsertBelow"/>
+        <reference ref="Markdown.Table.InsertTableColumn.InsertBefore"/>
+        <reference ref="Markdown.Table.InsertTableColumn.InsertAfter"/>
+        <reference ref="Markdown.Table.InsertRow.InsertAbove"/>
+        <reference ref="Markdown.Table.InsertRow.InsertBelow"/>
         <separator/>
         <group id="Markdown.TableColumnActions.ColumnAlignmentActions.Popup"
                class="com.intellij.ide.actions.NonTrivialActionGroup"
                popup="true"
                compact="true">
-          <reference id="Markdown.Table.ColumnAlignmentActions"/>
+          <reference ref="Markdown.Table.ColumnAlignmentActions"/>
         </group>
-        <reference id="Markdown.Table.SwapColumns.SwapWithLeftColumn"/>
-        <reference id="Markdown.Table.SwapColumns.SwapWithRightColumn"/>
+        <reference ref="Markdown.Table.SwapColumns.SwapWithLeftColumn"/>
+        <reference ref="Markdown.Table.SwapColumns.SwapWithRightColumn"/>
         <separator/>
-        <reference id="Markdown.Table.RemoveCurrentColumn"/>
-        <reference id="Markdown.Table.RemoveCurrentRow"/>
+        <reference ref="Markdown.Table.RemoveCurrentColumn"/>
+        <reference ref="Markdown.Table.RemoveCurrentRow"/>
       </group>
     </group>
 
@@ -526,7 +526,7 @@
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Code_span">
         <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
       </action>
-      <reference id="Markdown.Styling.CreateLink"/>
+      <reference ref="Markdown.Styling.CreateLink"/>
       <separator/>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.CreateOrChangeListPopupAction"
               id="Markdown.Styling.CreateOrChangeList"
@@ -548,7 +548,7 @@
     <group id="Markdown.InsertGroup">
       <!-- Also add all insert actions into default generate popup -->
       <add-to-group group-id="GenerateGroup" anchor="last"/>
-      <reference id="Markdown.Styling.CreateLink"/>
+      <reference ref="Markdown.Styling.CreateLink"/>
       <action id="Markdown.InsertEmptyTable"
               class="org.intellij.plugins.markdown.editor.tables.actions.InsertEmptyTableAction"
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Table"/>
@@ -573,8 +573,8 @@
     <group id="Markdown.EditorContextMenuGroup">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="EditorToggleColumnMode"/>
       <separator/>
-      <reference id="Markdown.TableContextMenuGroup"/>
-      <reference id="Markdown.Insert"/>
+      <reference ref="Markdown.TableContextMenuGroup"/>
+      <reference ref="Markdown.Insert"/>
     </group>
 
     <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">

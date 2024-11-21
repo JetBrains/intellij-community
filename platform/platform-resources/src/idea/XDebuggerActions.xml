@@ -135,10 +135,10 @@
 
     <group id="XDebugger.ParallelStacks.Popup.FreezeThreadGroup">
       <separator/>
-      <reference id="Debugger.FreezeInactiveThreadsAmongSelected" />
-      <reference id="Debugger.ThawAllThreadsAction"/>
-      <reference id="Debugger.FreezeSelectedThreads"/>
-      <reference id="Debugger.ThawSelectedThreads"/>
+      <reference ref="Debugger.FreezeInactiveThreadsAmongSelected" />
+      <reference ref="Debugger.ThawAllThreadsAction"/>
+      <reference ref="Debugger.FreezeSelectedThreads"/>
+      <reference ref="Debugger.ThawSelectedThreads"/>
     </group>
 
     <group id="XDebugger.ParallelStacks.Popup.Extra">

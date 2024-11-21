@@ -37,7 +37,7 @@
       <group id="RunToolbarProcessActionGroup"/>
       <action id="RunToolbarStopAction" class="com.intellij.execution.runToolbar.RunToolbarStopAction"/>
       <group id="RunToolbarMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup">
-        <reference id="RunToolbarSlotContextMenuGroup"/>
+        <reference ref="RunToolbarSlotContextMenuGroup"/>
       </group>
     </group>
 
@@ -46,13 +46,13 @@
       <action id="RunToolbarShowHidePopupAction" class="com.intellij.execution.runToolbar.RunToolbarShowHidePopupAction" icon="AllIcons.Toolbar.Expand"/>
       <action id="RunToolbarMainSlotInfoAction" class="com.intellij.execution.runToolbar.RunToolbarMainSlotInfoAction"/>
       <action id="RunToolbarMainRunConfigurationsAction" class="com.intellij.execution.runToolbar.RunToolbarMainRunConfigurationsAction"/>
-      <reference id="RunToolbarRerunAction"/>
-      <reference id="RunToolbarAdditionalProcessActions"/>
+      <reference ref="RunToolbarRerunAction"/>
+      <reference ref="RunToolbarAdditionalProcessActions"/>
       <group id="RunToolbarProcessMainActionGroup"/>
-      <reference id="RunToolbarStopAction"/>
+      <reference ref="RunToolbarStopAction"/>
       <action id="RunToolbarMainMultipleStopAction" class="com.intellij.execution.runToolbar.RunToolbarMainMultipleStopAction" icon="AllIcons.Actions.Suspend"/>
       <group id="RunToolbarMainMoreActionGroup" icon="AllIcons.Actions.More" popup="true" class="com.intellij.execution.runToolbar.RunToolbarMoreActionGroup">
-        <reference id="RunToolbarSlotContextMenuGroup"/>
+        <reference ref="RunToolbarSlotContextMenuGroup"/>
       </group>
     </group>
 

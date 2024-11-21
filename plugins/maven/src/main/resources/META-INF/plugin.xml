@@ -706,8 +706,8 @@
     </action>
 
     <group id="Maven.ShowSettingsGroup" popup="true" icon="AllIcons.General.Settings">
-      <reference id="ExternalSystem.ShowCommonSettings"/>
-      <reference id="Maven.ShowSettings"/>
+      <reference ref="ExternalSystem.ShowCommonSettings"/>
+      <reference ref="Maven.ShowSettings"/>
     </group>
 
     <action id="Maven.ToggleOffline"
@@ -798,71 +798,71 @@
     </group>
 
     <group id="Maven.DownloadAllGroup">
-      <reference id="Maven.DownloadAllSources"/>
-      <reference id="Maven.DownloadAllDocs"/>
-      <reference id="Maven.DownloadAllSourcesAndDocs"/>
+      <reference ref="Maven.DownloadAllSources"/>
+      <reference ref="Maven.DownloadAllDocs"/>
+      <reference ref="Maven.DownloadAllSourcesAndDocs"/>
     </group>
 
     <group id="Maven.SyncAllGroup">
-      <reference id="Maven.SyncIncrementally"/>
-      <reference id="Maven.Reimport"/>
+      <reference ref="Maven.SyncIncrementally"/>
+      <reference ref="Maven.Reimport"/>
     </group>
 
     <group id="Maven.NavigatorActionsToolbar">
       <group id="Maven.SyncAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.SyncActionGroup"
              icon="AllIcons.Actions.Refresh">
-        <reference id="Maven.SyncAllGroup"/>
+        <reference ref="Maven.SyncAllGroup"/>
       </group>
-      <reference id="Maven.UpdateFolders"/>
+      <reference ref="Maven.UpdateFolders"/>
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
              icon="AllIcons.Actions.Download">
-        <reference id="Maven.DownloadAllGroup"/>
+        <reference ref="Maven.DownloadAllGroup"/>
       </group>
       <separator/>
-      <reference id="Maven.AddManagedFiles"/>
+      <reference ref="Maven.AddManagedFiles"/>
       <separator/>
-      <reference id="Maven.RunBuild"/>
-      <reference id="Maven.ExecuteGoal"/>
-      <reference id="Maven.ToggleOffline"/>
-      <reference id="Maven.ToggleSkipTests"/>
-      <reference id="Maven.CollapseAll"/>
+      <reference ref="Maven.RunBuild"/>
+      <reference ref="Maven.ExecuteGoal"/>
+      <reference ref="Maven.ToggleOffline"/>
+      <reference ref="Maven.ToggleSkipTests"/>
+      <reference ref="Maven.CollapseAll"/>
       <separator/>
-      <reference id="Maven.NavigatorDependencyAnalyzer"/>
+      <reference ref="Maven.NavigatorDependencyAnalyzer"/>
       <separator/>
-      <reference id="Maven.ShowSettingsGroup"/>
+      <reference ref="Maven.ShowSettingsGroup"/>
     </group>
 
     <group id="Maven.DependencyMenu">
-      <reference id="Maven.DownloadSelectedSources"/>
-      <reference id="Maven.DownloadSelectedDocs"/>
-      <reference id="Maven.DownloadSelectedSourcesAndDocs"/>
+      <reference ref="Maven.DownloadSelectedSources"/>
+      <reference ref="Maven.DownloadSelectedDocs"/>
+      <reference ref="Maven.DownloadSelectedSourcesAndDocs"/>
       <separator/>
-      <reference id="Maven.ViewDependencyAnalyzer"/>
+      <reference ref="Maven.ViewDependencyAnalyzer"/>
     </group>
 
     <group id="Maven.BaseProjectMenu">
-      <reference id="Maven.ReimportProject"/>
-      <reference id="Maven.UpdateFoldersForProject"/>
+      <reference ref="Maven.ReimportProject"/>
+      <reference ref="Maven.UpdateFoldersForProject"/>
       <separator/>
-      <reference id="Maven.IgnoreProjects"/>
-      <reference id="Maven.RemoveManagedFiles"/>
+      <reference ref="Maven.IgnoreProjects"/>
+      <reference ref="Maven.RemoveManagedFiles"/>
       <separator/>
-      <reference id="Maven.OpenSettingsXml"/>
+      <reference ref="Maven.OpenSettingsXml"/>
       <separator/>
-      <reference id="Maven.DownloadAllGroup"/>
+      <reference ref="Maven.DownloadAllGroup"/>
       <separator/>
-      <reference id="Maven.ShowEffectivePom"/>
+      <reference ref="Maven.ShowEffectivePom"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
       <reference ref="Maven.BaseProjectMenu"/>
       <separator/>
-      <reference id="Maven.NavigatorDependencyAnalyzer"/>
+      <reference ref="Maven.NavigatorDependencyAnalyzer"/>
       <separator/>
-      <reference id="Maven.RunBuild"/>
+      <reference ref="Maven.RunBuild"/>
       <reference ref="RunContextGroup"/>
       <separator/>
-      <reference id="EditSource"/>
+      <reference ref="EditSource"/>
     </group>
 
     <group id="Maven.ProfilesMenu" popup="true">

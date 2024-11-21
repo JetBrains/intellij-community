@@ -107,7 +107,7 @@
         </group>
 
         <separator/>
-        <reference id="Vcs.VcsClone"/>
+        <reference ref="Vcs.VcsClone"/>
         <group id="Vcs.Browse" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
         <separator/>
         <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
@@ -231,9 +231,9 @@
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"
               icon="AllIcons.Vcs.Unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
-      <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Dialog"
               icon="AllIcons.Vcs.Patch"/>
       <reference ref="ChangesView.CreatePatchToClipboard"/>
@@ -266,9 +266,9 @@
     <action id="Vcs.Shelf.UnshelveChangesAndRemove" class="com.intellij.openapi.vcs.changes.savedPatches.UnshelveChangesAndRemoveAction"/>
 
     <group id="Vcs.Shelf.Operations.ContextMenu" class="com.intellij.openapi.vcs.changes.savedPatches.ShelfOperationsGroup">
-      <reference id="Vcs.Shelf.Apply"/>
-      <reference id="Vcs.Shelf.Pop"/>
-      <reference id="ShelveChanges.UnshelveWithDialog"/>
+      <reference ref="Vcs.Shelf.Apply"/>
+      <reference ref="Vcs.Shelf.Pop"/>
+      <reference ref="ShelveChanges.UnshelveWithDialog"/>
       <reference ref="Vcs.Shelf.Drop"/>
       <reference ref="ShelvedChanges.Restore"/>
       <reference ref="ShelvedChanges.ImportPatches"/>
@@ -287,11 +287,11 @@
     <action id="Vcs.ApplySelectedChanges" class="com.intellij.openapi.vcs.changes.actions.RevertSelectedChangesAction$Apply"/>
 
     <group id="Vcs.SavedPatches.ContextMenu">
-      <reference id="Vcs.Shelf.Operations.ContextMenu"/>
+      <reference ref="Vcs.Shelf.Operations.ContextMenu"/>
       <separator/>
-      <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
     </group>
     <group id="Vcs.SavedPatches.ChangesBrowser.ContextMenu">
       <reference ref="Vcs.ShowDiffWithLocal"/>
@@ -346,7 +346,7 @@
       <reference ref="Vcs.OpenRepositoryVersion"/>
       <reference ref="Vcs.RevertSelectedChanges"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
-      <reference id="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="Vcs.GetVersion"/>
       <reference ref="Vcs.ShowHistoryForRevision"/>
     </group>
@@ -384,7 +384,7 @@
     <group id="UpdateActionGroup">
       <reference ref="EditSource"/>
       <reference ref="$Delete"/>
-      <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowDiff"/>
     </group>
 
     <action id="Vcs.ReformatCommitMessage" class="com.intellij.vcs.commit.message.ReformatCommitMessageAction"
@@ -400,7 +400,7 @@
 
     <group id="ChangesView.CommitToolbar">
       <action id="Vcs.ToggleAmendCommitMode" class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
-      <reference id="Vcs.MessageActionGroup"/>
+      <reference ref="Vcs.MessageActionGroup"/>
     </group>
 
     <action id="ChangesView.ShowCommitOptions" class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
@@ -494,10 +494,10 @@
             icon="AllIcons.Actions.Copy"/>
 
     <group id="VcsSelectionHistoryDialog.Popup">
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
-      <reference id="VcsHistory.ShowAllAffected"/>
-      <reference id="Vcs.CopyRevisionNumberAction"/>
+      <reference ref="Diff.ShowDiff"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="VcsHistory.ShowAllAffected"/>
+      <reference ref="Vcs.CopyRevisionNumberAction"/>
     </group>
 
     <group id="Shelve.KeymapGroup" searchable="false">
@@ -523,8 +523,8 @@
     </group>
 
     <group id="FileHistory.KeymapGroup" searchable="false">
-      <reference id="Vcs.GetVersion"/>
-      <reference id="FileHistory.AnnotateRevision"/>
+      <reference ref="Vcs.GetVersion"/>
+      <reference ref="FileHistory.AnnotateRevision"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
@@ -667,21 +667,21 @@
       <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
         <group id="Vcs.Operations.Popup.VcsNameSeparator"
                class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
-        <reference id="ChangesView.AddUnversioned"/>
-        <reference id="CheckinProject"/>
+        <reference ref="ChangesView.AddUnversioned"/>
+        <reference ref="CheckinProject"/>
         <reference ref="ChangesView.ToggleCommitUi"/>
-        <reference id="CheckinFiles"/>
-        <reference id="ChangesView.Revert"/>
+        <reference ref="CheckinFiles"/>
+        <reference ref="ChangesView.Revert"/>
         <separator/>
-        <reference id="Vcs.ShowTabbedFileHistory"/>
-        <reference id="Annotate"/>
-        <reference id="Compare.SameVersion"/>
+        <reference ref="Vcs.ShowTabbedFileHistory"/>
+        <reference ref="Annotate"/>
+        <reference ref="Compare.SameVersion"/>
       </group>
       <separator/>
       <group id="Vcs.Operations.Popup.Vcs.Providers"
              class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$Providers"/>
       <group id="Vcs.Operations.Popup.NonVcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$NonVcsAware">
-        <reference id="Start.Use.Vcs"/>
+        <reference ref="Start.Use.Vcs"/>
       </group>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>

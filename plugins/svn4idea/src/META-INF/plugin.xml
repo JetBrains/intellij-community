@@ -50,45 +50,45 @@
       <action id="Subversion.Create.External" class="org.jetbrains.idea.svn.actions.CreateExternalAction"/>
       <separator/>
       <reference ref="ChangesView.AddUnversioned"/>
-      <reference id="CheckinFiles"/>
-      <reference id="UpdateFiles"/>
-      <reference id="IntegrateFiles"/>
-      <reference id="CheckStatusForFiles"/>
+      <reference ref="CheckinFiles"/>
+      <reference ref="UpdateFiles"/>
+      <reference ref="IntegrateFiles"/>
+      <reference ref="CheckStatusForFiles"/>
       <separator/>
       <action id="Subversion.ShowProperties" class="org.jetbrains.idea.svn.actions.ShowPropertiesAction"/>
       <action id="Subversion.SetProperty" class="org.jetbrains.idea.svn.actions.SetPropertyAction"/>
-      <reference id="ChangesView.Revert"/>
+      <reference ref="ChangesView.Revert"/>
       <action id="Subversion.Resolve" class="org.jetbrains.idea.svn.actions.ResolveAction"/>
       <action id="Subversion.MarkResolved" class="org.jetbrains.idea.svn.actions.MarkResolvedAction"/>
       <action id="Subversion.MarkTreeResolved" class="org.jetbrains.idea.svn.actions.MarkTreeConflictResolvedAction"/>
       <action id="Subversion.Clenaup" class="org.jetbrains.idea.svn.actions.CleanupAction"/>
       <separator/>
-      <reference id="Show.Current.Revision"/>
-      <reference id="Compare.SameVersion"/>
-      <reference id="Compare.LastVersion"/>
-      <reference id="Compare.Selected"/>
+      <reference ref="Show.Current.Revision"/>
+      <reference ref="Compare.SameVersion"/>
+      <reference ref="Compare.LastVersion"/>
+      <reference ref="Compare.Selected"/>
       <action id="Subversion.CompareWithBranch" class="org.jetbrains.idea.svn.diff.CompareWithBranchAction"/>
-      <reference id="Vcs.ShowTabbedFileHistory"/>
-      <reference id="Vcs.ShowHistoryForBlock"/>
-      <reference id="Annotate"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="Vcs.ShowHistoryForBlock"/>
+      <reference ref="Annotate"/>
       <action id="Subversion.Copy" class="org.jetbrains.idea.svn.branchConfig.CreateBranchOrTagAction"/>
       <separator/>
       <action id="Subversion.Lock" class="org.jetbrains.idea.svn.actions.LockAction"/>
       <action id="Subversion.Unlock" class="org.jetbrains.idea.svn.actions.UnlockAction"/>
       <action id="Subversion.Relocate" class="org.jetbrains.idea.svn.actions.RelocateAction"/>
       <separator/>
-      <reference id="ChangesView.Browse"/>
+      <reference ref="ChangesView.Browse"/>
       <separator/>
       <add-to-group group-id="SubversionFilePopupGroup" anchor="last"/>
     </group>
-    <reference id="Subversion.MarkTreeResolved">
+    <reference ref="Subversion.MarkTreeResolved">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="Diff.ShowStandaloneDiff"/>
     </reference>
     <group id="SubversionUpdateActionGroup" class="org.jetbrains.idea.svn.actions.SubversionGroup">
       <reference ref="ChangesView.AddUnversioned"/>
-      <reference id="ChangesView.Revert"/>
-      <reference id="Subversion.Resolve"/>
-      <reference id="Subversion.MarkResolved"/>
+      <reference ref="ChangesView.Revert"/>
+      <reference ref="Subversion.Resolve"/>
+      <reference ref="Subversion.MarkResolved"/>
       <separator/>
       <add-to-group group-id="UpdateActionGroup" anchor="first"/>
     </group>

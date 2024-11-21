@@ -4,7 +4,7 @@
   </dependencies>
   <actions>
     <group id="ChangesView.ApplyPatch.LangGroup">
-      <reference id="ChangesView.ApplyPatch"/>
+      <reference ref="ChangesView.ApplyPatch"/>
 
       <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ProjectViewEditSource" anchor="after"/>
       <add-to-group group-id="NavbarPopupMenu" relative-to-action="EditSource" anchor="after"/>

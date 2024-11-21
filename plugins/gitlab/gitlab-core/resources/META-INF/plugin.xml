@@ -160,57 +160,57 @@
     </action>
 
     <group id="GitLab.Main.Group" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
-      <reference id="GitLab.Merge.Request.Show.List"/>
+      <reference ref="GitLab.Merge.Request.Show.List"/>
 
       <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
     </group>
 
     <group id="GitLab.Merge.Request.List.Actions">
-      <reference id="GitLab.Merge.Request.Show"/>
-      <reference id="GitLab.Merge.Request.Open.Link"/>
-      <reference id="GitLab.Merge.Request.Copy.Link"/>
+      <reference ref="GitLab.Merge.Request.Show"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
       <separator/>
-      <reference id="GitLab.Merge.Request.List.Refresh"/>
+      <reference ref="GitLab.Merge.Request.List.Refresh"/>
     </group>
 
     <group id="GitLab.Merge.Request.Details.Popup">
-      <reference id="GitLab.Merge.Request.Refresh"/>
-      <reference id="GitLab.Merge.Request.Open.Link"/>
-      <reference id="GitLab.Merge.Request.Copy.Link"/>
+      <reference ref="GitLab.Merge.Request.Refresh"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Timeline.Popup">
       <action id="GitLab.Merge.Request.Timeline.ShowEvents"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.action.GitLabMergeRequestTimelineShowEventsAction"/>
       <separator/>
-      <reference id="GitLab.Merge.Request.Refresh"/>
-      <reference id="GitLab.Merge.Request.Open.Link"/>
-      <reference id="GitLab.Merge.Request.Copy.Link"/>
+      <reference ref="GitLab.Merge.Request.Refresh"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Timeline.Error.Popup">
-      <reference id="GitLab.Merge.Request.Open.Link"/>
-      <reference id="GitLab.Merge.Request.Copy.Link"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Changes.Popup">
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Diff.ShowStandaloneDiff"/>
-      <reference id="EditSource"/>
+      <reference ref="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
+      <reference ref="EditSource"/>
       <action id="GitLab.Merge.Request.Changes.MarkViewed"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesViewedAction"/>
       <action id="GitLab.Merge.Request.Changes.MarkNotViewed"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesNotViewedAction"/>
       <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
-        <reference id="ChangesView.GroupBy"/>
+        <reference ref="ChangesView.GroupBy"/>
       </group>
       <separator/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
       <separator/>
-      <reference id="GitLab.Merge.Request.Refresh"/>
-      <reference id="GitLab.Merge.Request.Open.Link"/>
-      <reference id="GitLab.Merge.Request.Copy.Link"/>
+      <reference ref="GitLab.Merge.Request.Refresh"/>
+      <reference ref="GitLab.Merge.Request.Open.Link"/>
+      <reference ref="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
     <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
@@ -245,7 +245,7 @@
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ShowAction"
               icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
       </action>
-      <reference id="GitLab.MergeRequest.Review.Submit"/>
+      <reference ref="GitLab.MergeRequest.Review.Submit"/>
       <action id="GitLab.Merge.Request.Branch.Update"
               class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$UpdateAction"
               icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabWarning">

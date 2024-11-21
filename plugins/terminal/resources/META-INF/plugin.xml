@@ -189,7 +189,7 @@
     <action id="Terminal.EnableNewUi" class="org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction"/>
 
     <group id="Terminal.ToolWindowActions">
-      <reference id="Terminal.EnableNewUi"/>
+      <reference ref="Terminal.EnableNewUi"/>
     </group>
 
     <group id="Terminal.PromptStyle" popup="true">
