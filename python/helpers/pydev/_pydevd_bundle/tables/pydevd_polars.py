@@ -134,7 +134,7 @@ def __analyze_boolean_column(column, col_name):
 
 
 def __analyze_categorical_column(column, col_name):
-    all_values = len(column)
+    all_values = column.shape[0]
     if column.is_null().all():
         value_counts = pl.DataFrame({col_name: "None", COUNT_COL_NAME: all_values})
     else:
@@ -149,8 +149,8 @@ def __analyze_categorical_column(column, col_name):
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES - (0 if len(value_counts) == 3 else 1)
         counts = value_counts[:num_unique_values_to_show_in_vis]
-        top_values_counts = counts[COUNT_COL_NAME].apply(lambda count: round(count / all_values * 100, 1))
-        top_values = {label: count for label, count in zip(counts[col_name], top_values_counts)}
+        counts = counts.with_columns(((pl.col(COUNT_COL_NAME) / all_values * 100).round(1)).alias(COUNT_COL_NAME))
+        top_values = {label: count for label, count in zip(counts[col_name], counts[COUNT_COL_NAME])}
         if len(value_counts) == 3:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:
