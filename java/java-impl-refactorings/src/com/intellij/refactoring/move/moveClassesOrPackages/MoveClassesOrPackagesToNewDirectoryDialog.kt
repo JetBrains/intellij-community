@@ -27,13 +27,8 @@ import com.intellij.refactoring.move.MoveHandler
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.canBeOpenedInEditor
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
-import com.intellij.ui.dsl.builder.SpacingConfiguration
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.Dimension
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -66,11 +61,6 @@ open class MoveClassesOrPackagesToNewDirectoryDialog(
     sourceNameLabel.text = HtmlChunk.html().addRaw(sourceNameText).toString()
     searchInCommentsAndStringsCheckBox.isSelected = refactoringSettings.MOVE_SEARCH_IN_COMMENTS
     searchForTextOccurrencesCheckBox.isSelected = refactoringSettings.MOVE_SEARCH_FOR_TEXT
-
-    val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(
-      ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)
-    )
-    tooltipLabel.text = RefactoringBundle.message("path.completion.shortcut", shortcutText)
 
     if (canShowPreserveSourceRoots) {
       val sourceRoots = mutableSetOf<VirtualFile?>()
@@ -119,7 +109,6 @@ open class MoveClassesOrPackagesToNewDirectoryDialog(
   private lateinit var searchForTextOccurrencesCheckBox: JCheckBox
   private lateinit var preserveSourceRootCheckBox: JCheckBox
   private lateinit var sourceNameLabel: JLabel
-  private lateinit var tooltipLabel: JBLabel
 
   override fun createCenterPanel(): JComponent {
     val project = directory.project
@@ -143,15 +132,15 @@ open class MoveClassesOrPackagesToNewDirectoryDialog(
                 isOKActionEnabled = text.isNotEmpty()
               }
             })
-          }.resizableColumn().align(AlignX.FILL).component
+          }.columns(COLUMNS_LARGE)
+            .resizableColumn()
+            .align(AlignX.FILL).component
         }
         row("") {
-          tooltipLabel = JBLabel().apply {
-            componentStyle = UIUtil.ComponentStyle.SMALL
-            fontColor = UIUtil.FontColor.BRIGHTER
-            border = JBUI.Borders.emptyLeft(10)
-          }
-          cell(tooltipLabel)
+          cell(JBLabel())
+            .comment(RefactoringBundle.message("path.completion.shortcut", KeymapUtil.getFirstKeyboardShortcutText(
+              ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)
+            )))
         }
         row {
           searchInCommentsAndStringsCheckBox = checkBox(RefactoringBundle.message("search.in.comments.and.strings"))
