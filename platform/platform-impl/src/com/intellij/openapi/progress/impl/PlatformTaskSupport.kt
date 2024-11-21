@@ -102,13 +102,13 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
 
     try {
-      cs.subscribeToTask(taskInfoEntity, context, pipe).use {
+      subscribeToTask(taskInfoEntity, context, pipe).use {
         pipe.collectProgressUpdates(action)
       }
     }
     finally {
       LOG.trace { "Task finished: entityId=$entityId, title=$title" }
-      cs.launch {
+      withContext(NonCancellable) {
         taskStorage.removeTask(taskInfoEntity)
         LOG.trace { "Task removed from storage: entityId=$entityId, title=$title" }
       }
