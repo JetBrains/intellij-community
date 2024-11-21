@@ -340,6 +340,10 @@ class IjentNioPosixFileAttributesWithDosAdapter(
     val owner = owner()
     val group = group()
     return when {
+      userInfo.uid == 0 && owner is EelPosixUserPrincipal && owner.uid != 0 ->
+        // on unix, root can read everything except the files that they forbid for themselves
+        isDirectory
+
       owner is EelPosixUserPrincipal && owner.uid == userInfo.uid ->
         OWNER_WRITE !in permissions() || (isDirectory && OWNER_EXECUTE !in permissions())
 
