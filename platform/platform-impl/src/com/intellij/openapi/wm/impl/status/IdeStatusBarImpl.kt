@@ -757,14 +757,14 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   private fun recreateLayoutIfIsEmptyRightPanel(panel: JPanel) {
-    if (panel !== rightPanel && panel.components.none { it.isVisible }) return
-
-    // Workaround of a bug in AWT:
-    // GridBagLayout.componentAdjusting is not set to NULL after removing the last visible child component.
-    // That leads to a leak of the StatusBarWidget component, and that leads to a situation when the plugin can't be properly unloaded.
-    rightPanelLayout = GridBagLayout()
-    panel.layout = rightPanelLayout
-    sortRightWidgets()
+    if (panel === rightPanel && panel.components.none { it.isVisible }) {
+      // Workaround of a bug in AWT:
+      // GridBagLayout.componentAdjusting is not set to NULL after removing the last visible child component.
+      // That leads to a leak of the StatusBarWidget component, and that leads to a situation when the plugin can't be properly unloaded.
+      rightPanelLayout = GridBagLayout()
+      panel.layout = rightPanelLayout
+      sortRightWidgets()
+    }
   }
 
   override fun updateWidget(id: String) {
