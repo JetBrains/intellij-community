@@ -10,7 +10,7 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
@@ -99,10 +99,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
     ): CompletionResultSet {
-        val sorter = Weighers.addWeighersToCompletionSorter(
-            sorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher),
-            positionContext = positionContext,
-        )
+        val sorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher)
+            .applyWeighers(positionContext)
 
         return withRelevanceSorter(sorter)
     }
