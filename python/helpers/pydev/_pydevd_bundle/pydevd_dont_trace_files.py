@@ -143,8 +143,8 @@ DONT_TRACE = {
     'pydevd_vars.py': PYDEV_FILE,
     'pydevd_vm_type.py': PYDEV_FILE,
     'pydevd_xml.py': PYDEV_FILE,
-    'test_common.py': PYDEV_FILE,
-    'test_pandas.py': PYDEV_FILE,
+    'test_pydev_common.py': PYDEV_FILE,
+    'test_pandas_internal_pydev.py': PYDEV_FILE,
     'test_pydev_nparray.py': PYDEV_FILE,
     'test_pydev_pandas.py': PYDEV_FILE,
 }
