@@ -5,6 +5,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -71,8 +72,9 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
       file = createPsiFileImpl(target);
       if (file == null) return null;
       if (file.getLanguage() != target) {
-        file = createPsiFileImpl(target);
-        throw new IllegalStateException("Inconsistent view provider "+this +" ("+getClass()+") implementation. Its method createPsiFileImpl("+target+") returned "+ file +"("+file.getClass()+") with getLanguage()="+file.getLanguage());
+        throw PluginException.createByClass(new IllegalStateException("Inconsistent view provider " + this + " (" + getClass() + ") implementation. " +
+                                            "Its method createPsiFileImpl() was called with language=" + target + ", but returned "
+                                            + file + "(" + file.getClass() + ") with getLanguage()=" + file.getLanguage()), getClass());
       }
       if (myOriginal != null) {
         PsiFile originalFile = myOriginal.getPsi(target);
