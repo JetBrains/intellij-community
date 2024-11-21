@@ -34,14 +34,12 @@ public final class JpsModelSerializationDataService {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public static JpsPathVariablesConfiguration getPathVariablesConfiguration(JpsGlobal global) {
+  public static @Nullable JpsPathVariablesConfiguration getPathVariablesConfiguration(JpsGlobal global) {
     return global.getContainer().getChild(JpsGlobalLoader.PATH_VARIABLES_ROLE);
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static JpsPathVariablesConfiguration getOrCreatePathVariablesConfiguration(JpsGlobal global) {
+  public static @NotNull JpsPathVariablesConfiguration getOrCreatePathVariablesConfiguration(JpsGlobal global) {
     JpsPathVariablesConfiguration child = global.getContainer().getChild(JpsGlobalLoader.PATH_VARIABLES_ROLE);
     if (child == null) {
       return global.getContainer().setChild(JpsGlobalLoader.PATH_VARIABLES_ROLE, new JpsPathVariablesConfigurationImpl());
@@ -50,31 +48,26 @@ public final class JpsModelSerializationDataService {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public static JpsProjectSerializationDataExtension getProjectExtension(@NotNull JpsProject project) {
+  public static @Nullable JpsProjectSerializationDataExtension getProjectExtension(@NotNull JpsProject project) {
     return project.getContainer().getChild(JpsProjectSerializationDataExtensionImpl.ROLE);
   }
 
-  @Nullable
-  public static File getBaseDirectory(@NotNull JpsProject project) {
+  public static @Nullable File getBaseDirectory(@NotNull JpsProject project) {
     JpsProjectSerializationDataExtension extension = getProjectExtension(project);
     return extension != null ? extension.getBaseDirectory() : null;
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public static JpsModuleSerializationDataExtension getModuleExtension(@NotNull JpsModule project) {
+  public static @Nullable JpsModuleSerializationDataExtension getModuleExtension(@NotNull JpsModule project) {
     return project.getContainer().getChild(JpsModuleSerializationDataExtensionImpl.ROLE);
   }
 
-  @Nullable
-  public static File getBaseDirectory(@NotNull JpsModule module) {
+  public static @Nullable File getBaseDirectory(@NotNull JpsModule module) {
     JpsModuleSerializationDataExtension extension = getModuleExtension(module);
-    return extension != null ? extension.getBaseDirectory() : null;
+    return extension == null ? null : extension.getBaseDirectory();
   }
 
-  @Nullable
-  public static String getPathVariableValue(@NotNull JpsGlobal global, @NotNull String name) {
+  public static @Nullable String getPathVariableValue(@NotNull JpsGlobal global, @NotNull String name) {
     String value = PathMacroUtil.getGlobalSystemMacroValue(name, false);
     if (value != null) {
       return value;
