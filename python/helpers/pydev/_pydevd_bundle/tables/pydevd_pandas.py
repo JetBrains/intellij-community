@@ -6,6 +6,7 @@ import typing
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
 CSV_FORMAT_SEPARATOR = '~'
+DASH_SYMBOL = '\u2014'
 
 
 def get_type(table):
@@ -237,7 +238,7 @@ def analyze_numeric_column(column):
         counts, bin_edges = np.histogram(column.dropna(), bins=ColumnVisualisationUtils.NUM_BINS)
 
         # so the long dash will be correctly viewed both on Mac and Windows
-        bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
+        bin_labels = ['{} {} {}'.format(format_function(bin_edges[i]), DASH_SYMBOL, format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
         bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
         res = bin_count_dict
     return add_custom_key_value_separator(res.items())

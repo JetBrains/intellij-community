@@ -100,13 +100,14 @@ def __analyze_column(col_name, column):
     col_type = column.dtype
     res = []
     column_visualisation_type = None
+
     if __is_boolean(column, col_type):
         column_visualisation_type, res = __analyze_boolean_column(column, col_name)
 
     elif __is_numeric(column, col_type):
         column_visualisation_type, res = __analyze_numeric_column(column, col_name)
 
-    elif __is_categorical(column, col_type):
+    else:
         column_visualisation_type, res = __analyze_categorical_column(column, col_name)
 
     if column_visualisation_type != ColumnVisualisationType.UNIQUE:
@@ -124,12 +125,7 @@ def __is_boolean(column, col_type):
 
 def __is_numeric(column, col_type):
     # (pl.Series, pl.DataType) -> bool
-    return column.is_numeric() and not column.is_null().all()
-
-
-def __is_categorical(column, col_type):
-    # (pl.Series, pl.DataType) -> bool
-    return col_type == pl.Boolean or col_type == pl.Object or col_type == pl.Utf8 or column.is_temporal() or column.is_null().all()
+    return __is_series_numeric(column) and not column.is_null().all()
 
 
 def __analyze_boolean_column(column, col_name):
@@ -171,13 +167,10 @@ def __analyze_categorical_column(column, col_name):
 def __analyze_numeric_column(column, col_name):
     # handle np.NaN values, because they are not dropped with drop_nulls() the way they are
     column = column.fill_nan(None).drop_nulls()
-    if column.is_float():
-        # for float type we don't compute number of unique values because it's an
-        # expensive operation, just take number of elements in a column
-        unique_values = column.len()
+    if column.shape[0] <= ColumnVisualisationUtils.NUM_BINS:
+        raw_counts = column.value_counts().sort(by=col_name).to_dict(as_series=False)
+        res = __add_custom_key_value_separator(zip(raw_counts[col_name], raw_counts[COUNT_COL_NAME]))
     else:
-        unique_values = column.n_unique()
-    if unique_values > ColumnVisualisationUtils.NUM_BINS:
         import numpy as np
 
         def format_function(x):
@@ -190,9 +183,7 @@ def __analyze_numeric_column(column, col_name):
         # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} {} {}'.format(format_function(bin_edges[i]), DASH_SYMBOL, format_function(bin_edges[i + 1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
         res = __add_custom_key_value_separator(zip(bin_labels, counts))
-    else:
-        raw_counts = column.value_counts().sort(by=col_name).to_dict()
-        res = __add_custom_key_value_separator(zip(raw_counts[col_name], raw_counts[COUNT_COL_NAME]))
+
     return ColumnVisualisationType.HISTOGRAM, res
 
 
@@ -275,3 +266,18 @@ def __get_float_precision(format):
                     pass
 
     return None
+
+
+def __is_series_numeric(column):
+    """
+    Determines if the given column is numeric based on the version of the polars
+    library being used.
+
+    For polars major version 0, the method checks if the column is numeric using
+    the `is_numeric` method directly on the column. For later versions, it checks
+    the `is_numeric` method on the column's data type.
+    """
+    if pl_version_major == 0:
+        return column.is_numeric()
+    else:
+        return column.dtype.is_numeric()

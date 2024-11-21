@@ -314,13 +314,7 @@ def test_describe_series(setup_dataframe):
 
     for column in df:
         described_series = polars_tables_helpers.__get_describe(column)
-        resulted += str(described_series) + "\n"
-
-    print()
-    print(resulted)
-    print()
-
-    exp_file_python_ver = str(sys.version_info[0]) + '_' + str(sys.version_info[1])
+        resulted += str(described_series.to_dict(as_series=False)) + "\n"
 
     read_expected_from_file_and_compare_with_actual(
         actual=resulted,
@@ -336,20 +330,23 @@ def test_vis_data_detecting_column_type(setup_dataframe):
         if col_name_to_data_type[column.name] == TYPE_BOOL:
             assert polars_tables_helpers.__is_boolean(column, col_type) == True
             assert polars_tables_helpers.__is_numeric(column, col_type) == False
-            assert polars_tables_helpers.__is_categorical(column, col_type) == False
         elif col_name_to_data_type[column.name] == TYPE_NUMERIC:
             assert polars_tables_helpers.__is_boolean(column, col_type) == False
             assert polars_tables_helpers.__is_numeric(column, col_type) == True
-            assert polars_tables_helpers.__is_categorical(column, col_type) == False
         elif col_name_to_data_type[column.name] == TYPE_CATEGORICAL:
             assert polars_tables_helpers.__is_boolean(column, col_type) == False
             assert polars_tables_helpers.__is_numeric(column, col_type) == False
-            assert polars_tables_helpers.__is_categorical(column, col_type) == True
 
 
 # 14
 def test_vis_data_numeric_columns_simple():
-    pass
+    test_data = pl.DataFrame({"ints": list(range(10)) + list(range(10))})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data)
+
+    read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/polars/vis_data_integer_simple.txt'
+    )
 
 
 # 15
@@ -406,22 +403,6 @@ def test_get_float_precision():
 #
 #     return "\n".join(result)
 
-#
-# @pytest.mark.skipif(sys.version_info < (3, 0),
-#                     reason="The exception will be raised during df creation in Python2")
-# def test_overflow_error_is_caught(setup_df_with_big_int_values):
-#     df = setup_df_with_big_int_values
-#     assert polars_tables_helpers.__get_describe(df) is None
-#
-#
-# def test_vis_data_integer_columns_simple():
-#     test_data = pd.DataFrame({"ints": list(range(10)) + list(range(10))})
-#     actual = polars_tables_helpers.get_value_occurrences_count(test_data)
-#     read_expected_from_file_and_compare_with_actual(
-#         actual=actual,
-#         expected_file='test_data/pandas/vis_data_integer_simple.txt'
-#     )
-#
 #
 # @pytest.mark.skipif(sys.version_info < (3, 0),reason="")
 # def test_vis_data_integer_columns_with_bins():
