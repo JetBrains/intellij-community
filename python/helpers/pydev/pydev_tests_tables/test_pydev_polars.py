@@ -5,7 +5,6 @@ check functions from _pydevd_bundle.tables.pydevd_polars module.
 """
 
 import pytest
-import sys
 
 import polars as pl
 import numpy as np
@@ -15,6 +14,8 @@ from datetime import datetime, date, time
 import _pydevd_bundle.tables.pydevd_polars as polars_tables_helpers
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 TYPE_BOOL, TYPE_NUMERIC, TYPE_CATEGORICAL = "bool", "numeric", "categorical"
+pl_version_major, pl_version_minor, _ = pl.__version__.split(".")
+polars_version = pl_version_major
 
 
 @pytest.fixture
@@ -24,36 +25,51 @@ def setup_dataframe():
     We create a DataFrame with various data types.
     Also, we create other auxiliary data
     """
-    df = pl.DataFrame({
-        "int_col": [1, 2, 3],
-        "float_col": [1.0, 2.0, 3.0],
-        "bool_col": [True, False, True],
-        "bool_col_with_none": [True, False, None],
-        "str_col": ["one", "two", "three"],
-        "date_col": [date(2022, 1, 1), date(2022, 1, 2), date(2022, 1, 3)],
-        "datetime_col": [datetime(2022, 1, 1, 12, 0), datetime(2022, 1, 2, 12, 0), datetime(2022, 1, 3, 12, 0)],
-        "time_col": [time(12, 0), time(12, 30), time(13, 0)],
-        "duration_col": [pl.duration(milliseconds=500), pl.duration(milliseconds=1000), pl.duration(milliseconds=1500)],
-        "categorical_col": ["A", "B", "A"],
-        "binary_col": [b"abc", b"def", b"ghi"],
-        "struct_col": [{"age": 30, "height": 5.5}, {"age": 25, "height": 6.1}, {"age": 35, "height": 5.9}],
-        "list_col": [[1, 2], [3, 4], [5, 6]],
-        "large_number": [18446744073709551610, 18446744073709551611, 18446744073709551612]
-    }, schema={"int_col": pl.Int64,
-               "float_col": pl.Float64,
-               "bool_col": pl.Boolean,
-               "bool_col_with_none": pl.Boolean,
-               "str_col": pl.Utf8,
-               "date_col": pl.Date,
-               "datetime_col": pl.Datetime,
-               "time_col": pl.Time,
-               "duration_col": pl.Object,
-               "categorical_col": pl.Categorical,
-               "binary_col": pl.Binary,
-               "struct_col": pl.Struct,
-               "list_col": pl.List,
-               "large_number": pl.UInt64
-    })
+    if pl_version_major == "0":
+        df = pl.DataFrame({
+                "int_col": [1, 2, 3],
+                "float_col": [1.0, 2.0, 3.0],
+                "bool_col": [True, False, True],
+                "str_col": ["one", "two", "three"],
+                "date_col": [date(2022, 1, 1), date(2022, 1, 2), date(2022, 1, 3)],
+                "datetime_col": [datetime(2022, 1, 1, 12, 0),
+                                 datetime(2022, 1, 2, 12, 0),
+                                 datetime(2022, 1, 3, 12, 0)],
+                "categorical_col": ["A", "B", "A"],
+        })
+    else:
+        df = pl.DataFrame({
+                "int_col": [1, 2, 3],
+                "float_col": [1.0, 2.0, 3.0],
+                "bool_col": [True, False, True],
+                "bool_col_with_none": [True, False, None],
+                "str_col": ["one", "two", "three"],
+                "date_col": [date(2022, 1, 1), date(2022, 1, 2), date(2022, 1, 3)],
+                "datetime_col": [datetime(2022, 1, 1, 12, 0),
+                                 datetime(2022, 1, 2, 12, 0),
+                                 datetime(2022, 1, 3, 12, 0)],
+                "time_col": [time(12, 0), time(12, 30), time(13, 0)],
+                "categorical_col": ["A", "B", "A"],
+                "binary_col": [b"abc", b"def", b"ghi"],
+                "struct_col": [{"age": 30, "height": 5.5},
+                               {"age": 25, "height": 6.1},
+                               {"age": 35, "height": 5.9}],
+                "list_col": [[1, 2], [3, 4], [5, 6]],
+                "large_number": [1844674407370955, 1844674407370955, 1844674407370955]
+        }, schema={"int_col": pl.Int64,
+                   "float_col": pl.Float64,
+                   "bool_col": pl.Boolean,
+                   "bool_col_with_none": pl.Boolean,
+                   "str_col": pl.Utf8,
+                   "date_col": pl.Date,
+                   "datetime_col": pl.Datetime,
+                   "time_col": pl.Time,
+                   "categorical_col": pl.Categorical,
+                   "binary_col": pl.Binary,
+                   "struct_col": pl.Struct,
+                   "list_col": pl.List,
+                   "large_number": pl.UInt64
+                   })
 
     df_html = df.head(1)._repr_html_()
     columns_types = [str(t) for t in df.dtypes]
@@ -66,7 +82,6 @@ def setup_dataframe():
         "date_col": TYPE_CATEGORICAL,
         "datetime_col": TYPE_CATEGORICAL,
         "time_col": TYPE_CATEGORICAL,
-        "duration_col": TYPE_CATEGORICAL,
         "categorical_col": TYPE_CATEGORICAL,
         "binary_col": TYPE_CATEGORICAL,
         "struct_col": TYPE_CATEGORICAL,
@@ -106,19 +121,23 @@ def setup_dataframe_many_numeric_columns():
     return df_numeric
 
 
-# @pytest.fixture
-# def setup_df_with_big_int_values():
-#     """
-#     Here we create a fixture for one test.
-#     With that df we check that we catch OverflowError exception in the describe functions.
-#     This number has to be so big.
-#     """
-#     big_int = 555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
-#     df = pd.DataFrame({"BitIntValues": [1, 2]})
-#     df["BitIntValues"] = big_int
-#
-#     return df
+@pytest.fixture
+def setup_dataframe_with_float_values():
+    if pl_version_major == "0":
+        df = pl.DataFrame({
+                "int_col": [1, 2, 3],
+                "float_col": [1.0, 2.0, None],
+        })
+    else:
+        df = pl.DataFrame({
+                "int_col": [1, 2, 3],
+                "float_col": [1.0, 2.0, None],
+                "struct_col": [{"age": 30, "height": 5.5},
+                               {"age": 25, "height": 6.1},
+                               {"age": 35, "height": None}],
+        })
 
+    return df
 
 # 1
 def test_info_command(setup_dataframe):
@@ -167,7 +186,7 @@ def test_display_data_html_saves_display_options(setup_dataframe):
 
     before_config_state = pl.Config.state()
 
-    polars_tables_helpers.display_data_html(df, start=0, end=2)
+    polars_tables_helpers.display_data_html(df, start_index=0, end_index=2)
 
     after_config_state = pl.Config.state()
 
@@ -187,7 +206,7 @@ def test_display_data_csv_saves_display_options(setup_dataframe):
 
     before_config_state = pl.Config.state()
 
-    polars_tables_helpers.display_data_csv(df, start=0, end=2)
+    polars_tables_helpers.display_data_csv(df, start_index=0, end_index=2)
 
     after_config_state = pl.Config.state()
 
@@ -195,18 +214,6 @@ def test_display_data_csv_saves_display_options(setup_dataframe):
     for key in before_config_state.keys():
         assert before_config_state[key] == after_config_state[key], \
         f"For key {key} config state after getting data has been changed: before={before_config_state[key]}, after={after_config_state[key]}"
-
-
-# def test_convert_to_df_unnamed_series(setup_series_no_names):
-#     """
-#     In this test we check two methods: __convert_to_df and __get_column_name.
-#     For unnamed pd.Series case.
-#     :param setup_series_no_names: fixture/data for the test
-#     """
-#     converted_series = polars_tables_helpers.__convert_to_df(setup_series_no_names)
-#
-#     assert isinstance(converted_series, pd.DataFrame)
-#     assert converted_series.columns[0] == '<unnamed>'
 
 
 # 5
@@ -249,9 +256,9 @@ def test_get_info_format(setup_dataframe):
               polars_tables_helpers.get_column_types(df)]
     actual = '\n'.join(actual)
 
-    read_expected_from_file_and_compare_with_actual(
+    __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/polars/get_info_result.txt'
+        expected_file='test_data/polars/major_version_' + polars_version +'/get_info_result.txt'
     )
 
 
@@ -260,9 +267,9 @@ def test_describe_many_numerical_columns_check_html(setup_dataframe_many_numeric
     df = setup_dataframe_many_numeric_columns
     actual = polars_tables_helpers.get_column_descriptions(df)
 
-    read_expected_from_file_and_compare_with_actual(
+    __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/polars/dataframe_many_numeric_columns_describe_after.txt'
+        expected_file='test_data/polars/major_version_' + polars_version + '/dataframe_many_numeric_columns_describe.txt'
     )
 
 # 8
@@ -302,7 +309,6 @@ def test_get_describe_save_columns(setup_dataframe):
 # 11
 def test_get_describe_returned_types(setup_dataframe):
     _, df, _, _, _ = setup_dataframe
-
     assert type(polars_tables_helpers.__get_describe(df)) == pl.DataFrame
     assert type(polars_tables_helpers.__get_describe(df['int_col'])) == pl.DataFrame
 
@@ -312,142 +318,273 @@ def test_describe_series(setup_dataframe):
 
     resulted = ""
 
-    for column in df:
-        described_series = polars_tables_helpers.__get_describe(column)
+    for column in df.columns:
+        described_series = polars_tables_helpers.__get_describe(df[column])
         resulted += str(described_series.to_dict(as_series=False)) + "\n"
 
-    read_expected_from_file_and_compare_with_actual(
+    __read_expected_from_file_and_compare_with_actual(
         actual=resulted,
-        expected_file='test_data/polars/series_describe.txt'
+        expected_file='test_data/polars/major_version_' + polars_version + '/series_describe.txt'
     )
 
 
 # 13
 def test_vis_data_detecting_column_type(setup_dataframe):
     _, df, _, _, col_name_to_data_type = setup_dataframe
-    for column in df:
-        col_type = column.dtype
-        if col_name_to_data_type[column.name] == TYPE_BOOL:
-            assert polars_tables_helpers.__is_boolean(column, col_type) == True
-            assert polars_tables_helpers.__is_numeric(column, col_type) == False
-        elif col_name_to_data_type[column.name] == TYPE_NUMERIC:
-            assert polars_tables_helpers.__is_boolean(column, col_type) == False
-            assert polars_tables_helpers.__is_numeric(column, col_type) == True
-        elif col_name_to_data_type[column.name] == TYPE_CATEGORICAL:
-            assert polars_tables_helpers.__is_boolean(column, col_type) == False
-            assert polars_tables_helpers.__is_numeric(column, col_type) == False
+    for column in df.columns:
+        col_type = df[column].dtype
+        if col_name_to_data_type[column] == TYPE_BOOL:
+            assert polars_tables_helpers.__is_boolean(df[column], col_type) == True
+            assert polars_tables_helpers.__is_numeric(df[column], col_type) == False
+        elif col_name_to_data_type[column] == TYPE_NUMERIC:
+            assert polars_tables_helpers.__is_boolean(df[column], col_type) == False
+            assert polars_tables_helpers.__is_numeric(df[column], col_type) == True
+        elif col_name_to_data_type[column] == TYPE_CATEGORICAL:
+            assert polars_tables_helpers.__is_boolean(df[column], col_type) == False
+            assert polars_tables_helpers.__is_numeric(df[column], col_type) == False
 
 
 # 14
-def test_vis_data_numeric_columns_simple():
+def test_vis_data_int_columns_simple():
     test_data = pl.DataFrame({"ints": list(range(10))})
     actual = polars_tables_helpers.get_value_occurrences_count(test_data)
 
-    read_expected_from_file_and_compare_with_actual(
+    __read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/polars/vis_data_numeric_column_simple.txt'
+        expected_file='test_data/polars/vis_data_int_column_simple.txt'
     )
 
 
 # 15
-def test_vis_data_numeric_columns_with_bins():
+def test_vis_data_int_columns_with_bins():
     test_data = pl.DataFrame({"ints": list(range(50))})
     actual = polars_tables_helpers.get_value_occurrences_count(test_data)
 
-    read_expected_from_file_and_compare_with_actual(
+    __read_expected_from_file_and_compare_with_actual(
             actual=actual,
-            expected_file='test_data/polars/vis_data_numeric_column_with_bins.txt'
+            expected_file='test_data/polars/vis_data_int_column_with_bins.txt'
     )
 
 
 # 16
-def test_vis_data_bool_column():
-    pass
+def test_vis_data_float_columns_simple():
+    test_data_floats = pl.DataFrame({"floats": [1.1, 2.2, 3.3, 4.4, 5.5]})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data_floats)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/vis_data_float_column_simple.txt'
+    )
 
 
 # 17
-def test_vis_data_categorical_column_percentage():
-    pass
+def test_vis_data_float_columns_with_bins():
+    test_data_floats = pl.DataFrame({"floats": [1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 9.9, 10.1, 11.1, 12.2] * 100})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data_floats)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/vis_data_float_column_with_bins.txt'
+    )
 
 
 # 18
-def test_vis_data_categorical_column_other():
-    pass
+def test_vis_data_bool_column():
+    test_data_bool = pl.DataFrame({"bools": [True] * 50 + [False] * 25})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data_bool)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/vis_data_bool_column.txt'
+    )
 
 
 # 19
-def test_vis_data_categorical_column_unique():
-    pass
+def test_vis_data_categorical_column_percentage():
+    test_data_str = pl.DataFrame({"strs": ["First"] * 50 + ["Second"] * 25})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data_str)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/vis_data_categorical_column.txt'
+    )
 
 
 # 20
-def test_vis_data_categorical_column_switch_perc_to_unique():
-    pass
+def test_vis_data_categorical_column_other():
+    test_data_str_other = pl.DataFrame({"strs": ["First"] * 50 + ["Second"] * 25 + ["Third"] * 10 + ["Forth"] * 5})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data_str_other)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/vis_data_categorical_column_other.txt'
+    )
 
 
 # 21
+def test_vis_data_categorical_column_unique():
+    test_data_str_unique = pl.DataFrame({"strs": [str(i) for i in range(1000)]})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data_str_unique)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/vis_data_categorical_column_unique.txt'
+    )
+
+
+# 22
+def test_vis_data_categorical_column_switch_perc_to_unique():
+    # we need a column with 49% of unique values
+    test_data_other = pl.DataFrame({"ints": [str(i) for i in range(49)] + ["48"] * 51})
+    assert polars_tables_helpers.ColumnVisualisationType.PERCENTAGE in polars_tables_helpers.get_value_occurrences_count(test_data_other)
+
+    # if the share of unique is greater than 50% then we should show "UNIQUE" vis
+    test_data_unique = pl.DataFrame({"ints": [str(i) for i in range(52)] + ["51"] * 49})
+    assert polars_tables_helpers.ColumnVisualisationType.UNIQUE in polars_tables_helpers.get_value_occurrences_count(test_data_unique)
+
+
+# 23
 def test_get_float_precision():
-    assert __get_float_precision(None) == None
-    assert __get_float_precision("%.2f") == 2
-    assert __get_float_precision("%.12f") == 12
-    assert __get_float_precision("%.12e") == None
-    assert __get_float_precision("%d") == None
-    assert __get_float_precision(1) == None
+    assert polars_tables_helpers.__get_float_precision(None) is None
+    assert polars_tables_helpers.__get_float_precision("%.2f") == 2
+    assert polars_tables_helpers.__get_float_precision("%.12f") == 12
+    assert polars_tables_helpers.__get_float_precision("%.12e") is None
+    assert polars_tables_helpers.__get_float_precision("%d") is None
+    assert polars_tables_helpers.__get_float_precision(1) is None
 
 
+# 24
+def test_get_data_numeric_dataframe(setup_dataframe_many_numeric_columns):
+    df = setup_dataframe_many_numeric_columns
+    actual = polars_tables_helpers.get_data(df, False, 0, 2)
 
-# def __prepare_describe_result(described_str):
-#     """
-#     This function is needed with the aim not to be depended on the python version,
-#     there is different indentation in different python versions.
-#     We check only the data, not the indentation.
-#     """
-#     # type: (str) -> (str)
-#     result = []
-#     for line in described_str.split("\n"):
-#         result.append(" ".join(line.split()))
-#
-#     return "\n".join(result)
-
-#
-# @pytest.mark.skipif(sys.version_info < (3, 0),reason="")
-# def test_vis_data_integer_columns_with_bins():
-#     test_data = pd.DataFrame({"ints": list(range(21)) + list(range(21))})
-#     actual = polars_tables_helpers.get_value_occurrences_count(test_data)
-#     read_expected_from_file_and_compare_with_actual(
-#         actual=actual,
-#         expected_file='test_data/pandas/vis_data_integer_with_bins.txt'
-#     )
-#
-#
-# @pytest.mark.skipif(sys.version_info < (3, 0),reason="")
-# def test_vis_data_float_columns_simple():
-#     import numpy as np
-#     test_data = pd.DataFrame({"floats": np.arange(0, 1, 0.1)})
-#     actual = polars_tables_helpers.get_value_occurrences_count(test_data)
-#     read_expected_from_file_and_compare_with_actual(
-#         actual=actual,
-#         expected_file='test_data/pandas/vis_data_float_simple.txt'
-#     )
-#
-#
-# @pytest.mark.skipif(sys.version_info < (3, 0),reason="")
-# def test_vis_data_float_columns_with_bins():
-#     import numpy as np
-#     test_data = pd.DataFrame({"floats": np.arange(0, 3, 0.1)})
-#     actual = polars_tables_helpers.get_value_occurrences_count(test_data)
-#     read_expected_from_file_and_compare_with_actual(
-#         actual=actual,
-#         expected_file='test_data/pandas/vis_data_float_with_bins.txt'
-#     )
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_numeric_dataframe.txt'
+    )
 
 
-def read_expected_from_file_and_compare_with_actual(actual, expected_file):
+# 25
+def test_get_data_numeric_dataframe_second_page(setup_dataframe_many_numeric_columns):
+    df = setup_dataframe_many_numeric_columns
+    actual = polars_tables_helpers.get_data(df, False, 2, 4)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_numeric_dataframe_second_page.txt'
+    )
+
+
+# 26
+def test_get_data_empty_series(setup_series_empty):
+    s = setup_series_empty
+    actual = polars_tables_helpers.get_data(s, False, 0, 2)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_empty_series.txt'
+    )
+
+
+# 27
+def test_get_data_empty_series_second_page(setup_series_empty):
+    s = setup_series_empty
+    actual = polars_tables_helpers.get_data(s, False, 2, 4)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_empty_series_second_page.txt'
+    )
+
+
+# 28
+def test_get_data_unnamed_series(setup_series_empty):
+    s = setup_series_empty
+    actual = polars_tables_helpers.get_data(s, False, 0, 2)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_unnamed_series.txt'
+    )
+
+
+# 29
+def test_get_data_unnamed_series_second_page(setup_series_empty):
+    s = setup_series_empty
+    actual = polars_tables_helpers.get_data(s, False, 2, 4)
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_unnamed_series_second_page.txt'
+    )
+
+# 30
+def test_get_data_float_values_2f(setup_dataframe_with_float_values):
+    df = setup_dataframe_with_float_values
+    actual = polars_tables_helpers.get_data(df, False, 0, 3, format="%.2f")
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_float_values_2f.txt'
+    )
+
+
+# 31
+def test_get_data_float_values_2fgarbage(setup_dataframe_with_float_values):
+    df = setup_dataframe_with_float_values
+    actual = polars_tables_helpers.get_data(df, False, 0, 3, format="%.2fgarbage")
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_float_values_2fgarbage.txt'
+    )
+
+
+# 32
+def test_get_data_float_values_0f(setup_dataframe_with_float_values):
+    df = setup_dataframe_with_float_values
+    actual = polars_tables_helpers.get_data(df, False, 0, 3, format="%.0f")
+
+    __read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/major_version_' + polars_version + '/get_data_float_values_0f.txt'
+    )
+
+# 33
+def test_display_data_html_df(capsys, setup_dataframe):
+    _, df, _, _, _ = setup_dataframe
+
+    polars_tables_helpers.display_data_html(df, 0, 3)
+
+    # Capture the output
+    captured = capsys.readouterr()
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=captured.out,
+        expected_file='test_data/polars/major_version_' + polars_version + '/display_data_html_df.txt'
+    )
+
+
+# 34
+def test_display_data_html_df_with_float_values(capsys, setup_dataframe_with_float_values):
+    df = setup_dataframe_with_float_values
+
+    polars_tables_helpers.display_data_html(df, 0, 3)
+
+    # Capture the output
+    captured = capsys.readouterr()
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=captured.out,
+        expected_file='test_data/polars/major_version_' + polars_version + '/display_data_html_df_with_float_values.txt'
+    )
+
+
+def __read_expected_from_file_and_compare_with_actual(actual, expected_file):
     with open(expected_file, 'r') as in_f:
         expected = in_f.read()
+    assert len(expected) > 0, "The expected file is empty"
 
     # for a more convenient assertion fails messages here we compare string char by char
     for ind, (act, exp) in enumerate(zip(actual, expected)):
-        assert act == exp, "index is %s, act part = %s, exp part = %s" % (ind,
-            actual[max(0, ind - 20): min(len(actual) - 1, ind + 20)],
-            expected[max(0, ind - 20): min(len(actual) - 1, ind + 20)])
+        assert act == exp, "\nindex is %s, \n\nact part = %s \n\nexp part = %s\n" % (ind, actual, expected)

@@ -1,0 +1,8 @@
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (0,)</small><table border="1" class="dataframe"><thead><tr><th>empty_col</th></tr><tr><td>i64</td></tr></thead><tbody></tbody></table></div>

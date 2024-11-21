@@ -2,11 +2,29 @@
 import numpy as np
 import pandas as pd
 import typing
+from collections import OrderedDict
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
 CSV_FORMAT_SEPARATOR = '~'
 DASH_SYMBOL = '\u2014'
+
+
+class ColumnVisualisationType:
+    HISTOGRAM = "histogram"
+    UNIQUE = "unique"
+    PERCENTAGE = "percentage"
+
+
+class ColumnVisualisationUtils:
+    NUM_BINS = 20
+    MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 3
+    UNIQUE_VALUES_PERCENT = 50
+
+    TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
+    TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
+    TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR = '__pydev_table_occurrences_count_dict__'
+    TABLE_OCCURRENCES_COUNT_OTHER = '__pydev_table_other__'
 
 
 def get_type(table):
@@ -46,10 +64,20 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
         return repr(__convert_to_df(data).to_html(notebook=True))
 
     if use_csv_serialization:
-        computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
+        computed_data = __compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
     else:
-        computed_data = _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
+        computed_data = __compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
     return computed_data
+
+
+# used by DSTableCommands
+# noinspection PyUnresolvedReferences
+def display_data_html(table, start_index, end_index):
+    # type: (Union[pd.DataFrame, pd.Series], int, int) -> None
+    def ipython_display(data, format):
+        from IPython.display import display, HTML
+        display(HTML(__convert_to_df(data).to_html(notebook=True)))
+    __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
 # used by DSTableCommands
@@ -62,24 +90,35 @@ def display_data_csv(table, start_index, end_index):
         except AttributeError:
             pass
         print(__convert_to_df(data))
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
+    __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
-# used by DSTableCommands
-# noinspection PyUnresolvedReferences
-def display_data_html(table, start_index, end_index):
-    # type: (Union[pd.DataFrame, pd.Series], int, int) -> None
-    def ipython_display(data, format):
-        from IPython.display import display
-        display(__convert_to_df(data))
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
+def get_column_descriptions(table):
+    # type: (Union[pd.DataFrame, pd.Series]) -> str
+    described_result = __get_describe(table)
+
+    if described_result is not None:
+        return get_data(described_result, None, None)
+    else:
+        return ""
+
+
+def get_value_occurrences_count(table):
+    df = __convert_to_df(table)
+    bin_counts = []
+
+    for _, column_data in df.items():
+        column_visualisation_type, result = __analyze_column(column_data)
+
+        bin_counts.append(str({column_visualisation_type:result}))
+    return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
 
 
 def __get_data_slice(table, start, end):
     return __convert_to_df(table).iloc[start:end]
 
 
-def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
+def __compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
     # type: (Union[pd.DataFrame, pd.Series], function, int, int) -> str
 
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
@@ -95,7 +134,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     pd.set_option('display.max_rows', max_rows)
     pd.set_option('display.max_colwidth', max_colwidth)
 
-    format_function = _define_format_function(format)
+    format_function = __define_format_function(format)
     if format_function is not None:
         pd.set_option('display.float_format', format_function)
 
@@ -113,39 +152,30 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     return data
 
 
-def _define_format_function(format):
+def __define_format_function(format):
     # type: (Union[None, str]) -> Union[Callable, None]
     if format is None or format == 'null':
         return None
 
-    if format.startswith("%"):
+    if type(format) == str and format.startswith("%"):
         return lambda x: format % x
 
     return None
-
-def get_column_descriptions(table):
-    # type: (Union[pd.DataFrame, pd.Series]) -> str
-    described_result = __get_describe(table)
-
-    if described_result is not None:
-        return get_data(described_result, None, None)
-    else:
-        return ""
 
 
 def __get_describe(table):
     # type: (Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series, None]
     try:
         described_ = table.describe(percentiles=[.05, .25, .5, .75, .95],
-                                    exclude=[np.complex64, np.complex128])
-    except (TypeError, OverflowError, ValueError):
+                                    exclude=[np.complex64, np.complex128, np.complexfloating])
+    except (TypeError, OverflowError, ValueError) as e:
         return
 
     try:
         import geopandas
         if type(table) is geopandas.GeoSeries:
             return described_
-    except ImportError:
+    except ImportError as e:
         pass
 
     if type(table) is pd.Series:
@@ -154,70 +184,53 @@ def __get_describe(table):
         return described_.reindex(columns=table.columns, copy=False)
 
 
-class ColumnVisualisationType:
-    HISTOGRAM = "histogram"
-    UNIQUE = "unique"
-    PERCENTAGE = "percentage"
-
-
-class ColumnVisualisationUtils:
-    NUM_BINS = 20
-    MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 3
-    UNIQUE_VALUES_PERCENT = 50
-
-    TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
-    TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
-    TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR = '__pydev_table_occurrences_count_dict__'
-    TABLE_OCCURRENCES_COUNT_OTHER = '__pydev_table_other__'
-
-
-def get_value_occurrences_count(table):
-    df = __convert_to_df(table)
-    bin_counts = []
-
-    for _, column_data in df.items():
-        column_visualisation_type, result = analyze_column(column_data)
-
-        bin_counts.append(str({column_visualisation_type:result}))
-    return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
-
-
-def analyze_column(column):
+def __analyze_column(column):
     col_type = column.dtype
 
-    if col_type == bool:
-        return ColumnVisualisationType.HISTOGRAM, analyze_boolean_column(column)
-    elif col_type.kind in ['O', 'S', 'U', 'M', 'm', 'c'] or column.isna().all():
-        return analyze_categorical_column(column)
-    elif col_type.kind in ['i', 'f', 'u']:
-        return ColumnVisualisationType.HISTOGRAM, analyze_numeric_column(column)
+    if __is_boolean(col_type):
+        return ColumnVisualisationType.HISTOGRAM, __analyze_boolean_column(column)
+    elif __is_categorical(column, col_type):
+        return __analyze_categorical_column(column)
+    elif __is_numeric(col_type):
+        return ColumnVisualisationType.HISTOGRAM, __analyze_numeric_column(column)
 
 
-def analyze_boolean_column(column):
-    res = column.value_counts().sort_index().to_dict()
-    return add_custom_key_value_separator(res.items())
+def __is_boolean(col_type):
+    return col_type == bool
 
 
-def analyze_categorical_column(column):
+def __is_categorical(column, col_type):
+    return col_type.kind in ['O', 'S', 'U', 'M', 'm', 'c'] or column.isna().all() or col_type.kind is None
+
+
+def __is_numeric(col_type):
+    return col_type.kind in ['i', 'f', 'u']
+
+def __analyze_boolean_column(column):
+    res = column.value_counts().sort_index().to_dict(OrderedDict)
+    return __add_custom_key_value_separator(res.items())
+
+
+def __analyze_categorical_column(column):
     # Processing of unhashable types (lists, dicts, etc.).
     # In Polars these types are NESTED and can be processed separately, but in Pandas they are Objects
     if len(column) == 0 or not isinstance(column.iloc[0], typing.Hashable):
         return None, "{}"
 
-    value_counts = column.value_counts(dropna=False)
+    value_counts = column.value_counts(dropna=False, normalize=True, sort=True, ascending=False)
     all_values = len(column)
     vis_type = ColumnVisualisationType.PERCENTAGE
-    if len(value_counts) <= 3 or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
+    if len(value_counts) <= 3 or float(len(value_counts)) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS - (0 if len(value_counts) == 3 else 1)
 
-        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda count: round(count / all_values * 100, 1)).to_dict()
+        top_values = value_counts.iloc[:num_unique_values_to_show_in_vis].apply(lambda v_c_share: round(v_c_share * 100, 1)).to_dict(OrderedDict)
         if len(value_counts) == 3:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:
             others_count = value_counts.iloc[num_unique_values_to_show_in_vis:].sum()
-            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count / all_values * 100, 1)
-        result = add_custom_key_value_separator(top_values.items())
+            top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count * 100, 1)
+        result = __add_custom_key_value_separator(top_values.items())
     else:
         vis_type = ColumnVisualisationType.UNIQUE
         top_values = len(value_counts)
@@ -225,7 +238,7 @@ def analyze_categorical_column(column):
     return vis_type, result
 
 
-def analyze_numeric_column(column):
+def __analyze_numeric_column(column):
     if column.size <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
@@ -241,10 +254,10 @@ def analyze_numeric_column(column):
         bin_labels = ['{} {} {}'.format(format_function(bin_edges[i]), DASH_SYMBOL, format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
         bin_count_dict = {label: count for label, count in zip(bin_labels, counts)}
         res = bin_count_dict
-    return add_custom_key_value_separator(res.items())
+    return __add_custom_key_value_separator(res.items())
 
 
-def add_custom_key_value_separator(pairs_list):
+def __add_custom_key_value_separator(pairs_list):
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR.join(
         ['{}{}{}'.format(key, ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR, value) for key, value in pairs_list]
     )

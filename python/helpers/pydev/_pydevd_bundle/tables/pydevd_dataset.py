@@ -45,10 +45,20 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
         return repr(data.to_html(notebook=True))
 
     if use_csv_serialization:
-        computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
+        computed_data = __compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
     else:
-        computed_data = _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
+        computed_data = __compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
     return computed_data
+
+
+# used by DSTableCommands
+# noinspection PyUnresolvedReferences
+def display_data_html(table, start_index, end_index):
+    # type: (datasets.arrow_dataset.Dataset, int, int) -> None
+    def ipython_display(data, format):
+        from IPython.display import display
+        display(data)
+    __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
 # used by DSTableCommands
@@ -61,17 +71,7 @@ def display_data_csv(table, start_index, end_index):
         except AttributeError:
             pass
         print(data)
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
-
-
-# used by DSTableCommands
-# noinspection PyUnresolvedReferences
-def display_data_html(table, start_index, end_index):
-    # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data, format):
-        from IPython.display import display
-        display(data)
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
+    __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
 def __get_data_slice(table, start, end):
@@ -79,7 +79,7 @@ def __get_data_slice(table, start, end):
     return __convert_to_df(table).iloc[start:end]
 
 
-def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
+def __compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
     # type: (datasets.arrow_dataset.Dataset, function, int, int) -> str
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
 
@@ -93,7 +93,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     pd.set_option('display.max_rows', max_rows)
     pd.set_option('display.max_colwidth', max_colwidth)
 
-    format_function = _define_format_function(format)
+    format_function = __define_format_function(format)
     if format_function is not None:
         pd.set_option('display.float_format', format_function)
 
@@ -113,7 +113,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     return data
 
 
-def _define_format_function(format):
+def __define_format_function(format):
     # type: (Union[None, str]) -> Union[Callable, None]
     if format is None or format == 'null':
         return None

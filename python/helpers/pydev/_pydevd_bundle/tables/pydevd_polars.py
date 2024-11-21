@@ -62,16 +62,16 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
 
 
 # used by DSTableCommands
-def display_data_html(table, start, end):
+def display_data_html(table, start_index, end_index):
     # type: (Union[pl.Series, pl.DataFrame], int, int) -> None
     with __create_config():
-        print(table[start:end]._repr_html_())
+        print(table[start_index:end_index]._repr_html_())
 
 
-def display_data_csv(table, start, end):
+def display_data_csv(table, start_index, end_index):
     # type: (Union[pl.Series, pl.DataFrame], int, int) -> None
     with __create_config():
-        print(__write_to_csv(__get_df_slice(table, start, end)))
+        print(__write_to_csv(__get_df_slice(table, start_index, end_index)))
 
 
 def get_column_descriptions(table):
@@ -166,7 +166,7 @@ def __analyze_categorical_column(column, col_name):
 
 def __analyze_numeric_column(column, col_name):
     # handle np.NaN values, because they are not dropped with drop_nulls() the way they are
-    column = column.fill_nan(None).drop_nulls()
+    column = column.fill_null(strategy="min")
     if column.shape[0] <= ColumnVisualisationUtils.NUM_BINS:
         raw_counts = column.value_counts().sort(by=col_name).to_dict(as_series=False)
         res = __add_custom_key_value_separator(zip(raw_counts[col_name], raw_counts[COUNT_COL_NAME]))
@@ -224,7 +224,7 @@ def __create_config(format=None):
     cfg.set_tbl_rows(-1)  # Unlimited
     cfg.set_fmt_str_lengths(MAX_COLWIDTH)  # No option to set unlimited, so it's 100_000
     float_precision = __get_float_precision(format)
-    if float_precision is not None:
+    if float_precision is not None and hasattr(cfg, 'set_float_precision'):
         cfg.set_float_precision(float_precision)
     return cfg
 
@@ -247,7 +247,7 @@ def __get_describe(table):
         return described_df
     # If DataFrame/Series have unsupported type for describe
     # then Polars will raise TypeError exception. We should catch them.
-    except:
+    except Exception as e:
         return
 
 
