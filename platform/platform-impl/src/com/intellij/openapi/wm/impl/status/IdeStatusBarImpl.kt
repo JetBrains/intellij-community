@@ -530,7 +530,10 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
       override fun setFraction(fraction: Double) {
         super.setFraction(fraction)
-        reporter.fraction(fraction)
+        // RawProgressReporter logs an error if the value is not in the interval 0.0-1.0,
+        // but ProgressIndicator didn't have that check before (although, according to the documentation, it should be in the range),
+        // so some indicators report the wrong value and this can cause error spam - IJPL-166399
+        reporter.fraction(fraction.coerceIn(0.0, 1.0))
       }
     }
   }
