@@ -43,7 +43,7 @@ def setup_dataframe():
                "float_col": pl.Float64,
                "bool_col": pl.Boolean,
                "bool_col_with_none": pl.Boolean,
-               "str_col": pl.String,
+               "str_col": pl.Utf8,
                "date_col": pl.Date,
                "datetime_col": pl.Datetime,
                "time_col": pl.Time,
@@ -340,18 +340,24 @@ def test_vis_data_detecting_column_type(setup_dataframe):
 
 # 14
 def test_vis_data_numeric_columns_simple():
-    test_data = pl.DataFrame({"ints": list(range(10)) + list(range(10))})
+    test_data = pl.DataFrame({"ints": list(range(10))})
     actual = polars_tables_helpers.get_value_occurrences_count(test_data)
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/polars/vis_data_integer_simple.txt'
+        expected_file='test_data/polars/vis_data_numeric_column_simple.txt'
     )
 
 
 # 15
 def test_vis_data_numeric_columns_with_bins():
-    pass
+    test_data = pl.DataFrame({"ints": list(range(50))})
+    actual = polars_tables_helpers.get_value_occurrences_count(test_data)
+
+    read_expected_from_file_and_compare_with_actual(
+            actual=actual,
+            expected_file='test_data/polars/vis_data_numeric_column_with_bins.txt'
+    )
 
 
 # 16
