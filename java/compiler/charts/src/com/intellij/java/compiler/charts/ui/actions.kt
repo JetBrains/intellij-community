@@ -9,12 +9,14 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.JBUI
 import java.awt.Cursor
 import java.awt.Font
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.font.TextAttribute
+import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -43,10 +45,16 @@ class OpenDirectoryAction(private val project: Project, private val name: String
 
   override fun actionPerformed(e: MouseEvent) {
     val module = ModuleManager.getInstance(project).findModuleByName(name) ?: return
-    val path = LocalFileSystem.getInstance().findFileByPath(module.moduleFilePath) ?: return
-    val directory = path.parent ?: return
+    val path = findModuleDirectory(module.moduleFilePath)?: return
     close()
-    OpenFileDescriptor(project, directory, -1).navigate(true)
+    OpenFileDescriptor(project, path, -1).navigate(true)
+  }
+
+  private fun findModuleDirectory(path: String): VirtualFile? = LocalFileSystem.getInstance().let { fs ->
+    val file = fs.findFileByPath(path)
+    if (file != null) return file.parent
+    val parent = Paths.get(path).parent ?: return null
+    return fs.findFileByPath(parent.toString())
   }
 }
 
