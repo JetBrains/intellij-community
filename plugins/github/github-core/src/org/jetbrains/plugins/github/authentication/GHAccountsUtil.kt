@@ -24,6 +24,7 @@ import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.DialogManager
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -174,7 +175,8 @@ object GHAccountsUtil {
 
   @RequiresEdt
   @JvmStatic
-  internal fun login(model: GHLoginModel, request: GHLoginRequest, project: Project?, parentComponent: Component?) {
+  @ApiStatus.Internal
+  fun login(model: GHLoginModel, request: GHLoginRequest, project: Project?, parentComponent: Component?) {
     if (request.server != GithubServerPath.DEFAULT_SERVER) {
       request.loginWithToken(model, project, parentComponent)
     }
@@ -191,7 +193,8 @@ class GHAccountAuthData(val account: GithubAccount, login: String, token: String
   val token: String get() = password!!
 }
 
-internal class GHLoginRequest(
+@ApiStatus.Internal
+class GHLoginRequest(
   val text: @NlsContexts.DialogMessage String? = null,
   val error: Throwable? = null,
 

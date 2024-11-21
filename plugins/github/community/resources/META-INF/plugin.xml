@@ -24,9 +24,12 @@
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
+
+  <content>
+    <module name="intellij.vcs.github" loading="required"/>
+  </content>
+
   <extensions defaultExtensionNs="com.intellij">
     <pluginSuggestionProvider implementation="org.jetbrains.plugins.github.GitHubUltimateSuggestionProvider"/>
   </extensions>
-
-  <xi:include href="/META-INF/github-core-config.xml"/>
 </idea-plugin>

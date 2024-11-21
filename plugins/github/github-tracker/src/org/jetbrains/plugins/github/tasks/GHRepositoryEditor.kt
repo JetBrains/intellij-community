@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.tasks
 
 import com.intellij.openapi.project.Project
@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.authentication.GHLoginRequest
 import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 
-private object GHRepositoryEditorKt {
+private object GHRepositoryEditor {
   fun askToken(project: Project, host: String): String? {
     val server = tryParse(host) ?: return null
 

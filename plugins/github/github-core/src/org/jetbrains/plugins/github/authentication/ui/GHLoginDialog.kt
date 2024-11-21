@@ -17,6 +17,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -109,7 +110,8 @@ internal sealed class GHLoginDialog(
   }
 }
 
-internal interface GHLoginModel {
+@ApiStatus.Internal
+interface GHLoginModel {
   fun isAccountUnique(server: GithubServerPath, login: String): Boolean
   suspend fun saveLogin(server: GithubServerPath, login: String, token: String)
 }
