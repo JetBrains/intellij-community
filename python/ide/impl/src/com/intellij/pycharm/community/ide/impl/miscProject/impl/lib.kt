@@ -54,6 +54,7 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.pathString
+import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = fileLogger()
 
@@ -97,11 +98,33 @@ private suspend fun openFile(project: Project, file: Path): PsiFile {
   val vfsFile = withContext(Dispatchers.IO) {
     VfsUtil.findFile(file, true) ?: error("Can't find VFS $file")
   }
-  return withContext(Dispatchers.EDT) {
-    val psiFile = readAction { PsiManager.getInstance(project).findFile(vfsFile) } ?: error("Can't find PSI for $vfsFile")
-    psiFile.navigate(true)
-    psiFile
+  // `navigate` throws `AssertionError` from time to time due to platform API bug.
+  // We "fix" it by means of retries
+  return callWithRetry {
+    withContext(Dispatchers.EDT) {
+      val psiFile = readAction { PsiManager.getInstance(project).findFile(vfsFile) } ?: error("Can't find PSI for $vfsFile")
+      psiFile.navigate(true)
+
+      return@withContext psiFile
+    }
   }
+}
+
+/**
+ * Retries  [code] `10` times if it throws [AssertionError]
+ */
+private suspend fun <T> callWithRetry(code: suspend () -> T): T {
+  val logger = fileLogger()
+  repeat(10) {
+    try {
+      return code()
+    }
+    catch (e: AssertionError) {
+      logger.warn(e)
+      delay(100.milliseconds)
+    }
+  }
+  return code()
 }
 
 private suspend fun generateFile(where: Path, templateFileName: TemplateFileName): Path = withContext(Dispatchers.IO) {
