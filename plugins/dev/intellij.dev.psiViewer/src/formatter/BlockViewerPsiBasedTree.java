@@ -309,7 +309,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       //    assert currentElem != null;      //for Scala-language plugin etc it can be null, because formatterBlocks is not instance of ASTBlock
       TextRange curTextRange = currentElem.getTextRange();
       PsiElement parentElem = currentElem.getParent();
-      while (parentElem != null && parentElem.getTextRange().equals(curTextRange)) {
+      while (parentElem != null && parentElem.getTextRange() != null && parentElem.getTextRange().equals(curTextRange)) {
         psiToBlockMap.put(parentElem, block);
         parentElem = parentElem.getParent();
       }
