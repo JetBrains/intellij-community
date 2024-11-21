@@ -22,7 +22,7 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
   @ApiStatus.Experimental
   open suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) = contextAction(suspendContext)
 
-  override suspend fun actionSuspend() {
+  final override suspend fun actionSuspend() {
     if (LOG.isDebugEnabled) {
       LOG.debug("trying $this")
     }
@@ -45,7 +45,7 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
     check(resetContinuation(null) == null) { "Continuation is not null after resume" }
   }
 
-  override fun invokeContinuation() = invokeWithChecks {
+  final override fun invokeContinuation() = invokeWithChecks {
     executeContinuation()
   }
 
@@ -83,7 +83,7 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
     }
   }
 
-  override fun onSuspendOrFinish() {
+  final override fun onSuspendOrFinish() {
     if (mySuspendContextSetInProgress) {
       suspendContext?.myInProgress = false
     }

@@ -47,6 +47,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
 
   override fun getPriority() = myPriority
 
+  @ApiStatus.Internal
   fun notifyCancelled() {
     try {
       commandCancelled()
@@ -72,9 +73,11 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
     }
   }
 
+  @ApiStatus.Internal
   protected open fun onSuspendOrFinish() {
   }
 
+  @ApiStatus.Internal
   protected open fun invokeContinuation() {
     executeContinuation()
   }
@@ -88,6 +91,8 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
   }
 
   internal fun resetContinuation(runnable: Runnable?): Runnable? = continuation.getAndSet(runnable)
+
+  @ApiStatus.Internal
   protected fun executeContinuation() {
     resetContinuation(null)?.run()
   }
