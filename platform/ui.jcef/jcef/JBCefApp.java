@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.Version;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
@@ -236,6 +237,10 @@ public final class JBCefApp {
   }
 
   private static boolean isSupportedImpl() {
+    if (SystemInfo.isLinux && !isLinuxLibcSupported()) {
+      return false;
+    }
+
     CefDelegate delegate = getActiveDelegate();
     if (delegate != null) {
       return delegate.isCefSupported();
@@ -540,5 +545,28 @@ public final class JBCefApp {
 
   private static @Nullable CefDelegate getActiveDelegate() {
     return CefDelegate.EP.findFirstSafe(CefDelegate::isActive);
+  }
+
+  private static boolean isLinuxLibcSupported() {
+    String libcVersionString;
+    try {
+      libcVersionString = LibC.INSTANCE.gnu_get_libc_version();
+    } catch (UnsatisfiedLinkError e) {
+      LOG.warn("Failed load libc to check the version: " + e.getMessage());
+      return false;
+    }
+
+    Version version = Version.parseVersion(libcVersionString);
+    if (version == null) {
+      LOG.error("Failed to parse libc version: " + libcVersionString);
+      return false;
+    }
+
+    if (version.lessThan(2, 28)) {
+      LOG.warn("Incompatible glibc version: " + libcVersionString);
+      return false;
+    }
+
+    return true;
   }
 }
