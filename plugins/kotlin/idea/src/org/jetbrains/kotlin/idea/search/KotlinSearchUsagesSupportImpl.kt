@@ -12,7 +12,6 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
