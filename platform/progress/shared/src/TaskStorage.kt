@@ -7,7 +7,7 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
-import fleet.kernel.withEntities
+import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -76,9 +76,7 @@ abstract class TaskStorage {
    * @param taskInfoEntity The task to be removed.
    */
   suspend fun removeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
-    withEntities(taskInfoEntity) {
-      removeTaskInfoEntity(taskInfoEntity)
-    }
+    removeTaskInfoEntity(taskInfoEntity)
   }
 
   /**
@@ -104,7 +102,7 @@ abstract class TaskStorage {
    * @return Unit
    */
   suspend fun updateTask(taskInfoEntity: TaskInfoEntity, state: ProgressState): Unit = withKernel {
-    withEntities(taskInfoEntity) {
+    tryWithEntities(taskInfoEntity) {
       updateTaskInfoEntity {
         taskInfoEntity[TaskInfoEntity.ProgressStateType] = state
       }
