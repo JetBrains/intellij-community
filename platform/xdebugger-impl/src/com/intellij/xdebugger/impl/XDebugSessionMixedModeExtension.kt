@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
-import com.intellij.openapi.application.EDT
 import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
@@ -26,10 +24,10 @@ abstract class XDebugSessionMixedModeExtension(
   abstract fun isLowStackFrame(stackFrame: XStackFrame): Boolean
 
   fun pause() {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch {
       assert(stateMachine.get() is BothRunning)
 
-      stateMachine.set(MixedModeProcessTransitionStateMachine.StopRequested)
+      stateMachine.set(StopRequested)
       stateMachine.waitFor(BothStopped::class)
     }
   }
@@ -45,7 +43,7 @@ abstract class XDebugSessionMixedModeExtension(
     }
 
   fun resume() {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch {
       stateMachine.set(ResumeRequested)
       stateMachine.waitFor(BothRunning::class)
     }
@@ -56,7 +54,7 @@ abstract class XDebugSessionMixedModeExtension(
       stateMachine.set(LowLevelStepRequested(suspendContext, StepType.Into))
     }
     else {
-      coroutineScope.launch(Dispatchers.EDT) {
+      coroutineScope.launch {
         val newState =
           if (high.isStepWillBringIntoNativeCode(suspendContext))
             MixedStepRequested(suspendContext, MixedStepType.IntoLowFromHigh)
