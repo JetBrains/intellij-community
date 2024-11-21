@@ -2,8 +2,11 @@
 package com.intellij.debugger.streams.exec;
 
 import com.intellij.debugger.streams.test.TraceExecutionTestCase;
+import com.intellij.debugger.streams.test.TraceExecutionTestHelper;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,9 +30,14 @@ public class UserCodeExceptionTest extends TraceExecutionTestCase {
   }
 
   @Override
-  protected void handleSuccess(@Nullable StreamChain chain, @Nullable TracingResult result, boolean resultMustBeNull) {
-    assertNotNull(result);
-    super.handleSuccess(chain, result, resultMustBeNull);
-    assertTrue(result.exceptionThrown());
+  protected @NotNull TraceExecutionTestHelper getHelper(XDebugSession session) {
+    return new JavaTraceExecutionTestHelper(session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+      @Override
+      protected void handleSuccess(@Nullable StreamChain chain, @Nullable TracingResult result, boolean resultMustBeNull) {
+        assertNotNull(result);
+        super.handleSuccess(chain, result, resultMustBeNull);
+        assertTrue(result.exceptionThrown());
+      }
+    };
   }
 }

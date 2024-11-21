@@ -2,9 +2,12 @@
 package com.intellij.debugger.streams.exec;
 
 import com.intellij.debugger.streams.test.TraceExecutionTestCase;
+import com.intellij.debugger.streams.test.TraceExecutionTestHelper;
 import com.intellij.debugger.streams.trace.PrimitiveValue;
 import com.intellij.debugger.streams.trace.Value;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,11 +31,16 @@ public class PrimitiveTerminalOperationTest extends TraceExecutionTestCase {
   }
 
   @Override
-  protected void handleResultValue(@Nullable Value result, boolean mustBeNull) {
-    assertFalse(mustBeNull);
-    assertNotNull(result);
-    assertInstanceOf(result, PrimitiveValue.class);
-    println("Result type:" + result.typeName(), ProcessOutputTypes.SYSTEM);
-    println("value = " + result.toString(), ProcessOutputTypes.SYSTEM);
+  protected @NotNull TraceExecutionTestHelper getHelper(XDebugSession session) {
+    return new JavaTraceExecutionTestHelper(session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+      @Override
+      protected void handleResultValue(@Nullable Value result, boolean mustBeNull) {
+        assertFalse(mustBeNull);
+        assertNotNull(result);
+        assertInstanceOf(result, PrimitiveValue.class);
+        println("Result type:" + result.typeName(), ProcessOutputTypes.SYSTEM);
+        println("value = " + result.toString(), ProcessOutputTypes.SYSTEM);
+      }
+    };
   }
 }
