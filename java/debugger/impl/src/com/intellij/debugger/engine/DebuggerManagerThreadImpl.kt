@@ -327,12 +327,20 @@ private fun findCurrentContext(): Triple<DebuggerManagerThreadImpl, PrioritizedT
   return Triple(managerThread, priority, suspendContext)
 }
 
+/**
+ * Executes [action] in debugger manager thread and returns a future.
+ * **This method can only be called in debugger manager thread.**
+ * Use [invokeCommandAsCompletableFuture] with managerThread param if you are not.
+ */
 @ApiStatus.Experimental
 fun <T> invokeCommandAsCompletableFuture(action: suspend () -> T): CompletableFuture<T> {
   val (managerThread, priority, suspendContext) = findCurrentContext()
   return invokeCommandAsCompletableFuture(managerThread, priority, suspendContext, action)
 }
 
+/**
+ * Executes [action] in debugger manager thread and returns a future.
+ */
 @ApiStatus.Experimental
 fun <T> invokeCommandAsCompletableFuture(
   managerThread: DebuggerManagerThreadImpl,
@@ -352,6 +360,15 @@ fun <T> invokeCommandAsCompletableFuture(
   return res
 }
 
+/**
+ * This call launches the coroutine [action].
+ *
+ * **This method can only be called in debugger manager thread.** Use [executeOnDMT] if you are not.
+ *
+ * Starts a [SuspendContextCommandImpl] if was in a [SuspendContextCommandImpl], else starts a [DebuggerCommandImpl].
+ *
+ * Pass [onCommandCancelled] to be notified if the command is canceled.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 fun launchInDebuggerCommand(
@@ -362,6 +379,12 @@ fun launchInDebuggerCommand(
   executeOnDMT(managerThread, priority, suspendContext, onCommandCancelled, action)
 }
 
+/**
+ * Runs [action] in debugger manager thread.
+ * Pass [onCommandCancelled] to be notified if the command is canceled.
+ *
+ * This is similar to [DebuggerManagerThreadImpl.invoke] call.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 fun executeOnDMT(
@@ -371,6 +394,12 @@ fun executeOnDMT(
   action: suspend () -> Unit,
 ) = executeOnDMT(suspendContext.managerThread, priority, suspendContext, onCommandCancelled, action)
 
+/**
+ * Runs [action] in debugger manager thread as a [SuspendContextCommandImpl].
+ * Pass [onCommandCancelled] to be notified if the command is canceled.
+ *
+ * This is similar to [DebuggerManagerThreadImpl.invoke] call.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 fun executeOnDMT(
@@ -399,6 +428,13 @@ fun executeOnDMT(
   }
 }
 
+/**
+ * Runs [block] in debugger manager thread as a [SuspendContextCommandImpl].
+ *
+ * The coroutine is canceled if the corresponding command is canceled.
+ *
+ * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 suspend fun <T> withDebugContext(
@@ -407,6 +443,14 @@ suspend fun <T> withDebugContext(
   block: () -> T,
 ): T = withDebugContext(suspendContext.managerThread, priority, suspendContext, block)
 
+/**
+ * Runs [block] in debugger manager thread.
+ *
+ * When the passed [suspendContext] is null, starts a [DebuggerCommandImpl], else [SuspendContextCommandImpl].
+ * The coroutine is canceled if the corresponding command is canceled.
+ *
+ * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 suspend fun <T> withDebugContext(
