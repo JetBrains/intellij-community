@@ -58,6 +58,7 @@ public class StringUtil {
    * @return a lightweight CharSequence which results from replacing {@code [start, end)} range in the {@code charSeq} with {@code replacement}.
    * Works in O(1), but retains references to the passed char sequences, so please use something else if you want them to be garbage-collected.
    */
+  @Contract(pure = true)
   public static @NotNull MergingCharSequence replaceSubSequence(@NotNull CharSequence charSeq, int start, int end, @NotNull CharSequence replacement) {
     return new MergingCharSequence(
           new MergingCharSequence(new CharSequenceSubSequence(charSeq, 0, start), replacement),
@@ -530,10 +531,12 @@ public class StringUtil {
   }
 
 
+  @Contract(mutates = "param3")
   public static void escapeStringCharacters(int length, @NotNull String str, @NotNull StringBuilder buffer) {
     escapeStringCharacters(length, str, "\"", buffer);
   }
 
+  @Contract(mutates = "param4")
   public static @NotNull StringBuilder escapeStringCharacters(int length,
                                                               @NotNull String str,
                                                               @Nullable String additionalChars,
@@ -541,6 +544,7 @@ public class StringUtil {
     return escapeStringCharacters(length, str, additionalChars, true, buffer);
   }
 
+  @Contract(mutates = "param5")
   public static @NotNull StringBuilder escapeStringCharacters(int length,
                                                               @NotNull String str,
                                                               @Nullable String additionalChars,
@@ -549,6 +553,7 @@ public class StringUtil {
     return escapeStringCharacters(length, str, additionalChars, escapeSlash, true, buffer);
   }
 
+  @Contract(mutates = "param6")
   public static @NotNull StringBuilder escapeStringCharacters(int length,
                                                               @NotNull String str,
                                                               @Nullable String additionalChars,
@@ -658,6 +663,7 @@ public class StringUtil {
   }
 
   @ApiStatus.Internal
+  @Contract(mutates = "param3")
   public static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
@@ -758,8 +764,9 @@ public class StringUtil {
   /**
    * @see <a href="https://en.cppreference.com/w/cpp/language/escape">C/C++ escaping</a>
    */
+  @Contract(pure = true)
   public static @NotNull String unescapeAnsiStringCharacters(@NotNull String s) {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(s.length());
     int length = s.length();
     int count = 0; // count == -1 if the escape sequence has an arbitrary length
     int radix = 0;
@@ -1083,6 +1090,7 @@ public class StringUtil {
     return string.substring(index);
   }
 
+  @Contract(mutates = "param1")
   public static @NotNull StringBuilder trimLeading(@NotNull StringBuilder builder, char symbol) {
     int index = 0;
     while (index < builder.length() && builder.charAt(index) == symbol) index++;
@@ -1109,6 +1117,7 @@ public class StringUtil {
     return string.substring(0, index + 1);
   }
 
+  @Contract(mutates = "param1")
   public static @NotNull StringBuilder trimTrailing(@NotNull StringBuilder builder, char symbol) {
     int index = builder.length() - 1;
     while (index >= 0 && builder.charAt(index) == symbol) index--;
@@ -1165,6 +1174,7 @@ public class StringUtil {
     return pluralize(base);
   }
 
+  @Contract(mutates = "param1")
   public static void repeatSymbol(@NotNull Appendable buffer, char symbol, int times) {
     assert times >= 0 : times;
     try {
@@ -1511,6 +1521,7 @@ public class StringUtil {
     return Strings.join(items, f, separator);
   }
 
+  @Contract(mutates = "param4")
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
@@ -1523,6 +1534,7 @@ public class StringUtil {
     return Strings.join(strings, separator);
   }
 
+  @Contract(mutates = "param3")
   public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
     Strings.join(strings, separator, result);
   }
@@ -1877,6 +1889,7 @@ public class StringUtil {
     return Strings.indexOf(s, c, start, end, caseSensitive);
   }
 
+  @Contract(pure = true)
   public static int indexOf(char @NotNull [] s, char c, int start, int end, boolean caseSensitive) {
     return Strings.indexOf(s, c, start, end, caseSensitive);
   }
@@ -2014,6 +2027,7 @@ public class StringUtil {
     return buf.toString();
   }
 
+  @Contract(mutates = "param1")
   public static void escapeChar(@NotNull StringBuilder buf, char character) {
     int idx = 0;
     while ((idx = indexOf(buf, character, idx)) >= 0) {
@@ -2027,6 +2041,7 @@ public class StringUtil {
     return escapeChar(str, '"');
   }
 
+  @Contract(mutates = "param1")
   public static void escapeQuotes(@NotNull StringBuilder buf) {
     escapeChar(buf, '"');
   }
@@ -2071,10 +2086,12 @@ public class StringUtil {
     }
   }
 
+  @Contract(mutates = "param1")
   public static void quote(@NotNull StringBuilder builder) {
     quote(builder, '\"');
   }
 
+  @Contract(mutates = "param1")
   public static void quote(@NotNull StringBuilder builder, char quotingChar) {
     builder.insert(0, quotingChar);
     builder.append(quotingChar);
@@ -2172,6 +2189,7 @@ public class StringUtil {
     return escapeToRegexp(text, result).toString();
   }
 
+  @Contract(mutates = "param2")
   public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
     return Strings.escapeToRegexp(text, builder);
   }
@@ -2307,6 +2325,7 @@ public class StringUtil {
    * Checks if the char sequence slice is a valid java identifier (according to JLS 3.8)
    * @return true exactly iff {@code isJavaIdentifier(str.subSequence(startIncl, endExcl)) == true }
    */
+  @Contract(pure = true)
   public static boolean isJavaIdentifier(@NotNull CharSequence str, int startIncl, int endExcl) {
     if (str.length() == 0) return false;
     Ref.BooleanRef isFirst = new Ref.BooleanRef();
@@ -2532,6 +2551,7 @@ public class StringUtil {
     return result.toString();
   }
 
+  @Contract(pure = true)
   public static void assertValidSeparators(@NotNull CharSequence s) {
     char[] chars = CharArrayUtil.fromSequenceWithoutCopying(s);
     int slashRIndex = -1;
@@ -2695,6 +2715,7 @@ public class StringUtil {
    * Collapses all white-space (including new lines) between non-white-space characters to a single space character.
    * Leading and trailing white space is removed.
    */
+  @Contract(pure = true)
   public static @NotNull String collapseWhiteSpace(@NotNull CharSequence s) {
     StringBuilder result = new StringBuilder();
     boolean space = false;
@@ -2821,6 +2842,7 @@ public class StringUtil {
     return true;
   }
 
+  @Contract(pure = true)
   public static @Nullable LineSeparator detectSeparators(@NotNull CharSequence text) {
     int index = indexOfAny(text, "\n\r");
     if (index == -1) return null;
@@ -2831,6 +2853,7 @@ public class StringUtil {
     return lineSeparator;
   }
 
+  @Contract(pure = true)
   public static @Nullable LineSeparator getLineSeparatorAt(@NotNull CharSequence text, int index) {
     if (index < 0 || index >= text.length()) {
       return null;
@@ -2894,6 +2917,7 @@ public class StringUtil {
    * @param shortName a short name, which must not contain dots
    * @return true if specified short name is a short name of fully-qualified name
    */
+  @Contract(pure = true)
   public static boolean isShortNameOf(@NotNull String fqName, @NotNull String shortName) {
     if (fqName.length() < shortName.length()) return false;
     if (fqName.length() == shortName.length()) return fqName.equals(shortName);
@@ -2939,6 +2963,7 @@ public class StringUtil {
     };
   }
 
+  @Contract(mutates = "param1")
   public static boolean trimEnd(@NotNull StringBuilder buffer, @NotNull CharSequence end) {
     if (endsWith(buffer, end)) {
       buffer.delete(buffer.length() - end.length(), buffer.length());
@@ -2961,6 +2986,7 @@ public class StringUtil {
    * @param s  the string to test.
    * @return   true if the string has an uppercase character, false if not.
    */
+  @Contract(pure = true)
   public static boolean hasUpperCaseChar(@NotNull String s) {
       char[] chars = s.toCharArray();
       for (char c : chars) {
@@ -2976,6 +3002,7 @@ public class StringUtil {
    * @param s  the string to test.
    * @return   true if the string has a lowercase character, false if not.
    */
+  @Contract(pure = true)
   public static boolean hasLowerCaseChar(@NotNull String s) {
       char[] chars = s.toCharArray();
       for (char c : chars) {
@@ -2988,6 +3015,7 @@ public class StringUtil {
 
   private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[\\da-fA-F]{4}");
 
+  @Contract(pure = true)
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
 
@@ -3152,6 +3180,7 @@ public class StringUtil {
    * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
    * if no non-whitespace character found
    */
+  @Contract(pure = true)
   public static int skipWhitespaceForward(@NotNull CharSequence text, int pos) {
     int length = text.length();
     while (pos < length && isWhitespaceOrTab(text.charAt(pos))) {
@@ -3168,6 +3197,7 @@ public class StringUtil {
    * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
    * if no non-whitespace character found
    */
+  @Contract(pure = true)
   public static int skipWhitespaceOrNewLineForward(@NotNull CharSequence text, int pos) {
     int length = text.length();
     while (pos < length && isWhitespaceTabOrNewLine(text.charAt(pos))) {
@@ -3184,6 +3214,7 @@ public class StringUtil {
    * @return position of the character before or equal to pos which has no space or tab before;
    * or zero if no non-whitespace character found
    */
+  @Contract(pure = true)
   public static int skipWhitespaceBackward(@NotNull CharSequence text, int pos) {
     while (pos > 0 && isWhitespaceOrTab(text.charAt(pos - 1))) {
       pos--;
@@ -3199,6 +3230,7 @@ public class StringUtil {
    * @return position of the character before or equal to pos which has no space or tab before;
    * or zero if no non-whitespace character found
    */
+  @Contract(pure = true)
   public static int skipWhitespaceOrNewLineBackward(@NotNull CharSequence text, int pos) {
     while (pos > 0 && isWhitespaceTabOrNewLine(text.charAt(pos - 1))) {
       pos--;
@@ -3229,11 +3261,13 @@ public class StringUtil {
     return StringUtilRt.convertLineSeparators(text, newSeparator);
   }
 
+  @Contract(pure = true)
   public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String convertLineSeparators(@NotNull String text,
                                              @NotNull String newSeparator,
                                              int @Nullable [] offsetsToKeep,
