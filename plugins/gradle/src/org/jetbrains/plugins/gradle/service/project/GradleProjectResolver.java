@@ -94,7 +94,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static final Logger LOG = Logger.getInstance(GradleProjectResolver.class);
 
-  private final @NotNull GradleExecutionHelper myHelper;
   private final @NotNull GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
   private final @NotNull MultiMap<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = MultiMap.createConcurrent();
 
@@ -109,15 +108,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   public static final boolean DEBUG_ORPHAN_MODULES_PROCESSING = Boolean.getBoolean("external.system.debug.orphan.modules.processing");
 
-  // This constructor is called by external system API, see AbstractExternalSystemFacadeImpl class constructor.
+  /**
+   * This constructor is called by the external system API.
+   *
+   * @see com.intellij.openapi.externalSystem.service.AbstractExternalSystemFacadeImpl#AbstractExternalSystemFacadeImpl
+   */
   @SuppressWarnings("UnusedDeclaration")
-  public GradleProjectResolver() {
-    this(new GradleExecutionHelper());
-  }
-
-  public GradleProjectResolver(@NotNull GradleExecutionHelper helper) {
-    myHelper = helper;
-  }
+  public GradleProjectResolver() { }
 
   @Override
   public @Nullable DataNode<ProjectData> resolveProjectInfo(
@@ -187,7 +184,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext);
       var projectDataFunction = getProjectDataFunction(resolverContext, projectResolverChain);
-      final DataNode<ProjectData> projectDataNode = myHelper.execute(
+      final DataNode<ProjectData> projectDataNode = GradleExecutionHelper.execute(
         resolverContext.getProjectPath(),
         resolverContext.getSettings(),
         resolverContext.getExternalSystemTaskId(),
@@ -217,11 +214,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull GradleProjectResolverExtension projectResolverChain
   ) {
     return new ProjectConnectionDataNodeFunction(resolverContext, projectResolverChain);
-  }
-
-  @NotNull
-  GradleExecutionHelper getHelper() {
-    return myHelper;
   }
 
   @Override

@@ -71,7 +71,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public static final Key<String> INIT_SCRIPT_PREFIX_KEY = Key.create("INIT_SCRIPT_PREFIX_KEY");
   public static final Key<Collection<VersionSpecificInitScript>> VERSION_SPECIFIC_SCRIPTS_KEY = Key.create("VERSION_SPECIFIC_SCRIPTS_KEY");
   private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
-  private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
   private final Map<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = new ConcurrentHashMap<>();
 
@@ -118,7 +117,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         String rootProjectPath = determineRootProject(projectPath);
         GradleWrapperHelper.ensureInstalledWrapper(id, rootProjectPath, settings, listener, cancellationToken);
       }
-      myHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
+      GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
         executeTasks(projectPath, id, settings, listener, connection, cancellationToken);
         return null;
       });

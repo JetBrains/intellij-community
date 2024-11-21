@@ -51,22 +51,37 @@ import java.util.*;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
 
-public class GradleExecutionHelper {
+public final class GradleExecutionHelper {
+
+  /**
+   * @deprecated Use helper methods without object instantiation.
+   * All method is this class is static.
+   */
+  @Deprecated
+  public GradleExecutionHelper() { }
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
-  public <T> T execute(@NotNull String projectPath,
-                       @Nullable GradleExecutionSettings settings,
-                       @NotNull Function<? super ProjectConnection, ? extends T> f) {
+  /**
+   * @deprecated Use instead the static variant of this method.
+   */
+  @Deprecated
+  public <T> T execute(
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @NotNull Function<? super ProjectConnection, ? extends T> f
+  ) {
     return execute(projectPath, settings, null, null, null, f);
   }
 
-  public <T> T execute(@NotNull String projectPath,
-                       @Nullable GradleExecutionSettings settings,
-                       @Nullable ExternalSystemTaskId taskId,
-                       @Nullable ExternalSystemTaskNotificationListener listener,
-                       @Nullable CancellationToken cancellationToken,
-                       @NotNull Function<? super ProjectConnection, ? extends T> f) {
+  public static <T> T execute(
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @Nullable ExternalSystemTaskId taskId,
+    @Nullable ExternalSystemTaskNotificationListener listener,
+    @Nullable CancellationToken cancellationToken,
+    @NotNull Function<? super ProjectConnection, ? extends T> f
+  ) {
     String projectDir;
     File projectPathFile = new File(projectPath);
     if (projectPathFile.isFile() && projectPath.endsWith(GradleConstants.EXTENSION) && projectPathFile.getParent() != null) {
@@ -82,23 +97,21 @@ public class GradleExecutionHelper {
     else {
       projectDir = projectPath;
     }
-    return withGradleConnection(
-      projectDir, taskId, settings, listener, cancellationToken,
-      connection -> {
-        try {
-          return SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection));
-        }
-        catch (ExternalSystemException | ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.warn("Gradle execution error", e);
-          Throwable rootCause = ExceptionUtil.getRootCause(e);
-          ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
-          externalSystemException.initCause(e);
-          throw externalSystemException;
-        }
-      });
+    return withGradleConnection(projectDir, taskId, settings, listener, cancellationToken, connection -> {
+      try {
+        return SystemPropertiesAdjuster.executeAdjusted(projectDir, () -> f.fun(connection));
+      }
+      catch (ExternalSystemException | ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.warn("Gradle execution error", e);
+        Throwable rootCause = ExceptionUtil.getRootCause(e);
+        ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
+        externalSystemException.initCause(e);
+        throw externalSystemException;
+      }
+    });
   }
 
   @ApiStatus.Internal
