@@ -1065,6 +1065,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             addInstruction(new GotoInstruction(endGuardOffset));
             ((DeferredOffset)targetOffset).setOffset(getInstructionCount());
             guard.accept(this);
+            generateBoxingUnboxingInstructionFor(guard, PsiTypes.booleanType());
             addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(guard)));
             addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
             endGuardOffset.setOffset(getInstructionCount());

@@ -135,6 +135,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testInstanceOfPatternAffectNullity() { doTest(); }
 
   public void testNullabilityInEnumSwitch() { doTest(); }
+  
+  public void testSwitchBooleanWhen() { doTest(); }
 
   public void testJetBrainsNotNullByDefault() {
     addJetBrainsNotNullByDefault(myFixture);
