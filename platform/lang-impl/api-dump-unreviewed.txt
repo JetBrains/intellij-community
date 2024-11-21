@@ -8238,6 +8238,7 @@ com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:getCustomProperties():java.util.Map
 - a:setDefaultText(java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:setDialogOwner(java.awt.Component):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
+- setKindSelector(java.util.function.BiFunction):V
 - a:setTitle(java.lang.String):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:setValidator(com.intellij.openapi.ui.InputValidator):com.intellij.ide.actions.CreateFileFromTemplateDialog$Builder
 - a:show(java.lang.String,java.lang.String,com.intellij.ide.actions.CreateFileFromTemplateDialog$FileCreator):com.intellij.psi.PsiElement
@@ -8537,6 +8538,7 @@ c:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel
 - getEnteredName():java.lang.String
 - getNameField():javax.swing.JTextField
 - getSelectedTemplate():java.lang.String
+- setTemplateSelectorMatcher(java.util.function.BiFunction):V
 f:com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel$TemplatePresentation
 - java.lang.Record
 - <init>(java.lang.String,javax.swing.Icon,java.lang.String):V

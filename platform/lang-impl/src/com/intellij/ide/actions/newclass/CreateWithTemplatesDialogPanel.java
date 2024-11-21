@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -15,12 +16,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static com.intellij.ide.actions.newclass.TemplateListCellRendererKt.createTemplateListCellRenderer;
 
 public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPanel<CreateWithTemplatesDialogPanel.TemplatePresentation> {
   public record TemplatePresentation(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {}
+
+  private boolean templateExplicitlySelected = false;
 
   public CreateWithTemplatesDialogPanel(@Nullable String selectedItem, @NotNull List<? extends TemplatePresentation> templates) {
     super(templates, ExperimentalUI.isNewUI() ? createTemplateListCellRenderer() : new TemplateListCellRenderer());
@@ -65,6 +72,34 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
     }
 
     myTemplatesList.setSelectedIndex(0);
+  }
+
+  public void setTemplateSelectorMatcher(BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher) {
+    myTemplatesList.addListSelectionListener(ListSelectionEvent -> {
+      templateExplicitlySelected = true;
+    });
+    myTextField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyTyped(KeyEvent e) {
+        if (templateExplicitlySelected) {
+          return;
+        }
+        String newElementName = getEnteredName();
+        JList<TemplatePresentation> list = myTemplatesList;
+        TemplatePresentation matchedElement = null;
+        for (int i = 0; i < list.getModel().getSize(); i++) {
+          TemplatePresentation presentation = list.getModel().getElementAt(i);
+          if (templateMatcher.apply(newElementName, presentation)) {
+            matchedElement = presentation;
+            break;
+          }
+        }
+        if (matchedElement != null) {
+          list.setSelectedValue(matchedElement, true);
+          templateExplicitlySelected = false;
+        }
+      }
+    });
   }
 
   private static final class TemplateListCellRenderer implements ListCellRenderer<TemplatePresentation> {
