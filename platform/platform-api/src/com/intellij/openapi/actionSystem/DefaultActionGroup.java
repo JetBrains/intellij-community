@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -369,7 +370,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   private static void reportGetChildrenForNullEvent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() || PlatformUtils.isRider() /* Temporary I hope; see RIDER-120302 */) return;
     LOG.error("Do not call `getChildren(null)`. Do not expand action groups manually. " +
               "Reuse `AnActionEvent.updateSession` by composing, wrapping, and postprocessing action groups. " +
               "Otherwise, use `getChildActionsOrStubs()` or `getChildren(ActionManager)`");
