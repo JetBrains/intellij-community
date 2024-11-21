@@ -90,7 +90,10 @@ public final class TreeUtil {
   }
 
   public static @NotNull JBTreeTraverser<Object> treeTraverser(@NotNull JTree tree) {
-    TreeModel model = tree.getModel();
+    return modelTraverser(tree.getModel());
+  }
+
+  public static @NotNull JBTreeTraverser<Object> modelTraverser(@NotNull TreeModel model) {
     Object root = model.getRoot();
     return JBTreeTraverser.from(node -> nodeChildren(node, model)).withRoot(root);
   }

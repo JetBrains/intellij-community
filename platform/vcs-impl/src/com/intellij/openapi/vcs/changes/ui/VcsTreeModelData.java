@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.List;
 import java.util.Set;
@@ -28,8 +29,13 @@ import java.util.stream.Stream;
 
 public abstract class VcsTreeModelData {
   public static @NotNull VcsTreeModelData all(@NotNull JTree tree) {
-    assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
-    return new AllUnderData(getRoot(tree));
+    return all(tree.getModel());
+  }
+
+  @NotNull
+  public static VcsTreeModelData all(@NotNull TreeModel model) {
+    assert model.getRoot() instanceof ChangesBrowserNode;
+    return new AllUnderData((ChangesBrowserNode<?>)model.getRoot());
   }
 
   public static @NotNull VcsTreeModelData selected(@NotNull JTree tree) {
