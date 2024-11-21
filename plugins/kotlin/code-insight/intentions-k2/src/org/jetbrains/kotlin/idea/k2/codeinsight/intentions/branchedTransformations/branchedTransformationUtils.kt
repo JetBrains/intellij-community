@@ -208,8 +208,24 @@ private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(con
     }
 }
 
+/**
+ * Search state for the `when` subject introduction.
+ *
+ * This state helps to track which boolean operators are allowed for a given candidate branch transformation.
+ * The `&&` and `||` operators are mutually exclusive for the subject introduction.
+ * Once one of them is encountered, meeting the other one blocks the transformation.
+ */
 private enum class SearchState {
-    UNCONSTRAINED, AND_ONLY, AND_FORBIDDEN, INCOMPATIBLE, GUARDS_NOT_SUPPORTED;
+    /* both `||` and `&&` are allowed */
+    UNCONSTRAINED,
+    /* only `&&` is allowed */
+    AND_ONLY,
+    /* only `||` is allowed */
+    OR_ONLY,
+    /* met both `&&` and `||`, the transformation is not possible */
+    INCOMPATIBLE,
+    /* when guards are not enabled, only `||` are allowed */
+    GUARDS_NOT_SUPPORTED;
 
     operator fun plus(other: SearchState): SearchState = when {
         this == GUARDS_NOT_SUPPORTED || other == GUARDS_NOT_SUPPORTED -> GUARDS_NOT_SUPPORTED
@@ -238,7 +254,7 @@ fun KtExpression?.getWhenConditionSubjectCandidate(checkConstants: Boolean): KtE
                             ?: rhs?.takeIf { it.hasCandidateNameReferenceExpression(checkConstants) }
 
                     KtTokens.OROR -> {
-                        val nextStepState = state + SearchState.AND_FORBIDDEN
+                        val nextStepState = state + SearchState.OR_ONLY
                         val leftCandidate = lhs?.safeDeparenthesize().getCandidate(nextStepState)
                         val rightCandidate = rhs?.safeDeparenthesize().getCandidate(nextStepState)
                         if (leftCandidate.matches(rightCandidate)) leftCandidate else null
