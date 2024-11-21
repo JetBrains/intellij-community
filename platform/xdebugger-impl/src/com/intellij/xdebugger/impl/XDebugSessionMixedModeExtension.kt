@@ -53,37 +53,31 @@ abstract class XDebugSessionMixedModeExtension(
 
   fun stepInto(suspendContext: XSuspendContext) {
     if (isLowSuspendContext(suspendContext)) {
-      this.low.asXDebugProcess.startStepInto(suspendContext)
+      stateMachine.set(LowLevelStepRequested(suspendContext, StepType.Into))
     }
     else {
       coroutineScope.launch(Dispatchers.EDT) {
-        val stepType =
+        val newState =
           if (high.isStepWillBringIntoNativeCode(suspendContext))
-            StepType.IntoFromManagedToNative
+            MixedStepRequested(suspendContext, MixedStepType.IntoLowFromHigh)
           else
-            StepType.Into
+            HighLevelDebuggerStepRequested(suspendContext, StepType.Into)
 
-        this@XDebugSessionMixedModeExtension.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, stepType))
+        this@XDebugSessionMixedModeExtension.stateMachine.set(newState)
       }
     }
   }
 
   fun stepOver(suspendContext: XSuspendContext) {
-    if (isLowSuspendContext(suspendContext)) {
-      this.low.asXDebugProcess.startStepOver(suspendContext)
-    }
-    else {
-      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Over))
-    }
+    val stepType = StepType.Over
+    val newState = if (isLowSuspendContext(suspendContext)) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext, stepType)
+    this.stateMachine.set(newState)
   }
 
   fun stepOut(suspendContext: XSuspendContext) {
-    if (isLowSuspendContext(suspendContext)) {
-      this.low.asXDebugProcess.startStepOut(suspendContext)
-    }
-    else {
-      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Out))
-    }
+    val stepType = StepType.Out
+    val newState = if (isLowSuspendContext(suspendContext)) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext, stepType)
+    this.stateMachine.set(newState)
   }
 
   fun onResumed(isLowLevel: Boolean) {

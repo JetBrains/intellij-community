@@ -20,6 +20,7 @@ class MixedModeProcessTransitionStateMachine(
   object WaitingForHighProcessPositionReached : State
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
+  class OnlyHighStoppedWaitingForLowStepToComplete(val highSuspendContext: XSuspendContext) : State
   object OnlyLowStopped : State
   class WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
@@ -27,6 +28,7 @@ class MixedModeProcessTransitionStateMachine(
   class HighLevelDebuggerResumedForStepOnlyLowStopped(val low: XSuspendContext) : State
   class MixedStepIntoStartedWaitingForHighDebuggerToBeResumed(val nativeBreakpointId: Int) : State
   class MixedStepIntoStartedHighDebuggerResumed(val nativeBreakpointId: Int) : State
+  class LowLevelStepStarted(val high: XSuspendContext) : State
 
   interface Event
   object StopRequested : Event
@@ -39,10 +41,16 @@ class MixedModeProcessTransitionStateMachine(
   class HighStop(val highSuspendContext: XSuspendContext?) : Event
 
   enum class StepType {
-    Over, Into, Out, IntoFromManagedToNative
+    Over, Into, Out
+  }
+
+  enum class MixedStepType {
+    IntoLowFromHigh
   }
 
   class HighLevelDebuggerStepRequested(val highSuspendContext: XSuspendContext, val stepType: StepType) : Event
+  class MixedStepRequested(val highSuspendContext: XSuspendContext, val stepType: MixedStepType) : Event
+  class LowLevelStepRequested(val lowSuspendContext: XSuspendContext, val stepType: StepType) : Event
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
 
@@ -97,6 +105,7 @@ class MixedModeProcessTransitionStateMachine(
   }
 
   private suspend fun setInternal(event: Event) {
+    logger.info("setInternal: state = ${state::class.simpleName}, event = ${event::class.simpleName}")
     val currentState = state
     when (event) {
       is StopRequested -> {
@@ -169,9 +178,13 @@ class MixedModeProcessTransitionStateMachine(
               }
             }
           }
-          is OnlyHighStopped -> {
+          is OnlyHighStopped, is OnlyHighStoppedWaitingForLowStepToComplete -> {
+            if (currentState is OnlyHighStoppedWaitingForLowStepToComplete)
+              low.continueHighDebuggerServiceThreads()
+
+            val highSuspendCtx = if (currentState is OnlyHighStopped) currentState.highSuspendContext!! else (currentState as OnlyHighStoppedWaitingForLowStepToComplete).highSuspendContext
+
             val lowSuspendCtx = event.suspendContext
-            val highSuspendCtx = currentState.highSuspendContext!!
             state = BothStopped(lowSuspendCtx, highSuspendCtx)
           }
           else -> throwTransitionIsNotImplemented(event)
@@ -200,6 +213,9 @@ class MixedModeProcessTransitionStateMachine(
           is BothStopped -> {
             state = OnlyHighStopped(currentState.high)
           }
+          is LowLevelStepStarted -> {
+            state = OnlyHighStoppedWaitingForLowStepToComplete(currentState.high)
+          }
           else -> throwTransitionIsNotImplemented(event)
         }
       }
@@ -207,24 +223,32 @@ class MixedModeProcessTransitionStateMachine(
       is HighLevelDebuggerStepRequested -> {
         when (currentState) {
           is BothStopped -> {
-            val steppingThread = high.getStoppedThreadId(event.highSuspendContext)
+            low.continueAllThreads(exceptEventThread = false)
             when (event.stepType) {
               StepType.Over -> {
-                low.continueAllThreads(exceptEventThread = false)
                 high.asXDebugProcess.startStepOver(event.highSuspendContext)
-                state = ManagedStepStarted(currentState.low)
               }
               StepType.Into -> {
                 low.continueAllThreads(exceptEventThread = false)
                 high.asXDebugProcess.startStepInto(event.highSuspendContext)
-                state = ManagedStepStarted(currentState.low)
               }
               StepType.Out -> {
                 low.continueAllThreads(exceptEventThread = false)
                 high.asXDebugProcess.startStepOut(event.highSuspendContext)
-                state = ManagedStepStarted(currentState.low)
               }
-              StepType.IntoFromManagedToNative -> {
+            }
+            state = ManagedStepStarted(currentState.low)
+          }
+          else -> throwTransitionIsNotImplemented(event)
+        }
+      }
+
+      is MixedStepRequested -> {
+        val steppingThread = high.getStoppedThreadId(event.highSuspendContext)
+        when (currentState) {
+          is BothStopped -> {
+            when (event.stepType) {
+              MixedStepType.IntoLowFromHigh -> {
                 // after this call, the native breakpoint is set, but the managed thread is stopped in suspend_current method
                 val breakpointId = low.findAndSetBreakpointInNativeFunction(steppingThread) {
                   withContext(Dispatchers.EDT) {
@@ -241,10 +265,26 @@ class MixedModeProcessTransitionStateMachine(
               }
             }
           }
-          else -> throwTransitionIsNotImplemented(event)
         }
       }
-
+      is LowLevelStepRequested -> {
+        when (currentState) {
+          is BothStopped -> {
+            when (event.stepType) {
+              StepType.Over -> {
+                this.low.asXDebugProcess.startStepOver(event.lowSuspendContext)
+              }
+              StepType.Into -> {
+                this.low.asXDebugProcess.startStepInto(event.lowSuspendContext)
+              }
+              StepType.Out -> {
+                this.low.asXDebugProcess.startStepOut(event.lowSuspendContext)
+              }
+            }
+            state = LowLevelStepStarted(currentState.high)
+          }
+        }
+      }
       is HighRun -> {
         when (currentState) {
           is ManagedStepStarted -> {
@@ -288,6 +328,6 @@ class MixedModeProcessTransitionStateMachine(
   fun get(): State = state
 
   fun throwTransitionIsNotImplemented(event: Event) {
-    TODO("Transition from ${get()} by event $event is not implemented");
+    TODO("Transition from ${get()::class.simpleName} by event ${event::class.simpleName} is not implemented");
   }
 }
