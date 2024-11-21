@@ -14,6 +14,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl
 import com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -79,6 +80,15 @@ suspend fun Path.getEelApi(): EelApi {
   return eels.firstOrNull() ?: localEel
 }
 
+object EelInitialization {
+  suspend fun runEelInitialization(project: Project) {
+    val eels = EP_NAME.extensionList
+    eels.forEachConcurrent { eelProvider ->
+      eelProvider.tryInitialize(project)
+    }
+  }
+}
+
 /**
  * TODO It is an obscuring API. It was created like that because it's the easiest way to implement lazy checkers.
  *
@@ -114,6 +124,15 @@ interface EelProvider {
   suspend fun getEelApi(path: Path): EelApi?
 
   fun getEelApiKey(path: Path): EelApiKey?
+
+  /**
+   * Runs an initialization process for [EelApi] relevant to [project] during the process of its opening.
+   *
+   * This function runs **early**, so implementors need to be careful with performance.
+   * This function is called for every opening [Project],
+   * so the implementation is expected to exit quickly if it decides that it is not responsible for [project].
+   */
+  suspend fun tryInitialize(project: Project)
 }
 
 private val EP_NAME = ExtensionPointName<EelProvider>("com.intellij.eelProvider")
