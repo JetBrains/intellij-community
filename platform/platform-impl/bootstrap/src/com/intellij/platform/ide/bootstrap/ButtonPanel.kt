@@ -8,7 +8,10 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import java.awt.Component
+import java.awt.Graphics
 import java.awt.event.AWTEventListener
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
@@ -28,21 +31,33 @@ internal class ButtonPanel(@JvmField val button: JButton) : JPanel(BorderLayout(
 internal fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon? = null, onClick: (JButton) -> Unit): JButton {
   class MyButton : JButton() {
     var isPressed = false
+    val eventListener: AWTEventListener = createAWTEventListener()
 
-    init {
-      Toolkit.getDefaultToolkit().addAWTEventListener(AWTEventListener { event ->
-        if (event.id == MouseEvent.MOUSE_CLICKED) {
-          val me = event as MouseEvent
-          val source = me.source
-          if (source is Component) {
-            val bounds = this@MyButton.bounds
-            val location = SwingUtilities.convertPoint(source, me.point, this@MyButton.parent)
-            if (!bounds.contains(location)) {
-              isPressed = false
+    private fun createAWTEventListener(): AWTEventListener {
+      return object : AWTEventListener {
+        override fun eventDispatched(event: AWTEvent?) {
+          if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED) {
+            val source = event.source
+            if (source is Component) {
+              val bounds = this@MyButton.bounds
+              val location = SwingUtilities.convertPoint(source, event.point, this@MyButton.parent)
+              if (!bounds.contains(location)) {
+                isPressed = false
+              }
             }
           }
         }
-      }, AWTEvent.MOUSE_EVENT_MASK)
+      }
+    }
+
+    override fun addNotify() {
+      super.addNotify()
+      toolkit.addAWTEventListener(eventListener, AWTEvent.MOUSE_EVENT_MASK)
+    }
+
+    override fun removeNotify() {
+      super.removeNotify()
+      toolkit.removeAWTEventListener(eventListener)
     }
 
     override fun getComponentGraphics(g: Graphics?): Graphics {
