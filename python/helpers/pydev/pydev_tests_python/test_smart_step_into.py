@@ -4,6 +4,7 @@ import pytest
 
 from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.smart_step_into import get_stepping_variants
+from _pydevd_bundle.pydevd_constants import IS_PY38
 
 
 @pytest.fixture
@@ -72,6 +73,7 @@ def consecutive_calls():
 
 
 @pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+@pytest.mark.xfail(not IS_PY38, reason="PCQA-718")
 def test_candidates_for_inner_decorator_py2(inner_decorator_code):
     variants = list(get_stepping_variants(inner_decorator_code))
     assert len(variants) == 1
