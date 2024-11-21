@@ -40,6 +40,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/avoidCapturingPackageNameNested/avoidCapturingPackageNameNested.test");
     }
 
+    @TestMetadata("kotlin/avoidCapturingPackageNameSafeCall/avoidCapturingPackageNameSafeCall.test")
+    public void testKotlin_avoidCapturingPackageNameSafeCall_AvoidCapturingPackageNameSafeCall() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/avoidCapturingPackageNameSafeCall/avoidCapturingPackageNameSafeCall.test");
+    }
+
     @TestMetadata("kotlin/avoidCapturingPackageName/avoidCapturingPackageName.test")
     public void testKotlin_avoidCapturingPackageName_AvoidCapturingPackageName() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/avoidCapturingPackageName/avoidCapturingPackageName.test");
@@ -218,6 +223,11 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
     @TestMetadata("kotlin/kt17032/kt17032.test")
     public void testKotlin_kt17032_Kt17032() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/kt17032/kt17032.test");
+    }
+
+    @TestMetadata("kotlin/leaveNoRootPrefixIfQualifierIsAdded/leaveNoRootPrefixIfQualifierIsAdded.test")
+    public void testKotlin_leaveNoRootPrefixIfQualifierIsAdded_LeaveNoRootPrefixIfQualifierIsAdded() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/leaveNoRootPrefixIfQualifierIsAdded/leaveNoRootPrefixIfQualifierIsAdded.test");
     }
 
     @TestMetadata("kotlin/moveClassFromDefaultPackage/moveClassFromDefaultPackage.test")

@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.analysis.canAddRootPrefix
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.addRootPrefix
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.restoreInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.updatableUsageInfo
 import org.jetbrains.kotlin.idea.references.*
@@ -119,17 +121,6 @@ sealed class K2MoveRenameUsageInfo(
         fun refresh(element: KtElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
             val reference = element.mainReference ?: return this
             return Source(element, reference, referencedElement, isInternal)
-        }
-
-        private fun KtDotQualifiedExpression.addRootPrefix(factory: KtPsiFactory) {
-            val receiverExpr = receiverExpression
-            if (receiverExpr is KtReferenceExpression) {
-                if (receiverExpression.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) return // already has root prefix
-                val replaced = factory.createExpressionByPattern("$0.$1", ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE, receiverExpr)
-                receiverExpr.replace(replaced)
-            } else if (receiverExpr is KtDotQualifiedExpression) {
-                receiverExpr.addRootPrefix(factory)
-            }
         }
 
         override fun retarget(to: PsiNamedElement): PsiElement? {
@@ -446,6 +437,25 @@ sealed class K2MoveRenameUsageInfo(
             }.toMap()
         }
 
+        /**
+         * Adds the [ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE] qualifier prefix to this dot qualified expression if it is not there already.
+         * This prefix ensures that when we qualify an expression, we do not accidentally capture local variable names that have
+         * the same name as the package prefix we are located in.
+         *
+         * Note: This should only be called for qualified expressions that already have a package qualifier.
+         */
+        private fun KtDotQualifiedExpression.addRootPrefix(factory: KtPsiFactory) {
+            val leftmostReceiver = getLeftMostReceiverExpression()
+            if (leftmostReceiver is KtReferenceExpression) {
+                if (leftmostReceiver.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) return // already has root prefix
+                val replaced = factory.createExpressionByPattern("$0.$1", ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE, leftmostReceiver)
+                leftmostReceiver.replace(replaced)
+            }
+        }
+
+        /**
+         * Removes the [ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE] from this expression that has been added by [addRootPrefix].
+         */
         private fun KtDotQualifiedExpression.removeRootPrefix() {
             val selectorExpression = selectorExpression
             val receiverExpression = receiverExpression
@@ -469,7 +479,9 @@ sealed class K2MoveRenameUsageInfo(
                     shortenReferences(usageMap.keys.filterIsInstance<KtElement>())
                 }
                 // There are some circumstances where the reference shortener does not shorten an expression we added the root prefix to.
-                // For those cases, we want to ensure that no root prefixes are left in any of the elements.
+                // This can happen if the reference shortener is unable to add an import because the declaration's name is already
+                // being used in the target package.
+                // In these cases, we need to manually remove the added root prefix.
                 for (pointer in qualifiedExpressionPointers) {
                     val qualifiedExpression = pointer.element ?: continue
                     qualifiedExpression.removeRootPrefix()
