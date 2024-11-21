@@ -6,7 +6,7 @@ import com.intellij.ide.settings.RemoteSettingInfoProvider
 
 private class JavaDebuggerSettingsProvider : RemoteSettingInfoProvider {
   override fun getRemoteSettingsInfo() =
-    mapOf("DebuggerSettings" to RemoteSettingInfo(RemoteSettingInfo.Direction.InitialFromBackend))
+    mapOf("DebuggerSettings" to RemoteSettingInfo(RemoteSettingInfo.Direction.InitialFromFrontend))
 
   /**
    * DebuggerSettings are located in different plugins in monolith and frontend, so we have to map them.
