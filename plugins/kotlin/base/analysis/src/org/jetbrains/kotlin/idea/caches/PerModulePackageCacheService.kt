@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches
 
@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.psi.PsiManager
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
@@ -220,7 +222,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
     private val useStrongMapForCaching: Boolean = Registry.`is`("kotlin.cache.packages.strong.map", false)
 
     private val pendingVFileChanges: MutableSet<VFileEvent> = mutableSetOf()
-    private val pendingKtFileChanges: MutableSet<KtFile> = mutableSetOf()
+    private val pendingKtFileChanges: MutableSet<SmartPsiElementPointer<KtFile>> = mutableSetOf()
 
     private val projectScope: GlobalSearchScope = GlobalSearchScope.projectScope(project)
 
@@ -253,7 +255,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
     }
 
     internal fun notifyPackageChange(file: KtFile): Unit = synchronized(this) {
-        pendingKtFileChanges += file
+        pendingKtFileChanges += SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file, file)
     }
 
     private fun invalidateCacheForModuleSourceInfo(moduleSourceInfo: ModuleSourceInfo) {
@@ -298,10 +300,12 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
                 implicitPackagePrefixCache.update(event)
             }
 
-            pendingKtFileChanges.processPending { file ->
-                if (file.virtualFile != null && file.virtualFile !in projectScope) {
+            pendingKtFileChanges.processPending { filePointer ->
+                val file = filePointer.element
+
+                if (file == null || file.virtualFile != null && file.virtualFile !in projectScope) {
                     LOG.debugIfEnabled(project) {
-                        "Skip $file without vFile, or not in scope: ${file.virtualFile?.let { it !in projectScope }}"
+                        "Skip $file without vFile, or not in scope: ${file?.virtualFile?.let { it !in projectScope }}"
                     }
                     return@processPending
                 }
