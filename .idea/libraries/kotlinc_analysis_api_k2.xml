@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-k2" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-k2-for-ide:2.1.20-ij243-27">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-k2-for-ide:2.1.20-ij243-32">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.1.20-ij243-27/analysis-api-k2-for-ide-2.1.20-ij243-27.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.1.20-ij243-32/analysis-api-k2-for-ide-2.1.20-ij243-32.jar">
           <sha256sum>1d7563eb83797d89a82fc68dc5f4a83cc45a0f2c7600c29c5967ddc00e28d99b</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.1.20-ij243-27/analysis-api-k2-for-ide-2.1.20-ij243-27.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.1.20-ij243-32/analysis-api-k2-for-ide-2.1.20-ij243-32.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.1.20-ij243-27/analysis-api-k2-for-ide-2.1.20-ij243-27-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-for-ide/2.1.20-ij243-32/analysis-api-k2-for-ide-2.1.20-ij243-32-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
