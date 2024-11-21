@@ -7,11 +7,8 @@ import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -28,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Analyze overwritten fields based on DFA-CFG (unlike usual CFG, it includes method calls, so we can know when field value may leak)
@@ -46,41 +45,105 @@ final class OverwrittenFieldAnalyzer {
     new StandardDataFlowInterpreter(flow, listener) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
-        if (instructionState.getInstruction() instanceof ReturnInstruction && !listener.myAnchors.isEmpty()) {
+        Instruction instruction = instructionState.getInstruction();
+        if (instruction instanceof ReturnInstruction && !listener.myAnchors.isEmpty()) {
           DfaMemoryState state = instructionState.getMemoryState();
-          for (DfaValue value : factory.getValues()) {
-            if (value instanceof DfaVariableValue var && var.getDescriptor() instanceof WriteNotReadDescriptor) {
-              DfaAnchor anchor = state.getDfType(var).getConstantOfType(DfaAnchor.class);
-              if (anchor != null) {
-                listener.myAnchors.remove(anchor);
-                if (listener.myAnchors.isEmpty()) break;
-              }
+          List<DfaValue> list = factory.getValues().stream().toList();
+          for (DfaValue value : list) {
+            if (value instanceof DfaVariableValue var) {
+              listener.markAsRead(state, var);
             }
           }
+        }
+        if (instruction instanceof FlushVariableInstruction flushInstruction) {
+          listener.markAsRead(instructionState.getMemoryState(), flushInstruction.getVariable());
         }
         return super.acceptInstruction(instructionState);
       }
     }.interpret(new JvmDfaMemoryStateImpl(factory));
-    return listener.myAnchors;
+    Map<Boolean, Set<DfaAnchor>> map = StreamEx.of(listener.myAnchors)
+      .partitioningBy(DfWriteAnchorType::wasRead, Collectors.mapping(DfWriteAnchorType::write, Collectors.toSet()));
+    return map.get(false).stream().filter(anchor -> !map.get(true).contains(anchor)).collect(Collectors.toSet());
   }
-
-  private static class DfAnchorConstantType extends DfConstantType<DfaAnchor> {
-    protected DfAnchorConstantType(DfaAnchor value) {
-      super(value);
+  
+  private sealed interface DfWriteStateType extends DfType {
+    @Override
+    default DfType correctTypeOnFlush(DfType typeBeforeFlush) {
+      return typeBeforeFlush instanceof DfWriteAnchorType anchorType ? anchorType.markAsRead() : DfWriteTopType.INSTANCE;
+    }
+  }
+  
+  private enum DfWriteTopType implements DfWriteStateType {
+    INSTANCE;
+    
+    @Override
+    public boolean isSuperType(@NotNull DfType other) {
+      return other.equals(this) || other == BOTTOM || other instanceof DfWriteAnchorType;
     }
 
     @Override
     public @NotNull DfType join(@NotNull DfType other) {
-      return this.equals(other) ? this : TOP;
+      return other instanceof DfWriteStateType ? this : TOP;
     }
 
     @Override
     public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
-      return this.equals(other) ? this : null;
+      return other instanceof DfWriteStateType ? this : null;
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      return other instanceof DfWriteStateType ? other : this;
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "WTOP";
     }
   }
 
-  private record WriteNotReadDescriptor(@NotNull DfaVariableValue var) implements VariableDescriptor {
+  private record DfWriteAnchorType(@NotNull DfaAnchor write, boolean wasRead) implements DfWriteStateType {
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      DfType type = tryJoinExactly(other);
+      return type == null ? DfWriteTopType.INSTANCE : type;
+    }
+
+    @Override
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+      if (this.equals(other) || other instanceof DfWriteTopType) return other;
+      if (other instanceof DfWriteAnchorType otherState && write.equals(otherState.write)) {
+        return wasRead ? this : other;
+      }
+      return null;
+    }
+
+    DfWriteAnchorType markAsRead() {
+      return wasRead ? this : new DfWriteAnchorType(write, true);
+    }
+
+    @Override
+    public boolean isSuperType(@NotNull DfType other) {
+      return other.equals(this) || other == BOTTOM ||
+             (wasRead && other instanceof DfWriteAnchorType stateType && write.equals(stateType.write));
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      if (this.equals(other) || other instanceof DfWriteTopType) return this;
+      if (other instanceof DfWriteAnchorType otherState && write.equals(otherState.write)) {
+        return wasRead ? other : this;
+      }
+      return BOTTOM;
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "@" + write + (wasRead ? " (wasRead)" : "");
+    }
+  }
+
+  private record WriteAnchorDescriptor(@NotNull DfaVariableValue var) implements VariableDescriptor {
     @Override
     public boolean isStable() {
       return false;
@@ -93,7 +156,7 @@ final class OverwrittenFieldAnalyzer {
 
     @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-      return DfType.TOP;
+      return DfWriteTopType.INSTANCE;
     }
 
     @Override
@@ -104,7 +167,7 @@ final class OverwrittenFieldAnalyzer {
 
   private static class FieldAnalysisListener implements DfaListener {
     private final DfaValueFactory myFactory;
-    private final Set<DfaAnchor> myAnchors;
+    private final Set<DfWriteAnchorType> myAnchors;
 
     private FieldAnalysisListener(DfaValueFactory factory) {
       myFactory = factory;
@@ -123,8 +186,7 @@ final class OverwrittenFieldAnalyzer {
              PsiUtil.isIncrementDecrementOperation(exprAnchor.getExpression()))) {
           return;
         }
-        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteNotReadDescriptor(var));
-        state.flushVariable(wnr);
+        markAsRead(state, var);
       }
     }
 
@@ -134,30 +196,48 @@ final class OverwrittenFieldAnalyzer {
                                  @NotNull DfaMemoryState state,
                                  @Nullable DfaAnchor anchor) {
       if (dest instanceof DfaVariableValue var && var.getPsiVariable() instanceof PsiField && anchor != null) {
-        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteNotReadDescriptor(var));
-        DfaAnchor oldAnchor = state.getDfType(wnr).getConstantOfType(DfaAnchor.class);
-        if (oldAnchor != null) {
-          myAnchors.add(oldAnchor);
+        DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteAnchorDescriptor(var));
+        if (state.getDfType(wnr) instanceof DfWriteAnchorType writeStateType) {
+          myAnchors.add(writeStateType);
         }
       }
     }
 
     @Override
     public void afterAssignment(@NotNull DfaValue source,
-                                 @NotNull DfaValue dest,
-                                 @NotNull DfaMemoryState state,
-                                 @Nullable DfaAnchor anchor) {
+                                @NotNull DfaValue dest,
+                                @NotNull DfaMemoryState state,
+                                @Nullable DfaAnchor anchor) {
       if (dest instanceof DfaVariableValue var) {
         List<DfaVariableValue> varsToFlush = StreamEx.of(myFactory.getValues())
           .select(DfaVariableValue.class)
-          .filter(v -> v.getDescriptor() instanceof WriteNotReadDescriptor desc && desc.var.dependsOn(var))
+          .filter(v -> v.getDescriptor() instanceof WriteAnchorDescriptor desc && desc.var.dependsOn(var))
           .toList();
         varsToFlush.forEach(state::flushVariable);
         if (var.getPsiVariable() instanceof PsiField && anchor != null) {
-          DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteNotReadDescriptor(var));
-          state.meetDfType(wnr, new DfAnchorConstantType(anchor));
+          DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteAnchorDescriptor(var));
+          state.meetDfType(wnr, new DfWriteAnchorType(anchor, false));
         }
       }
+    }
+
+    private void markAsRead(@NotNull DfaMemoryState state, @NotNull DfaVariableValue var) {
+      List<DfaVariableValue> varsToMark = StreamEx.of(myFactory.getValues())
+        .select(DfaVariableValue.class)
+        .filter(v -> v.getDescriptor() instanceof WriteAnchorDescriptor desc && desc.var.dependsOn(var))
+        .toList();
+      varsToMark.forEach(variable -> setAnchorToRead(state, variable));
+    }
+
+    private void setAnchorToRead(@NotNull DfaMemoryState state, DfaVariableValue variable) {
+      state.updateDfType(variable, t -> {
+        if (t instanceof DfWriteAnchorType writeStateType) {
+          DfWriteAnchorType read = writeStateType.markAsRead();
+          myAnchors.add(read);
+          return read;
+        }
+        return t;
+      });
     }
   }
 }

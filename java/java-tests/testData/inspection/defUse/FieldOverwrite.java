@@ -116,6 +116,24 @@ public class FieldOverwrite {
     intStaticField = 2;
   }
 
+  void writeByRange(int x) {
+    if (x > 0) {
+      val = 1;
+    }
+    if (x > 10) {
+      val = 2;
+    }
+  }
+
+  void writeByRange2(int x) {
+    if (x > 10) {
+      <warning descr="The value '2' assigned to 'val' is never used">val</warning> = 2;
+    }
+    if (x > 0) {
+      val = 1;
+    }
+  }
+
   static void useStatic() {
     System.out.println(intStaticField);
   }
