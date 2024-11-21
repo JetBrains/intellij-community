@@ -13,12 +13,12 @@ import org.jetbrains.annotations.ApiStatus
 internal object JsonFeatureUsageCollector : CounterUsagesCollector() {
   private val jsonSchemaGroup = EventLogGroup(
     id = "json.schema.features",
-    version = 1,
+    version = 2,
   )
 
   internal val jsonSchemaHighlightingSessionData =
     jsonSchemaGroup.registerVarargEvent(
-      "jsonSchemaHighlightingSession",
+      "json.schema.highlighting.session.finished",
       *JsonSchemaFusFeature.getAllRegistered().toTypedArray()
     )
 
@@ -42,37 +42,37 @@ sealed interface JsonSchemaFusFeature {
 }
 
 enum class JsonSchemaFusRegexpFeature(override val event: StringEventField) : JsonSchemaFusFeature {
-  JsonFusSchemaId(StringValidatedByRegexpReference("schemaId", "^(https?):\\/\\/[^\\s/$.?#].[^\\s]*$"))
+  JsonFusSchemaId(StringValidatedByRegexpReference("schema_id", "^(https?):\\/\\/[^\\s/$.?#].[^\\s]*$", "JSON schema ID"))
 }
 
 enum class JsonSchemaFusCountedUniqueFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
-  UniqueRemoteUrlDownloadRequest(EventFields.RoundedInt("uniqueRemoteUrlDownloadRequest")),
-  SchemaAccessWithoutReadLock(EventFields.RoundedInt("schemaAccessWithoutReadLock")),
+  UniqueRemoteUrlDownloadRequest(EventFields.RoundedInt("unique_remote_url_download_request", "Number of unique remote (URL) references collected during highlighting session")),
+  SchemaAccessWithoutReadLock(EventFields.RoundedInt("schema_access_without_read_lock", "Number of all JSON schema resolve/validation features access attempts outside of the highlighting read action")),
 }
 
 @ApiStatus.Internal
 enum class JsonSchemaFusCountedFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
-  ExecutedHttpVirtualFileDownloadRequest(EventFields.RoundedInt("executedHttpVirtualFileDownloadRequest")),
-  RemoteUrlResolveRequest(EventFields.RoundedInt("remoteUrlResolveRequest")),
-  LocalReferenceResolveRequest(EventFields.RoundedInt("localFileResolveRequest")),
-  JsonSchemaResolveTreeBuild(EventFields.RoundedInt("jsonSchemaResolveTreeBuild")),
-  AllJsonSchemaResolveTreeBuild(EventFields.RoundedInt("allJsonSchemaResolveTreeBuild")),
+  ExecutedHttpVirtualFileDownloadRequest(EventFields.RoundedInt("executed_http_virtual_file_download_request", "Remote (URL) reference download was called)")),
+  RemoteUrlResolveRequest(EventFields.RoundedInt("remote_url_resolve_request", "Remote (URL) reference resolve was called")),
+  LocalReferenceResolveRequest(EventFields.RoundedInt("local_file_resolve_request", "Local reference resolve was called")),
 
-  ArrayValidation(EventFields.RoundedInt("arrayValidation")),
-  ConstantNodeValidation(EventFields.RoundedInt("constantNodeValidation")),
-  EnumValidation(EventFields.RoundedInt("enumValidation")),
-  NotValidation(EventFields.RoundedInt("notValidation")),
-  StringValidation(EventFields.RoundedInt("stringValidation")),
-  NumberValidation(EventFields.RoundedInt("numberValidation")),
-  ObjectValidation(EventFields.RoundedInt("objectValidation")),
-  TypeValidation(EventFields.RoundedInt("typeValidation")),
+  JsonSchemaResolveTreeBuild(EventFields.RoundedInt("json_schema_resolve_tree_build", "DetailedResolve was called")),
 
-  OneOfExpanded(EventFields.RoundedInt("oneOfExpanded")),
-  AnyOfExpanded(EventFields.RoundedInt("anyOfExpanded")),
-  AllOfExpanded(EventFields.RoundedInt("allOfExpanded")),
-  IfElseExpanded(EventFields.RoundedInt("ifElseExpanded")),
-  DefinitionsExpanded(EventFields.RoundedInt("definitionsExpanded")),
+  ArrayValidation(EventFields.RoundedInt("array_validation", "Array validator was called")),
+  ConstantNodeValidation(EventFields.RoundedInt("constant_node_validation", "Constant validator was called")),
+  EnumValidation(EventFields.RoundedInt("enum_validation", "Enum validator was called")),
+  NotValidation(EventFields.RoundedInt("not_validation", "Not validator was called")),
+  StringValidation(EventFields.RoundedInt("string_validation", "String validator was called")),
+  NumberValidation(EventFields.RoundedInt("number_validation", "Number validator was called")),
+  ObjectValidation(EventFields.RoundedInt("object_validation", "Object validator was called")),
+  TypeValidation(EventFields.RoundedInt("type_validation", "Type validator was called")),
 
-  SchemaInherited(EventFields.RoundedInt("schemaInherited")),
-  SchemaMerged(EventFields.RoundedInt("schemaMerged")),
+  OneOfExpanded(EventFields.RoundedInt("one_of_expanded", "OneOf schema node was expanded")),
+  AnyOfExpanded(EventFields.RoundedInt("any_of_expanded", "AnyOf schema node was expanded")),
+  AllOfExpanded(EventFields.RoundedInt("all_of_expanded", "AllOf schema node was expanded")),
+  IfElseExpanded(EventFields.RoundedInt("if_else_expanded", "IfElse schema node was expanded")),
+  DefinitionsExpanded(EventFields.RoundedInt("definitions_expanded", "Definition reference was expanded")),
+
+  SchemaInherited(EventFields.RoundedInt("schema_inherited", "Schema node was inherited")),
+  SchemaMerged(EventFields.RoundedInt("schema_merged", "Schema node was merged")),
 }
