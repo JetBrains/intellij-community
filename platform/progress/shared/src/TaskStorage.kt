@@ -8,6 +8,8 @@ import com.intellij.platform.project.asEntity
 import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
 import fleet.kernel.withEntities
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -30,15 +32,28 @@ abstract class TaskStorage {
     project: Project,
     title: String,
     cancellation: TaskCancellation,
-  ): TaskInfoEntity = withKernel {
-    createTaskInfoEntity {
-      TaskInfoEntity.new {
-        it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) project.asEntity() else null
-        it[TaskInfoEntity.Title] = title
-        it[TaskInfoEntity.TaskCancellationType] = cancellation
-        it[TaskInfoEntity.ProgressStateType] = null
-        it[TaskInfoEntity.TaskStatusType] = TaskStatus.RUNNING
+  ): TaskInfoEntity {
+    var taskInfoEntity: TaskInfoEntity? = null
+    try {
+      return withKernel {
+        taskInfoEntity = createTaskInfoEntity {
+          TaskInfoEntity.new {
+            it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) project.asEntity() else null
+            it[TaskInfoEntity.Title] = title
+            it[TaskInfoEntity.TaskCancellationType] = cancellation
+            it[TaskInfoEntity.ProgressStateType] = null
+            it[TaskInfoEntity.TaskStatusType] = TaskStatus.RUNNING
+          }
+        }
+        return@withKernel taskInfoEntity
       }
+    }
+    catch (ex: Exception) {
+      // Ensure that task is deleted if exception happened during creation (e.g. CancellationException on withContext exit)
+      withContext(NonCancellable) {
+        taskInfoEntity?.let { removeTask(it) }
+      }
+      throw ex
     }
   }
 
