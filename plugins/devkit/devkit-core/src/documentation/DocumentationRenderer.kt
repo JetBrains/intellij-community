@@ -87,7 +87,7 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun StringBuilder.appendElement(element: Element): StringBuilder {
     appendElementPath(element.path)
     appendLine("<hr/>")
-    appendDeprecation(element)
+    appendDeprecation(element.deprecatedSince, element.deprecationNote)
     appendSinceUntil(element.since, element.until)
     element.description?.trim()?.let { appendLine("$it\n") }
     appendRequirement(element.requirement)
@@ -124,12 +124,16 @@ internal class DocumentationRenderer(private val project: Project) {
     return "[`<$text>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)"
   }
 
-  private fun StringBuilder.appendDeprecation(element: Element) {
-    if (element.deprecatedSince != null) {
+  private fun StringBuilder.appendDeprecation(deprecatedSince: String?, deprecationNote: String?) {
+    if (deprecatedSince != null || deprecationNote != null) {
       append("**_")
-      append("Deprecated since ${element.deprecatedSince}")
+      if (deprecatedSince != null) {
+        append("Deprecated since ${deprecatedSince}")
+      } else {
+        append("Deprecated")
+      }
       append("_**")
-      val deprecationNote = element.deprecationNote
+      val deprecationNote = deprecationNote
       if (deprecationNote != null) {
         append("<br/>")
         val italicDeprecationNote = deprecationNote.lines().joinToString(separator = "\n") { if (it.isNotEmpty()) "_${it}_" else it }
@@ -250,6 +254,7 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun StringBuilder.appendAttribute(attribute: Attribute): StringBuilder {
     appendAttributePath(attribute.path)
     appendLine("<hr/>")
+    appendDeprecation(attribute.deprecatedSince, attribute.deprecationNote)
     appendSinceUntil(attribute.since, attribute.until)
     attribute.description?.trim()?.let { append(it) }
     appendParagraphSeparator()

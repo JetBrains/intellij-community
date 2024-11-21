@@ -153,6 +153,14 @@
           "type": "string",
           "description": "Version until the attribute is available."
         },
+        "deprecatedSince": {
+          "type": "string",
+          "description": "Version since the attribute is deprecated."
+        },
+        "deprecationNote": {
+          "type": "string",
+          "description": "Deprecation note for the attribute. Supports Writerside Markdown format."
+        },
         "requirement": {
           "$ref": "#/definitions/Requirement"
         },

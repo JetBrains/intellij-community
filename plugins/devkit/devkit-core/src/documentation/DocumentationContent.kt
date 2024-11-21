@@ -69,6 +69,8 @@ internal data class Attribute(
   var name: String? = null,
   var since: String? = null,
   var until: String? = null,
+  var deprecatedSince: String? = null,
+  var deprecationNote: String? = null,
   var requirement: Requirement? = null,
   var description: String? = null,
   var defaultValue: String? = null,

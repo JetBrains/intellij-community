@@ -123,3 +123,22 @@ elements:
               The `deprecatedElement` description.
             requirement:
               required: no
+        - element:
+            name: elementWithDeprecatedAttribute
+            #language=Markdown
+            description: |
+              The `elementWithDeprecatedAttribute` description.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: deprecated-attribute
+                  #language=Markdown
+                  description: The `deprecated-attribute` description.
+                  deprecatedSince: "2005.1"
+                  #language=Markdown
+                  deprecationNote: Use [`new-attribute`](#attribute:root__elementWithDeprecatedAttribute__new-attribute) instead.
+              - attribute:
+                  name: new-attribute
+                  #language=Markdown
+                  description: The `new-attribute` description.
