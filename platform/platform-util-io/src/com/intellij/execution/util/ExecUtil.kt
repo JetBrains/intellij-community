@@ -160,11 +160,10 @@ object ExecUtil {
     val sudoCommandLine = SudoCommandProvider.getInstance().sudoCommand(commandLine, prompt)
                           ?: throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
 
-    val parentEnvType = if (SystemInfoRt.isWindows) GeneralCommandLine.ParentEnvironmentType.NONE else commandLine.parentEnvironmentType
     return sudoCommandLine
       .withWorkingDirectory(commandLine.workingDirectory)
       .withEnvironment(commandLine.environment)
-      .withParentEnvironmentType(parentEnvType)
+      .withParentEnvironmentType(commandLine.parentEnvironmentType)
       .withRedirectErrorStream(commandLine.isRedirectErrorStream)
   }
 
