@@ -717,7 +717,6 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - f:setSpeedSearchHighlighting(Z):V
 - a:speedSearch(kotlin.jvm.functions.Function1):V
 *f:com.intellij.ui.dsl.listCellRenderer.LcrTextSpeedSearchParams
-- com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - <init>():V
 - f:getRanges():java.lang.Iterable
 - f:setRanges(java.lang.Iterable):V

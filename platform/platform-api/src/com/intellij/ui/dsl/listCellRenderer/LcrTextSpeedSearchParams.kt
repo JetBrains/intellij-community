@@ -5,7 +5,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class LcrTextSpeedSearchParams : LcrInitParams() {
+@LcrDslMarker
+class LcrTextSpeedSearchParams {
 
   /**
    * List of ranges that match current speedsearch or null for default behavior
