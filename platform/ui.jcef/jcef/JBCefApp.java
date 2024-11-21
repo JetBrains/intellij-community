@@ -92,11 +92,22 @@ public final class JBCefApp {
     addCefCustomSchemeHandlerFactory(new JBCefFileSchemeHandlerFactory());
 
     if (RegistryManager.getInstance().is("ide.browser.jcef.out-of-process.enabled")) {
-      if (Boolean.getBoolean("idea.debug.mode"))
-        LOG.debug("Out-of-process jcef mode is disabled (because idea.debug.mode=true)");
-      else if (SystemInfo.isWayland)
-        LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
-      else
+      boolean isTemporaryDisabled = false;
+      if (!Boolean.getBoolean("force_enable_out_of_process_jcef")) {
+        isTemporaryDisabled = true;
+        if (Boolean.getBoolean("idea.debug.mode"))
+          LOG.debug("Out-of-process jcef mode is disabled (because idea.debug.mode=true)");
+        else if (SystemInfo.isWayland)
+          LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
+        else if (SystemInfo.isWindows)
+          LOG.debug("Out-of-process jcef mode is temporarily disabled in Windows");
+        else if (SystemInfo.isLinux)
+          LOG.debug("Out-of-process jcef mode is temporarily disabled in Linux");
+        else
+          isTemporaryDisabled = false;
+      }
+
+      if (!isTemporaryDisabled)
         System.setProperty("jcef.remote.enabled", "true");
     }
 
