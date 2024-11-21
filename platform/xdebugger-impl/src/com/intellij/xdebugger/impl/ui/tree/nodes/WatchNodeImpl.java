@@ -25,7 +25,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
                        @NotNull WatchesRootNode parent,
                        @NotNull XExpression expression,
                        @Nullable XStackFrame stackFrame) {
-    this(tree, parent, expression, stackFrame, expression.getExpression());
+    this(tree, parent, expression, stackFrame, renderName(expression));
   }
 
   WatchNodeImpl(@NotNull XDebuggerTree tree,
@@ -46,8 +46,14 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   }
 
   protected WatchNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression, XNamedValue value) {
-    super(tree, parent, expression.getExpression(), value);
+    super(tree, parent, renderName(expression), value);
     myExpression = expression;
+  }
+
+  protected static String renderName(XExpression expression) {
+    StringBuilder output = new StringBuilder();
+    XValuePresentationUtil.renderName(expression.getExpression(), Integer.MAX_VALUE, s -> output.append(s));
+    return output.toString();
   }
 
   @Override

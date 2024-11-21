@@ -1562,6 +1562,7 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - getEvaluationOrigin():com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 - getExpression():com.intellij.xdebugger.XExpression
 - getValueContainer():com.intellij.xdebugger.frame.XValue
+- ps:renderName(com.intellij.xdebugger.XExpression):java.lang.String
 - p:shouldUpdateInlineDebuggerData():Z
 c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
