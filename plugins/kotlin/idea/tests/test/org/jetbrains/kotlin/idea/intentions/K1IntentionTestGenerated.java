@@ -12844,6 +12844,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/iterateExpression/noNameConflict.kt");
         }
 
+        @TestMetadata("noNameConflict2.kt")
+        public void testNoNameConflict2() throws Exception {
+            runTest("testData/intentions/iterateExpression/noNameConflict2.kt");
+        }
+
         @TestMetadata("nonOperatorIterator.kt")
         public void testNonOperatorIterator() throws Exception {
             runTest("testData/intentions/iterateExpression/nonOperatorIterator.kt");

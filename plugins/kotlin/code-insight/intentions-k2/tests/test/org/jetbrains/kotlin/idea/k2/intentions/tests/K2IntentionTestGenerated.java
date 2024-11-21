@@ -7203,7 +7203,89 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/iterateExpression")
+    public static class IterateExpression extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("collectionIteratorWithComponents.kt")
+        public void testCollectionIteratorWithComponents() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/collectionIteratorWithComponents.kt");
+        }
+
+        @TestMetadata("dataClassCollectionIterator.kt")
+        public void testDataClassCollectionIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/dataClassCollectionIterator.kt");
+        }
+
+        @TestMetadata("extensionIterator.kt")
+        public void testExtensionIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/extensionIterator.kt");
+        }
+
+        @TestMetadata("extensionIteratorWithPartialSubstitution1.kt")
+        public void testExtensionIteratorWithPartialSubstitution1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/extensionIteratorWithPartialSubstitution1.kt");
+        }
+
+        @TestMetadata("extensionIteratorWithPartialSubstitution2.kt")
+        public void testExtensionIteratorWithPartialSubstitution2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/extensionIteratorWithPartialSubstitution2.kt");
+        }
+
+        @TestMetadata("functionCall.kt")
+        public void testFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/functionCall.kt");
+        }
+
+        @TestMetadata("mapIterator.kt")
+        public void testMapIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/mapIterator.kt");
+        }
+
+        @TestMetadata("nameSuggestion.kt")
+        public void testNameSuggestion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nameSuggestion.kt");
+        }
+
+        @TestMetadata("noNameConflict.kt")
+        public void testNoNameConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/noNameConflict.kt");
+        }
+
+        @TestMetadata("noNameConflict2.kt")
+        public void testNoNameConflict2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/noNameConflict2.kt");
+        }
+
+        @TestMetadata("nonOperatorIterator.kt")
+        public void testNonOperatorIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nonOperatorIterator.kt");
+        }
+
+        @TestMetadata("nonOperatotExtensionIterator.kt")
+        public void testNonOperatotExtensionIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nonOperatotExtensionIterator.kt");
+        }
+
+        @TestMetadata("nothing.kt")
+        public void testNothing() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nothing.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/simple.kt");
+        }
+    }
 
 
 
