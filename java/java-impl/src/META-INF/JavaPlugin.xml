@@ -1358,7 +1358,26 @@
     <codeInsight.declarativeInlayProviderCustomSettingsProvider language="JAVA"
                                                                 providerId="java.method.chains"
                                                                 implementationClass="com.intellij.codeInsight.hints.JavaMethodChainsHintsCustomSettingsProvider"/>
-    <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.AnnotationInlayProvider"/>
+    <codeInsight.declarativeInlayProvider language="JAVA"
+                                          implementationClass="com.intellij.codeInsight.hints.AnnotationInlayProvider"
+                                          isEnabledByDefault="true"
+                                          group="ANNOTATIONS_GROUP"
+                                          providerId="java.annotation.hints"
+                                          bundle="messages.JavaBundle"
+                                          nameKey="settings.inlay.java.annotations">
+      <option bundle="messages.JavaBundle"
+              optionId="showInferred"
+              enabledByDefault="true"
+              nameKey="settings.inlay.java.inferred.annotations"
+              descriptionKey="inlay.annotation.hints.inferred.annotations" />
+      <option bundle="messages.JavaBundle"
+              optionId="showExternal"
+              enabledByDefault="true"
+              nameKey="settings.inlay.java.external.annotations"
+              descriptionKey="inlay.annotation.hints.external.annotations" />
+
+    </codeInsight.declarativeInlayProvider>
+
     <codeInsight.declarativeInlayProvider language="JAVA"
                                           implementationClass="com.intellij.codeInsight.hints.JavaImplicitTypeDeclarativeInlayHintsProvider"
                                           isEnabledByDefault="false"
@@ -2771,6 +2790,18 @@
 
     <action id="DownloadJdkAction" class="com.intellij.ide.actions.DownloadJdkAction" icon="AllIcons.Actions.Download"/>
     <action id="AddJdkAction" class="com.intellij.ide.actions.AddJdkAction" icon="AllIcons.Nodes.PpJdk"/>
+  </actions>
+
+  <actions resource-bundle="messages.JavaBundle">
+    <action class="com.intellij.codeInsight.hints.InsertAnnotationAction" id="InsertAnnotationAction">
+      <add-to-group group-id="InlayMenu" />
+    </action>
+    <action class="com.intellij.codeInsight.hints.ToggleInferredAnnotationsAction" id="ToggleInferredAnnotationsAction">
+      <add-to-group group-id="InlayMenu" />
+    </action>
+    <action class="com.intellij.codeInsight.hints.ToggleExternalAnnotationsAction" id="ToggleExternalAnnotationsAction">
+      <add-to-group group-id="InlayMenu" />
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
