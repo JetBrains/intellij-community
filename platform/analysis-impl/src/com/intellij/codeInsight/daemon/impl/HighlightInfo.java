@@ -696,7 +696,7 @@ public class HighlightInfo implements Segment {
 
   public int getActualEndOffset() {
     RangeHighlighterEx h = highlighter;
-    return h == null || !h.isValid()  || isFileLevelAnnotation() ? endOffset : h.getEndOffset();
+    return h == null || !h.isValid() || isFileLevelAnnotation() ? endOffset : h.getEndOffset();
   }
 
   public static class IntentionActionDescriptor {

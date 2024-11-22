@@ -148,7 +148,7 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testNoUncheckedWarningOnRawSubstitutor() { doTest(true, false); }
   public void testArrayInitializerTypeCheckVariableType() { doTest(false, false);}
 
-  public void testJavaUtilCollections_NoVerify() {
+  public void testJavaUtilCollections_NoVerify_Stress() {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
     assertNotNull(collectionsClass);
     collectionsClass = (PsiClass)collectionsClass.getNavigationElement();

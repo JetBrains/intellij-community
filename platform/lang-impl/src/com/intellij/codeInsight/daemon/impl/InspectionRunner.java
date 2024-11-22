@@ -38,6 +38,7 @@ import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -82,9 +83,9 @@ class InspectionRunner {
   record InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                            @NotNull InspectionProblemHolder holder,
                            @NotNull PsiElementVisitor visitor,
-                           @NotNull List<? extends PsiElement> elementsInside,
-                           @NotNull List<? extends PsiElement> elementsOutside,
-                           @NotNull List<? extends Class<?>> acceptingPsiTypes,
+                           @NotNull @Unmodifiable List<? extends PsiElement> elementsInside,
+                           @NotNull @Unmodifiable List<? extends PsiElement> elementsOutside,
+                           @NotNull @Unmodifiable List<? extends Class<?>> acceptingPsiTypes,
                            // The containing file this tool was called for. In the case of injected context, this will be the injected file.
                            @NotNull PsiFile psiFile) {
     @Override
