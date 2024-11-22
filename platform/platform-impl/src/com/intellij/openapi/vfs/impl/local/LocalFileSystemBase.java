@@ -362,6 +362,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     //          and OSes cache file-system requests, so 2 file.size() requests one after another cost almost the same
     //          as a first file.size() request alone. So that optimization needs to be carefully benchmarked to prove it
     //          does provide anything -- and my guess: it probably doesn't
+
+    byte[] maybeContent = LocalFileSystemEelUtil.readWholeFileIfNotTooLargeWithEel(nioFile);
+    if (maybeContent != null) {
+      return maybeContent;
+    }
+
     var length = Files.size(nioFile);
 
     if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {

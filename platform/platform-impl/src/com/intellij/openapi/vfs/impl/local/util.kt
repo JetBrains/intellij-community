@@ -1,0 +1,45 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("LocalFileSystemEelUtil")
+
+package com.intellij.openapi.vfs.impl.local
+
+import com.intellij.openapi.util.io.FileTooBigException
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.ijent.community.impl.nio.getOrThrowFileSystemException
+import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
+
+private val map = ContainerUtil.createConcurrentWeakMap<Path, EelApi>();
+
+/**
+ * [java.nio.file.Files.readAllBytes] takes five separate syscalls to complete.
+ * This is unacceptable in the remote setting when each request to IO results in RPC.
+ * Here we try to invoke a specialized function that can read all bytes from [path] in one request.
+ */
+internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
+  if (!Registry.`is`("vfs.try.eel.for.content.loading", false)) {
+    return null
+  }
+  val root = path.root ?: return null
+  val api = map.computeIfAbsent(root) { root.getEelApiBlocking() }
+  if (api is LocalEelApi) {
+    return null
+  }
+  val eelPath = api.mapper.getOriginalPath(path) ?: return null
+  val limit = FileSizeLimit.getContentLoadLimit(FileUtilRt.getExtension(path.fileName.toString()))
+
+  return runBlocking {
+    when (val res = api.fs.readFully(eelPath, limit.toULong(), EelFileSystemApi.OverflowPolicy.DROP).getOrThrowFileSystemException()) {
+      is EelFileSystemApi.FullReadResult.Bytes -> res.bytes
+      is EelFileSystemApi.FullReadResult.BytesOverflown -> error("Never returned")
+      is EelFileSystemApi.FullReadResult.Overflow -> throw FileTooBigException("File $path is bigger than $limit bytes")
+    }
+  }
+}
