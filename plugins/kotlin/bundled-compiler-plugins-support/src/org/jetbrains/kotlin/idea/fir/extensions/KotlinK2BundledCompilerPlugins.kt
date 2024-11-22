@@ -25,12 +25,11 @@ import kotlin.reflect.KClass
  * This enum uses corresponding [CompilerPluginRegistrar] classes only to ensure
  * their availability in compile time; it should not try to instantiate them.
  *
- * Jars with specified compiler plugins are identified by the content of
- * one of [COMPILER_PLUGIN_REGISTRAR_FILES] inside of them. If any of those files contains one of
- * [registrarClassName]s, then we consider this jar to be a compiler plugin.
- *
  * [PathManager.getJarForClass] is used to get the correct location of plugin's jars
  * in any IDE launch scenario (both when run from sources and in dev mode).
+ *
+ * @see CompilerPluginRegistrarUtils
+ * @see KotlinBundledFirCompilerPluginProvider
  */
 @OptIn(ExperimentalCompilerApi::class)
 enum class KotlinK2BundledCompilerPlugins(
