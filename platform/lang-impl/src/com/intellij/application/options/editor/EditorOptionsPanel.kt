@@ -457,7 +457,7 @@ private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: Strin
   row(label) {
     val itemWithSeparator: E = values.first { it.osDefault === OsDefault.NONE }
 
-    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItemRenderer(itemWithSeparator))
+    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItem.createRenderer(itemWithSeparator))
       .applyToComponent { isSwingPopup = false }
       .align(AlignX.FILL)
       .bind(

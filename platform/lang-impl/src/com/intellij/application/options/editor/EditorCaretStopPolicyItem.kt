@@ -4,10 +4,10 @@ package com.intellij.application.options.editor
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.actions.CaretStopBoundary
-import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.GroupedComboBoxRenderer
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import org.jetbrains.annotations.Nls
+import javax.swing.ListCellRenderer
 
 internal interface EditorCaretStopPolicyItem {
   val title: String
@@ -21,15 +21,17 @@ internal interface EditorCaretStopPolicyItem {
                                             ?: checkNotNull(enumValues<E>().find { it.osDefault.isIdeDefault })
     internal fun String.appendHint(hint: String): String =
       if (hint.isBlank()) this else "$this ($hint)"
-  }
 
-  class EditorCaretStopPolicyItemRenderer(private val itemWithSeparator: EditorCaretStopPolicyItem): GroupedComboBoxRenderer<EditorCaretStopPolicyItem?>() {
-    override fun getText(item: EditorCaretStopPolicyItem?): String = item?.title ?: ""
-    override fun getSecondaryText(item: EditorCaretStopPolicyItem?): String? = item?.osDefault?.hint
-
-    override fun separatorFor(value: EditorCaretStopPolicyItem?): ListSeparator? = when (value) {
-      itemWithSeparator -> ListSeparator()
-      else -> null
+    internal fun createRenderer(itemWithSeparator: EditorCaretStopPolicyItem): ListCellRenderer<EditorCaretStopPolicyItem?> {
+      return listCellRenderer("") {
+        text(value.title)
+        text(value.osDefault.hint) {
+          foreground = greyForeground
+        }
+        if (value == itemWithSeparator) {
+          separator { }
+        }
+      }
     }
   }
 
