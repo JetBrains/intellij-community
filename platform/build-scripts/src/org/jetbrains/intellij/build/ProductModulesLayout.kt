@@ -34,7 +34,7 @@ class ProductModulesLayout {
    * You can find the layouts of these bundled plugins in the [pluginLayouts] list.
    * 
    * This property can be used for writing only. 
-   * If you need to read the list of plugins which should be bundled, use [BuildContext.bundledPluginModules] instead.  
+   * If you need to read the list of plugins which should be bundled, use [BuildContext.getBundledPluginModules] instead.
    */
   var bundledPluginModules: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS
 
@@ -43,7 +43,8 @@ class ProductModulesLayout {
    * Zip archives of these plugins will be built and placed under [BuildContext.nonBundledPlugins] directory in the build artifacts.
    * Layouts of the plugins are specified in [pluginLayouts] list.
    *
-   * @see [org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList]
+   * This list is used only if [ProductModulesLayout.buildAllCompatiblePlugins] is set to false, otherwise an error is thrown.
+   * [BuildContext.pluginAutoPublishList] becomes the source of truth instead of this list then.
    */
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 

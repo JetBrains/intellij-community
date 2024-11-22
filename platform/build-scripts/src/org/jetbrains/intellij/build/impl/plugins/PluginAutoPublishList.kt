@@ -34,8 +34,8 @@ class PluginAutoPublishList(private val context: BuildContext) : Predicate<Plugi
     file?.useLines { lines ->
       lines
         .map { StringUtil.split(it, "//", true, false)[0] }
-        .map { StringUtil.split(it, "#", true, false)[0].trim() }
-        .filter { !it.isEmpty() }
+        .map { StringUtil.split(it, "#", true, false)[0] }
+        .map { it.trim() }.filter { !it.isEmpty() }
         .toCollection(TreeSet(String.CASE_INSENSITIVE_ORDER))
     } ?: emptyList()
   }
