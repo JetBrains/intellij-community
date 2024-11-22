@@ -56,8 +56,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -683,22 +683,11 @@ public final class HighlightMethodUtil {
   }
 
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
-    if (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument"))) {
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
-      if (parent instanceof PsiExpressionList) {
-        PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiCallExpression callExpression) {
-          JavaResolveResult parentResolveResult = callExpression.resolveMethodGenerics();
-          if (parentResolveResult instanceof MethodCandidateInfo info &&
-              info.getInferenceErrorMessage() != null) {
-            // Parent resolve failed as well, and it's likely more informative.
-            // Suppress this error to allow reporting from parent
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    // Parent resolve failed as well, and it's likely more informative.
+    // Suppress this error to allow reporting from parent
+    return (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument")) ||
+            errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.declaration.for.the.method.reference.not.found"))) &&
+           hasSurroundingInferenceError(methodCall);
   }
 
   private static void registerUsageFixes(@NotNull PsiMethodCallExpression methodCall,
@@ -2351,6 +2340,22 @@ public final class HighlightMethodUtil {
     MethodSignature valueOfMethod = MethodSignatureUtil.createMethodSignature("valueOf", new PsiType[]{javaLangString},
                                                                               PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
     return MethodSignatureUtil.areSignaturesErasureEqual(valueOfMethod, methodSignature);
+  }
+
+  static boolean hasSurroundingInferenceError(@NotNull PsiElement context) {
+    PsiCall topCall = LambdaUtil.treeWalkUp(context);
+    if (topCall == null) return false;
+    while (context != topCall) {
+      context = context.getParent();
+      if (context instanceof PsiMethodCallExpression call &&
+          call.resolveMethodGenerics() instanceof MethodCandidateInfo info &&
+          info.getInferenceErrorMessage() != null) {
+        // Possibly inapplicable method reference due to the surrounding call inference failure:
+        // suppress method reference error in order to display more relevant inference error.
+        return true;
+      }
+    }
+    return false;
   }
 
   private static final class ReturnModel {

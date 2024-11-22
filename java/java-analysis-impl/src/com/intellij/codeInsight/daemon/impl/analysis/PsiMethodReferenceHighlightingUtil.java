@@ -38,7 +38,7 @@ public final class PsiMethodReferenceHighlightingUtil {
   public static @NlsContexts.DetailedDescription String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef,
                                                                                     @NotNull PsiElement resolve,
                                                                                     PsiType functionalInterfaceType) {
-    PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
+    PsiClass containingClass = resolve instanceof PsiMethod method ? method.getContainingClass() : (PsiClass)resolve;
     boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
     PsiElement qualifier = methodRef.getQualifier();
 
@@ -65,6 +65,10 @@ public final class PsiMethodReferenceHighlightingUtil {
 
     if (!receiverReferenced) {
       if (isStaticSelector && !isMethodStatic && !isConstructor) {
+        if (functionalInterfaceType instanceof PsiClassType classType && classType.hasParameters()) {
+          // Prefer surrounding error, as it could be more descriptive
+          if (HighlightMethodUtil.hasSurroundingInferenceError(methodRef)) return null;
+        }
         return JavaErrorBundle.message("non.static.method.cannot.be.referenced.from.a.static.context.method.reference.context");
       }
       if (!isStaticSelector && isMethodStatic) {

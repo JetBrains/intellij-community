@@ -1508,9 +1508,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!hasErrorResults()) {
-      if (results.length == 0 || results[0] instanceof MethodCandidateInfo methodInfo &&
-                                 !methodInfo.isApplicable() &&
-                                 functionalInterfaceType != null || results.length > 1) {
+      boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
+                                         !methodInfo.isApplicable() &&
+                                         functionalInterfaceType != null;
+      if (results.length != 1 || resolvedButNonApplicable) {
         String description = null;
         if (results.length == 1) {
           description = ((MethodCandidateInfo)results[0]).getInferenceErrorMessage();
@@ -1545,7 +1546,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
               }
               return;
             }
-            description = JavaErrorBundle.message("cannot.resolve.method", expression.getReferenceName());
+            
+            if (!(resolvedButNonApplicable && HighlightMethodUtil.hasSurroundingInferenceError(expression))) {
+              description = JavaErrorBundle.message("cannot.resolve.method", expression.getReferenceName());
+            }
           }
         }
 
