@@ -1,15 +1,20 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.trace
 
-import com.intellij.debugger.streams.wrapper.StreamChain;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
+import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.evaluation.EvaluationMode
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
+import org.jetbrains.annotations.NonNls
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TraceExpressionBuilder {
-  @NotNull
-  @NonNls String createTraceExpression(@NotNull StreamChain chain);
+interface TraceExpressionBuilder {
+  fun createTraceExpression(chain: StreamChain): @NonNls String
+
+  //TODO(Korovin): Combine with the method above?
+  fun createXExpression(chain: StreamChain, expressionText: String): XExpression {
+    return XExpressionImpl.fromText(expressionText, EvaluationMode.CODE_FRAGMENT)
+  }
 }

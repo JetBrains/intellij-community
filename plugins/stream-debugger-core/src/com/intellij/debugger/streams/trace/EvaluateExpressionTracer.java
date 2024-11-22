@@ -4,11 +4,9 @@ package com.intellij.debugger.streams.trace;
 import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +36,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
     final XStackFrame stackFrame = mySession.getCurrentStackFrame();
     final XDebuggerEvaluator evaluator = mySession.getDebugProcess().getEvaluator();
     if (stackFrame != null && evaluator != null) {
-      evaluator.evaluate(XExpressionImpl.fromText(streamTraceExpression, EvaluationMode.CODE_FRAGMENT), new XEvaluationCallbackBase() {
+      evaluator.evaluate(myExpressionBuilder.createXExpression(chain, streamTraceExpression), new XEvaluationCallbackBase() {
         @Override
         public void evaluated(@NotNull XValue evaluationResult) {
           var result = myXValueInterpreter.tryExtractResult(mySession, evaluationResult);
