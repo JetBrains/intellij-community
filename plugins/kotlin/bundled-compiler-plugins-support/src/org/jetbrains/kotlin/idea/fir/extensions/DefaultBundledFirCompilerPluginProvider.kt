@@ -10,6 +10,9 @@ import java.nio.file.Path
  */
 internal class DefaultBundledFirCompilerPluginProvider : KotlinBundledFirCompilerPluginProvider {
     override fun provideBundledPluginJar(userSuppliedPluginJar: Path): Path? {
-        return KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)?.bundledJarLocation
+        val registrarContent = CompilerPluginRegistrarUtils.readRegistrarContent(userSuppliedPluginJar) ?: return null
+        val matchingPlugin = KotlinK2BundledCompilerPlugins.entries.firstOrNull { it.registrarClassName in registrarContent }
+
+        return matchingPlugin?.bundledJarLocation
     }
 }
