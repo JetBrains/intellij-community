@@ -38,6 +38,7 @@ import java.io.File
  * Only files that are mentioned in these folders are asserted to be generated correctly.
  */
 @TestRoot("project-wizard/tests")
+@Disabled("Temporarily disabled until timeouts are fixed: KTI-2059")
 class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotlinProjectTestUtils {
 
     override var testDirectory = "testData/gradleNewProjectWizard"
