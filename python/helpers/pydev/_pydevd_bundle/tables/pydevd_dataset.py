@@ -38,10 +38,10 @@ def get_column_types(table):
 def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> str
 
-    def convert_data_to_csv(data):
+    def convert_data_to_csv(data, format):
         return repr(data.to_csv(na_rep = "NaN", float_format=format, sep=CSV_FORMAT_SEPARATOR))
 
-    def convert_data_to_html(data):
+    def convert_data_to_html(data, format):
         return repr(data.to_html(notebook=True))
 
     if use_csv_serialization:
@@ -55,9 +55,9 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
 # noinspection PyUnresolvedReferences
 def display_data_csv(table, start_index, end_index):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data):
+    def ipython_display(data, format):
         try:
-            data = data.to_csv(na_rep = "NaN", sep=CSV_FORMAT_SEPARATOR)
+            data = data.to_csv(na_rep = "NaN", sep=CSV_FORMAT_SEPARATOR, float_format=format)
         except AttributeError:
             pass
         print(data)
@@ -68,7 +68,7 @@ def display_data_csv(table, start_index, end_index):
 # noinspection PyUnresolvedReferences
 def display_data_html(table, start_index, end_index):
     # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data):
+    def ipython_display(data, format):
         from IPython.display import display
         display(data)
     _compute_sliced_data(table, ipython_display, start_index, end_index)
@@ -102,7 +102,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     else:
         table = __convert_to_df(table)
 
-    data = fun(table)
+    data = fun(table, pd.get_option('display.float_format'))
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
