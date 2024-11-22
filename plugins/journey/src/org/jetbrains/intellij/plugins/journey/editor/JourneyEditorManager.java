@@ -82,7 +82,6 @@ public final class JourneyEditorManager implements Disposable {
     Editor editor = JourneyEditorFactory.createEditor(psiElement.getProject(), psiFile.getFileDocument(),
                                                       psiFile.getViewProvider().getVirtualFile());
     registerEditor(psiElement, editor);
-    ((EditorEx) editor).setBackgroundColor(Gray._249);
     AsyncEditorLoader.Companion.performWhenLoaded(editor, () -> {
       editor.getCaretModel().moveToOffset(psiElement.getTextRange().getStartOffset());
       showOnlyRange(editor, psiElement);

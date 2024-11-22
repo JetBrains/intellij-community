@@ -27,10 +27,12 @@ import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramVfsRe
 
 public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
   private final JourneyDiagramDataModel myDataModel;
+  private final DiagramBuilder myBuilder;
 
   public JourneyNodeCellRenderer(@NotNull DiagramBuilder builder, @Nullable ModificationTracker updates) {
     super(builder, updates);
-    myDataModel = ((JourneyDiagramDataModel)myBuilder.getDataModel());
+    myBuilder = builder;
+    myDataModel = ((JourneyDiagramDataModel)builder.getDataModel());
   }
 
   private final Map<PsiElement, JourneyEditorWrapper> NODE_PANELS = new HashMap<>();

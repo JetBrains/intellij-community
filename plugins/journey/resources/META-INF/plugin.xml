@@ -21,11 +21,34 @@
     <group id="JourneyAction" searchable="false">
       <action id="JourneyToggleAction" class="org.jetbrains.intellij.plugins.journey.JourneyToggleAction"/>
     </group>
-    <action id="org.jetbrains.intellij.plugins.journey.editor.actions.OpenInEditorAction"
-            class="org.jetbrains.intellij.plugins.journey.editor.actions.OpenInEditorAction"
+    <action id="org.jetbrains.intellij.plugins.journey.actions.OpenInEditorAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.OpenInEditorAction"
             text="Jump To Source"
     >
       <keyboard-shortcut first-keystroke="F4" keymap="$default"/>
+    </action>
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoDeclarationAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoDeclarationAction"
+            text="Go To Declaration"
+    >
+      <keyboard-shortcut first-keystroke="ctrl P" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta P" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta P" keymap="Mac OS X 10.5+"/>
+    </action>
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoUsagesAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoUsagesAction"
+            text="Go To Usages Or Declaration"
+    >
+      <keyboard-shortcut first-keystroke="ctrl O" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta O" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta O" keymap="Mac OS X 10.5+"/>
+    </action>
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoSuperAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoSuperAction"
+            text="Go To Super">
+      <keyboard-shortcut first-keystroke="ctrl U" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta U" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta U" keymap="Mac OS X 10.5+"/>
     </action>
   </actions>
 
@@ -37,6 +60,9 @@
       <className>org.jetbrains.intellij.plugins.journey.StartJourneyIntentionAction</className>
       <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
+
+    <registryKey key="ide.journey.enabled" defaultValue="false"
+                 description="Enable Journey plugin features"/>
   </extensions>
 
 </idea-plugin>

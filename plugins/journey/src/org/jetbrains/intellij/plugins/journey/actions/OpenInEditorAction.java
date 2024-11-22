@@ -1,4 +1,4 @@
-package org.jetbrains.intellij.plugins.journey.editor.actions;
+package org.jetbrains.intellij.plugins.journey.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;

@@ -5,7 +5,7 @@ import com.intellij.diagram.DiagramProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMember;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
@@ -61,8 +61,13 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
     final var that = (JourneyNode)obj;
     PsiElement psi1 = this.identity.element();
     PsiElement psi2 = that.identity.element();
-    if (psi1 instanceof PsiMethod && psi2 instanceof PsiMethod) {
-      Boolean o = ReadAction.compute(() -> Objects.equals(((PsiMethod)psi1).getContainingClass(), ((PsiMethod)psi2).getContainingClass()));
+
+    if (psi1 == psi2) {
+      return true;
+    }
+
+    if (psi1 instanceof PsiMember psiMember1 && psi2 instanceof PsiMember psiMember2) {
+      Boolean o = ReadAction.compute(() -> Objects.equals(psiMember1.getContainingClass(), (psiMember2.getContainingClass())));
       if (!o) return false;
     }
     return super.equals(obj);

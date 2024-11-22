@@ -1,13 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.navigation.actions
+package org.jetbrains.intellij.plugins.journey.actions
 
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
-import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.ide.util.EditSourceUtil
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -15,54 +19,88 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.list.createTargetPopup
+import com.intellij.util.ui.EDT
+import org.jetbrains.intellij.plugins.journey.JourneyDataKeys
 
-internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
+internal class JourneyGotoDeclarationOnlyHandler() : CodeInsightActionHandler {
 
   companion object {
+
+    fun navigateToLookupItem(project: Project): Boolean {
+      val activeLookup: Lookup? = LookupManager.getInstance(project).activeLookup
+      if (activeLookup == null) {
+        return false
+      }
+      val currentItem = activeLookup.currentItem
+      navigateRequestLazy(project) {
+        TargetElementUtil.targetElementFromLookupElement(currentItem)
+          ?.gtdTargetNavigatable()
+          ?.navigationRequest()
+      }
+      return true
+    }
+
+    internal fun PsiElement.gtdTargetNavigatable(): Navigatable? {
+      return TargetElementUtil.getInstance()
+        .getGotoDeclarationTarget(this, navigationElement)
+        ?.psiNavigatable()
+    }
+
+    internal fun PsiElement.psiNavigatable(): Navigatable? {
+      return this as? Navigatable
+             ?: EditSourceUtil.getDescriptor(this)
+    }
+
+    /**
+     * Obtains a [NavigationRequest] instance from [requestor] on a background thread, and calls [navigateRequest].
+     */
+    fun navigateRequestLazy(project: Project, requestor: NavigationRequestor) {
+      EDT.assertIsEdt()
+      @Suppress("DialogTitleCapitalization")
+      val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
+        requestor.navigationRequest()
+      }
+      if (request != null) {
+        navigateRequest(project, request)
+      }
+    }
 
     private fun gotoDeclaration(project: Project, editor: Editor, file: PsiFile, offset: Int): GTDActionData? {
       return fromGTDProviders(project, editor, offset)
              ?: gotoDeclaration(file, offset)
     }
 
-    fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
-      return gotoDeclaration(file.project, editor, file, offset)?.ctrlMouseData()
-    }
-
     internal fun gotoDeclaration(
       project: Project,
       editor: Editor,
       actionResult: NavigationActionResult,
-      reporter: GotoDeclarationReporter?
     ) {
-      // obtain event data before showing the popup,
-      // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
-      val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
       when (actionResult) {
         is SingleTarget -> {
-          reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.SINGLE)
-          actionResult.navigationProvider?.let {
-            GTDUCollector.recordNavigated(eventData, it.javaClass)
+          val diagramDataModel = editor.getUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL)
+          if (diagramDataModel != null) {
+            val navigationRequest = underModalProgress(project, "Journey goto declaration.") {
+              actionResult.requestor.navigationRequest()
+            }
+
+            diagramDataModel.addEdge(navigationRequest, editor)
+            return
           }
           navigateRequestLazy(project, actionResult.requestor)
-          reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.AUTO, actionResult.navigationProvider)
         }
         is MultipleTargets -> {
-          reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.MULTIPLE)
           val popup = createTargetPopup(
             CodeInsightBundle.message("declaration.navigation.title"),
             actionResult.targets, LazyTargetWithPresentation::presentation
           ) { (requestor, _, navigationProvider) ->
-            navigationProvider?.let {
-              GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
-            }
             navigateRequestLazy(project, requestor)
-            reporter?.reportNavigatedToDeclaration(GotoDeclarationReporter.NavigationType.FROM_POPUP, navigationProvider)
           }
           popup.showInBestPositionFor(editor)
-          reporter?.reportLookupElementsShown()
         }
       }
     }
@@ -74,6 +112,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
     if (navigateToLookupItem(project)) {
       return
     }
+
     if (EditorUtil.isCaretInVirtualSpace(editor)) {
       return
     }
@@ -92,11 +131,12 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
     }
 
     if (actionResult == null) {
-      reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
-      notifyNowhereToGo(project, editor, file, offset)
+      //notifyNowhereToGo(project, editor, file, offset)
+      throw UnsupportedOperationException("Journey TODO")
     }
     else {
-      gotoDeclaration(project, editor, actionResult, reporter)
+      gotoDeclaration(project, editor, actionResult)
     }
   }
+
 }

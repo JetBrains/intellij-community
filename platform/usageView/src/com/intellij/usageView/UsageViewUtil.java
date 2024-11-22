@@ -35,8 +35,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.intellij.openapi.project.Project.JOURNEY_CURRENT_NODE;
-
 public final class UsageViewUtil {
   private static final Logger LOG = Logger.getInstance(UsageViewUtil.class);
 
@@ -144,16 +142,6 @@ public final class UsageViewUtil {
     int offset = info.getNavigationOffset();
     VirtualFile file = info.getVirtualFile();
     Project project = info.getProject();
-    { // TODO Journey Hack
-      System.out.println("NAVIGATION_FROM_POPUP_USAGES");
-      var navigationInterceptor = info.getProject().getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR);
-      if (navigationInterceptor != null) {
-        boolean stopNavigation = navigationInterceptor.apply(project.getUserData(JOURNEY_CURRENT_NODE), info.getElement());
-        if (stopNavigation) {
-          return;
-        }
-      }
-    }
     if (file != null) {
       UsageViewStatisticsCollector.logUsageNavigate(project, info);
       FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);

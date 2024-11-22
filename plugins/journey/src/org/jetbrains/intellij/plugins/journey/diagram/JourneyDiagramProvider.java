@@ -2,7 +2,6 @@ package org.jetbrains.intellij.plugins.journey.diagram;// Copyright 2000-2024 Je
 
 import com.intellij.diagram.*;
 import com.intellij.diagram.extras.DiagramExtras;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.graph.builder.GraphBuilder;
@@ -12,19 +11,14 @@ import com.intellij.openapi.graph.view.NodeCellRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.uml.presentation.DiagramPresentationModelImpl;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.plugins.journey.diagram.persistence.JourneyUmlFileSnapshotLoader;
-import org.jetbrains.intellij.plugins.journey.navigation.JourneyNavigationUtils;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Optional;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNodeIdentity> {
@@ -73,7 +67,7 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
         LOG.error("Could not load snapshot from .uml file", e);
       }
 
-      project.putUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR, (element1, element2) -> navigate(project, dataModel, element1, element2));
+      project.putUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR, (element1, element2) -> navigate(dataModel, element1, element2));
 
       return dataModel;
     }
@@ -83,32 +77,9 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
     }
   }
 
-  private static Boolean navigate(Project project, JourneyDiagramDataModel model, Object from, Object to) {
-    PsiElement fromResult = JourneyNavigationUtils.findPsiElement(project, from);
-    PsiElement toResult = JourneyNavigationUtils.findPsiElement(project, to);
-    addEdge(fromResult, toResult, model);
+  public static Boolean navigate(JourneyDiagramDataModel model, Object from, Object to) {
+    model.addEdge(from, to);
     return true;
-  }
-
-  public static void addEdge(PsiElement from, PsiElement to, JourneyDiagramDataModel model) {
-    var fromNode = Optional.ofNullable(findNodeForFile(model, from)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(from)));
-    var toNode = Optional.ofNullable(findNodeForFile(model, to)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(to)));
-    if (toNode == null || fromNode == null) {
-      return;
-    }
-
-    model.createEdge(fromNode, toNode);
-    model.addNewPairUpdate(toNode, fromNode);
-  }
-
-  private static @Nullable JourneyNode findNodeForFile(JourneyDiagramDataModel model, PsiElement from) {
-    if (from == null) return null;
-    PsiFile fromFile = ReadAction.nonBlocking(() -> from.getContainingFile()).executeSynchronously();
-    return ContainerUtil.find(model.getNodes(), node -> {
-      PsiElement element = node.getIdentifyingElement().element();
-      PsiFile toFile = ReadAction.nonBlocking(() -> element.getContainingFile()).executeSynchronously();
-      return toFile.isEquivalentTo(fromFile);
-    });
   }
 
   @Override

@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.usages.Usage
@@ -21,10 +20,7 @@ internal fun navigateAndHint(project: Project,
                              parameters: ShowUsagesParameters,
                              actionHandler: ShowUsagesActionHandler,
                              onReady: Runnable) {
-  println("Inline_code_usage_go")
   // Code below need EDT
-  val curEditor = parameters.editor
-
   (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
     NavigationService.getInstance(project).navigate(usage, NavigationOptions.defaultOptions().requestFocus(true))
     writeIntentReadAction {
@@ -32,18 +28,6 @@ internal fun navigateAndHint(project: Project,
       if (newEditor == null) {
         onReady.run()
         return@writeIntentReadAction
-      }
-
-      if (Registry.`is`("ide.journey.enabled")) { // TODO Journey Hack
-        val navigationInterceptor = project.getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR)
-        val isJourney = (curEditor != null && curEditor.getUserData(Project.JOURNEY_DIAGRAM_DATA_MODEL) != null) ||
-                        (newEditor != null && newEditor.getUserData(Project.JOURNEY_DIAGRAM_DATA_MODEL) != null)
-        if (isJourney && navigationInterceptor != null) {
-          println("JOURNEY ShowUsagesUtil navigation")
-          navigationInterceptor.apply(curEditor, newEditor)
-          onReady.run()
-          return@writeIntentReadAction
-        }
       }
 
       ShowUsagesAction.hint(false, hint, parameters.withEditor(newEditor), actionHandler)

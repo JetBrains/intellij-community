@@ -23,7 +23,7 @@ public class JourneyEditorWrapper extends JPanel {
     setPreferredSize(new Dimension(editor.getComponent().getWidth(), editor.getComponent().getHeight()));
 
     editorComponent.add(new JourneyTitleBar(title, editorComponent), BorderLayout.NORTH);
-    Border border = new JourneyLineBorder(JBColor.DARK_GRAY, 1, this, view);
+    Border border = new JourneyLineBorder(JBColor.LIGHT_GRAY, 1, this, view);
     editorComponent.setBorder(border);
   }
 
