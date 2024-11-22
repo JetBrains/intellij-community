@@ -1482,6 +1482,18 @@ public final class PyUtil {
   public static boolean isInitOrNewMethod(@Nullable PsiElement element) {
     return PyUtilCore.isInitOrNewMethod(element);
   }
+  
+  /**
+   * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __init__},
+   * {@code __init_subclass__}, or {@code __new__}.
+   * @see PyUtil#isInitMethod(PsiElement)
+   * @see PyUtil#isNewMethod(PsiElement)
+   * @see PyUtil#turnConstructorIntoClass(PyFunction)
+   */
+  @Contract("null -> false")
+  public static boolean isConstructorLikeMethod(@Nullable PsiElement element) {
+    return PyUtilCore.isConstructorLikeMethod(element);
+  }
 
   /**
    * @return containing class for a method named {@code __init__} or {@code __new__}.

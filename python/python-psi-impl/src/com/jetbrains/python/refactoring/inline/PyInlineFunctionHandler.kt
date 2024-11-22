@@ -54,7 +54,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     val error = when {
       element.isAsync -> PyPsiBundle.message("refactoring.inline.function.async")
       element.isGenerator -> PyPsiBundle.message("refactoring.inline.function.generator")
-      PyUtil.isInitOrNewMethod(element) -> PyPsiBundle.message("refactoring.inline.function.constructor")
+      PyUtil.isConstructorLikeMethod(element) -> PyPsiBundle.message("refactoring.inline.function.constructor")
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> PyPsiBundle.message("refactoring.inline.function.builtin")
       isSpecialMethod(element) -> PyPsiBundle.message("refactoring.inline.function.special.method")
       isUnderSkeletonDir(element) -> PyPsiBundle.message("refactoring.inline.function.skeleton.only")

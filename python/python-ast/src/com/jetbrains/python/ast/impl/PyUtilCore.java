@@ -191,7 +191,26 @@ public final class PyUtilCore {
     if (function == null) return false;
 
     final String name = function.getName();
-    return (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) && function.getContainingClass() != null;
+    return (PyNames.INIT.equals(name) ||
+            PyNames.NEW.equals(name)) && function.getContainingClass() != null;
+  }
+
+  /**
+   * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __init__},
+   * {@code __init_subclass__}, or {@code __new__}.
+   * @see PyUtil#isInitMethod(PsiElement)
+   * @see PyUtil#isNewMethod(PsiElement)
+   * @see PyUtil#turnConstructorIntoClass(PyFunction)
+   */
+  @Contract("null -> false")
+  public static boolean isConstructorLikeMethod(@Nullable PsiElement element) {
+    final PyAstFunction function = ObjectUtils.tryCast(element, PyAstFunction.class);
+    if (function == null) return false;
+
+    final String name = function.getName();
+    return (PyNames.INIT_SUBCLASS.equals(name) ||
+            PyNames.INIT.equals(name) ||
+            PyNames.NEW.equals(name)) && function.getContainingClass() != null;
   }
 
   public static boolean isStringLiteral(@Nullable PyAstStatement stmt) {

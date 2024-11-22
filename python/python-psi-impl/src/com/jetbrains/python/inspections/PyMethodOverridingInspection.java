@@ -37,7 +37,7 @@ public final class PyMethodOverridingInspection extends PyInspection {
       final PyClass cls = function.getContainingClass();
       if (cls == null) return;
 
-      if (PyUtil.isInitOrNewMethod(function) ||
+      if (PyUtil.isConstructorLikeMethod(function) ||
           PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
           ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensions(), e -> e.ignoreMethodParameters(function, myTypeEvalContext))) {
         return;

@@ -196,7 +196,7 @@ public final class PyDocstringGenerator {
       final RaiseVisitor visitor = new RaiseVisitor();
       final PyAstStatementList statementList = ((PyAstFunction)myDocStringOwner).getStatementList();
       statementList.accept(visitor);
-      if (!PyUtilCore.isInitOrNewMethod(myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
+      if (!PyUtilCore.isConstructorLikeMethod(myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
         // will add :return: placeholder in Sphinx/Epydoc docstrings
         withReturnValue(null);
       }

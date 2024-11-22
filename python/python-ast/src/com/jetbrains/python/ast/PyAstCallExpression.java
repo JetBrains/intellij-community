@@ -41,7 +41,7 @@ public interface PyAstCallExpression extends PyAstCallSiteExpression {
 
   @Contract("null -> false")
   private static boolean isImplicitlyInvokedMethod(@Nullable PyAstCallable resolvedCallee) {
-    if (PyUtilCore.isInitOrNewMethod(resolvedCallee)) return true;
+    if (PyUtilCore.isConstructorLikeMethod(resolvedCallee)) return true;
 
     if (resolvedCallee instanceof PyAstFunction function) {
       return PyNames.CALL.equals(function.getName()) && function.getContainingClass() != null;
