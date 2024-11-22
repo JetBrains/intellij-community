@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -188,7 +189,9 @@ public class GitImpl extends GitImplBase {
       // do not use per-project executable for 'clone' command
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
       GitExecutable executable = GitExecutableManager.getInstance().getExecutable(defaultProject, parentDirectory);
-      GitLineHandler handler = new GitLineHandler(defaultProject, parentDirectory, executable, GitCommand.CLONE, emptyList());
+
+      List<String> configParameters = SystemInfo.isWindows ? List.of("core.longpaths=true") : emptyList();
+      GitLineHandler handler = new GitLineHandler(defaultProject, parentDirectory, executable, GitCommand.CLONE, configParameters);
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
