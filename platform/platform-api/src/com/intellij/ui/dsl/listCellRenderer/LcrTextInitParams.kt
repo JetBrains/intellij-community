@@ -46,7 +46,10 @@ abstract class LcrTextInitParams(foreground: Color) : LcrInitParams() {
   var renderingHints: Map<RenderingHints.Key, Any?>? = null
 
   /**
-   * The text is used by speed search and therefore should be highlighted while searching
+   * The text is used by speed search and therefore should be highlighted while searching.
+   * The following rules should be used to comply with IJ UX standards:
+   * * The speed search filters out items from the list: only the current (selected) item shows the speed search highlighting
+   * * The speed search doesn't filter out items from the list: all items show the speed search highlighting
    */
   abstract fun speedSearch(init: LcrTextSpeedSearchParams.() -> Unit)
 }
