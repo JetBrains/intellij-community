@@ -46,6 +46,7 @@ class MPSProperties : JetBrainsProductProperties() {
         sequenceOf(
             "intellij.java.plugin",
             "intellij.java.ide.customization",
+            "intellij.json",
             "intellij.copyright",
             "intellij.properties",
             "intellij.properties.resource.bundle.editor",
