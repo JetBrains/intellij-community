@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import java.util.concurrent.locks.LockSupport;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -25,6 +24,7 @@ import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -74,6 +74,7 @@ public final class ThreadLeakTracker {
       "CompilerThread0",
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
+      "EventQueueMonitor-ComponentEvtDispatch", // com.sun.java.accessibility.util.ComponentEvtDispatchThread
       "External compiler",
       FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
