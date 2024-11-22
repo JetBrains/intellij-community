@@ -167,6 +167,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var listener = resolverContext.getListener();
     var cancellationToken = resolverContext.getCancellationToken();
 
+    var projectResolverChain = createProjectResolverChain(resolverContext);
+
     ExternalSystemSyncActionsCollector.logSyncStarted(id.findProject(), id.getId(), settings.isParallelModelFetch());
 
     var gradleExecutionSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
@@ -176,7 +178,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       GradleWrapperHelper.ensureInstalledWrapper(id, projectPath, settings, listener, cancellationToken);
 
-      var projectResolverChain = createProjectResolverChain(resolverContext);
+      var buildEnvironment = executeProjectResolverTask(resolverContext, projectResolverChain, connection ->
+        GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings)
+      );
+      resolverContext.setBuildEnvironment(buildEnvironment);
 
       var projectDataNode = executeProjectResolverTask(resolverContext, projectResolverChain, connection ->
         doResolveProjectInfo(connection, resolverContext, projectResolverChain)
@@ -257,17 +262,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull GradleProjectResolverExtension projectResolverChain
   ) throws IllegalArgumentException, IllegalStateException {
 
-    final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(
-      connection,
-      resolverContext.getExternalSystemTaskId(),
-      resolverContext.getListener(),
-      resolverContext.getCancellationToken(),
-      resolverContext.getSettings()
-    );
-    if (buildEnvironment != null) {
-      resolverContext.setBuildEnvironment(buildEnvironment);
-    }
-
     var buildAction = new GradleModelFetchAction();
 
     GradleExecutionSettings executionSettings = resolverContext.getSettings();
@@ -312,7 +306,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(executionSettings);
     var pathMapper = ObjectUtils.doIfNotNull(environmentConfigurationProvider, it -> it.getPathMapper());
-    var models = new GradleIdeaModelHolder(pathMapper, buildEnvironment);
+    var models = new GradleIdeaModelHolder(pathMapper, resolverContext.getBuildEnvironment());
     resolverContext.setModels(models);
 
 

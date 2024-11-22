@@ -17,17 +17,15 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -46,6 +44,7 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -201,28 +200,26 @@ public final class GradleExecutionHelper {
     }
   }
 
-  private static void setupJvmArguments(
+  @VisibleForTesting
+  public static void setupJvmArguments(
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings,
     @Nullable BuildEnvironment buildEnvironment
   ) {
+    var buildRoot = getBuildRoot(buildEnvironment);
+    if (buildRoot != null) {
+      var properties = GradlePropertiesFile.getProperties(settings.getServiceDirectory(), buildRoot);
+      var jvmArgsProperty = properties.getJvmOptions();
+      if (jvmArgsProperty != null) {
+        var jvmArgs = ParametersListUtil.parse(jvmArgsProperty.getValue());
+        LOG.debug("Passing JVM args from gradle.properties to Gradle Tooling API: " + jvmArgs);
+        operation.addJvmArguments(jvmArgs);
+      }
+    }
+
     var jvmArgs = ContainerUtil.filter(settings.getJvmArguments(), it -> !StringUtil.isEmpty(it));
-
-    if (jvmArgs.isEmpty()) {
-      return;
-    }
-
-    var buildEnvironmentRoot = getBuildRoot(buildEnvironment);
-    var buildEnvironmentJvmArgs = getJvmArgs(buildEnvironment);
-
-    // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
-    // to avoid spawning of the second Gradle daemon
-    if (buildEnvironmentRoot != null && !"buildSrc".equals(buildEnvironmentRoot.getFileName().toString())) {
-      // merge gradle args e.g. defined in gradle.properties
-      jvmArgs = mergeBuildJvmArguments(buildEnvironmentJvmArgs, jvmArgs);
-    }
-
-    operation.setJvmArguments(ArrayUtilRt.toStringArray(jvmArgs));
+    LOG.debug("Passing custom JVM args to Gradle Tooling API: " + jvmArgs);
+    operation.addJvmArguments(jvmArgs);
   }
 
   private static void setupJavaHome(
@@ -364,19 +361,29 @@ public final class GradleExecutionHelper {
     }
   }
 
-  public static @Nullable Path getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
+  private static @Nullable Path getWorkingRoot(@Nullable BuildEnvironment buildEnvironment) {
     if (buildEnvironment == null) {
       return null;
     }
     return buildEnvironment.getBuildIdentifier().getRootDir().toPath();
   }
 
-  private static @NotNull List<String> getJvmArgs(@Nullable BuildEnvironment buildEnvironment) {
-    if (buildEnvironment == null) {
-      return Collections.emptyList();
+  private static @Nullable Path getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
+    return ObjectUtils.doIfNotNull(getWorkingRoot(buildEnvironment), it -> resolveBuildRoot(it));
+  }
+
+  private static @NotNull Path resolveBuildRoot(@NotNull Path workingDirectory) {
+    var buildRoot = workingDirectory;
+    while (buildRoot != null) {
+      for (var settingsFileName : GradleConstants.KNOWN_GRADLE_SETTINGS_FILES) {
+        var settingsFile = buildRoot.resolve(settingsFileName);
+        if (Files.exists(settingsFile)) {
+          return buildRoot;
+        }
+      }
+      buildRoot = buildRoot.getParent();
     }
-    var jvmArgs = buildEnvironment.getJava().getJvmArguments();
-    return ContainerUtil.filter(jvmArgs, it -> !StringUtil.isEmpty(it));
+    return workingDirectory;
   }
 
   private static void setupEnvironment(
@@ -399,87 +406,6 @@ public final class GradleExecutionHelper {
       settings.isPassParentEnvs() ? GeneralCommandLine.ParentEnvironmentType.CONSOLE : GeneralCommandLine.ParentEnvironmentType.NONE);
     Map<String, String> effectiveEnvironment = commandLine.getEffectiveEnvironment();
     operation.setEnvironmentVariables(effectiveEnvironment);
-  }
-
-  @ApiStatus.Internal
-  @VisibleForTesting
-  static List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
-    List<String> mergedJvmArgs = mergeJvmArgs(jvmArgs, jvmArgsFromIdeSettings);
-    JvmOptions jvmOptions = new JvmOptions(null);
-    jvmOptions.setAllJvmArgs(mergedJvmArgs);
-    return jvmOptions.getAllJvmArgs();
-  }
-
-  @ApiStatus.Internal
-  @VisibleForTesting
-  static List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
-    List<String> mergedJvmArgs = ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings);
-    MultiMap<String, String> argumentsMap = parseJvmArgs(mergedJvmArgs);
-
-    Map<String, String> mergedKeys = new LinkedHashMap<>();
-    Set<String> argKeySet = new LinkedHashSet<>(argumentsMap.keySet());
-    for (String argKey : argKeySet) {
-      Collection<String> values = argumentsMap.getModifiable(argKey);
-      if (values.size() == 1 && values.iterator().next().isEmpty()) {
-        Couple<String> couple = splitArg(argKey);
-        mergedKeys.put(couple.first, couple.second);
-      }
-      else {
-        mergedKeys.put(argKey, "");
-        Map<String, String> mergedArgs = new LinkedHashMap<>();
-        for (String jvmArg : values) {
-          if (jvmArg.isEmpty()) continue;
-          Couple<String> couple = splitArg(jvmArg);
-          mergedArgs.put(couple.first, couple.second);
-        }
-        values.clear();
-        mergedArgs.forEach((key, value) -> values.add(key + value));
-      }
-    }
-
-    List<String> mergedArgs = new SmartList<>();
-    mergedKeys.forEach((s1, s2) -> mergedArgs.add(s1 + s2));
-    argKeySet.stream().filter(argKey -> !mergedArgs.contains(argKey)).forEach(argumentsMap::remove);
-
-    // remove `--add-opens` options, because same options will be added by gradle producing the option duplicates.
-    // And the daemon will become uncompilable with the CLI invocations.
-    // see https://github.com/gradle/gradle/blob/v5.1.1/subprojects/launcher/src/main/java/org/gradle/launcher/daemon/configuration/DaemonParameters.java#L125
-    argumentsMap.remove("--add-opens");
-
-    List<String> result = new SmartList<>();
-    argumentsMap.keySet().forEach(key -> argumentsMap.get(key).forEach(val -> {
-      result.add(key);
-      if (StringUtil.isNotEmpty(val)) {
-        result.add(val);
-      }
-    }));
-    return result;
-  }
-
-  private static @NotNull MultiMap<@NotNull String, @NotNull String> parseJvmArgs(@NotNull List<@NotNull String> args) {
-    MultiMap<String, String> result = MultiMap.createLinkedSet();
-    String lastKey = null;
-    for (String jvmArg : args) {
-      if (jvmArg.startsWith("-")) {
-        result.putValue(jvmArg, "");
-        lastKey = jvmArg;
-      }
-      else {
-        if (lastKey != null) {
-          result.putValue(lastKey, jvmArg);
-          lastKey = null;
-        }
-        else {
-          result.putValue(jvmArg, "");
-        }
-      }
-    }
-    return result;
-  }
-
-  private static Couple<String> splitArg(String arg) {
-    int i = arg.indexOf('=');
-    return i <= 0 ? Couple.of(arg, "") : Couple.of(arg.substring(0, i), arg.substring(i));
   }
 
   @Nullable
