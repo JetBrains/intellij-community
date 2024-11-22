@@ -1568,11 +1568,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
                        if narrower(x):
-                           assert_type(x, int)
-                           #           └─ should be of `int` type
+                           expr1: int = x
+                           #            └─ should be of `int` type
                        else:
-                           assert_type(x, str)
-                           #           └─ should be of `str` type
+                           expr2: str = x
+                           #            └─ should be of `str` type
                    
                    def is_bool(x: object) -> TypeIs[bool]:
                        return isinstance(x, bool)
