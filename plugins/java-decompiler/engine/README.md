@@ -1,18 +1,18 @@
-### About Fernflower
+### About FernFlower
 
-Fernflower is the first actually working analytical decompiler for Java and 
+FernFlower is the first actually working analytical decompiler for Java and 
 probably for a high-level programming language in general. Naturally it is still 
 under development, please send your bug reports and improvement suggestions to the
-[issue tracker](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem+Decompiler).
+[issue tracker](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem+Java. Decompiler).
 
-### Fernflower and ForgeFlower
+### FernFlower and ForgeFlower
 
-Fernflower includes some patches from [ForgeFlower](https://github.com/MinecraftForge/ForgeFlower).
+FernFlower includes some patches from [ForgeFlower](https://github.com/MinecraftForge/ForgeFlower).
 Sincere appreciation is extended to the maintainers of ForgeFlower for their valuable contributions and enhancements.
 
 ### Licence
 
-Fernflower is licenced under the [Apache Licence Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+FernFlower is licenced under the [Apache Licence Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 ### Running from command line
 
@@ -92,7 +92,7 @@ Option 'ren' (i.e. -ren=1) activates renaming functionality. Default renaming st
 - new names are built according to a simple pattern: (class|method|field)_\<consecutive unique number>  
 You can overwrite this rules by providing your own implementation of the 4 key methods invoked by the decompiler while renaming. Simply 
 pass a class that implements org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer in the option 'urc'
-(e.g. -urc=com.example.MyRenamer) to Fernflower. The class must be available on the application classpath.
+(e.g. -urc=com.example.MyRenamer) to FernFlower. The class must be available on the application classpath.
 
 The meaning of each method should be clear from naming: toBeRenamed determine whether the element will be renamed, while the other three
 provide new names for classes, methods and fields respectively.  
