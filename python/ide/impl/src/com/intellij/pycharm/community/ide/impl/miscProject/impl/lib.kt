@@ -304,7 +304,7 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
  * Looks for system pythons. Returns flavor and all its pythons.
  */
 fun findPythonsOnSystem(): List<Pair<PythonSdkFlavor<*>, Collection<Path>>> =
-  PythonSdkFlavor.getApplicableFlavors(true)
+  PythonSdkFlavor.getApplicableFlavors(false) //system=platform dependent (exclude venv)
     .map { flavor ->
       flavor.dropCaches()
       flavor to flavor.suggestLocalHomePaths(null, null)
