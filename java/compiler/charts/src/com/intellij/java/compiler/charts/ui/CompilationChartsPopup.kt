@@ -34,7 +34,7 @@ class CompilationChartsPopup(
     this.module = module
     this.popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content(module.info, actions), null)
-      .setResizable(true)
+      .setResizable(false)
       .setMovable(true)
       .setFocusable(false)
       .setRequestFocus(false)
