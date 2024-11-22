@@ -54,7 +54,7 @@ object CollectionAssertions {
   }
 
   @JvmStatic
-  fun <T> assertContains(
+  fun <T> assertContainsUnordered(
     expected: Collection<T>,
     actual: Collection<T>,
     messageSupplier: (() -> String)? = null,
