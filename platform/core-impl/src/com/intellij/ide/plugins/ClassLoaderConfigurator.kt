@@ -96,7 +96,7 @@ class ClassLoaderConfigurator(
       }
     }
     else {
-      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null) {
+      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null && module.moduleLoadingRule != ModuleLoadingRule.EMBEDDED) {
         throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
 

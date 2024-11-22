@@ -563,6 +563,21 @@ class PluginDescriptorTest {
   }
   
   @Test
+  fun `embedded content module without package prefix`() {
+    val samplePluginDir = pluginDirPath.resolve("sample-plugin")
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("embedded.module", PluginBuilder(), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .build(samplePluginDir)
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).hasSize(1)
+    val mainClassLoader = result.enabledPlugins.single().pluginClassLoader
+    val embeddedModuleClassLoader = result.findEnabledModule("embedded.module")!!.pluginClassLoader
+    assertThat(embeddedModuleClassLoader).isSameAs(mainClassLoader)
+  }
+  
+  @Test
   fun `dependencies of embedded content module are added to the main class loader`() {
     PluginBuilder()
       .noDepends()
