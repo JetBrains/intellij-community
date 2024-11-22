@@ -40,7 +40,6 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.*
@@ -1076,32 +1075,30 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkGenericTypeParameterization(node: PySubscriptionExpression) {
       val type = myTypeEvalContext.getType(node)
-      val operandType = myTypeEvalContext.getType(node.operand)
-      if (type is PyCollectionType && operandType is PyClassType && operandType.classQName != PyNames.TUPLE) {
-        val indexTypes = PyTypingTypeProvider.getIndexTypesStatic(node, myTypeEvalContext)
-        if (indexTypes.isNotEmpty()) {
-          val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(type.pyClass, myTypeEvalContext)
-          if (genericDefinitionType != null) {
-            val elementTypes = genericDefinitionType.elementTypes
-            val numOfDispensable = elementTypes.count { (it is PyTypeParameterType && it.defaultType != null) || it is PyTypeVarTupleType }
+      val declaration = node.operand.reference?.resolve() as? PyClass ?: return
+      if (type is PyCollectionType && declaration.name != PyNames.TUPLE) {
+        val typeArguments = PyTypingTypeProvider.getIndexTypesStatic(node, myTypeEvalContext)
+        if (typeArguments.isNotEmpty()) {
+          val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(type.pyClass, myTypeEvalContext) ?: return
+          val typeParameters = genericDefinitionType.elementTypes
+          val numOfDispensable = typeParameters.count { (it is PyTypeParameterType && it.defaultType != null) || it is PyTypeVarTupleType }
 
-            val mapping = PyTypeParameterMapping.mapByShape(elementTypes,
-                                                            indexTypes,
-                                                            PyTypeParameterMapping.Option.USE_DEFAULTS,
-                                                            PyTypeParameterMapping.Option.MAP_WITH_DEFAULTS_STRICT)
-            if (mapping == null) {
-              val expectedMax = elementTypes.size
-              val expectedMin = expectedMax - numOfDispensable
-              val actualNum = indexTypes.size
+          val mapping = PyTypeParameterMapping.mapByShape(typeParameters,
+                                                          typeArguments,
+                                                          PyTypeParameterMapping.Option.USE_DEFAULTS,
+                                                          PyTypeParameterMapping.Option.MAP_WITH_DEFAULTS_STRICT)
+          if (mapping == null) {
+            val expectedMax = typeParameters.size
+            val expectedMin = expectedMax - numOfDispensable
+            val actualNum = typeArguments.size
 
-              if (actualNum < expectedMin) {
-                registerProblem(node.indexExpression, PyPsiBundle.message("INSP.type.hints.generic.type.too.few.type.arguments",
-                                                                          type.pyClass.name, expectedMin, actualNum), ProblemHighlightType.WEAK_WARNING)
-              }
-              else if (actualNum > expectedMax) {
-                registerProblem(node.indexExpression, PyPsiBundle.message("INSP.type.hints.generic.type.too.many.type.arguments",
-                                                                          type.pyClass.name, expectedMax, actualNum), ProblemHighlightType.WEAK_WARNING)
-              }
+            if (actualNum < expectedMin) {
+              registerProblem(node.indexExpression, PyPsiBundle.message("INSP.type.hints.generic.type.too.few.type.arguments",
+                                                                        type.pyClass.name, expectedMin, actualNum), ProblemHighlightType.WEAK_WARNING)
+            }
+            else if (actualNum > expectedMax) {
+              registerProblem(node.indexExpression, PyPsiBundle.message("INSP.type.hints.generic.type.too.many.type.arguments",
+                                                                        type.pyClass.name, expectedMax, actualNum), ProblemHighlightType.WEAK_WARNING)
             }
           }
         }

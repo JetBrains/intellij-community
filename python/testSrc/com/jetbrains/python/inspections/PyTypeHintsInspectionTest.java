@@ -1992,6 +1992,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // TODO remove when PY-77059 is supported
+  public void testParameterizedImplicitTypeAlias() {
+    doTestByText("""
+                   from typing import TypeVar, Coroutine, Any
+                   Co = Coroutine[Any, Any, T]
+                   MyCo = Co[T]
+                   """);
+  }
+
 
   @NotNull
   @Override
