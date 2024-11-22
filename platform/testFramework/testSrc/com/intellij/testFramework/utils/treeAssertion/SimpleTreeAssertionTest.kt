@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.treeAssertion
 
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
-import com.intellij.platform.testFramework.treeAssertion.buildTree
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

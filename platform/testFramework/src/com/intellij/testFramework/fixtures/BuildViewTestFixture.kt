@@ -8,8 +8,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
-import com.intellij.platform.testFramework.treeAssertion.buildTree
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.ThrowableRunnable
