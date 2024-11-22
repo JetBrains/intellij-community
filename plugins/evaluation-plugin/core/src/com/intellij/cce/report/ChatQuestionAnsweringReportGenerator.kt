@@ -77,13 +77,11 @@ class ChatQuestionAnsweringReportGenerator(
             overflow: hidden;
             word-wrap: break-word;
             background-color: #f9f9f9;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         """.trimIndent()
   }
 
   private fun preStyle(): String {
     return """
-            font-size: 0.9em;
             overflow-x: auto;
             max-width: 100%;
             white-space: pre-wrap;
