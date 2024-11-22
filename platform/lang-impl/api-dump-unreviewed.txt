@@ -1498,6 +1498,7 @@ f:com.intellij.codeInsight.actions.LayoutCodeInfoCollector
 - setReformatCodeNotification(java.lang.String):V
 - setSecondFormatNotification(java.lang.String):V
 com.intellij.codeInsight.actions.LayoutCodeOptions
+- com.intellij.codeInsight.actions.OptionalReformatActions
 - a:getTextRangeType():com.intellij.codeInsight.actions.TextRangeType
 a:com.intellij.codeInsight.actions.MultiCaretCodeInsightAction
 - com.intellij.openapi.actionSystem.AnAction
@@ -1532,6 +1533,11 @@ c:com.intellij.codeInsight.actions.OptimizeImportsProcessor
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[],java.lang.String,java.lang.Runnable):V
 - s:getCommandName():java.lang.String
 - p:prepareTask(com.intellij.psi.PsiFile,Z):java.util.concurrent.FutureTask
+com.intellij.codeInsight.actions.OptionalReformatActions
+- doNotKeepLineBreaks():Z
+- isCodeCleanup():Z
+- a:isOptimizeImports():Z
+- a:isRearrangeCode():Z
 com.intellij.codeInsight.actions.ReaderModeListener
 - java.util.EventListener
 - a:modeChanged(com.intellij.openapi.project.Project):V
