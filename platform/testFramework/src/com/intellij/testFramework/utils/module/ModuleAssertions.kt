@@ -6,6 +6,8 @@ package com.intellij.testFramework.utils.module
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertContains
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
