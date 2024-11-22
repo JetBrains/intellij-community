@@ -75,4 +75,18 @@ object CollectionAssertions {
       throw AssertionFailedError(message, expected, actual)
     }
   }
+
+  @JvmStatic
+  fun <T> assertEmpty(
+    actual: Collection<T>,
+    messageSupplier: (() -> String)? = null,
+  ) {
+    if (actual.isNotEmpty()) {
+      val message = (messageSupplier?.invoke() ?: "") + """|
+      |Expecting empty but was:
+      |  $actual
+    """.trimMargin()
+      throw AssertionFailedError(message, emptyList<String>(), actual)
+    }
+  }
 }
