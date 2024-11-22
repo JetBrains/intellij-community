@@ -4,7 +4,7 @@ package com.intellij.cce.report
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
 import com.intellij.cce.evaluable.AIA_USER_PROMPT
-import com.intellij.cce.evaluable.chat.REFERENCE_PROPERTY
+import com.intellij.cce.evaluable.REFERENCE_PROPERTY
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*

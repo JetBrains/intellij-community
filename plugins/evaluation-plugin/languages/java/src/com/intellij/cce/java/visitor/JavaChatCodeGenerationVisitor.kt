@@ -2,9 +2,9 @@
 package com.intellij.cce.java.visitor
 
 import com.intellij.cce.core.*
-import com.intellij.cce.evaluable.chat.INTERNAL_RELEVANT_FILES_PROPERTY
-import com.intellij.cce.evaluable.chat.INTERNAL_API_CALLS_PROPERTY
-import com.intellij.cce.evaluable.chat.METHOD_NAME_PROPERTY
+import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
+import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
+import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.java.chat.extractCalledInternalApiMethods
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException

@@ -2,7 +2,7 @@ package com.intellij.cce.java.chat
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.core.TokenProperties
-import com.intellij.cce.evaluable.chat.METHOD_NAME_PROPERTY
+import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.metric.ApiCallExtractor
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.smartReadActionBlocking

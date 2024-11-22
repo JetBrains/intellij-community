@@ -8,7 +8,7 @@ import com.intellij.cce.actions.FileActions
 import com.intellij.cce.core.SimpleTokenProperties
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TypeProperty
-import com.intellij.cce.evaluable.chat.PROMPT_PROPERTY
+import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FilesHelper
 import com.intellij.ide.scratch.ScratchUtil

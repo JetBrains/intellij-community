@@ -4,7 +4,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
-import com.intellij.cce.evaluable.chat.REFERENCE_PROPERTY
+import com.intellij.cce.evaluable.REFERENCE_PROPERTY
 import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.computeBleuScore
 import org.apache.commons.lang3.StringUtils
