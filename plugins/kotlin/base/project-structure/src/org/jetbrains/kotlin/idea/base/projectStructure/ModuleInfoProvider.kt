@@ -270,15 +270,12 @@ class ModuleInfoProvider(private val project: Project) {
             val contextualModuleResult = contextByContextualBinaryModule(collectionRequest)
             contextualModuleResult?.let { yield(Result.success(it)) }
 
-            yieldAll(object : Iterable<Result<IdeaModuleInfo>> {
-                override fun iterator(): Iterator<Result<IdeaModuleInfo>> {
-                    val orderEntries = runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }
-                    val iterator = orderEntries.iterator()
-                    return MappingIterator(iterator) { orderEntry ->
-                        collectByOrderEntry(collectionRequest, orderEntry)?.let(Result.Companion::success)
-                    }
+            val orderEntries = runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }
+            yieldAll(
+                orderEntries.asSequence().mapNotNull { orderEntry ->
+                    collectByOrderEntry(collectionRequest, orderEntry)?.let(Result.Companion::success)
                 }
-            })
+            )
         }
     }
 
@@ -321,28 +318,24 @@ class ModuleInfoProvider(private val project: Project) {
     }
 
     private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectSourceRelatedByFile(virtualFile: VirtualFile, config: Configuration) {
-        yieldAll(object : Iterable<Result<IdeaModuleInfo>> {
-            override fun iterator(): Iterator<Result<IdeaModuleInfo>> {
-                val modules = sequence {
-                    withCallExtensions(
-                        config = config,
-                        extensionBlock = { findContainingModules(project, virtualFile) },
-                    ) {
-                        runReadAction { fileIndex.getModuleForFile(virtualFile) }?.let { module ->
-                            yield(module)
-                        }
-                    }
-                }
-                val iterator = modules.iterator()
-
-                return MappingIterator(iterator) { module ->
-                    if (module.isDisposed) return@MappingIterator null
-                    val projectFileIndex = ProjectFileIndex.getInstance(project)
-                    val sourceRootType: KotlinSourceRootType? = projectFileIndex.getKotlinSourceRootType(virtualFile)
-                    module.asSourceInfo(sourceRootType)?.let(Result.Companion::success)
+        val modules = sequence {
+            withCallExtensions(
+                config = config,
+                extensionBlock = { findContainingModules(project, virtualFile) },
+            ) {
+                runReadAction { fileIndex.getModuleForFile(virtualFile) }?.let { module ->
+                    yield(module)
                 }
             }
-        })
+        }
+        yieldAll(
+            modules.mapNotNull { module ->
+                if (module.isDisposed) return@mapNotNull null
+                val projectFileIndex = ProjectFileIndex.getInstance(project)
+                val sourceRootType: KotlinSourceRootType? = projectFileIndex.getKotlinSourceRootType(virtualFile)
+                module.asSourceInfo(sourceRootType)?.let(Result.Companion::success)
+            }
+        )
 
         val fileOrigin = getOutsiderFileOrigin(project, virtualFile)
         if (fileOrigin != null) {
@@ -499,27 +492,17 @@ private sealed class UserDataModuleContainer {
 @K1ModeProjectStructureApi
 fun Sequence<Result<IdeaModuleInfo>>.unwrap(
     errorHandler: (String, Throwable) -> Unit,
-): Sequence<IdeaModuleInfo> {
-    val originalSequence = this
-    return object : Sequence<IdeaModuleInfo> {
-        override fun iterator(): Iterator<IdeaModuleInfo> {
-            return object : TransformingIterator<IdeaModuleInfo>() {
-                private var iterator: Iterator<Result<IdeaModuleInfo>>? = originalSequence.iterator()
-                override fun calculateHasNext(): Boolean = iterator?.hasNext() == true
-
-                override fun calculateNext(): IdeaModuleInfo? {
-                    val iter = iterator ?: return null
-                    val result = iter.next()
-                    result.getOrNull()?.let { return it }
-
-                    val error = result.exceptionOrNull()
-                    if (error != null) {
-                        errorHandler("Could not find correct module information", error)
-                        iterator = null
-                    }
-                    return null
-                }
-            }
+): Sequence<IdeaModuleInfo> = sequence {
+    for (result in this@unwrap) {
+        val successResult = result.getOrNull()
+        if (successResult != null) {
+            yield(successResult)
+            continue
+        }
+        val error = result.exceptionOrNull()
+        if (error != null) {
+            errorHandler("Could not find correct module information", error)
+            break
         }
     }
 }
