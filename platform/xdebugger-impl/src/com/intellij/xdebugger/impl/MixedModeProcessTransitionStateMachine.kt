@@ -16,7 +16,6 @@ class MixedModeProcessTransitionStateMachine(
   private val coroutineScope: CoroutineScope,
 ) {
   interface State
-  object BeforeStart : State
 
   object BothRunning : State
   class ResumeStarted(val low: XSuspendContext, val high: XSuspendContext) : State
@@ -58,7 +57,7 @@ class MixedModeProcessTransitionStateMachine(
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
   private val stateMachineHelperScope = coroutineScope.childScope("Edt coroutine scope", Dispatchers.Default)
 
-  private var state: State = BeforeStart
+  private var state: State = BothRunning
 
   private fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean {
     return suspendContext.javaClass.name.contains("Cidr")
@@ -209,10 +208,6 @@ class MixedModeProcessTransitionStateMachine(
 
       is LowRun -> {
         when (currentState) {
-          is BeforeStart -> {
-            // now only low level debugger reports its start
-            state = BothRunning
-          }
           is ResumeStarted -> {
             state = OnlyHighStopped(currentState.high)
           }
