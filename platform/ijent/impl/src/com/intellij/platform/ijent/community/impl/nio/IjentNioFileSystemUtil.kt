@@ -14,7 +14,7 @@ import java.io.IOException
 import java.nio.file.*
 
 @Throws(FileSystemException::class)
-internal fun <T, E : EelFsError> EelResult<T, E>.getOrThrowFileSystemException(): T =
+fun <T, E : EelFsError> EelResult<T, E>.getOrThrowFileSystemException(): T =
   when (this) {
     is EelResult.Ok -> value
     is EelResult.Error -> error.throwFileSystemException()

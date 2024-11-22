@@ -390,6 +390,11 @@ abstract class PosixNioBasedEelFileSystemApi(
     wrapIntoEelResult {
       Files.createSymbolicLink(linkPath.toNioPath(), target.toNioPath())
     }
+
+  override suspend fun readFully(path: EelPath.Absolute, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
+    TODO("Not yet implemented")
+  }
+
 }
 
 abstract class WindowsNioBasedEelFileSystemApi(
@@ -425,6 +430,11 @@ abstract class WindowsNioBasedEelFileSystemApi(
 
       // TODO File permissions for windows.
     }
+
+  override suspend fun readFully(path: EelPath.Absolute, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> {
+    TODO("Not yet implemented")
+  }
+
 }
 
 private fun copyTimes(

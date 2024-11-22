@@ -156,6 +156,32 @@ interface EelFileSystemApi {
     interface Other : FileReaderError, EelFsError.Other
   }
 
+  enum class OverflowPolicy {
+    DROP,
+    RETAIN,
+  }
+
+  sealed interface FullReadResult {
+    interface Overflow : FullReadResult
+    interface BytesOverflown : FullReadResult {
+      val bytes: ByteArray
+    }
+
+    interface Bytes : FullReadResult {
+      val bytes: ByteArray
+    }
+  }
+
+  @CheckReturnValue
+  suspend fun readFully(path: EelPath.Absolute, limit: ULong, overflowPolicy: OverflowPolicy): EelResult<FullReadResult, FullReadError>
+
+  sealed interface FullReadError : EelFsError {
+    interface DoesNotExist : FullReadError, EelFsError.DoesNotExist
+    interface PermissionDenied : FullReadError, EelFsError.PermissionDenied
+    interface NotFile : FullReadError, EelFsError.NotFile
+    interface Other : FullReadError, EelFsError.Other
+  }
+
   /**
    * Opens the file only for writing
    */

@@ -18,6 +18,10 @@ object EelFsResultImpl {
 
   data class DiskInfoImpl(override val totalSpace: ULong, override val availableSpace: ULong) : EelFileSystemApi.DiskInfo
 
+  data class FullBytesReadImpl(override val bytes: ByteArray) : EelFileSystemApi.FullReadResult.Bytes
+  data class FullBytesReadOverflown(override val bytes: ByteArray) : EelFileSystemApi.FullReadResult.BytesOverflown
+  data object Overflow : EelFileSystemApi.FullReadResult.Overflow
+
   data class Other(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.FileReaderError.Other,
     EelFileSystemApi.FileWriterError.Other,
@@ -38,7 +42,8 @@ object EelFsResultImpl {
     EelFileSystemApi.MoveError.Other,
     EelFileSystemPosixApi.CreateSymbolicLinkError.Other,
     EelOpenedFile.CloseError.Other,
-    EelOpenedFile.Writer.TruncateError.Other
+    EelOpenedFile.Writer.TruncateError.Other,
+    EelFileSystemApi.FullReadError.Other
 
   data class DoesNotExist(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.ChangeAttributesError.SourceDoesNotExist,
@@ -48,6 +53,7 @@ object EelFsResultImpl {
     EelFileSystemApi.SameFileError.DoesNotExist,
     EelFileSystemApi.StatError.DoesNotExist,
     EelFileSystemApi.CanonicalizeError.DoesNotExist,
+    EelFileSystemApi.FullReadError.DoesNotExist,
     EelFileSystemApi.DiskInfoError.PathDoesNotExists,
     EelFileSystemPosixApi.CreateDirectoryError.ParentNotFound,
     EelFileSystemApi.DeleteError.DoesNotExist,
@@ -75,7 +81,8 @@ object EelFsResultImpl {
     EelFileSystemApi.DeleteError.PermissionDenied,
     EelFileSystemApi.CopyError.PermissionDenied,
     EelFileSystemApi.MoveError.PermissionDenied,
-    EelFileSystemPosixApi.CreateSymbolicLinkError.PermissionDenied
+    EelFileSystemPosixApi.CreateSymbolicLinkError.PermissionDenied,
+    EelFileSystemApi.FullReadError.PermissionDenied
 
   data class NotDirectory(override val where: EelPath.Absolute, override val message: String) :
     EelFileSystemApi.CanonicalizeError.NotDirectory,
@@ -99,7 +106,8 @@ object EelFsResultImpl {
     EelFileSystemApi.FileWriterError.NotFile,
     EelFileSystemApi.SameFileError.NotFile,
     EelFileSystemApi.StatError.NotFile,
-    EelFileSystemApi.MoveError.TargetIsDirectory
+    EelFileSystemApi.MoveError.TargetIsDirectory,
+    EelFileSystemApi.FullReadError.NotFile
 
   data class InvalidValue(override val where: EelPath.Absolute, override val message: String) :
     EelOpenedFile.Reader.ReadError.InvalidValue,

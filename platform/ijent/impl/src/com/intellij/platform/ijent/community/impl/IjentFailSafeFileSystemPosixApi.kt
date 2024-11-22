@@ -161,6 +161,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
       openForReading(path)
     }
 
+  override suspend fun readFully(path: EelPath.Absolute, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> = holder.withDelegateRetrying {
+    readFully(path, limit, overflowPolicy)
+  }
+
   override suspend fun openForWriting(
     options: EelFileSystemApi.WriteOptions,
   ): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> =
