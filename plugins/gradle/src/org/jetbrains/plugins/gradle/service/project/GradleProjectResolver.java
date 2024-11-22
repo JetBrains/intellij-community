@@ -42,10 +42,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.gradle.api.ProjectConfigurationException;
-import org.gradle.tooling.BuildActionFailureException;
-import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -164,38 +161,30 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private @Nullable DataNode<ProjectData> resolveProjectInfo(
     @NotNull DefaultProjectResolverContext resolverContext
   ) {
-    final long activityId = resolverContext.getExternalSystemTaskId().getId();
-    GradleExecutionSettings settings = resolverContext.getSettings();
-    ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId,
-                                                      settings.isParallelModelFetch());
+    var projectPath = resolverContext.getProjectPath();
+    var id = resolverContext.getExternalSystemTaskId();
+    var settings = resolverContext.getSettings();
+    var listener = resolverContext.getListener();
+    var cancellationToken = resolverContext.getCancellationToken();
 
-    Span gradleExecutionSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+    ExternalSystemSyncActionsCollector.logSyncStarted(id.findProject(), id.getId(), settings.isParallelModelFetch());
+
+    var gradleExecutionSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleExecution")
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
-      GradleWrapperHelper.ensureInstalledWrapper(
-        resolverContext.getExternalSystemTaskId(),
-        resolverContext.getProjectPath(),
-        resolverContext.getSettings(),
-        resolverContext.getListener(),
-        resolverContext.getCancellationToken()
-      );
 
-      final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext);
+      GradleWrapperHelper.ensureInstalledWrapper(id, projectPath, settings, listener, cancellationToken);
+
+      var projectResolverChain = createProjectResolverChain(resolverContext);
+
       var projectDataFunction = getProjectDataFunction(resolverContext, projectResolverChain);
-      final DataNode<ProjectData> projectDataNode = GradleExecutionHelper.execute(
-        resolverContext.getProjectPath(),
-        resolverContext.getSettings(),
-        resolverContext.getExternalSystemTaskId(),
-        resolverContext.getListener(),
-        resolverContext.getCancellationToken(),
-        projectDataFunction
-      );
+      var projectDataNode = GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, projectDataFunction);
 
       // auto-discover buildSrc projects of the main and included builds
-      String gradleVersion = resolverContext.getProjectGradleVersion();
+      var gradleVersion = resolverContext.getProjectGradleVersion();
       if (gradleVersion != null && GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.0")) {
-        String gradleHome = ObjectUtils.doIfNotNull(resolverContext.getUserData(GRADLE_HOME_DIR), it -> it.getPath());
+        var gradleHome = ObjectUtils.doIfNotNull(resolverContext.getUserData(GRADLE_HOME_DIR), it -> it.getPath());
         new GradleBuildSrcProjectsResolver(this, resolverContext, gradleHome, projectResolverChain)
           .discoverAndAppendTo(projectDataNode);
       }
