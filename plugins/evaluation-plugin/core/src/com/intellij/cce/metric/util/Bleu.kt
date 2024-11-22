@@ -1,6 +1,7 @@
 // The logic is taken from https://github.com/mjpost/sacrebleu/blob/master/sacrebleu/metrics/bleu.py, simplified by eliminating
 // smoothing methods, tokenizer options, and advanced settings for clarity in core BLEU calculation.
 // For simplifying, a single prediction and reference text is assumed in the BLEU score calculation.
+package com.intellij.cce.metric.util
 
 import java.text.BreakIterator
 import kotlin.math.exp

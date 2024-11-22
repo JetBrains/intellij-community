@@ -6,7 +6,7 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
 import com.intellij.cce.evaluable.chat.REFERENCE_PROPERTY
 import com.intellij.cce.metric.util.Bootstrap
-import computeBleuScore
+import com.intellij.cce.metric.util.computeBleuScore
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
