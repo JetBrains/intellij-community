@@ -40,8 +40,9 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
-    <bundledFirCompilerPluginProvider implementation="org.jetbrains.kotlin.idea.fir.extensions.DefaultBundledFirCompilerPluginProvider"
-                                      order="first"/>
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
+            order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
