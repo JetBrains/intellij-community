@@ -96,7 +96,7 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
                 NO
             } else if (declaration.isTopLevel() && isAnnotated(declaration, TestNGUtil.TEST_ANNOTATION_FQN)) {
                 YES
-            } else if (findAnnotatedFunction(declaration, testableClassMethodAnnotations) != null) {
+            } else if (containsTestIndicator(declaration)) {
                 YES
             } else if (declaration.hasModifier(KtTokens.OPEN_KEYWORD) || declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
                 for (subDeclaration in declaration.declarations) {
@@ -114,6 +114,14 @@ class KotlinTestNGFramework: TestNGFramework(), KotlinPsiBasedTestFramework {
             } else {
                 NO
             }
+        }
+
+        private fun containsTestIndicator(classOrObject: KtClassOrObject): Boolean {
+            for (declaration in classOrObject.declarations) {
+                val function = declaration as? KtNamedFunction ?: continue
+                if (isAnnotated(function, testableClassMethodAnnotations) && !isIgnoredMethod(function)) return true
+            }
+            return false
         }
 
         override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
