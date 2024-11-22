@@ -6,14 +6,13 @@ import com.intellij.java.compiler.charts.ui.CompilationChartsAction.Position.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.FlowLayout
 import java.awt.Point
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 class CompilationChartsPopup(
   private val project: Project,
@@ -26,10 +25,12 @@ class CompilationChartsPopup(
     close()
 
     val name = module.info["name"] ?: return
-    val actions = listOf<CompilationChartsAction>(OpenDirectoryAction(project, name, { close() }),
-                                                  OpenProjectStructureAction(project, name, { close() }),
-                                                  ShowModuleDependenciesAction(project, name, component, { close() }),
-                                                  ShowMatrixDependenciesAction(project, name, component, { close() }),)
+    val actions = listOf<CompilationChartsAction>(
+      OpenDirectoryAction(project, name, { close() }),
+      OpenProjectStructureAction(project, name, { close() }),
+      ShowModuleDependenciesAction(project, name, component, { close() }),
+      ShowMatrixDependenciesAction(project, name, component, { close() }),
+    )
     this.module = module
     this.popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content(module.info, actions), null)
@@ -57,73 +58,43 @@ class CompilationChartsPopup(
     if (module?.contains(e.point) == true) return true
     val content = popup?.content ?: return false
     val event = SwingUtilities.convertMouseEvent(e.component, e, content)
-    return content.contains(event.point)
+    val rectangle = content.bounds.apply {
+      x -= 10
+      y -= 10
+      width += 20
+      height += 20
+    }
+
+    return rectangle.contains(event.point)
   }
 
-  private fun content(info: Map<String, String>, actions: List<CompilationChartsAction>): JComponent {
-    val panel = JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      alignmentY = JPanel.TOP_ALIGNMENT
-      alignmentX = JPanel.LEFT_ALIGNMENT
-      border = JBUI.Borders.empty(10)
+  private fun content(info: Map<String, String>, actions: List<CompilationChartsAction>): JComponent = panel {
+    row {
+      actions.filter { it.isAccessible() && it.position() == LEFT }
+        .map { it.label() }
+        .forEach { label -> cell(label).align(AlignX.LEFT) }
+
+      label(info["name"] ?: "")
+
+      actions.filter { it.isAccessible() && it.position() == RIGHT }
+        .map { it.label() }
+        .forEach { label -> cell(label).align(AlignX.RIGHT) }
     }
 
-    val head = JPanel(BorderLayout()).apply {
-      maximumSize = Dimension(Int.MAX_VALUE, 30)
+    separator()
+
+    row {
+      label(CompilationChartsBundle.message("charts.duration", info["duration"]))
     }
 
-    val center = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-      border = JBUI.Borders.emptyTop(5)
-    }
-
-    val footer = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      border = JBUI.Borders.emptyTop(5)
-      alignmentX = JPanel.LEFT_ALIGNMENT
-    }
-
-    val title = JLabel(info["name"])
-    val duration = JLabel(CompilationChartsBundle.message("charts.duration", info["duration"]))
-
-    val left = JPanel().apply {
-      actions.filter { action -> action.isAccessible() }
-        .filter { action -> action.position() == LEFT }
-        .forEach { action -> add(action.label()) }
-    }
-
-    val right = JPanel().apply {
-      actions.filter { action -> action.isAccessible() }
-        .filter { action -> action.position() == RIGHT }
-        .forEach { action -> add(action.label()) }
-    }
-
-    val list = JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
-      alignmentX = JPanel.LEFT_ALIGNMENT
-      border = JBUI.Borders.emptyTop(10)
-    }.apply {
-      actions.filter { action -> action.isAccessible() }
-        .filter { action -> action.position() == LIST }
-        .forEach { action -> add(action.label().apply {alignmentX = JPanel.LEFT_ALIGNMENT}) }
-    }
-
-    return panel.apply {
-      add(head.apply {
-        add(left, BorderLayout.WEST)
-        add(title, BorderLayout.CENTER)
-        add(right, BorderLayout.EAST)
-      })
-      add(JSeparator(SwingConstants.HORIZONTAL).apply {
-        border = JBUI.Borders.empty(0, 10)
-        maximumSize = Dimension(Int.MAX_VALUE, 1)
-        foreground = UIUtil.getTooltipSeparatorColor()
-      })
-      add(center.apply {
-        add(duration, BorderLayout.WEST)
-      })
-      add(footer.apply {
-        add(list)
-      })
-    }
+    actions.filter { it.isAccessible() && it.position() == LIST }
+      .map { it.label() }
+      .forEach { label ->
+        row {
+          cell(label).align(AlignX.LEFT)
+        }
+      }
+  }.apply {
+    border = JBUI.Borders.empty(10)
   }
 }
