@@ -9,6 +9,8 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -21,6 +23,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.TimeUnit;
 
 public class LabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
@@ -65,6 +69,7 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         ExpressionEvaluator evaluator = null;
+        long startNs = System.nanoTime();
         try {
           evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
 
@@ -81,6 +86,14 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
           JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(debugProcess.getProject(), evaluator, false, XEvaluationOrigin.RENDERER);
           descriptor.setValueLabelFailed(
             new EvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex));
+        }
+        finally {
+          long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
+          if (descriptor instanceof ValueDescriptorImpl valueDescriptor
+              && valueDescriptor.getLastRenderer() instanceof NodeRendererImpl nodeRenderer
+              && nodeRenderer.hasOverhead()) {
+            OverheadTimings.add(debugProcess, new NodeRendererImpl.Overhead(nodeRenderer), 0, timeMs);
+          }
         }
         labelListener.labelChanged();
       }

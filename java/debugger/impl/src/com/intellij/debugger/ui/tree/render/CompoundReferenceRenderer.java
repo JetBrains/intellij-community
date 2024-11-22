@@ -50,6 +50,7 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
   private ChildrenRenderer myChildrenRenderer;
   private ValueIconRenderer myIconRenderer = null;
   protected final NodeRendererSettings myRendererSettings;
+  private boolean myHasOverhead = false;
 
   private FullValueEvaluatorProvider myFullValueEvaluatorProvider;
 
@@ -68,6 +69,17 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
 
   public CompoundReferenceRenderer(String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
     this(NodeRendererSettings.getInstance(), name, labelRenderer, childrenRenderer);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean hasOverhead() {
+    return myHasOverhead;
+  }
+
+  @ApiStatus.Internal
+  public void setHasOverhead(boolean value) {
+    myHasOverhead = value;
   }
 
   @Override

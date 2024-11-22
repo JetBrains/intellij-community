@@ -9,7 +9,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -79,12 +79,13 @@ public class CreateRendererAction extends AnAction {
             };
           SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
           if (name != null) {
-            NodeRenderer renderer = NodeRendererSettings.getInstance().createCompoundReferenceRenderer(
+            CompoundReferenceRenderer renderer = NodeRendererSettings.getInstance().createCompoundReferenceRenderer(
               StringUtil.getShortName(name),
               name,
               null,
               null);
             renderer.setEnabled(true);
+            renderer.setHasOverhead(true);
             ui.addRenderer(renderer);
           }
           editor.show();
