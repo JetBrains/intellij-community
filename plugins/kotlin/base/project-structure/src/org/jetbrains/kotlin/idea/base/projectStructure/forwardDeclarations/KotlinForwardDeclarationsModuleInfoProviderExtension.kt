@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtensi
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.register
-import org.jetbrains.kotlin.idea.base.util.SeqScope
 
 /**
  * An extension to provide the correct [IdeaModuleInfo] for synthetic forward declaration files.
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.idea.base.util.SeqScope
  * Results are tracked per-project by the [KotlinForwardDeclarationsFileOwnerTracker].
  */
 internal class KotlinForwardDeclarationsModuleInfoProviderExtension : ModuleInfoProviderExtension {
-    override fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(
+    override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByElement(
         element: PsiElement,
         file: PsiFile,
         virtualFile: VirtualFile
@@ -29,7 +28,7 @@ internal class KotlinForwardDeclarationsModuleInfoProviderExtension : ModuleInfo
         registerByVirtualFile(file.project, virtualFile)
     }
 
-    override fun SeqScope<Result<IdeaModuleInfo>>.collectByFile(
+    override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByFile(
         project: Project,
         virtualFile: VirtualFile,
         isLibrarySource: Boolean,
@@ -39,9 +38,9 @@ internal class KotlinForwardDeclarationsModuleInfoProviderExtension : ModuleInfo
     }
 
     // Kotlin/Native forward declarations can't belong to a module
-    override fun SeqScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {}
+    override suspend fun SequenceScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {}
 
-    private fun SeqScope<Result<IdeaModuleInfo>>.registerByVirtualFile(project: Project, virtualFile: VirtualFile) {
+    private suspend fun SequenceScope<Result<IdeaModuleInfo>>.registerByVirtualFile(project: Project, virtualFile: VirtualFile) {
         if (!virtualFile.isValid) return
         KotlinForwardDeclarationsFileOwnerTracker.getInstance(project).getFileOwner(virtualFile)?.let { kaModule ->
             register(kaModule.moduleInfo)
