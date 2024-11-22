@@ -9,7 +9,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.externalSystem.testFramework.utils.module.assertNoSourceRoots
 import com.intellij.platform.externalSystem.testFramework.utils.module.assertSourceRoots
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test

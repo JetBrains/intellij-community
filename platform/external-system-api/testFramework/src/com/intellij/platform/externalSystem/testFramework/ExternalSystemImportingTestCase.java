@@ -46,7 +46,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.testFramework.utils.module.ModuleAssertions;
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions;
 import com.intellij.testFramework.utils.module.SourceRootAssertions;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.openapi.externalSystem.test.compileModules
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
