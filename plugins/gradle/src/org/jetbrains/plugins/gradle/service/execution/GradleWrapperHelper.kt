@@ -133,11 +133,18 @@ object GradleWrapperHelper {
     cancellationToken: CancellationToken
   ) {
     SystemPropertiesAdjuster.executeAdjusted(projectPath) {
+
+      /**
+       * Don't reuse this build environment for the main execution process, because the wrapper task changes used Gradle distribution.
+       * It affects [org.gradle.tooling.model.build.GradleEnvironment] in [org.gradle.tooling.model.build.BuildEnvironment].
+       */
+      val buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings)
+
       val launcher = connection.newBuild()
       val wrapperSettings = GradleExecutionSettings(settings).apply {
         tasks = listOf("wrapper")
       }
-      GradleExecutionHelper.prepareForExecution(connection, launcher, cancellationToken, id, wrapperSettings, listener)
+      GradleExecutionHelper.prepareForExecution(launcher, cancellationToken, id, wrapperSettings, listener, buildEnvironment)
       ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
         .spanBuilder("ExecuteWrapperTask")
         .use { launcher.run() }

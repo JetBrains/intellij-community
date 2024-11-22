@@ -160,7 +160,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       var operation = isApplicableTestLauncher(id, projectPath, settings, gradleVersion)
                       ? connection.newTestLauncher()
                       : connection.newBuild();
-      GradleExecutionHelper.prepareForExecution(connection, operation, cancellationToken, id, settings, listener);
+      GradleExecutionHelper.prepareForExecution(operation, cancellationToken, id, settings, listener, buildEnvironment);
       if (operation instanceof BuildLauncher) {
         ((BuildLauncher)operation).run();
       }

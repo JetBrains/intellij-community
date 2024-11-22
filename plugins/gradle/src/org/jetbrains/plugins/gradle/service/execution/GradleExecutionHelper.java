@@ -116,18 +116,16 @@ public final class GradleExecutionHelper {
 
   @ApiStatus.Internal
   public static void prepareForExecution(
-    @NotNull ProjectConnection connection,
     @NotNull LongRunningOperation operation,
     @NotNull CancellationToken cancellationToken,
     @NotNull ExternalSystemTaskId id,
     @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable BuildEnvironment buildEnvironment
   ) {
     clearSystemProperties(operation);
 
     applyIdeaParameters(settings);
-
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, null, settings);
 
     setupJvmArguments(operation, settings, buildEnvironment);
 
