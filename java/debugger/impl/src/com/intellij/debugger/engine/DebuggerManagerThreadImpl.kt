@@ -440,7 +440,7 @@ fun executeOnDMT(
 suspend fun <T> withDebugContext(
   suspendContext: SuspendContextImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  block: () -> T,
+  block: suspend () -> T,
 ): T = withDebugContext(suspendContext.managerThread, priority, suspendContext, block)
 
 /**
@@ -457,7 +457,7 @@ suspend fun <T> withDebugContext(
   managerThread: DebuggerManagerThreadImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   suspendContext: SuspendContextImpl? = null,
-  block: () -> T,
+  block: suspend () -> T,
 ): T = suspendCancellableCoroutine { continuation ->
   executeOnDMT(managerThread, priority, suspendContext,
                onCommandCancelled = { continuation.cancel() }
