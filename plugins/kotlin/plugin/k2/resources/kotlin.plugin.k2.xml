@@ -43,6 +43,10 @@
     <bundledFirCompilerPluginProvider
             implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
             order="first"/>
+
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider"
+            order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
