@@ -72,8 +72,6 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
-            // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
-            put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
             fragmentCompilerBackend.configureCompiler(this)
         }
 
