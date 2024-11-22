@@ -179,6 +179,7 @@ public final class DebuggerUIUtil {
       EditorFactory.getInstance().releaseEditor(editor);
     });
     editor.getSettings().setLineNumbersShown(false);
+    editor.getSettings().setUseSoftWraps(true);
     return editor;
   }
 
