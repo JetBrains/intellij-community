@@ -41,6 +41,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.externalSystem.testFramework.utils.module.ExternalSystemSourceRootAssertion;
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -118,7 +119,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
     var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
-    ModuleAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
+    ContentRootAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
   }
 
   protected void assertNoSourceRoots(String moduleName) {

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.testFramework.utils.module.assertContentRoots
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
 import com.intellij.testFramework.utils.module.assertModules
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
