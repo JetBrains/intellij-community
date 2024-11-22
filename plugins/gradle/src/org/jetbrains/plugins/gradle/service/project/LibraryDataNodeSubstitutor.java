@@ -214,7 +214,7 @@ public class LibraryDataNodeSubstitutor {
   private Collection<ModuleLookupResult> lookupTargetModule(String path) {
     List<ModuleLookupResult> results = new ArrayList<>();
 
-    GradleSourceSetData targetModule = Optional.ofNullable(resolverContext.getSettings())
+    GradleSourceSetData targetModule = Optional.of(resolverContext.getSettings())
       .map(GradleExecutionSettings::getExecutionWorkspace)
       .map(ws -> ws.findModuleDataByArtifacts(Collections.singleton(new File(path))))
       .filter(md -> md instanceof GradleSourceSetData)

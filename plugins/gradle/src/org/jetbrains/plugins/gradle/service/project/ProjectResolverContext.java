@@ -34,7 +34,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   String getProjectPath();
 
-  @Nullable
+  @NotNull
   GradleExecutionSettings getSettings();
 
   @NotNull

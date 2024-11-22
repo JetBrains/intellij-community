@@ -73,9 +73,7 @@ public final class GradleBuildSrcProjectsResolver {
     for (GradleLightBuild build : myResolverContext.getAllBuilds()) {
       String buildPath = FileUtil.toSystemIndependentName(build.getBuildIdentifier().getRootDir().getPath());
 
-      GradleExecutionSettings buildSrcProjectSettings = mainBuildExecutionSettings != null
-                                                        ? new GradleExecutionSettings(mainBuildExecutionSettings)
-                                                        : new GradleExecutionSettings();
+      GradleExecutionSettings buildSrcProjectSettings = new GradleExecutionSettings(mainBuildExecutionSettings);
 
       if (myGradleHome != null) {
         buildSrcProjectSettings.setGradleHome(myGradleHome);

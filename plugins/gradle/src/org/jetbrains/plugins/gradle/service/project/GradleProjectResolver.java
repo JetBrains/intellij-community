@@ -136,12 +136,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
+    GradleExecutionSettings effectiveSettings = settings != null ? settings : new GradleExecutionSettings();
     GradleProjectResolverIndicator projectResolverIndicator = new GradleProjectResolverIndicator(
       ProgressManager.getInstance().getProgressIndicator(),
       GradleConnector.newCancellationTokenSource()
     );
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
-      syncTaskId, projectPath, settings, listener, gradleResolverPolicy, projectResolverIndicator, false
+      syncTaskId, projectPath, effectiveSettings, listener, gradleResolverPolicy, projectResolverIndicator, false
     );
     GradleProjectResolverResultHandler resolverResultHandler = new GradleProjectResolverResultHandler(resolverContext);
 
@@ -166,21 +167,19 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
     GradleExecutionSettings settings = resolverContext.getSettings();
     ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId,
-                                                      settings != null && settings.isParallelModelFetch());
+                                                      settings.isParallelModelFetch());
 
     Span gradleExecutionSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleExecution")
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
-      if (resolverContext.getSettings() != null) {
-        GradleWrapperHelper.ensureInstalledWrapper(
-          resolverContext.getExternalSystemTaskId(),
-          resolverContext.getProjectPath(),
-          resolverContext.getSettings(),
-          resolverContext.getListener(),
-          resolverContext.getCancellationToken()
-        );
-      }
+      GradleWrapperHelper.ensureInstalledWrapper(
+        resolverContext.getExternalSystemTaskId(),
+        resolverContext.getProjectPath(),
+        resolverContext.getSettings(),
+        resolverContext.getListener(),
+        resolverContext.getCancellationToken()
+      );
 
       final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext);
       var projectDataFunction = getProjectDataFunction(resolverContext, projectResolverChain);
@@ -257,9 +256,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var buildAction = new GradleModelFetchAction();
 
     GradleExecutionSettings executionSettings = resolverContext.getSettings();
-    if (executionSettings == null) {
-      executionSettings = new GradleExecutionSettings();
-    }
 
     configureExecutionArgumentsAndVmOptions(executionSettings, resolverContext);
     final Set<Class<?>> toolingExtensionClasses = new HashSet<>();
@@ -320,7 +316,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
-      GradleModelFetchActionRunner.runAndTraceBuildAction(resolverContext, executionSettings, buildAction, modelFetchActionResultHandler);
+      GradleModelFetchActionRunner.runAndTraceBuildAction(resolverContext, buildAction, modelFetchActionResultHandler);
 
       var gradleVersion = ObjectUtils.doIfNotNull(resolverContext.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
@@ -356,7 +352,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     try (Scope ignore = projectResolversSpan.makeCurrent()) {
       extractExternalProjectModels(models);
-      return convertData(executionSettings, resolverContext, projectResolverChain);
+      return convertData(resolverContext, projectResolverChain);
     }
     catch (Throwable t) {
       projectResolversErrorsCount += 1;
@@ -374,7 +370,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private @NotNull DataNode<ProjectData> convertData(
-    @NotNull GradleExecutionSettings executionSettings,
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull GradleProjectResolverExtension tracedResolverChain
   ) {
@@ -420,6 +415,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       moduleMap.put(mainModuleId, Pair.create(moduleDataNode, gradleModule));
     }
 
+    GradleExecutionSettings executionSettings = resolverContext.getSettings();
     executionSettings.getExecutionWorkspace().setModuleIdIndex(moduleMap);
 
     File gradleHomeDir = null;
@@ -632,7 +628,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull DataNode<ProjectData> projectDataNode
   ) {
-    if (resolverContext.getSettings() != null && !resolverContext.getSettings().getExecutionWorkspace().getBuildParticipants().isEmpty()) {
+    if (!resolverContext.getSettings().getExecutionWorkspace().getBuildParticipants().isEmpty()) {
       return Collections.emptyList();
     }
     CompositeBuildData compositeBuildData;

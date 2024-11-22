@@ -44,7 +44,7 @@ import java.util.function.Supplier;
 public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
   @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
   @NotNull private final String myProjectPath;
-  @Nullable private final GradleExecutionSettings mySettings;
+  @NotNull private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   @NotNull private final GradleProjectResolverIndicator myProjectResolverIndicator;
   private ProjectConnection myConnection;
@@ -66,7 +66,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   public DefaultProjectResolverContext(
     @NotNull ExternalSystemTaskId externalSystemTaskId,
     @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
+    @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable GradlePartialResolverPolicy resolverPolicy,
     @NotNull GradleProjectResolverIndicator projectResolverIndicator,
@@ -85,7 +85,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   public DefaultProjectResolverContext(
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
+    @NotNull GradleExecutionSettings settings,
     boolean isBuildSrcProject
   ) {
     this(
@@ -109,7 +109,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Nullable
   @Override
   public String getIdeProjectPath() {
-    return mySettings != null ? mySettings.getIdeProjectPath() : null;
+    return mySettings.getIdeProjectPath();
   }
 
   @NotNull
@@ -118,9 +118,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myProjectPath;
   }
 
-  @Nullable
   @Override
-  public GradleExecutionSettings getSettings() {
+  public @NotNull GradleExecutionSettings getSettings() {
     return mySettings;
   }
 
@@ -239,22 +238,22 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public boolean isResolveModulePerSourceSet() {
-    return mySettings == null || mySettings.isResolveModulePerSourceSet();
+    return mySettings.isResolveModulePerSourceSet();
   }
 
   @Override
   public boolean isUseQualifiedModuleNames() {
-    return mySettings != null && mySettings.isUseQualifiedModuleNames();
+    return mySettings.isUseQualifiedModuleNames();
   }
 
   @Override
   public boolean isDelegatedBuild() {
-    return mySettings == null || mySettings.isDelegatedBuild();
+    return mySettings.isDelegatedBuild();
   }
 
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
-      String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();
+      String serviceDirectory = mySettings.getServiceDirectory();
       myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : GradleUserHomeUtil.gradleUserHomeDir();
     }
     return myGradleUserHome;
