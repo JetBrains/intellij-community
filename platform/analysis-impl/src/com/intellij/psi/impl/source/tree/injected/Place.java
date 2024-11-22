@@ -18,11 +18,17 @@ package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
-public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
-  Place() {
+import java.util.AbstractList;
+import java.util.List;
+
+public class Place extends AbstractList<PsiLanguageInjectionHost.Shred> {
+  @NotNull private final List<? extends PsiLanguageInjectionHost.Shred> myList;
+
+  Place(@Unmodifiable @NotNull List<? extends PsiLanguageInjectionHost.Shred> list) {
+    myList = list;
   }
 
   @NotNull
@@ -43,5 +49,15 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
     for (PsiLanguageInjectionHost.Shred shred : this) {
       shred.dispose();
     }
+  }
+
+  @Override
+  public PsiLanguageInjectionHost.Shred get(int index) {
+    return myList.get(index);
+  }
+
+  @Override
+  public int size() {
+    return myList.size();
   }
 }
