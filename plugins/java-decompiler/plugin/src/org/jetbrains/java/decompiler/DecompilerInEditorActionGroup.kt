@@ -15,7 +15,15 @@ internal class DecompilerInEditorActionGroup(private val settings: IdeaDecompile
   }
 
   override fun getChildren(event: AnActionEvent?): Array<AnAction> {
-    return DecompilerPreset.entries.map { preset -> ChangeDecompilerPresetAction(preset) }.toTypedArray()
+    val actions = DecompilerPreset.entries
+      .map { preset -> ChangeDecompilerPresetAction(preset) }
+      .toList<AnAction>()
+      .toTypedArray()
+
+    return arrayOf(
+      Separator.create(IdeaDecompilerBundle.message("decompiler.preset.title")),
+      *actions,
+    )
   }
 
   private inner class ChangeDecompilerPresetAction(private val preset: DecompilerPreset) : ToggleAction() {
