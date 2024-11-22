@@ -15,9 +15,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
-import com.intellij.searchEverywhere.ActionItemPresentation
-import com.intellij.searchEverywhere.OptionItemPresentation
-import com.intellij.searchEverywhere.SearchEverywhereItemPresentation
+import com.intellij.searchEverywhere.shared.ActionItemPresentation
+import com.intellij.searchEverywhere.shared.OptionItemPresentation
+import com.intellij.searchEverywhere.shared.SearchEverywhereItemPresentation
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.text.Matcher
 import com.intellij.util.text.nullize
@@ -35,7 +35,7 @@ object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SearchEvery
     val showIcon = UISettings.getInstance().showIconsInMenus
     val value = matchedValue.value
     if (value is ActionWrapper) {
-      var presentation = ActionItemPresentation(name = "")
+      var presentation = ActionItemPresentation(text = "")
 
       val anAction = value.action
       val actionPresentation = value.presentation
@@ -69,13 +69,13 @@ object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SearchEvery
 
       //val text = ActionPresentationDecorator.decorateTextIfNeeded(anAction, actionPresentation.text)
       val text = actionPresentation.text
-      presentation = presentation.run { copy(name = text) }
+      presentation = presentation.run { copy(text = text) }
 
       return presentation
     }
     else if (value is OptionDescription) {
       val hit = calcHit(value)
-      var presentation = OptionItemPresentation(name = hit)
+      var presentation = OptionItemPresentation(text = hit)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run { copy(switcherState = it) }
@@ -85,7 +85,7 @@ object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SearchEvery
       return presentation
     }
 
-    return ActionItemPresentation(name = "Unknown item")
+    return ActionItemPresentation(text = "Unknown item")
   }
 }
 

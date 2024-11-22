@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.searchEverywhere.vm
+package com.intellij.searchEverywhere.frontend
 
-import com.intellij.searchEverywhere.SearchEverywhereViewItem
-import com.intellij.searchEverywhere.core.SearchEverywhereDispatcher
 import com.intellij.searchEverywhere.core.SearchEverywhereTab
+import com.intellij.searchEverywhere.shared.SearchEverywhereItemData
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,16 +12,14 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-@OptIn(ExperimentalCoroutinesApi::class)
 class SearchEverywhereTabVm(
   private val coroutineScope: CoroutineScope,
   private val info: SearchEverywhereTab,
   searchPattern: StateFlow<String>,
-  searchDispatcher: SearchEverywhereDispatcher,
 ) {
-  val searchResults: StateFlow<List<SearchEverywhereViewItem<*, *>>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<List<SearchEverywhereItemData>> get() = _searchResults.asStateFlow()
 
-  private val _searchResults: MutableStateFlow<List<SearchEverywhereViewItem<*, *>>> = MutableStateFlow(emptyList())
+  private val _searchResults: MutableStateFlow<List<SearchEverywhereItemData>> = MutableStateFlow(emptyList())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   private val providerLimit: Int get() =

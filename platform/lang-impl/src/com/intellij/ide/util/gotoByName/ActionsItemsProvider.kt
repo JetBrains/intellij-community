@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.impl.Utils.runSuspendingUpdateSessionFo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
+import com.intellij.searchEverywhere.shared.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -19,34 +19,42 @@ import java.awt.Component
 
 
 @ApiStatus.Internal
-class ActionsItemsProvider(project: Project?, contextComponent: Component?, editor: Editor?): SearchEverywhereItemsProvider<MatchedValue, ActionSearchParams> {
+class ActionsItemsProvider(project: Project?, contextComponent: Component?, editor: Editor?): SearchEverywhereItemsProvider {
+  override val id: SearchEverywhereProviderId = object: SearchEverywhereProviderId {
+    override val value: String = "ActionsItemsProvider"
+  }
 
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 
-  override fun processItems(searchParams: ActionSearchParams): Flow<SearchEverywhereItemsProvider.WeightedItem<MatchedValue>> {
+  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
     return channelFlow {
-      processItems(searchParams) { value, weight ->
-        channel.send(SearchEverywhereItemsProvider.WeightedItem(value, weight))
+      processItems(params) { value, weight ->
+        val item = ActionSearchItem(weight, value)
+        val itemId = params.session.saveItem(item)
+        channel.send(ActionSearchItemData(itemId, id, weight, item.presentation()))
+
         coroutineContext.isActive
       }
     }
   }
 
-  private suspend fun processItems(searchParams: ActionSearchParams, processor: suspend (MatchedValue, Int) -> Boolean) {
+  private suspend fun processItems(params: SearchEverywhereParams, processor: suspend (MatchedValue, Int) -> Boolean) {
+    if (params !is ActionSearchParams) return
+
     model.buildGroupMappings()
     runSuspendingUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
-      if (searchParams.pattern.isEmpty() && isRecentsShown()) {
-        processRecents(searchParams, presentationProvider, processor)
+      if (params.text.isEmpty() && isRecentsShown()) {
+        processRecents(params, presentationProvider, processor)
       }
       else {
-        processAllItems(searchParams, presentationProvider, processor)
+        processAllItems(params, presentationProvider, processor)
       }
     }
   }
 
   private fun CoroutineScope.processAllItems(params: ActionSearchParams, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue, Int) -> Boolean) {
-    asyncProvider.filterElements(this, presentationProvider, params.pattern) { matchedValue ->
+    asyncProvider.filterElements(this, presentationProvider, params.text) { matchedValue ->
       if (!params.includeDisabled) {
         val enabled = (matchedValue.value as? GotoActionModel.ActionWrapper)?.isAvailable != false
         if (!enabled) return@filterElements true
@@ -59,7 +67,7 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
 
   private fun CoroutineScope.processRecents(params: ActionSearchParams, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue, Int) -> Boolean) {
     val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
-    asyncProvider.processActions(this, presentationProvider, params.pattern, actionIDs) { matchedValue ->
+    asyncProvider.processActions(this, presentationProvider, params.text, actionIDs) { matchedValue ->
       if (!params.includeDisabled) {
         val enabled = (matchedValue.value as? GotoActionModel.ActionWrapper)?.isAvailable != false
         if (!enabled) return@processActions true
@@ -75,4 +83,19 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
 }
 
 @ApiStatus.Internal
-data class ActionSearchParams(val pattern: String, val includeDisabled: Boolean)
+data class ActionSearchParams(override val text: String,
+                              override val session: SearchEverywhereSession,
+                              val includeDisabled: Boolean): SearchEverywhereParams
+
+
+@ApiStatus.Internal
+class ActionSearchItem(private val weight: Int, private val matchedValue: MatchedValue): SearchEverywhereItem {
+  override fun weight(): Int = weight
+  override fun presentation(): SearchEverywhereItemPresentation = ActionPresentationProvider.invoke(matchedValue)
+}
+
+@ApiStatus.Internal
+class ActionSearchItemData(override val itemId: SearchEverywhereItemId,
+                           override val providerId: SearchEverywhereProviderId,
+                           override val weight: Int,
+                           override val presentation: SearchEverywhereItemPresentation) : SearchEverywhereItemData

@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.searchEverywhere.vm
+package com.intellij.searchEverywhere.frontend
 
 import com.intellij.openapi.project.Project
-import com.intellij.searchEverywhere.core.DefaultSearchEverywhereDispatcher
 import com.intellij.searchEverywhere.core.SearchEverywhereTab
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,9 +16,10 @@ class SearchEverywherePopupVm(private val coroutineScope: CoroutineScope,
 
   val currentTab: StateFlow<SearchEverywhereTabVm> get() = _currentTab.asStateFlow()
 
+
   private val searchPattern = MutableStateFlow("")
   private val tabVms: List<SearchEverywhereTabVm> = tabs.map {
-    SearchEverywhereTabVm(coroutineScope, it, searchPattern, DefaultSearchEverywhereDispatcher())
+    SearchEverywhereTabVm(coroutineScope, it, searchPattern)
   }
   private val _currentTab: MutableStateFlow<SearchEverywhereTabVm>
 

@@ -1,30 +1,80 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.searchEverywhere.mocks
 
-import com.intellij.searchEverywhere.SearchEverywhereItemsProvider
+import com.intellij.searchEverywhere.shared.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.Internal
 class SearchEverywhereItemsProviderMock(
-  private val resultPrefix: String = "item",
+  val resultPrefix: String = "item",
   private val size: Int = 100,
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
-) : SearchEverywhereItemsProvider<String, String> {
-  override fun processItems(searchParams: String): Flow<SearchEverywhereItemsProvider.WeightedItem<String>> {
+) : SearchEverywhereItemsProvider {
+  override val id: SearchEverywhereProviderId = SearchEverywhereProviderStringId("SearchEverywhereItemsProviderMock_$resultPrefix")
+
+  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
     return flow {
       if (delayStep <= 0) delay(delayMillis)
 
       repeat(size) { index ->
-        val item = "$resultPrefix $index"
-        emit(SearchEverywhereItemsProvider.WeightedItem(item, index))
+        val item = SearchEverywhereItemMock("$resultPrefix $index")
+        val itemId = params.session.saveItem(item)
+        emit(SearchEverywhereItemDataMock(itemId, id, item.weight(), item.presentation()))
         if (delayStep > 0 && delayMillis > 0 && (index + 1) % delayStep == 0) {
           delay(delayMillis)
         }
       }
     }
   }
+}
+
+@ApiStatus.Internal
+class SearchEverywhereItemMock(val text: String) : SearchEverywhereItem {
+  override fun weight(): Int = 0
+  override fun presentation(): SearchEverywhereItemPresentation = ActionItemPresentation(text = text)
+}
+
+@ApiStatus.Internal
+data class SearchEverywhereProviderStringId(override val value: String) : SearchEverywhereProviderId
+
+@ApiStatus.Internal
+class SearchEverywhereItemDataMock(
+  override val itemId: SearchEverywhereItemId,
+  override val providerId: SearchEverywhereProviderId,
+  override val weight: Int,
+  override val presentation: SearchEverywhereItemPresentation,
+) : SearchEverywhereItemData
+
+@ApiStatus.Internal
+class SearchEverywhereSessionMock : SearchEverywhereSession {
+  override val id: String = UUID.randomUUID().toString()
+
+  private val items = mutableMapOf<SearchEverywhereItemId, SearchEverywhereItem>()
+
+  override fun saveItem(item: SearchEverywhereItem): SearchEverywhereItemId {
+    val id = SearchEverywhereItemId(
+      if (item is SearchEverywhereItemMock) item.text
+      else UUID.randomUUID().toString()
+    )
+    items[id] = item
+    return id
+  }
+
+  override suspend fun getItem(itemId: SearchEverywhereItemId): SearchEverywhereItem? {
+    return items[itemId]
+  }
+
+  override fun dispose() {
+    items.clear()
+  }
+}
+
+@ApiStatus.Internal
+class SearchEverywhereParamsMock(override val text: String) : SearchEverywhereParams {
+  override val session: SearchEverywhereSession = SearchEverywhereSessionMock()
 }
