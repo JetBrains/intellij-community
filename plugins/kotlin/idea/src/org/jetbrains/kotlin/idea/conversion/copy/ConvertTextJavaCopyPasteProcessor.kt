@@ -144,7 +144,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
             runPostProcessing(project, targetFile, newBounds.asTextRange, convertedResult.converterContext, j2kKind)
 
-            conversionPerformed = true
+            Util.conversionPerformed = true
         }
 
         val conversionTime = measureTimeMillis { convert() }
@@ -329,7 +329,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         return CopiedJavaCode(fileText, intArrayOf(index), intArrayOf(index + text.length))
     }
 
-    companion object {
+    object Util {
         @get:TestOnly
         var conversionPerformed: Boolean = false
     }

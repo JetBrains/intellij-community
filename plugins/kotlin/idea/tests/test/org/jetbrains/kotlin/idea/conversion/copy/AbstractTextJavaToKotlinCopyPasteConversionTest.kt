@@ -47,12 +47,12 @@ abstract class AbstractTextJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopy
 
         configureTargetFile(fileName.replace(".txt", ".to.kt"))
 
-        ConvertTextJavaCopyPasteProcessor.conversionPerformed = false
+        ConvertTextJavaCopyPasteProcessor.Util.conversionPerformed = false
 
         myFixture.performEditorAction(IdeActions.ACTION_PASTE)
 
         kotlin.test.assertEquals(
-            noConversionExpected, !ConvertTextJavaCopyPasteProcessor.conversionPerformed,
+            noConversionExpected, !ConvertTextJavaCopyPasteProcessor.Util.conversionPerformed,
             if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
         )
 

@@ -50,13 +50,13 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractJ2kCopyPast
 
             configureTargetFile("$baseName.to.kt")
 
-            ConvertJavaCopyPasteProcessor.conversionPerformed = false
+            ConvertJavaCopyPasteProcessor.Util.conversionPerformed = false
 
             myFixture.performEditorAction(IdeActions.ACTION_PASTE)
             UIUtil.dispatchAllInvocationEvents()
 
             assertEquals(
-                noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
+                noConversionExpected, !ConvertJavaCopyPasteProcessor.Util.conversionPerformed,
                 if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
             )
 
