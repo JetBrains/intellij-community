@@ -341,7 +341,7 @@ fun ElementAndTextList.linesCount() =
 internal fun getJ2kKind(targetFile: KtFile): J2kConverterExtension.Kind =
     if (targetFile is KtCodeFragment || !NewJ2k.isEnabled) K1_OLD else K1_NEW
 
-fun runPostProcessing(
+internal fun runPostProcessing(
     project: Project,
     file: KtFile,
     bounds: TextRange?,
@@ -350,33 +350,23 @@ fun runPostProcessing(
 ) {
     val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
     if (j2kKind == K1_NEW) {
+        val runnable = {
+            val processor = J2kConverterExtension.extension(kind = K1_NEW).createWithProgressProcessor(
+                ProgressManager.getInstance().progressIndicator!!,
+                emptyList(),
+                postProcessor.phasesCount
+            )
+            J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds) { phase, description ->
+                processor.updateState(0, phase, description)
+            }
+        }
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            {
-                val processor =
-                    J2kConverterExtension.extension(kind = K1_NEW).createWithProgressProcessor(
-                        ProgressManager.getInstance().progressIndicator!!,
-                        emptyList(),
-                        postProcessor.phasesCount
-                    )
-                AfterConversionPass(project, postProcessor)
-                    .run(
-                        file,
-                        converterContext,
-                        bounds
-                    ) { phase, description ->
-                        processor.updateState(0, phase, description)
-                    }
-            },
-            @Suppress("DialogTitleCapitalization") KotlinBundle.message("copy.text.convert.java.to.kotlin.title"),
-            true,
+            runnable,
+            KotlinBundle.message("copy.text.convert.java.to.kotlin.title"),
+            /* canBeCanceled = */ true,
             project
         )
     } else {
-        AfterConversionPass(project, postProcessor)
-            .run(
-                file,
-                converterContext,
-                bounds
-            )
+        J2KPostProcessingRunner.run(postProcessor, file, converterContext, bounds)
     }
 }

@@ -4,18 +4,17 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.psi.KtFile
 
-class AfterConversionPass(val project: Project, private val postProcessor: PostProcessor) {
-    @JvmOverloads
+object J2KPostProcessingRunner {
     fun run(
+        postProcessor: PostProcessor,
         kotlinFile: KtFile,
-        converterContext: ConverterContext?,
-        range: TextRange?,
+        converterContext: ConverterContext? = null,
+        range: TextRange? = null,
         onPhaseChanged: ((Int, String) -> Unit)? = null
     ) {
         val target =
