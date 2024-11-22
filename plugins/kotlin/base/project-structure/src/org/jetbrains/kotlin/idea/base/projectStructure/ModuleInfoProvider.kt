@@ -499,7 +499,6 @@ private sealed class UserDataModuleContainer {
 @K1ModeProjectStructureApi
 fun Sequence<Result<IdeaModuleInfo>>.unwrap(
     errorHandler: (String, Throwable) -> Unit,
-    stopOnErrors: Boolean = true
 ): Sequence<IdeaModuleInfo> {
     val originalSequence = this
     return object : Sequence<IdeaModuleInfo> {
@@ -516,9 +515,7 @@ fun Sequence<Result<IdeaModuleInfo>>.unwrap(
                     val error = result.exceptionOrNull()
                     if (error != null) {
                         errorHandler("Could not find correct module information", error)
-                        if (stopOnErrors) {
-                            iterator = null
-                        }
+                        iterator = null
                     }
                     return null
                 }
