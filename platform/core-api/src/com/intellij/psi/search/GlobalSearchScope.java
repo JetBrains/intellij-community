@@ -282,14 +282,17 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    * Please consider using {@link this#filesWithLibrariesScope} or {@link this#filesWithoutLibrariesScope} for optimization
    */
   @Contract(pure = true)
-  public static @NotNull GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files, final @Nullable @Nls String displayName) {
-    if (files.isEmpty()) return EMPTY_SCOPE;
-    return files.size() == 1? fileScope(project, files.iterator().next(), displayName) : new FilesScope(project, files) {
-      @Override
-      public @NotNull String getDisplayName() {
-        return displayName == null ? super.getDisplayName() : displayName;
-      }
-    };
+  public static @NotNull GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable @Nls String displayName) {
+    if (files.isEmpty()) {
+      return EMPTY_SCOPE;
+    }
+    if (files.size() == 1) {
+      return fileScope(project, files.iterator().next(), displayName);
+    }
+    if (displayName != null) {
+      return new FilesScopeWithDisplayName(project, files, displayName);
+    }
+    return new FilesScope(project, files, null);
   }
 
   @Contract(pure = true)
@@ -338,12 +341,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   public static class FilesScope extends AbstractFilesScope {
     private final VirtualFileSet myFiles;
 
-    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files) {
-      this(project, files, null);
-    }
-
-    // Optimization
-    private FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots) {
+    /** @param hasFilesOutOfProjectRoots optimization */
+    @ApiStatus.Internal
+    FilesScope(@Nullable Project project, @NotNull Collection<? extends VirtualFile> files, @Nullable Boolean hasFilesOutOfProjectRoots) {
       super(project, hasFilesOutOfProjectRoots);
       myFiles = VfsUtilCore.createCompactVirtualFileSet(files);
       myFiles.freeze();

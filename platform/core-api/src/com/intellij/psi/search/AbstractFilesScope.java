@@ -17,7 +17,7 @@ import java.util.Collection;
 abstract class AbstractFilesScope extends GlobalSearchScope implements VirtualFileEnumeration {
   volatile Boolean myHasFilesOutOfProjectRoots;
 
-  // Optimization
+  /** @param hasFilesOutOfProjectRoots optimization */
   AbstractFilesScope(@Nullable Project project, @Nullable Boolean hasFilesOutOfProjectRoots) {
     super(project);
     myHasFilesOutOfProjectRoots = hasFilesOutOfProjectRoots;
