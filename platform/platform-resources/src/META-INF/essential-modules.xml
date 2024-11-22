@@ -17,6 +17,7 @@
     <module name="intellij.platform.clouds"/>
     <module name="intellij.platform.execution.dashboard"/>
     <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.searchEverywhere"/>
 
     <module name="intellij.platform.vcs.impl.backend"/>
     <module name="intellij.platform.vcs.impl.frontend"/>
