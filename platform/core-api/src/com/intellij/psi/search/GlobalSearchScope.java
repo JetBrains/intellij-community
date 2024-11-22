@@ -129,37 +129,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (localScopeElements.length == 0) {
       return this;
     }
-    return new GlobalSearchScope(localScopeElements[0].getProject()) {
-      @Override
-      public boolean contains(@NotNull VirtualFile file) {
-        return GlobalSearchScope.this.contains(file) || scope.isInScope(file);
-      }
-
-      @Override
-      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-        return GlobalSearchScope.this.contains(file1) && GlobalSearchScope.this.contains(file2) ? GlobalSearchScope.this.compare(file1, file2) : 0;
-      }
-
-      @Override
-      public boolean isSearchInModuleContent(@NotNull Module aModule) {
-        return GlobalSearchScope.this.isSearchInModuleContent(aModule);
-      }
-
-      @Override
-      public boolean isSearchInLibraries() {
-        return GlobalSearchScope.this.isSearchInLibraries();
-      }
-
-      @Override
-      public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-        return GlobalSearchScope.this.getUnloadedModulesBelongingToScope();
-      }
-
-      @Override
-      public @NonNls String toString() {
-        return "UnionToLocal: (" + GlobalSearchScope.this + ", " + scope + ")";
-      }
-    };
+    return new GlobalAndLocalUnionScope(this, scope, localScopeElements[0].getProject());
   }
 
   @Contract(pure = true)
