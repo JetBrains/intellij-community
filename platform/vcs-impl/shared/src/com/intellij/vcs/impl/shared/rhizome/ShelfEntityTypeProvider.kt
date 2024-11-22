@@ -149,7 +149,7 @@ data class SelectShelveChangeEntity(override val eid: EID) : Entity {
   companion object : DurableEntityType<SelectShelveChangeEntity>(SelectShelveChangeEntity::class.java.name, "com.intellij", ::SelectShelveChangeEntity) {
     val ChangeList = requiredRef<ShelvedChangeListEntity>("ChangeList")
     val Change = optionalRef<ShelvedChangeEntity>("Change")
-    val Project = requiredRef<ProjectEntity>("project")
+    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
   }
 }
 

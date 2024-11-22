@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
@@ -19,6 +20,8 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update.Companion.create
 import com.intellij.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
+import com.intellij.vcs.impl.backend.shelf.diff.ShelfDiffChangesProvider
+import com.intellij.vcs.impl.backend.shelf.diff.ShelfDiffChangesState
 import com.intellij.vcs.impl.backend.shelf.diff.ShelvedPreviewProcessor
 import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.vcs.impl.shared.changes.PreviewDiffSplitterComponent
@@ -31,7 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.tree.TreePath
+import javax.swing.tree.DefaultTreeModel
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
@@ -45,19 +48,16 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   private val shelveChangesManager = ShelveChangesManager.getInstance(project)
 
-  private val tree = ShelfTree(project)
+  private var grouping: ChangesGroupingSupport = ChangesGroupingSupport(project, this, false)
 
-  private val diffPreview = BackendShelveEditorDiffPreview(tree, cs, project)
+  private var model = buildTreeModelSync(true)
 
-  private fun updateTreeModel(afterUpdate: () -> Unit = {}) {
-    tree.invalidateDataAndRefresh {
-      updateDbModel(afterUpdate)
-    }
-  }
+  private val diffChangesProvider = ShelfDiffChangesProvider(model)
+  private val diffPreview = BackendShelveEditorDiffPreview(project, cs, diffChangesProvider)
 
   fun createPreviewDiffSplitter() {
     cs.launch(Dispatchers.EDT) {
-      val processor = ShelvedPreviewProcessor(project, cs, tree, false)
+      val processor = ShelvedPreviewProcessor(project, cs, false, diffChangesProvider)
       val previewDiffSplitterComponent = PreviewDiffSplitterComponent(processor, SHELVE_PREVIEW_SPLITTER_PROPORTION)
       withKernel {
         change {
@@ -71,12 +71,12 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   fun updateDbModel(afterUpdate: () -> Unit = {}) {
     cs.launch {
-      val root = tree.model.root as ChangesBrowserNode<*>
+      val root = model.root as ChangesBrowserNode<*>
       withKernel {
         var order = 0
         val rootNodes = mutableSetOf<NodeEntity>()
         for (child in root.children()) {
-          val entity = dfs(tree, child as ChangesBrowserNode<*>, null, order++) ?: continue
+          val entity = dfs(child as ChangesBrowserNode<*>, null, order++) ?: continue
           rootNodes.add(entity)
         }
         change {
@@ -95,8 +95,8 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  private suspend fun dfs(tree: ShelfTree, node: ChangesBrowserNode<*>, parent: NodeEntity?, orderInParent: Int): NodeEntity? {
-    val entity = node.save(tree, orderInParent, project) ?: return null
+  private suspend fun dfs(node: ChangesBrowserNode<*>, parent: NodeEntity?, orderInParent: Int): NodeEntity? {
+    val entity = node.save(orderInParent, project) ?: return null
     if (parent != null) {
       change {
         shared {
@@ -106,13 +106,13 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
     var order = 0
     for (child in node.children()) {
-      dfs(this.tree, child as ChangesBrowserNode<*>, entity, order++)
+      dfs(child as ChangesBrowserNode<*>, entity, order++)
     }
     return entity
   }
 
-  private suspend fun ChangesBrowserNode<*>.save(tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity? {
-    val entity = this.convertToEntity(tree, orderInParent, project) ?: return null
+  private suspend fun ChangesBrowserNode<*>.save(orderInParent: Int, project: Project): NodeEntity? {
+    val entity = this.convertToEntity(orderInParent, project) ?: return null
     putUserData(ENTITY_ID_KEY, entity.ref())
     return entity
   }
@@ -128,7 +128,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
   }
 
   internal fun findChangeListNode(changeList: DurableRef<ShelvedChangeListEntity>): ChangesBrowserNode<*>? {
-    return TreeUtil.treeTraverser(tree)
+    return TreeUtil.modelTraverser(model)
       .bfsTraversal()
       .find { (it as ChangesBrowserNode<*>).getUserData(ENTITY_ID_KEY) == changeList } as? ChangesBrowserNode<*>
   }
@@ -141,22 +141,19 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
   fun showDiff(changeListDto: ChangeListDto) {
     val selectedChanges = findChangesInTree(changeListDto)
 
-    tree.selectedChanges = selectedChanges.map { it.shelvedChange }
+    val changesState = ShelfDiffChangesState(selectedChanges.map { it.shelvedChange })
+    diffChangesProvider.changesStateFlow.tryEmit(changesState)
     cs.launch(Dispatchers.EDT) {
       diffPreview.performDiffAction()
     }
   }
 
-  fun updateSelection(changeListDto: ChangeListDto) {
-    val selectedChanges = findChangesInTree(changeListDto)
-    tree.selectedChanges = selectedChanges.map { it.shelvedChange }
-    cs.launch(Dispatchers.EDT) {
-      tree.selectionModel.selectionPaths = selectedChanges.map { TreePath(it.path) }.toTypedArray() //wa to call TreeHandlerChangesTreeTracker.updatePreview()
-    }
-  }
-
   fun scheduleTreeUpdate(callback: () -> Unit = {}) {
-    updateQueue.queue(create("update") { updateTreeModel(callback) })
+    updateQueue.queue(create("update") {
+      model = buildTreeModelSync()
+      diffChangesProvider.treeModel = model
+      updateDbModel(callback)
+    })
   }
 
   fun saveGroupings() {
@@ -180,7 +177,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   fun selectChangeListInTree(changeList: ShelvedChangeList) {
     cs.launch {
-      val nodeToSelect = TreeUtil.findNodeWithObject(tree.model.root as ChangesBrowserNode<*>, changeList) as? ChangesBrowserNode<*>
+      val nodeToSelect = TreeUtil.findNodeWithObject(model.root as ChangesBrowserNode<*>, changeList) as? ChangesBrowserNode<*>
                          ?: return@launch
       val nodeRef = nodeToSelect.getUserData(ENTITY_ID_KEY) ?: return@launch
       withKernel {
@@ -197,10 +194,33 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
+  fun buildTreeModelSync(init: Boolean = false): DefaultTreeModel {
+    val showRecycled = ShelveChangesManager.getInstance(project).isShowRecycled
+    if (init) {
+      grouping.setGroupingKeysOrSkip(ShelveChangesManager.getInstance(project).grouping)
+    }
+    val modelBuilder = ShelvedTreeModelBuilder(project, grouping.grouping)
+    val changeLists = ShelveChangesManager.getInstance(project).allLists
+    modelBuilder.setShelvedLists(changeLists.filter { !it.isDeleted && (showRecycled || !it.isRecycled) })
+    modelBuilder.setDeletedShelvedLists(changeLists.filter { it.isDeleted })
+    return modelBuilder.build()
+  }
+
 
   fun changeGrouping(groupingKeys: Set<String>) {
-    tree.groupingSupport.setGroupingKeys(groupingKeys)
+    grouping.setGroupingKeys(groupingKeys)
+    scheduleTreeUpdate()
   }
+
+  fun updateDiffFile(changeListDto: ChangeListDto) {
+    val selectedChanges = findChangesInTree(changeListDto).map { it.shelvedChange }
+    diffChangesProvider.changesStateFlow.tryEmit(ShelfDiffChangesState(selectedChanges))
+  }
+
+  fun isDirectoryGroupingEnabled(): Boolean {
+    return grouping.isDirectory
+  }
+
 
   override fun dispose() {
     updateQueue.cancelAllUpdates()
@@ -208,9 +228,8 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   companion object {
     private const val SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"
-    val ENTITY_ID_KEY = Key<DurableRef<NodeEntity>>("persistentId")
-    const val REPOSITORY_GROUPING_KEY = "repository"
+    val ENTITY_ID_KEY: Key<DurableRef<NodeEntity>> = Key<DurableRef<NodeEntity>>("persistentId")
 
-    fun getInstance(project: Project) = project.service<ShelfTreeHolder>()
+    fun getInstance(project: Project): ShelfTreeHolder = project.service<ShelfTreeHolder>()
   }
 }

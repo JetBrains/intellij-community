@@ -17,18 +17,18 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
 @ApiStatus.Internal
-suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity? {
+suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(orderInParent: Int, project: Project): NodeEntity? {
   val converter = NodeToEntityConverter.getConverter(this)
   if (converter == null) {
     return null
   }
   @Suppress("UNCHECKED_CAST")
-  return (converter as NodeToEntityConverter<T>).convert(this@convertToEntity, tree, orderInParent, project)
+  return (converter as NodeToEntityConverter<T>).convert(this@convertToEntity, orderInParent, project)
 }
 
 @ApiStatus.Internal
 abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>>(private val nodeClass: KClass<N>) {
-  abstract suspend fun convert(node: N, tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity
+  abstract suspend fun convert(node: N, orderInParent: Int, project: Project): NodeEntity
 
   fun isNodeAcceptable(node: ChangesBrowserNode<*>): Boolean = nodeClass.isInstance(node)
 
@@ -42,7 +42,7 @@ abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>>(private val node
 }
 
 internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<ShelvedListNode>(ShelvedListNode::class) {
-  override suspend fun convert(node: ShelvedListNode, tree: ShelfTree, orderInParent: Int, project: Project): ShelvedChangeListEntity {
+  override suspend fun convert(node: ShelvedListNode, orderInParent: Int, project: Project): ShelvedChangeListEntity {
     return withKernel {
       change {
         shared {
@@ -62,7 +62,7 @@ internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<Shelve
 }
 
 internal class ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeNode>(ShelvedChangeNode::class) {
-  override suspend fun convert(node: ShelvedChangeNode, tree: ShelfTree, orderInParent: Int, project: Project): ShelvedChangeEntity {
+  override suspend fun convert(node: ShelvedChangeNode, orderInParent: Int, project: Project): ShelvedChangeEntity {
     return withKernel {
       change {
         shared {
@@ -80,7 +80,7 @@ internal class ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeN
 
 
 internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowserNode>(TagChangesBrowserNode::class) {
-  override suspend fun convert(node: TagChangesBrowserNode, tree: ShelfTree, orderInParent: Int, project: Project): TagNodeEntity {
+  override suspend fun convert(node: TagChangesBrowserNode, orderInParent: Int, project: Project): TagNodeEntity {
     return withKernel {
       change {
         shared {
@@ -95,7 +95,7 @@ internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowse
 }
 
 internal class ModuleNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserModuleNode>(ChangesBrowserModuleNode::class) {
-  override suspend fun convert(node: ChangesBrowserModuleNode, tree: ShelfTree, orderInParent: Int, project: Project): ModuleNodeEntity {
+  override suspend fun convert(node: ChangesBrowserModuleNode, orderInParent: Int, project: Project): ModuleNodeEntity {
     return withKernel {
       change {
         shared {
@@ -114,13 +114,13 @@ internal class ModuleNodeToEntityConverter : NodeToEntityConverter<ChangesBrowse
 
 
 internal class FilePathNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserFilePathNode>(ChangesBrowserFilePathNode::class) {
-  override suspend fun convert(node: ChangesBrowserFilePathNode, tree: ShelfTree, orderInParent: Int, project: Project): FilePathNodeEntity {
+  override suspend fun convert(node: ChangesBrowserFilePathNode, orderInParent: Int, project: Project): FilePathNodeEntity {
     return withKernel {
       change {
         shared {
           FilePathNodeEntity.new {
             val filePath = node.userObject ?: return@new
-            val isFlatten = tree.isShowFlatten && node.isLeaf
+            val isFlatten = !ShelfTreeHolder.getInstance(project).isDirectoryGroupingEnabled()
             val name = if (isFlatten) filePath.name else node.getRelativeFilePath(project, filePath)
             it[FilePathNodeEntity.OriginText] = node.getOriginText()
             if (isFlatten) {

@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getC
 import com.intellij.platform.kernel.withKernel
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.impl.backend.shelf.NodeToEntityConverter
-import com.intellij.vcs.impl.backend.shelf.ShelfTree
 import com.intellij.vcs.impl.shared.rhizome.NodeEntity
 import com.intellij.vcs.impl.shared.rhizome.RepositoryNodeEntity
 import fleet.kernel.change
