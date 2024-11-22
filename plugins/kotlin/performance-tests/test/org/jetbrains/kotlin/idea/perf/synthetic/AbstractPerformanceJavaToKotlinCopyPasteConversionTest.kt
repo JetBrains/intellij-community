@@ -60,7 +60,7 @@ abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private va
                     performEditorAction(IdeActions.ACTION_CUT)
                     configureByText(KotlinFileType.INSTANCE, "<caret>")
                 }
-                ConvertJavaCopyPasteProcessor.conversionPerformed = false
+                ConvertJavaCopyPasteProcessor.Util.conversionPerformed = false
             }
             test {
                 myFixture.performEditorAction(IdeActions.ACTION_PASTE)
@@ -69,7 +69,7 @@ abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private va
             tearDown {
                 val document = myFixture.getDocument(myFixture.file)
                 PsiDocumentManager.getInstance(project).commitDocument(document)
-                kotlin.test.assertFalse(!ConvertJavaCopyPasteProcessor.conversionPerformed, "No conversion to Kotlin suggested")
+                kotlin.test.assertFalse(!ConvertJavaCopyPasteProcessor.Util.conversionPerformed, "No conversion to Kotlin suggested")
                 assertEquals("class Foo {\n    private val value: String? = null\n}", myFixture.file.text)
                 deleteFixtureFile()
             }
@@ -102,7 +102,7 @@ abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private va
 
                 configureTargetFile("$testName.to.kt")
 
-                ConvertJavaCopyPasteProcessor.conversionPerformed = false
+                ConvertJavaCopyPasteProcessor.Util.conversionPerformed = false
             }
             test {
                 perfTestCore()
@@ -130,7 +130,7 @@ abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private va
 
     open fun validate(path: String, noConversionExpected: Boolean) {
         kotlin.test.assertEquals(
-            noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
+            noConversionExpected, !ConvertJavaCopyPasteProcessor.Util.conversionPerformed,
             if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
         )
         KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), myFixture.file.text)

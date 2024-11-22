@@ -12,7 +12,7 @@ abstract class AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest :
         // this is a performance test rather validation test
         if (!noConversionExpected) {
             kotlin.test.assertEquals(
-                noConversionExpected, !ConvertJavaCopyPasteProcessor.conversionPerformed,
+                noConversionExpected, !ConvertJavaCopyPasteProcessor.Util.conversionPerformed,
                 if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
             )
         }

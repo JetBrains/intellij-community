@@ -169,7 +169,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             PsiDocumentManager.getInstance(project).commitDocument(document)
             runPostProcessing(project, targetFile, newBounds, conversionResult?.converterContext, j2kKind)
 
-            conversionPerformed = true
+            Util.conversionPerformed = true
         }
 
         if (confirmConvertJavaOnPaste(project, isPlainText = false)) {
@@ -228,7 +228,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         }
     }
 
-    companion object {
+    object Util {
         @get:TestOnly
         var conversionPerformed: Boolean = false
     }
