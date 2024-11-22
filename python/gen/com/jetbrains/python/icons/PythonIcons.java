@@ -55,4 +55,6 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon Vagrant = load("icons/com/jetbrains/pythonCore/python/expui/vagrant.svg", "icons/com/jetbrains/pythonCore/python/vagrant.svg", -820295927, 0);
     /** 16x16 */ public static final @NotNull Icon Virtualenv = load("icons/com/jetbrains/pythonCore/python/expui/virtualEnv.svg", "icons/com/jetbrains/pythonCore/python/virtualenv.svg", 758230626, 0);
   }
+
+  /** 16x16 */ public static final @NotNull Icon UV = load("icons/com/jetbrains/pythonCore/python/expui/uv.svg", -856014559, 0);
 }
