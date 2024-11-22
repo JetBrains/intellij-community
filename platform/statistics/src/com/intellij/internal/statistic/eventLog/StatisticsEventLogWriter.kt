@@ -84,11 +84,6 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
   }
 
   override fun dispose() {
-    val closeFuture = AppExecutorUtil.getAppExecutorService().submit {
-      logger = null
-    }
-    Runtime.getRuntime().addShutdownHook(Thread {
-      closeFuture.get(500, TimeUnit.MILLISECONDS)
-    })
+    logger = null
   }
 }
