@@ -44,4 +44,9 @@ public class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK2JvmBasic
     public void testKT_69416() throws Exception {
         runTest("../../completion/testData/basic/fullJdk/KT-69416.kt");
     }
+
+    @TestMetadata("TrailingLambdaParameterName.kt")
+    public void testTrailingLambdaParameterName() throws Exception {
+        runTest("../../completion/testData/basic/fullJdk/TrailingLambdaParameterName.kt");
+    }
 }

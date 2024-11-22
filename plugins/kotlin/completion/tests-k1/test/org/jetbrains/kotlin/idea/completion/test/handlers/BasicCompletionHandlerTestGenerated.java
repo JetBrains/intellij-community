@@ -464,6 +464,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName.kt");
         }
 
+        @TestMetadata("HigherOrderFunctionParameterName2.kt")
+        public void testHigherOrderFunctionParameterName2() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName2.kt");
+        }
+
         @TestMetadata("HigherOrderFunctionWithArg.kt")
         public void testHigherOrderFunctionWithArg() throws Exception {
             runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithArg.kt");

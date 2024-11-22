@@ -9,6 +9,5 @@ fun bar() {
 }
 
 // INVOCATION_COUNT: 0
-
 // EXIST: { itemText: "reference", tailText: " -> ", allLookupStrings: "reference", typeText: "Int" }
 // EXIST: bar, null
