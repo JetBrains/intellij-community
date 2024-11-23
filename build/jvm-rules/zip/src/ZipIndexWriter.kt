@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.util.lang.ImmutableZipFile
-import com.intellij.util.lang.ImmutableZipFile.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE
-import com.intellij.util.lang.Xxh3
+import com.dynatrace.hash4j.hashing.Hashing
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 
@@ -31,7 +29,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     entryCount++
     buffer.ensureWritable(46 + name.size)
 
-    buffer.writeIntLE(CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)
+    buffer.writeIntLE(0x02014b50)
     // Version made by (2), Version needed to extract (2), General purpose bit flag (2)
     buffer.writeZero(6)
     // compression method
@@ -46,7 +44,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     buffer.writeIntLE(size)
 
     if (indexWriter != null) {
-      indexWriter.add(IkvIndexEntry(longKey = Xxh3.hash(normalName), offset = dataOffset, size = size))
+      indexWriter.add(IkvIndexEntry(longKey = Hashing.xxh3_64().hashBytesToLong(normalName), offset = dataOffset, size = size))
       indexWriter.names.add(normalName)
     }
 
@@ -64,7 +62,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     val centralDirectoryLength = buffer.readableBytes()
     if (entryCount < 65_535) {
       // write an end of central directory record (EOCD)
-      buffer.writeIntLE(ImmutableZipFile.EOCD)
+      buffer.writeIntLE(0x6054B50)
       // number of this disk (short), disk where central directory starts (short)
       buffer.writeZero(4)
       // number of central directory records on this disk

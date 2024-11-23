@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,16 +66,6 @@ public final class DirectByteBufferPool {
     }
     else {
       this.releaser.accept(buffer);
-    }
-  }
-
-  // pool is not expected to be used during releaseAll call
-  public void releaseAll() {
-    Iterator<ByteBuffer> iterator = pool.values().iterator();
-    while (iterator.hasNext()) {
-      ByteBuffer buffer = iterator.next();
-      iterator.remove();
-      releaser.accept(buffer);
     }
   }
 

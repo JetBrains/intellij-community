@@ -21,6 +21,8 @@ import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import kotlin.math.min
 
+val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
+
 // 1 MB
 private const val largeFileThreshold = 1_048_576
 private const val compressThreshold = 8 * 1024

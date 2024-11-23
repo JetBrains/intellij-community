@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.util.lang.ImmutableZipFile
 import java.io.EOFException
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -200,7 +199,8 @@ private fun computeDataOffset(mappedBuffer: ByteBuffer, headerOffset: Int, nameL
 }
 
 private inline fun readZipEntries(buffer: ByteBuffer, fileSize: Int, entryProcessor: EntryProcessor) {
-  var offset = fileSize - ImmutableZipFile.MIN_EOCD_SIZE
+  // MIN_EOCD_SIZE
+  var offset = fileSize - 22
   var finished = false
 
   // first, EOCD

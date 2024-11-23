@@ -14,8 +14,6 @@ import java.util.*
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
-val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
-
 fun copyFileToDir(file: Path, targetDir: Path) {
   doCopyFile(file = file, target = targetDir.resolve(file.fileName), targetDir = targetDir)
 }

@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.util.lang.Xx3UnencodedString
-import com.intellij.util.lang.Xxh3
+import com.dynatrace.hash4j.hashing.Hashing
 
 class PackageIndexBuilder {
   private val dirsToRegister = HashSet<String>()
@@ -11,7 +10,7 @@ class PackageIndexBuilder {
 
   fun addFile(name: String, addClassDir: Boolean = false) {
     val i = name.lastIndexOf('/')
-    val packageNameHash = if (i == -1) 0 else Xx3UnencodedString.hashUnencodedStringRange(name, i)
+    val packageNameHash = if (i == -1) 0 else Hashing.xxh3_64().hashCharsToLong(name.substring(0, i))
     if (name.endsWith(".class")) {
       indexWriter.classPackages.add(packageNameHash)
       if (addClassDir) {
@@ -25,19 +24,19 @@ class PackageIndexBuilder {
   }
 
   fun writePackageIndex(zipCreator: ZipFileWriter, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE) {
-    @Suppress("UsePropertyAccessSyntax")
     if (!indexWriter.resourcePackages.isEmpty()) {
       // add empty package if top-level directory will be requested
       indexWriter.resourcePackages.add(0)
     }
 
-    val sortedDirsToRegister = dirsToRegister.sorted()
+    val sortedDirsToRegister = dirsToRegister.toTypedArray()
+    sortedDirsToRegister.sort()
 
     val stream = zipCreator.resultStream
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
       for (dirName in sortedDirsToRegister) {
         val nameBytes = dirName.encodeToByteArray()
-        indexWriter.add(IkvIndexEntry(longKey = Xxh3.hash(nameBytes), offset = 0, size = -1))
+        indexWriter.add(IkvIndexEntry(longKey = Hashing.xxh3_64().hashBytesToLong(nameBytes), offset = 0, size = -1))
         indexWriter.names.add(nameBytes)
       }
     }
@@ -63,7 +62,7 @@ class PackageIndexBuilder {
 
     var dirName = name.substring(0, slashIndex)
     while (dirsToRegister.add(dirName)) {
-      indexWriter.resourcePackages.add(Xx3UnencodedString.hashUnencodedString(dirName))
+      indexWriter.resourcePackages.add(Hashing.xxh3_64().hashCharsToLong(dirName))
 
       slashIndex = dirName.lastIndexOf('/')
       if (slashIndex == -1) {

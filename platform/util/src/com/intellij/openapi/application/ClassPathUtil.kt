@@ -46,7 +46,7 @@ object ClassPathUtil {
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'
       SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'
       UrlClassLoader::class.java,  // module 'intellij.platform.util.classLoader'
-      classLoader.loadClass("com.intellij.util.lang.Xx3UnencodedString"),  // intellij.platform.util.rt.java8 (required for classLoader)
+      classLoader.loadClass("com.intellij.util.lang.Xxh3Impl"),  // intellij.platform.util.rt.java8 (required for classLoader)
       Flow::class.java,  // jetbrains-annotations
       Document::class.java,  // JDOM
       Appender::class.java,  // Log4J
