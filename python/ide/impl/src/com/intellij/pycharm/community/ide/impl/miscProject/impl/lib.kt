@@ -2,6 +2,7 @@
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -35,6 +36,7 @@ import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStra
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.UseThesePythons
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.io.awaitExit
 import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.Result
@@ -55,6 +57,7 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = fileLogger()
 
@@ -191,7 +194,7 @@ private suspend fun findExistingVenv(
     logger.warn("No flavor found for $pythonPath")
     return@withContext null
   }
-  if (flavor.getVersionString(pythonPath.toString()) == null) {
+  if (validatePythonAndGetVersion(pythonPath, flavor) == null) {
     logger.warn("No version string. python seems to be broken: $pythonPath")
     return@withContext null
   }
@@ -209,7 +212,7 @@ private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, pr
 
 private suspend fun getSystemPython(obtainPythonStrategy: ObtainPythonStrategy): Result<PythonBinary, LocalizedErrorString> {
   // First, find the latest python according to strategy
-  var systemPythonBinary = filterLatestPython(
+  var systemPythonBinary = filterLatestUsablePython(
     when (obtainPythonStrategy) {
       is UseThesePythons -> obtainPythonStrategy.pythons
       is FindOnSystem -> findPythonsOnSystem()
@@ -230,12 +233,11 @@ private suspend fun getSystemPython(obtainPythonStrategy: ObtainPythonStrategy):
             return Result.Failure(LocalizedErrorString(
               PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", exception.toString())))
           }
+          // Find latest python again, after installation
+          systemPythonBinary = filterLatestUsablePython(findPythonsOnSystem())
         }
       }
     }
-    // Find latest python again, after installation
-    systemPythonBinary = filterLatestPython(findPythonsOnSystem())
-    logger.warn("No python found even after installation")
   }
 
   return if (systemPythonBinary == null) {
@@ -325,11 +327,11 @@ suspend fun installLatestPython(): kotlin.Result<Unit> = withContext(Dispatchers
  * Looks for the latest python among [flavorsToPythons]: each flavour might have 1 or more pythons.
  * Broken pythons are filtered out. If `null` is returned, no python found, you probably need to [installLatestPython]
  */
-private suspend fun filterLatestPython(flavorsToPythons: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>): PythonBinary? {
+private suspend fun filterLatestUsablePython(flavorsToPythons: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>): PythonBinary? {
   var current: Pair<LanguageLevel, Path>? = null
   for ((flavor, paths) in flavorsToPythons) {
     for (pythonPath in paths) {
-      val versionString = withContext(Dispatchers.IO) { flavor.getVersionString(pythonPath.pathString) } ?: continue
+      val versionString = validatePythonAndGetVersion(pythonPath, flavor) ?: continue
       val languageLevel = flavor.getLanguageLevelFromVersionString(versionString)
 
       // Highest possible, no need to search further
@@ -344,6 +346,40 @@ private suspend fun filterLatestPython(flavorsToPythons: List<Pair<PythonSdkFlav
   }
 
   return current?.second
+}
+
+/**
+ * Ensures that [pythonBinary] is executable and returns its version. `null` if python is broken (reports error to logs).
+ *
+ * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
+ * As we need workable pythons, we validate it by executing
+ */
+private suspend fun validatePythonAndGetVersion(pythonBinary: PythonBinary, flavor: PythonSdkFlavor<*>): String? = withContext(Dispatchers.IO) {
+  val fileLogger = fileLogger()
+  val process =
+    try {
+      GeneralCommandLine(pythonBinary.toString(), "-c", "print(1)").createProcess()
+    }
+    catch (e: ExecutionException) {
+      fileLogger.warn("$pythonBinary is bad, skipping", e)
+      return@withContext null
+    }
+  val timeout = 5.seconds
+  return@withContext withTimeoutOrNull(timeout) {
+    val exitCode = process.awaitExit()
+    return@withTimeoutOrNull if (exitCode != 0) {
+      fileLogger.warn("$pythonBinary returned $exitCode, skipping")
+      null
+    }
+    else {
+      flavor.getVersionString(pythonBinary.pathString)
+    }
+  }.also {
+    if (it == null) {
+      fileLogger.warn("$pythonBinary didn't return in $timeout, skipping")
+      process.destroyForcibly()
+    }
+  }
 }
 
 
