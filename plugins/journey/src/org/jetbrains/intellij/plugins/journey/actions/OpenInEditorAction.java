@@ -27,10 +27,10 @@ public class OpenInEditorAction extends AnAction {
     openInEditor(virtualFile, project, offset);
   }
 
-  public static void openInEditor(VirtualFile virtualFile, Project project, int offset) {
+  private static void openInEditor(VirtualFile virtualFile, Project project, int offset) {
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, offset);
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    // This opens file and sets the caret to required position, but for some reason does not focus an editor.
+    // This opens file and sets the caret to the required position, but for some reason does not focus an editor.
     fileEditorManager.openTextEditor(descriptor, true);
     // This forces to focus the editor.
     fileEditorManager.openFile(virtualFile, true);

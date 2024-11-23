@@ -5,13 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.Gray;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ public final class JourneyEditorManager implements Disposable {
 
   public final Map<PsiElement, Editor> OPENED_JOURNEY_EDITORS = new ConcurrentHashMap<>();
 
-  public void showOnlyRange(Editor editor, PsiElement psiElement) {
+  public static void foldOnlyRange(Editor editor, PsiElement psiElement, boolean isExpanded) {
     FoldingModel foldingModel = editor.getFoldingModel();
     int documentLength = editor.getDocument().getTextLength();
 
@@ -57,24 +56,50 @@ public final class JourneyEditorManager implements Disposable {
     foldingModel.runBatchFoldingOperation(() -> {
       // Create a fold region before the visible range
       if (lineStartOffset > 0) {
-        FoldRegion beforeRegion = foldingModel.addFoldRegion(0, lineStartOffset, "");
-        if (beforeRegion != null) {
-          beforeRegion.setExpanded(false);
+        FoldRegion beforeRegion = foldingModel.getFoldRegion(0, lineStartOffset);
+        if (beforeRegion == null) {
+          beforeRegion = foldingModel.addFoldRegion(0, lineStartOffset, "");
         }
+        beforeRegion.setExpanded(isExpanded);
       }
 
       // Create a fold region after the visible range
       if (lineEndOffset < documentLength) {
-        FoldRegion afterRegion = foldingModel.addFoldRegion(lineEndOffset, documentLength, "");
-        if (afterRegion != null) {
-          afterRegion.setExpanded(false);
+        FoldRegion afterRegion = foldingModel.getFoldRegion(lineEndOffset, documentLength);
+        if (afterRegion == null) {
+          afterRegion = foldingModel.addFoldRegion(lineEndOffset, documentLength, "");
         }
+        afterRegion.setExpanded(isExpanded);
       }
     });
   }
 
+  public static final float BASE_FONT_SIZE = 13.0f;
+  public static final int BASE_WIDTH = 800;
+  public static final int TITLE_OFFSET = 60;
+
+  public static void updateEditorSize(Editor editor, NodeRealizer realizer, PsiElement psiElement, float zoom) {
+    float fontSize = BASE_FONT_SIZE * zoom;
+    editor.getColorsScheme().setEditorFontSize(fontSize);
+    editor.getCaretModel().moveToOffset(psiElement.getTextRange().getStartOffset());
+
+    TextRange range = psiElement.getTextRange();
+    int lineStartOffset = editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(range.getStartOffset()));
+    int lineEndOffset = editor.getDocument().getLineEndOffset(editor.getDocument().getLineNumber(range.getEndOffset()));
+
+    Point p1 = editor.offsetToXY(lineStartOffset);
+    Point p2 = editor.offsetToXY(lineEndOffset);
+    // TODO change const offset
+    int h = (int)((p2.y - p1.y + TITLE_OFFSET) / zoom);
+    if (realizer != null) {
+      realizer.setHeight(h);
+    } else {
+      editor.getComponent().setSize(new Dimension(BASE_WIDTH, h));
+    }
+  }
+
   @RequiresEdt
-  public Editor openPsiElementInEditor(PsiElement psiElement) {
+  public Editor openPsiElementInEditor(PsiElement psiElement, float zoom) {
     PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) {
       return null;
@@ -84,9 +109,10 @@ public final class JourneyEditorManager implements Disposable {
     registerEditor(psiElement, editor);
     AsyncEditorLoader.Companion.performWhenLoaded(editor, () -> {
       editor.getCaretModel().moveToOffset(psiElement.getTextRange().getStartOffset());
-      showOnlyRange(editor, psiElement);
+      foldOnlyRange(editor, psiElement, false);
     });
-    editor.getComponent().setSize(new Dimension(600, 400));
+
+    updateEditorSize(editor, null, psiElement, zoom);
     return editor;
   }
 

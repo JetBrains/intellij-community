@@ -3,7 +3,6 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 import com.intellij.diagram.*;
 import com.intellij.diagram.presentation.DiagramLineType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.graph.base.Edge;
 import com.intellij.openapi.graph.base.Node;
 import com.intellij.openapi.graph.builder.GraphBuilder;
@@ -16,13 +15,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager;
-import org.jetbrains.intellij.plugins.journey.navigation.JourneyNavigationUtils;
+import org.jetbrains.intellij.plugins.journey.util.JourneyNavigationUtil;
 import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.*;
@@ -31,9 +28,10 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
 
   private final DiagramProvider<JourneyNodeIdentity> myProvider;
   private final Collection<JourneyNode> myNodes = new HashSet<>();
-  private @NotNull List<JourneyEdge> myEdges = new ArrayList<>();
+  private final List<JourneyEdge> myEdges = new ArrayList<>();
   public final JourneyEditorManager myEditorManager;
-  private static final double LAYOUT_OFFSET = 400;
+  private static final double LAYOUT_OFFSET = 800;
+  private static JourneyDiagramDataModel currentModel;
 
   public JourneyDiagramDataModel(
     @NotNull Project project,
@@ -51,6 +49,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     myProvider = provider;
     myEditorManager = new JourneyEditorManager();
     Disposer.register(this, myEditorManager);
+    currentModel = this;
   }
 
   public JourneyDiagramDataModel(
@@ -65,6 +64,11 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     myProvider = provider;
     myEditorManager = new JourneyEditorManager();
     Disposer.register(this, myEditorManager);
+    currentModel = this;
+  }
+
+  public static JourneyDiagramDataModel getCurrentModel() {
+    return currentModel;
   }
 
   @Override
@@ -87,7 +91,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   }
 
   @Override
-  public @Nullable JourneyNode addElement(@Nullable JourneyNodeIdentity element) {
+  public @NotNull JourneyNode addElement(@Nullable JourneyNodeIdentity element) {
     if (element == null) throw new IllegalArgumentException("element must not be null");
     PsiElement psiElement = element.element();
     psiElement = PsiUtil.tryFindParentOrNull(psiElement, it -> it instanceof PsiMember);
@@ -99,7 +103,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     return node;
   }
 
-  private void layout(GraphBuilder<?,?> builder, List<Node> nodesToLayout, List<Edge> edgesToLayout) {
+  private static void layout(GraphBuilder<?, ?> builder, List<Node> nodesToLayout, List<Edge> edgesToLayout) {
     final var layouter = builder.getGraphPresentationModel().getSettings().getCurrentLayouter();
     final var basicQuery = GraphLayoutService.getInstance().queryLayout(builder).animated().withLayouter(layouter);
 
@@ -121,25 +125,46 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
       );
   }
 
-  private Optional<NodeRealizer> getRealizer(DiagramBuilder builder, JourneyNode journeyNode) {
+  private static Optional<NodeRealizer> getRealizer(DiagramBuilder builder, JourneyNode journeyNode) {
     Graph2D graph2D = builder.getGraphBuilder().getGraph();
     Optional<Node> node = Arrays.stream(graph2D.getNodeArray()).filter(
       (n) -> Objects.equals(builder.getNodeObject(n), journeyNode)).findFirst();
     return node.map(graph2D::getRealizer);
   }
 
-  private void layoutNewElement(JourneyNode fromJourneyNode, JourneyNode toJourneyNode) {
-    var edgesToLayout = List.of(getBuilder().getGraphBuilder().getGraph().getEdgeArray());
-    List<Node> nodesToLayout = new ArrayList<>();
-    var fromNode = getRealizer(this.getBuilder(), fromJourneyNode);
-    var toNode = getRealizer(this.getBuilder(), toJourneyNode);
+  public boolean isNodeExist(JourneyNode node) {
+    return getRealizer(this.getBuilder(), node).isPresent();
+  }
 
-    if (fromNode.isPresent() && toNode.isPresent()) {
-      toNode.get().setCenterX(fromNode.get().getCenterX() + LAYOUT_OFFSET);
-      toNode.get().setCenterY(fromNode.get().getCenterY());
-      nodesToLayout = List.of(toNode.get().getNode());
-    }
-    layout(getBuilder().getGraphBuilder(), nodesToLayout, edgesToLayout);
+  public void addNewPairUpdate(JourneyNode fromJourneyNode, JourneyNode toJourneyNode, boolean isLeftToRight) {
+    queryUpdate(() -> {
+      var edgesToLayout = List.of(getBuilder().getGraphBuilder().getGraph().getEdgeArray());
+      List<Node> nodesToLayout = new ArrayList<>();
+      var fromNode = getRealizer(this.getBuilder(), fromJourneyNode);
+      var toNode = getRealizer(this.getBuilder(), toJourneyNode);
+      var existedNode = isLeftToRight ? fromNode : toNode;
+      var newNode = isLeftToRight ? toNode : fromNode;
+      var offset = isLeftToRight ? LAYOUT_OFFSET : -LAYOUT_OFFSET;
+
+      if (existedNode.isPresent() && newNode.isPresent()) {
+        newNode.get().setCenterX(existedNode.get().getCenterX() + offset);
+        newNode.get().setCenterY(existedNode.get().getCenterY());
+        nodesToLayout = List.of(newNode.get().getNode());
+      }
+      layout(getBuilder().getGraphBuilder(), nodesToLayout, edgesToLayout);
+    });
+  }
+
+  public void addElementWithLayout(PsiElement element) {
+    var node = Optional.of(addElement(new JourneyNodeIdentity(element)));
+    queryUpdate(() -> {
+      var edgesToLayout = List.of(getBuilder().getGraphBuilder().getGraph().getEdgeArray());
+      var nodeRealizer = getRealizer(this.getBuilder(), node.get());
+      if (nodeRealizer.isPresent()) {
+        var nodesToLayout = List.of(nodeRealizer.get().getNode());
+        layout(getBuilder().getGraphBuilder(), nodesToLayout, edgesToLayout);
+      }
+    });
   }
 
   public void queryUpdate(Runnable thenRun) {
@@ -179,8 +204,8 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   public static final DiagramRelationshipInfo MANY_TO_ONE = new DiagramRelationshipInfoAdapter.Builder()
     .setName("MANY_TO_ONE")
     .setLineType(DiagramLineType.SOLID)
-    .setTargetArrow(DiagramRelationshipInfo.CROWS_FOOT_MANY)
-    .setSourceArrow(DiagramRelationshipInfo.ANGLE)
+    .setWidth(2)
+    .setTargetArrow(DiagramRelationshipInfo.ANGLE)
     .create();
 
   @Override
@@ -195,36 +220,13 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
 
   @Override
   public void dispose() {
-
+    myNodes.clear();
+    myEdges.clear();
   }
 
   public void addEdge(Object from, Object to) {
-    PsiElement fromResult = JourneyNavigationUtils.findPsiElement(getProject(), from);
-    PsiElement toResult = JourneyNavigationUtils.findPsiElement(getProject(), to);
-    addEdge(fromResult, toResult);
+    PsiElement fromResult = JourneyNavigationUtil.findPsiElement(getProject(), from);
+    PsiElement toResult = JourneyNavigationUtil.findPsiElement(getProject(), to);
+    JourneyDiagramProvider.addEdge(fromResult, toResult, this);
   }
-
-  public void addEdge(PsiElement from, PsiElement to) {
-    var fromNode = Optional.ofNullable(findNode(from)).orElseGet(() -> addElement(new JourneyNodeIdentity(from)));
-    var toNode = Optional.ofNullable(findNode(to)).orElseGet(() -> addElement(new JourneyNodeIdentity(to)));
-    if (toNode == null || fromNode == null) {
-      return;
-    }
-
-    createEdge(fromNode, toNode);
-    queryUpdate(() -> {
-      layoutNewElement(toNode, fromNode);
-    });
-  }
-
-  private @Nullable JourneyNode findNode(PsiElement from) {
-    if (from == null) return null;
-    PsiFile fromFile = ReadAction.nonBlocking(() -> from.getContainingFile()).executeSynchronously();
-    return ContainerUtil.find(this.getNodes(), node -> {
-      PsiElement element = node.getIdentifyingElement().element();
-      PsiFile toFile = ReadAction.nonBlocking(() -> element.getContainingFile()).executeSynchronously();
-      return toFile.isEquivalentTo(fromFile);
-    });
-  }
-
 }

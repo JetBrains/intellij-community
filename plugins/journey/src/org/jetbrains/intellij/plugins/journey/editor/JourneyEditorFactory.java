@@ -24,7 +24,6 @@ public final class JourneyEditorFactory {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setWheelScrollingEnabled(true);
-    scrollPane.setAutoscrolls(true);
     scrollPane.setBorder(JBUI.Borders.empty());
     /*
      Rendered docs cannot be resized along with font size,

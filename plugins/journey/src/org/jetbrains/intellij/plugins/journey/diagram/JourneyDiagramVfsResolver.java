@@ -46,7 +46,7 @@ class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNodeIdentit
     return null;
   }
 
-  private @Nullable String getPsiFqnRecursive(@NotNull PsiElement element) {
+  private static @Nullable String getPsiFqnRecursive(@NotNull PsiElement element) {
     var parent = element;
     String result = null;
     while (parent != null && result == null) {

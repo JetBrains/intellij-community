@@ -16,8 +16,6 @@ import java.util.List;
 // TODO
 @SuppressWarnings("HardCodedStringLiteral")
 public final class JourneyDiagramElementManager implements DiagramElementManager<JourneyNodeIdentity> {
-  private @NotNull DiagramProvider<JourneyNodeIdentity> myProvider;
-
   @Override
   public @Nullable JourneyNodeIdentity findInDataContext(@NotNull DataContext context) {
     return null;
@@ -84,6 +82,5 @@ public final class JourneyDiagramElementManager implements DiagramElementManager
 
   @Override
   public void setUmlProvider(@NotNull DiagramProvider<JourneyNodeIdentity> provider) {
-    this.myProvider = provider;
   }
 }

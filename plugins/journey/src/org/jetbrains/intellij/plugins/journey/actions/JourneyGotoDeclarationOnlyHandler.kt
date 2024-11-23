@@ -88,7 +88,7 @@ internal class JourneyGotoDeclarationOnlyHandler() : CodeInsightActionHandler {
               actionResult.requestor.navigationRequest()
             }
 
-            diagramDataModel.addEdge(navigationRequest, editor)
+            diagramDataModel.addEdge(editor, navigationRequest)
             return
           }
           navigateRequestLazy(project, actionResult.requestor)
@@ -97,7 +97,7 @@ internal class JourneyGotoDeclarationOnlyHandler() : CodeInsightActionHandler {
           val popup = createTargetPopup(
             CodeInsightBundle.message("declaration.navigation.title"),
             actionResult.targets, LazyTargetWithPresentation::presentation
-          ) { (requestor, _, navigationProvider) ->
+          ) { (requestor, _, _) ->
             navigateRequestLazy(project, requestor)
           }
           popup.showInBestPositionFor(editor)

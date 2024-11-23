@@ -57,7 +57,7 @@ public class JourneyGotoSuperAction extends AnAction implements JourneyEditorOve
       LOG.info("No super elements found");
     }
     if (result.size() == 1) {
-      diagramDataModel.addEdge(result.get(0), psiMember);
+      diagramDataModel.addEdge(psiMember, result.get(0));
     }
     if (result.size() > 1) {
       createTargetPopup(FindBundle.message("show.usages.ambiguous.title"), result, (e1) -> {
@@ -68,7 +68,7 @@ public class JourneyGotoSuperAction extends AnAction implements JourneyEditorOve
         }
         return UtilKt.targetPresentation(element);
       }, (e1) -> {
-        diagramDataModel.addEdge(e1, psiMember);
+        diagramDataModel.addEdge(psiMember, e1);
       }).showInBestPositionFor(editor);
     }
   }

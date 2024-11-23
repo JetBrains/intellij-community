@@ -1,4 +1,4 @@
-package org.jetbrains.intellij.plugins.journey.navigation;
+package org.jetbrains.intellij.plugins.journey.util;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.CaretModel;
@@ -12,11 +12,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
-import static com.intellij.openapi.project.Project.JOURNEY_CURRENT_NODE;
-
-public final class JourneyNavigationUtils {
+public final class JourneyNavigationUtil {
 
 
   public static PsiElement getPsiElement(SourceNavigationRequest navigationRequest, Project project) {
@@ -61,7 +58,6 @@ public final class JourneyNavigationUtils {
       if (result instanceof Editor editor) result = editorToPsiMethod(project, editor);
       if (result instanceof SourceNavigationRequest navigationRequest) result = getPsiElement(navigationRequest, project);
       if (result instanceof OpenFileDescriptor ofd) result = getPsiElement(ofd);
-      if (result == null) result = project.getUserData(JOURNEY_CURRENT_NODE);
       if (result instanceof PsiElement psiElementFrom) {
         PsiElement parent = PsiUtil.tryFindParentOrNull(psiElementFrom, it -> it instanceof PsiMember);
         if (parent != null) {

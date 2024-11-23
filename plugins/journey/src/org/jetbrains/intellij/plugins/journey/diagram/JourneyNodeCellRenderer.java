@@ -35,7 +35,11 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
     myDataModel = ((JourneyDiagramDataModel)builder.getDataModel());
   }
 
-  private final Map<PsiElement, JourneyEditorWrapper> NODE_PANELS = new HashMap<>();
+  private static final Map<PsiElement, JourneyEditorWrapper> NODE_PANELS = new HashMap<>();
+
+  public static NodeRealizer getRealizer(@NotNull PsiElement psiElement) {
+    return NODE_PANELS.get(psiElement).getRealizer();
+  }
 
   @Override
   protected @NotNull JComponent createNodeRealizerComponent(@NotNull Graph2DView view,
@@ -51,13 +55,13 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
         return cached;
       }
 
-      Editor editor = myDataModel.myEditorManager.openPsiElementInEditor(psiElement);
+      Editor editor = myDataModel.myEditorManager.openPsiElementInEditor(psiElement, (float)view.getZoom());
       if (editor == null) {
         throw new IllegalStateException("Can't open " + psiElement);
       }
       editor.putUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL, myDataModel);
 
-      JourneyEditorWrapper editorWrapper = new JourneyEditorWrapper(editor, realizer, ObjectUtils.notNull(getQualifiedName(psiElement), () -> "No title"), view);
+      JourneyEditorWrapper editorWrapper = new JourneyEditorWrapper(editor, realizer, psiElement, view, myDataModel);
       myDataModel.myEditorManager.closeEditor.addListener(it -> {
         if (it == editor) {
           view.getCanvasComponent().remove(editorWrapper.getEditorComponent());

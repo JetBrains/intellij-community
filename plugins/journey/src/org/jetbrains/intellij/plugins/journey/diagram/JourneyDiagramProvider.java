@@ -11,7 +11,9 @@ import com.intellij.openapi.graph.view.NodeCellRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.uml.presentation.DiagramPresentationModelImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +21,9 @@ import org.jetbrains.intellij.plugins.journey.diagram.persistence.JourneyUmlFile
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Optional;
+
+import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager.updateEditorSize;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNodeIdentity> {
@@ -67,8 +72,6 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
         LOG.error("Could not load snapshot from .uml file", e);
       }
 
-      project.putUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR, (element1, element2) -> navigate(dataModel, element1, element2));
-
       return dataModel;
     }
     catch (Exception e) {
@@ -77,9 +80,21 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
     }
   }
 
-  public static Boolean navigate(JourneyDiagramDataModel model, Object from, Object to) {
-    model.addEdge(from, to);
-    return true;
+  public static void addEdge(PsiElement from, PsiElement to, JourneyDiagramDataModel model) {
+    var fromNode = Optional.ofNullable(findNodeForFile(model, from)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(from)));
+    var toNode = Optional.ofNullable(findNodeForFile(model, to)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(to)));
+    if (toNode == null || fromNode == null) {
+      return;
+    }
+
+    boolean isLeftToRight = model.isNodeExist(fromNode);
+    model.createEdge(fromNode, toNode);
+    model.addNewPairUpdate(fromNode, toNode, isLeftToRight);
+  }
+
+  private static @Nullable JourneyNode findNodeForFile(JourneyDiagramDataModel model, PsiElement node) {
+    return ContainerUtil.find(model.getNodes(), e ->
+      e.getIdentifyingElement().element().isEquivalentTo(node));
   }
 
   @Override
@@ -114,16 +129,17 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
       public void actionPerformed(@NotNull GraphBuilder<?, ?> builder, @NotNull GraphBuilderEvent event) {
         super.actionPerformed(builder, event);
         if (event == GraphBuilderEvent.ZOOM_CHANGED) {
-          int font = (int)(13 * builder.getZoom());
-          font = Math.min(font, 13);
           if (builder.getGraphDataModel() instanceof DiagramDataModelWrapper ddmw
               && ddmw.getModel() instanceof JourneyDiagramDataModel journeyDiagramDataModel
           ) {
-            Collection<Editor> editors = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.values();
-            for (Editor editor : editors) {
-              editor.getColorsScheme().setEditorFontSize(font);
-              // TODO such revalidation cause to flickering 
-              SwingUtilities.invokeLater(() -> editor.getComponent().revalidate());
+            Collection<PsiElement> elements = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.keySet();
+            for (PsiElement psi : elements) {
+              Editor editor = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.get(psi);
+              // TODO such revalidation cause to flickering
+              SwingUtilities.invokeLater(() -> {
+                updateEditorSize(editor, JourneyNodeCellRenderer.getRealizer(psi), psi, (float)builder.getZoom());
+                editor.getComponent().revalidate();
+              });
             }
           }
         }

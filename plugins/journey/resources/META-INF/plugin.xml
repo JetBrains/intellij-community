@@ -19,7 +19,7 @@
 
   <actions>
     <group id="JourneyAction" searchable="false">
-      <action id="JourneyToggleAction" class="org.jetbrains.intellij.plugins.journey.JourneyToggleAction"/>
+      <action id="JourneyToggleAction" class="org.jetbrains.intellij.plugins.journey.actions.JourneyToggleAction"/>
     </group>
     <action id="org.jetbrains.intellij.plugins.journey.actions.OpenInEditorAction"
             class="org.jetbrains.intellij.plugins.journey.actions.OpenInEditorAction"
@@ -50,6 +50,13 @@
       <keyboard-shortcut first-keystroke="meta U" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta U" keymap="Mac OS X 10.5+"/>
     </action>
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoImplementationAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyGotoImplementationAction"
+            text="Go To Implementation">
+      <keyboard-shortcut first-keystroke="ctrl alt B" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta alt B" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta alt B" keymap="Mac OS X 10.5+"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -57,7 +64,13 @@
 
     <intentionAction>
       <language>UAST</language>
-      <className>org.jetbrains.intellij.plugins.journey.StartJourneyIntentionAction</className>
+      <className>org.jetbrains.intellij.plugins.journey.actions.StartJourneyIntentionAction</className>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
+
+    <intentionAction>
+      <language>UAST</language>
+      <className>org.jetbrains.intellij.plugins.journey.actions.AddToJourneyIntentionAction</className>
       <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
 
