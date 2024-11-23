@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import kotlinx.coroutines.withContext
@@ -54,6 +55,12 @@ internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNew
     if (wasStarted.getAndSet(true)) return
     if (environment.isForceDisabled) return
     logger.info("Checking whether to show the What's New page on startup.")
+    val urls = ExternalProductResourceUrls.getInstance()
+    if (urls.whatIsNewPageUrl != null) {
+      logger.error("ExternalProductResourceUrls::whatIsNewPageUrl is not null. Vision-based What's New is not supported and will be disabled.")
+      // If you need to enable new What's New in your product, make sure to set ExternalProductResourceUrls::whatIsNewPageUrl to null in your override of that serivce.
+      return
+    }
 
     // a bit hacky workaround but now we don't have any tools to forward local startup activities to a controller
     val clientId = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).firstOrNull()?.clientId ?: ClientId.localId
