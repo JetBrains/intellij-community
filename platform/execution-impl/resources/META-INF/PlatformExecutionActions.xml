@@ -1,6 +1,6 @@
 <idea-plugin>
   <actions>
-    <action class="com.intellij.execution.wsl.target.WslSyncAction" internal="true"/>
+    <action class="com.intellij.execution.wsl.target.WslSyncAction" internal="true" text="WSL Sync"/>
     <action class="com.intellij.execution.wsl.proxy.WslProxyAction" internal="true"/>
     <action id="TerminalIncreaseFontSize" class="com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"
             use-shortcut-of="EditorIncreaseFontSize"/>

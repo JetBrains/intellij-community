@@ -1,18 +1,13 @@
 package com.intellij.execution.multilaunch.design.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.execution.multilaunch.execution.executables.Executable
 import com.intellij.execution.multilaunch.design.ExecutableRow
 import com.intellij.execution.multilaunch.design.popups.ExecutableSelectionPopupFactory
 import com.intellij.execution.multilaunch.execution.conditions.ConditionFactory
-import com.intellij.idea.ActionsBundle
+import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.ui.awt.RelativePoint
 
-class AddExecutableAction : ManageExecutableAction(ActionsBundle.message("action.multilaunch.AddExecutableAction.text")) {
-  companion object {
-    val ID = "multilaunch.AddExecutableAction"
-  }
-
+internal class AddExecutableAction : ManageExecutableAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val configuration = e.configuration ?: return
