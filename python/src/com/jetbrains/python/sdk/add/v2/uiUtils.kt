@@ -157,7 +157,9 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: P
     }
     is ExistingSelectableInterpreter -> {
       icon = PythonPsiApiIcons.Python
-      append(interpreter.sdk.versionString!!)
+      // This is a dirty hack, but version string might be null for invalid pythons
+      // We must fix it after PythonInterpreterService will make sdk needless
+      append(interpreter.sdk.versionString ?: "broken interpreter")
       append(" " + replaceHomePathToTilde(interpreter.homePath), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
   }
