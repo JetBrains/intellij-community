@@ -26,20 +26,26 @@ package org.jetbrains.lang.manifest.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.lang.manifest.psi.*;
+import org.jetbrains.lang.manifest.psi.Header;
+import org.jetbrains.lang.manifest.psi.HeaderValue;
+import org.jetbrains.lang.manifest.psi.ManifestToken;
+import org.jetbrains.lang.manifest.psi.ManifestTokenType;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class HeaderImpl extends ASTWrapperPsiElement implements Header {
+public class HeaderImpl extends ASTWrapperPsiElement implements Header, NavigatablePsiElement {
   public HeaderImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -74,6 +80,26 @@ public class HeaderImpl extends ASTWrapperPsiElement implements Header {
   @Override
   public List<HeaderValue> getHeaderValues() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, HeaderValue.class);
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      @Override
+      public String getPresentableText() {
+        return getName();
+      }
+
+      @Override
+      public String getLocationString() {
+        return null;
+      }
+
+      @Override
+      public Icon getIcon(boolean open) {
+        return null;
+      }
+    };
   }
 
   @Override
