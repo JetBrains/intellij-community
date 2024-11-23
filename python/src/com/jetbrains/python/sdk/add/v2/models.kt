@@ -117,7 +117,10 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
 
   private suspend fun initInterpreterList() {
     withContext(Dispatchers.IO) {
+      // TODO: PythonInterpreterService: load valid system pythons
       val existingSdks = PyConfigurableInterpreterList.getInstance(null).getModel().sdks.toList()
+
+
       val allValidSdks = ProjectSpecificSettingsStep.getValidPythonSdks(existingSdks)
         .map { ExistingSelectableInterpreter(it, PySdkUtil.getLanguageLevelForSdk(it), it.isSystemWide) }
 
@@ -132,6 +135,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
       val existingSdkPaths = existingSdks.mapNotNull { it.homePath }.mapNotNull { tryResolvePath(it) }.toSet()
 
       val detected = PythonSdkFlavor.getApplicableFlavors(true).flatMap { sdkFlavor ->
+        // TODO: PythonInterpreterService: detect valid system pythons
         sdkFlavor.suggestLocalHomePaths(null, null)
           .filterNot { it in existingSdkPaths }
           .map { DetectedSelectableInterpreter(it.pathString, sdkFlavor.getLanguageLevel(it.pathString)) }

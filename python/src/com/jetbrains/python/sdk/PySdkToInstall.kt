@@ -31,7 +31,7 @@ fun getSdksToInstall(): List<PySdkToInstall> {
     PySdkToInstall(it.value)
   }
 }
-
+// TODO: PythonInterpreterService: get rid of this function
 @RequiresEdt
 @Internal
 fun installSdkIfNeeded(sdk: Sdk, module: Module?, existingSdks: List<Sdk>, context: UserDataHolder? = null): Result<Sdk> =

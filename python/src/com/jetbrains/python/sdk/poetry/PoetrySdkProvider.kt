@@ -64,6 +64,7 @@ class PoetrySdkProvider : PySdkProvider {
   }
 
 }
+// TODO: PythonInterpreterService: validate system python
 
 internal fun validateSdks(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<Sdk> {
   val moduleFile = module?.baseDir

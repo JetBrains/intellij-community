@@ -112,7 +112,7 @@ fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
   module.pythonSdk = sdk
   module.excludeInnerVirtualEnv(sdk)
 }
-
+// TODO: PythonInterpreterService: get system pythons
 /**
  * @param context used to get [BASE_DIR] in [com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.suggestLocalHomePaths]
  */
@@ -141,7 +141,7 @@ private fun PythonSdkFlavor<*>.detectSdks(
     .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, this) }
 
 
-internal fun PythonSdkFlavor<*>.detectSdkPaths(
+private fun PythonSdkFlavor<*>.detectSdkPaths(
   module: Module?,
   context: UserDataHolder,
   targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,

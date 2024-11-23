@@ -306,6 +306,7 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
  * Looks for system pythons. Returns flavor and all its pythons.
  */
 fun findPythonsOnSystem(): List<Pair<PythonSdkFlavor<*>, Collection<Path>>> =
+  // TODO: PythonInterpreterService: detect valid system pythons
   PythonSdkFlavor.getApplicableFlavors(false) //system=platform dependent (exclude venv)
     .map { flavor ->
       flavor.dropCaches()
@@ -348,6 +349,7 @@ private suspend fun filterLatestUsablePython(flavorsToPythons: List<Pair<PythonS
   return current?.second
 }
 
+// TODO: PythonInterpreterService: validate system python
 /**
  * Ensures that [pythonBinary] is executable and returns its version. `null` if python is broken (reports error to logs).
  *

@@ -63,7 +63,7 @@ class UvSdkProvider : PySdkProvider {
     return UvSdkAdditionalData.load(element)
   }
 }
-
+// TODO: PythonInterpreterService: validate system python
 internal fun validateSdks(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<Sdk> {
   val sdks = findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() }
              ?: detectSystemWideSdks(module, existingSdks, context)
