@@ -7,26 +7,25 @@ import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSi
  * A/B Experiment option interface.
  *
  * Implement and register an option for your feature.
- *
  */
 interface ABExperimentOption {
   val id: ABExperimentOptionId
 
   /**
-   * Returns a size of an audience group for the option.
+   * Returns the size of an audience group for the option.
    *
    * The number of A/B experimental groups is limited.
    * The group size must be agreed with the analysts so that the result of the experiment is statistically significant.
    *
    * If group capacity is exhausted for a specific IDE, there will be an error in runtime.
-   * In such a case, you need to communicate with related persons of other options
+   * In such a case, you need to communicate with related persons with other options
    * to handle such a case and rearrange option groups accordingly.
    *
    * @param isPopularIde true if the current IDE is popular.
    * It can be used to adjust the group size of the option accordingly.
-   * Popular IDEs have more users and the group size should be smaller than it is in other IDEs.
+   * Popular IDEs have more users, and the group size should be smaller than it is in other IDEs.
    *
-   * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.TOTAL_NUMBER_OF_GROUPS
+   * @see com.intellij.platform.experiment.ab.impl.experiment.TOTAL_NUMBER_OF_GROUPS
    */
   fun getGroupSizeForIde(isPopularIde: Boolean): ABExperimentOptionGroupSize
 
@@ -46,7 +45,7 @@ interface ABExperimentOption {
    * In this case, the plugin must specify the target version so as not to spoil the experiment
    * by overflowing the maximum number of user groups.
    *
-   * For IDEs it allows to control in what version of IDE what options are enabled.
+   * For IDEs, it allows to control in what version of IDE what options are enabled.
    */
   fun checkIdeVersionIsSuitable(): Boolean
 }
