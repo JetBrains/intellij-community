@@ -53,7 +53,7 @@ typealias ErrorSink = FlowCollector<@NlsSafe String>
 /**
  * Displays error with a message box and writes it to a log.
  */
-object ShowingMessageErrorSync : ErrorSink {
+internal object ShowingMessageErrorSync : ErrorSink {
   override suspend fun emit(value: @NlsSafe String) {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       thisLogger().warn(value)

@@ -2,8 +2,6 @@
 package com.jetbrains.python.newProjectWizard
 
 import com.intellij.facet.ui.ValidationResult
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
@@ -17,15 +15,15 @@ import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
+import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
-import com.jetbrains.python.util.ErrorSink
-import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 
 /**
  * Extend this class to register a new project generator.
@@ -33,18 +31,27 @@ import kotlinx.coroutines.withContext
  * [typeSpecificUI] is a UI to display these settings and bind then using Kotlin DSL UI
  * [allowedInterpreterTypes] limits a list of allowed interpreters (all interpreters are allowed by default)
  * [newProjectName] is a default name of the new project ([getName]Project is default)
- * [expandProjectAfterCreation]: expand project tree view on the left side of IDE
+ *
+ * To test this class, see [setUiServices]
  */
 abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   private val typeSpecificSettings: TYPE_SPECIFIC_SETTINGS,
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
-  private val errorSink: ErrorSink = ShowingMessageErrorSync,
   private val _newProjectName: @NlsSafe String? = null,
-  private val expandProjectAfterCreation: Boolean = !ApplicationManager.getApplication().isHeadlessEnvironment,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings> {
   private val baseSettings = PyV3BaseProjectSettings()
+  private var uiServices: PyV3UIServices = PyV3UIServicesProd
   val newProjectName: @NlsSafe String get() = _newProjectName ?: "${name.replace(" ", "")}Project"
+
+
+  /**
+   * Run this method as before any other to substitute services with mock for tests
+   */
+  @TestOnly
+  fun setUiServices(uiServices: PyV3UIServices) {
+    this.uiServices = uiServices
+  }
 
 
   @RequiresEdt
@@ -53,7 +60,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     coroutineScope.launch {
       val sdk = settings.generateAndGetSdk(module, baseDir).getOrElse {
         withContext(Dispatchers.EDT) {
-          errorSink.emit(it.localizedMessage) // Show error generation to user
+          uiServices.errorSink.emit(it.localizedMessage) // Show error generation to user
         }
         return@launch // Since we failed to generate project, we do not need to go any further
       }
@@ -67,19 +74,15 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       // Project view must be expanded (PY-75909) but it can't be unless it contains some files.
       // Either base settings (which create venv) might generate some or type specific settings (like Django) may.
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
-      ensureProjectViewExpanded(project)
-      typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure { errorSink.emit(it.localizedMessage) }
-      ensureProjectViewExpanded(project)
+      uiServices.expandProjectTreeView(project)
+      typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure { uiServices.errorSink.emit(it.localizedMessage) }
+      uiServices.expandProjectTreeView(project)
     }
   }
 
-  private suspend fun ensureProjectViewExpanded(project: Project): Unit = withContext(Dispatchers.EDT) {
-    if (!expandProjectAfterCreation) return@withContext
-    AbstractProjectViewPane.EP.getExtensions(project).firstNotNullOf { pane -> pane.tree }.expandRow(0)
-  }
 
   override fun createPeer(): ProjectGeneratorPeer<PyV3BaseProjectSettings> =
-    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, allowedInterpreterTypes)
+    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, allowedInterpreterTypes, uiServices)
 
   override fun validate(baseDirPath: String): ValidationResult =
     when (val pathOrError = validatePath(baseDirPath)) {
