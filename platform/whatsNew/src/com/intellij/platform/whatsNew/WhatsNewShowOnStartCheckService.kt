@@ -67,7 +67,8 @@ internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNew
           val whatsNewAction = environment.findAction()
           if (whatsNewAction != null) {
             if (!PlatformUtils.isPyCharm() // PY-77622
-                && !PlatformUtils.isPhpStorm() /* WI-79830 */) {
+                && !PlatformUtils.isPhpStorm() /* WI-79830 */
+                && !application.isUnitTestMode /* unit test env has non-null URL, known fact, not an issue */) {
               val urls = ExternalProductResourceUrls.getInstance()
               if (urls.whatIsNewPageUrl != null) {
                 logger.error("ExternalProductResourceUrls::whatIsNewPageUrl is not null. Vision-based What's New is not supported and will be disabled.")
