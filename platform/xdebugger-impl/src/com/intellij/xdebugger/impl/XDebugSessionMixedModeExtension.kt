@@ -73,6 +73,9 @@ abstract class XDebugSessionMixedModeExtension(
   }
 
   fun stepOut(suspendContext: XSuspendContext) {
+    // TODO: in unity the stepping out from native code to managed doesn't work
+    //  (we got in suspend_current method when step from native call wrapper, as I understand this happens because the wrappers' nop instructions
+    //  are replaced by a trampin going to suspend_current method
     val stepType = StepType.Out
     val newState = if (isLowSuspendContext(suspendContext)) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext, stepType)
     this.stateMachine.set(newState)
