@@ -15,7 +15,8 @@ suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesF
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
-  val descriptorMap = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = true, honorCompatiblePluginsToIgnore = true, context)
+  val minimal = System.getProperty("intellij.build.minimal").toBoolean()
+  val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context)
   val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context)
 
   val bundledAndPublished = pluginsToPublish.filter { pluginToPublish ->
@@ -158,7 +159,7 @@ suspend fun collectPluginDescriptors(
     if (xml.getChildren("content").any { contentElement ->
         contentElement.getChildren("module").any {
           val name = it.getAttributeValue("name", "")
-          //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin 
+          //intellij.platform.vcs.*.split modules are currently included in the CodeWithMe plugin
           name.startsWith("intellij.platform.vcs.") && !name.endsWith(".split") || name == "intellij.ide.startup.importSettings"
         }
       }) {
