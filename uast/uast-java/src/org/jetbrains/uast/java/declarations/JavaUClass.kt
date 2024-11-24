@@ -57,6 +57,10 @@ abstract class AbstractJavaUClass(
 
   override fun equals(other: Any?): Boolean = other is AbstractJavaUClass && javaPsi == other.javaPsi
   override fun hashCode(): Int = javaPsi.hashCode()
+
+  override fun isRecord(): Boolean {
+    return javaPsi.isRecord
+  }
 }
 
 @ApiStatus.Internal
