@@ -2,7 +2,6 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelTunnelsApi.Connection
-import com.intellij.platform.eel.impl.HostAddressBuilderImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * API for sockets. Use [hostAddressBuilder] to create arguments.
@@ -416,4 +416,24 @@ interface EelConnectionError : EelNetworkError {
    * Unknown failure during a connection establishment
    */
   interface UnknownFailure : EelConnectionError
+}
+
+
+private data class HostAddressBuilderImpl(
+  override var port: UShort = 0u,
+  override var hostname: String = "localhost",
+  override var protocolPreference: EelIpPreference = EelIpPreference.USE_SYSTEM_DEFAULT,
+  override var timeout: Duration = 10.seconds,
+) : EelTunnelsApi.HostAddress.Builder, EelTunnelsApi.HostAddress {
+  override fun hostname(hostname: String): EelTunnelsApi.HostAddress.Builder = apply { this.hostname = hostname }
+
+  override fun preferIPv4(): EelTunnelsApi.HostAddress.Builder = apply { this.protocolPreference = EelIpPreference.PREFER_V4 }
+
+  override fun preferIPv6(): EelTunnelsApi.HostAddress.Builder = apply { this.protocolPreference = EelIpPreference.PREFER_V6 }
+
+  override fun preferOSDefault(): EelTunnelsApi.HostAddress.Builder = this.apply { this.protocolPreference = EelIpPreference.USE_SYSTEM_DEFAULT }
+
+  override fun connectionTimeout(timeout: Duration): EelTunnelsApi.HostAddress.Builder = apply { this.timeout = timeout }
+
+  override fun build(): EelTunnelsApi.HostAddress = this.copy()
 }

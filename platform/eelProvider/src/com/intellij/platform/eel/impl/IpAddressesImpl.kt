@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl
 
-import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.EelTunnelsApi.ResolvedSocketAddress
 import java.net.Inet4Address
 import java.net.Inet6Address
@@ -11,7 +10,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 data class ResolvedV4SocketAddressImpl(override val port: UShort, override val bits: UInt) : ResolvedSocketAddress.V4
-data class ResolvedV6SocketAddressImpl(override val port: UShort, override val higherBits: ULong, override val lowerBits: ULong) : EelTunnelsApi.ResolvedSocketAddress.V6
+data class ResolvedV6SocketAddressImpl(override val port: UShort, override val higherBits: ULong, override val lowerBits: ULong) : ResolvedSocketAddress.V6
 
 
 val SocketAddress.asResolvedSocketAddress: ResolvedSocketAddress
