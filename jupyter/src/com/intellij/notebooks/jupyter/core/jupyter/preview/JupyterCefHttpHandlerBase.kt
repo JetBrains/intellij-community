@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.jupyter.core.jupyter.preview
 
 
@@ -85,7 +85,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
     return true
   }
 
-  fun processInternalLibs(uri: String): ByteArray? {
+  private fun processInternalLibs(uri: String): ByteArray? {
     try {
       val extension = FileUtilRt.getExtension(uri)
       // map files used for debugging
@@ -103,22 +103,17 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
     }
   }
 
-  private fun getFileFromUrl(fullUri: String): String? {
-    if (fullUri in absolutePathFiles) {
-      return fullUri
+  protected fun getFileFromUrl(fullPath: String): String? {
+    if (fullPath in absolutePathFiles) {
+      return fullPath
     }
-    if (!fullUri.startsWith(PATH_PREFIX)) {
-      return null
+    if (fullPath.startsWith(PATH_PREFIX)) {
+      val uri = fullPath.replace("//", "/").substring(PATH_PREFIX.length).trimStart('/')
+      if (uri.isNotEmpty() && ".." !in uri) {
+        return uri
+      }
     }
-    val uri = fullUri.replace("//", "/").substring(PATH_PREFIX.length).trimStart('/')
-    if (uri.isEmpty()) {
-      return null
-    }
-
-    if (".." in uri) {
-      return null
-    }
-    return uri
+    return null
   }
 
   abstract val appName: String
