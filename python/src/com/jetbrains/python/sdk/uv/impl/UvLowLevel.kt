@@ -16,18 +16,23 @@ import kotlin.io.path.pathString
 internal class UvLowLevelImpl(val cwd: Path, val uvCli: UvCli) : UvLowLevel {
   override suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path> {
     if (init) {
-      uvCli.runUv(cwd, "init").getOrElse {
+      val initArgs = mutableListOf("init");
+      if (python != null) {
+        initArgs.add("--python")
+        initArgs.add(python.pathString)
+      }
+      uvCli.runUv(cwd, *initArgs.toTypedArray()).getOrElse {
         return Result.failure(it)
       }
     }
 
-    var args = mutableListOf("venv");
+    val venvArgs = mutableListOf("venv");
     if (python != null) {
-      args.add("--python")
-      args.add(python.pathString)
+      venvArgs.add("--python")
+      venvArgs.add(python.pathString)
     }
 
-    uvCli.runUv(cwd, *args.toTypedArray()).getOrElse {
+    uvCli.runUv(cwd, *venvArgs.toTypedArray()).getOrElse {
       return Result.failure(it)
     }
 
