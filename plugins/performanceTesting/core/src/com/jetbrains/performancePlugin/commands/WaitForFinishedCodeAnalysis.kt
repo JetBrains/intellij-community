@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -48,6 +49,10 @@ private fun Collection<FileEditor>.getWorthy(): List<TextEditor> {
     else it
   }
 }
+
+private fun isTrafficLightExists(editor: Editor): Boolean = (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null
+
+private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.traffic.light")
 
 internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -282,6 +287,11 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       while (iterator.hasNext()) {
         val (editor, exceptionWithTime) = iterator.next()
         val highlightedEditor = highlightedEditors[editor]
+
+        if (checkTrafficLightRenderer()) {
+          assert(isTrafficLightExists(editor.editor)) { "Highlighting traffic light should be shown in the top right corner of the editor, in case of $status" }
+        }
+
         if (highlightedEditor == null) {
           if (!UIUtil.isShowing(editor.getComponent())) {
             iterator.remove()
