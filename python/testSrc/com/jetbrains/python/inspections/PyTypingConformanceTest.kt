@@ -11,6 +11,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.util.io.URLUtil
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.PythonTestUtil
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import org.junit.Ignore
@@ -38,10 +39,17 @@ private val IGNORED_INSPECTIONS = listOf(
 class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   @Test
   fun test() {
-    val files = myFixture.configureByFiles(*getFilePaths().toTypedArray())
-    enableInspections()
-    checkHighlighting()
-    //assertNotParsed(files[0])
+    val settings = PyCodeInsightSettings.getInstance()
+    val oldHighlightUnusedImports = settings.HIGHLIGHT_UNUSED_IMPORTS
+    settings.HIGHLIGHT_UNUSED_IMPORTS = false
+    try {
+      myFixture.configureByFiles(*getFilePaths().toTypedArray())
+      enableInspections()
+      checkHighlighting()
+    }
+    finally {
+      settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnusedImports
+    }
   }
 
   private fun getFilePaths(): List<String> {
