@@ -42,7 +42,6 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.KeyStroke
-import kotlin.Throws
 
 private val LOG = logger<ActionUtil>()
 private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, true)
@@ -139,7 +138,7 @@ object ActionUtil {
     vararg events: AnActionEvent,
   ) {
     val actionNames = events.asSequence()
-      .map { it.presentation.text }.filter { it.isNotEmpty() }.toList()
+      .mapNotNull { it.presentation.text }.filter { it.isNotEmpty() }.toList()
     if (LOG.isDebugEnabled) {
       LOG.debug("Showing dumb mode warning for ${events.asList()}", Throwable())
     }
