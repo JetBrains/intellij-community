@@ -88,17 +88,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
     }
   }
 
-  private fun doScheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module?, isCreatingNewProject: Boolean): CompletableFuture<Boolean> {
-    val setSdk: (Sdk?) -> Unit = { sdk ->
-      if (isCreatingNewProject) {
-        ProjectRootManager.getInstance(project).projectSdk = sdk
-      }
-      else {
-        ModuleRootManager.getInstance(module!!).modifiableModel.apply {
-          this.sdk = sdk
-        }.commit()
-      }
-    }
+  private fun doScheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, onInstalledSdk: (Sdk?) -> Unit = {}): CompletableFuture<Boolean> {
     val jdkDownloader = (SdkDownload.EP_NAME.findFirstSafe { it is JdkDownloader } as? JdkDownloader)
                         ?: return CompletableFuture.completedFuture(false)
 
@@ -109,7 +99,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
         val (selectedFile, error) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
         if (selectedFile != null) {
           jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile) { downloadTask ->
-            scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, setSdk)
+            scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, onInstalledSdk)
           }
         } else {
           Messages.showErrorDialog(project, JavaUiBundle.message("jdk.download.error.message", error), JavaUiBundle.message("jdk.download.error.title"))
@@ -121,10 +111,28 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
   }
 
   fun scheduleDownloadJdkForNewProject(sdkDownloadTask: JdkDownloadTask): CompletableFuture<Boolean> {
-    return doScheduleDownloadJdk(sdkDownloadTask, null, true)
+    return doScheduleDownloadJdk(sdkDownloadTask) {
+      ProjectRootManager.getInstance(project).projectSdk = it
+    }
   }
 
   fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module, isCreatingNewProject: Boolean) {
-    doScheduleDownloadJdk(sdkDownloadTask, module, isCreatingNewProject)
+    if (isCreatingNewProject) {
+      scheduleDownloadJdkForNewProject(sdkDownloadTask)
+    } else {
+      scheduleDownloadJdk(sdkDownloadTask, module)
+    }
+  }
+
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask, module: Module) {
+    doScheduleDownloadJdk(sdkDownloadTask) {
+      ModuleRootManager.getInstance(module).modifiableModel.apply {
+        this.sdk = it
+      }.commit()
+    }
+  }
+
+  fun scheduleDownloadJdk(sdkDownloadTask: JdkDownloadTask) {
+    doScheduleDownloadJdk(sdkDownloadTask)
   }
 }
