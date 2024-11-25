@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
+import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
@@ -242,8 +243,7 @@ internal open class FirCallableCompletionContributor(
 
             val expectedType = expectedType?.takeUnless { it is KaErrorType }
                 ?.withNullability(KaTypeNullability.NON_NULLABLE)
-                ?.takeUnless { it.isAnyType }
-                ?.takeUnless { it.isNothingType }
+                ?.takeIf { it.isEnum() }
 
             yieldAll(sequence {
                 val psiFilter: (KtEnumEntry) -> Boolean = if (invocationCount > 2) { _ -> true }
