@@ -14,8 +14,6 @@ import java.nio.file.Path
 class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("uv", model) {
   override val interpreterType: InterpreterType = InterpreterType.UV
   override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
-  // FIXME: support uv installation
-  override val installationScript = null
 
   override fun onShown() {
     // FIXME: validate base interpreters against pyprojecttoml version. See poetry

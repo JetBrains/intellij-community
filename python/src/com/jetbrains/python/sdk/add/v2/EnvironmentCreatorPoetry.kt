@@ -20,7 +20,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPythonVersionsService
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.poetryPath
@@ -37,7 +36,6 @@ import java.nio.file.Path
 class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
-  override val installationScript = PythonHelpersLocator.findPathInHelpers("pycharm_poetry_installer.py")
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     super.buildOptions(panel, validationRequestor)
