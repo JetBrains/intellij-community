@@ -74,8 +74,6 @@
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-plugin-classpath" level="project" />
     <orderEntry type="module" module-name="kotlin.j2k.shared" />
-    <orderEntry type="module" module-name="kotlin.j2k.k1.old" />
-    <orderEntry type="module" module-name="kotlin.j2k.k1.new" />
     <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="kotlin.scripting" />
     <orderEntry type="module" module-name="kotlin.inspections" />

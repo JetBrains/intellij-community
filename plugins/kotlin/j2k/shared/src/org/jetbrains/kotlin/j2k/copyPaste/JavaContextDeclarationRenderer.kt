@@ -16,15 +16,15 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.name.FqNameUnsafe
+import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.blockExpressionsOrSingle
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-internal data class JavaContextDeclarationStubs(
+data class JavaContextDeclarationStubs(
     val localDeclarations: String,
     val memberDeclarations: String
 )
@@ -37,7 +37,7 @@ internal data class JavaContextDeclarationStubs(
  * In plain text conversion, we don't have an original Java `PsiFile` from which to draw context.
  * So, we do the next best thing: take an approximation of the context from the target Kotlin file.
  */
-internal object JavaContextDeclarationRenderer {
+object JavaContextDeclarationRenderer {
     fun render(contextElement: KtElement): JavaContextDeclarationStubs {
         val task: () -> JavaContextDeclarationStubs = {
             runReadAction {
@@ -52,7 +52,7 @@ internal object JavaContextDeclarationRenderer {
         }
 
         return ProgressManager.getInstance().runProcessWithProgressSynchronously<JavaContextDeclarationStubs, Exception>(
-            task, KotlinBundle.message("copy.text.rendering.declaration.stubs"), /* canBeCanceled = */ true, contextElement.project
+            task, KotlinNJ2KBundle.message("copy.text.rendering.declaration.stubs"), /* canBeCanceled = */ true, contextElement.project
         )
     }
 

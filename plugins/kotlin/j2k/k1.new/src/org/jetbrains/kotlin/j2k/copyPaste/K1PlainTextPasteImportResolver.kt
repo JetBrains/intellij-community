@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -24,24 +24,17 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 
 /**
- * This class tries to prepare the plain text Java code for J2K by adding necessary imports so that
- * such code can be properly resolved and converted.
- *
- * 1. For every Kotlin file import statement, try to convert it to a Java PSI import and add it to the Java file.
- * 2. For every unresolved short reference in the dummy Java file:
- *      * Try to find a visible class, method, or field with the same short name
- *      * If such a declaration is found, add an import for it (usually to both the Java and Kotlin files).
- *      Note: imports for Java are added at once, but for Kotlin they are returned as a list, to be converted by J2K later.
- *
  * Tests: [org.jetbrains.kotlin.nj2k.TextNewJavaToKotlinCopyPasteConversionTestGenerated].
  */
-class PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) {
+class K1PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
+    PlainTextPasteImportResolver {
     private val sourceJavaFile: PsiJavaFile = dataForConversion.sourceJavaFile
     private val javaFileImportList: PsiImportList = sourceJavaFile.importList!!
     private val project = targetKotlinFile.project
@@ -55,7 +48,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
     private val failedToResolveReferenceNames: MutableSet<String> = mutableSetOf()
     private val importsToAddToKotlinFile: MutableList<PsiImportStatementBase> = mutableListOf()
 
-    fun generateRequiredImports(): List<PsiImportStatementBase> {
+    override fun generateRequiredImports(): List<PsiImportStatementBase> {
         addImportsToJavaFileFromKotlinFile()
         tryToResolveShortReferencesByAddingImports()
         return importsToAddToKotlinFile
@@ -67,14 +60,14 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
         if (javaFileImportList in dataForConversion.elementsAndTexts.toList()) return
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            addImportsTask, KotlinBundle.message("copy.text.adding.imports"), /* canBeCanceled = */ true, project
+            addImportsTask, KotlinNJ2KBundle.message("copy.text.adding.imports"), /* canBeCanceled = */ true, project
         )
     }
 
     private fun tryToResolveShortReferencesByAddingImports() {
         ProgressManager.checkCanceled()
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            resolveReferencesTask, KotlinBundle.message("copy.text.resolving.references"), /* canBeCanceled = */ true, project
+            resolveReferencesTask, KotlinNJ2KBundle.message("copy.text.resolving.references"), /* canBeCanceled = */ true, project
         )
     }
 
@@ -236,6 +229,7 @@ class PlainTextPasteImportResolver(private val dataForConversion: DataForConvers
         }
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     private fun findUniqueMemberByShortName(name: String): PsiMember? {
         return runReadAction {
             val candidateMembers: List<PsiMember> =
