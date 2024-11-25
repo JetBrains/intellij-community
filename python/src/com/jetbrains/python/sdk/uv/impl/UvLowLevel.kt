@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.uv.impl
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
@@ -17,7 +18,10 @@ internal class UvLowLevelImpl(val cwd: Path, val uvCli: UvCli) : UvLowLevel {
   override suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path> {
     if (init) {
       val initArgs = mutableListOf("init");
-      if (python != null) {
+      if (python == null) {
+        thisLogger().warn("Running 'uv init' at ${cwd} without '--python'. The 'python' executable version will be used.")
+      }
+      else {
         initArgs.add("--python")
         initArgs.add(python.pathString)
       }
