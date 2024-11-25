@@ -6,7 +6,6 @@ import com.intellij.java.compiler.charts.ui.CompilationChartsAction.Position.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import java.awt.Point
@@ -26,10 +25,10 @@ class CompilationChartsPopup(
 
     val name = module.info["name"] ?: return
     val actions = listOf<CompilationChartsAction>(
-      OpenDirectoryAction(project, name, { close() }),
-      OpenProjectStructureAction(project, name, { close() }),
-      ShowModuleDependenciesAction(project, name, component, { close() }),
-      ShowMatrixDependenciesAction(project, name, component, { close() }),
+      OpenDirectoryAction(project, name) { close() },
+      OpenProjectStructureAction(project, name) { close() },
+      ShowModuleDependenciesAction(project, name, component) { close() },
+      ShowMatrixDependenciesAction(project, name, component) { close() },
     )
     this.module = module
     this.popup = JBPopupFactory.getInstance()
@@ -71,14 +70,12 @@ class CompilationChartsPopup(
   private fun content(info: Map<String, String>, actions: List<CompilationChartsAction>): JComponent = panel {
     row {
       actions.filter { it.isAccessible() && it.position() == LEFT }
-        .map { it.label() }
-        .forEach { label -> cell(label).align(AlignX.LEFT) }
+        .forEach { it.draw(this) }
 
       label(info["name"] ?: "")
 
       actions.filter { it.isAccessible() && it.position() == RIGHT }
-        .map { it.label() }
-        .forEach { label -> cell(label).align(AlignX.RIGHT) }
+        .forEach { it.draw(this) }
     }
 
     separator()
@@ -88,11 +85,8 @@ class CompilationChartsPopup(
     }
 
     actions.filter { it.isAccessible() && it.position() == LIST }
-      .map { it.label() }
-      .forEach { label ->
-        row {
-          cell(label).align(AlignX.LEFT)
-        }
+      .forEach {
+        row { it.draw(this) }
       }
   }.apply {
     border = JBUI.Borders.empty(10)
