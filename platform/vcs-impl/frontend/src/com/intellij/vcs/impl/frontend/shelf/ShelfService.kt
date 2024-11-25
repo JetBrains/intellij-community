@@ -7,7 +7,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.vcs.impl.frontend.changes.ChangeList
 import com.intellij.vcs.impl.shared.rhizome.DiffSplitterEntity
 import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
@@ -23,8 +22,6 @@ import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
 import fleet.kernel.shared
-import fleet.kernel.DurableRef
-import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,7 +35,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
       withKernel {
         val changeLists = changeListsMap.toDtos()
         val projectRef = project.asEntity().ref()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).unshelve(projectRef, changeLists, withDialog)
+        RemoteShelfActionsApi.getInstance().unshelve(projectRef, changeLists, withDialog)
       }
     }
   }
@@ -51,7 +48,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
         }
 
         val projectRef = project.asEntity().ref()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).delete(projectRef, exactlySelectedLists, changes.toDtos())
+        RemoteShelfActionsApi.getInstance().delete(projectRef, exactlySelectedLists, changes.toDtos())
 
       }
     }
@@ -62,7 +59,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
       withKernel {
         val changeLists = changeListsMap.toDtos()
         val projectRef = project.asEntity().ref()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).showStandaloneDiff(projectRef, changeLists, withLocal)
+        RemoteShelfActionsApi.getInstance().showStandaloneDiff(projectRef, changeLists, withLocal)
       }
     }
   }
@@ -75,7 +72,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     cs.launch(Dispatchers.IO) {
       withKernel {
         val projectRef = project.asEntity().ref()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).renameShelvedChangeList(projectRef, changeList.ref(), newName)
+        RemoteShelfApi.getInstance().renameShelvedChangeList(projectRef, changeList.ref(), newName)
         change {
           changeList[ShelvedChangeListEntity.Description] = newName
         }
@@ -87,7 +84,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     cs.launch(Dispatchers.IO) {
       withKernel {
         val projectRef = project.asEntity().ref()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).importShelvesFromPatches(projectRef)
+        RemoteShelfActionsApi.getInstance().importShelvesFromPatches(projectRef)
       }
     }
   }
@@ -99,7 +96,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
           ChangeListDto(changeList = it.key.ref(), changes = it.value.map { it.ref() })
         }
         val projectRef = project.asEntity().ref()
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).navigateToSource(projectRef, changeLists, focusEditor)
+        RemoteShelfActionsApi.getInstance().navigateToSource(projectRef, changeLists, focusEditor)
       }
     }
   }
@@ -113,7 +110,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
           val changes = it.changes.map { (it as ShelvedChangeEntity).ref() }
           ChangeListDto(changeListNode.ref(), changes)
         }
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).createPatchForShelvedChanges(projectRef, changeLists, silentClipboard)
+        RemoteShelfActionsApi.getInstance().createPatchForShelvedChanges(projectRef, changeLists, silentClipboard)
       }
     }
   }
@@ -122,7 +119,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     cs.launch(Dispatchers.IO) {
       withKernel {
         val changelistRefs = deletedChangeLists.map { it.ref() }
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).restoreShelves(project.asEntity().ref(), changelistRefs)
+        RemoteShelfActionsApi.getInstance().restoreShelves(project.asEntity().ref(), changelistRefs)
       }
     }
   }
@@ -130,7 +127,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   fun createPreviewDiffSplitter() {
     cs.launch(Dispatchers.IO) {
       withKernel {
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).createPreviewDiffSplitter(project.asEntity().ref())
+        RemoteShelfActionsApi.getInstance().createPreviewDiffSplitter(project.asEntity().ref())
       }
     }
   }

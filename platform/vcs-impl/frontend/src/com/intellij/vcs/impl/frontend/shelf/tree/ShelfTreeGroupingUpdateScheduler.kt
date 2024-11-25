@@ -27,7 +27,7 @@ class ShelfTreeGroupingUpdateScheduler {
         val projectRef = withKernel {
           project.asEntity().ref()
         }
-        return@withPermit RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).applyTreeGrouping(projectRef, groupingKeys).await()
+        return@withPermit RemoteShelfApi.getInstance().applyTreeGrouping(projectRef, groupingKeys).await()
       }
     }
     catch (_: Exception) {

@@ -2,11 +2,13 @@
 package com.intellij.vcs.impl.shared.rpc
 
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.Deferred
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -19,6 +21,10 @@ interface RemoteShelfApi : RemoteApi<Unit> {
   suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto, fromModelChange: Boolean)
   suspend fun applyTreeGrouping(projectRef: DurableRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus>
   suspend fun renameShelvedChangeList(projectRef: DurableRef<ProjectEntity>, changeList: DurableRef<ShelvedChangeListEntity>, newName: String)
+
+  companion object {
+    suspend fun getInstance(): RemoteShelfApi = RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>())
+  }
 }
 
 @ApiStatus.Internal

@@ -37,7 +37,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     subscribeToTreeChanges()
     cs.launch(Dispatchers.IO) {
       withKernel {
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).loadChangesAsync(project.asEntity().ref())
+        RemoteShelfApi.getInstance().loadChangesAsync(project.asEntity().ref())
       }
     }
   }
@@ -99,7 +99,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
       withKernel {
         val changeListEntity = changeListNode.userObject as ShelvedChangeListEntity
         val dto = ChangeListDto(changeListEntity.ref(), changeNodes.map { it.userObject as ShelvedChangeEntity }.map { it.ref() })
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().ref(), dto, false)
+        RemoteShelfApi.getInstance().notifyNodeSelected(project.asEntity().ref(), dto, false)
       }
     }
   }

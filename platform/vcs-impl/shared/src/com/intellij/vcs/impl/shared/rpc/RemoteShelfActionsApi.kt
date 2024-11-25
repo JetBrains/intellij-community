@@ -2,10 +2,12 @@
 package com.intellij.vcs.impl.shared.rpc
 
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus
 
 @Rpc
@@ -19,4 +21,8 @@ interface RemoteShelfActionsApi : RemoteApi<Unit> {
   suspend fun navigateToSource(projectRef: DurableRef<ProjectEntity>, navigatables: List<ChangeListDto>, focusEditor: Boolean)
   suspend fun restoreShelves(projectRef: DurableRef<ProjectEntity>, changeLists: List<DurableRef<ShelvedChangeListEntity>>)
   suspend fun createPreviewDiffSplitter(projectRef: DurableRef<ProjectEntity>)
+
+  companion object {
+    suspend fun getInstance(): RemoteShelfActionsApi = RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>())
+  }
 }
