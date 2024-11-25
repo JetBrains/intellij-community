@@ -112,6 +112,10 @@ internal class SmoothRobot @JvmOverloads constructor(
     moveMouseAndClick(where, button, times)
   }
 
+  override fun doubleClick(c: Component) {
+    click(c, MouseButton.LEFT_BUTTON, 2)
+  }
+
   fun pressMouse(mouseButton: RemoteMouseButton) {
     pressMouse(mouseButton.toAssertJ())
   }
@@ -122,6 +126,21 @@ internal class SmoothRobot @JvmOverloads constructor(
 
   fun pressMouse(point: Point, mouseButton: RemoteMouseButton) {
     pressMouse(point, mouseButton.toAssertJ())
+  }
+
+  override fun pressMouse(component: Component, point: Point) {
+    moveMouse(component, point)
+    basicRobot.pressMouse(component, point)
+  }
+
+  override fun pressMouse(component: Component, point: Point, mouseButton: MouseButton) {
+    moveMouse(component, point)
+    basicRobot.pressMouse(component, point, mouseButton)
+  }
+
+  override fun pressMouse(point: Point, mouseButton: MouseButton) {
+    moveMouse(point)
+    basicRobot.pressMouse(point, mouseButton)
   }
 
   fun releaseMouse(mouseButton: RemoteMouseButton) {
