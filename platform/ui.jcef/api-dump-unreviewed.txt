@@ -1,7 +1,3 @@
-c:com.intellij.ui.jcef.CefBrowserFactoryImpl
-- com.intellij.ui.jcef.CefOsrBrowserFactory
-- <init>():V
-- createOsrBrowser(com.intellij.ui.jcef.JBCefOSRHandlerFactory,org.cef.CefClient,java.lang.String,org.cef.browser.CefRequestContext,org.cef.browser.CefBrowser,java.awt.Point,Z,org.cef.CefBrowserSettings):org.cef.browser.CefBrowser
 c:com.intellij.ui.jcef.HwFacadeJPanel
 - javax.swing.JPanel
 - <init>():V
