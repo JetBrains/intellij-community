@@ -41,7 +41,6 @@ import kotlin.system.measureTimeMillis
 
 class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     private val LOG = Logger.getInstance(ConvertTextJavaCopyPasteProcessor::class.java)
-    private val javaContextDeclarationRenderer = JavaContextDeclarationRenderer()
 
     private class MyTransferableData(val text: String) : TextBlockTransferableData {
 
@@ -272,7 +271,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
     private fun prepareCopiedJavaCodeByContext(text: String, context: JavaContext, target: KtElement): CopiedJavaCode {
         val targetFile = target.containingFile as KtFile
-        val (localDeclarations, memberDeclarations) = javaContextDeclarationRenderer.render(target)
+        val (localDeclarations, memberDeclarations) = JavaContextDeclarationRenderer.render(target)
 
         val prefix = buildString {
             targetFile.packageDirective?.let {
