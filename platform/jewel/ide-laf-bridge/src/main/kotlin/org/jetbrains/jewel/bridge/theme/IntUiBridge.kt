@@ -69,6 +69,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         chipStyle = readChipStyle(),
         circularProgressStyle = readCircularProgressStyle(theme.isDark),
         comboBoxStyle = readDefaultComboBoxStyle(),
+        defaultBannerStyle = readDefaultBannerStyle(),
         defaultButtonStyle = readDefaultButtonStyle(),
         defaultDropdownStyle = readDefaultDropdownStyle(menuStyle),
         defaultTabStyle = readDefaultTabStyle(),

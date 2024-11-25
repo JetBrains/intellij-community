@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
+import org.jetbrains.jewel.samples.standalone.view.component.Banners
 import org.jetbrains.jewel.samples.standalone.view.component.Borders
 import org.jetbrains.jewel.samples.standalone.view.component.Buttons
 import org.jetbrains.jewel.samples.standalone.view.component.Checkboxes
@@ -95,6 +96,7 @@ object ComponentsViewModel {
                     }
                 },
             ),
+            ViewInfo(title = "Banners", iconKey = StandaloneSampleIcons.jewelLogo, content = { Banners() }),
         )
     var currentView by mutableStateOf(views.first())
 }

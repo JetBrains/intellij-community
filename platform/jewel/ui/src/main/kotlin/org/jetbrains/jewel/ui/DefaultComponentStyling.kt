@@ -11,6 +11,7 @@ import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
 import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles
 import org.jetbrains.jewel.ui.component.styling.DividerStyle
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
@@ -21,6 +22,7 @@ import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalChipStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCircularProgressStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultComboBoxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
@@ -66,6 +68,7 @@ public class DefaultComponentStyling(
     public val checkboxStyle: CheckboxStyle,
     public val chipStyle: ChipStyle,
     public val circularProgressStyle: CircularProgressStyle,
+    public val defaultBannerStyle: DefaultBannerStyles,
     public val comboBoxStyle: ComboBoxStyle,
     public val defaultButtonStyle: ButtonStyle,
     public val defaultDropdownStyle: DropdownStyle,
@@ -99,6 +102,7 @@ public class DefaultComponentStyling(
             LocalChipStyle provides chipStyle,
             LocalCircularProgressStyle provides circularProgressStyle,
             LocalContextMenuRepresentation provides ContextMenuRepresentation,
+            LocalDefaultBannerStyle provides defaultBannerStyle,
             LocalDefaultComboBoxStyle provides comboBoxStyle,
             LocalDefaultButtonStyle provides defaultButtonStyle,
             LocalDefaultDropdownStyle provides defaultDropdownStyle,

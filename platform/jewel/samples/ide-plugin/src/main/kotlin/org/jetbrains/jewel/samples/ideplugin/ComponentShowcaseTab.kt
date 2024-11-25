@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -52,18 +53,22 @@ import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Dropdown
+import org.jetbrains.jewel.ui.component.ErrorBanner
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconActionButton
 import org.jetbrains.jewel.ui.component.IconButton
+import org.jetbrains.jewel.ui.component.InformationBanner
 import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Slider
+import org.jetbrains.jewel.ui.component.SuccessBanner
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
+import org.jetbrains.jewel.ui.component.WarningBanner
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
@@ -206,6 +211,18 @@ private fun RowScope.ColumnOne() {
 
         var sliderValue by remember { mutableFloatStateOf(.15f) }
         Slider(sliderValue, { sliderValue = it }, steps = 5)
+
+        var bannerStyle by remember { mutableIntStateOf(0) }
+        Column {
+            OutlinedButton({ bannerStyle = (bannerStyle + 1) % 4 }) { Text("Give me a new banner!") }
+            Spacer(modifier = Modifier.height(8.dp))
+            when (bannerStyle) {
+                1 -> ErrorBanner("This is an error banner in Compose")
+                0 -> SuccessBanner("This is a success banner in Compose")
+                2 -> WarningBanner("This is a warning banner in Compose")
+                else -> InformationBanner("This is an information banner in Compose")
+            }
+        }
     }
 }
 

@@ -27,6 +27,7 @@ import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
 import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
+import org.jetbrains.jewel.ui.component.styling.DefaultBannerStyles
 import org.jetbrains.jewel.ui.component.styling.DividerStyle
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
@@ -110,6 +111,7 @@ public fun ComponentStyling.dark(
     checkboxStyle: CheckboxStyle = CheckboxStyle.dark(),
     chipStyle: ChipStyle = ChipStyle.dark(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.dark(),
+    defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.dark(),
     comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.dark(),
     defaultButtonStyle: ButtonStyle = ButtonStyle.Default.dark(),
     defaultTabStyle: TabStyle = TabStyle.Default.dark(),
@@ -141,6 +143,7 @@ public fun ComponentStyling.dark(
             checkboxStyle = checkboxStyle,
             chipStyle = chipStyle,
             circularProgressStyle = circularProgressStyle,
+            defaultBannerStyle = defaultBannerStyle,
             comboBoxStyle = comboBoxStyle,
             defaultButtonStyle = defaultButtonStyle,
             defaultDropdownStyle = dropdownStyle,
@@ -174,6 +177,7 @@ public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
     circularProgressStyle: CircularProgressStyle = CircularProgressStyle.light(),
+    defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.light(),
     comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.light(),
     defaultButtonStyle: ButtonStyle = ButtonStyle.Default.light(),
     defaultTabStyle: TabStyle = TabStyle.Default.light(),
@@ -206,6 +210,7 @@ public fun ComponentStyling.light(
             chipStyle = chipStyle,
             circularProgressStyle = circularProgressStyle,
             comboBoxStyle = comboBoxStyle,
+            defaultBannerStyle = defaultBannerStyle,
             defaultButtonStyle = defaultButtonStyle,
             defaultDropdownStyle = dropdownStyle,
             defaultTabStyle = defaultTabStyle,
