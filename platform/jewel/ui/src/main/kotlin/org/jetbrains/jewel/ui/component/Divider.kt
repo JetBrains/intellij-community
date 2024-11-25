@@ -2,8 +2,6 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -37,8 +35,8 @@ public fun Divider(
     val actualThickness = thickness.takeOrElse { style.metrics.thickness }
     val orientationModifier =
         when (orientation) {
-            Orientation.Horizontal -> Modifier.height(actualThickness).fillMaxWidth()
-            Orientation.Vertical -> Modifier.width(actualThickness).fillMaxHeight()
+            Orientation.Horizontal -> Modifier.height(actualThickness)
+            Orientation.Vertical -> Modifier.width(actualThickness)
         }
 
     val lineColor = color.takeOrElse { style.color }
