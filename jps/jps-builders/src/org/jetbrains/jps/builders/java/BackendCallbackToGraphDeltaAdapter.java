@@ -33,7 +33,7 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   @Override
   public void associate(String classFileName, Collection<String> sources, ClassReader cr, boolean isGenerated) {
-    if (reportMissingOutput && !new File(classFileName).exists()) {
+    if (reportMissingOutput && !classFileName.startsWith("$") && !new File(classFileName).exists()) {
       throw new IllegalArgumentException("Class file '" + classFileName + "' was registered but it does not exist");
     }
     JvmClassNodeBuilder builder = JvmClassNodeBuilder.create(classFileName, cr, isGenerated);
