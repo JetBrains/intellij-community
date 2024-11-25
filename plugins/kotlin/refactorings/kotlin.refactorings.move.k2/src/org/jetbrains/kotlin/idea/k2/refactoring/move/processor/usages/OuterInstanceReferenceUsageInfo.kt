@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
+package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages
 
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageInfo
@@ -21,16 +21,16 @@ internal sealed class OuterInstanceReferenceUsageInfo(element: PsiElement, priva
     }
 
     class ExplicitThis(
-        expression: KtThisExpression,
-        isIndirectOuter: Boolean
+      expression: KtThisExpression,
+      isIndirectOuter: Boolean
     ) : OuterInstanceReferenceUsageInfo(expression, isIndirectOuter) {
         val expression: KtThisExpression get() = element as KtThisExpression
     }
 
     class ImplicitReceiver(
-        callElement: KtElement,
-        isIndirectOuter: Boolean,
-        private val isDoubleReceiver: Boolean
+      callElement: KtElement,
+      isIndirectOuter: Boolean,
+      private val isDoubleReceiver: Boolean
     ) : OuterInstanceReferenceUsageInfo(callElement, isIndirectOuter) {
         val callElement: KtElement get() = element as KtElement
 
