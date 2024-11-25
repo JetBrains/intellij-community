@@ -57,5 +57,7 @@
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests.k1" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
   </component>
 </module>
