@@ -20,9 +20,12 @@ object GradleAddDownloadToolchainRepositoryQuickFix : BuildIssueQuickFix {
         return GradleCoroutineScopeProvider.getInstance(project).cs
             .launch {
                 writeCommandAction(project, "Applying Foojay Plugin to Project") {
-                    val topLevelBuildScript = project.getTopLevelBuildScriptSettingsPsiFile()!!
-                    val buildScriptSupport = GradleBuildScriptSupport.getManipulator(topLevelBuildScript)
-                    buildScriptSupport.addFoojayPlugin(topLevelBuildScript)
+                    project.getTopLevelBuildScriptSettingsPsiFile()?.let { topLevelBuildScript ->
+                        val buildScriptSupport = GradleBuildScriptSupport.getManipulator(topLevelBuildScript)
+                        buildScriptSupport.addFoojayPlugin(topLevelBuildScript)
+                    } ?: run {
+                        // TODO create settings.gradle file with Foojay Plugin
+                    }
                 }
             }.asCompletableFuture()
     }
