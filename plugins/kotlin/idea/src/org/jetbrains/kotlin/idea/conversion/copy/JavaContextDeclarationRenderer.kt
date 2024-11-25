@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
@@ -16,72 +16,100 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedMemberDescriptor
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-data class ContextDeclarations(
-    val localDeclarationsJavaStubs: String,
-    val memberDeclarationsJavaStubs: String
+internal data class JavaContextDeclarationStubs(
+    val localDeclarations: String,
+    val memberDeclarations: String
 )
 
-class JavaContextDeclarationRenderer {
-    private val KtElement.memberDeclarations
-        get() = parentsWithSelf
-            .flatMap { declaration ->
-                when (declaration) {
-                    is KtClass -> declaration.resolveToDescriptorIfAny()
-                        ?.unsubstitutedMemberScope
-                        ?.getContributedDescriptors()
-                        ?.asSequence()
-                    is KtDeclarationContainer ->
-                        declaration.declarations.mapNotNull { it.resolveToDescriptorIfAny() }.asSequence()
-                    else -> null
-                } ?: emptySequence()
-            }.filter { member ->
-                member !is DeserializedMemberDescriptor
-                        && !member.name.isSpecial
-                        && member.name.asString() != "dummy"
-            }
+/**
+ * Converts member/local declarations of the target Kotlin element, into which the Java code is pasted,
+ * to Java-friendly stubs ([JavaContextDeclarationStubs]).
+ *
+ * This is basically a crude Kotlin to Java converter for enhancing the context of plain text copy-paste J2K conversion.
+ * In plain text conversion, we don't have an original Java `PsiFile` from which to draw context.
+ * So, we do the next best thing: take an approximation of the context from the target Kotlin file.
+ */
+internal object JavaContextDeclarationRenderer {
+    fun render(contextElement: KtElement): JavaContextDeclarationStubs {
+        val localDeclarations = getLocalDeclarations(contextElement)
+        val memberDeclarations = getMemberDeclarations(contextElement)
+        val localDeclarationsJavaStubs = render(localDeclarations)
+        val memberDeclarationsJavaStubs = render(memberDeclarations)
+        return JavaContextDeclarationStubs(localDeclarationsJavaStubs, memberDeclarationsJavaStubs)
+    }
 
-    private val KtElement.localDeclarations
-        get() = getParentOfType<KtDeclaration>(strict = false)
-            ?.safeAs<KtFunction>()
-            ?.bodyExpression
+    private fun getLocalDeclarations(contextElement: KtElement): List<DeclarationDescriptor> {
+        val containerFunction = contextElement.getParentOfType<KtFunction>(strict = false) ?: return emptyList()
+        val localDeclarations = containerFunction.bodyExpression
             ?.blockExpressionsOrSingle()
             ?.filterIsInstance<KtDeclaration>()
-            ?.mapNotNull { it.resolveToDescriptorIfAny() }
             .orEmpty()
+        return localDeclarations.mapNotNull { it.resolveToDescriptorIfAny() }.toList()
+    }
 
-    fun render(contextElement: KtElement): ContextDeclarations =
-        ContextDeclarations(
-            contextElement.localDeclarations.render(),
-            contextElement.memberDeclarations.render()
-        )
+    private fun getMemberDeclarations(contextElement: KtElement): List<DeclarationDescriptor> {
+        val allMembers = contextElement.parentsWithSelf.flatMap { declaration ->
+            when (declaration) {
+                is KtClass -> declaration.resolveToDescriptorIfAny()
+                    ?.unsubstitutedMemberScope
+                    ?.getContributedDescriptors()
+                    ?.asSequence()
 
-    private fun Sequence<DeclarationDescriptor>.render() =
-        buildString {
-            for (member in this@render) {
-                renderJavaDeclaration(member)
+                is KtDeclarationContainer ->
+                    declaration.declarations.mapNotNull { it.resolveToDescriptorIfAny() }.asSequence()
+
+                else -> null
+            } ?: emptySequence()
+        }
+        val filteredMembers = allMembers.filter { member ->
+            member !is DeserializedMemberDescriptor
+                    && !member.name.isSpecial
+                    && member.name.asString() != "dummy"
+        }
+
+        return filteredMembers.toList()
+    }
+
+    private fun render(declarationDescriptors: List<DeclarationDescriptor>): String {
+        val renderer = Renderer()
+        return buildString {
+            for (declaration in declarationDescriptors) {
+                val renderedDeclaration = renderer.render(declaration)
+                append(renderedDeclaration)
                 appendLine()
             }
         }
+    }
+}
 
+private class Renderer {
+    private val builder = StringBuilder()
 
-    private fun StringBuilder.renderJavaDeclaration(declaration: DeclarationDescriptor) {
+    fun render(declaration: DeclarationDescriptor): String {
+        renderDeclaration(declaration)
+        val result = builder.toString()
+        builder.clear()
+        return result
+    }
+
+    private fun renderDeclaration(declaration: DeclarationDescriptor) {
         when (declaration) {
             is VariableDescriptorWithAccessors -> {
                 renderType(declaration.type)
-                append(' ')
+                append(" ")
                 append(declaration.name.asString())
                 append(" = null;")
             }
+
             is FunctionDescriptor -> {
                 renderType(declaration.returnType)
-                append(' ')
+                append(" ")
                 append(declaration.name.asString())
-                append('(')
+                append("(")
                 for ((i, parameter) in declaration.valueParameters.withIndex()) {
                     renderType(parameter.type)
-                    append(' ')
+                    append(" ")
                     append(parameter.name.asString())
                     if (i != declaration.valueParameters.lastIndex) {
                         append(", ")
@@ -92,8 +120,7 @@ class JavaContextDeclarationRenderer {
         }
     }
 
-
-    private fun StringBuilder.renderType(type: KotlinType?) {
+    private fun renderType(type: KotlinType?) {
         val fqName = type?.constructor?.declarationDescriptor?.fqNameUnsafe
 
         if (fqName != null) {
@@ -103,7 +130,7 @@ class JavaContextDeclarationRenderer {
         }
         if (!type?.arguments.isNullOrEmpty()) {
             append("<")
-            for (typeArgument in type!!.arguments) {
+            for (typeArgument in type.arguments) {
                 if (typeArgument.isStarProjection) {
                     append("?")
                 } else {
@@ -114,12 +141,15 @@ class JavaContextDeclarationRenderer {
         }
     }
 
-    private fun StringBuilder.renderFqName(fqName: FqNameUnsafe) {
+    private fun renderFqName(fqName: FqNameUnsafe) {
         val stringFqName = when (fqName) {
             StandardNames.FqNames.unit -> "void"
-            else -> JavaToKotlinClassMap.mapKotlinToJava(fqName)?.asSingleFqName() ?: fqName.asString()
+            else -> JavaToKotlinClassMap.mapKotlinToJava(fqName)?.asFqNameString() ?: fqName.asString()
         }
         append(stringFqName)
     }
 
+    private fun append(s: String) {
+        builder.append(s)
+    }
 }
