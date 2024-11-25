@@ -211,10 +211,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     renderer.append(getCountText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
-  public String toString() {
-    return getTextPresentation();
-  }
-
   @Override
   public void setUserObject(Object userObject) {
     if (userObject != getUserObject()) {

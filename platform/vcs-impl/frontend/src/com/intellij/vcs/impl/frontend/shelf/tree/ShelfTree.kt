@@ -41,19 +41,13 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
       sink[SELECTED_CHANGELISTS_KEY] = selectedLists
       sink[SELECTED_DELETED_CHANGELISTS_KEY] = selectedLists.filter { it.isDeleted }.toSet()
       sink[SELECTED_CHANGES_KEY] = getSelectedChanges()
-      val groupedChanges = SelectedData(this).iterateRawNodes()
-        .filter { it.userObject is ShelvedChangeEntity }
-        .groupBy { it.findParentOfType(ShelvedChangeListNode::class.java) }
-        .map { entry ->
-          entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
-        }
-      val groupedChangesMap = groupedChanges.toMap()
-      sink[GROUPED_CHANGES_KEY] = groupedChangesMap
-      sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.first, it.second) }
+      val groupedChanges = getSelectedChangesWithChangeLists()
+      sink[GROUPED_CHANGES_KEY] = groupedChanges
+      sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.key, it.value) }
       if (!isEditing()) {
         sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = deleteProvider
       }
-      sink[NAVIGATABLE_ARRAY] = arrayOf(FrontendShelfNavigatable(project, groupedChangesMap))
+      sink[NAVIGATABLE_ARRAY] = arrayOf(FrontendShelfNavigatable(project, groupedChanges))
     }
   }
 
@@ -63,6 +57,15 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
       if (clazz.isInstance(parent)) return parent
       parent = parent.parent ?: return null
     }
+  }
+
+  fun getSelectedChangesWithChangeLists(): Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>> {
+    return SelectedData(this).iterateRawNodes()
+      .filter { it.userObject is ShelvedChangeEntity }
+      .groupBy { it.findParentOfType(ShelvedChangeListNode::class.java) }
+      .map { entry ->
+        entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
+      }.toMap()
   }
 
   fun updateModel(model: DefaultTreeModel) {

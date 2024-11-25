@@ -11,16 +11,16 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
-import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserRootNode
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
+import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
+import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.jetbrains.rhizomedb.entity
+import fleet.kernel.ref
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
-import fleet.kernel.DurableRef
-import fleet.kernel.ref
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,26 +62,47 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     cs.launch {
       withKernel {
         ShelvesTreeRootEntity.each().collectLatest {
+          val changes = tree.getSelectedChangesWithChangeLists()
           val rootNode = it.convertToTreeNodeRecursive() ?: return@collectLatest
           cs.launch(Dispatchers.EDT) {
             tree.model = ChangesTreeModel(rootNode)
+            selectChangesInTree(changes)
           }
         }
       }
     }
   }
 
-  fun updateTree(rootEntity: ShelvesTreeRootEntity) {
-    cs.launch {
-      withKernel {
-        val rootNode = rootEntity.convertToTreeNodeRecursive() ?: return@withKernel
-        cs.launch(Dispatchers.EDT) {
-          tree.updateModel(ChangesTreeModel(rootNode))
+  suspend fun selectChangesInTree(changes: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>) {
+    withKernel {
+      val firstChangeList = changes.entries.firstOrNull()
+      val list = firstChangeList?.key ?: return@withKernel
+      val changeListNode = TreeUtil.findNode(tree.getRoot()) {
+        val changeList = it.userObject as? ShelvedChangeListEntity ?: return@findNode false
+        return@findNode changeList.name == list.name && changeList.date == list.date
+      } ?: return@withKernel
+      val changeNodes = firstChangeList.value.mapNotNull { oldChange ->
+        TreeUtil.findNode(changeListNode) {
+          val change = it.userObject as? ShelvedChangeEntity ?: return@findNode false
+          return@findNode change.filePath == oldChange.filePath
         }
       }
+      val pathsToSelect = changeNodes.map { TreeUtil.getPathFromRoot(it) }
+      TreeUtil.selectPaths(tree, pathsToSelect)
+
+      notifyNodesSelected(changeListNode, changeNodes)
     }
   }
 
+  private fun notifyNodesSelected(changeListNode: DefaultMutableTreeNode, changeNodes: List<DefaultMutableTreeNode>) {
+    cs.launch(Dispatchers.IO) {
+      withKernel {
+        val changeListEntity = changeListNode.userObject as ShelvedChangeListEntity
+        val dto = ChangeListDto(changeListEntity.ref(), changeNodes.map { it.userObject as ShelvedChangeEntity }.map { it.ref() })
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().ref(), dto, false)
+      }
+    }
+  }
 
   fun selectShelvedList(list: ShelvedChangeListEntity) {
     val treeNode = TreeUtil.findNodeWithObject(tree.model.root as DefaultMutableTreeNode, list)

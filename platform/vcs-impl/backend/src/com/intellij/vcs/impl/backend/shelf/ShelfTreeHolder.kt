@@ -212,9 +212,9 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     scheduleTreeUpdate()
   }
 
-  fun updateDiffFile(changeListDto: ChangeListDto) {
+  fun updateDiffFile(changeListDto: ChangeListDto, fromModelChange: Boolean) {
     val selectedChanges = findChangesInTree(changeListDto).map { it.shelvedChange }
-    diffChangesProvider.changesStateFlow.tryEmit(ShelfDiffChangesState(selectedChanges))
+    diffChangesProvider.changesStateFlow.tryEmit(ShelfDiffChangesState(selectedChanges, fromModelChange))
   }
 
   fun isDirectoryGroupingEnabled(): Boolean {

@@ -36,7 +36,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
       cs.launch(Dispatchers.IO) {
         withKernel {
           val changeListDto = creteSelectedListsDto() ?: return@withKernel
-          RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().ref(), changeListDto)
+          RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().ref(), changeListDto, false)
         }
       }
     }

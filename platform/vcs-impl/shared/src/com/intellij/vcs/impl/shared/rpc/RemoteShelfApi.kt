@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 interface RemoteShelfApi : RemoteApi<Unit> {
   suspend fun loadChangesAsync(projectRef: DurableRef<ProjectEntity>)
   suspend fun showDiffForChanges(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto)
-  suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto)
+  suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto, fromModelChange: Boolean)
   suspend fun applyTreeGrouping(projectRef: DurableRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus>
   suspend fun renameShelvedChangeList(projectRef: DurableRef<ProjectEntity>, changeList: DurableRef<ShelvedChangeListEntity>, newName: String)
 }

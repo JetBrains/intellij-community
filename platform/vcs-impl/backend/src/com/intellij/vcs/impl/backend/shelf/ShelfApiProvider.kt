@@ -45,9 +45,9 @@ internal class BackendShelfApi : RemoteShelfApi {
     ShelfTreeHolder.getInstance(project).showDiff(changeListDto)
   }
 
-  override suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto) {
+  override suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto, fromModelChange: Boolean) {
     val project = projectRef.asProject()
-    ShelfTreeHolder.getInstance(project).updateDiffFile(changeListDto)
+    ShelfTreeHolder.getInstance(project).updateDiffFile(changeListDto, fromModelChange)
   }
 
   override suspend fun applyTreeGrouping(projectRef: DurableRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus> {
