@@ -212,7 +212,7 @@ public class GitRebaseProcess {
     try {
       GitRebaseParams params = myRebaseSpec.getParams();
       if (params != null) {
-        String upstream = params.getUpstream();
+        GitRebaseParams.RebaseUpstream upstream = params.getUpstream();
         String branch = params.getBranch();
         commitsToRebase = GitRebaseUtils.getNumberOfCommitsToRebase(repository, upstream, branch);
       }
@@ -374,12 +374,22 @@ public class GitRebaseProcess {
   protected void notifySuccess() {
     String rebasedBranch = getCommonCurrentBranchNameIfAllTheSame(myRebaseSpec.getAllRepositories());
     GitRebaseParams params = myRebaseSpec.getParams();
-    String baseBranch = params == null ? null
-                                       : params.getUpstream() != null ? notNull(params.getNewBase(), params.getUpstream())
-                                                                      : params.getNewBase();
+
+    String baseBranch = null;
+    if (params != null) {
+      baseBranch = params.getNewBase();
+
+      if (baseBranch == null) {
+        GitRebaseParams.RebaseUpstream upstream = params.getUpstream();
+        if (upstream instanceof GitRebaseParams.RebaseUpstream.Reference upstreamRef) {
+          baseBranch = upstreamRef.getRef();
+        }
+      }
+    }
     if (HEAD.equals(baseBranch)) {
       baseBranch = getItemIfAllTheSame(myRebaseSpec.getInitialBranchNames().values(), baseBranch);
     }
+
     String message = GitSuccessfulRebase.formatMessage(rebasedBranch, baseBranch, params != null && params.getBranch() != null);
     myNotifier.notifyMinorInfo(REBASE_SUCCESSFUL, GitBundle.message("rebase.notification.successful.title"), message);
   }
@@ -523,7 +533,7 @@ public class GitRebaseProcess {
       return true;
     }
 
-    String upstream = myRebaseSpec.getParams().getUpstream();
+    GitRebaseParams.RebaseUpstream upstream = myRebaseSpec.getParams().getUpstream();
     for (GitRepository repository : myRebaseSpec.getAllRepositories()) {
       String currentBranchName = chooseNotNull(repository.getCurrentBranchName(), repository.getCurrentRevision());
       if (currentBranchName == null) {
@@ -539,7 +549,7 @@ public class GitRebaseProcess {
   }
 
   public static boolean isRebasingPublishedCommit(@NotNull GitRepository repository,
-                                                  @Nullable String baseBranch,
+                                                  @NotNull GitRebaseParams.RebaseUpstream baseBranch,
                                                   @NotNull String rebasingBranch) {
     try {
       String range = GitRebaseUtils.getCommitsRangeToRebase(baseBranch, rebasingBranch);

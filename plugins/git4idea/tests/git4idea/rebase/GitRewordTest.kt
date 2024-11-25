@@ -2,6 +2,7 @@
 package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibility.Possible
@@ -18,6 +19,34 @@ class GitRewordTest : GitSingleRepoTest() {
 
     val newMessage = "Correct message"
     GitRewordOperation(repo, commit, newMessage).execute()
+
+    assertLastMessage(newMessage, "Message reworded incorrectly")
+  }
+
+  fun `test reword initial commit via rebase`() {
+    val initialHash = git("log --pretty=%H").trim()
+    file("a").create("initial").addCommit("Wrong message")
+
+    val initialCommit = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(initialHash)).first()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, initialCommit, newMessage).execute()
+
+    assertMessage(newMessage, repo.message("HEAD^"), "Message reworded incorrectly")
+  }
+
+  fun `test reword initial commit via amend`() {
+    val initialHash = git("log --pretty=%H").trim()
+    val initialCommit = VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(initialHash)).first()
+
+    refresh()
+    updateChangeListManager()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(repo, initialCommit, newMessage).execute()
 
     assertLastMessage(newMessage, "Message reworded incorrectly")
   }
