@@ -178,6 +178,9 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
 
         @Override
         public boolean equals(PsiFile o1, PsiFile o2) {
+          if (o1 == null || o2 == null) {
+            return (o1==null)==(o2==null);
+          }
           if (o1.getViewProvider() instanceof InjectedFileViewProvider viewProvider1) {
             if (o2.getViewProvider() instanceof InjectedFileViewProvider viewProvider2) {
               // compare injected files by their offsets because they can be created concurrently in the background
