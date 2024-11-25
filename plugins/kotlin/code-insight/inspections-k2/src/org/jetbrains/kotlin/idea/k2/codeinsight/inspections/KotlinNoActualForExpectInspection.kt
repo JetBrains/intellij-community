@@ -6,21 +6,28 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.psi.*
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiElementVisitor.EMPTY_VISITOR
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.findParentOfType
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.ui.JBEmptyBorder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -46,6 +53,10 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.tooling.core.withClosure
+import java.awt.Component
+import javax.swing.DefaultListCellRenderer
+import javax.swing.JLabel
+import javax.swing.JList
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
@@ -126,44 +137,50 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
                     )
                 }
 
-                val fixes = allModulesCapableOfProvidingActuals.mapIndexedNotNull map@{ index, actualModule ->
-                    CreateActualForExpectLocalQuickFix(
-                        priority = index, moduleName = actualModule.name,
-                        sourceSet = KotlinBuildSystemFacade.getInstance().findSourceSet(actualModule) ?: return@map null,
-                        actualDeclaration = actualDeclaration?.createSmartPointer() ?: return@map null,
-                    )
+                val actualDeclarations = allModulesCapableOfProvidingActuals.mapNotNull { actualModule ->
+                    val sourceSet = KotlinBuildSystemFacade.getInstance().findSourceSet(actualModule) ?: return@mapNotNull null
+                    val actualDeclaration = actualDeclaration ?: return@mapNotNull null
+                    ActualDeclaration(actualModule, actualDeclaration, sourceSet)
                 }
+
 
                 // We only care about the name of the target, not the common submodule of the MPP module
                 val missingModulesWithActuals = missingActuals.joinToString { it.name.substringAfterLast('.') }
 
+                val fixes = if (!actualDeclarations.isEmpty()) {
+                    arrayOf(CreateActualForExpectLocalQuickFix(actualDeclarations))
+                } else {
+                    emptyArray()
+                }
                 holder.registerProblem(
-                    expectModifier, KotlinBundle.message("no.actual.for.expect.declaration", missingModulesWithActuals),
-                    *fixes.toTypedArray()
+                    expectModifier,
+                    KotlinBundle.message("no.actual.for.expect.declaration", missingModulesWithActuals),
+                    *fixes
                 )
             }
         }
     }
 }
 
+private data class ActualDeclaration(val module: Module, val declarationFromText: KtDeclaration, val sourceSet: KotlinBuildSystemSourceSet)
+
 private class CreateActualForExpectLocalQuickFix(
-    private val priority: Int,
-    private val moduleName: String,
-    private val sourceSet: KotlinBuildSystemSourceSet,
-    private val actualDeclaration: SmartPsiElementPointer<KtDeclaration>,
+    val actualDeclarations: List<ActualDeclaration>
 ) : LocalQuickFix {
 
     override fun startInWriteAction(): Boolean {
-        return true
+        return false
     }
+
+    override fun availableInBatchMode(): Boolean = false
 
     // NOTE: Works for IJ (not for Fleet, because Fleet has different logic for preview)
     // Quick-fix requires a WriteLock to create a new file or find an existing one, so the preview can't be shown by running fix,
     // because `generatePreview` is called outside the write action.
     // Instead, a custom preview is displayed.
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-        val actualDeclarationElement = actualDeclaration.element ?: return IntentionPreviewInfo.EMPTY
-        val declarationText = actualDeclarationElement.copied().reformatted().text
+        val (_, declaration, sourceSet) = actualDeclarations.first()
+        val declarationText = declaration.copied().reformatted().text
 
         return IntentionPreviewInfo.CustomDiff(
             KotlinFileType.INSTANCE,
@@ -175,12 +192,11 @@ private class CreateActualForExpectLocalQuickFix(
     }
 
     override fun getName(): String {
-        /**
-         * We're using a 'zero width space' character to influence the sorting of the QuickFix as they
-         * are traditionally just sorted by their name.
-         */
-        val sortingWhiteSpace = buildString(priority) { repeat(priority) { append('\u200B') } }
-        return KotlinBundle.message("create.actual.in.0", "$sortingWhiteSpace${sourceSet.name}")
+        if (actualDeclarations.size == 1) {
+            return KotlinBundle.message("create.actual.in.0", actualDeclarations.first().module.name)
+        } else {
+            return KotlinBundle.message("create.actuals")
+        }
     }
 
     override fun getFamilyName(): String {
@@ -188,12 +204,40 @@ private class CreateActualForExpectLocalQuickFix(
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return
+        if (actualDeclarations.size == 1) {
+            runWriteAction { doCreateActualFix(project, descriptor, actualDeclarations.first()) }
+        } else {
+            val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(actualDeclarations)
+                .setTitle(KotlinBundle.message("choose.actual.module"))
+                .setItemChosenCallback { declaration ->
+                    WriteCommandAction.writeCommandAction(project).withName(familyName).run(ThrowableRunnable<Throwable> {
+                            doCreateActualFix(project, descriptor, declaration)
+                        })
+                }
+                .setRenderer(object : DefaultListCellRenderer() {
+                    override fun getListCellRendererComponent(
+                        list: JList<*>?,
+                        value: Any?,
+                        index: Int,
+                        isSelected: Boolean,
+                        cellHasFocus: Boolean
+                    ): Component {
+                        val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+                        (component as JLabel).text = (value as? ActualDeclaration)?.sourceSet?.name
+                        component.border = JBEmptyBorder(5)
+                        return component
+                    }
+                })
+                .createPopup()
+            popup.showCenteredInCurrentWindow(project)
+        }
+    }
 
+    private fun doCreateActualFix(project: Project, descriptor: ProblemDescriptor, actualDeclaration: ActualDeclaration) {
         val expectDeclaration = descriptor.psiElement.findParentOfType<KtDeclaration>() ?: return
         val expectRelativePackagePath = expectDeclaration.relativePackagePath
-        val actualDirectory = findOrCreateActualDeclarationDirectory(project, module, expectRelativePackagePath) ?: return
-        val actualKtFile = findOrCreateActualDeclarationFile(module, expectDeclaration, actualDirectory) ?: return
+        val actualDirectory = findOrCreateActualDeclarationDirectory(project, actualDeclaration, expectRelativePackagePath) ?: return
+        val actualKtFile = findOrCreateActualDeclarationFile(actualDeclaration, expectDeclaration, actualDirectory) ?: return
 
         /**
          * The above call to [findOrCreateActualDeclarationFile] might have created a new source root and therefore triggered
@@ -201,7 +245,7 @@ private class CreateActualForExpectLocalQuickFix(
          */
         DumbService.getInstance(project).completeJustSubmittedTasks()
 
-        val added = actualKtFile.add(actualDeclaration.element ?: return).reformatted() as? KtNamedDeclaration ?: return
+        val added = actualKtFile.add(actualDeclaration.declarationFromText).reformatted() as? KtNamedDeclaration ?: return
         val shortened = ShortenReferencesFacility.getInstance().shorten(added) as? KtDeclaration
 
         /**
@@ -255,8 +299,8 @@ private class CreateActualForExpectLocalQuickFix(
      * Create the source root in the IJ model if necessary.
      */
     @RequiresWriteLock
-    private fun findOrCreateActualDeclarationDirectory(project: Project, module: Module, expectRelativePackagePath: String): PsiDirectory? {
-        val actualSourceRoot = sourceSet.findOrCreateMostSuitableKotlinSourceRoot() ?: return null
+    private fun findOrCreateActualDeclarationDirectory(project: Project, actualDeclaration: ActualDeclaration, expectRelativePackagePath: String): PsiDirectory? {
+        val actualSourceRoot = actualDeclaration.sourceSet.findOrCreateMostSuitableKotlinSourceRoot() ?: return null
 
         val actualDirectory = expectRelativePackagePath
             .split(VfsUtil.VFS_SEPARATOR)
@@ -272,12 +316,12 @@ private class CreateActualForExpectLocalQuickFix(
      * In this case we try to find another file which does not yet exist or has a matching package name.
      */
     private fun findOrCreateActualDeclarationFile(
-        module: Module,
+        actualDeclaration: ActualDeclaration,
         expectDeclaration: KtDeclaration,
         actualDirectory: PsiDirectory
     ): KtFile? {
         val expectKtFile = expectDeclaration.containingKtFile
-        val fileName = getActualTargetFileName(module, sourceSet, expectKtFile)
+        val fileName = getActualTargetFileName(actualDeclaration.module, actualDeclaration.sourceSet, expectKtFile)
 
         /*
         We attempt to find or create the file. If there exists af file with the current fileName, which
