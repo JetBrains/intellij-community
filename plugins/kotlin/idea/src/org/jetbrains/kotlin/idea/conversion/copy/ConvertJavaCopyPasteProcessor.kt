@@ -81,7 +81,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
 
         val data = values.single() as CopiedJavaCode
 
-        val (targetFile, targetBounds, document) = getTargetData(project, editor, caretOffset, bounds) ?: return
+        val (targetFile, targetBounds, document) = getTargetData(project, editor.document, caretOffset, bounds) ?: return
         val j2kKind = getJ2kKind(targetFile)
 
         val targetModule = targetFile.module
