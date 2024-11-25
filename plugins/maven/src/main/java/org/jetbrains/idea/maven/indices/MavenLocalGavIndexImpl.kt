@@ -73,7 +73,7 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
     var success = false
     var filesProcessed = 0
     val startTime = System.currentTimeMillis()
-    if(mutex.tryLock()){
+    if (mutex.tryLock()) {
       try {
         withContext(Dispatchers.IO) {
           try {
@@ -95,9 +95,12 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
             success = true
             indicator.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
           }
+          catch (e: java.io.IOException) {
+            MavenLog.LOG.warn("Error updating repository $repoFile GAV index", e)
+          }
           finally {
             MavenLog.LOG.info(
-              "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis")
+              "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis, succeed = $success")
             activity.finished {
               listOf(
                 MavenIndexUsageCollector.MANUAL.with(explicit),
@@ -108,10 +111,12 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
             }
           }
         }
-      } finally {
+      }
+      finally {
         mutex.unlock()
       }
-    } else {
+    }
+    else {
       MavenLog.LOG.info("maven index updating already")
     }
 
