@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -53,6 +54,7 @@ import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import org.jetbrains.eval4j.Value as Eval4JValue
@@ -237,9 +239,20 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         val result = if (classLoaderRef != null) {
             try {
                 return evaluateWithCompilation(context, compiledData, classLoaderRef)
-            } catch (e: Throwable) {
-                LOG.warn("Compiling evaluator failed: " + e.message, e)
-                evaluateWithEval4J(context, compiledData, classLoaderRef)
+            } catch (original: Throwable) {
+                if (original is CancellationException) {
+                    throw original
+                }
+                try {
+                    evaluateWithEval4J(context, compiledData, classLoaderRef).also {
+                        LOG.error("Eval4J success, but compiling evaluator failed with: " + original.message, original)
+                    }
+                } catch (e: Throwable) {
+                    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+                        LOG.error("Eval4J also failed: " + e.message, e)
+                    }
+                    throw original
+                }
             }
         } else {
             evaluateWithEval4J(context, compiledData, context.classLoader)
