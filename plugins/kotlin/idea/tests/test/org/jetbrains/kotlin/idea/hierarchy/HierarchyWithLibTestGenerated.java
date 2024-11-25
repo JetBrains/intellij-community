@@ -30,6 +30,11 @@ public class HierarchyWithLibTestGenerated extends AbstractHierarchyWithLibTest 
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractList")
+    public void testAbstractList() throws Exception {
+        runTest("testData/hierarchy/withLib/abstractList/");
+    }
+
     @TestMetadata("annotation")
     public void testAnnotation() throws Exception {
         runTest("testData/hierarchy/withLib/annotation/");

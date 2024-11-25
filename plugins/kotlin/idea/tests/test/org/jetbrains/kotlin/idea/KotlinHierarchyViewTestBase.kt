@@ -7,12 +7,18 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestFixture
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 import java.io.IOException
+import kotlin.collections.find
 
 @RunWith(JUnit38ClassRunner::class)
 abstract class KotlinHierarchyViewTestBase : KotlinLightCodeInsightFixtureTestCase() {
@@ -30,6 +36,13 @@ abstract class KotlinHierarchyViewTestBase : KotlinLightCodeInsightFixtureTestCa
                 HierarchyViewTestFixture.doHierarchyTest(treeStructure, expectedStructure)
             }
         }
+    }
+
+    protected fun findTargetLibraryClass(targetClass: String): PsiElement {
+        return JavaFullClassNameIndex.getInstance().getClasses(targetClass, project, GlobalSearchScope.allScope(project))
+            .find { it.qualifiedName == targetClass }
+            ?: KotlinFullClassNameIndex.Helper.get(targetClass, project, GlobalSearchScope.allScope(project)).find { it.kotlinFqName?.asString() == targetClass }
+            ?: error("Could not find java class: $targetClass")
     }
 
     @Throws(IOException::class)
