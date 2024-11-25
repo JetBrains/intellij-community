@@ -7,7 +7,6 @@ import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import kotlin.Throws
 
 private val tlErrorLog: ThreadLocal<ErrorLog?> = ThreadLocal()
 
@@ -18,6 +17,16 @@ internal fun withErrorLog(errorLog: ErrorLog?): AccessToken {
 }
 
 internal val errorLog: ErrorLog? get() = tlErrorLog.get()
+
+/**
+ * Collects errors which are logged inside the [Runnable] and re-throws them after [Runnable] finishes.
+ */
+fun assertNoErrorLogged(executable: Runnable) {
+  val errors = collectErrorsLoggedInTheCurrentThread(executable::run)
+  if (errors.isNotEmpty()) {
+    rethrowLoggedErrors(null, errors)
+  }
+}
 
 inline fun <reified T : Throwable> assertErrorLogged(noinline executable: () -> Unit): T {
   return assertErrorLogged(T::class.java, executable)
