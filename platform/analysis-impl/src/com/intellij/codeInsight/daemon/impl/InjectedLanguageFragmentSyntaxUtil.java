@@ -17,7 +17,8 @@ class InjectedLanguageFragmentSyntaxUtil {
   @Contract(pure = true)
   static List<HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
                                                            @NotNull TextRange hostRange,
-                                                           TextAttributesKey @NotNull [] keys, @Nullable Object toolId) {
+                                                           TextAttributesKey @NotNull [] keys,
+                                                           @Nullable Object toolId) {
     if (hostRange.isEmpty()) {
       return List.of();
     }
@@ -27,6 +28,7 @@ class InjectedLanguageFragmentSyntaxUtil {
       .textAttributes(TextAttributes.ERASE_MARKER)
       .createUnconditionally();
     eraseInfo.toolId = toolId;
+    eraseInfo.markFromInjection();
     if (toolId != null) {
       eraseInfo.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
     }
@@ -41,6 +43,7 @@ class InjectedLanguageFragmentSyntaxUtil {
       .textAttributes(injectedAttributes)
       .createUnconditionally();
     injectedInfo.toolId = toolId;
+    injectedInfo.markFromInjection();
     if (toolId != null) {
       injectedInfo.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
     }

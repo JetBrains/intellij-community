@@ -502,6 +502,9 @@ public class HighlightInfo implements Segment {
     if (forcedTextAttributesKey != null) {
       s += "; forcedTextAttributesKey: " + forcedTextAttributesKey;
     }
+    if (forcedTextAttributes != null) {
+      s += "; forcedTextAttributes: " + forcedTextAttributes;
+    }
     if (unresolvedReference != null) {
       s += "; unresolvedReference: " + unresolvedReference.getClass() +"; qf completed: "+isUnresolvedReferenceQuickFixesComputed();
     }

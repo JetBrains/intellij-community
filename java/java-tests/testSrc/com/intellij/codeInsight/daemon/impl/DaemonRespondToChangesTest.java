@@ -1006,7 +1006,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assert profile.isToolEnabled(myDeadCodeKey, myFile);
   }
 
-  public void testErrorDisappearsRightAfterTypingInsideVisibleAreaWhileDaemonContinuesToChugAlong() {
+  public void testErrorDisappearsRightAfterTypingInsideVisibleAreaWhileDaemonContinuesToChugAlong_Stress() {
     String text = "class X{\nint xxx;\n{\nint i = <selection>null</selection><caret>;\n" + StringUtil.repeat("{ this.hashCode(); }\n\n\n", 10000) + "}}";
     configureByText(JavaFileType.INSTANCE, text);
 
@@ -1082,7 +1082,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertNotEmpty(highlightErrors());
   }
 
-  public void testInterruptOnTyping() throws Throwable {
+  public void testInterruptOnTyping_Stress() throws Throwable {
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     assertEmpty(highlightErrors());
@@ -2035,59 +2035,61 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   // after all typings are over, wait for final highlighting to complete and check that no errors are left in the markup
   private void assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(String initialText, String textToType, Runnable afterWaitForDaemon) {
     // run expensive consistency checks on each typing
-    HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = true; Disposer.register(getTestRootDisposable(), () -> HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = false);
-    String finalText = initialText.replace("<caret>", textToType);
-    configureByText(JavaFileType.INSTANCE, finalText);
-    assertEmpty(doHighlighting(HighlightSeverity.ERROR));
-    runWithReparseDelay(0, () -> {
-      for (int i=0; i<10; i++) {
-        //System.out.println("i = " + i);
-        PassExecutorService.LOG.debug("i = " + i);
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText("  "));
-        doHighlighting(); // reset various optimizations e.g. FileStatusMap.getCompositeDocumentDirtyRange
-        MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
-        for (int c = 0; c < finalText.length(); c++) {
-          PassExecutorService.LOG.debug("c = " + c);
-          //System.out.println("  c = " + c);
-          int o=c;
-          //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
-          WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-            assertFalse(myDaemonCodeAnalyzer.isRunning());
-            long docStamp = myEditor.getDocument().getModificationStamp();
-            char charToType = finalText.charAt(o);
-            type(charToType);
-            if (docStamp != myEditor.getDocument().getModificationStamp()) { // condition could be false when type handler does overtype ')' with already existing ')'
-              assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
+    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdaterImpl.getInstance(getProject());
+    updater.runAssertingInvariants(() -> {
+      String finalText = initialText.replace("<caret>", textToType);
+      configureByText(JavaFileType.INSTANCE, finalText);
+      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      runWithReparseDelay(0, () -> {
+        for (int i=0; i<10; i++) {
+          //System.out.println("i = " + i);
+          PassExecutorService.LOG.debug("i = " + i);
+          WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText("  "));
+          doHighlighting(); // reset various optimizations e.g. FileStatusMap.getCompositeDocumentDirtyRange
+          MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
+          for (int c = 0; c < finalText.length(); c++) {
+            PassExecutorService.LOG.debug("c = " + c);
+            //System.out.println("  c = " + c);
+            int o=c;
+            //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
+            WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+              assertFalse(myDaemonCodeAnalyzer.isRunning());
+              long docStamp = myEditor.getDocument().getModificationStamp();
+              char charToType = finalText.charAt(o);
+              type(charToType);
+              if (docStamp != myEditor.getDocument().getModificationStamp()) { // condition could be false when type handler does overtype ')' with already existing ')'
+                assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
+              }
+            });
+            //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
+            TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
+            myDaemonCodeAnalyzer.restart(myFile);
+            List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
+            //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
+            //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);
+            PassExecutorService.LOG.debug(" errorsfrommarkup:\n" + StringUtil.join(ContainerUtil.sorted(errorsFromMarkup, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n") + "\n-----\n");
+            while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)/*in case the highlighting has already finished miraculously by now*/) {
+              Thread.yield();
+              UIUtil.dispatchAllInvocationEvents();
+              if (t.timedOut()) {
+                throw new RuntimeException(new TimeoutException());
+              }
             }
-          });
-          //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
-          TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
-          myDaemonCodeAnalyzer.restart(myFile);
-          List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
-          //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
-          //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);
-          PassExecutorService.LOG.debug(" errorsfrommarkup:\n" + StringUtil.join(ContainerUtil.sorted(errorsFromMarkup, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n") + "\n-----\n");
-          while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)/*in case the highlighting has already finished miraculously by now*/) {
-            Thread.yield();
-            UIUtil.dispatchAllInvocationEvents();
-            if (t.timedOut()) {
-              throw new RuntimeException(new TimeoutException());
+            if (afterWaitForDaemon != null) {
+              afterWaitForDaemon.run();
             }
           }
-          if (afterWaitForDaemon != null) {
-            afterWaitForDaemon.run();
+          // some chars might be inserted by TypeHandlers
+          while (!myEditor.getDocument().getText().substring(myEditor.getCaretModel().getOffset()).isEmpty()) {
+            delete(myEditor);
           }
+          LOG.debug("All typing completed. " +
+                    "\neditor text:-----------\n"+myEditor.getDocument().getText()+"\n-------\n"+
+                    "errors in markup: " + StringUtil.join(getErrorsFromMarkup(markupModel), "\n") + "\n-----\n");
+          waitForDaemon(getProject(), myEditor.getDocument());
+          assertEmpty(myEditor.getDocument().getText(), getErrorsFromMarkup(markupModel));
         }
-        // some chars might be inserted by TypeHandlers
-        while (!myEditor.getDocument().getText().substring(myEditor.getCaretModel().getOffset()).isEmpty()) {
-          delete(myEditor);
-        }
-        LOG.debug("All typing completed. " +
-                  "\neditor text:-----------\n"+myEditor.getDocument().getText()+"\n-------\n"+
-                  "errors in markup: " + StringUtil.join(getErrorsFromMarkup(markupModel), "\n") + "\n-----\n");
-        waitForDaemon(getProject(), myEditor.getDocument());
-        assertEmpty(myEditor.getDocument().getText(), getErrorsFromMarkup(markupModel));
-      }
+      });
     });
   }
 
