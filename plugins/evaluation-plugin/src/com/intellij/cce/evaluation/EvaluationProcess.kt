@@ -27,7 +27,7 @@ class EvaluationProcess private constructor (
       if (hasError && step !is UndoableEvaluationStep.UndoStep) continue
       println("Starting step: ${step.name} (${step.description})")
       val duration = measureTimeMillis {
-        val result = environment.execute(step, workspace)
+        val result = environment.execute(step, currentWorkspace)
         if (result == null) {
           hasError = true
         } else {

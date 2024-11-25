@@ -163,7 +163,7 @@ function addDiffView(sessionDiv, popup, lookup, originalText) {
   const diffDiv = document.createElement("DIV");
   diffDiv.setAttribute("class", "diffView");
 
-  const suggestionsText = lookup["suggestions"].map(s => s.presentationText).join("\n");
+  const suggestionsText = lookup["suggestions"][lookup["suggestions"].length - 1].presentationText;
 
   const unifiedDiff = lineDiff.unifiedSlideDiff(originalText, suggestionsText, 1);
 
@@ -227,6 +227,9 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   addAiaDiagnosticsBlock("Code snippets from response", "extracted_code_snippets", popup, lookup)
   addAiaDiagnosticsBlock("Internal api calls from original code snippet", "ground_truth_internal_api_calls", popup, lookup)
   addAiaDiagnosticsBlock("Extracted api calls from generated code snippet", "predicted_api_calls", popup, lookup)
+  // TODO better to add a separate popup view?
+  addAiaDiagnosticsBlock("Appeared highlights", "appeared_highlights", popup, lookup)
+  addAiaDiagnosticsBlock("Erased APIs", "erased_apis", popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)

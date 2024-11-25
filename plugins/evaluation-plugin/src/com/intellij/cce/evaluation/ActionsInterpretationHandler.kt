@@ -77,7 +77,9 @@ class ActionsInterpretationHandler(
           fileCount += 1
         }
         else {
-          LOG.warn("No sessions collected from file: ${chunk.name}")
+          if (chunk.sessionsExist) {
+            LOG.warn("No sessions collected from file: ${chunk.name}")
+          }
         }
       }
       catch (e: Throwable) {

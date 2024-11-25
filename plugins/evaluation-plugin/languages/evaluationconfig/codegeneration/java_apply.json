@@ -5,7 +5,7 @@
   "strategy": {
     "model": "",
     "mode": "",
-    "behaviour": "SELECT_ENTIRE_NODE_AND_CALL_FEATURE",
+    "behaviour": "GENERATE_CODE_SNIPPETS_AND_CALL_APPLY",
     "collectContextOnly": false,
     "userPrompts": {
       "METHOD": [
@@ -19,20 +19,28 @@
   "actions": {
     "evaluationRoots": [
       "."
-    ]
+    ],
+    "sourceFile": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/code-generation-snippet-application/java/keycloak_keycloak/actions.json"
   },
   "interpret": {
     "saveLogs": true,
     "sessionProbability": 1.0,
     "sessionSeed": null,
-    "sessionsLimit": 10,
-    "filesLimit": 1,
+    "sessionsLimit": 400,
+    "filesLimit": 100,
     "order": "LINEAR",
     "trainTestSplit": 70
   },
   "reports": {
     "evaluationTitle": "Default",
-    "defaultMetrics": null,
+    "defaultMetrics": [
+      "Sessions",
+      "Precision",
+      "SessionsWithoutSyntaxErrorsRatio",
+      "WithoutHighlightErrors",
+      "PreservedAPI",
+      "MeanLatency"
+    ],
     "sessionsFilters": [],
     "comparisonFilters": []
   }

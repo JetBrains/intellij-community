@@ -81,13 +81,18 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
     .replace("/", "_")
 
   override fun prepare(datasetContext: DatasetContext) {
+    val path = datasetContext.path(name)
+
+    if (path.exists()) {
+      return
+    }
+
     val readToken = System.getenv("AIA_EVALUATION_DATASET_READ_TOKEN") ?: ""
     check(readToken.isNotBlank()) {
       "Token for dataset $url should be configured"
     }
 
     val content = httpGet(url, readToken)
-    val path = datasetContext.path(name)
     path.toFile().writeText(content)
   }
 }

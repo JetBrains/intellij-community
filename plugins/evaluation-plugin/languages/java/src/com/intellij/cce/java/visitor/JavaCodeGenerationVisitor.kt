@@ -4,6 +4,7 @@ package com.intellij.cce.java.visitor
 import com.intellij.cce.core.*
 import com.intellij.cce.visitor.EvaluationVisitor
 import com.intellij.cce.visitor.exceptions.PsiConverterException
+import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.startOffset
 
@@ -22,9 +23,20 @@ class JavaCodeGenerationVisitor : EvaluationVisitor, JavaRecursiveElementVisitor
   }
 
   override fun visitMethod(method: PsiMethod) {
-    codeFragment?.addChild(
-      CodeToken(method.text, method.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
-    )
+    val methodProperties = SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {
+      QualifiedNameProviderUtil.getQualifiedName(method)?.let {
+        put(TokenLocationProperty.METHOD_QUALIFIED_NAME.key, it)
+      }
+      method.containingClass?.name?.let {
+        put(TokenLocationProperty.CLASS.key, it)
+      }
+      if (method.containingClass?.name?.endsWith("Test") == true) { // TODO normal condition
+        put(TokenLocationProperty.TEST_SOURCE.key, true.toString())
+      }
+    }
+
+    codeFragment?.addChild(CodeToken(method.text, method.startOffset, methodProperties))
+
     val body = method.body
     if (body != null) {
       val meaningfullBodyChildren = body.trim()
