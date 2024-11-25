@@ -85,13 +85,10 @@ public fun ListComboBox(
         }
     }
 
-    fun onSelectedIndexesChange() = { selectedItems: List<Int> ->
-        if (selectedItems.isNotEmpty()) {
-            val selectedItemIndex = selectedItems.first()
-            selectedItem = selectedItemIndex
-            inputTextFieldState.setTextAndPlaceCursorAtEnd(items[selectedItemIndex])
-            onSelectedItemChange(items[selectedItemIndex])
-        }
+    fun onSelectedIndexChange(selectedItemIndex: Int) {
+        selectedItem = selectedItemIndex
+        inputTextFieldState.setTextAndPlaceCursorAtEnd(items[selectedItemIndex])
+        onSelectedItemChange(items[selectedItemIndex])
     }
 
     fun contentItems(
@@ -147,7 +144,11 @@ public fun ListComboBox(
                 modifier = Modifier.fillMaxWidth().heightIn(max = popupMaxHeight).padding(contentPadding),
                 selectionMode = SelectionMode.Single,
                 state = scrollState,
-                onSelectedIndexesChange = onSelectedIndexesChange(),
+                onSelectedIndexesChange = { selectedItemsIndexes ->
+                    if (selectedItemsIndexes.isEmpty()) return@SelectableLazyColumn
+                    if (selectedItemsIndexes.first() == selectedItem) return@SelectableLazyColumn
+                    onSelectedIndexChange(selectedItemsIndexes.first())
+                },
                 content = contentItems(items, onHoverItemChange, listItemContent),
             )
         }
