@@ -36,6 +36,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__firstLevelChild2\"><code>&lt;firstLevelChild2&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__deprecatedElement\"><code>&lt;deprecatedElement&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__elementWithCallouts\"><code>&lt;elementWithCallouts&gt;</code></a></li>" +
       "</ul>"
     )
   }
@@ -51,7 +52,8 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
         </root>
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;first-level-child-1&gt;</code></b><hr/>\n" +
-      "The <code>first-level-child-1</code> description.<blockquote><p>Some warning about <code>first-level-child-1</code>.</blockquote>" +
+      "The <code>first-level-child-1</code> description.<blockquote><p><icon src=\"AllIcons.General.Warning\"/> <b>Warning</b><br>\n" +
+      " Some warning about <code>first-level-child-1</code>.</blockquote>" +
       "<h5>Requirement</h5>" +
       "<p>Required: no; additional details with an alias<br/>\n" +
       "<b>Additional detail about <code>first-level-child-1</code>.</b>" +
@@ -84,7 +86,9 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
         </root>
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__firstLevelChild2\"><code>&lt;firstLevelChild2&gt;</code></a> / <b><code>@child-attribute-1</code></b><hr/>\n" +
-      "A <code>child-attribute</code> description. A link to <a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a>.<blockquote><p>Callout here.</blockquote>" +
+      "A <code>child-attribute</code> description. A link to <a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a>." +
+      "<blockquote><p><icon src=\"AllIcons.General.Warning\"/> <b>Warning</b><br>\n" +
+      " Callout here.</blockquote>" +
       "<p>Required: <b>yes</b>"
     )
   }
@@ -201,6 +205,53 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a> / <b><code>@deprecated-attribute</code></b><hr/>\n" +
       "<b><i>Deprecated since 2005.1</i></b><br/><i>Use <a href=\"psi_element://#attribute:root__elementWithDeprecatedAttribute__new-attribute\"><code>new-attribute</code></a> instead.</i>" +
       "<p>The <code>deprecated-attribute</code> description."
+    )
+  }
+
+  fun `test element with callouts`() {
+    doTestDocContains(
+      """
+        <root>
+          <elementWith<caret>Callouts/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;elementWithCallouts&gt;</code></b><hr/>\n" +
+      "Dummy text 1." +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.Actions.IntentionBulbGrey\"/> <b>Tip</b><br>\n" +
+      " This is a 1st callout without style.\n" +
+      "Dummy text 2.</blockquote>" +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Warning\"/> <b>Warning</b><br>\n" +
+      " This is a 2nd callout - note.\n" +
+      " Checking multiline." +
+      "</blockquote>" +
+      "<p>Dummy text 3." +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Warning\"/> <b>Warning</b><br>\n" +
+      " This is a 3rd callout - warning." +
+      "<p>New paragraph." +
+      "</blockquote>" +
+      "<p>Dummy text 4." +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Warning\"/> <b>Custom Title</b><br>\n" +
+      " This is a 4th callout - warning with a custom title at the end." +
+      "<p>New paragraph." +
+      "</blockquote>" +
+      "<p>Dummy text 5." +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Warning\"/> <b>Custom Title</b><br>\n" +
+      " This is a 5th callout - warning with a custom title at the start." +
+      "<p>New paragraph." +
+      "</blockquote>" +
+      "<p>Dummy text 6." +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.Actions.IntentionBulbGrey\"/> <b>Custom Title</b><br>\n" +
+      " This is a 6th callout - the implicit tip style and a custom title." +
+      "<p>New paragraph." +
+      "</blockquote>" +
+      "<h5>Requirement</h5>" +
+      "<p>Required: no"
     )
   }
 

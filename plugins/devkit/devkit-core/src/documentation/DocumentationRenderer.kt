@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 
 private const val HEADER_LEVEL = "#####"
 
@@ -32,7 +33,7 @@ internal class DocumentationRenderer(private val project: Project) {
       .adjustLinks(baseUrl)
       .deleteSelfLinks(elementPath)
       .adjustClassLinks()
-      .deleteCalloutAttributes()
+      .convertCallouts()
     return runReadAction { DocMarkdownToHtmlConverter.convert(project, markdownContent) }
       .removeWritersideSpecificTags()
   }
@@ -65,7 +66,8 @@ internal class DocumentationRenderer(private val project: Project) {
       if (url.startsWith(ELEMENT_PATH_PREFIX) || url.startsWith(ATTRIBUTE_PATH_PREFIX)) {
         val rawPath = url.removePrefix(ELEMENT_PATH_PREFIX).removePrefix(ATTRIBUTE_PATH_PREFIX)
         if (rawPath == elementPathString) text else "[$text]($PSI_ELEMENT_PROTOCOL$url)"
-      } else {
+      }
+      else {
         matchResult.value
       }
     }
@@ -80,8 +82,69 @@ internal class DocumentationRenderer(private val project: Project) {
     }
   }
 
-  private fun CharSequence.deleteCalloutAttributes(): String {
-    return this.replace(Regex("\\{style=.*?}"), "")
+  private fun CharSequence.convertCallouts(): String {
+    val content = StringBuilder()
+    val lines = this.lines()
+    var i = 0
+    while (i < lines.size) {
+      val line = lines[i]
+      if (line.trim().startsWith("> ")) {
+        val calloutStart = i
+        i++
+        while (i < lines.size) {
+          val trimmedLine = lines[i].trim()
+          if (trimmedLine.startsWith("> ") || trimmedLine == ">" || trimmedLine.isAttributesLine()) {
+            i++
+          }
+          else {
+            break
+          }
+        }
+        content.appendLine(buildCalloutHeader(lines[i]))
+        for (j in calloutStart until i) {
+          if (!lines[j].isAttributesLine()) {
+            content.appendLine(lines[j])
+          }
+        }
+      }
+      else {
+        content.appendLine(line)
+      }
+      i++
+    }
+    return content.toString()
+  }
+
+  private fun buildCalloutHeader(attributesLine: String): String {
+    val attributes = parseAttributes(attributesLine)
+    val indent = attributesLine.takeWhile { it == ' ' }
+    val style = attributes["style"]
+    val icon = when (style) {
+      "warning" -> "AllIcons.General.Warning"
+      "info" -> "AllIcons.General.Information"
+      else -> "AllIcons.Actions.IntentionBulbGrey"
+    }
+    val text = attributes["title"] ?: when (style) {
+      "warning" -> "Warning"
+      "info" -> "Information"
+      else -> "Tip"
+    }
+    return "${indent}> ${HtmlChunk.tag("icon").attr("src", icon)}&nbsp;<b>$text</b><br>"
+  }
+
+  private fun String.isAttributesLine(): Boolean {
+    return matches(Regex("^\\s*\\{*?}\\s*"))
+  }
+
+  private fun parseAttributes(input: String): Map<String, String> {
+    val attributes = mutableMapOf<String, String>()
+    val pattern = """(\w+)\s*=\s*(?:'([^']*)'|"([^"]*)"|(\S+))""".toRegex()
+    pattern.findAll(input.trim().removeSurrounding("{", "}")).forEach { matchResult ->
+      val (key, singleQuoted, doubleQuoted, unquoted) = matchResult.destructured
+      val value = singleQuoted.ifEmpty { doubleQuoted.ifEmpty { unquoted } }
+      attributes[key] = value
+    }
+    return attributes
   }
 
   private fun StringBuilder.appendElement(element: Element): StringBuilder {
@@ -129,7 +192,8 @@ internal class DocumentationRenderer(private val project: Project) {
       append("**_")
       if (deprecatedSince != null) {
         append("Deprecated since ${deprecatedSince}")
-      } else {
+      }
+      else {
         append("Deprecated")
       }
       append("_**")
