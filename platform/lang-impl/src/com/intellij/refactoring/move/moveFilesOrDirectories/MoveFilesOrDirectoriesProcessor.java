@@ -182,7 +182,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         if (showProgression) progressIndicator.setFraction((double)i / myElementsToMove.length);
         if (element instanceof PsiDirectory directory) {
           progressIndicator.setText2(directory.getVirtualFile().getPresentableUrl());
-          MoveFilesOrDirectoriesUtil.doMoveDirectory(directory, newParent);
+          doMoveDirectory(directory, newParent);
           for (PsiElement psiElement : directory.getChildren()) {
             processDirectoryFiles(movedFiles, oldToNewMap, psiElement);
           }
@@ -193,7 +193,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
           PsiFile moving = newParent.findFile(movedFile.getName());
           if (moving == null) {
-            MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, newParent);
+            doMoveFile(movedFile, newParent);
           }
           moving = newParent.findFile(movedFile.getName());
           if (moving != null) {
@@ -258,6 +258,14 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         LOG.error(e);
       }
     }
+  }
+
+  protected void doMoveFile(@NotNull PsiFile movedFile, @NotNull PsiDirectory newParent) {
+    MoveFilesOrDirectoriesUtil.doMoveFile(movedFile, newParent);
+  }
+
+  protected void doMoveDirectory(@NotNull PsiDirectory directory, @NotNull PsiDirectory newParent) {
+    MoveFilesOrDirectoriesUtil.doMoveDirectory(directory, newParent);
   }
 
   @Override
@@ -360,9 +368,9 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private static final class MyUsageInfo extends UsageInfo {
-    private final PsiElement myTarget;
-    final PsiReference myReference;
+  protected static final class MyUsageInfo extends UsageInfo {
+    public final PsiElement myTarget;
+    public final PsiReference myReference;
 
     MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiElement target) {
       super(reference);
