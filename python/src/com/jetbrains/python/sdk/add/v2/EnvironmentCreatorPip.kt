@@ -10,13 +10,11 @@ import com.intellij.util.text.nullize
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
 import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
-import java.nio.file.Path
 
 
 class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("pipenv", model) {
   override val interpreterType: InterpreterType = InterpreterType.PIPENV
   override val executable: ObservableMutableProperty<String> = model.state.pipenvExecutable
-  override val installationScript: Path? = null
 
   override fun savePathToExecutableToProperties() {
     PropertiesComponent.getInstance().pipEnvPath = executable.get().nullize()

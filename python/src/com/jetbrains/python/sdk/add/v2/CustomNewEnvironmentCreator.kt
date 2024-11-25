@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -119,10 +120,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
       installPipIfNeeded(pythonExecutable)
 
       if (installationScript != null) {
-        installExecutableViaPythonScript(installationScript!!, pythonExecutable)
-      }
-      else {
-        installExecutableViaPip(name, pythonExecutable)
+        installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name)
       }
     }
   }
@@ -136,7 +134,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    *
    * If this property is not null, the provided script will be used for installation instead of the default pip installation.
    */
-  internal abstract val installationScript: Path?
+  private val installationScript: Path? = PythonHelpersLocator.findPathInHelpers("pycharm_package_installer.py")
 
   internal abstract fun savePathToExecutableToProperties()
 

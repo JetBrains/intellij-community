@@ -121,5 +121,5 @@ internal suspend fun installPipIfNeeded(pythonExecutable: String) {
  * @throws [PyExecutionException] if the command execution fails.
  */
 @Internal
-suspend fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String) =
-  runCommandLine(GeneralCommandLine(pythonExecutable, scriptPath.absolutePathString())).getOrThrow()
+suspend fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String, vararg args: String) =
+  runCommandLine(GeneralCommandLine(pythonExecutable, scriptPath.absolutePathString(), *args)).getOrThrow()
