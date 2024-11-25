@@ -19,7 +19,7 @@ dotEnvFile ::= item_*
 
 private item_ ::= (EXPORT? property|COMMENT|CRLF)
 
-key ::= KEY_CHARS
+key ::= KEY_CHARS {implements="com.intellij.model.psi.PsiExternalReferenceHost"}
 
 value ::= VALUE_CHARS+ | QUOTE VALUE_CHARS* QUOTE?
 

@@ -87,7 +87,7 @@ public class EnvironmentVariablesApi {
                 return true;
             }
 
-            for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.getEnvVariablesProviders()) {
                 FileAcceptResult fileAcceptResult = provider.acceptFile(virtualFile);
                 if (!fileAcceptResult.isAccepted()) {
                     continue;
@@ -99,7 +99,7 @@ public class EnvironmentVariablesApi {
             return true;
         }, GlobalSearchScope.allScope(project));
 
-        return (targets.size() > 0 ? targets : secondaryTargets).toArray(PsiElement.EMPTY_ARRAY);
+        return (!targets.isEmpty() ? targets : secondaryTargets).toArray(PsiElement.EMPTY_ARRAY);
     }
 
     /**
@@ -114,7 +114,7 @@ public class EnvironmentVariablesApi {
         PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
 
         Processor<PsiFile> psiFileProcessor = psiFile -> {
-            for (EnvironmentVariablesUsagesProvider provider : EnvironmentVariablesProviderUtil.USAGES_PROVIDERS) {
+            for (EnvironmentVariablesUsagesProvider provider : EnvironmentVariablesProviderUtil.getEnvVariablesUsagesProviders()) {
                 targets.addAll(EnvironmentVariablesUtil.getUsagesElementsByKey(key, provider.getUsages(psiFile)));
             }
 
@@ -129,7 +129,7 @@ public class EnvironmentVariablesApi {
     }
 
     private static FileAcceptResult getFileAcceptResult(VirtualFile virtualFile) {
-        for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+        for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.getEnvVariablesProviders()) {
             FileAcceptResult fileAcceptResult = provider.acceptFile(virtualFile);
             if (!fileAcceptResult.isAccepted()) {
                 continue;

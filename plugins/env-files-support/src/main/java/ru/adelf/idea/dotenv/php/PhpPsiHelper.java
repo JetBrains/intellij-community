@@ -56,7 +56,8 @@ class PhpPsiHelper {
 
         if (!(variable instanceof Variable)) return false;
 
-        return (variable.getName() != null && ARRAY_NAMES.contains(variable.getName()));
+        variable.getName();
+        return ARRAY_NAMES.contains(variable.getName());
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -80,7 +81,7 @@ class PhpPsiHelper {
 
     private static int getParameterIndex(ParameterList parameterList, PsiElement parameter) {
         PsiElement[] parameters = parameterList.getParameters();
-        for(int i = 0; i < parameters.length; i = i + 1) {
+        for(int i = 0; i < parameters.length; i += 1) {
             if(parameters[i].equals(parameter)) {
                 return i;
             }

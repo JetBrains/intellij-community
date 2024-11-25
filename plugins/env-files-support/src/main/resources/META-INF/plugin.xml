@@ -26,9 +26,11 @@
 
     <extensionPoints>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"
-                        name="environmentVariablesProvider"/>
+                        name="environmentVariablesProvider"
+                        dynamic="true"/>
         <extensionPoint interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider"
-                        name="environmentVariablesUsagesProvider"/>
+                        name="environmentVariablesUsagesProvider"
+                        dynamic="true"/>
     </extensionPoints>
 
     <depends>com.intellij.modules.platform</depends>
@@ -46,7 +48,6 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>
-        <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
         <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
 
@@ -56,6 +57,11 @@
         <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
 
         <lang.foldingBuilder language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvValuesHiding"/>
+
+        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvKey"
+                                     hostLanguage="DotEnv"
+                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvSymbolReferenceProvider"
+                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyUsageSymbol"/>
 
         <localInspection language="DotEnv"
                          groupName="DotEnv"
