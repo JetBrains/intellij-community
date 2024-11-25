@@ -139,6 +139,11 @@ class PluginVerifier(
     "com.intellij.ide.util.gotoByName.GotoActionModel.getGroupMapping",
     "com.jetbrains.rdclient.util.idea.RangeUtilKt",
 
+    // new 243.1
+    "com.intellij.database.run.ConsoleDataRequest.CONSOLE_DATA_REQUEST",
+    "com.intellij.vcs.ShelveTitlePatch",
+    "com.intellij.vcs.ShelveTitleProvider"
+
     )
 
 }
