@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.gradle.toolchain
 
 import com.intellij.ide.projectWizard.generators.JdkDownloadService
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -12,6 +13,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.times
+import org.mockito.kotlin.whenever
 import java.nio.file.Files
 import kotlin.io.path.Path
 
@@ -40,45 +42,33 @@ class GradleDaemonJvmCriteriaDownloadToolchainTest : BasePlatformTestCase() {
     }
 
     fun `test Given supported vendors When download matching JDK Then requested item contains expected values`() {
-        lateinit var lastError: Throwable
-        repeat(5) {
-            val result = runCatching {
-                listOf("Oracle", "Amazon", "BellSoft", "Azul", "SAP", "Eclipse", "IBM", "GraalVM", "JetBrains").forEachIndexed { index, vendor ->
-                    createDaemonJvmPropertiesFile(21, vendor)
-                    GradleDaemonJvmCriteriaDownloadToolchain.downloadJdkMatchingCriteria(project, project.basePath.orEmpty())
-
-                    assertJdkDownloader(21, vendor, index + 1)
-                }
-            }
-            if (result.isSuccess) return
-            lastError = result.exceptionOrNull()!!
-
-            if (lastError.message?.startsWith("Failed to locate and download a matching toolchain") == true) {
-                Thread.sleep(5000)
-            } else throw lastError
+        val jdkItems = createJdkItemsSample()
+        val jdkListDownloader = mock<JdkListDownloader>().also {
+            whenever(it.downloadModelForJdkInstaller(null, JdkPredicate.default())).thenReturn(jdkItems)
         }
-        throw RuntimeException("Failed to locate and download a matching toolchain within several tries", lastError)
+        ApplicationManager.getApplication().replaceService(JdkListDownloader::class.java, jdkListDownloader, project)
+
+        jdkItems.forEachIndexed { index, vendor ->
+            createDaemonJvmPropertiesFile(21, vendor.product.vendor)
+            GradleDaemonJvmCriteriaDownloadToolchain.downloadJdkMatchingCriteria(project, project.basePath.orEmpty())
+
+            assertJdkDownloader(21, vendor.product.vendor, index + 1)
+        }
     }
 
     fun `test Given different format vendors When download matching JDK Then requested item contains expected values`() {
-        lateinit var lastError: Throwable
-        repeat(5) {
-            val result = runCatching {
-                listOf("JetBrains", "jetbrains", "JETBRAINS", " JetBrains ").forEachIndexed { index, vendor ->
-                    createDaemonJvmPropertiesFile(17, vendor)
-                    GradleDaemonJvmCriteriaDownloadToolchain.downloadJdkMatchingCriteria(project, project.basePath.orEmpty())
-
-                    assertJdkDownloader(17, "JetBrains", index + 1)
-                }
-            }
-            if (result.isSuccess) return
-            lastError = result.exceptionOrNull()!!
-
-            if (lastError.message?.startsWith("Failed to locate and download a matching toolchain") == true) {
-                Thread.sleep(5000)
-            } else throw lastError
+        val jdkItemJetbrains = simpleJdkItem("JetBrains", "Runtime", 17)
+        val jdkListDownloader = mock<JdkListDownloader>().also {
+            whenever(it.downloadModelForJdkInstaller(null, JdkPredicate.default())).thenReturn(listOf(jdkItemJetbrains))
         }
-        throw RuntimeException("Failed to locate and download a matching toolchain within several tries", lastError)
+        ApplicationManager.getApplication().replaceService(JdkListDownloader::class.java, jdkListDownloader, project)
+
+        listOf("JetBrains", "jetbrains", "JETBRAINS", " JetBrains ").forEachIndexed { index, vendor ->
+            createDaemonJvmPropertiesFile(17, vendor)
+            GradleDaemonJvmCriteriaDownloadToolchain.downloadJdkMatchingCriteria(project, project.basePath.orEmpty())
+
+            assertJdkDownloader(17, "JetBrains", index + 1)
+        }
     }
 
     private fun createDaemonJvmPropertiesFile(version: Int, vendor: String) {
@@ -99,5 +89,23 @@ class GradleDaemonJvmCriteriaDownloadToolchainTest : BasePlatformTestCase() {
         val downloadableJdkItem = jdkDownloadTaskCaptor.lastValue.jdkItem
         assertEquals(expectedVersion, downloadableJdkItem.jdkMajorVersion)
         assertEquals(expectedVendor, downloadableJdkItem.product.vendor)
+    }
+
+    private fun createJdkItemsSample() = listOf(
+        simpleJdkItem("Oracle", "OpenJDK", 21),
+        simpleJdkItem("Amazon", "Corretto", 21),
+        simpleJdkItem("BellSoft", "Liberica JDK", 21),
+        simpleJdkItem("Azul", "Zulu Community™", 21),
+        simpleJdkItem("SAP", "SapMachine", 21),
+        simpleJdkItem("Eclipse", "Temurin", 21),
+        simpleJdkItem("IBM", "Semeru", 21),
+        simpleJdkItem("GraalVM", "Community Edition", 21),
+        simpleJdkItem("JetBrains", "Runtime", 21)
+    )
+
+    private fun simpleJdkItem(vendor: String, product: String, version: Int) = mock<JdkItem>().also {
+        whenever(it.product).thenReturn(JdkProduct(vendor = vendor, product = product, flavour = null))
+        whenever(it.jdkMajorVersion).thenReturn(version)
+        whenever(it.installFolderName).thenReturn("installFolderName")
     }
 }
