@@ -344,22 +344,24 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-53611
-  public void testRequiredNotRequiredAtTheSameTime() {
-    doTestByText("""
-                   from typing_extensions import TypedDict, Required, NotRequired
-                   class A(TypedDict):
-                       x: <warning descr="Key cannot be required and not required at the same time">Required[NotRequired[int]]</warning>
-                       y: Required[int]
-                       z: NotRequired[int]
-                   A = TypedDict('A', {'x': <warning descr="Key cannot be required and not required at the same time">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})""");
-  }
-
-  public void testRequiredNotRequiredWithReadOnly() {
+  public void testNestedQualifiers() {
     doTestByText("""
                    from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
+                   
                    class A(TypedDict):
-                       x: <warning descr="Key cannot be required and not required at the same time">Required[ReadOnly[NotRequired[int]]]</warning>
-                   """);
+                       x: <warning descr="Required[] and NotRequired[] cannot be nested">Required[NotRequired[int]]</warning>
+                       y: Required[int]
+                       z: NotRequired[int]
+                       a: <warning descr="Required[] and NotRequired[] cannot be nested">Required[ReadOnly[NotRequired[int]]]</warning>
+                       b: <warning descr="Required[] and NotRequired[] cannot be nested">Required[Required[int]]</warning>
+                       c: <warning descr="Required[] and NotRequired[] cannot be nested">Required[ReadOnly[Required[int]]]</warning>
+                   
+                   A = TypedDict('A', {'x': <warning descr="Required[] and NotRequired[] cannot be nested">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})
+                   
+                   class B(TypedDict):
+                       x: <warning descr="ReadOnly[] cannot be nested">ReadOnly[ReadOnly[int]]</warning>
+                       y: <warning descr="ReadOnly[] cannot be nested">ReadOnly[Required[ReadOnly[int]]]</warning>
+                       z: ReadOnly[int]""");
   }
 
   // PY-53611

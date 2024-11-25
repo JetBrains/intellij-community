@@ -220,23 +220,43 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return PyTypedDictType.TypedDictFieldQualifiers(isRequired = totality)
     }
 
-    fun parseTypedDictFieldQualifiers(expression: PySubscriptionExpression, context: TypeEvalContext, totality: Boolean? = null): PyTypedDictType.TypedDictFieldQualifiers {
-      val resolvedNames = mutableSetOf<String>()
+    private fun parseTypedDictFieldQualifiers(expression: PySubscriptionExpression, context: TypeEvalContext, totality: Boolean? = null): PyTypedDictType.TypedDictFieldQualifiers {
+      var isRequired = totality
+      var isReadOnly = false
+      for (qualifier in getTypedDictFieldQualifiers(expression, context)) {
+        when (qualifier) {
+          TypedDictFieldQualifier.REQUIRED -> isRequired = true
+          TypedDictFieldQualifier.NOT_REQUIRED -> isRequired = false
+          TypedDictFieldQualifier.READ_ONLY -> isReadOnly = true
+        }
+      }
+      return PyTypedDictType.TypedDictFieldQualifiers(isRequired = isRequired, isReadOnly = isReadOnly)
+    }
+
+    fun getTypedDictFieldQualifiers(expression: PySubscriptionExpression, context: TypeEvalContext): List<TypedDictFieldQualifier> {
+      val result = mutableListOf<TypedDictFieldQualifier>()
       expression.accept(object : PyRecursiveElementVisitor() {
         override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-          resolvedNames.addAll(resolveToQualifiedNames(node.operand, context))
+          val resolvedNames = resolveToQualifiedNames(node.operand, context)
+          if (resolvedNames.any { name -> REQUIRED == name || REQUIRED_EXT == name }) {
+            result.add(TypedDictFieldQualifier.REQUIRED)
+          }
+          else if (resolvedNames.any { name -> NOT_REQUIRED == name || NOT_REQUIRED_EXT == name }) {
+            result.add(TypedDictFieldQualifier.NOT_REQUIRED)
+          }
+          else if (resolvedNames.any { name -> READONLY == name || READONLY_EXT == name }) {
+            result.add(TypedDictFieldQualifier.READ_ONLY)
+          }
           super.visitPySubscriptionExpression(node)
         }
       })
-      var isRequired = totality
-      if (resolvedNames.any { name -> REQUIRED == name || REQUIRED_EXT == name }) {
-        isRequired = true
-      }
-      else if (resolvedNames.any { name -> NOT_REQUIRED == name || NOT_REQUIRED_EXT == name }) {
-        isRequired = false
-      }
-      val isReadOnly = resolvedNames.any {name -> READONLY == name || READONLY_EXT == name}
-      return PyTypedDictType.TypedDictFieldQualifiers(isRequired = isRequired, isReadOnly = isReadOnly)
+      return result
+    }
+
+    enum class TypedDictFieldQualifier {
+      REQUIRED,
+      NOT_REQUIRED,
+      READ_ONLY
     }
 
     private fun getTotality(cls: PyClass): Boolean {

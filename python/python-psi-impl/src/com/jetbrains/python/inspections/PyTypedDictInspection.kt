@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion.TypedDictFieldQualifier
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
@@ -359,25 +360,13 @@ class PyTypedDictInspection : PyInspection() {
         return
       }
       if (expression is PySubscriptionExpression && expression.operand is PyReferenceExpression) {
-        var requiredPresented = false
-        var notRequiredPresented = false
-        expression.accept(object: PyRecursiveElementVisitor() {
-          override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-            val typedDictFieldQualifiers = PyTypedDictTypeProvider.parseTypedDictFieldQualifiers(node, myTypeEvalContext)
-            if (typedDictFieldQualifiers.isRequired == true) {
-              requiredPresented = true
-            }
-            if (typedDictFieldQualifiers.isRequired == false) {
-              notRequiredPresented = true
-            }
-            if (requiredPresented && notRequiredPresented) {
-              registerProblem(expression, PyPsiBundle.message("INSP.typeddict.cannot.be.required.and.not.required.at.the.same.time"))
-              return
-            }
-            super.visitPySubscriptionExpression(node)
-          }
-        })
-
+        val qualifiers = PyTypedDictTypeProvider.getTypedDictFieldQualifiers(expression, myTypeEvalContext)
+        if (qualifiers.count { it == TypedDictFieldQualifier.REQUIRED || it == TypedDictFieldQualifier.NOT_REQUIRED } > 1) {
+          registerProblem(expression, PyPsiBundle.message("INSP.typeddict.required.and.not.required.cannot.be.nested"))
+        }
+        if (qualifiers.count { it == TypedDictFieldQualifier.READ_ONLY } > 1) {
+          registerProblem(expression, PyPsiBundle.message("INSP.typeddict.read.only.cannot.be.nested"))
+        }
         return
       }
       val type = if (expression is PyReferenceExpression) {
