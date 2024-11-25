@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
@@ -49,10 +50,13 @@ private class GitSkipHooksConfigurationPanel(
   private val repositoryManager get() = GitRepositoryManager.getInstance(panel.project)
   private val runHooks = JCheckBox(GitBundle.message("checkbox.run.git.hooks")).apply {
     isSelected = true
-    toolTipText = GitBundle.message("tooltip.run.git.hooks")
     addActionListener {
       CommitSessionCollector.getInstance(panel.project).logCommitOptionToggled(CommitOption.RUN_HOOKS, isSelected)
     }
+  }
+
+  init {
+    refreshAvailability()
   }
 
   override fun getComponent(): JComponent = panel {
@@ -63,6 +67,12 @@ private class GitSkipHooksConfigurationPanel(
 
   private fun refreshAvailability() {
     runHooks.isVisible = repositoryManager.repositories.any { it.hasCommitHooks() }
+    runHooks.isEnabled = !isCommitHooksFullyDisabled()
+    if (isCommitHooksFullyDisabled()) {
+      runHooks.isSelected = false
+    }
+    runHooks.toolTipText = if (isCommitHooksFullyDisabled()) GitBundle.message("tooltip.run.git.hooks.disabled")
+    else GitBundle.message("tooltip.run.git.hooks")
   }
 
   override fun onChangeListSelected(list: LocalChangeList) {
@@ -70,8 +80,10 @@ private class GitSkipHooksConfigurationPanel(
   }
 
   override fun saveState() {
-    commitContext.isSkipHooks = runHooks.isVisible && !runHooks.isSelected
+    commitContext.isSkipHooks = isCommitHooksFullyDisabled() || (runHooks.isVisible && !runHooks.isSelected)
   }
+
+  private fun isCommitHooksFullyDisabled(): Boolean = AdvancedSettings.getBoolean("git.commit.do.not.run.hooks")
 
   override fun restoreState() {
     refreshAvailability()
