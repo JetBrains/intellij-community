@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * Tested with TextJavaToKotlinCopyPasteConversionTestGenerated
  */
 class PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, val targetFile: KtFile) {
-    private val file = dataForConversion.file
+    private val file = dataForConversion.sourceJavaFile
     private val project = targetFile.project
 
     private val importList = file.importList!!
