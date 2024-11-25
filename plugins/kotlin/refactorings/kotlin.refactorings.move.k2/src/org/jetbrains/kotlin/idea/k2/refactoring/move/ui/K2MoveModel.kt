@@ -73,7 +73,7 @@ sealed class K2MoveModel {
             }.align(AlignY.TOP + AlignX.LEFT)
             panel {
                 searchInComments.createComboBox(this)
-                mppDeclarations.createComboBox(this, inSourceRoot && this is Declarations)
+                mppDeclarations.createComboBox(this, inSourceRoot && this@K2MoveModel is Declarations)
             }.align(AlignY.TOP + AlignX.RIGHT)
         }
     }
