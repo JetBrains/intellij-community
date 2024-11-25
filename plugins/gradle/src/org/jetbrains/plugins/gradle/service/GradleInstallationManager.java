@@ -21,8 +21,6 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -253,10 +251,6 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  public String suggestBetterGradleHomePath(@NotNull String homePath) {
-    return suggestBetterGradleHomePath(null, homePath);
-  }
-
   /**
    * Tries to suggest better path to gradle home
    *
@@ -337,10 +331,6 @@ public class GradleInstallationManager implements Disposable {
       return false;
     }
     return isGradleSdkHome(project, new File(file.getPath()));
-  }
-
-  public boolean isGradleSdkHome(@Nullable File file) {
-    return isGradleSdkHome(null, file);
   }
 
   /**
@@ -427,26 +417,6 @@ public class GradleInstallationManager implements Disposable {
     }
 
     return null;
-  }
-
-  /**
-   * Allows to ask for the classpath roots of the classes that are additionally provided by the gradle integration (e.g. gradle class
-   * files, bundled groovy-all jar etc).
-   *
-   * @param project target project to use for gradle home retrieval
-   * @return classpath roots of the classes that are additionally provided by the gradle integration (if any);
-   * {@code null} otherwise
-   */
-  @Nullable
-  public List<VirtualFile> getClassRoots(@Nullable Project project) {
-    List<File> files = getClassRoots(project, null);
-    if (files == null) return null;
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-    return ContainerUtil.mapNotNull(files, file -> {
-      final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
-      return virtualFile != null ? jarFileSystem.getJarRootForLocalFile(virtualFile) : null;
-    });
   }
 
   @Nullable
