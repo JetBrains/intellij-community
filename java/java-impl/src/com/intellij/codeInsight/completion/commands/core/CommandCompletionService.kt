@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion.commands.core
 
 import com.intellij.codeInsight.completion.commands.api.CommandCompletionFactory
-import com.intellij.codeInsight.daemon.impl.CommandCompletionServiceApi
+import com.intellij.codeInsight.daemon.impl.CollectedCachedIntentionHandler
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HintRenderer
@@ -452,10 +452,10 @@ data class PreviousActionInfoContainer(
 
 data class HighlightingContainer(val cachedIntentions: CachedIntentions, val map: Map<IntentionActionWithTextCaching, RangeHighlighterEx?>)
 
-class CommandCompletionServiceImpl(val project: Project) : CommandCompletionServiceApi() {
-  override fun cacheActions(editor: Editor, file: PsiFile, intentions: CachedIntentions) {
+class CommandCompletionServiceImpl : CollectedCachedIntentionHandler {
+  override fun processCollectedCachedIntentions(editor: Editor, file: PsiFile, intentions: CachedIntentions) {
     if (!Registry.`is`("java.completion.command.enabled")) return
-    val completionService = project.getService<CommandCompletionService>(CommandCompletionService::class.java)
+    val completionService = file.project.getService<CommandCompletionService>(CommandCompletionService::class.java)
     completionService?.cacheActions(editor, file, intentions)
   }
 }

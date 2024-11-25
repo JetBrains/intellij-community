@@ -720,5 +720,8 @@
 
     <extensionPoint qualifiedName="com.intellij.inlinePrompt" dynamic="true"
                     interface="com.intellij.inlinePrompt.InlinePromptExtension"/>
+
+    <extensionPoint qualifiedName="com.intellij.show.intention.cached.intentions.handler" dynamic="true"
+                    interface="com.intellij.codeInsight.daemon.impl.CollectedCachedIntentionHandler"/>
   </extensionPoints>
 </idea-plugin>

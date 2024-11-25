@@ -2737,11 +2737,9 @@
     <completion.contributor language="JAVA" id="commands" order="first, after liveTemplates"
                             implementationClass="com.intellij.codeInsight.completion.commands.core.CommandCompletionContributor"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionCharFilter" order="first" id="commandCompletion"/>
-    <typedHandler implementation="com.intellij.codeInsight.completion.commands.core.CommandTypeHandler" id="commandPreviousCompletion" order="last"/>
+    <typedHandler implementation="com.intellij.codeInsight.completion.commands.core.CommandTypeHandler" id="commandPreviousCompletion" order="first"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.CommandCompletionServiceApi"
-                    serviceImplementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionServiceImpl"
-                    overrides="true"/>
+    <show.intention.cached.intentions.handler implementation="com.intellij.codeInsight.completion.commands.core.CommandCompletionServiceImpl"/>
 
     <registryKey key="java.completion.command.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="true"/>
