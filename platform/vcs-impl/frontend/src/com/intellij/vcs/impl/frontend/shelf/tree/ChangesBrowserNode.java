@@ -111,14 +111,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return false;
   }
 
-  public final void markAsHelperNode() {
-    myHelper = true;
-  }
-
-  public boolean isMeaningfulNode() {
-    return !myHelper;
-  }
-
   public int getFileCount() {
     if (myFileCount == -1) {
       myFileCount = (isFile() ? 1 : 0) + sumForChildren(ChangesBrowserNode::getFileCount);
@@ -147,36 +139,10 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return sum;
   }
 
-  @NotNull
-  public <U> List<U> getAllObjectsUnder(@NotNull Class<U> clazz) {
-    return traverseObjectsUnder().filter(clazz).toList();
-  }
-
-  public @NotNull JBIterable<?> traverseObjectsUnder() {
-    return traverse().map(TreeUtil::getUserObject);
-  }
-
   public @NotNull JBIterable<ChangesBrowserNode<?>> traverse() {
     JBIterable<?> iterable = TreeUtil.treeNodeTraverser(this).preOrderDfsTraversal();
     //noinspection unchecked
     return (JBIterable<ChangesBrowserNode<?>>)iterable;
-  }
-
-  public @NotNull JBIterable<ChangesBrowserNode<?>> iterateNodeChildren() {
-    JBIterable<?> iterable = TreeUtil.nodeChildren(this);
-    //noinspection unchecked
-    return (JBIterable<ChangesBrowserNode<?>>)iterable;
-  }
-
-  public @NotNull JBIterable<VirtualFile> iterateFilesUnder() {
-    return traverseObjectsUnder().filter(VirtualFile.class).filter(VirtualFile::isValid);
-  }
-
-  public @NotNull JBIterable<FilePath> iterateFilePathsUnder() {
-    return traverse()
-      .filter(ChangesBrowserNode::isLeaf)
-      .map(ChangesBrowserNode::getUserObject)
-      .filter(FilePath.class);
   }
 
   public void render(@NotNull JTree tree, @NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
@@ -223,7 +189,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
    * Used by speedsearch, copy-to-clipboard and default renderer.
    */
   public @Nls String getTextPresentation() {
-    PluginException.reportDeprecatedDefault(getClass(), "getTextPresentation", "A proper implementation required");
     return userObject == null ? "" : userObject.toString(); //NON-NLS
   }
 
@@ -241,23 +206,4 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     }
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
-    if (parentPath != null) {
-      String presentablePath = VcsUtil.getPresentablePath(renderer.getProject(), parentPath, true, true);
-      if (presentablePath.isEmpty()) return;
-      renderer.append(spaceAndThinSpace() + presentablePath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    }
-  }
-
-  protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
-    renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
-                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
-  }
-
-  @DirtyUI
-  @Nullable
-  protected static Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
-    VirtualFile file;//TODO
-    return null;
-  }
 }

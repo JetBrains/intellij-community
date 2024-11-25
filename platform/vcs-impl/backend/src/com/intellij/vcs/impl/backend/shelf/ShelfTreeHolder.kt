@@ -120,7 +120,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
   internal fun findChangesInTree(changeListDto: ChangeListDto): List<ShelvedChangeNode> {
     val changeListNode = findChangeListNode(changeListDto.changeList)
                          ?: return emptyList()
-    val selectedChanges = changeListNode.traverse().filter(ShelvedChangeNode::class.java).filter {
+    val selectedChanges = changeListNode.traverse().filterIsInstance<ShelvedChangeNode>().filter {
       val changeRef = it.getUserData(ENTITY_ID_KEY) as? DurableRef<*> ?: return@filter false
       return@filter changeListDto.changes.isEmpty() || changeListDto.changes.contains(changeRef)
     }

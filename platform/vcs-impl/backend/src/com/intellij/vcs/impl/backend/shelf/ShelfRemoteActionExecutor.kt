@@ -29,16 +29,16 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
   private val shelveChangesManager = ShelveChangesManager.getInstance(project)
 
   fun createPatchForShelvedChanges(changeListsDto: List<ChangeListDto>, silentClipboard: Boolean) {
+    val patchBuilder: CreatePatchCommitExecutor.PatchBuilder
+    val changeNodes = changeListsDto.flatMap { shelfTreeHolder.findChangesInTree(it) }
+    val changeList = changeNodes.firstOrNull()?.shelvedChange?.changeList ?: return
+    if (changeListsDto.size == 1) {
+      patchBuilder = CreatePatchCommitExecutor.ShelfPatchBuilder(project, changeList, changeNodes.map { it.shelvedChange.path })
+    }
+    else {
+      patchBuilder = CreatePatchCommitExecutor.DefaultPatchBuilder(project)
+    }
     cs.launch(Dispatchers.EDT) {
-      val patchBuilder: CreatePatchCommitExecutor.PatchBuilder
-      val changeNodes = changeListsDto.flatMap { shelfTreeHolder.findChangesInTree(it) }
-      val changeList = changeNodes.first().shelvedChange.changeList
-      if (changeListsDto.size == 1) {
-        patchBuilder = CreatePatchCommitExecutor.ShelfPatchBuilder(project, changeList, changeNodes.map { it.shelvedChange.path })
-      }
-      else {
-        patchBuilder = CreatePatchCommitExecutor.DefaultPatchBuilder(project)
-      }
       val changes = changeNodes.map { it.shelvedChange.getChangeWithLocal(project) }
       CreatePatchFromChangesAction.createPatch(project, changeList.description, changes, silentClipboard, patchBuilder)
     }
@@ -66,8 +66,8 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
           }
           return@launch
         }
-        ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, shelvedChanges.changes, shelvedChanges.files, null)
       }
+      ShelveChangesManager.getInstance(project).unshelveSilentlyAsynchronously(project, changeLists, shelvedChanges.changes, shelvedChanges.files, null)
     }
   }
 

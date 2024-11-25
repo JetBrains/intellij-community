@@ -29,10 +29,13 @@ import java.util.*
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 
+
+/*
+ * Copy-paste of com.intellij.openapi.vcs.changes.ui.ChangesTree
+ */
 @ApiStatus.Internal
 @Suppress("LeakingThis")
 open class ChangesTree(val project: Project, private val cs: CoroutineScope, private val place: String, private val showCheckboxes: Boolean = false, private val highlightProblems: Boolean = false) : Tree(), UiCompatibleDataProvider {
-  private var modelUpdateInProgress = false
   private val keyHandlers = ChangesTreeHandlers(this)
   private var isModelFlat: Boolean = true
   private val treeExpander = MyTreeExpander()
@@ -42,24 +45,6 @@ open class ChangesTree(val project: Project, private val cs: CoroutineScope, pri
     val nodeRenderer = ChangesBrowserNodeRenderer(project, { false }, false)
     setCellRenderer(ChangesTreeFrontendCellRenderer(nodeRenderer))
     setRootVisible(false)
-  }
-
-  open fun isInclusionVisible(node: ChangesBrowserNode<*>): Boolean {
-    return true
-  }
-
-  protected fun updateTreeModel(
-    model: DefaultTreeModel,
-  ) {
-    ThreadingAssertions.assertEventDispatchThread()
-    modelUpdateInProgress = true
-    try {
-      setModel(model)
-      isModelFlat = isCurrentModelFlat()
-    }
-    finally {
-      modelUpdateInProgress = false
-    }
   }
 
   fun setDoubleClickHandler(processor: Processor<in MouseEvent>) {
@@ -72,15 +57,6 @@ open class ChangesTree(val project: Project, private val cs: CoroutineScope, pri
 
   fun getRoot(): ChangesBrowserRootNode {
     return model.root as ChangesBrowserRootNode
-  }
-
-  fun addSelectionListener(parent: Disposable? = null, listener: TreeSelectionListener) {
-    addTreeSelectionListener(listener)
-    if (parent != null) Disposer.register(parent) { removeTreeSelectionListener(listener) }
-  }
-
-  fun addGroupingChangedListener(listener: PropertyChangeListener) {
-    groupingSupport.addPropertyChangeListener(listener)
   }
 
   private fun isCurrentModelFlat(): Boolean {
@@ -141,8 +117,6 @@ private class ChangesTreeHandlers(private val tree: ChangesTree) {
 
       val clickPath = TreeUtil.getPathForLocation(tree, e.x, e.y)
       if (clickPath == null) return false
-
-      //if (tree.getPathIfCheckBoxClicked(e.point) != null) return false
 
       return handler.process(e)
     }

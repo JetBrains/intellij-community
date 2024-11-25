@@ -7,19 +7,21 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.vcs.impl.shared.rhizome.GroupingItemEntity
 import com.intellij.vcs.impl.shared.rhizome.GroupingItemsEntity
-import fleet.kernel.onDispose
 import fleet.kernel.rete.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class ChangesGroupingStatesHolder(private val project: Project, private val cs: CoroutineScope) {
+class ChangesGroupingStatesHolder(private val cs: CoroutineScope) {
   private val states: MutableMap<String, MutableSet<String>> = ConcurrentHashMap()
-  val allGroupingKeys: MutableSet<String> = mutableSetOf()
+  private val _allGroupingKeys: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
+
+  val allGroupingKeys: Set<String> = _allGroupingKeys
 
   init {
     initializeGroupingKeys()
@@ -29,10 +31,13 @@ class ChangesGroupingStatesHolder(private val project: Project, private val cs: 
   private fun initializeGroupingKeys() {
     cs.launch {
       withKernel {
-        GroupingItemEntity.each().collect {
-          allGroupingKeys.add(it.name)
-          it.onDispose(coroutineContext[Rete]!!) {
-            allGroupingKeys.remove(it.name)
+        GroupingItemEntity.each().tokensFlow().collect { (added, groupingItem) ->
+          val name = groupingItem.value.name
+          if (added) {
+            _allGroupingKeys.add(name)
+          }
+          else {
+            _allGroupingKeys.remove(name)
           }
         }
       }

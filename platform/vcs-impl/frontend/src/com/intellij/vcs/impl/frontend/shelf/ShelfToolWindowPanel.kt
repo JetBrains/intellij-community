@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.frontend.shelf
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.DiffPreview
@@ -31,6 +29,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.JScrollPane
 
+/*
+ * Remote-dev friendly implementation of com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.ShelfToolWindowPanel
+ */
 @ApiStatus.Internal
 class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: CoroutineScope) : SimpleToolWindowPanel(true) {
   private val mainPanelContent = Wrapper()

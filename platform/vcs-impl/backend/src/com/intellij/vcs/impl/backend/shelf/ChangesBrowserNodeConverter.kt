@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -20,7 +22,11 @@ import kotlin.reflect.KClass
 suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(orderInParent: Int, project: Project): NodeEntity? {
   val converter = NodeToEntityConverter.getConverter(this)
   if (converter == null) {
-    return null
+    NodeToEntityConverter.LOG.error("No converter found for node ${this::class.simpleName}")
+    return TagNodeEntity.new {
+      it[TagNodeEntity.Text] = node.textPresentation
+      it[NodeEntity.Order] = orderInParent
+    }
   }
   @Suppress("UNCHECKED_CAST")
   return (converter as NodeToEntityConverter<T>).convert(this@convertToEntity, orderInParent, project)
@@ -38,6 +44,8 @@ abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>>(private val node
     fun getConverter(node: ChangesBrowserNode<*>): NodeToEntityConverter<*>? {
       return EP_NAME.extensionList.firstOrNull { it.isNodeAcceptable(node) }
     }
+
+    val LOG: Logger = logger<NodeToEntityConverter<*>>()
   }
 }
 

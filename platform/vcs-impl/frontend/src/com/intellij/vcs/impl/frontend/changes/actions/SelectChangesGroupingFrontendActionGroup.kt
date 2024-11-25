@@ -32,7 +32,11 @@ class SelectChangesGroupingFrontendActionGroup : DefaultActionGroup(), DumbAware
 abstract class SelectChangesGroupingAction(private val key: String) : ToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val project = e.project ?: return
+    val project = e.project
+    if (project == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     e.presentation.isEnabledAndVisible = ChangesGroupingStatesHolder.getInstance(project).allGroupingKeys.contains(key)
   }
 

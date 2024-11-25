@@ -11,6 +11,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ToolWindowContentPostProcessor
+import com.intellij.vcs.impl.frontend.shelf.ShelfTreeUpdater.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -21,7 +22,7 @@ class ShelveContentReplacer() : ToolWindowContentPostProcessor {
 
   override fun postprocessContent(project: Project, content: Content, toolWindow: ToolWindow) {
     val listener = ShelfTabListener(toolWindow)
-    content.putUserData(ShelfTreeUpdater.CONTENT_PROVIDER_SUPPLIER_KEY) { ShelfTreeUpdater.getInstance(project).initToolWindowPanel() }
+    content.putUserData(ShelfTreeUpdater.CONTENT_PROVIDER_SUPPLIER_KEY) { ShelfTreeUpdater.getInstance(project).createToolWindowPanel() }
     toolWindow.contentManager.addContentManagerListener(listener)
   }
 
@@ -29,15 +30,21 @@ class ShelveContentReplacer() : ToolWindowContentPostProcessor {
     override fun stateChanged(toolWindowManager: ToolWindowManager) {
       val selectedContent = toolWindow.contentManager.selectedContent
       if (toolWindow.isVisible && SHELF_CONTENT_NAME == selectedContent?.tabName) {
-        ShelfTreeUpdater.getInstance(toolWindow.project).initContent(selectedContent)
+        initContent(selectedContent)
       }
     }
 
     override fun selectionChanged(event: ContentManagerEvent) {
       val content = event.content
       if (toolWindow.isVisible && event.operation == ContentManagerEvent.ContentOperation.add && SHELF_CONTENT_NAME == content.tabName) {
-        ShelfTreeUpdater.getInstance(toolWindow.project).initContent(content)
+        initContent(content)
       }
+    }
+
+    private fun initContent(content: Content) {
+      val toolWindowPanel = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
+      content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
+      content.component = toolWindowPanel
     }
   }
 }

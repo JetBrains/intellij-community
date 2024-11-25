@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
-import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
@@ -17,14 +16,13 @@ import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
-import com.jetbrains.rhizomedb.entity
 import fleet.kernel.ref
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
-import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -42,20 +40,8 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     }
   }
 
-  fun initContent(content: Content) {
-    val toolWindowPanel = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
-    content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
-    content.component = toolWindowPanel
-  }
-
-  fun initToolWindowPanel(): ShelfToolWindowPanel {
+  fun createToolWindowPanel(): ShelfToolWindowPanel {
     return ShelfToolWindowPanel(project, tree, cs)
-  }
-
-  private suspend fun findRootEntity(): ShelvesTreeRootEntity? {
-    return withKernel {
-      entity(ShelvesTreeRootEntity.Project, project.asEntity())
-    }
   }
 
   private fun subscribeToTreeChanges() {
@@ -64,7 +50,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
         ShelvesTreeRootEntity.each().collectLatest {
           val changes = tree.getSelectedChangesWithChangeLists()
           val rootNode = it.convertToTreeNodeRecursive() ?: return@collectLatest
-          cs.launch(Dispatchers.EDT) {
+          withContext(Dispatchers.EDT) {
             tree.model = ChangesTreeModel(rootNode)
             selectChangesInTree(changes)
           }
@@ -104,7 +90,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     }
   }
 
-  fun selectShelvedList(list: ShelvedChangeListEntity) {
+  private fun selectShelvedList(list: ShelvedChangeListEntity) {
     val treeNode = TreeUtil.findNodeWithObject(tree.model.root as DefaultMutableTreeNode, list)
     if (treeNode == null) {
       return

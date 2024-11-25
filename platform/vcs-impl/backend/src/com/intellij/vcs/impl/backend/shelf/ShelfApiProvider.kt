@@ -12,8 +12,6 @@ import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.intellij.vcs.impl.shared.rpc.UpdateStatus
 import fleet.kernel.DurableRef
-import fleet.kernel.change
-import fleet.kernel.shared
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -66,11 +64,5 @@ internal class BackendShelfApi : RemoteShelfApi {
 }
 
 internal suspend fun DurableRef<ProjectEntity>.asProject(): Project {
-  return withKernel {
-    change {
-      shared {
-        deref().asProject()
-      }
-    }
-  }
+  return withKernel { deref().asProject() }
 }

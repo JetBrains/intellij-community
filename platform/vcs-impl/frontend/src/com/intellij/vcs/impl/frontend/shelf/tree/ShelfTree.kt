@@ -69,10 +69,6 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
       }.toMap()
   }
 
-  fun updateModel(model: DefaultTreeModel) {
-    updateTreeModel(model)
-  }
-
   fun getSelectedLists(): Set<ShelvedChangeListEntity> {
     return selectionPaths?.mapNotNull { TreeUtil.findObjectInPath(it, ShelvedChangeListEntity::class.java) }?.toSet() ?: emptySet()
   }

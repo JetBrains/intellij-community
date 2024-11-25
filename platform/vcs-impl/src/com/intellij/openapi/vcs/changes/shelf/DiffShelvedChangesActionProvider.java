@@ -62,7 +62,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
 
 import static com.intellij.diff.tools.util.DiffNotifications.createNotificationProvider;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
@@ -113,7 +112,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
 
   public static @Nullable ListSelection<? extends ChangeDiffRequestChain.Producer> createDiffProducers(@NotNull Project project,
                                                                                                        boolean withLocal,
-                                                                                                       Supplier<ListSelection<ShelvedWrapper>> listLoader) {
+                                                                                                       ListSelection<ShelvedWrapper> selection) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return null;
 
     final String base = project.getBasePath();
@@ -122,11 +121,9 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       return null;
     }
 
-    ListSelection<ShelvedWrapper> wrappers = listLoader.get();
-
     ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
 
-    return wrappers.map(s -> {
+    return selection.map(s -> {
       return createDiffProducer(project, base, patchContext, s, withLocal);
     });
   }
@@ -165,16 +162,13 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
   public static void showShelvedChangesDiff(@NotNull DataContext dc, boolean withLocal) {
     Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) return;
-    showShelvedChangesDiff(project, withLocal,
-                           () -> {
-                             return ShelvedChangesViewManager.getSelectedChangesOrAll(dc);
-                           });
+    showShelvedChangesDiff(project, withLocal, ShelvedChangesViewManager.getSelectedChangesOrAll(dc));
   }
 
   public static void showShelvedChangesDiff(@NotNull Project project,
                                             boolean withLocal,
-                                            Supplier<ListSelection<ShelvedWrapper>> listLoader) {
-    ListSelection<? extends ChangeDiffRequestChain.Producer> diffRequestProducers = createDiffProducers(project, withLocal, listLoader);
+                                            ListSelection<ShelvedWrapper> selection) {
+    ListSelection<? extends ChangeDiffRequestChain.Producer> diffRequestProducers = createDiffProducers(project, withLocal, selection);
     if (diffRequestProducers == null || diffRequestProducers.isEmpty()) return;
 
     DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers);

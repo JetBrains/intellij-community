@@ -19,14 +19,14 @@ open class ChangesGroupingSupport(val project: Project, private val source: Stri
   private val changeSupport = PropertyChangeSupport(source)
   private val groupingUpdateScheduler = ShelfTreeGroupingUpdateScheduler.getInstance(project)
   private val groupingStatesHolder = ChangesGroupingStatesHolder.getInstance(project)
-  val groupingKeys get() = groupingStatesHolder.getGroupingsForPlace(source)
+  private val groupingKeys get() = groupingStatesHolder.getGroupingsForPlace(source)
 
 
-  operator fun get(groupingKey: @NonNls String): Boolean {
+  fun get(groupingKey: @NonNls String): Boolean {
     return groupingStatesHolder.isGroupingEnabled(source, groupingKey)
   }
 
-  operator fun set(groupingKey: String, state: Boolean) {
+  fun set(groupingKey: String, state: Boolean) {
     val oldGroupingKeys = groupingStatesHolder.getGroupingsForPlace(source)
     val currentState = oldGroupingKeys.contains(groupingKey)
     if (currentState == state) return
@@ -43,15 +43,6 @@ open class ChangesGroupingSupport(val project: Project, private val source: Stri
   }
 
   fun isNone() = groupingKeys.isEmpty()
-
-
-  fun addPropertyChangeListener(listener: PropertyChangeListener) {
-    changeSupport.addPropertyChangeListener(listener)
-  }
-
-  fun removePropertyChangeListener(listener: PropertyChangeListener) {
-    changeSupport.removePropertyChangeListener(listener)
-  }
 
   companion object {
     const val PROP_GROUPING_KEYS = "ChangesGroupingKeys" // NON-NLS
