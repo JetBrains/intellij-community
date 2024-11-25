@@ -3765,7 +3765,9 @@ f:com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 - s:getTopLevelEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.Editor
 com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 c:com.intellij.psi.impl.source.tree.injected.Place
-- com.intellij.util.SmartList
+- java.util.AbstractList
+- get(I):com.intellij.psi.PsiLanguageInjectionHost$Shred
+- size():I
 a:com.intellij.psi.search.PredefinedSearchScopeProvider
 - sf:Companion:com.intellij.psi.search.PredefinedSearchScopeProvider$Companion
 - <init>():V
