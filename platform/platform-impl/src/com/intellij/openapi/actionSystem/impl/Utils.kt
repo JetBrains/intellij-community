@@ -184,7 +184,6 @@ object Utils {
   @JvmStatic
   private fun createAsyncDataContextImpl(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
-    dataContext is EdtDataContext -> createAsyncDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     !ApplicationManager.getApplication().isUnitTestMode() -> dataContext.also {
       reportUnexpectedDataContextKind(dataContext)
     }
@@ -237,7 +236,6 @@ object Utils {
   @JvmStatic
   private fun getRawDataIfCached(dataContext: DataContext, dataId: String, uiOnly: Boolean): Any? = when (dataContext) {
     is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId, uiOnly)
-    is EdtDataContext -> dataContext.getRawDataIfCached(dataId)
     is CustomizedDataContext -> getRawDataIfCached(dataContext.customizedDelegate, dataId, uiOnly)
     else -> null
   }
