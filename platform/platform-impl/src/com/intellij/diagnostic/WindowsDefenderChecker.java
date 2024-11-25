@@ -34,6 +34,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,18 +90,19 @@ public class WindowsDefenderChecker {
 
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  final @Nullable Boolean isAlreadyProcessed(@NotNull Project project) {
+  final boolean isAlreadyProcessed(@NotNull Project project, Consumer<@Nullable Boolean> notifyAction) {
     var projectPath = getProjectPath(project);
     if (projectPath != null && myProjectPaths.containsKey(projectPath)) {
       while (!project.isDisposed() && myProjectPaths.get(projectPath) == null) TimeoutUtil.sleep(100);
-      var success = myProjectPaths.remove(projectPath);
+      Boolean success = myProjectPaths.remove(projectPath);
       if (success == Boolean.TRUE) {
         PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
       }
-      return success;
+      notifyAction.accept(success);
+      return true;
     }
 
-    return null;
+    return false;
   }
 
   private static @Nullable Path getProjectPath(Project project) {
