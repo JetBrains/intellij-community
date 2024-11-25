@@ -85,4 +85,18 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), myProject),
                   new File(getProjectPath() + "/gradle/custom.versions.toml"));
   }
+
+  @Test
+  @TargetVersions("8.8+")
+  public void testDaemonJvmCriteriaIsWatched() throws Exception {
+    createProjectSubFile("gradle/gradle-daemon-jvm.properties", """
+      toolchainVersion=17
+      """);
+
+    importProject();
+
+    final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), myProject),
+                  new File(getProjectPath() + "/gradle/gradle-daemon-jvm.properties"));
+  }
 }
