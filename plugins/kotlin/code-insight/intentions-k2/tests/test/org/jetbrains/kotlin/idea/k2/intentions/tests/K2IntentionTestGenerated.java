@@ -10031,7 +10031,84 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/moveMemberToTopLevel")
+    public static class MoveMemberToTopLevel extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractFunction.kt")
+        public void testAbstractFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/abstractFunction.kt");
+        }
+
+        @TestMetadata("abstractProperty.kt")
+        public void testAbstractProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/abstractProperty.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/function.kt");
+        }
+
+        @TestMetadata("functionInCompanion.kt")
+        public void testFunctionInCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/functionInCompanion.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/property.kt");
+        }
+
+        @TestMetadata("propertyInCompanion.kt")
+        public void testPropertyInCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/propertyInCompanion.kt");
+        }
+
+        @TestMetadata("redeclarationConflict.kt")
+        public void testRedeclarationConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflict.kt");
+        }
+
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflictK2.kt");
+        }
+
+        @TestMetadata("redeclarationConflictWithPackage.kt")
+        public void testRedeclarationConflictWithPackage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackage.kt");
+        }
+
+        @TestMetadata("redeclarationConflictWithPackageK2.kt")
+        public void testRedeclarationConflictWithPackageK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackageK2.kt");
+        }
+
+        @TestMetadata("redeclarationPropertyConflict.kt")
+        public void testRedeclarationPropertyConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflict.kt");
+        }
+
+        @TestMetadata("redeclarationPropertyConflictK2.kt")
+        public void testRedeclarationPropertyConflictK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflictK2.kt");
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/script.kts");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/anonymousFunctionToLambda")

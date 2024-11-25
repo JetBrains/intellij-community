@@ -15338,14 +15338,29 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflict.kt");
         }
 
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflictK2.kt");
+        }
+
         @TestMetadata("redeclarationConflictWithPackage.kt")
         public void testRedeclarationConflictWithPackage() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackage.kt");
         }
 
+        @TestMetadata("redeclarationConflictWithPackageK2.kt")
+        public void testRedeclarationConflictWithPackageK2() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackageK2.kt");
+        }
+
         @TestMetadata("redeclarationPropertyConflict.kt")
         public void testRedeclarationPropertyConflict() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflict.kt");
+        }
+
+        @TestMetadata("redeclarationPropertyConflictK2.kt")
+        public void testRedeclarationPropertyConflictK2() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflictK2.kt");
         }
 
         @TestMetadata("script.kts")
