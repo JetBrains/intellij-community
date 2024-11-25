@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -205,14 +206,21 @@ private class CreateActualForExpectLocalQuickFix(
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         if (actualDeclarations.size == 1) {
-            runWriteAction { doCreateActualFix(project, descriptor, actualDeclarations.first()) }
+            runWriteAction { doCreateActualFix(project, descriptor, actualDeclarations.first()) }?.let {
+                navigateToActual(it, requestFocus = true)
+            }
         } else {
             val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(actualDeclarations)
                 .setTitle(KotlinBundle.message("choose.actual.module"))
-                .setItemChosenCallback { declaration ->
-                    WriteCommandAction.writeCommandAction(project).withName(familyName).run(ThrowableRunnable<Throwable> {
-                            doCreateActualFix(project, descriptor, declaration)
+                .setItemsChosenCallback { declarations ->
+                    val actualDeclarations = WriteCommandAction.writeCommandAction(project).withName(familyName)
+                        .compute(ThrowableComputable<List<KtDeclaration>, Throwable> {
+                            declarations.mapNotNull { declaration -> doCreateActualFix(project, descriptor, declaration) }
                         })
+                    val last = actualDeclarations.lastOrNull()
+                    for (declaration in actualDeclarations) {
+                        navigateToActual(declaration, declaration == last)
+                    }
                 }
                 .setRenderer(object : DefaultListCellRenderer() {
                     override fun getListCellRendererComponent(
@@ -233,11 +241,11 @@ private class CreateActualForExpectLocalQuickFix(
         }
     }
 
-    private fun doCreateActualFix(project: Project, descriptor: ProblemDescriptor, actualDeclaration: ActualDeclaration) {
-        val expectDeclaration = descriptor.psiElement.findParentOfType<KtDeclaration>() ?: return
+    private fun doCreateActualFix(project: Project, descriptor: ProblemDescriptor, actualDeclaration: ActualDeclaration): KtDeclaration? {
+        val expectDeclaration = descriptor.psiElement.findParentOfType<KtDeclaration>() ?: return null
         val expectRelativePackagePath = expectDeclaration.relativePackagePath
-        val actualDirectory = findOrCreateActualDeclarationDirectory(project, actualDeclaration, expectRelativePackagePath) ?: return
-        val actualKtFile = findOrCreateActualDeclarationFile(actualDeclaration, expectDeclaration, actualDirectory) ?: return
+        val actualDirectory = findOrCreateActualDeclarationDirectory(project, actualDeclaration, expectRelativePackagePath) ?: return null
+        val actualKtFile = findOrCreateActualDeclarationFile(actualDeclaration, expectDeclaration, actualDirectory) ?: return null
 
         /**
          * The above call to [findOrCreateActualDeclarationFile] might have created a new source root and therefore triggered
@@ -245,9 +253,11 @@ private class CreateActualForExpectLocalQuickFix(
          */
         DumbService.getInstance(project).completeJustSubmittedTasks()
 
-        val added = actualKtFile.add(actualDeclaration.declarationFromText).reformatted() as? KtNamedDeclaration ?: return
-        val shortened = ShortenReferencesFacility.getInstance().shorten(added) as? KtDeclaration
+        val added = actualKtFile.add(actualDeclaration.declarationFromText).reformatted() as? KtNamedDeclaration ?: return null
+        return ShortenReferencesFacility.getInstance().shorten(added) as? KtDeclaration ?: added
+    }
 
+    private fun navigateToActual(target: KtDeclaration, requestFocus: Boolean) {
         /**
          * Find the navigation target:
          *
@@ -263,12 +273,11 @@ private class CreateActualForExpectLocalQuickFix(
          * writing the implementation can be started right away!
          */
         val navigationTarget = run {
-            val target = shortened ?: added
             val blockExpression = target.childrenOfType<KtBlockExpression>().firstOrNull() ?: return@run target
             blockExpression.children.first() as? KtElement ?: return@run target
         }
 
-        navigationTarget.navigate(true)
+        navigationTarget.navigate(requestFocus)
     }
 
     /**
