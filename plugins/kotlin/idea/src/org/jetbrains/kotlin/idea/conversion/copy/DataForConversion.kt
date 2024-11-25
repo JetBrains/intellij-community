@@ -51,9 +51,9 @@ data class DataForConversion private constructor(
         ) {
             val elements = file.elementsInRange(range)
             if (elements.isEmpty()) {
-                add(fileText.substring(range.startOffset, range.endOffset))
+                addText(fileText.substring(range.startOffset, range.endOffset))
             } else {
-                add(fileText.substring(range.startOffset, elements.first().textRange.startOffset))
+                addText(fileText.substring(range.startOffset, elements.first().textRange.startOffset))
                 elements.forEach {
                     when {
                         it is PsiComment -> {
@@ -61,11 +61,11 @@ data class DataForConversion private constructor(
                             // to the neighboring real elements and so may be duplicated
                             return@forEach
                         }
-                        shouldExpandToChildren(it) -> this += it.allChildren.toList()
-                        else -> this += it
+                        shouldExpandToChildren(it) -> addElements(it.allChildren.toList())
+                        else -> addElement(it)
                     }
                 }
-                add(fileText.substring(elements.last().textRange.endOffset, range.endOffset))
+                addText(fileText.substring(elements.last().textRange.endOffset, range.endOffset))
             }
         }
 
