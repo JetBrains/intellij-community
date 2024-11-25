@@ -43,7 +43,7 @@ internal fun suggestedSdkName(basePath: Path): @NlsSafe String {
   return "UV (${PathUtil.getFileName(basePath.pathString)})"
 }
 
-val UV_ICON = PythonIcons.Python.UV
+val UV_ICON = PythonIcons.UV
 val UV_LOCK: String = "uv.lock"
 
 // FIXME: move pyprojecttoml code out to common package
