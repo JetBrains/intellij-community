@@ -134,6 +134,7 @@
 
     <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonFeatureUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.jetbrains.jsonSchema.fus.JsonSchemaIdValidationRule"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">

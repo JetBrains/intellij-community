@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.psi.util.ReadActionCachedValue
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -42,9 +43,9 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
     return currentHighlightingSession.getCachedOrEvaluate()
   }
 
-  fun reportSchemaType(schemaId: String?) {
+  fun reportSchemaType(schemaRoot: JsonSchemaObject) {
     val currentSession = getOrComputeCurrentSession() ?: return
-    currentSession.schemaType = schemaId
+    currentSession.schemaType = guessBestSchemaId(schemaRoot)
   }
 
   fun reportSchemaUsageFeature(featureKind: JsonSchemaFusFeature) {
@@ -64,7 +65,7 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
       .map { (feature, usagesCount) -> feature.event.with(usagesCount) }
     val uniqueSchemasCount = JsonSchemaFusCountedUniqueFeature.UniqueRemoteUrlDownloadRequest.event.with(sessionData.requestedRemoteSchemas.size)
     val schemaAccessOutsideHighlightingCount = JsonSchemaFusCountedUniqueFeature.SchemaAccessWithoutReadLock.event.with(requestsOutsideHighlightingCounter.getAndSet(0))
-    val schemaId = JsonSchemaFusRegexpFeature.JsonFusSchemaId.event.with(sessionData.schemaType)
+    val schemaId = JsonSchemaFusAllowedListFeature.JsonFusSchemaId.event.with(sessionData.schemaType)
 
     val allDataAccumulated = allCountEventsDuringSession + uniqueSchemasCount + schemaAccessOutsideHighlightingCount + schemaId
     JsonFeatureUsageCollector.jsonSchemaHighlightingSessionData.log(allDataAccumulated)
@@ -74,5 +75,9 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
       thisLogger().debug("JSON schema highlighting session statistics: $printableStatistics")
     }
   }
-}
 
+  private fun guessBestSchemaId(schemaRoot: JsonSchemaObject): String? {
+    val rawSchemaIdentifier = schemaRoot.id ?: schemaRoot.rawFile?.name
+    return rawSchemaIdentifier?.replace("http://", "https://")
+  }
+}
