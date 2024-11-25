@@ -243,9 +243,15 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
       }
 
-      private fun hideAllUnfocusedAutoHideToolWindows(toolWindowManager: ToolWindowManagerImpl, focusedComponent: Component) {
+      private fun hideAllUnfocusedAutoHideToolWindows(
+        toolWindowManager: ToolWindowManagerImpl,
+        focusedComponent: Component,
+        predicate: (String) -> Boolean = { true },
+      ) {
         for (id in toolWindowManager.idToEntry.keys) {
-          hideIfAutoHideToolWindowLostFocus(toolWindowManager, id, focusedComponent)
+          if (predicate(id)) {
+            hideIfAutoHideToolWindowLostFocus(toolWindowManager, id, focusedComponent)
+          }
         }
       }
 
@@ -349,8 +355,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             }
             if (Registry.`is`("auto.hide.all.tool.windows.on.any.action", false)) {
               val focusedComponent = IdeFocusManager.getInstance(manager.project).focusOwner
+              val actionToolWindowId = getToolWindowIdForComponent(event.inputEvent?.component)
               if (focusedComponent != null) {
-                hideAllUnfocusedAutoHideToolWindows(manager, focusedComponent)
+                hideAllUnfocusedAutoHideToolWindows(manager, focusedComponent) { id -> id != actionToolWindowId }
               }
             }
           }
