@@ -94,7 +94,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         val text = TextBlockTransferable.convertLineSeparators(editor, (values.single() as MyTransferableData).text, values)
 
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
-        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor, caretOffset, bounds) ?: return
+        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor.document, caretOffset, bounds) ?: return
         psiDocumentManager.commitDocument(targetDocument)
 
         val j2kKind = getJ2kKind(targetFile)
