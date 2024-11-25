@@ -58,7 +58,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         startOffsets: IntArray,
         endOffsets: IntArray
     ): List<TextBlockTransferableData> {
-        if (file is KtFile) return listOf(CopiedKotlinCode(file.text, startOffsets, endOffsets))
+        if (file is KtFile) return listOf(CopiedKotlinCode())
         return emptyList()
     }
 
