@@ -40,10 +40,3 @@ private val BACKGROUND_BALANCE
   get() = namedDouble("VersionControl.RefLabel.backgroundBrightness", 0.08)
 
 private val BACKGROUND_BASE_COLOR = namedColor("VersionControl.RefLabel.backgroundBase", JBColor(Color.BLACK, Color.WHITE))
-
-@OptIn(ExperimentalCoroutinesApi::class)
-internal fun <T> withLastKnownDb(body: () -> T): T {
-  return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[DbSource.ContextElement]!!.dbSource.latest) {
-    body()
-  }
-}

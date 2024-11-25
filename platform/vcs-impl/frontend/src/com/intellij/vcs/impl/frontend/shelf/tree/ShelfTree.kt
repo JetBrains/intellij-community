@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataKey.Companion.create
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.platform.kernel.withLastKnownDb
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.*

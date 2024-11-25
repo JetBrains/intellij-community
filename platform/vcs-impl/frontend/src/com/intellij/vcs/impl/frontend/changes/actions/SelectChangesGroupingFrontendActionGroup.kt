@@ -6,15 +6,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
-import com.intellij.platform.kernel.KernelService
+import com.intellij.platform.kernel.withLastKnownDb
 import com.intellij.platform.project.asEntity
 import com.intellij.vcs.impl.frontend.changes.ChangesGroupingStatesHolder
 import com.intellij.vcs.impl.frontend.changes.ChangesTree
 import com.intellij.vcs.impl.shared.rhizome.RepositoryCountEntity
-import com.jetbrains.rhizomedb.asOf
 import com.jetbrains.rhizomedb.entity
-import fleet.kernel.DbSource
-import fleet.kernel.rete.Rete
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -60,8 +57,8 @@ class GroupByModuleAction() : SelectChangesGroupingAction("module")
 class GroupByRepositoryAction : SelectChangesGroupingAction("repository") {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[DbSource.ContextElement]!!.dbSource.latest) {
-      val projectEntity = e.project?.asEntity() ?: return@asOf
+    withLastKnownDb {
+      val projectEntity = e.project?.asEntity() ?: return@withLastKnownDb
       val repositoryCount = entity(RepositoryCountEntity.Project, projectEntity)?.count ?: 0
       e.presentation.isEnabledAndVisible = repositoryCount > 1
     }
