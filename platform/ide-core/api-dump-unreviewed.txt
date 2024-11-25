@@ -2530,6 +2530,7 @@ com.intellij.openapi.wm.ToolWindowId
 - sf:MESSAGES_WINDOW:java.lang.String
 - sf:MODULES_DEPENDENCIES:java.lang.String
 - sf:PREVIEW:java.lang.String
+- sf:PROBLEMS_VIEW:java.lang.String
 - sf:PROJECT_VIEW:java.lang.String
 - sf:RUN:java.lang.String
 - sf:SERVICES:java.lang.String

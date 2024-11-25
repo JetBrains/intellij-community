@@ -45,7 +45,9 @@ internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
     val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR)
     val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
     val content = toolWindow?.let { ToolWindowContextMenuActionBase.getContextContent(e, it) }
-    val enabled = content != null && toolWindow.id != ToolWindowId.STRUCTURE_VIEW ||
+    val enabled = content != null &&
+                  toolWindow.id != ToolWindowId.STRUCTURE_VIEW &&
+                  toolWindow.id != ToolWindowId.PROBLEMS_VIEW ||
                   fileEditor?.file is ToolWindowTabFileImpl
 
     e.presentation.isEnabledAndVisible = enabled
