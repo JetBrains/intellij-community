@@ -65,6 +65,8 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 17;
 
+  private static final Version MIN_SUPPORTED_GLIBC_VERSION = new Version(2, 28, 0);
+
   private final @Nullable CefDelegate myDelegate;
   private final @Nullable CefApp myCefApp;
 
@@ -563,17 +565,17 @@ public final class JBCefApp {
     try {
       libcVersionString = LibC.INSTANCE.gnu_get_libc_version();
     } catch (UnsatisfiedLinkError e) {
-      LOG.warn("Failed load libc to check the version: " + e.getMessage());
+      LOG.warn("Failed to get the glibc version: " + e.getMessage());
       return false;
     }
 
     Version version = Version.parseVersion(libcVersionString);
     if (version == null) {
-      LOG.error("Failed to parse libc version: " + libcVersionString);
+      LOG.error("Failed to parse the glibc version: " + libcVersionString);
       return false;
     }
 
-    if (version.lessThan(2, 28)) {
+    if (version.compareTo(MIN_SUPPORTED_GLIBC_VERSION) < 0) {
       LOG.warn("Incompatible glibc version: " + libcVersionString);
       return false;
     }
