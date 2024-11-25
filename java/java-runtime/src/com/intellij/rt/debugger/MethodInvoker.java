@@ -5,8 +5,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
-import java.lang.reflect.Array;
-import java.util.Arrays;
 
 @SuppressWarnings({"SSBasedInspection", "unused"})
 public final class MethodInvoker {
@@ -201,22 +199,14 @@ public final class MethodInvoker {
         }
       }
 
-      Object result;
-      if (vararg && args.length == parameterCount - 1) { // add an empty array if no vararg parameters passed
-        args = Arrays.copyOf(args, parameterCount);
-        args[args.length - 1] = Array.newInstance(lastParameterType.getComponentType(), 0);
-      }
-      if (args.length == 1 && args[0] == null) { // single null arg
-        result = method.asFixedArity().invoke((Object[])null);
-      }
-      else {
-        if (vararg && args.length == parameterCount && lastParameterType.isAssignableFrom(args[args.length - 1].getClass())) {
-          result = method.asFixedArity().invokeWithArguments(args);
-        }
-        else {
-          result = method.invokeWithArguments(args);
+      if (vararg && args.length == parameterCount) {
+        Object lastArg = args[args.length - 1];
+        if (lastArg == null || lastParameterType.isAssignableFrom(lastArg.getClass())) {
+          method = method.asFixedArity();
         }
       }
+
+      Object result = method.invokeWithArguments(args);
       returnValue.set(result);
       return result;
     }
