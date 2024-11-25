@@ -16,6 +16,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.util.slashedPath
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Paths
 
 abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase() {
     private var mockLibraryFacility: MockLibraryFacility? = null
@@ -46,7 +48,16 @@ abstract class AbstractParameterInfoTest : KotlinLightCodeInsightFixtureTestCase
         ThrowableRunnable { super.tearDown() },
     )
 
-    protected open fun doTest(fileName: String) {
+    protected fun doTest(fileName: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            Paths.get(fileName),
+            IgnoreTests.DIRECTIVES.of(pluginMode)
+        ) {
+            doActualTest(fileName)
+        }
+    }
+
+    private fun doActualTest(fileName: String) {
         val prefix = FileUtil.getNameWithoutExtension(PathUtil.getFileName(fileName))
         val mainFile = File(FileUtil.toSystemDependentName(fileName))
         mainFile.parentFile

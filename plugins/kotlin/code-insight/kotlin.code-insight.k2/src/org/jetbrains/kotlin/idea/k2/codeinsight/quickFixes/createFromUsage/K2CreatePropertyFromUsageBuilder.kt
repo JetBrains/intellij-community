@@ -13,12 +13,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
-import com.intellij.psi.*
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiType
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -26,16 +28,16 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTarget
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.*
-import org.jetbrains.kotlin.name.StandardClassIds.Annotations.ParameterNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
@@ -223,31 +225,13 @@ object K2CreatePropertyFromUsageBuilder {
             allowAnalysisOnEdt {
                 analyze(declaration) {
                     val symbol = findClass(classId) as? KaAnnotatedSymbol ?: return false
-                    val annotationValues =
-                        symbol.annotations
-                            .firstOrNull { it.classId?.asSingleFqName() == StandardNames.FqNames.target }
-                            ?.arguments
-                            ?.filter { it.name == ParameterNames.targetAllowedTargets }
-                            ?.map { it.expression }
-                            ?: return false
-                    for(value in annotationValues) {
-                        if (value.isApplicableTargetSet(expectedTargetCallableId)) {
-                            return true
-                        }
+                    return symbol.hasApplicableAllowedTarget {
+                        it.isApplicableTargetSet(expectedTargetCallableId)
                     }
-                    return false
                 }
             }
         }
         return false
-    }
-
-    private fun KaAnnotationValue.isApplicableTargetSet(expectedTargetCallableId: CallableId): Boolean {
-        return when (this) {
-            is KaAnnotationValue.ArrayValue -> values.any { it.isApplicableTargetSet(expectedTargetCallableId) }
-            is KaAnnotationValue.EnumEntryValue -> callableId == expectedTargetCallableId
-            else -> false
-        }
     }
 
     private val fieldAnnotationTargetCallableId: CallableId =

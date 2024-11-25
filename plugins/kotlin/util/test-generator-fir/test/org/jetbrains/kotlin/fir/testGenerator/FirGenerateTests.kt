@@ -198,7 +198,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractFirParameterInfoTest> {
             model(
                 "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|java)$"), isRecursive = true,
-                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib")
+                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib", "withLib4/sharedLib")
             )
         }
 
