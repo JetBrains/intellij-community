@@ -190,7 +190,7 @@ internal fun checkNameClashConflicts(
                         "text.declarations.clash.move.0.destination.1.declared.in.scope.2",
                         renderedDeclaration,
                         conflictingSymbol.renderForConflict(),
-                        conflictingScope.renderForConflict(),
+                        conflictingScope.renderForConflict().ifBlank { "default" },
                     )
                     conflicts.putValue(declaration, message)
                 }

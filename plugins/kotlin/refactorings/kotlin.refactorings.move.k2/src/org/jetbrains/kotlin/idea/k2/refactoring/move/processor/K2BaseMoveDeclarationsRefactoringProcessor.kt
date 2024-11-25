@@ -46,7 +46,7 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
         }
     }
 
-    protected open fun collectConflicts(moveDescriptor: K2MoveDescriptor, allUsages: MutableSet<UsageInfo>) {}
+    protected open fun collectConflicts(moveDescriptor: K2MoveDescriptor,allUsages: MutableSet<UsageInfo>) {}
 
     override fun findUsages(): Array<UsageInfo> {
         if (!operationDescriptor.searchReferences) return emptyArray()
@@ -97,7 +97,7 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
         }
     }
 
-    protected val conflicts = MultiMap<PsiElement, String>()
+    protected val conflicts: MultiMap<PsiElement, String> = MultiMap<PsiElement, String>()
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()

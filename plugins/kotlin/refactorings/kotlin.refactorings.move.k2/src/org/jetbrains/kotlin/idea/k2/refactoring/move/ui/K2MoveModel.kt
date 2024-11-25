@@ -229,7 +229,7 @@ sealed class K2MoveModel {
         override val target: K2MoveTargetModel.File,
         override val inSourceRoot: Boolean,
         outerClassName: String?,
-        internal val isInnerClass: Boolean,
+        internal val needsInstanceReference: Boolean,
         override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
 
@@ -237,11 +237,11 @@ sealed class K2MoveModel {
             return super.isValidRefactoring() && isValidDeclarationsRefactoring(source, target)
         }
 
-        var passOuterClass: Boolean = isInnerClass
+        private var passOuterClass: Boolean = needsInstanceReference
         var outerClassInstanceParameterName: String = outerClassName?.decapitalizeAsciiOnly() ?: "instance"
 
         override fun buildPanel(panel: Panel) = with(panel) {
-            if (isInnerClass) {
+            if (needsInstanceReference) {
                 lateinit var selected: ComponentPredicate
                 row {
                     selected = checkBox(KotlinBundle.message("pass.outer.class.instance.as.parameter"))
@@ -270,7 +270,7 @@ sealed class K2MoveModel {
                 searchReferences = searchReferences.state,
                 dirStructureMatchesPkg = true,
                 newClassName = null,
-                outerInstanceParameterName = outerClassInstanceParameterName,
+                outerInstanceParameterName = outerClassInstanceParameterName.takeIf { needsInstanceReference },
                 moveCallBack = moveCallBack
             )
         }
@@ -323,15 +323,16 @@ sealed class K2MoveModel {
             if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements.toList(), true)) return null
 
             if (elementsToMove.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
-                if (elementsToMove.size != 1) {
+                val singleElementToMove = elementsToMove.singleOrNull()
+                if (singleElementToMove == null) {
                     val message = RefactoringBundle.getCannotRefactorMessage(
                         KotlinBundle.message("text.move.declaration.only.support.for.single.elements")
                     )
                     CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
                     return null
-                } else if (elementsToMove.single() !is KtClassOrObject) {
+                } else if (singleElementToMove !is KtClassOrObject && singleElementToMove !is KtNamedFunction && singleElementToMove !is KtProperty) {
                     val message = RefactoringBundle.getCannotRefactorMessage(
-                        KotlinBundle.message("text.move.declaration.only.support.for.nested.classes")
+                        KotlinBundle.message("text.move.declaration.only.support.for.some.nested.declarations")
                     )
                     CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
                     return null
@@ -409,18 +410,20 @@ sealed class K2MoveModel {
                         val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
                         K2MoveTargetModel.File(sourceFileName(), containingFile.packageFqName, psiDirectory)
                     }
-                    val singleClassToMove = (elementsToMove.singleOrNull() as? KtClassOrObject)
+                    val singleDeclarationToMove = (elementsToMove.singleOrNull() as? KtNamedDeclaration)
                         .takeIf { it !is KtObjectDeclaration || !it.isCompanion() }
-                    val outerClassName = (singleClassToMove?.parent?.parent as? KtClassOrObject?)?.name
+                    val outerClassName = (singleDeclarationToMove?.parent?.parent as? KtClassOrObject?)?.name
 
-                    if (singleClassToMove?.containingClassOrObject != null) {
+                    if (singleDeclarationToMove?.containingClassOrObject != null) {
+                        val needsInstanceReference = (singleDeclarationToMove is KtClass && singleDeclarationToMove.isInner()) ||
+                                (singleDeclarationToMove is KtNamedFunction && singleDeclarationToMove.containingClassOrObject !is KtObjectDeclaration)
                         NestedDeclarations(
                             project = project,
                             source = source,
                             target = target,
                             inSourceRoot = inSourceRoot,
-                            isInnerClass = singleClassToMove is KtClass && singleClassToMove.isInner(),
-                            outerClassName = outerClassName,
+                            needsInstanceReference = needsInstanceReference,
+                            outerClassName = outerClassName.takeIf { needsInstanceReference },
                             moveCallBack = moveCallBack
                         )
                     } else {

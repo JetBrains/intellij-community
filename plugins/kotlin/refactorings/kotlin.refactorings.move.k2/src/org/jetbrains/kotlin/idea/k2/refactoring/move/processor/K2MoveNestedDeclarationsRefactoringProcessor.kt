@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -26,12 +27,33 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
     operationDescriptor: K2MoveOperationDescriptor.NestedDeclarations,
 ) : K2BaseMoveDeclarationsRefactoringProcessor<K2MoveOperationDescriptor.NestedDeclarations>(operationDescriptor) {
     private fun findInternalUsages(moveSource: K2MoveSourceDescriptor<*>): List<UsageInfo> {
-        val classToMove = moveSource.elements.singleOrNull() as? KtClass ?: return emptyList()
-        return collectOuterInstanceReferences(classToMove)
+        val declarationToMove = moveSource.elements.singleOrNull() as? KtNamedDeclaration ?: return emptyList()
+        return collectOuterInstanceReferences(declarationToMove)
     }
 
     override fun getUsages(moveDescriptor: K2MoveDescriptor): List<UsageInfo> {
         return super.getUsages(moveDescriptor) + findInternalUsages(moveDescriptor.source)
+    }
+
+    private enum class MoveType {
+        CLASS, PROPERTY, FUNCTION, UNKNOWN
+    }
+
+    private val moveType: MoveType by lazy {
+        when (operationDescriptor.sourceElements.singleOrNull()) {
+            is KtClass -> MoveType.CLASS
+            is KtProperty -> MoveType.PROPERTY
+            is KtNamedFunction -> MoveType.FUNCTION
+            else -> MoveType.UNKNOWN
+        }
+    }
+    private val elementToMove = operationDescriptor.sourceElements.single()
+
+    private fun willLoseOuterInstanceReference(): Boolean {
+        // For properties, any outer instance reference is a conflict because we do not process them.
+        val canReferenceOuterInstance = moveType != MoveType.PROPERTY && operationDescriptor.outerInstanceParameterName != null
+        // For anything else, it is a conflict if it is contained in a class rather than an object
+        return !canReferenceOuterInstance && elementToMove.containingClassOrObject !is KtObjectDeclaration
     }
 
     override fun collectConflicts(
@@ -55,7 +77,18 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                     true
                 }
 
-                is OuterInstanceReferenceUsageInfo -> usage.reportConflictIfAny(conflicts)
+                is OuterInstanceReferenceUsageInfo -> {
+                    if (moveType == MoveType.PROPERTY) {
+                        // For properties, any outer instance reference is a conflict because we do not process them.
+                        conflicts.putValue(
+                            element,
+                            KotlinBundle.message("usages.of.outer.class.instance.inside.of.property.0.won.t.be.processed", elementToMove.nameAsSafeName.asString())
+                        )
+                        true
+                    } else {
+                        usage.reportConflictIfAny(conflicts)
+                    }
+                }
 
                 else -> false
             }
@@ -73,17 +106,17 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
         val outerInstanceParameterName = operationDescriptor.outerInstanceParameterName ?: return
         val psiFactory = KtPsiFactory(project)
         val newOuterInstanceRef = psiFactory.createExpression(outerInstanceParameterName)
-        val classToMove = moveSource.elements.singleOrNull() as? KtClass
+        val declarationToMove = moveSource.elements.singleOrNull() as? KtNamedDeclaration
 
         for (usage in usages) {
             if (usage is MoveRenameUsageInfo) {
-                val referencedNestedClass = usage.referencedElement?.unwrapped as? KtClassOrObject
-                if (referencedNestedClass == classToMove) {
-                    val outerClass = referencedNestedClass?.containingClassOrObject
+                val referencedNestedDeclaration = usage.referencedElement?.unwrapped as? KtNamedDeclaration
+                if (declarationToMove != null && referencedNestedDeclaration == declarationToMove) {
+                    val outerClass = referencedNestedDeclaration.containingClassOrObject
                     val lightOuterClass = outerClass?.toLightClass()
                     if (lightOuterClass != null) {
                         MoveInnerClassUsagesHandler.EP_NAME
-                            .forLanguage(usage.element?.language ?: return)
+                            .forLanguage(usage.element?.language ?: continue)
                             ?.correctInnerClassUsage(usage, lightOuterClass, outerInstanceParameterName)
                     }
                 }
@@ -106,25 +139,48 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
         moveDescriptor: K2MoveDescriptor,
         originalDeclaration: KtNamedDeclaration
     ) {
+        val containingClass = originalDeclaration.containingClassOrObject
+        val psiFactory = KtPsiFactory(originalDeclaration.project)
+        val outerInstanceParameterName = operationDescriptor.outerInstanceParameterName
         with(originalDeclaration) {
             operationDescriptor.newClassName?.let { setName(it) }
 
-            if (this is KtClass) {
-                // TODO: Potentially allow for moving into classes
-                if (hasModifier(KtTokens.INNER_KEYWORD)) removeModifier(KtTokens.INNER_KEYWORD)
-                if (hasModifier(KtTokens.PROTECTED_KEYWORD)) removeModifier(KtTokens.PROTECTED_KEYWORD)
+            when (this) {
+                is KtClass -> {
+                    // TODO: Potentially allow for moving into classes
+                    if (hasModifier(KtTokens.INNER_KEYWORD)) removeModifier(KtTokens.INNER_KEYWORD)
+                    if (hasModifier(KtTokens.PROTECTED_KEYWORD)) removeModifier(KtTokens.PROTECTED_KEYWORD)
 
-                operationDescriptor.outerInstanceParameterName?.let { outerInstanceParameterName ->
-                    val containingClass = containingClassOrObject ?: return
-                    analyze(originalDeclaration) {
-                        // Use the fully qualified type because we have not moved it to the new location yet
-                        val type = containingClass.classSymbol?.defaultType?.render(
-                            renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
-                            position = Variance.INVARIANT
-                        ) ?: return
-                        val parameter = KtPsiFactory(project).createParameter("private val $outerInstanceParameterName: $type")
-                        createPrimaryConstructorParameterListIfAbsent().addParameter(parameter)
+                    if (outerInstanceParameterName != null) {
+                        val containingClass = containingClassOrObject ?: return
+                        analyze(originalDeclaration) {
+                            // Use the fully qualified type because we have not moved it to the new location yet
+                            val type = containingClass.classSymbol?.defaultType?.render(
+                                renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
+                                position = Variance.INVARIANT
+                            ) ?: return
+                            val parameter = KtPsiFactory(project).createParameter("private val $outerInstanceParameterName: $type")
+                            createPrimaryConstructorParameterListIfAbsent().addParameter(parameter)
+                        }
                     }
+                }
+                is KtNamedFunction -> {
+                    if (outerInstanceParameterName != null) {
+                        val outerInstanceType = analyze(originalDeclaration) {
+                            val type = (containingClass?.symbol as? KaClassSymbol)?.defaultType ?: return@analyze null
+                            type.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+                        }
+                        if (outerInstanceType == null) return
+                        valueParameterList?.addParameterBefore(
+                            psiFactory.createParameter(
+                                "${outerInstanceParameterName}: $outerInstanceType"
+                            ),
+                            valueParameterList?.parameters?.firstOrNull()
+                        )
+                    }
+                }
+                is KtProperty -> {
+
                 }
             }
         }
@@ -136,9 +192,16 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
         newDeclaration: PsiElement
     ) {
         val outerInstanceParameterName = operationDescriptor.outerInstanceParameterName ?: return
-        if (originalDeclaration !is KtClass || newDeclaration !is KtClass) return
-        val primaryConstructor = newDeclaration.primaryConstructor ?: return
-        val addedParameter = primaryConstructor.valueParameters.firstOrNull { it.name == outerInstanceParameterName } ?: return
-        shortenReferences(addedParameter)
+        when (newDeclaration) {
+            is KtClass -> {
+                val primaryConstructor = newDeclaration.primaryConstructor ?: return
+                val addedParameter = primaryConstructor.valueParameters.firstOrNull { it.name == outerInstanceParameterName } ?: return
+                shortenReferences(addedParameter)
+            }
+            is KtNamedFunction -> {
+                val addedParameter = newDeclaration.valueParameterList?.parameters?.firstOrNull() ?: return
+                shortenReferences(addedParameter)
+            }
+        }
     }
 }

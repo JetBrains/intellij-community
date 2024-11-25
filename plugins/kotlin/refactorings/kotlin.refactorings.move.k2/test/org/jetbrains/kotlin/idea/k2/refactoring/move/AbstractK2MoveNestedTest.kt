@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveNestedDecla
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class AbstractK2MoveNestedTest : AbstractMultifileMoveRefactoringTest() {
@@ -37,9 +37,9 @@ internal object K2MoveNestedRefactoringAction : KotlinMoveRefactoringAction {
         val project = mainFile.project
         val type = config.getString("type")
         when (type) {
-            "MOVE_KOTLIN_NESTED_CLASS" -> {
+            "MOVE_KOTLIN_NESTED_CLASS", "MOVE_KOTLIN_NESTED_DECLARATION" -> {
                 val project = mainFile.project
-                val elementToMove = elementsAtCaret.single().getNonStrictParentOfType<KtClassOrObject>()!!
+                val elementToMove = elementsAtCaret.single().getNonStrictParentOfType<KtNamedDeclaration>()!!
                 val fileName = (elementToMove.name!!) + ".kt"
                 val targetPackageFqName = config.getNullableString("targetPackage")?.let {
                     FqName(it)
