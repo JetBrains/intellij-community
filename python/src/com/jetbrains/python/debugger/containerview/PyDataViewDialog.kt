@@ -64,6 +64,8 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     init()
   }
 
+  override fun getDimensionServiceKey() = "#com.jetbrains.python.debugger.containerview.PyDataViewDialog"
+
   private fun createBottomElements(): JPanel {
     val colored = JBCheckBox(PyBundle.message("debugger.data.view.colored.cells"))
     colored.setSelected(isColoringEnabled(myProject))
