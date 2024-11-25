@@ -29,12 +29,11 @@ class XMixedModeSuspendContext(
 
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
     coroutineScope.launch(Dispatchers.Default) {
+      activeExecutionStack?.computationCompleted?.await()
 
       val acc = MyAccumulatingContainer()
 
-      withContext(Dispatchers.EDT) {
-        highLevelDebugSuspendContext.computeExecutionStacks(acc)
-      }
+      highLevelDebugSuspendContext.computeExecutionStacks(acc)
 
       val highLevelStacks = measureTimedValue { acc.frames.await() }.also { logger.info("High level stacks loaded in ${it.duration}") }.value
       val threadIdToHighLevelStackMap = highLevelStacks.associateBy { (it as XExecutionStackWithNativeThreadId).getNativeThreadId() }

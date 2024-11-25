@@ -55,7 +55,7 @@ class MixedModeProcessTransitionStateMachine(
   class LowLevelStepRequested(val lowSuspendContext: XSuspendContext, val stepType: StepType) : Event
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
-  private val stateMachineHelperScope = coroutineScope.childScope("Edt coroutine scope", Dispatchers.Default)
+  private val stateMachineHelperScope = coroutineScope.childScope("Helper coroutine scope", Dispatchers.Default)
 
   private var state: State = BothRunning
 

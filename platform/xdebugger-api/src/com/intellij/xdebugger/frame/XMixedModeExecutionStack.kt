@@ -1,6 +1,5 @@
 package com.intellij.xdebugger.frame
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
 import kotlinx.coroutines.CompletableDeferred
@@ -20,13 +19,15 @@ class XMixedModeExecutionStack(
   val coroutineScope: CoroutineScope,
 ) : XExecutionStack(lowLevelExecutionStack.displayName) {
 
+  var computationCompleted: CompletableDeferred<Unit> = CompletableDeferred()
+
   override fun getTopFrame(): XStackFrame? {
     // when we are stopped the top frame is always from a low-level debugger, so no need to look for a corresponding high level frame
     return lowLevelExecutionStack.topFrame
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.Default) {
       val lowLevelAcc = MyAccumulatingContainer()
       lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
       val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
@@ -43,6 +44,8 @@ class XMixedModeExecutionStack(
         val combinedFrames = measureTimedValue { framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames) }.also { logger.info("Mixed stack built in ${it.duration}") }.value
         container.addStackFrames(combinedFrames, true)
       }
+    }.invokeOnCompletion {
+      computationCompleted.complete(Unit)
     }
   }
 
