@@ -19,13 +19,14 @@ public class TerminatorStreamCallImpl extends StreamCallImpl implements Terminat
   private final Boolean myReturnsVoid;
 
   public TerminatorStreamCallImpl(@NotNull String name,
+                                  @NotNull String genericArgs,
                                   @NotNull List<CallArgument> args,
                                   @NotNull GenericType typeBefore,
                                   @NotNull GenericType resultType,
                                   @NotNull TextRange range,
                                   @NotNull Boolean returnsVoid
                                   ) {
-    super(name, args, StreamCallType.TERMINATOR, range);
+    super(name, genericArgs, args, StreamCallType.TERMINATOR, range);
     myTypeBefore = typeBefore;
     myReturnType = resultType;
     myReturnsVoid = returnsVoid;

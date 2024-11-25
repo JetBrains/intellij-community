@@ -39,7 +39,7 @@ public final class TraceUtil {
   }
 
   public static @NotNull @NlsSafe String formatWithArguments(@NotNull MethodCall call) {
-    return call.getName() + StreamEx.of(call.getArguments())
+    return call.getName() + call.getGenericArguments() + StreamEx.of(call.getArguments())
       .map(x -> StringUtil.shortenTextWithEllipsis(x.getText().replaceAll("\\s", ""), 30, 5, THREE_DOTS))
       .joining(", ", "(", ")");
   }

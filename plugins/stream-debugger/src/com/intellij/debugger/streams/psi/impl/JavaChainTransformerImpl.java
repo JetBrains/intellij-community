@@ -64,7 +64,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
       final String name = resolveMethodName(callExpression);
       final List<CallArgument> args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
-      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange()));
+      result.add(new IntermediateStreamCallImpl(name, "", args, typeBefore, type, callExpression.getTextRange()));
       typeBefore = type;
     }
 
@@ -75,7 +75,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final String name = resolveMethodName(expression);
     final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
-    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange(), resultType.equals(JavaTypes.INSTANCE.getVOID()));
+    return new TerminatorStreamCallImpl(name, "", args, typeBefore, resultType, expression.getTextRange(), resultType.equals(JavaTypes.INSTANCE.getVOID()));
   }
 
   private static @NotNull List<CallArgument> resolveArguments(@NotNull PsiMethodCallExpression methodCall) {

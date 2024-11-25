@@ -121,7 +121,7 @@ open class DistinctByKeyHandler(callNumber: Int,
   }
 
   private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall =
-    IntermediateStreamCallImpl(myCall.name, args, typeBefore, typeAfter, textRange)
+    IntermediateStreamCallImpl(myCall.name, myCall.genericArguments, args, typeBefore, typeAfter, textRange)
 
   open class DistinctByCustomKey(callNumber: Int,
                                  call: IntermediateStreamCall,
@@ -132,7 +132,7 @@ open class DistinctByKeyHandler(callNumber: Int,
 
     private companion object {
       fun IntermediateStreamCall.transform(extractorType: String, extractorExpression: String): IntermediateStreamCall =
-        IntermediateStreamCallImpl("distinct", listOf(CallArgumentImpl(extractorType, extractorExpression)), typeBefore, typeAfter,
+        IntermediateStreamCallImpl("distinct", genericArguments, listOf(CallArgumentImpl(extractorType, extractorExpression)), typeBefore, typeAfter,
                                    TextRange.EMPTY_RANGE)
 
     }

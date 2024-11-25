@@ -19,5 +19,5 @@ class ParallelHandler(num: Int, private val call: IntermediateStreamCall, dsl: D
   }
 
   private class SequentialCall(elementsType: GenericType)
-    : IntermediateStreamCallImpl("sequential", emptyList(), elementsType, elementsType, TextRange.EMPTY_RANGE)
+    : IntermediateStreamCallImpl("sequential", "", emptyList(), elementsType, elementsType, TextRange.EMPTY_RANGE)
 }

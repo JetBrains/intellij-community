@@ -28,7 +28,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     for ((index, controller) in controllers.subList(0, controllers.size - 1).withIndex()) {
       val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[index + 1])
       val nextCall = controller.nextCall ?: error("intermediate state should know about next call")
-      val mappingPane = MappingPane(nextCall.name, TraceUtil.formatWithArguments(nextCall), valuesBefore, mapping, controller)
+      val mappingPane = MappingPane(nextCall.name + nextCall.genericArguments, TraceUtil.formatWithArguments(nextCall), valuesBefore, mapping, controller)
 
       val tree = CollectionTree.create(controller.getStreamResult(), valuesBefore.map { it.traceElement }, evaluationContext, builder, "${debugName}FlatView#controller#${index}")
       val view = PositionsAwareCollectionView(tree, valuesBefore)

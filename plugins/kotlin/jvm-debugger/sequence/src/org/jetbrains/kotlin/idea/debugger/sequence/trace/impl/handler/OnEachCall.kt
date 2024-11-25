@@ -17,6 +17,8 @@ class OnEachCall(private val elementsType: GenericType, lambda: String) : Interm
 
     override fun getName(): String = "onEach"
 
+    override fun getGenericArguments(): String = ""
+
     override fun getType(): StreamCallType = StreamCallType.INTERMEDIATE
 
     override fun getTextRange(): TextRange = TextRange.EMPTY_RANGE

@@ -63,10 +63,10 @@ class FilterIsInstanceHandler(num: Int, call: IntermediateStreamCall, dsl: Dsl) 
         }
 
         private fun syntheticMapCall(mapper: CallArgument): IntermediateStreamCall =
-            IntermediateStreamCallImpl("map", listOf(mapper), call.typeBefore, call.typeAfter, EMPTY_RANGE)
+            IntermediateStreamCallImpl("map", "", listOf(mapper), call.typeBefore, call.typeAfter, EMPTY_RANGE)
 
         private fun syntheticFilterCall(predicate: CallArgument): IntermediateStreamCall =
-            IntermediateStreamCallImpl("filter", listOf(predicate), call.typeBefore, call.typeBefore, EMPTY_RANGE)
+            IntermediateStreamCallImpl("filter", "", listOf(predicate), call.typeBefore, call.typeBefore, EMPTY_RANGE)
 
         private fun functionalType(argType: String, resultType: String): String {
             return "($argType) -> $resultType"

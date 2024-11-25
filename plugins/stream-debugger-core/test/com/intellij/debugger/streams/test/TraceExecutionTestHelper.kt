@@ -152,7 +152,7 @@ abstract class TraceExecutionTestHelper(
 
   private fun handleTrace(trace: List<TraceInfo>) {
     for (info in trace) {
-      val name = info.call.name
+      val name = info.call.name + info.call.genericArguments
       println(name, ProcessOutputTypes.SYSTEM)
 
       print("    before: ", ProcessOutputTypes.SYSTEM)

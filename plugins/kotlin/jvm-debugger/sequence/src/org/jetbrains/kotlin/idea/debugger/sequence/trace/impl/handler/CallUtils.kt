@@ -9,10 +9,10 @@ import com.intellij.debugger.streams.wrapper.impl.TerminatorStreamCallImpl
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 
 fun IntermediateStreamCall.withArgs(args: List<CallArgument>) =
-    IntermediateStreamCallImpl(name, args, typeBefore, typeAfter, textRange)
+    IntermediateStreamCallImpl(name, genericArguments, args, typeBefore, typeAfter, textRange)
 
 fun TerminatorStreamCall.withArgs(args: List<CallArgument>) =
-    TerminatorStreamCallImpl(name, args, typeBefore, resultType, textRange, resultType == JavaTypes.VOID)
+    TerminatorStreamCallImpl(name, genericArguments, args, typeBefore, resultType, textRange, resultType == JavaTypes.VOID)
 
 fun StreamCall.typeBefore() = if (this is TypeBeforeAware) this.typeBefore else KotlinSequenceTypes.ANY
 

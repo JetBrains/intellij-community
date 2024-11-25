@@ -63,7 +63,7 @@ public class StreamChainImpl implements StreamChain {
     while (iterator.hasNext()) {
       final MethodCall call = iterator.next();
       final String args = args2Text(call.getArguments());
-      builder.append(call.getName()).append(args);
+      builder.append(call.getName()).append(call.getGenericArguments()).append(args);
       if (iterator.hasNext()) {
         builder.append("\n").append(".");
       }
@@ -78,7 +78,7 @@ public class StreamChainImpl implements StreamChain {
     final StringBuilder builder = new StringBuilder();
     builder.append(myQualifierExpression.getText().replaceAll("\\s+", ""));
     for (final StreamCall call : StreamEx.of(myIntermediateCalls).map(x -> (StreamCall)x).append(myTerminator)) {
-      builder.append(" -> ").append(call.getName());
+      builder.append(" -> ").append(call.getName()).append(call.getGenericArguments());
     }
 
     return builder.toString();

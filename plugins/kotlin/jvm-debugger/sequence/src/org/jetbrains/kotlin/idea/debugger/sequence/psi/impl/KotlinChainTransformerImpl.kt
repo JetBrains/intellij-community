@@ -29,7 +29,7 @@ class KotlinChainTransformerImpl(private val typeExtractor: CallTypeExtractor) :
         for (call in callChain.subList(0, callChain.size - 1)) {
             val (typeBefore, typeAfter) = typeExtractor.extractIntermediateCallTypes(call)
             intermediateCalls += IntermediateStreamCallImpl(
-                call.callName(), call.valueArguments.map { createCallArgument(call, it) },
+                call.callName(), "", call.valueArguments.map { createCallArgument(call, it) },
                 typeBefore, typeAfter,
                 call.textRange
             )
@@ -39,6 +39,7 @@ class KotlinChainTransformerImpl(private val typeExtractor: CallTypeExtractor) :
         val (typeBeforeTerminator, resultType) = typeExtractor.extractTerminalCallTypes(terminationsPsiCall)
         val terminationCall = TerminatorStreamCallImpl(
             terminationsPsiCall.callName(),
+            "",
             terminationsPsiCall.valueArguments.map { createCallArgument(terminationsPsiCall, it) },
             typeBeforeTerminator, resultType, terminationsPsiCall.textRange, resultType == JavaTypes.VOID
         )

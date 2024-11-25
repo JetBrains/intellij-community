@@ -58,6 +58,8 @@ internal class JBIterableSupportProvider : JvmLibrarySupportProvider() {
   private class JBIterablePeekCall(private val elementsType: GenericType, private val argText: String) : IntermediateStreamCall {
     override fun getName(): String = "filter"
 
+    override fun getGenericArguments(): String = ""
+
     override fun getArguments(): List<CallArgument> = listOf(CallArgumentImpl(CommonClassNames.JAVA_LANG_OBJECT, argText))
 
     override fun getType(): StreamCallType = StreamCallType.INTERMEDIATE

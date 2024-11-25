@@ -41,7 +41,7 @@ class CollectionTerminatorHandler(
         var result: Expression = TextExpression(resultExpression)
         for (call in additionalCallsAfter) {
             val args = call.arguments.map { TextExpression(it.text) }.toTypedArray()
-            result = result.call(call.name, *args)
+            result = result.call(call.name + call.genericArguments, *args)
         }
 
         return result

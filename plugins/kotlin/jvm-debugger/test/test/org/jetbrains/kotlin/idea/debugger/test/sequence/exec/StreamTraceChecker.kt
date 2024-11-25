@@ -9,12 +9,11 @@ import com.intellij.execution.ExecutionTestCase
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import java.util.*
 
 class StreamTraceChecker(private val testCase: ExecutionTestCase) {
     fun checkChain(trace: List<TraceInfo>) {
         for (info in trace) {
-            val name = info.call.name
+            val name = info.call.name + info.call.genericArguments
             println(name)
 
             print("    before: ")

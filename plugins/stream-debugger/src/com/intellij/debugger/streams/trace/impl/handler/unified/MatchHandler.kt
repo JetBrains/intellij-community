@@ -64,11 +64,11 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
     val result = ArrayList(myPeekHandler.additionalCallsBefore())
     val filterPredicate = (if (call.name == "allMatch") myPredicateVariable.call("negate") else myPredicateVariable).toCode()
     val filterArg = CallArgumentImpl(myPredicateVariable.type.variableTypeName, filterPredicate)
-    result += IntermediateStreamCallImpl("filter", listOf(filterArg), call.typeBefore, call.typeBefore, TextRange.EMPTY_RANGE)
+    result += IntermediateStreamCallImpl("filter", "", listOf(filterArg), call.typeBefore, call.typeBefore, TextRange.EMPTY_RANGE)
     result.addAll(myPeekHandler.additionalCallsAfter())
     return result
   }
 
   private fun TerminatorStreamCall.transformArgs(args: List<CallArgument>): TerminatorStreamCall =
-    TerminatorStreamCallImpl(name, args, typeBefore, resultType, textRange, resultType == JavaTypes.VOID)
+    TerminatorStreamCallImpl(name, genericArguments, args, typeBefore, resultType, textRange, resultType == JavaTypes.VOID)
 }

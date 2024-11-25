@@ -122,5 +122,5 @@ class KotlinDistinctByHandler(callNumber: Int, private val call: IntermediateStr
     }
 
     private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall =
-        IntermediateStreamCallImpl("distinctBy", args, typeBefore, typeAfter, textRange)
+        IntermediateStreamCallImpl("distinctBy", genericArguments, args, typeBefore, typeAfter, textRange)
 }

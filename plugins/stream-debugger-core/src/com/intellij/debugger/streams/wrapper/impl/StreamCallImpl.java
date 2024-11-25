@@ -15,15 +15,18 @@ import java.util.List;
  */
 public abstract class StreamCallImpl implements StreamCall {
   private final String myName;
+  private final String myGenericArgs;
   private final List<CallArgument> myArgs;
   private final StreamCallType myType;
   private final TextRange myTextRange;
 
   StreamCallImpl(@NotNull String name,
+                 @NotNull String genericArgs,
                  @NotNull List<CallArgument> args,
                  @NotNull StreamCallType type,
                  @NotNull TextRange range) {
     myName = name;
+    myGenericArgs = genericArgs;
     myArgs = args;
     myType = type;
     myTextRange = range;
@@ -39,6 +42,12 @@ public abstract class StreamCallImpl implements StreamCall {
     return myName;
   }
 
+  @Override
+  public @NotNull String getGenericArguments() {
+    return myGenericArgs;
+  }
+
+  @NotNull
   @Override
   public @NotNull List<CallArgument> getArguments() {
     return myArgs;

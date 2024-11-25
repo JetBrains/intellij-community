@@ -15,6 +15,9 @@ public interface MethodCall {
   @NlsSafe String getName();
 
   @NotNull
+  @NlsSafe String getGenericArguments();
+
+  @NotNull
   List<CallArgument> getArguments();
 
   @NotNull
