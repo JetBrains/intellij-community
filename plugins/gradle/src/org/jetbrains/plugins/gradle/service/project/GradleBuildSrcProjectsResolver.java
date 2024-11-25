@@ -7,10 +7,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +17,6 @@ import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -91,12 +88,10 @@ public final class GradleBuildSrcProjectsResolver {
       String buildSrcGroup = getBuildSrcGroup(buildPath, buildName);
 
       buildSrcResolverCtx.setBuildSrcGroup(buildSrcGroup);
-      handleBuildSrcProject(mainBuildProjectDataNode,
-                            buildName,
-                            index.buildClasspathNodesMap().getModifiable(Paths.get(buildPath)),
-                            index.includedModulesPaths(),
-                            buildSrcResolverCtx,
-                            myProjectResolver.getProjectDataFunction(buildSrcResolverCtx, myResolverChain));
+
+      var buildClasspathNodes = index.buildClasspathNodesMap().getModifiable(Paths.get(buildPath));
+      var includedModulesPaths = index.includedModulesPaths();
+      handleBuildSrcProject(mainBuildProjectDataNode, buildName, buildClasspathNodes, includedModulesPaths, buildSrcResolverCtx);
     }
   }
 
@@ -181,12 +176,13 @@ public final class GradleBuildSrcProjectsResolver {
     return compositeBuildDataNode != null ? compositeBuildDataNode.getData() : null;
   }
 
-  private void handleBuildSrcProject(@NotNull DataNode<ProjectData> resultProjectDataNode,
-                                     @Nullable String buildName,
-                                     @NotNull Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes,
-                                     @NotNull Map<String, DataNode<ModuleData>> includedModulesPaths,
-                                     @NotNull DefaultProjectResolverContext buildSrcResolverCtx,
-                                     @NotNull Function<ProjectConnection, DataNode<ProjectData>> projectConnectionDataNodeFunction) {
+  private void handleBuildSrcProject(
+    @NotNull DataNode<ProjectData> resultProjectDataNode,
+    @Nullable String buildName,
+    @NotNull Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes,
+    @NotNull Map<String, DataNode<ModuleData>> includedModulesPaths,
+    @NotNull DefaultProjectResolverContext buildSrcResolverCtx
+  ) {
     final String projectPath = buildSrcResolverCtx.getProjectPath();
     File projectPathFile = new File(projectPath);
     if (!projectPathFile.isDirectory()) {
@@ -202,13 +198,8 @@ public final class GradleBuildSrcProjectsResolver {
       return;
     }
 
-    final DataNode<ProjectData> buildSrcProjectDataNode = GradleExecutionHelper.execute(
-      buildSrcResolverCtx.getProjectPath(),
-      buildSrcResolverCtx.getSettings(),
-      buildSrcResolverCtx.getExternalSystemTaskId(),
-      buildSrcResolverCtx.getListener(),
-      buildSrcResolverCtx.getCancellationToken(),
-      projectConnectionDataNodeFunction
+    var buildSrcProjectDataNode = GradleProjectResolver.executeProjectResolverTask(buildSrcResolverCtx, myResolverChain, () ->
+      myProjectResolver.doResolveProjectInfo(buildSrcResolverCtx, myResolverChain)
     );
 
     if (buildSrcProjectDataNode == null) return;

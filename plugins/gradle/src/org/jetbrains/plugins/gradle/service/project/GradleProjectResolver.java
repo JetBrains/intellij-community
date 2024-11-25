@@ -32,7 +32,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
@@ -178,8 +177,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       var projectResolverChain = createProjectResolverChain(resolverContext);
 
-      var projectDataFunction = getProjectDataFunction(resolverContext, projectResolverChain);
-      var projectDataNode = GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, projectDataFunction);
+      var projectDataNode = executeProjectResolverTask(resolverContext, projectResolverChain, () ->
+        doResolveProjectInfo(resolverContext, projectResolverChain)
+      );
 
       // auto-discover buildSrc projects of the main and included builds
       var gradleVersion = resolverContext.getProjectGradleVersion();
@@ -194,14 +194,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     finally {
       gradleExecutionSpan.end();
     }
-  }
-
-
-  protected @NotNull Function<ProjectConnection, DataNode<ProjectData>> getProjectDataFunction(
-    @NotNull DefaultProjectResolverContext resolverContext,
-    @NotNull GradleProjectResolverExtension projectResolverChain
-  ) {
-    return new ProjectConnectionDataNodeFunction(resolverContext, projectResolverChain);
   }
 
   @Override
@@ -222,6 +214,41 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     finally {
       myCancellationMap.remove(taskId, cancellationTokenSource);
     }
+  }
+
+  protected static <R> R executeProjectResolverTask(
+    @NotNull DefaultProjectResolverContext resolverContext,
+    @NotNull GradleProjectResolverExtension projectResolverChain,
+    @NotNull Supplier<R> task
+  ) {
+    var projectPath = resolverContext.getProjectPath();
+    var id = resolverContext.getExternalSystemTaskId();
+    var settings = resolverContext.getSettings();
+    var listener = resolverContext.getListener();
+    var cancellationToken = resolverContext.getCancellationToken();
+    var buildEnvironment = resolverContext.getBuildEnvironment();
+
+    return GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
+      try {
+        resolverContext.setConnection(connection);
+        return task.get();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (RuntimeException e) {
+        LOG.info("Gradle project resolve error", e);
+        var esException = ExceptionUtil.findCause(e, ExternalSystemException.class);
+        if (esException != null && esException != e) {
+          LOG.info("\nCaused by: " + esException.getOriginalReason());
+        }
+
+        ExternalSystemSyncActionsCollector.logError(id.findProject(), id.getId(), extractCause(e));
+        ExternalSystemSyncActionsCollector.logSyncFinished(id.findProject(), id.getId(), false);
+
+        throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
+      }
+    });
   }
 
   @NotNull
@@ -893,47 +920,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       for (var externalContentRootData : externalContentRootNodes) {
         moduleNode.createChild(ProjectKeys.CONTENT_ROOT, externalContentRootData);
       }
-    }
-  }
-
-  private final class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
-    private final @NotNull GradleProjectResolverExtension myProjectResolverChain;
-    private final @NotNull DefaultProjectResolverContext myResolverContext;
-
-    private ProjectConnectionDataNodeFunction(
-      @NotNull DefaultProjectResolverContext resolverContext,
-      @NotNull GradleProjectResolverExtension projectResolverChain
-    ) {
-      myResolverContext = resolverContext;
-      myProjectResolverChain = projectResolverChain;
-    }
-
-    @Override
-    public @NotNull DataNode<ProjectData> fun(@NotNull ProjectConnection connection) {
-      ExternalSystemTaskId taskId = myResolverContext.getExternalSystemTaskId();
-      final long activityId = taskId.getId();
-
-      return computeCancellable(myResolverContext, () -> {
-        try {
-          myResolverContext.setConnection(connection);
-          return doResolveProjectInfo(myResolverContext, myProjectResolverChain);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (RuntimeException e) {
-          LOG.info("Gradle project resolve error", e);
-          ExternalSystemException esException = ExceptionUtil.findCause(e, ExternalSystemException.class);
-          if (esException != null && esException != e) {
-            LOG.info("\nCaused by: " + esException.getOriginalReason());
-          }
-          ExternalSystemSyncActionsCollector.logError(taskId.findProject(), activityId, extractCause(e));
-          ExternalSystemSyncActionsCollector.logSyncFinished(taskId.findProject(), activityId, false);
-
-          throw myProjectResolverChain.getUserFriendlyError(
-            myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
-        }
-      });
     }
   }
 
