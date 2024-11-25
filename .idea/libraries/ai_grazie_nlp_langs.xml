@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="ai.grazie.nlp.langs" type="repository">
-    <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-langs-jvm:0.3.146">
+    <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-langs-jvm:0.3.150">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.3.146/nlp-langs-jvm-0.3.146.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.3.150/nlp-langs-jvm-0.3.150.jar">
           <sha256sum>3910ee705b244315098e0a52db7f3f8aa0d1ab1575554f8b3e41d57d1a0daa6a</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.3.146/nlp-langs-jvm-0.3.146.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.3.150/nlp-langs-jvm-0.3.150.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.3.146/nlp-langs-jvm-0.3.146-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0.3.150/nlp-langs-jvm-0.3.150-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
