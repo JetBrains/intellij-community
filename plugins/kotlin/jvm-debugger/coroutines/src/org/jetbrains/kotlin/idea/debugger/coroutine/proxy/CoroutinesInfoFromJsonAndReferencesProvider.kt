@@ -110,8 +110,9 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
         val state: String?
     )
 
-    private inline fun <reified T> ArrayReference.toTypedList(): List<T> {
-        return values.map { it as? T ?: error("Value has type ${it::class.java}, but ${T::class.java} was expected") }
+    private inline fun <reified T> ArrayReference.toTypedList(): List<T> = values.map {
+        if (it != null && it !is T) error("Value has type ${it::class.java}, but ${T::class.java} was expected")
+        it
     }
 
     companion object {
