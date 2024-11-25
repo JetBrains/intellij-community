@@ -64,10 +64,11 @@ internal class FirNamedArgumentCompletionContributor(
                     CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.argumentMapping, currentArgumentIndex)
                 }
 
-                addAll(collectNamedArgumentInfos(callElement, candidatesWithNoTypeMismatches, currentArgumentIndex))
+                val argumentsBeforeCurrent = valueArgumentList.arguments.take(currentArgumentIndex)
+                addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithNoTypeMismatches))
                 // if no candidates without type mismatches have any candidate parameters, try searching among remaining candidates
                 if (isEmpty()) {
-                    addAll(collectNamedArgumentInfos(callElement, candidatesWithTypeMismatches, currentArgumentIndex))
+                    addAll(collectNamedArgumentInfos(callElement, argumentsBeforeCurrent, candidatesWithTypeMismatches))
                 }
             }
 
@@ -103,34 +104,39 @@ internal class FirNamedArgumentCompletionContributor(
     context(KaSession)
     private fun collectNamedArgumentInfos(
         callElement: KtCallElement,
+        argumentsBeforeCurrent: List<KtValueArgument>,
         candidates: List<KaFunctionCall<*>>,
-        currentArgumentIndex: Int
     ): List<NamedArgumentInfo> {
-        val argumentsBeforeCurrent = callElement.valueArgumentList?.arguments?.take(currentArgumentIndex) ?: return emptyList()
-
         val nameToTypes = mutableMapOf<Name, MutableSet<IndexedValue<KaType>>>()
-        for (candidate in candidates) {
-            val indexedParameterCandidates = collectNotUsedIndexedParameterCandidates(callElement, candidate, argumentsBeforeCurrent)
-            indexedParameterCandidates.forEach { (index, parameter) ->
-                nameToTypes.getOrPut(parameter.name) { HashSet() }.add(IndexedValue(index, parameter.symbol.returnType))
-            }
+
+        candidates.flatMap {
+            collectNotUsedIndexedParameterCandidates(callElement, it, argumentsBeforeCurrent)
+        }.forEach { (index, parameter) ->
+            nameToTypes.getOrPut(parameter.name) { HashSet() }.add(IndexedValue(index, parameter.symbol.returnType))
         }
-        return nameToTypes.map { (name, types) -> NamedArgumentInfo(name, types.toList()) }
+        return nameToTypes.map { (name, types) ->
+            NamedArgumentInfo(name, types.toList())
+        }
     }
 
     context(KaSession)
     private fun collectNotUsedIndexedParameterCandidates(
         callElement: KtCallElement,
         candidate: KaFunctionCall<*>,
-        argumentsBeforeCurrent: List<KtValueArgument>
-    ): List<IndexedValue<KaVariableSignature<KaValueParameterSymbol>>> {
+        argumentsBeforeCurrent: List<KtValueArgument>,
+    ): Sequence<IndexedValue<KaVariableSignature<KaValueParameterSymbol>>> {
         val signature = candidate.partiallyAppliedSymbol.signature
         val argumentMapping = candidate.argumentMapping
 
         val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(callElement, signature, argumentMapping)
-        if (argumentsBeforeCurrent.any { it.getArgumentExpression() !in argumentToParameterIndex }) return emptyList()
+        if (argumentsBeforeCurrent.any { it.getArgumentExpression() !in argumentToParameterIndex }) return emptySequence()
 
         val alreadyPassedParameters = argumentsBeforeCurrent.mapNotNull { argumentMapping[it.getArgumentExpression()] }.toSet()
-        return signature.valueParameters.withIndex().filterNot { (_, parameter) -> parameter in alreadyPassedParameters }
+        return signature.valueParameters
+            .asSequence()
+            .withIndex()
+            .filterNot { (_, parameter) ->
+                parameter in alreadyPassedParameters
+            }
     }
 }
