@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NonNls;
@@ -15,7 +15,7 @@ import java.util.List;
 public abstract class VcsQuickListContentProviderBase implements VcsQuickListContentProvider {
   @Override
   @Nullable
-  public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs, @Nullable DataContext dataContext) {
+  public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs, @Nullable AnActionEvent event) {
     if (activeVcs == null || !getVcsName().equals(activeVcs.getName())) return null;
 
     return collectVcsSpecificActions(ActionManager.getInstance());

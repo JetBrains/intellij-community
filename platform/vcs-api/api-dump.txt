@@ -752,7 +752,9 @@ f:com.intellij.openapi.vcs.actions.VcsContextFactory$SERVICE
 - s:getInstance():com.intellij.openapi.vcs.actions.VcsContextFactory
 com.intellij.openapi.vcs.actions.VcsQuickListContentProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getNotInVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - getNotInVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - replaceVcsActionsFor(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):Z
 a:com.intellij.openapi.vcs.actions.VcsQuickListContentProviderBase
@@ -760,7 +762,7 @@ a:com.intellij.openapi.vcs.actions.VcsQuickListContentProviderBase
 - <init>():V
 - ps:add(java.lang.String,com.intellij.openapi.actionSystem.ActionManager,java.util.List):V
 - pa:collectVcsSpecificActions(com.intellij.openapi.actionSystem.ActionManager):java.util.List
-- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - pa:getVcsName():java.lang.String
 c:com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails
 - f:changes:java.util.List

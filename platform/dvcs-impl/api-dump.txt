@@ -96,7 +96,7 @@ a:com.intellij.dvcs.actions.DvcsQuickListContentProvider
 - ps:add(java.lang.String,com.intellij.openapi.actionSystem.ActionManager,java.util.List):V
 - pa:collectVcsSpecificActions(com.intellij.openapi.actionSystem.ActionManager):java.util.List
 - p:customizeActions(com.intellij.openapi.actionSystem.ActionManager,java.util.List):V
-- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
 - pa:getVcsName():java.lang.String
 - replaceVcsActionsFor(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):Z
 com.intellij.dvcs.branch.BranchType

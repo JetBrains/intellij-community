@@ -40,7 +40,10 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
                              @NotNull DataContext dataContext) {
     if (project == null) return;
     CustomActionsSchema schema = CustomActionsSchema.getInstance();
-    group.add(schema.getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP));
+    AnAction correctedAction = schema.getCorrectedAction(VcsActions.VCS_OPERATIONS_POPUP);
+    if (correctedAction != null) {
+      group.add(correctedAction);
+    }
   }
 
   private static boolean isUnderVcs(@NotNull Project project) {
@@ -67,22 +70,21 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
       Project project = e.getProject();
-      DataContext dataContext = e.getDataContext();
       if (project == null) return EMPTY_ARRAY;
 
       JBIterable<VcsQuickListContentProvider> providers = JBIterable.of(VcsQuickListContentProvider.EP_NAME.getExtensions());
       JBIterable<AnAction> actions;
       if (!isUnderVcs(project)) {
-        actions = providers.flatMap(p -> p.getNotInVcsActions(project, dataContext));
+        actions = providers.flatMap(p -> p.getNotInVcsActions(project, e));
       }
       else {
-        AbstractVcs vcs = getContextVcs(project, dataContext);
+        AbstractVcs vcs = getContextVcs(project, e.getDataContext());
         if (vcs != null) {
           List<AnAction> replacingActions = providers
-            .filterMap(p -> p.replaceVcsActionsFor(vcs, dataContext) ? p.getVcsActions(project, vcs, dataContext) : null)
+            .filterMap(p -> p.replaceVcsActionsFor(vcs, e.getDataContext()) ? p.getVcsActions(project, vcs, e) : null)
             .first();
           actions = replacingActions != null ? JBIterable.from(replacingActions) :
-                    providers.flatMap(p -> p.getVcsActions(project, vcs, dataContext));
+                    providers.flatMap(p -> p.getVcsActions(project, vcs, e));
         }
         else {
           actions = JBIterable.empty();
@@ -123,12 +125,11 @@ public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction imple
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      DataContext dataContext = e.getDataContext();
-      AbstractVcs vcs = getContextVcs(project, dataContext);
+      AbstractVcs vcs = getContextVcs(project, e.getDataContext());
       if (vcs != null) {
         JBIterable<VcsQuickListContentProvider> providers = JBIterable.of(VcsQuickListContentProvider.EP_NAME.getExtensions());
         List<AnAction> replacingActions = providers
-          .filterMap(p -> p.replaceVcsActionsFor(vcs, dataContext) ? p.getVcsActions(project, vcs, dataContext) : null)
+          .filterMap(p -> p.replaceVcsActionsFor(vcs, e.getDataContext()) ? p.getVcsActions(project, vcs, e) : null)
           .first();
         e.getPresentation().setVisible(replacingActions == null);
       }
