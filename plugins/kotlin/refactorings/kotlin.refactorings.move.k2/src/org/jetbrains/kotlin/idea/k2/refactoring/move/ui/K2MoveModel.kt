@@ -270,7 +270,7 @@ sealed class K2MoveModel {
                 searchReferences = searchReferences.state,
                 dirStructureMatchesPkg = true,
                 newClassName = null,
-                outerInstanceParameterName = outerClassInstanceParameterName.takeIf { needsInstanceReference },
+                outerInstanceParameterName = outerClassInstanceParameterName.takeIf { passOuterClass },
                 moveCallBack = moveCallBack
             )
         }

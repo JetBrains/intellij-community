@@ -390,6 +390,11 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveNestedClass/protectedClass/protectedClass.test");
     }
 
+    @TestMetadata("kotlin/moveProperty/moveToTopLevel/externalPropertyUsageFromJava/externalPropertyUsageFromJava.test")
+    public void testKotlin_moveProperty_moveToTopLevel_externalPropertyUsageFromJava_ExternalPropertyUsageFromJava() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveProperty/moveToTopLevel/externalPropertyUsageFromJava/externalPropertyUsageFromJava.test");
+    }
+
     @TestMetadata("kotlin/moveProperty/moveToTopLevel/moveWithInstanceReference/moveWithInstanceReference.test")
     public void testKotlin_moveProperty_moveToTopLevel_moveWithInstanceReference_MoveWithInstanceReference() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveProperty/moveToTopLevel/moveWithInstanceReference/moveWithInstanceReference.test");

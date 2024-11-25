@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationD
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.ImplicitCompanionAsDispatchReceiverUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -49,6 +50,10 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
             else -> MoveType.UNKNOWN
         }
     }
+
+    init {
+      require(operationDescriptor.sourceElements.size == 1) { "We can only move a single nested declaration at a time" }
+    }
     private val elementToMove = operationDescriptor.sourceElements.single()
 
     private fun willLoseOuterInstanceReference(): Boolean {
@@ -68,6 +73,19 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
             val element = usage.element ?: continue
 
             val isConflict = when (usage) {
+                is K2MoveRenameUsageInfo.Light -> {
+                    if (moveType != MoveType.CLASS && operationDescriptor.outerInstanceParameterName != null) {
+                        // We only have the facility to correct outer class usages if the moved declaration is a nested class.
+                        conflicts.putValue(
+                            element,
+                            KotlinBundle.message("usages.of.nested.declarations.from.non.kotlin.code.won.t.be.processed", element.text)
+                        )
+                        true
+                    } else {
+                        false
+                    }
+                }
+
                 is ImplicitCompanionAsDispatchReceiverUsageInfo -> {
                     val isValidTarget = isValidTargetForImplicitCompanionAsDispatchReceiver(moveDescriptor.target, usage.companionObject)
                     if (!isValidTarget) {
@@ -80,11 +98,13 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                 }
 
                 is OuterInstanceReferenceUsageInfo -> {
-                    if (moveType == MoveType.PROPERTY) {
-                        // For properties, any outer instance reference is a conflict because we do not process them.
+                    if (willLoseOuterInstanceReference()) {
                         conflicts.putValue(
                             element,
-                            KotlinBundle.message("usages.of.outer.class.instance.inside.of.property.0.won.t.be.processed", elementToMove.nameAsSafeName.asString())
+                            KotlinBundle.message(
+                                "usages.of.outer.class.instance.inside.declaration.0.won.t.be.processed",
+                                elementToMove.nameAsSafeName.asString()
+                            )
                         )
                         true
                     } else {
@@ -117,6 +137,8 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                     val outerClass = referencedNestedDeclaration.containingClassOrObject
                     val lightOuterClass = outerClass?.toLightClass()
                     if (lightOuterClass != null) {
+                        // While this is called the `MoveInnerClassUsagesHandler`, it will also correctly modify usages
+                        // of inner methods from Kotlin code (but not from Java code!).
                         MoveInnerClassUsagesHandler.EP_NAME
                             .forLanguage(usage.element?.language ?: continue)
                             ?.correctInnerClassUsage(usage, lightOuterClass, outerInstanceParameterName)
@@ -166,6 +188,7 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                         }
                     }
                 }
+
                 is KtNamedFunction -> {
                     if (outerInstanceParameterName != null) {
                         val outerInstanceType = analyze(originalDeclaration) {
@@ -181,6 +204,7 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                         )
                     }
                 }
+
                 is KtProperty -> {
 
                 }
@@ -200,6 +224,7 @@ class K2MoveNestedDeclarationsRefactoringProcessor(
                 val addedParameter = primaryConstructor.valueParameters.firstOrNull { it.name == outerInstanceParameterName } ?: return
                 shortenReferences(addedParameter)
             }
+
             is KtNamedFunction -> {
                 val addedParameter = newDeclaration.valueParameterList?.parameters?.firstOrNull() ?: return
                 shortenReferences(addedParameter)
