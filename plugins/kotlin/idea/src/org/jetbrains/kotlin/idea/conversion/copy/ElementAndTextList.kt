@@ -1,47 +1,42 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
 import com.intellij.psi.PsiElement
 
-
+/**
+ * A list of `PsiElement`s to convert with J2K, intermixed with plain text strings,
+ * that will be inserted into the J2K result as is.
+ */
 class ElementAndTextList() {
-    private val elementsAndTexts = ArrayList<Any>()
+    private val elementsAndTexts: MutableList<Any> = mutableListOf()
 
-    constructor(elements: List<Any>) : this() {
-        elementsAndTexts.addAll(elements.filter { it is PsiElement || it is String })
+    constructor(items: List<Any>) : this() {
+        val filteredItems = items.filter {
+            it is PsiElement || (it is String && !it.isEmpty())
+        }
+        elementsAndTexts.addAll(filteredItems)
     }
 
-    fun add(a: String) = elementsAndTexts.add(a)
-
-    fun add(a: PsiElement) = elementsAndTexts.add(a)
-
-    operator fun plusAssign(other: String) = plusAssign(other as Any)
-
-    operator fun plusAssign(other: PsiElement) = plusAssign(other as Any)
-
-    private operator fun plusAssign(a: Any) {
-        elementsAndTexts.add(a)
+    fun addText(text: String) {
+        if (!text.isEmpty()) elementsAndTexts.add(text)
     }
 
-    operator fun plusAssign(other: Collection<PsiElement>) {
-        elementsAndTexts.addAll(other)
+    fun addElement(element: PsiElement) {
+        elementsAndTexts.add(element)
     }
 
-    operator fun plus(other: ElementAndTextList): ElementAndTextList {
-        val newList = ElementAndTextList()
-        newList.elementsAndTexts.addAll(this.elementsAndTexts)
-        newList.elementsAndTexts.addAll(other.elementsAndTexts)
-        return newList
+    fun addElements(elements: Collection<PsiElement>) {
+        elementsAndTexts.addAll(elements)
     }
 
     fun toList(): List<Any> = elementsAndTexts.toList()
 
     fun process(processor: ElementsAndTextsProcessor) {
-        elementsAndTexts.forEach { element ->
-            when (element) {
-                is PsiElement -> processor.processElement(element)
-                is String -> processor.processText(element)
+        for (item in elementsAndTexts) {
+            when (item) {
+                is PsiElement -> processor.processElement(item)
+                is String -> processor.processText(item)
             }
         }
     }
@@ -49,5 +44,5 @@ class ElementAndTextList() {
 
 interface ElementsAndTextsProcessor {
     fun processElement(element: PsiElement)
-    fun processText(string: String)
+    fun processText(text: String)
 }
