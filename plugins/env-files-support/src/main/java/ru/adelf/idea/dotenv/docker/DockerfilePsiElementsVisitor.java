@@ -3,7 +3,6 @@ package ru.adelf.idea.dotenv.docker;
 import com.intellij.docker.dockerFile.parser.psi.DockerFileEnvRegularDeclaration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
@@ -23,11 +22,11 @@ class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
     }
 
     private void visitProperty(DockerFileEnvRegularDeclaration envRegularDeclaration) {
-        if (StringUtils.isNotBlank(envRegularDeclaration.getDeclaredName().getText()) && envRegularDeclaration.getRegularValue() != null) {
-            collectedItems.add(new KeyValuePsiElement(
-                envRegularDeclaration.getDeclaredName().getText(),
-                envRegularDeclaration.getRegularValue().getText(),
-                envRegularDeclaration));
+        var key = envRegularDeclaration.getDeclaredName().getText();
+        var valueElement = envRegularDeclaration.getRegularValue();
+
+        if (key != null && !key.isBlank() && valueElement != null) {
+            collectedItems.add(new KeyValuePsiElement(key, valueElement.getText(), envRegularDeclaration));
         }
     }
 

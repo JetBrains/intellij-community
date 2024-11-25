@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.project.Project;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 
@@ -19,7 +18,7 @@ abstract public class BaseEnvCompletionProvider extends CompletionContributor im
             LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey())
                     .withCaseSensitivity(false);
 
-            if (StringUtils.isNotEmpty(entry.getValue())) {
+            if (!entry.getValue().isEmpty()) {
                 lockup = lockup.withTailText(" = " + entry.getValue(), true);
             }
 
