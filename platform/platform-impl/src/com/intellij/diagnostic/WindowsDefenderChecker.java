@@ -90,7 +90,7 @@ public class WindowsDefenderChecker {
 
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  final boolean isAlreadyProcessed(@NotNull Project project, Consumer<@Nullable Boolean> notifyAction) {
+  final boolean isAlreadyProcessed(@NotNull Project project, Consumer<Boolean> notifyAction) {
     var projectPath = getProjectPath(project);
     if (projectPath != null && myProjectPaths.containsKey(projectPath)) {
       while (!project.isDisposed() && myProjectPaths.get(projectPath) == null) TimeoutUtil.sleep(100);
@@ -98,7 +98,9 @@ public class WindowsDefenderChecker {
       if (success == Boolean.TRUE) {
         PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
       }
-      notifyAction.accept(success);
+      if (success != null) {
+        notifyAction.accept(success);
+      }
       return true;
     }
 
