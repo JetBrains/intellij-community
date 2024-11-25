@@ -2,12 +2,15 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -19,7 +22,8 @@ import java.util.List;
 
 final class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
 
-  public static final String INTENTION_ACTION_EXTENSION_POINT = "com.intellij.intentionAction";
+  @NonNls
+  private static final String INTENTION_ACTION_EXTENSION_POINT = "com.intellij.intentionAction";
 
   IntentionDescriptionNotFoundInspection() {
     super(DescriptionType.INTENTION);
@@ -39,11 +43,30 @@ final class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundIn
   }
 
   @Override
+  protected @Nullable String getDescriptionDir(Module module, PsiClass psiClass) {
+    Ref<String> customDirectory = Ref.create();
+    processIntentionActionExtension(ExtensionLocatorKt.locateExtensionsByPsiClass(psiClass), extension -> {
+      @SuppressWarnings("unchecked") GenericDomValue<String> descriptionDirectoryName =
+        (GenericDomValue<String>)DevKitDomUtil.getTag(extension, "descriptionDirectoryName");
+      if (descriptionDirectoryName != null && DomUtil.hasXml(descriptionDirectoryName)) {
+        customDirectory.set(descriptionDirectoryName.getStringValue());
+      }
+      return false;
+    });
+    if (customDirectory.get() != null) {
+      return customDirectory.get();
+    }
+
+    return super.getDescriptionDir(module, psiClass);
+  }
+
+  @Override
   protected boolean skipOptionalBeforeAfter(PsiClass epClass) {
     return processIntentionActionExtension(ExtensionLocatorKt.locateExtensionsByPsiClass(epClass), extension -> {
       @SuppressWarnings("unchecked") GenericDomValue<Boolean> skipBeforeAfterValue =
         (GenericDomValue<Boolean>)DevKitDomUtil.getTag(extension, "skipBeforeAfter");
-      return skipBeforeAfterValue != null && Boolean.TRUE.equals(skipBeforeAfterValue.getValue());
+      return skipBeforeAfterValue != null && DomUtil.hasXml(skipBeforeAfterValue) &&
+             Boolean.TRUE.equals(skipBeforeAfterValue.getValue());
     });
   }
 

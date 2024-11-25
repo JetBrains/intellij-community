@@ -62,6 +62,11 @@ public class IntentionDescriptionNotFoundInspectionTest extends JavaCodeInsightF
     myFixture.testHighlighting("MyModCommandIntentionWithDescription.java");
   }
 
+  public void testNoHighlightingDescriptionDirectoryName() {
+    myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
+    myFixture.testHighlighting("MyIntentionActionWithDescriptionDirectoryName.java");
+  }
+
   public void testHighlightingForBeforeAfter() {
     myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
     myFixture.testHighlighting("MyIntentionActionWithoutBeforeAfter.java");
