@@ -74,7 +74,7 @@ class DeclarativeHintsProviderSettingsModel(
     get() {
       val previewTextWithInlayPlaceholders = DeclarativeHintsPreviewProvider.getPreview(language, id, providerDescription.instance)
       if (previewTextWithInlayPlaceholders == null) return null
-      return InlayDumpUtil.removeHints(previewTextWithInlayPlaceholders)
+      return InlayDumpUtil.removeInlays(previewTextWithInlayPlaceholders)
     }
 
   override fun createFile(project: Project, fileType: FileType, document: Document, caseId: String?): PsiFile {
@@ -95,7 +95,7 @@ class DeclarativeHintsProviderSettingsModel(
     if (case == null) return previewText
     val preview = DeclarativeHintsPreviewProvider.getOptionPreview(language, id, case.id, providerDescription.instance)
     if (preview == null) return null
-    return InlayDumpUtil.removeHints(preview)
+    return InlayDumpUtil.removeInlays(preview)
   }
 
   override fun getCasePreviewLanguage(case: ImmediateConfigurable.Case?): Language = language

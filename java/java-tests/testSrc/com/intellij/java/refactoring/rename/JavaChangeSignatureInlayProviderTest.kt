@@ -606,11 +606,11 @@ class JavaChangeSignatureInlayProviderTest : BaseSuggestedRefactoringAvailabilit
 
     project.service<CodeVisionHost>().calculateCodeVisionSync(editor, testRootDisposable)
 
-    val actualText = InlayDumpUtil.dumpHintsInternal(
+    val actualText = InlayDumpUtil.dumpInlays(
       file.text,
       editor,
       { it.renderer is CodeVisionInlayRenderer },
-      { _, inlay, _ -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
+      { _, inlay -> inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation } }
     )
 
     assertEquals(after, actualText)

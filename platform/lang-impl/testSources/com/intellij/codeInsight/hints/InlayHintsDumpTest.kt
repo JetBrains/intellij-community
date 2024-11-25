@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.InlayDumpUtil.ExtractedInlayInfo
-import com.intellij.codeInsight.hints.InlayDumpUtil.InlayType
+import com.intellij.codeInsight.hints.InlayDumpUtil.InlayData
+import com.intellij.codeInsight.hints.InlayDumpUtil.InlayDumpPlacement
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
@@ -12,8 +12,8 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
   @Test
   fun `extract inline entries`() {
     assertEquals(
-      listOf(ExtractedInlayInfo(5, InlayType.Inline, "foo"),
-             ExtractedInlayInfo(8, InlayType.Inline, "bar")),
+      listOf(InlayData(5, InlayDumpPlacement.Inline, "foo"),
+             InlayData(8, InlayDumpPlacement.Inline, "bar")),
       extractInlays("01234/*<# foo #>*/567/*<# bar #>*/")
     )
   }
@@ -25,7 +25,7 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
       |    /*<# block content #>*/
       |    some more text
     """.trimMargin())
-    assertEquals(listOf(ExtractedInlayInfo(10, InlayType.BlockAbove, "content")), extracted)
+    assertEquals(listOf(InlayData(10, InlayDumpPlacement.BlockAbove, "content")), extracted)
   }
 
   @Test
@@ -40,11 +40,11 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
       }
     """.trimIndent()
     assertEquals(
-      listOf(ExtractedInlayInfo(17, InlayType.BlockAbove, "first above-line inlay"),
-             ExtractedInlayInfo(17, InlayType.BlockAbove, "second above-line inlay"),
-             ExtractedInlayInfo(29, InlayType.BlockAbove, "third above-line inlay with trailing spaces"),
-             ExtractedInlayInfo(36, InlayType.Inline, "inline inlay"),
-             ExtractedInlayInfo(40, InlayType.Inline, "eol inlay")),
+      listOf(InlayData(17, InlayDumpPlacement.BlockAbove, "first above-line inlay"),
+             InlayData(17, InlayDumpPlacement.BlockAbove, "second above-line inlay"),
+             InlayData(29, InlayDumpPlacement.BlockAbove, "third above-line inlay with trailing spaces"),
+             InlayData(36, InlayDumpPlacement.Inline, "inline inlay"),
+             InlayData(40, InlayDumpPlacement.Inline, "eol inlay")),
       extractInlays(text)
     )
 
@@ -53,7 +53,7 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
   @Test
   fun `inlay may contain octothorpe`() {
     assertEquals(
-      listOf(ExtractedInlayInfo(5, InlayType.Inline, "foo#bar")),
+      listOf(InlayData(5, InlayDumpPlacement.Inline, "foo#bar")),
       extractInlays("01234/*<# foo#bar #>*/567"))
   }
 
@@ -70,7 +70,7 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
         println("indented")
       } 
     """.trimIndent()
-    assertEquals(text, InlayDumpUtil.removeHints(textWithInlay))
+    assertEquals(text, InlayDumpUtil.removeInlays(textWithInlay))
   }
 
   @Test
@@ -87,9 +87,9 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
         print("123")
       }
     """.trimIndent()
-    assertEquals(withoutInlay, InlayDumpUtil.removeHints(text))
+    assertEquals(withoutInlay, InlayDumpUtil.removeInlays(text))
     assertEquals(
-      listOf(ExtractedInlayInfo(12, InlayType.BlockAbove, "this is a very\n       very very long inlay")),
+      listOf(InlayData(12, InlayDumpPlacement.BlockAbove, "this is a very\n       very very long inlay")),
       extractInlays(text)
     )
   }
@@ -111,10 +111,10 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.editor.inlayModel.addBlockElement(16, true, true, 0, DummyInlayRenderer("foo"))
 
     fun dumpInlays(indentBlockInlays: Boolean): String =
-      InlayDumpUtil.dumpHintsInternal(
+      InlayDumpUtil.dumpInlays(
         text,
         editor = myFixture.editor,
-        renderer = { r, _, _ -> r as DummyInlayRenderer; r.text },
+        renderer = { r, _ -> r as DummyInlayRenderer; r.text },
         indentBlockInlays = indentBlockInlays
       )
 
@@ -137,8 +137,8 @@ class InlayHintsDumpTest : LightPlatformCodeInsightFixture4TestCase() {
     assertEquals(expectedIndented, indentedInlayDump)
   }
 
-  private fun extractInlays(text: String): List<ExtractedInlayInfo> {
-    return InlayDumpUtil.extractEntries(text).map { it.copy(content = it.content.trim()) }
+  private fun extractInlays(text: String): List<InlayData> {
+    return InlayDumpUtil.extractInlays(text).map { it.copy(content = it.content.trim()) }
   }
 
 

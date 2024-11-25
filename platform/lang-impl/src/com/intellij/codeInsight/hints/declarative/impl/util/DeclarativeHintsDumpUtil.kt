@@ -2,15 +2,15 @@
 package com.intellij.codeInsight.hints.declarative.impl.util
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
-import com.intellij.codeInsight.hints.InlayDumpUtil.InlayType
+import com.intellij.codeInsight.hints.InlayDumpUtil.InlayDumpPlacement
 import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ParserException
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.extractHints
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import org.jetbrains.annotations.ApiStatus
 import java.lang.Character.*
 
@@ -74,7 +74,7 @@ object DeclarativeHintsDumpUtil {
    */
   @JvmStatic
   fun extractHints(source: String): List<ExtractedHintInfo> {
-    val extractedInlays = InlayDumpUtil.extractEntries(source)
+    val extractedInlays = InlayDumpUtil.extractInlays(source)
     val hintBuilder = object {
       val extractedHints = mutableListOf<ExtractedHintInfo>()
 
@@ -91,10 +91,10 @@ object DeclarativeHintsDumpUtil {
     val inlayContentParser = InlayContentParser()
     for ((inlayOffset, renderType, inlayContent) in extractedInlays) {
       when (renderType) {
-        InlayType.Inline -> hintBuilder.position = InlineInlayPosition(inlayOffset, true)
-        InlayType.BlockAbove -> hintBuilder.position = AboveLineIndentedPosition(inlayOffset, verticalPriorityCounter++)
+        InlayDumpPlacement.Inline -> hintBuilder.position = InlineInlayPosition(inlayOffset, true)
+        InlayDumpPlacement.BlockAbove -> hintBuilder.position = AboveLineIndentedPosition(inlayOffset, verticalPriorityCounter++)
       }
-      if (renderType == InlayType.Inline) {
+      if (renderType == InlayDumpPlacement.Inline) {
         val parts = inlayContentParser.parse("[$inlayContent]")
         if (parts.isEmpty()) {
           parseFail("Expected hint content")
@@ -156,21 +156,21 @@ object DeclarativeHintsDumpUtil {
   fun dumpHints(
     sourceText: String,
     editor: Editor,
-    renderer: (InlayPresentationList) -> String
+    renderer: (InlayPresentationList) -> String,
   ): String {
-    return InlayDumpUtil.dumpHintsInternal(
+    return InlayDumpUtil.dumpInlays(
       sourceText,
       editor,
       indentBlockInlays = true,
       filter = { it.renderer is DeclarativeInlayRendererBase<*> },
-      renderer = { inlayRenderer, _, inlayType ->
+      renderer = { inlayRenderer, inlay ->
         inlayRenderer as DeclarativeInlayRendererBase<*>
-        if (inlayType == InlayType.Inline) {
+        if (inlay.placement == Inlay.Placement.INLINE || inlay.placement == Inlay.Placement.AFTER_LINE_END) {
           val presentationList = inlayRenderer.presentationLists.singleOrNull()
           if (presentationList == null) {
             error("Inline declarative inlay must carry exactly one hint")
           }
-          return@dumpHintsInternal renderer(presentationList)
+          return@dumpInlays renderer(presentationList)
         }
         require(inlayRenderer is DeclarativeIndentedBlockInlayRenderer)
         val presentationLists = inlayRenderer.presentationLists

@@ -28,7 +28,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     verifyHintsPresence: Boolean = false,
     testMode: ProviderTestMode = ProviderTestMode.DETAILED,
   ) {
-    val sourceText = InlayDumpUtil.removeHints(expectedText)
+    val sourceText = InlayDumpUtil.removeInlays(expectedText)
     myFixture.configureByText(fileName, sourceText)
     doTestProviderWithConfigured(sourceText, expectedText, provider, enabledOptions, expectedFile, verifyHintsPresence, testMode)
   }
@@ -65,7 +65,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
   ) {
     val previewText = DeclarativeHintsPreviewProvider.getPreview(language, providerId, provider) ?: error("Preview not found for provider: $providerId")
     val fileName = "preview." + (language.associatedFileType?.defaultExtension ?: error("language must have extension"))
-    myFixture.configureByText(fileName, InlayDumpUtil.removeHints(previewText))
+    myFixture.configureByText(fileName, InlayDumpUtil.removeInlays(previewText))
 
     val pass = ActionUtil.underModalProgress(project, "") {
       DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId, emptyMap(), false)
