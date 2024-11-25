@@ -223,7 +223,6 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
     return false;
   }
 
-  @SuppressWarnings("IntentionDescriptionNotFoundInspection")
   public static final class ConvertNonFinalLocalToAtomicFix extends ConvertFieldToAtomicIntention implements HighPriorityAction {
     private final PsiElement myContext;
 
