@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.github">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
