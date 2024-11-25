@@ -75,6 +75,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -177,8 +178,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       var projectResolverChain = createProjectResolverChain(resolverContext);
 
-      var projectDataNode = executeProjectResolverTask(resolverContext, projectResolverChain, () ->
-        doResolveProjectInfo(resolverContext, projectResolverChain)
+      var projectDataNode = executeProjectResolverTask(resolverContext, projectResolverChain, connection ->
+        doResolveProjectInfo(connection, resolverContext, projectResolverChain)
       );
 
       // auto-discover buildSrc projects of the main and included builds
@@ -219,7 +220,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   protected static <R> R executeProjectResolverTask(
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull GradleProjectResolverExtension projectResolverChain,
-    @NotNull Supplier<R> task
+    @NotNull Function<ProjectConnection, R> task
   ) {
     var projectPath = resolverContext.getProjectPath();
     var id = resolverContext.getExternalSystemTaskId();
@@ -230,8 +231,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     return GradleExecutionHelper.execute(projectPath, settings, id, listener, cancellationToken, connection -> {
       try {
-        resolverContext.setConnection(connection);
-        return task.get();
+        return task.apply(connection);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -251,15 +251,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     });
   }
 
-  @NotNull
-  private DataNode<ProjectData> doResolveProjectInfo(
-    @NotNull final DefaultProjectResolverContext resolverContext,
-    @NotNull final GradleProjectResolverExtension projectResolverChain
-  )
-    throws IllegalArgumentException, IllegalStateException {
+  protected @NotNull DataNode<ProjectData> doResolveProjectInfo(
+    @NotNull ProjectConnection connection,
+    @NotNull DefaultProjectResolverContext resolverContext,
+    @NotNull GradleProjectResolverExtension projectResolverChain
+  ) throws IllegalArgumentException, IllegalStateException {
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(
-      resolverContext.getConnection(),
+      connection,
       resolverContext.getExternalSystemTaskId(),
       resolverContext.getListener(),
       resolverContext.getCancellationToken(),
@@ -332,7 +331,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
-      GradleModelFetchActionRunner.runAndTraceBuildAction(resolverContext, buildAction, modelFetchActionResultHandler);
+      GradleModelFetchActionRunner.runAndTraceBuildAction(connection, resolverContext, buildAction, modelFetchActionResultHandler);
 
       var gradleVersion = ObjectUtils.doIfNotNull(resolverContext.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {

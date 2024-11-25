@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gradle.statistics.GradleSyncCollector
  */
 @ApiStatus.Internal
 class GradleModelFetchActionRunner private constructor(
+  private val connection: ProjectConnection,
   private val resolverContext: DefaultProjectResolverContext,
   private val modelFetchAction: GradleModelFetchAction,
   private val modelFetchActionListener: GradleModelFetchActionListener,
@@ -60,7 +61,7 @@ class GradleModelFetchActionRunner private constructor(
   private fun notifyConnectionAboutChangedPaths() {
     ApplicationManager.getApplication()
       .getService(GradleFileModificationTracker::class.java)
-      .notifyConnectionAboutChangedPaths(resolverContext.connection)
+      .notifyConnectionAboutChangedPaths(connection)
   }
 
   /**
@@ -68,7 +69,7 @@ class GradleModelFetchActionRunner private constructor(
    */
   private fun runPhasedBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
     modelFetchAction.isUseProjectsLoadedPhase = true
-    resolverContext.connection.action()
+    connection.action()
       .projectsLoaded(modelFetchAction, resultHandler.asProjectLoadedResultHandler())
       .buildFinished(modelFetchAction, resultHandler.asBuildFinishedResultHandler())
       .build()
@@ -79,7 +80,7 @@ class GradleModelFetchActionRunner private constructor(
   }
 
   private fun runDefaultBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
-    resolverContext.connection.action(modelFetchAction)
+    connection.action(modelFetchAction)
       .prepareOperationForSync()
       .withStreamedValueListener(resultHandler.asStreamValueListener())
       .run(resultHandler.asResultHandler())
@@ -108,15 +109,17 @@ class GradleModelFetchActionRunner private constructor(
   companion object {
 
     private fun runBuildAction(
+      connection: ProjectConnection,
       resolverContext: DefaultProjectResolverContext,
       modelFetchAction: GradleModelFetchAction,
       modelFetchActionListener: GradleModelFetchActionListener,
     ) {
-      GradleModelFetchActionRunner(resolverContext, modelFetchAction, modelFetchActionListener).runBuildAction()
+      GradleModelFetchActionRunner(connection, resolverContext, modelFetchAction, modelFetchActionListener).runBuildAction()
     }
 
     @JvmStatic
     fun runAndTraceBuildAction(
+      connection: ProjectConnection,
       resolverContext: DefaultProjectResolverContext,
       modelFetchAction: GradleModelFetchAction,
       modelFetchActionListener: GradleModelFetchActionListener,
@@ -133,7 +136,7 @@ class GradleModelFetchActionRunner private constructor(
             collector.logModelFetchFailure(exception)
           }
         }
-        runBuildAction(resolverContext, modelFetchAction, modelFetchActionListenerWithTrace)
+        runBuildAction(connection, resolverContext, modelFetchAction, modelFetchActionListenerWithTrace)
       }
     }
   }

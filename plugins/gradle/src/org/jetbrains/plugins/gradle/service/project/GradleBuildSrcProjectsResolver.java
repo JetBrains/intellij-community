@@ -198,8 +198,8 @@ public final class GradleBuildSrcProjectsResolver {
       return;
     }
 
-    var buildSrcProjectDataNode = GradleProjectResolver.executeProjectResolverTask(buildSrcResolverCtx, myResolverChain, () ->
-      myProjectResolver.doResolveProjectInfo(buildSrcResolverCtx, myResolverChain)
+    var buildSrcProjectDataNode = GradleProjectResolver.executeProjectResolverTask(buildSrcResolverCtx, myResolverChain, connection ->
+      myProjectResolver.doResolveProjectInfo(connection, buildSrcResolverCtx, myResolverChain)
     );
 
     if (buildSrcProjectDataNode == null) return;

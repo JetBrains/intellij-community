@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
@@ -47,7 +46,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   @NotNull private final GradleProjectResolverIndicator myProjectResolverIndicator;
-  private ProjectConnection myConnection;
   @Nullable private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
@@ -75,7 +73,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
     mySettings = settings;
-    myConnection = null;
     myListener = listener;
     myPolicy = resolverPolicy;
     myProjectResolverIndicator = projectResolverIndicator;
@@ -121,16 +118,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Override
   public @NotNull GradleExecutionSettings getSettings() {
     return mySettings;
-  }
-
-  @NotNull
-  @Override
-  public ProjectConnection getConnection() {
-    return myConnection;
-  }
-
-  public void setConnection(@NotNull ProjectConnection connection) {
-    myConnection = connection;
   }
 
   public @NotNull ProgressIndicator getProgressIndicator() {

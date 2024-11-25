@@ -107,7 +107,6 @@ abstract class GradleProjectResolverTestCase {
     override fun getIdeProjectPath() = throw UnsupportedOperationException()
     override fun getProjectPath() = throw UnsupportedOperationException()
     override fun getSettings() = throw UnsupportedOperationException()
-    override fun getConnection() = throw UnsupportedOperationException()
     override fun getCancellationToken() = throw UnsupportedOperationException()
     override fun getListener() = throw UnsupportedOperationException()
     override fun isPhasedSyncEnabled() = throw UnsupportedOperationException()
