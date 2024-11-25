@@ -612,6 +612,16 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
   }
+  
+  public void testInlineSingleImplementationCastOnThis() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+  
+  public void testInlineSingleImplementationCastOnThisUnnecessary() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
 
   @Override
   protected Sdk getProjectJDK() {

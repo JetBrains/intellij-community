@@ -885,7 +885,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       else if (qualifier instanceof PsiSuperExpression) {
         qualifier = myFactory.createExpressionFromText("this", null);
       }
-      thisVar.getInitializer().replace(qualifier);
+      else if (qualifier.getType() != null && !thisVar.getType().isAssignableFrom(qualifier.getType())) {
+        PsiTypeCastExpression cast = (PsiTypeCastExpression)myFactory.createExpressionFromText("(A)b", null);
+        Objects.requireNonNull(cast.getOperand()).replace(qualifier);
+        Objects.requireNonNull(cast.getCastType()).replace(myFactory.createTypeElement(thisVar.getType()));
+        qualifier = cast;
+      }
+      Objects.requireNonNull(thisVar.getInitializer()).replace(qualifier);
     }
   }
 
