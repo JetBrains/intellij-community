@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.conversion.copy
+package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
@@ -16,8 +16,7 @@ import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.ParseContext
-import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
-import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
+import org.jetbrains.kotlin.j2k.ParseContext.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory

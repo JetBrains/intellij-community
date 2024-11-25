@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
-import org.jetbrains.kotlin.idea.conversion.copy.ConvertJavaCopyPasteProcessor
+import org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor
 
 abstract class AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest :
     AbstractPerformanceJavaToKotlinCopyPasteConversionTest(newJ2K = true) {

@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.conversion.copy
+package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import java.awt.datatransfer.DataFlavor
 
 /**
- * A marker class for [org.jetbrains.kotlin.idea.conversion.copy.ConvertTextJavaCopyPasteProcessor],
+ * A marker class for [ConvertTextJavaCopyPasteProcessor],
  * so that it doesn't try to run J2K on code copied from a Kotlin file.
  */
 class CopiedKotlinCode : TextBlockTransferableData {
