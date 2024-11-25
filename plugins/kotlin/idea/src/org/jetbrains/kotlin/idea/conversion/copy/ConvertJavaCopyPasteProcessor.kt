@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.conversion.copy
 
@@ -8,10 +8,10 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
+import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
+import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -43,9 +45,17 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
 
-class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
-    private val LOG = Logger.getInstance(ConvertJavaCopyPasteProcessor::class.java)
+private val LOG = Logger.getInstance(ConvertJavaCopyPasteProcessor::class.java)
+private const val MAX_TEXT_LENGTH_TO_CONVERT_WITHOUT_ASKING_USER = 1000
 
+/**
+ * Handles the J2K conversion of copy-pasted code from a Java file into a Kotlin file.
+ *
+ * See also [ConvertTextJavaCopyPasteProcessor] for the related case of arbitrary code copy-pasted into a Kotlin file.
+ *
+ * Tests: [org.jetbrains.kotlin.nj2k.NewJavaToKotlinCopyPasteConversionTestGenerated].
+ */
+class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     override fun extractTransferableData(content: Transferable): List<TextBlockTransferableData> {
         try {
             if (content.isDataFlavorSupported(CopiedJavaCode.DATA_FLAVOR)) {
@@ -79,143 +89,144 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         if (DumbService.getInstance(project).isDumb) return
         if (!KotlinEditorOptions.getInstance().isEnableJavaToKotlinConversion) return
 
-        val data = values.single() as CopiedJavaCode
+        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor.document, caretOffset, bounds) ?: return
+        if (!isConversionSupportedAtPosition(targetFile, targetBounds.startOffset)) return
 
-        val (targetFile, targetBounds, document) = getTargetData(project, editor.document, caretOffset, bounds) ?: return
+        val copiedJavaCode = values.single() as CopiedJavaCode
+        val dataForConversion = DataForConversion.prepare(copiedJavaCode, project)
         val j2kKind = getJ2kKind(targetFile)
+        val converter = J2KCopyPasteConverter(project, editor, dataForConversion, j2kKind, targetFile, targetBounds, targetDocument)
 
-        val targetModule = targetFile.module
+        val textLength = copiedJavaCode.startOffsets.indices.sumOf { copiedJavaCode.endOffsets[it] - copiedJavaCode.startOffsets[it] }
+        if (textLength < MAX_TEXT_LENGTH_TO_CONVERT_WITHOUT_ASKING_USER && converter.convertAndRestoreReferencesIfTextIsUnchanged()) {
+            // If the text to convert is short enough, attempt conversion without
+            // requiring user permission and skip the dialog if no conversion was made.
+            return
+        }
 
-        if (isNoConversionPosition(targetFile, targetBounds.startOffset)) return
+        if (!confirmConvertJavaOnPaste(project, isPlainText = false)) return
 
-        data class Result(
-            val text: String?,
-            val referenceData: Collection<KotlinReferenceData>,
-            val explicitImports: Set<FqName>,
-            val converterContext: ConverterContext?
+        val conversionTime = measureTimeMillis { converter.convert() }
+        J2KFusCollector.log(
+            type = ConversionType.PSI_EXPRESSION,
+            isNewJ2k = j2kKind == K1_NEW,
+            conversionTime,
+            linesCount = dataForConversion.elementsAndTexts.lineCount(),
+            filesCount = 1
         )
 
-        val dataForConversion = DataForConversion.prepare(data, project)
-
-        fun doConversion(): Result {
-            val result = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetModule, targetFile, j2kKind)
-            val referenceData = buildReferenceData(result.text, result.parseContext, dataForConversion.importsAndPackage, targetFile)
-            val text = if (result.textChanged) result.text else null
-            return Result(text, referenceData, result.importsToAdd, result.converterContext)
-        }
-
-        fun insertImports(
-            bounds: TextRange,
-            referenceData: Collection<KotlinReferenceData>,
-            explicitImports: Collection<FqName>
-        ): TextRange? {
-            if (referenceData.isEmpty() && explicitImports.isEmpty()) return bounds
-
-            PsiDocumentManager.getInstance(project).commitDocument(document)
-
-            val rangeMarker = document.createRangeMarker(bounds)
-            rangeMarker.isGreedyToLeft = true
-            rangeMarker.isGreedyToRight = true
-
-            KotlinCopyPasteReferenceProcessor()
-                .processReferenceData(project, editor, targetFile, bounds.startOffset, referenceData.toTypedArray())
-
-            runWriteAction {
-                explicitImports.forEach { fqName ->
-                    targetFile.resolveImportReference(fqName).firstOrNull()?.let {
-                        ImportInsertHelper.getInstance(project).importDescriptor(targetFile, it)
-                    }
-                }
-            }
-
-            return rangeMarker.asTextRange
-        }
-
-        var conversionResult: Result? = null
-
-        fun doConversionAndInsertImportsIfUnchanged(): Boolean {
-            conversionResult = doConversion()
-
-            if (conversionResult!!.text != null) return false
-
-            insertImports(
-                targetBounds.asTextRange ?: return true,
-                conversionResult!!.referenceData,
-                conversionResult!!.explicitImports
-            )
-            return true
-        }
-
-        val textLength = data.startOffsets.indices.sumOf { data.endOffsets[it] - data.startOffsets[it] }
-        // if the text to convert is short enough, try to do conversion without permission from user and skip the dialog if nothing converted
-        if (textLength < 1000 && doConversionAndInsertImportsIfUnchanged()) return
-
-        fun convert() {
-            if (conversionResult == null && doConversionAndInsertImportsIfUnchanged()) return
-            val (text, referenceData, explicitImports) = conversionResult!!
-            text!! // otherwise we should get true from doConversionAndInsertImportsIfUnchanged and return above
-
-            val boundsAfterReplace = runWriteAction {
-                val startOffset = targetBounds.startOffset
-                document.replaceString(startOffset, targetBounds.endOffset, text)
-
-                val endOffsetAfterCopy = startOffset + text.length
-                editor.caretModel.moveToOffset(endOffsetAfterCopy)
-                TextRange(startOffset, endOffsetAfterCopy)
-            }
-
-            val newBounds = insertImports(boundsAfterReplace, referenceData, explicitImports)
-
-            PsiDocumentManager.getInstance(project).commitDocument(document)
-            runPostProcessing(project, targetFile, newBounds, conversionResult?.converterContext, j2kKind)
-
-            Util.conversionPerformed = true
-        }
-
-        if (confirmConvertJavaOnPaste(project, isPlainText = false)) {
-            val conversionTime = measureTimeMillis {
-                convert()
-            }
-            J2KFusCollector.log(
-                ConversionType.PSI_EXPRESSION,
-                j2kKind == K1_NEW,
-                conversionTime,
-                dataForConversion.elementsAndTexts.linesCount(),
-                filesCount = 1
-            )
-        }
+        Util.conversionPerformed = true
     }
 
+    object Util {
+        @get:TestOnly
+        var conversionPerformed: Boolean = false
+    }
+}
+
+/**
+ * Runs J2K on the pasted code and updates [targetFile] as a side effect.
+ * Used by [ConvertJavaCopyPasteProcessor].
+ */
+private class J2KCopyPasteConverter(
+    private val project: Project,
+    private val editor: Editor,
+    private val dataForConversion: DataForConversion,
+    private val j2kKind: J2kConverterExtension.Kind,
+    private val targetFile: KtFile,
+    private val targetBounds: RangeMarker,
+    private val targetDocument: Document
+) {
+    /**
+     * @property changedText The transformed Kotlin code, or `null` if no conversion occurred (the result is the same as original code).
+     * @property referenceData A list of references within the converted Kotlin code that may need to be processed or resolved.
+     * @property importsToAdd A set of fully qualified names to be explicitly imported in the converted Kotlin file.
+     */
+    private data class Result(
+        val changedText: String?,
+        val referenceData: List<KotlinReferenceData>,
+        val importsToAdd: Set<FqName>,
+        val converterContext: ConverterContext?
+    )
+
+    private lateinit var result: Result
+
+    fun convert() {
+        if (!::result.isInitialized && convertAndRestoreReferencesIfTextIsUnchanged()) return
+
+        val (changedText, referenceData, importsToAdd, converterContext) = result
+        checkNotNull(changedText) // the case with unchanged text has already been handled by `convertAndRestoreReferencesIfTextIsUnchanged`
+
+        val endOffsetAfterReplace = targetBounds.startOffset + changedText.length
+        val boundsAfterReplace = TextRange(targetBounds.startOffset, endOffsetAfterReplace)
+        runWriteAction {
+            targetDocument.replaceString(targetBounds.startOffset, targetBounds.endOffset, changedText)
+            editor.caretModel.moveToOffset(endOffsetAfterReplace)
+        }
+
+        val newBounds = restoreReferencesAndInsertImports(boundsAfterReplace, referenceData, importsToAdd)
+        PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
+        runPostProcessing(project, targetFile, newBounds, converterContext, j2kKind)
+    }
+
+    /**
+     * This is a shortcut for copy-pasting trivial code that doesn't need to be converted (for example, a single identifier).
+     * In this case, we don't bother showing a J2K dialog and only restore references / insert required imports in the Kotlin file.
+     *
+     * Always runs the J2K conversion once and saves the result for later reference.
+     *
+     * @return `true` if the conversion text remains unchanged; `false` otherwise.
+     */
+    fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
+        fun runConversion() {
+            val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, j2kKind)
+            val (text, parseContext, importsToAdd, isTextChanged, converterContext) = conversionResult
+            val referenceData = buildReferenceData(text, parseContext, dataForConversion.importsAndPackage, targetFile)
+            val changedText = if (isTextChanged) text else null
+            result = Result(changedText, referenceData, importsToAdd, converterContext)
+        }
+
+        runConversion() // initializes `result`
+        if (result.changedText != null) return false
+        val boundsTextRange = targetBounds.asTextRange ?: return true
+        restoreReferencesAndInsertImports(boundsTextRange, result.referenceData, result.importsToAdd)
+        return true
+    }
+
+    /**
+     * Returns a list of references in the converted Kotlin code that need to be restored (i.e., to become resolved).
+     * A reference is restored by qualifying it or adding an import statement (see `KotlinCopyPasteReferenceProcessor`).
+     */
     private fun buildReferenceData(
         text: String,
         parseContext: ParseContext,
         importsAndPackage: String,
         targetFile: KtFile
-    ): Collection<KotlinReferenceData> {
+    ): List<KotlinReferenceData> {
         var blockStart: Int
         var blockEnd: Int
-        val fileText = buildString {
-            append(importsAndPackage)
-
+        val dummyFileText = buildString {
             val (contextPrefix, contextSuffix) = when (parseContext) {
-                ParseContext.CODE_BLOCK -> "fun ${generateDummyFunctionName(text)}() {\n" to "\n}"
-                ParseContext.TOP_LEVEL -> "" to ""
+                CODE_BLOCK -> "fun ${generateDummyFunctionName(text)}() {\n" to "\n}"
+                TOP_LEVEL -> "" to ""
             }
 
+            append(importsAndPackage)
             append(contextPrefix)
-
             blockStart = length
             append(text)
             blockEnd = length
-
             append(contextSuffix)
         }
 
-        val dummyFile = KtPsiFactory.contextual(targetFile).createFile("dummy.kt", fileText)
+        val dummyFile = KtPsiFactory.contextual(targetFile).createFile("dummy.kt", dummyFileText)
         val startOffset = blockStart
         val endOffset = blockEnd
-        return KotlinCopyPasteReferenceProcessor().collectReferenceData(dummyFile, intArrayOf(startOffset), intArrayOf(endOffset)).map {
-            it.copy(startOffset = it.startOffset - startOffset, endOffset = it.endOffset - startOffset)
+        val referenceDataList =
+            KotlinCopyPasteReferenceProcessor().collectReferenceData(dummyFile, intArrayOf(startOffset), intArrayOf(endOffset))
+
+        return referenceDataList.map { data: KotlinReferenceData ->
+            data.copy(startOffset = data.startOffset - startOffset, endOffset = data.endOffset - startOffset)
         }
     }
 
@@ -228,115 +239,151 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         }
     }
 
-    object Util {
-        @get:TestOnly
-        var conversionPerformed: Boolean = false
+    /**
+     * Restores references and inserts necessary imports for converted code in [bounds].
+     * @return The updated TextRange of converted code
+     */
+    private fun restoreReferencesAndInsertImports(
+        bounds: TextRange,
+        referenceData: List<KotlinReferenceData>,
+        importsToAdd: Collection<FqName>
+    ): TextRange? {
+        if (referenceData.isEmpty() && importsToAdd.isEmpty()) return bounds
+        PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
+
+        val rangeMarker = targetDocument.createRangeMarker(bounds)
+        rangeMarker.isGreedyToLeft = true
+        rangeMarker.isGreedyToRight = true
+
+        KotlinCopyPasteReferenceProcessor()
+            .processReferenceData(project, editor, targetFile, bounds.startOffset, referenceData.toTypedArray())
+
+        val importInsertHelper = ImportInsertHelper.getInstance(project)
+        val declarationDescriptorsToImport = importsToAdd.mapNotNull { fqName ->
+            targetFile.resolveImportReference(fqName).firstOrNull()
+        }
+        runWriteAction {
+            for (descriptor in declarationDescriptorsToImport) {
+                importInsertHelper.importDescriptor(targetFile, descriptor)
+            }
+        }
+
+        return rangeMarker.asTextRange
     }
 }
 
-internal class ConversionResult(
+
+///// Below are common functions shared between ConvertJavaCopyPasteProcessor and ConvertTextJavaCopyPasteProcessor /////
+
+internal data class ConversionResult(
     val text: String,
     val parseContext: ParseContext,
     val importsToAdd: Set<FqName>,
-    val textChanged: Boolean,
+    val isTextChanged: Boolean,
     val converterContext: ConverterContext?
 )
 
 internal fun ElementAndTextList.convertCodeToKotlin(
     project: Project,
-    targetModule: Module?,
     targetFile: KtFile,
     j2kKind: J2kConverterExtension.Kind
 ): ConversionResult {
-    val converter =
-        J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(
-            project,
-            targetModule,
-            ConverterSettings.defaultSettings,
-            targetFile
-        )
+    val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(
+        project,
+        targetFile.module,
+        ConverterSettings.defaultSettings,
+        targetFile
+    )
 
-    val inputElements = toList().filterIsInstance<PsiElement>()
-    val (results, _, converterContext) =
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            ThrowableComputable {
-                runReadAction { converter.elementsToKotlin(inputElements) }
-            },
-            JavaToKotlinAction.Handler.title,
-            true,
-            project
-        )
+    val inputElements = this.toList().filterIsInstance<PsiElement>()
+    val (results, _, converterContext) = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        ThrowableComputable {
+            runReadAction { converter.elementsToKotlin(inputElements) }
+        },
+        JavaToKotlinAction.Handler.title,
+        true,
+        project
+    )
 
-
-    val importsToAdd = LinkedHashSet<FqName>()
-
-    var resultIndex = 0
+    val importsToAdd = mutableSetOf<FqName>()
     val convertedCodeBuilder = StringBuilder()
     val originalCodeBuilder = StringBuilder()
     var parseContext: ParseContext? = null
+    var resultIndex = 0
+
     this.process(object : ElementsAndTextsProcessor {
         override fun processElement(element: PsiElement) {
             val originalText = element.text
             originalCodeBuilder.append(originalText)
 
-            val result = results[resultIndex++]
+            val result = results[resultIndex]
+            resultIndex++
+
             if (result != null) {
                 convertedCodeBuilder.append(result.text.trimEnd('\n'))
-                if (parseContext == null) { // use parse context of the first converted element as parse context for the whole text
+                if (parseContext == null) {
+                    // Use the parse context of the first converted element as a parse context for the whole text
                     parseContext = result.parseContext
                 }
                 importsToAdd.addAll(result.importsToAdd)
-            } else { // failed to convert element to Kotlin, insert "as is"
+            } else {
+                // Failed to convert the element to Kotlin, insert the Java text as is
                 convertedCodeBuilder.append(originalText)
             }
         }
 
-        override fun processText(string: String) {
-            originalCodeBuilder.append(string)
-            convertedCodeBuilder.append(string)
+        override fun processText(text: String) {
+            originalCodeBuilder.append(text)
+            convertedCodeBuilder.append(text)
         }
     })
 
     val convertedCode = convertedCodeBuilder.toString()
     val originalCode = originalCodeBuilder.toString()
+    val textChanged = convertedCode != originalCode
     return ConversionResult(
         convertedCode,
-        parseContext ?: ParseContext.CODE_BLOCK,
+        parseContext ?: CODE_BLOCK,
         importsToAdd,
-        convertedCode != originalCode,
+        textChanged,
         converterContext
     )
 }
 
-internal fun isNoConversionPosition(file: KtFile, offset: Int): Boolean {
-    if (offset == 0) return false
-    val token = file.findElementAt(offset - 1) ?: return true
+/**
+ * Does it make sense to run J2K on pasted code in this particular place in the file?
+ */
+internal fun isConversionSupportedAtPosition(file: KtFile, offset: Int): Boolean {
+    if (offset == 0) return true
+    val token = file.findElementAt(offset - 1) ?: return false
 
-    if (token !is PsiWhiteSpace && token.endOffset != offset) return true // pasting into the middle of token
+    if (token !is PsiWhiteSpace && token.endOffset != offset) {
+        // pasting into the middle of token
+        return false
+    }
 
     for (element in token.parentsWithSelf) {
         when (element) {
-            is PsiComment -> return element.node.elementType == KtTokens.EOL_COMMENT || offset != element.endOffset
-            is KtStringTemplateEntryWithExpression -> return false
-            is KtStringTemplateExpression -> return true
+            is PsiComment -> return element.node.elementType != KtTokens.EOL_COMMENT && offset == element.endOffset
+            is KtStringTemplateEntryWithExpression -> return true
+            is KtStringTemplateExpression -> return false
         }
     }
-    return false
+
+    return true
 }
 
 internal fun confirmConvertJavaOnPaste(project: Project, isPlainText: Boolean): Boolean {
     if (KotlinEditorOptions.getInstance().isDonTShowConversionDialog) return true
-
     val dialog = KotlinPasteFromJavaDialog(project, isPlainText)
     dialog.show()
     return dialog.isOK
 }
 
-
-fun ElementAndTextList.linesCount() =
-    toList()
-        .filterIsInstance<PsiElement>()
-        .sumOf { StringUtil.getLineBreakCount(it.text) }
+internal fun ElementAndTextList.lineCount(): Int {
+    val elements = this.toList().filterIsInstance<PsiElement>()
+    return elements.sumOf { StringUtil.getLineBreakCount(it.text) }
+}
 
 internal fun getJ2kKind(targetFile: KtFile): J2kConverterExtension.Kind =
     if (targetFile is KtCodeFragment || !NewJ2k.isEnabled) K1_OLD else K1_NEW

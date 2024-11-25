@@ -24,7 +24,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
@@ -138,7 +137,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
             type = ConversionType.TEXT_EXPRESSION,
             isNewJ2k = j2kKind == K1_NEW,
             conversionTime,
-            linesCount = dataForConversion.elementsAndTexts.linesCount(),
+            linesCount = dataForConversion.elementsAndTexts.lineCount(),
             filesCount = 1
         )
 
@@ -157,7 +156,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
      * Returns the closest `KtElement` into which we are pasting the Java code.
      */
     private fun detectPasteTarget(file: KtFile, startOffset: Int, endOffset: Int): KtElement? {
-        if (isNoConversionPosition(file, startOffset)) return null
+        if (!isConversionSupportedAtPosition(file, startOffset)) return null
 
         val fileText = file.text
         val dummyDeclarationText = "fun dummy(){}"
@@ -302,14 +301,13 @@ private class J2KTextCopyPasteConverter(
         val additionalImports = tryToResolveImports(dataForConversion, targetFile)
         ProgressManager.checkCanceled()
 
-        val targetModule = targetFile.module
         val importsInsertOffset = targetFile.importList?.endOffset ?: 0
-        var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetModule, targetFile, j2kKind).text
+        var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetFile, j2kKind).text
         if (targetFile.importDirectives.isEmpty() && importsInsertOffset > 0) {
             convertedImportsText = "\n" + convertedImportsText
         }
 
-        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetModule, targetFile, j2kKind)
+        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, j2kKind)
         val convertedText = conversionResult.text
         ProgressManager.checkCanceled()
 
