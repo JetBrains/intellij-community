@@ -6,8 +6,8 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions;
+import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,10 +23,10 @@ public class KotlinPasteFromJavaDialog extends DialogWrapper {
         super(project, true);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
-        setTitle(KotlinBundle.message("copy.title.convert.code.from.java"));
+        setTitle(KotlinNJ2KBundle.message("copy.title.convert.code.from.java"));
         if (isPlainText) {
             questionLabel.setText(
-                    KotlinBundle.message("copy.text.clipboard.content.seems.to.be.java.code.do.you.want.to.convert.it.to.kotlin"));
+                    KotlinNJ2KBundle.message("copy.text.clipboard.content.seems.to.be.java.code.do.you.want.to.convert.it.to.kotlin"));
             //TODO: should we also use different set of settings?
         }
         init();

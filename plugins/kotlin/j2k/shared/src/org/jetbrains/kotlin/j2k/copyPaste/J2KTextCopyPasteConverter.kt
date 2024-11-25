@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
  * Runs J2K on the pasted code and updates [targetFile] as a side effect.
  * Used by [ConvertTextJavaCopyPasteProcessor].
  */
-class J2KTextCopyPasteConverter(
+internal class J2KTextCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val dataForConversion: DataForConversion,
@@ -67,7 +67,8 @@ class J2KTextCopyPasteConverter(
     }
 
     private fun tryToResolveImports(dataForConversion: DataForConversion, targetFile: KtFile): ElementAndTextList {
-        val imports = PlainTextPasteImportResolver(dataForConversion, targetFile).generateRequiredImports()
+        val resolver = J2kConverterExtension.extension(j2kKind).createPlainTextPasteImportResolver(dataForConversion, targetFile)
+        val imports = resolver.generateRequiredImports()
         val newlineSeparatedImports = imports.flatMap { importStatement ->
             listOf("\n", importStatement)
         } + "\n\n"

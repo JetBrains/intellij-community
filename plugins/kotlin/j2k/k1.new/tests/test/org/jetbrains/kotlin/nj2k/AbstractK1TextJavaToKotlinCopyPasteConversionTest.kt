@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import org.jetbrains.kotlin.idea.conversion.copy.AbstractTextJavaToKotlinCopyPasteConversionTest
+import org.jetbrains.kotlin.j2k.AbstractTextJavaToKotlinCopyPasteConversionTest
 
 abstract class AbstractK1TextJavaToKotlinCopyPasteConversionTest : AbstractTextJavaToKotlinCopyPasteConversionTest() {
 }

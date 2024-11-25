@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.ParseContext
-import org.jetbrains.kotlin.j2k.ParseContext.*
+import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
+import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -25,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
  * Runs J2K on the pasted code and updates [targetFile] as a side effect.
  * Used by [ConvertJavaCopyPasteProcessor].
  */
-class J2KCopyPasteConverter(
+class K1J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val dataForConversion: DataForConversion,
@@ -33,7 +34,7 @@ class J2KCopyPasteConverter(
     private val targetFile: KtFile,
     private val targetBounds: RangeMarker,
     private val targetDocument: Document
-) {
+) : J2KCopyPasteConverter {
     /**
      * @property changedText The transformed Kotlin code, or `null` if no conversion occurred (the result is the same as original code).
      * @property referenceData A list of references within the converted Kotlin code that may need to be processed or resolved.
@@ -48,7 +49,7 @@ class J2KCopyPasteConverter(
 
     private lateinit var result: Result
 
-    fun convert() {
+    override fun convert() {
         if (!::result.isInitialized && convertAndRestoreReferencesIfTextIsUnchanged()) return
 
         val (changedText, referenceData, importsToAdd, converterContext) = result
@@ -66,15 +67,7 @@ class J2KCopyPasteConverter(
         runPostProcessing(project, targetFile, newBounds, converterContext, j2kKind)
     }
 
-    /**
-     * This is a shortcut for copy-pasting trivial code that doesn't need to be converted (for example, a single identifier).
-     * In this case, we don't bother showing a J2K dialog and only restore references / insert required imports in the Kotlin file.
-     *
-     * Always runs the J2K conversion once and saves the result for later reference.
-     *
-     * @return `true` if the conversion text remains unchanged; `false` otherwise.
-     */
-    fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
+    override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
         fun runConversion() {
             val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, j2kKind)
             val (text, parseContext, importsToAdd, isTextChanged, converterContext) = conversionResult

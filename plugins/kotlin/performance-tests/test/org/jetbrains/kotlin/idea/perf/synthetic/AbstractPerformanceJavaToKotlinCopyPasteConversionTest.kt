@@ -10,7 +10,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures
-import org.jetbrains.kotlin.idea.conversion.copy.AbstractJavaToKotlinCopyPasteConversionTest
+import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP

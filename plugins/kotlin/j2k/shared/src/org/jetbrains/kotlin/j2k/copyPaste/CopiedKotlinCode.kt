@@ -3,8 +3,7 @@
 package org.jetbrains.kotlin.j2k.copyPaste
 
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-
+import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import java.awt.datatransfer.DataFlavor
 
 /**
@@ -15,6 +14,6 @@ class CopiedKotlinCode : TextBlockTransferableData {
     override fun getFlavor(): DataFlavor = DATA_FLAVOR
 
     companion object {
-        val DATA_FLAVOR: DataFlavor = DataFlavor(CopiedKotlinCode::class.java, KotlinBundle.message("copy.text.copied.kotlin.code"))
+        val DATA_FLAVOR: DataFlavor = DataFlavor(CopiedKotlinCode::class.java, KotlinNJ2KBundle.message("copy.text.copied.kotlin.code"))
     }
 }

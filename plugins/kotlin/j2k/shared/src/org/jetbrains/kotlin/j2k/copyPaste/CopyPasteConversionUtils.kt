@@ -10,8 +10,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.NewJ2k
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
@@ -21,6 +19,7 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
@@ -53,7 +52,7 @@ fun ElementAndTextList.convertCodeToKotlin(
         ThrowableComputable {
             runReadAction { converter.elementsToKotlin(inputElements) }
         },
-        JavaToKotlinAction.Handler.title,
+        KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
         true,
         project
     )
@@ -162,7 +161,7 @@ fun runPostProcessing(
         }
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             runnable,
-            KotlinBundle.message("copy.text.convert.java.to.kotlin.title"),
+            KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),
             /* canBeCanceled = */ true,
             project
         )
