@@ -23,7 +23,7 @@ data class RepositoryCountEntity(override val eid: EID) : Entity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<RepositoryCountEntity>(RepositoryCountEntity::class.java.name, "com.intellij", ::RepositoryCountEntity) {
-    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
-    val Count = requiredValue("count", Int.serializer())
+    val Project: Required<ProjectEntity> = requiredRef("project", RefFlags.UNIQUE)
+    val Count: Required<Int> = requiredValue("count", Int.serializer())
   }
 }

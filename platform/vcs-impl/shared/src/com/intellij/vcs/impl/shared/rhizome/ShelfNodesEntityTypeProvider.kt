@@ -3,20 +3,30 @@ package com.intellij.vcs.impl.shared.rhizome
 
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
-import com.intellij.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class ShelfEntityTypeProvider : EntityTypeProvider {
-  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity, ShelvedChangeListEntity, ShelvedChangeEntity, TagNodeEntity, SelectShelveChangeEntity, GroupingItemsEntity, GroupingItemEntity, ModuleNodeEntity, FilePathNodeEntity, RepositoryNodeEntity, DiffSplitterEntity)
+/**
+ * A provider that supplies a list of entity types related to shelf nodes.
+ */
+class ShelfNodesEntityTypeProvider : EntityTypeProvider {
+  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity,
+                                                           ShelvedChangeListEntity,
+                                                           ShelvedChangeEntity,
+                                                           TagNodeEntity,
+                                                           ModuleNodeEntity,
+                                                           FilePathNodeEntity,
+                                                           RepositoryNodeEntity)
 }
 
+/**
+ * Represents a common mixin node entity for all shelf tree nodes, which can have children and maintains an order within its parent.
+ */
 @ApiStatus.Internal
-interface NodeEntity : Entity {
+sealed interface NodeEntity : Entity {
   val children: Set<NodeEntity>
     get() = this[Children]
 
@@ -30,6 +40,9 @@ interface NodeEntity : Entity {
   }
 }
 
+/**
+ * Represents the root entity of a shelves tree structure within a project.
+ */
 @ApiStatus.Internal
 data class ShelvesTreeRootEntity(override val eid: EID) : NodeEntity {
   val project: ProjectEntity by Project
@@ -76,6 +89,9 @@ data class ShelvedChangeEntity(override val eid: EID) : NodeEntity {
   }
 }
 
+/**
+ * Represents a tag node entity within the changes tree, such as the "Recently deleted" node.
+ */
 @ApiStatus.Internal
 data class TagNodeEntity(override val eid: EID) : NodeEntity {
   val text: String by Text
@@ -136,53 +152,5 @@ data class FilePathNodeEntity(override val eid: EID) : NodeEntity {
     val ParentPath = optionalValue("filePath", String.serializer())
     val OriginText = optionalValue("originText", String.serializer())
     val IsDirectory = requiredValue("isDirectory", Boolean.serializer())
-  }
-}
-
-@ApiStatus.Internal
-data class SelectShelveChangeEntity(override val eid: EID) : Entity {
-  val changeList: ShelvedChangeListEntity by ChangeList
-  val change: ShelvedChangeEntity? by Change
-  val project: ProjectEntity by Project
-
-  @ApiStatus.Internal
-  companion object : DurableEntityType<SelectShelveChangeEntity>(SelectShelveChangeEntity::class.java.name, "com.intellij", ::SelectShelveChangeEntity) {
-    val ChangeList = requiredRef<ShelvedChangeListEntity>("ChangeList")
-    val Change = optionalRef<ShelvedChangeEntity>("Change")
-    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
-  }
-}
-
-@ApiStatus.Internal
-data class GroupingItemsEntity(override val eid: EID) : Entity {
-  val place: String by Place
-  val items by Items
-
-  @ApiStatus.Internal
-  companion object : DurableEntityType<GroupingItemsEntity>(GroupingItemsEntity::class.java.name, "com.intellij", ::GroupingItemsEntity) {
-    val Place = requiredValue("place", String.serializer())
-    val Items = manyRef<GroupingItemEntity>("items", RefFlags.CASCADE_DELETE)
-  }
-}
-
-@ApiStatus.Internal
-data class GroupingItemEntity(override val eid: EID) : Entity {
-  val name by Name
-
-  @ApiStatus.Internal
-  companion object : DurableEntityType<GroupingItemEntity>(GroupingItemEntity::class.java.name, "com.intellij", ::GroupingItemEntity) {
-    val Name = requiredValue("name", String.serializer(), Indexing.UNIQUE)
-  }
-}
-
-@ApiStatus.Internal
-data class DiffSplitterEntity(override val eid: EID) : Entity {
-  val splitter: PreviewDiffSplitterComponent by Splitter
-  val project: ProjectEntity by Project
-
-  @ApiStatus.Internal
-  companion object : DurableEntityType<DiffSplitterEntity>(DiffSplitterEntity::class.java.name, "com.intellij", ::DiffSplitterEntity) {
-    val Splitter = requiredTransient<PreviewDiffSplitterComponent>("splitter")
-    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
   }
 }
