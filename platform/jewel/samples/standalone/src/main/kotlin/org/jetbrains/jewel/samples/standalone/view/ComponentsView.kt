@@ -35,7 +35,7 @@ import org.jetbrains.jewel.ui.theme.tooltipStyle
 fun ComponentsView() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         ComponentsToolBar()
-        Divider(Orientation.Vertical)
+        Divider(Orientation.Vertical, Modifier.fillMaxHeight())
         ComponentView(ComponentsViewModel.currentView)
     }
 }

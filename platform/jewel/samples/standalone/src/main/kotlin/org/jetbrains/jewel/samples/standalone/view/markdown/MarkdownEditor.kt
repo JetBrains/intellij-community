@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -23,12 +24,14 @@ import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import com.darkrockstudios.libraries.mpfilepicker.JvmFile
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
-import org.jetbrains.jewel.ui.component.ComboBox
 import org.jetbrains.jewel.ui.component.Divider
+import org.jetbrains.jewel.ui.component.ListComboBox
+import org.jetbrains.jewel.ui.component.ListItemState
 import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.PopupMenu
+import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
+import org.jetbrains.jewel.ui.theme.simpleListItemStyle
 
 @Composable
 internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier) {
@@ -37,14 +40,18 @@ internal fun MarkdownEditor(state: TextFieldState, modifier: Modifier = Modifier
             modifier = Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),
             onLoadMarkdown = { state.edit { replace(0, length, it) } },
         )
-        Divider(orientation = Orientation.Horizontal)
+        Divider(orientation = Orientation.Horizontal, Modifier.fillMaxWidth())
         Editor(state = state, modifier = Modifier.fillMaxWidth().weight(1f))
     }
 }
 
 @Composable
 private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) -> Unit) {
-    Row(modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    Row(
+        modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         var showFilePicker by remember { mutableStateOf(false) }
         OutlinedButton(onClick = { showFilePicker = true }, modifier = Modifier.padding(start = 2.dp)) {
             Text("Load file...")
@@ -63,36 +70,29 @@ private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) 
 
         OutlinedButton(onClick = { onLoadMarkdown("") }) { Text("Clear") }
 
-        Box {
-            var selected by remember { mutableStateOf("Jewel readme") }
-            ComboBox(
-                modifier = Modifier.width(140.dp),
-                labelText = selected,
-                popupContent = {
-                    PopupMenu(horizontalAlignment = Alignment.Start, onDismissRequest = { true }) {
-                        selectableItem(
-                            selected = selected == "Jewel readme",
-                            onClick = {
-                                selected = "Jewel readme"
-                                onLoadMarkdown(JewelReadme)
-                            },
-                        ) {
-                            Text("Jewel readme")
-                        }
+        Spacer(Modifier.weight(1f))
 
-                        selectableItem(
-                            selected = selected == "Markdown catalog",
-                            onClick = {
-                                selected = "Markdown catalog"
-                                onLoadMarkdown(MarkdownCatalog)
-                            },
-                        ) {
-                            Text("Markdown catalog")
-                        }
-                    }
-                },
-            )
-        }
+        val comboBoxItems = remember { listOf("Jewel readme", "Markdown catalog") }
+        var selected by remember { mutableStateOf("Jewel readme") }
+        ListComboBox(
+            items = comboBoxItems,
+            modifier = Modifier.width(170.dp).padding(end = 2.dp),
+            isEditable = false,
+            maxPopupHeight = 150.dp,
+            onSelectedItemChange = {
+                selected = it
+                onLoadMarkdown(if (selected == "Jewel readme") JewelReadme else MarkdownCatalog)
+            },
+            listItemContent = { item, isSelected, _, isItemHovered, isPreviewSelection ->
+                SimpleListItem(
+                    text = item,
+                    state = ListItemState(isSelected, isItemHovered, isPreviewSelection),
+                    modifier = Modifier,
+                    style = JewelTheme.simpleListItemStyle,
+                    contentDescription = item,
+                )
+            },
+        )
     }
 }
 

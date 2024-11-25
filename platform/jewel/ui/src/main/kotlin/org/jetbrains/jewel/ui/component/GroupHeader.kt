@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +22,7 @@ public fun GroupHeader(
 
         Divider(
             orientation = Orientation.Horizontal,
+            modifier = Modifier.fillMaxWidth(),
             color = style.colors.divider,
             thickness = style.metrics.dividerThickness,
             startIndent = style.metrics.indent,

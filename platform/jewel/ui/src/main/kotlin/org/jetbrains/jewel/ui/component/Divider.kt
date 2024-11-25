@@ -15,6 +15,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.DividerStyle
 import org.jetbrains.jewel.ui.theme.dividerStyle
+import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 public fun Divider(
@@ -25,13 +26,6 @@ public fun Divider(
     startIndent: Dp = Dp.Unspecified,
     style: DividerStyle = JewelTheme.dividerStyle,
 ) {
-    val indentModifier =
-        if (startIndent.value != 0f) {
-            Modifier.padding(start = startIndent.takeOrElse { style.metrics.startIndent })
-        } else {
-            Modifier
-        }
-
     val actualThickness = thickness.takeOrElse { style.metrics.thickness }
     val orientationModifier =
         when (orientation) {
@@ -40,5 +34,10 @@ public fun Divider(
         }
 
     val lineColor = color.takeOrElse { style.color }
-    Box(modifier.then(indentModifier).then(orientationModifier).background(color = lineColor))
+    Box(
+        modifier
+            .thenIf(startIndent.value != 0f) { padding(start = startIndent.takeOrElse { style.metrics.startIndent }) }
+            .then(orientationModifier)
+            .background(color = lineColor)
+    )
 }

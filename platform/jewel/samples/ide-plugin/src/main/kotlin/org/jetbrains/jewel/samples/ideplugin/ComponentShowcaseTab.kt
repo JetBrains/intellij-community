@@ -294,7 +294,7 @@ private fun RowScope.ColumnTwo(project: Project) {
     Column(Modifier.trackActivation().weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         MarkdownExample(project)
 
-        Divider(Orientation.Horizontal)
+        Divider(Orientation.Horizontal, Modifier.fillMaxWidth())
 
         var activated by remember { mutableStateOf(false) }
         Text("activated: $activated", Modifier.onActivated { activated = it })

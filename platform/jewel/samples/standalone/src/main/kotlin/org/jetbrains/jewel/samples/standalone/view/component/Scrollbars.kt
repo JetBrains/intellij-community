@@ -158,6 +158,7 @@ private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
                         if (index != LIST_ITEMS.lastIndex) {
                             Divider(
                                 orientation = Orientation.Horizontal,
+                                modifier = Modifier.fillMaxWidth(),
                                 color = JewelTheme.globalColors.borders.normal,
                             )
                         }

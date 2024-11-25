@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -56,7 +55,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
 import org.jetbrains.jewel.markdown.WithInlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
-import org.jetbrains.jewel.ui.Orientation.Horizontal
+import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.Text
@@ -182,7 +181,12 @@ public open class DefaultMarkdownBlockRenderer(
 
             if (underlineWidth > 0.dp && underlineColor.isSpecified) {
                 Spacer(Modifier.height(underlineGap))
-                Divider(Horizontal, color = underlineColor, thickness = underlineWidth)
+                Divider(
+                    orientation = Orientation.Horizontal,
+                    modifier = Modifier.fillMaxWidth(),
+                    color = underlineColor,
+                    thickness = underlineWidth,
+                )
             }
         }
     }
@@ -415,7 +419,12 @@ public open class DefaultMarkdownBlockRenderer(
 
     @Composable
     override fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak) {
-        Box(Modifier.padding(styling.padding).height(styling.lineWidth).background(styling.lineColor))
+        Divider(
+            orientation = Orientation.Horizontal,
+            modifier = Modifier.padding(styling.padding).fillMaxWidth(),
+            color = styling.lineColor,
+            thickness = styling.lineWidth,
+        )
     }
 
     @Composable
