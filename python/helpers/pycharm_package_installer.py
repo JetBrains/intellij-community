@@ -1,33 +1,31 @@
 #!/usr/bin/env python3
 r"""
-This script will install Poetry and its dependencies in an isolated fashion.
+This script will install Package and its dependencies in an isolated fashion.
 
 It will perform the following steps:
     * Create a new virtual environment using the built-in venv module, or the virtualenv zipapp if venv is unavailable.
-      This will be created at a platform-specific path (or `$POETRY_HOME` if `$POETRY_HOME` is set:
-        - `~/Library/Application Support/pypoetry` on macOS
-        - `$XDG_DATA_HOME/pypoetry` on Linux/Unix (`$XDG_DATA_HOME` is `~/.local/share` if unset)
-        - `%APPDATA%\pypoetry` on Windows
+      This will be created at a platform-specific path:
+        - `~/Library/Application Support/package_name` on macOS
+        - `$XDG_DATA_HOME/package_name` on Linux/Unix (`$XDG_DATA_HOME` is `~/.local/share` if unset)
+        - `%APPDATA%\package_name` on Windows
     * Update pip inside the virtual environment to avoid bugs in older versions.
-    * Install the latest (or a given) version of Poetry inside this virtual environment using pip.
-    * Install a `poetry` script into a platform-specific path (or `$POETRY_HOME/bin` if `$POETRY_HOME` is set):
+    * Install the latest (or a given) version of package inside this virtual environment using pip.
+    * Install a script into a platform-specific path:
         - `~/.local/bin` on Unix
         - `%APPDATA%\Python\Scripts` on Windows
     * Attempt to inform the user if they need to add this bin directory to their `$PATH`, as well as how to do so.
-    * Upon failure, write an error log to `poetry-installer-error-<hash>.log and restore any previous environment.
+    * Upon failure, write an error log to `package-installer-error-<hash>.log and restore any previous environment.
 
 This script performs minimal magic, and should be relatively stable. However, it is optimized for interactive developer
 use and trivial pipelines. If you are considering using this script in production, you should consider manually-managed
 installs, or use of pipx as alternatives to executing arbitrary, unversioned code from the internet. If you prefer this
 script to alternatives, consider maintaining a local copy as part of your infrastructure.
-
-For full documentation, visit https://python-poetry.org/docs/#installation.
 """  # noqa: E501
 import sys
 
 # Eager version check so we fail nicely before possible syntax errors
 if sys.version_info < (3, 6):  # noqa: UP036
-    sys.stdout.write("Poetry installer requires Python 3.6 or newer to run!\n")
+    sys.stdout.write("Installer requires Python 3.6 or newer to run!\n")
     sys.exit(1)
 
 import argparse
@@ -48,16 +46,7 @@ WINDOWS = sys.platform.startswith("win") or (sys.platform == "cli" and os.name =
 MINGW = sysconfig.get_platform().startswith("mingw")
 MACOS = sys.platform == "darwin"
 
-
-def string_to_bool(value):
-    value = value.lower()
-
-    return value in {"true", "1", "y", "yes"}
-
-def data_dir() -> Path:
-    if os.getenv("POETRY_HOME"):
-        return Path(os.getenv("POETRY_HOME")).expanduser()
-
+def data_dir(package_dir_name) -> Path:
     if WINDOWS:
         base_dir = Path(_get_win_folder("CSIDL_APPDATA"))
     elif MACOS:
@@ -66,12 +55,9 @@ def data_dir() -> Path:
         base_dir = Path(os.getenv("XDG_DATA_HOME", "~/.local/share")).expanduser()
 
     base_dir = base_dir.resolve()
-    return base_dir / "pypoetry"
+    return base_dir / package_dir_name
 
 def bin_dir() -> Path:
-    if os.getenv("POETRY_HOME"):
-        return Path(os.getenv("POETRY_HOME")).expanduser() / "bin"
-
     if WINDOWS and not MINGW:
         return Path(_get_win_folder("CSIDL_APPDATA")) / "Python/Scripts"
     else:
@@ -129,34 +115,29 @@ if WINDOWS:
     except ImportError:
         _get_win_folder = _get_win_folder_from_registry
 
-PRE_MESSAGE = """# Welcome to {poetry}!
+PRE_MESSAGE = """# Welcome to {package}!
 
-This will download and install the latest version of {poetry},
+This will download and install the latest version of {package},
 a dependency and package manager for Python.
 
-It will add the `poetry` command to {poetry}'s bin directory, located at:
+It will add the `{package}` command to {package}'s bin directory, located at:
 
-{poetry_home_bin}
+{package_home_bin}
 
 You can uninstall at any time by executing this script with the --uninstall option,
 and these changes will be reverted.
 """
 
-POST_MESSAGE = """{poetry} ({version}) is installed now. Great!
+POST_MESSAGE = """{package} ({version}) is installed now. Great!
 
 You can test that everything is set up by executing:
 
 `{test_command}`
 """
 
-POST_MESSAGE_CONFIGURE_UNIX = """export PATH="{poetry_home_bin}:$PATH\""""
+POST_MESSAGE_CONFIGURE_FISH = """set -U fish_user_paths {package_home_bin} $fish_user_paths"""
 
-POST_MESSAGE_CONFIGURE_FISH = """set -U fish_user_paths {poetry_home_bin} $fish_user_paths"""
-
-POST_MESSAGE_CONFIGURE_WINDOWS = """"""
-
-
-class PoetryInstallationError(RuntimeError):
+class PackageInstallationError(RuntimeError):
     def __init__(self, return_code: int = 0, log: Optional[str] = None):
         super().__init__()
         self.return_code = return_code
@@ -216,19 +197,19 @@ class VirtualEnvironment:
                 f"https://bootstrap.pypa.io/virtualenv/{python_version}/virtualenv.pyz"
             )
 
-            with tempfile.TemporaryDirectory(prefix="poetry-installer") as temp_dir:
+            with tempfile.TemporaryDirectory(prefix="package-installer") as temp_dir:
                 virtualenv_pyz = Path(temp_dir) / "virtualenv.pyz"
                 request = Request(
-                    virtualenv_bootstrap_url, headers={"User-Agent": "Python Poetry"}
+                    virtualenv_bootstrap_url, headers={"User-Agent": "Python Package Installer"}
                 )
                 virtualenv_pyz.write_bytes(urlopen(request).read())
                 cls.run(
                     sys.executable, virtualenv_pyz, "--clear", "--always-copy", target
                 )
 
-        # We add a special file so that Poetry can detect
+        # We add a special file so that package can detect
         # its own virtual environment
-        target.joinpath("poetry_env").touch()
+        target.joinpath("package_env").touch()
 
         env = cls(target)
 
@@ -246,7 +227,7 @@ class VirtualEnvironment:
             **kwargs,
         )
         if completed_process.returncode != 0:
-            raise PoetryInstallationError(
+            raise PackageInstallationError(
                 return_code=completed_process.returncode,
                 log=completed_process.stdout,
             )
@@ -262,9 +243,11 @@ class VirtualEnvironment:
 class Installer:
     def __init__(
             self,
+            name,
             target_version: Optional[str] = None,
             path: Optional[str] = None,
     ) -> None:
+        self._name = name
         self._version = target_version
         self._path = path
         self._bin_dir = None
@@ -279,7 +262,7 @@ class Installer:
     @property
     def data_dir(self) -> Path:
         if not self._data_dir:
-            self._data_dir = data_dir()
+            self._data_dir = data_dir(self._name)
         return self._data_dir
 
     def run(self) -> int:
@@ -291,7 +274,7 @@ class Installer:
         try:
             self.install(install_version)
         except subprocess.CalledProcessError as e:
-            raise PoetryInstallationError(
+            raise PackageInstallationError(
                 return_code=e.returncode, log=e.output.decode()
             ) from e
 
@@ -302,15 +285,15 @@ class Installer:
 
     def install(self, version):
         """
-        Installs Poetry in $POETRY_HOME.
+        Installs Package.
         """
         self._write(
-            "Installing {} ({})".format("Poetry",
+            "Installing {} ({})".format(self._name,
                                         version if version is not None else "latest")
         )
 
         with self.make_env(version) as env:
-            self.install_poetry(version, env)
+            self.install_package(version, env)
             self.make_bin(version, env)
             self._install_comment(version, "Done")
 
@@ -319,7 +302,7 @@ class Installer:
     def _install_comment(self, version: str, message: str):
         self._write(
             "Installing {} ({}): {}".format(
-                "Poetry",
+                self._name,
                 version if version is not None else "latest",
                 message
             )
@@ -361,7 +344,7 @@ class Installer:
         self._install_comment(version, "Creating script")
         self.bin_dir.mkdir(parents=True, exist_ok=True)
 
-        script = "poetry.exe" if WINDOWS else "poetry"
+        script = "{package}.exe".format(package=self._name) if WINDOWS else "{package}".format(package=self._name)
         target_script = env.bin_path.joinpath(script)
 
         if self.bin_dir.joinpath(script).exists():
@@ -374,22 +357,22 @@ class Installer:
             # does not have the correct permission on Windows
             shutil.copy(target_script, self.bin_dir.joinpath(script))
 
-    def install_poetry(self, version: str, env: VirtualEnvironment) -> None:
-        self._install_comment(version, "Installing Poetry")
+    def install_package(self, version: str, env: VirtualEnvironment) -> None:
+        self._install_comment(version, "Installing {package}".format(package=self._name))
 
         if self._path:
             specification = version
         elif version is not None:
-            specification = f"poetry=={version}"
+            specification = "{package}=={version}".format(package=self._name, version=version)
         else:
-            specification = "poetry"
+            specification = "{package}".format(package=self._name)
 
         env.pip("install", specification)
 
     def display_pre_message(self) -> None:
         kwargs = {
-            "poetry": "Poetry",
-            "poetry_home_bin": self.bin_dir,
+            "package": self._name,
+            "package_home_bin": self.bin_dir,
         }
         self._write(PRE_MESSAGE.format(**kwargs))
 
@@ -409,16 +392,16 @@ class Installer:
         path = self.get_windows_path_var()
 
         if not path or str(self.bin_dir) not in path:
-            command = POST_MESSAGE_CONFIGURE_WINDOWS.format(
-                poetry_home_bin=self.bin_dir
-            )
-            os.system(command)
+            current_path = os.environ.get('PATH', '')
+            new_path = "{current_path};{new_path}".format(current_path=current_path, new_path=self.bin_dir)
+            os.environ['PATH'] = new_path
+            subprocess.run("setx PATH {new_path}".format(new_path=new_path), shell=True)
 
         self._write(
             POST_MESSAGE.format(
-                poetry="Poetry",
+                package=self._name,
                 version=version,
-                test_command="poetry --version",
+                test_command="{package} --version".format(package=self._name),
             )
         )
 
@@ -439,15 +422,15 @@ class Installer:
 
         if not fish_user_paths or str(self.bin_dir) not in fish_user_paths:
             command = POST_MESSAGE_CONFIGURE_FISH.format(
-                poetry_home_bin=self.bin_dir
+                package_home_bin=self.bin_dir
             )
             os.system(command)
 
         self._write(
             POST_MESSAGE.format(
-                poetry="Poetry",
+                package=self._name,
                 version=version,
-                test_command="poetry --version",
+                test_command="{package} --version".format(package=self._name),
             )
         )
 
@@ -455,16 +438,24 @@ class Installer:
         paths = os.getenv("PATH", "").split(":")
 
         if not paths or str(self.bin_dir) not in paths:
-            command = POST_MESSAGE_CONFIGURE_UNIX.format(
-                poetry_home_bin=self.bin_dir
-            )
-            os.system(command)
+            home = os.path.expanduser("~")
+            if SHELL and "zsh" in SHELL:
+                config_file = os.path.join(home, ".zshrc")
+            else:
+                config_file = os.path.join(home, ".bashrc")
+
+            if not os.path.exists(config_file):
+                with open(config_file, "w") as file:
+                    file.write("#Created config file\n")
+
+            with open(config_file, "a") as file:
+                file.write("\nexport PATH=$PATH:{new_path}\n".format(new_path=self.bin_dir))
 
         self._write(
             POST_MESSAGE.format(
-                poetry="Poetry",
+                package=self._name,
                 version=version,
-                test_command="poetry --version",
+                test_command="{package} --version".format(package=self._name),
             )
         )
 
@@ -478,8 +469,9 @@ class Installer:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Installs the latest (or given) version of poetry"
+        description="Installs the latest (or given) version of package"
     )
+    parser.add_argument("-n", "--name", required=True)
     parser.add_argument("--version", help="install named version", dest="version")
     parser.add_argument(
         "--path",
@@ -487,28 +479,29 @@ def main():
         action="store",
         help=(
             "Install from a given path (file or directory) instead of "
-            "fetching the latest version of Poetry available online."
+            "fetching the latest version of package available online."
         ),
     )
 
     args = parser.parse_args()
 
     installer = Installer(
-        target_version=args.version or os.getenv("POETRY_VERSION"),
+        name=args.name,
+        target_version=args.version,
         path=args.path,
     )
 
     try:
         return installer.run()
-    except PoetryInstallationError as e:
-        installer._write("Poetry installation failed.")
+    except PackageInstallationError as e:
+        installer._write("{package} installation failed.".format(package=args.name))
 
         if e.log is not None:
             import traceback
 
             _, path = tempfile.mkstemp(
                 suffix=".log",
-                prefix="poetry-installer-error-",
+                prefix="package-installer-error-",
                 dir=str(Path.cwd()),
                 text=True,
             )

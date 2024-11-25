@@ -9,8 +9,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.poetry.PyProjectTomlPythonVersionsService
-import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPythonVersionsService
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.poetry.configurePoetryEnvironment
 import com.jetbrains.python.sdk.poetry.poetryPath
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.StateFlow
 class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreterModel, private val moduleOrProject: ModuleOrProject?) : CustomNewEnvironmentCreator("poetry", model) {
   override val interpreterType: InterpreterType = InterpreterType.POETRY
   override val executable: ObservableMutableProperty<String> = model.state.poetryExecutable
-  override val installationScript = PythonHelpersLocator.findPathInHelpers("pycharm_poetry_installer.py")
 
   override fun onShown() {
     val moduleDir = when (moduleOrProject) {

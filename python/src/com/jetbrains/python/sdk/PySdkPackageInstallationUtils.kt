@@ -127,5 +127,5 @@ internal suspend fun installPipIfNeeded(pythonExecutable: String) {
  */
 @Internal
 @RequiresBackgroundThread
-fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String) =
-  runCommandLine(GeneralCommandLine(pythonExecutable, scriptPath.absolutePathString())).getOrThrow()
+fun installExecutableViaPythonScript(scriptPath: Path, pythonExecutable: String, vararg args: String) =
+  runCommandLine(GeneralCommandLine(pythonExecutable, scriptPath.absolutePathString(), *args)).getOrThrow()
