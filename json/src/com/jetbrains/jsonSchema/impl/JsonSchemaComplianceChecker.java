@@ -59,7 +59,7 @@ public final class JsonSchemaComplianceChecker {
   }
 
   public void annotate(final @NotNull PsiElement element) {
-    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaType(myRootSchema.getId());
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaType(myRootSchema);
     doAnnotate(element);
     JsonSchemaHighlightingSessionStatisticsCollector.getInstance().flushHighlightingSessionDataToFus();
   }

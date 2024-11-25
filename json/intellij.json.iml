@@ -32,5 +32,6 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.json.split" exported="" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
   </component>
 </module>

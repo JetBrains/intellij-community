@@ -4,7 +4,6 @@ package com.jetbrains.jsonSchema.fus
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexpReference
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 internal object JsonFeatureUsageCollector : CounterUsagesCollector() {
   private val jsonSchemaGroup = EventLogGroup(
     id = "json.schema.features",
-    version = 2,
+    version = 3,
   )
 
   internal val jsonSchemaHighlightingSessionData =
@@ -32,7 +31,7 @@ sealed interface JsonSchemaFusFeature {
   companion object {
     fun getAllRegistered(): List<EventField<*>> {
       return listOf(
-        JsonSchemaFusRegexpFeature.entries,
+        JsonSchemaFusAllowedListFeature.entries,
         JsonSchemaFusCountedUniqueFeature.entries,
         JsonSchemaFusCountedFeature.entries
       ).flatten()
@@ -41,8 +40,8 @@ sealed interface JsonSchemaFusFeature {
   }
 }
 
-enum class JsonSchemaFusRegexpFeature(override val event: StringEventField) : JsonSchemaFusFeature {
-  JsonFusSchemaId(StringValidatedByRegexpReference("schema_id", "^(https?):\\/\\/[^\\s/$.?#].[^\\s]*$", "JSON schema ID"))
+enum class JsonSchemaFusAllowedListFeature(override val event: StringEventField) : JsonSchemaFusFeature {
+  JsonFusSchemaId(EventFields.StringValidatedByCustomRule("schema_id", JsonSchemaIdValidationRule::class.java, "JSON schema ID"))
 }
 
 enum class JsonSchemaFusCountedUniqueFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
