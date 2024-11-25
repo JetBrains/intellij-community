@@ -15,6 +15,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import kotlinx.coroutines.*
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -49,9 +51,11 @@ internal object ITNProxy {
   private val TEMPLATE: Map<String, String?> by lazy {
     val template = LinkedHashMap<String, String?>()
     template["protocol.version"] = "1.1"
-    template["os.name"] = SystemInfo.OS_NAME
+    template["os.cpu.arch"] = if (CpuArch.isEmulated()) "${CpuArch.CURRENT}(emulated)" else "${CpuArch.CURRENT}"
+    template["os.name"] = OS.CURRENT.name
+    template["os.version"] = OS.CURRENT.version
     template["host.id"] = DEVICE_ID
-    template["java.version"] = SystemInfo.JAVA_VERSION
+    template["java.version"] = SystemInfo.JAVA_RUNTIME_VERSION
     template["java.vm.vendor"] = SystemInfo.JAVA_VENDOR
     val appInfo = ApplicationInfoEx.getInstanceEx()
     val namesInfo = ApplicationNamesInfo.getInstance()
