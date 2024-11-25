@@ -261,12 +261,12 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
     }
 
     private fun DataForConversion.tryResolveImports(targetFile: KtFile): ElementAndTextList {
-        val importResolver = PlainTextPasteImportResolver(this, targetFile)
-        importResolver.addImportsFromTargetFile()
-        importResolver.tryResolveReferences()
-        return ElementAndTextList(importResolver.addedImports.flatMap { importStatement ->
+        val imports = PlainTextPasteImportResolver(this, targetFile).generateRequiredImports()
+        val newlineSeparatedImports = imports.flatMap { importStatement ->
             listOf("\n", importStatement)
-        } + "\n\n") //TODO Non-manual formatting for import list
+        } + "\n\n"
+
+        return ElementAndTextList(newlineSeparatedImports)
     }
 
     private fun prepareCopiedJavaCodeByContext(text: String, context: JavaContext, target: KtElement): CopiedJavaCode {
