@@ -53,6 +53,8 @@ import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterPartialTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileFullJDKTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinCopyPasteConversionTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2TextJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -521,6 +523,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractK2JavaToKotlinConverterMultiFileTest>(commonSuite = false) {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractK2JavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+            model("copyPaste", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2TextJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+            model("copyPastePlainText", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
         }
     }
 }

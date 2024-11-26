@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.test.*
@@ -37,33 +38,40 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractCopyPasteTe
     }
 
     fun doTest(unused: String) {
-        val path = dataFilePath(fileName())
-        withCustomCompilerOptions(File(path).readText(), project, module) {
-            val baseName = fileName().replace(".java", "")
-            myFixture.configureByFiles("$baseName.java")
+        val testFile = dataFile()
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testFile.toPath(), getDisableTestDirective(pluginMode)) {
+            withCustomCompilerOptions(testFile.readText(), project, module) {
+                doTest(testFile)
+            }
+        }
+    }
 
-            val fileText = myFixture.editor.document.text
-            val noConversionExpected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NO_CONVERSION_EXPECTED").isNotEmpty()
+    private fun doTest(testFile: File) {
+        val baseName = fileName().replace(".java", "")
+        myFixture.configureByFiles("$baseName.java")
 
-            myFixture.performEditorAction(IdeActions.ACTION_COPY)
+        val fileText = myFixture.editor.document.text
+        val noConversionExpected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NO_CONVERSION_EXPECTED").isNotEmpty()
 
-            configureByDependencyIfExists("$baseName.dependency.kt")
-            configureByDependencyIfExists("$baseName.dependency.java")
+        myFixture.performEditorAction(IdeActions.ACTION_COPY)
 
-            configureTargetFile("$baseName.to.kt")
+        configureByDependencyIfExists("$baseName.dependency.kt")
+        configureByDependencyIfExists("$baseName.dependency.java")
+
+        configureTargetFile("$baseName.to.kt")
 
             ConvertJavaCopyPasteProcessor.Util.conversionPerformed = false
 
             myFixture.performEditorAction(IdeActions.ACTION_PASTE)
             UIUtil.dispatchAllInvocationEvents()
 
-            assertEquals(
-                noConversionExpected, !ConvertJavaCopyPasteProcessor.Util.conversionPerformed,
-                if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
-            )
+        assertEquals(
+            noConversionExpected, !ConvertJavaCopyPasteProcessor.Util.conversionPerformed,
+            if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
+        )
 
-            val actualText = (myFixture.file as KtFile).dumpTextWithErrors()
-            KotlinTestUtils.assertEqualsToFile(File(path.replace(".java", ".expected.kt")), actualText)
-        }
+        val expectedFile = getExpectedFile(testFile, isCopyPaste = true, pluginMode)
+        val actualText = (myFixture.file as KtFile).getFileTextWithErrors(pluginMode)
+        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
 }

@@ -42,7 +42,7 @@ private val LOG = Logger.getInstance(ConvertTextJavaCopyPasteProcessor::class.ja
  *
  * See also [ConvertJavaCopyPasteProcessor] for the related case of code copy-pasted from a Java file into a Kotlin file.
  *
- * Tests: [org.jetbrains.kotlin.nj2k.TextNewJavaToKotlinCopyPasteConversionTestGenerated].
+ * Tests: [org.jetbrains.kotlin.j2k.k2.K2TextJavaToKotlinCopyPasteConversionTestGenerated].
  */
 class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     private class MyTransferableData(val text: String) : TextBlockTransferableData {

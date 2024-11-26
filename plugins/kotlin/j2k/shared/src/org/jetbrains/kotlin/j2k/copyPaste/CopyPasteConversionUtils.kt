@@ -10,12 +10,14 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.NewJ2k
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -137,8 +139,11 @@ fun ElementAndTextList.lineCount(): Int {
     return elements.sumOf { StringUtil.getLineBreakCount(it.text) }
 }
 
-fun getJ2kKind(targetFile: KtFile): J2kConverterExtension.Kind =
-    if (targetFile is KtCodeFragment || !NewJ2k.isEnabled) K1_OLD else K1_NEW
+fun getJ2kKind(targetFile: KtFile): J2kConverterExtension.Kind = when {
+    isK2Mode() -> K2
+    targetFile is KtCodeFragment || !NewJ2k.isEnabled -> K1_OLD
+    else -> K1_NEW
+}
 
 fun runPostProcessing(
     project: Project,
@@ -148,9 +153,9 @@ fun runPostProcessing(
     j2kKind: J2kConverterExtension.Kind
 ) {
     val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
-    if (j2kKind == K1_NEW) {
+    if (j2kKind != K1_OLD) {
         val runnable = {
-            val processor = J2kConverterExtension.extension(kind = K1_NEW).createWithProgressProcessor(
+            val processor = J2kConverterExtension.extension(j2kKind).createWithProgressProcessor(
                 ProgressManager.getInstance().progressIndicator!!,
                 emptyList(),
                 postProcessor.phasesCount
