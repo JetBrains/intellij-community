@@ -40,9 +40,9 @@ def g() -> Point:
     else:
         <warning descr="Expected type 'Point', got 'None' instead">return</warning>
 
-def h(x) -> <warning descr="Expected to return 'Point', got no return">Point</warning>:
+def h(x) -> <warning descr="Expected type 'Point', got 'None' instead">Point</warning>:
     x = 42
 
-def i() -> <warning descr="Expected to return 'Point', got no return">Point</warning>:
+def i() -> <warning descr="Expected type 'Point', got 'None' instead">Point</warning>:
     if True:
         pass

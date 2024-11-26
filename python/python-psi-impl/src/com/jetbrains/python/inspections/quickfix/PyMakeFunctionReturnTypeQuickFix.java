@@ -32,50 +32,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.jetbrains.python.inspections.PyTypeCheckerInspection.Visitor.getActualReturnType;
 
-/**
- * @author lada
- */
 public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
   private final @NotNull SmartPsiElementPointer<PyFunction> myFunction;
-  private final @Nullable SmartPsiElementPointer<PyExpression> myReturnExpr;
-  private final @Nullable SmartPsiElementPointer<PyAnnotation> myAnnotation;
-  private final @Nullable SmartPsiElementPointer<PsiComment> myTypeCommentAnnotation;
   private final String myReturnTypeName;
-  private final boolean myHaveSuggestedType;
 
-  public PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function,
-                                          @Nullable PyExpression returnExpr,
-                                          @Nullable PyType suggestedReturnType,
-                                          @NotNull TypeEvalContext context) {
-    this(function,
-         returnExpr,
-         function.getAnnotation(),
-         function.getTypeComment(),
-         suggestedReturnType != null,
-         getReturnTypeName(function, suggestedReturnType, context));
+  public PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    this(function, getReturnTypeName(function, context));
+  }
+
+  private PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function, @NotNull String returnTypeName) {
+    SmartPointerManager manager = SmartPointerManager.getInstance(function.getProject());
+    myFunction = manager.createSmartPsiElementPointer(function);
+    myReturnTypeName = returnTypeName;
   }
 
   @NotNull
-  private static String getReturnTypeName(@NotNull PyFunction function, @Nullable PyType returnType, @NotNull TypeEvalContext context) {
-    PyType type = returnType != null ? returnType : function.getReturnStatementType(context);
+  private static String getReturnTypeName(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    final PyType type = function.getInferredReturnType(context);
     return PythonDocumentationProvider.getTypeHint(type, context);
-  }
-
-  private PyMakeFunctionReturnTypeQuickFix(@NotNull PyFunction function,
-                                           @Nullable PyExpression returnExpr,
-                                           @Nullable PyAnnotation annotation,
-                                           @Nullable PsiComment typeComment,
-                                           boolean returnTypeSuggested,
-                                           @NotNull String returnTypeName) {
-    SmartPointerManager manager = SmartPointerManager.getInstance(function.getProject());
-    myFunction = manager.createSmartPsiElementPointer(function);
-    myReturnExpr = returnExpr != null ? manager.createSmartPsiElementPointer(returnExpr) : null;
-    myAnnotation = annotation != null ? manager.createSmartPsiElementPointer(annotation) : null;
-    myTypeCommentAnnotation = typeComment != null ? manager.createSmartPsiElementPointer(typeComment) : null;
-    myHaveSuggestedType = returnTypeSuggested;
-    myReturnTypeName = returnTypeName;
   }
 
   @Override
@@ -94,51 +69,46 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    if (myAnnotation != null) {
-      PyAnnotation annotation = myAnnotation.getElement();
-      if (annotation != null) {
-        PyExpression annotationExpr = annotation.getValue();
-        if (annotationExpr == null) return;
-        PsiElement newElement =
-          annotationExpr.replace(elementGenerator.createExpressionFromText(LanguageLevel.PYTHON34, myReturnTypeName));
-        addImportsForTypeAnnotations(newElement);
+    final PyFunction function = myFunction.getElement();
+    if (function == null) return;
+    
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+
+    boolean shouldAddImports = false;
+
+    PyAnnotation annotation = function.getAnnotation();
+    if (annotation != null) {
+      PyExpression annotationExpr = annotation.getValue();
+      if (annotationExpr != null) {
+        annotationExpr.replace(elementGenerator.createExpressionFromText(LanguageLevel.PYTHON34, myReturnTypeName));
+        shouldAddImports = true;
       }
     }
-    else if (myTypeCommentAnnotation != null) {
-      PsiComment typeComment = myTypeCommentAnnotation.getElement();
-      if (typeComment != null) {
-        StringBuilder typeCommentAnnotation = new StringBuilder(typeComment.getText());
-        typeCommentAnnotation.delete(typeCommentAnnotation.indexOf("->"), typeCommentAnnotation.length());
-        typeCommentAnnotation.append("-> ").append(myReturnTypeName);
-        PsiComment newTypeComment =
-          elementGenerator.createFromText(LanguageLevel.PYTHON27, PsiComment.class, typeCommentAnnotation.toString());
-        PsiElement newElement = typeComment.replace(newTypeComment);
-        addImportsForTypeAnnotations(newElement);
-      }
+    
+    PsiComment typeComment = function.getTypeComment();
+    if (typeComment != null) {
+      StringBuilder typeCommentAnnotation = new StringBuilder(typeComment.getText());
+      typeCommentAnnotation.delete(typeCommentAnnotation.indexOf("->"), typeCommentAnnotation.length());
+      typeCommentAnnotation.append("-> ").append(myReturnTypeName);
+      typeComment.replace(
+        elementGenerator.createFromText(LanguageLevel.PYTHON27, PsiComment.class, typeCommentAnnotation.toString()));
+      shouldAddImports = true;
+    }
+    
+    if (shouldAddImports) {
+      addImportsForTypeAnnotations(TypeEvalContext.userInitiated(project, function.getContainingFile()));
     }
   }
 
-  private void addImportsForTypeAnnotations(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (file == null) return;
+  private void addImportsForTypeAnnotations(@NotNull TypeEvalContext context) {
     PyFunction function = myFunction.getElement();
     if (function == null) return;
-    Project project = element.getProject();
-    TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(project, file);
-    PyType typeForImports = getTypeForImports(function, typeEvalContext);
+    PsiFile file = function.getContainingFile();
+    if (file == null) return;
+    
+    PyType typeForImports = function.getInferredReturnType(context);
     if (typeForImports != null) {
-      PyTypeHintGenerationUtil.addImportsForTypeAnnotations(List.of(typeForImports), typeEvalContext, file);
-    }
-  }
-
-  private @Nullable PyType getTypeForImports(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    PyType returnTypeActual = getActualReturnType(function, myReturnExpr != null ? myReturnExpr.getElement() : null, context);
-    if (myHaveSuggestedType && returnTypeActual != null) {
-      return returnTypeActual;
-    }
-    else {
-      return function.getReturnStatementType(context);
+      PyTypeHintGenerationUtil.addImportsForTypeAnnotations(List.of(typeForImports), context, file);
     }
   }
 
@@ -148,18 +118,6 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
     if (function == null) {
       return null;
     }
-    @Nullable PyExpression returnExpr = PyRefactoringUtil.findSameElementForPreview(myReturnExpr, target);
-    if (myReturnExpr != null && returnExpr == null) {
-      return null;
-    }
-    @Nullable PyAnnotation annotation = PyRefactoringUtil.findSameElementForPreview(myAnnotation, target);
-    if (myAnnotation != null && annotation == null) {
-      return null;
-    }
-    @Nullable PsiComment typeComment = PyRefactoringUtil.findSameElementForPreview(myTypeCommentAnnotation, target);
-    if (myTypeCommentAnnotation != null && typeComment == null) {
-      return null;
-    }
-    return new PyMakeFunctionReturnTypeQuickFix(function, returnExpr, annotation, typeComment, myHaveSuggestedType, myReturnTypeName);
+    return new PyMakeFunctionReturnTypeQuickFix(function, myReturnTypeName);
   }
 }
