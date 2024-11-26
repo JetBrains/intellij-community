@@ -94,6 +94,10 @@
     <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.github.notification.GHPushNotificationCustomizer"/>
   </extensions>
 
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.plugins.github.extensions.GHActionJsonSchemaProviderFactory"/>
+  </extensions>
+
   <actions>
     <action id="Github.Share" class="org.jetbrains.plugins.github.GithubShareAction" icon="AllIcons.Vcs.Vendors.Github">
       <add-to-group group-id="Vcs.Import"/>
