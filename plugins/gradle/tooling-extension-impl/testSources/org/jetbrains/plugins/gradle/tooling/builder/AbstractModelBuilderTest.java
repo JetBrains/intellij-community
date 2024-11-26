@@ -3,17 +3,13 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
-import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -209,14 +205,10 @@ public abstract class AbstractModelBuilderTest {
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
     return ContainerUtil.newHashSet(
-      ExternalSystemRtClass.class, // intellij.platform.externalSystem.rt
-      GradleToolingExtensionClass.class, // intellij.gradle.toolingExtension
-      GradleToolingExtensionImplClass.class, // intellij.gradle.toolingExtension.impl
       Multimap.class, // repacked gradle guava
       ShortTypeHandling.class, // groovy
       Object2ObjectMap.class, // fastutil
-      IonType.class,  // ion-java jar
-      SystemInfoRt.class // jar containing classes of `intellij.platform.util.rt` module
+      IonType.class  // ion-java jar
     );
   }
 

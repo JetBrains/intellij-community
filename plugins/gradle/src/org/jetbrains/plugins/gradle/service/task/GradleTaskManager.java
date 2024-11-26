@@ -8,8 +8,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
-import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
-import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +30,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.task.RunConfigurationTaskState;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.api.Task;
@@ -455,9 +452,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
     tools.add(taskClass);
     tools.add(GsonBuilder.class);
-    tools.add(ExternalSystemRtClass.class);
-    tools.add(GradleToolingExtensionClass.class);
-    tools.add(GradleToolingExtensionImplClass.class);
     String initScript = GradleInitScriptUtil.loadTaskInitScript(gradlePath, taskName, taskType, tools, taskConfiguration);
     runCustomTaskScript(project, executionName, projectPath, gradlePath, progressExecutionMode, callback, initScript, taskName);
   }
