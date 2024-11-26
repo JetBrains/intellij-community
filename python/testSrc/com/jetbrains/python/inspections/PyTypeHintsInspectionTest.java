@@ -671,6 +671,53 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        assert issubclass(A, <error descr="Type variables cannot be used with instance and class checks">p3</error>)""");
   }
 
+  public void testTypedDictWithInstanceAndClassChecks() {
+    doTestByText(
+      """
+        from typing import TypedDict
+
+        class Movie(TypedDict):
+            name: str
+            year: int
+        
+        Movie2 = TypedDict('Movie2', {'name': str, 'year': int})
+
+        class A:
+            pass
+
+        def foo(d):
+          if isinstance(d, <error descr="TypedDict type objects cannot be used with instance and class checks">Movie</error>):
+              pass
+
+          if isinstance(d, <error descr="TypedDict type objects cannot be used with instance and class checks">Movie2</error>):
+              pass
+
+        M = Movie
+        if issubclass(A, <error descr="TypedDict type objects cannot be used with instance and class checks">M</error>):
+            pass
+
+        M2 = Movie2
+        if issubclass(A, <error descr="TypedDict type objects cannot be used with instance and class checks">M2</error>):
+            pass
+        """
+    );
+  }
+
+  public void testTypedDictAsTypeVarBound() {
+    doTestByText(
+      """
+        from typing import TypedDict, TypeVar
+        
+        class Movie(TypedDict):
+            name: str
+            year: int
+
+        T = TypeVar("T", bound=<warning descr="TypedDict is not allowed as a bound for a TypeVar">TypedDict</warning>)
+        U = TypeVar("U", bound=Movie)
+        """
+    );
+  }
+
   // PY-16853
   public void testParenthesesAndTyping() {
     doTestByText("""

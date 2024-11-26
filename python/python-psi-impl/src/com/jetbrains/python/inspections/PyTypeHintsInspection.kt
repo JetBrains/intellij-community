@@ -376,6 +376,11 @@ class PyTypeHintsInspection : PyInspection() {
           }
         }
       }
+
+      val boundType = bound?.let { PyTypingTypeProvider.getType(it, myTypeEvalContext)?.get() }
+      if (boundType is PyClassLikeType && boundType.classQName == PyTypingTypeProvider.TYPED_DICT) {
+        registerProblem(bound, PyPsiBundle.message("INSP.type.hints.typed.dict.is.not.allowed.as.a.bound.for.a.type.var"))
+      }
     }
 
     private fun checkNameIsTheSameAsTarget(argument: PyExpression?, target: PyExpression?,
@@ -427,12 +432,12 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
-      checkInstanceAndClassChecksOnTypeVar(base)
+      checkInstanceAndClassChecksOnExpression(base)
       checkInstanceAndClassChecksOnReference(base)
       checkInstanceAndClassChecksOnSubscription(base)
     }
 
-    private fun checkInstanceAndClassChecksOnTypeVar(base: PyExpression) {
+    private fun checkInstanceAndClassChecksOnExpression(base: PyExpression) {
       val type = myTypeEvalContext.getType(base)
       if (type is PyTypeVarType && !type.isDefinition ||
           type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType } && !type.isDefinition) {
@@ -440,6 +445,11 @@ class PyTypeHintsInspection : PyInspection() {
                         PyPsiBundle.message("INSP.type.hints.type.variables.cannot.be.used.with.instance.class.checks"),
                         ProblemHighlightType.GENERIC_ERROR)
 
+      }
+      if (type is PyTypedDictType) {
+        registerProblem(base,
+                        PyPsiBundle.message("INSP.type.hints.typed.dict.type.objects.cannot.be.used.in.isinstance.tests"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
