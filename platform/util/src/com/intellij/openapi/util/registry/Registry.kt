@@ -388,6 +388,9 @@ class Registry {
     return state
   }
 
+  /**
+   * Shares modifiable map of stored properties, no defensive copying applied.
+   */
   @Internal
   fun getStoredProperties(): MutableMap<String, ValueWithSource> = userProperties
 
