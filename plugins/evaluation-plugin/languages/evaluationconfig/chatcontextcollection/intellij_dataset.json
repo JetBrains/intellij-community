@@ -5,9 +5,9 @@
     "sessionsCount": 1,
     "actions": [
       {
-        "sessionId": "b4c23b9a-861e-4386-a276-9a5da882650f",
-        "expectedText": "",
-        "offset": 1,
+        "sessionId": "10c23b9a-861e-4386-a276-9a5da882650f",
+        "expectedText": "# IntelliJ IDEA",
+        "offset": 0,
         "nodeProperties": {
           "tokenType": "METHOD",
           "location": "PROJECT",
@@ -16,6 +16,86 @@
             "prompt": "what does `spec.scramble` mean?",
             "internal_relevant_files": "build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt,remote-dev/inline-completion/backend.split/src/BackendInlineCompletionHandler.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/RdctInlineCompletionTestBase.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/LookupConflictInlineCompletionTest.kt,rider/test/framework/src/com/jetbrains/rider/test/scriptingApi/ScriptingAPI.Completion.kt",
             "internal_context_items": "build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "20c23b9a-861e-4386-a276-9a5da882650f",
+        "expectedText": "Welcome to JetBrains IntelliJ IDEA",
+        "offset": 1,
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What does SourceTreeToPsiMap class do?",
+            "internal_relevant_files": "community/platform/core-impl/src/com/intellij/psi/impl/source/SourceTreeToPsiMap.java,community/platform/core-impl/src/com/intellij/psi/impl/source/PsiFileImpl.java,community/platform/core-api/src/com/intellij/psi/PsiReference.java,ClsClassImpl,community/plugins/java-decompiler/plugin/src/org/jetbrains/java/decompiler/IdeaDecompiler.kt",
+            "internal_context_items": "community/platform/core-impl/src/com/intellij/psi/impl/source/SourceTreeToPsiMap.java"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "20c23b9a-861e-4386-a276-9a5da882650f",
+        "expectedText": "Welcome to JetBrains IntelliJ IDEA",
+        "offset": 1,
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "does replace remove only one occurence",
+            "internal_relevant_files": "community/platform/core-impl/src/com/intellij/psi/impl/source/SourceTreeToPsiMap.java,community/platform/core-impl/src/com/intellij/psi/impl/source/PsiFileImpl.java,community/platform/core-api/src/com/intellij/psi/PsiReference.java,ClsClassImpl,community/plugins/java-decompiler/plugin/src/org/jetbrains/java/decompiler/IdeaDecompiler.kt,build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt,remote-dev/inline-completion/backend.split/src/BackendInlineCompletionHandler.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/RdctInlineCompletionTestBase.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/LookupConflictInlineCompletionTest.kt,rider/test/framework/src/com/jetbrains/rider/test/scriptingApi/ScriptingAPI.Completion.kt",
+            "internal_context_items": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "30c23b9a-861e-4386-a276-9a5da882650f",
+        "expectedText": "Welcome to JetBrains IntelliJ IDEA",
+        "offset": 1,
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Give me synonym to 'override', 'reset'",
+            "internal_relevant_files": "community/platform/core-impl/src/com/intellij/psi/impl/source/SourceTreeToPsiMap.java,community/platform/core-impl/src/com/intellij/psi/impl/source/PsiFileImpl.java,community/platform/core-api/src/com/intellij/psi/PsiReference.java,ClsClassImpl,community/plugins/java-decompiler/plugin/src/org/jetbrains/java/decompiler/IdeaDecompiler.kt,build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt,remote-dev/inline-completion/backend.split/src/BackendInlineCompletionHandler.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/RdctInlineCompletionTestBase.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/LookupConflictInlineCompletionTest.kt,rider/test/framework/src/com/jetbrains/rider/test/scriptingApi/ScriptingAPI.Completion.kt",
+            "internal_context_items": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "40c23b9a-861e-4386-a276-9a5da882650f",
+        "expectedText": "Welcome to JetBrains IntelliJ IDEA",
+        "offset": 1,
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "write 10 greatest equasions",
+            "internal_relevant_files": "community/platform/core-impl/src/com/intellij/psi/impl/source/SourceTreeToPsiMap.java,community/platform/core-impl/src/com/intellij/psi/impl/source/PsiFileImpl.java,community/platform/core-api/src/com/intellij/psi/PsiReference.java,ClsClassImpl,community/plugins/java-decompiler/plugin/src/org/jetbrains/java/decompiler/IdeaDecompiler.kt,build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt,remote-dev/inline-completion/backend.split/src/BackendInlineCompletionHandler.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/RdctInlineCompletionTestBase.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/LookupConflictInlineCompletionTest.kt,rider/test/framework/src/com/jetbrains/rider/test/scriptingApi/ScriptingAPI.Completion.kt",
+            "internal_context_items": ""
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "40c23b9a-861e-4386-a276-9a5da882650f",
+        "expectedText": "Welcome to JetBrains IntelliJ IDEA",
+        "offset": 1,
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "is kotlin var volatile be default?",
+            "internal_relevant_files": "plugins/llm/core/src/com/intellij/ml/llm/core/codeGeneration/popup/AICodeGenerationPopupUtils.kt,plugins/llm/core/src/com/intellij/ml/llm/core/codeGeneration/AICodeGenerationUtils.kt,community/platform/core-impl/src/com/intellij/psi/impl/source/SourceTreeToPsiMap.java,community/platform/core-impl/src/com/intellij/psi/impl/source/PsiFileImpl.java,community/platform/core-api/src/com/intellij/psi/PsiReference.java,ClsClassImpl,community/plugins/java-decompiler/plugin/src/org/jetbrains/java/decompiler/IdeaDecompiler.kt,build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt,remote-dev/inline-completion/backend.split/src/BackendInlineCompletionHandler.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/RdctInlineCompletionTestBase.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/LookupConflictInlineCompletionTest.kt,rider/test/framework/src/com/jetbrains/rider/test/scriptingApi/ScriptingAPI.Completion.kt",
+            "internal_context_items": ""
           }
         },
         "type": "CALL_FEATURE"
