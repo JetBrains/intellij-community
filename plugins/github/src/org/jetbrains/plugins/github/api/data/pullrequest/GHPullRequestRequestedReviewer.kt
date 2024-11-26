@@ -8,7 +8,8 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.github.api.data.GHUser
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewerInfo.graphql")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false,
+              defaultImpl = GHPullRequestRequestedReviewer.Unknown::class)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "User", value = GHUser::class),
   JsonSubTypes.Type(name = "Team", value = GHTeam::class)
@@ -21,4 +22,13 @@ interface GHPullRequestRequestedReviewer {
   val name: String?
 
   fun getPresentableName(): @NlsSafe String = name ?: shortName
+
+  class Unknown(
+    override val id: String,
+    override val url: String,
+    override val avatarUrl: String,
+    override val name: String?,
+  ) : GHPullRequestRequestedReviewer {
+    override val shortName: String = id
+  }
 }

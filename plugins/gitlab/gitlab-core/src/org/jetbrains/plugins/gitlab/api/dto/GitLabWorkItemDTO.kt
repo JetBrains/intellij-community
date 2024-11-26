@@ -24,7 +24,7 @@ data class GitLabWorkItemDTO(
     include = JsonTypeInfo.As.PROPERTY,
     property = "__typename",
     visible = false,
-    defaultImpl = GitLabWidgetDTO::class
+    defaultImpl = Unknown::class
   )
   @JsonSubTypes(
     JsonSubTypes.Type(name = "WorkItemWidgetAssignees", value = WorkItemWidgetAssignees::class),
@@ -54,5 +54,6 @@ data class GitLabWorkItemDTO(
     class WorkItemWidgetNotes : GitLabWidgetDTO
     class WorkItemWidgetNotifications : GitLabWidgetDTO
     class WorkItemWidgetStartAndDueDate : GitLabWidgetDTO
+    class Unknown : GitLabWidgetDTO
   }
 }
