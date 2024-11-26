@@ -833,7 +833,10 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
     reader.skipElement()
   }
 
-  descriptor.dependencies = ModuleDependenciesDescriptor(modules, plugins)
+  val oldDependencies = descriptor.dependencies
+  val newModules = if (oldDependencies.modules.isEmpty()) modules else oldDependencies.modules + modules
+  val newPlugins = if (oldDependencies.plugins.isEmpty()) plugins else oldDependencies.plugins + plugins
+  descriptor.dependencies = ModuleDependenciesDescriptor(newModules, newPlugins) 
   assert(reader.isEndElement)
 }
 

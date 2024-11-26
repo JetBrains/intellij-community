@@ -66,6 +66,15 @@ class PluginDescriptorTest {
     assertThat(pluginDependencies).hasSize(2)
     assertThat(pluginDependencies.map { it.pluginId.idString }).containsExactly("dep2", "dep1")
   }
+  
+  @Test
+  fun testMultipleDependenciesTags() {
+    val descriptor = loadDescriptorInTest("multipleDependenciesTags")
+    assertThat(descriptor).isNotNull()
+    val pluginDependencies = descriptor.dependencies.plugins
+    assertThat(pluginDependencies).hasSize(2)
+    assertThat(pluginDependencies.map { it.id.idString }).containsExactly("dep1", "dep2")
+  }
 
   @Test
   fun testMalformedDescriptor() {
