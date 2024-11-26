@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls
 
 @GraphQLFragment("/graphql/fragment/actorInfo.graphql")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false,
-              defaultImpl = GHActor::class)
+              defaultImpl = GHActor.Unknown::class)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "User", value = GHUser::class),
   JsonSubTypes.Type(name = "Bot", value = GHBot::class),
@@ -23,4 +23,13 @@ interface GHActor : CodeReviewUser {
   override val avatarUrl: String
 
   fun getPresentableName(): @Nls String
+
+  class Unknown(
+    override val id: String,
+    override val login: String,
+    override val url: String,
+    override val avatarUrl: String,
+  ) : GHActor {
+    override fun getPresentableName(): @Nls String = login //NON-NLS
+  }
 }
