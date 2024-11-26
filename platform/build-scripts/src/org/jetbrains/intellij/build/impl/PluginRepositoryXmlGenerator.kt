@@ -14,11 +14,13 @@ import java.util.*
 import kotlin.io.path.createDirectories
 
 internal fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, context: BuildContext): Path {
+  require(pluginSpecs.isNotEmpty())
   val categories = TreeMap<String, MutableList<Plugin>>()
   for (spec in pluginSpecs) {
     val p = readPlugin(spec.pluginZip, spec.pluginXml, context.buildNumber, targetDir)
     categories.computeIfAbsent(p.category) { mutableListOf() }.add(p)
   }
+  Files.createDirectories(targetDir)
   val result = targetDir.resolve("plugins.xml")
   writePluginsXml(result, categories)
   return result

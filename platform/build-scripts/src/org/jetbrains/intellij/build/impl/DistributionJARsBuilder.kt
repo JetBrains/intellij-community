@@ -471,8 +471,14 @@ internal suspend fun buildNonBundledPlugins(
 
     if (prepareCustomPluginRepository) {
       val list = pluginSpecs.sortedBy { it.pluginZip }
-      generatePluginRepositoryMetaFile(list, context.nonBundledPlugins, context)
-      generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(context.nonBundledPluginsToBePublished) }, context.nonBundledPluginsToBePublished, context)
+      if (list.isNotEmpty()) {
+        generatePluginRepositoryMetaFile(list, context.nonBundledPlugins, context)
+      }
+
+      val pluginsToBePublished = list.filter { it.pluginZip.startsWith(context.nonBundledPluginsToBePublished) }
+      if (pluginsToBePublished.isNotEmpty()) {
+        generatePluginRepositoryMetaFile(pluginsToBePublished, context.nonBundledPluginsToBePublished, context)
+      }
     }
 
     validatePlugins(context, pluginSpecs)
