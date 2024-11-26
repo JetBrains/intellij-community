@@ -9,4 +9,5 @@ interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
 
   suspend fun findAndSetBreakpointInNativeFunction(steppingThreadId: Long, trigger: suspend (() -> Unit)): Int
   suspend fun removeTempBreakpoint(brId: Int)
+  suspend fun prepareThreadBeforeFramesComputation(triggerBringingManagedThreadsToUnBlockedState: suspend () -> Unit, threadId: Long)
 }

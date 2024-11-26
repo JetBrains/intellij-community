@@ -28,6 +28,8 @@ class XMixedModeExecutionStack(
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     coroutineScope.launch(Dispatchers.Default) {
+      prepareThreadBeforeFrameComputation()
+
       val lowLevelAcc = MyAccumulatingContainer()
       lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
       val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
@@ -47,6 +49,13 @@ class XMixedModeExecutionStack(
     }.invokeOnCompletion {
       computationCompleted.complete(Unit)
     }
+  }
+
+  private suspend fun prepareThreadBeforeFrameComputation() {
+    val threadId = (lowLevelExecutionStack as XExecutionStackWithNativeThreadId).getNativeThreadId()
+    val lowLevel = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
+    val highLevel = session.getDebugProcess(false) as XMixedModeHighLevelDebugProcess
+    lowLevel.prepareThreadBeforeFramesComputation({ highLevel.triggerBringingManagedThreadsToUnBlockedState() }, threadId)
   }
 
   private class MyAccumulatingContainer : XStackFrameContainer {
