@@ -83,6 +83,6 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
   @Override
   public String toString() {
     String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
-    return "PyGenericVariadicType: " + (scopeName != null ? scopeName + ":" : "") + myName;
+    return "PyTypeVarTupleType: " + (scopeName != null ? scopeName + ":" : "") + myName;
   }
 }
