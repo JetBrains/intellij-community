@@ -6,6 +6,7 @@ import git4idea.GitReference;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -268,7 +269,7 @@ public interface GitBrancher {
    * @param repositories map from repository to expected tag commit for --force-with-lease
    *                     null will delete tag without explicit check
    */
-  void deleteRemoteTag(@NotNull String name, @NotNull Map<GitRepository, String> repositories);
+  void deleteRemoteTag(@NotNull String name, @NotNull @Unmodifiable Map<GitRepository, String> repositories);
 
   /**
    * What should be done after successful merging a branch: delete the merged branch, propose to delete or do nothing.

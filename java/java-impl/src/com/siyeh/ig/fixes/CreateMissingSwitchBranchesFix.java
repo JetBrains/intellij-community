@@ -6,15 +6,17 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
+  @Unmodifiable
   protected final @NotNull Set<String> myNames;
 
-  public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull Set<String> names) {
+  public CreateMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @NotNull @Unmodifiable Set<String> names) {
     super(block);
     myNames = names;
   }
@@ -41,6 +43,7 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     CreateSwitchBranchesUtil.createTemplate(switchBlock, addedLabels, updater);
   }
 
+  @Unmodifiable
   protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     return myNames;
   }

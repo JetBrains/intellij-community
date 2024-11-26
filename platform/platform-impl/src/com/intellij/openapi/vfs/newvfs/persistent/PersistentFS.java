@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -61,6 +62,7 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
+  @Unmodifiable
   public abstract @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal

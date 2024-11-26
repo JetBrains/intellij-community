@@ -11,6 +11,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -18,7 +19,7 @@ import java.util.function.Function;
 public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwitchBranchesFix {
   private final @NotNull List<String> myAllNames;
 
-  public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names, @NotNull List<String> allNames) {
+  public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @Unmodifiable Set<String> names, @NotNull List<String> allNames) {
     super(block, names);
     myAllNames = allNames;
   }
@@ -79,6 +80,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
+  @Unmodifiable
   protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map2Set(myNames, name -> mapToConvert.getOrDefault(name, name));

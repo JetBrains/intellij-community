@@ -55,10 +55,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
@@ -115,6 +112,7 @@ public final class TerminalToolWindowManager implements Disposable {
    */
   @ApiStatus.Internal
   @Deprecated
+  @Unmodifiable
   public Set<JBTerminalWidget> getWidgets() {
     return ContainerUtil.map2SetNotNull(myContainerByWidgetMap.keySet(),
                                         widget -> JBTerminalWidget.asJediTermWidget(widget));

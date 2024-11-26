@@ -6,10 +6,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -115,6 +112,7 @@ public abstract class ActionManager {
   /**
    * Returns the list of all registered action IDs with the specified prefix.
    */
+  @Unmodifiable
   public abstract @NotNull List<@NonNls String> getActionIdList(@NotNull String idPrefix);
 
   /**

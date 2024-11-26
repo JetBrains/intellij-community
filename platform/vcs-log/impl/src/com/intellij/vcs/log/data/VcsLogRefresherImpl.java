@@ -26,10 +26,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.Future;
@@ -165,6 +162,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     });
   }
 
+  @Unmodifiable
   private @NotNull Map<VirtualFile, VcsLogProvider> getProvidersForRoots(@NotNull Set<? extends VirtualFile> roots) {
     return ContainerUtil.map2Map(roots, root -> Pair.create(root, myProviders.get(root)));
   }
@@ -512,6 +510,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     @NotNull
+    @Unmodifiable
     Map<VirtualFile, VcsLogProvider.Requirements> asMap(@NotNull Collection<? extends VirtualFile> roots) {
       return ContainerUtil.map2Map(roots, root -> Pair.create(root, this));
     }

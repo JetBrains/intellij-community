@@ -43,6 +43,7 @@ import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -138,6 +139,7 @@ public class GitImpl extends GitImplBase {
    * @return Unversioned not ignored files from the given scope.
    */
   @Override
+  @Unmodifiable
   public @NotNull Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                          @Nullable Collection<? extends VirtualFile> files) throws VcsException {
     return ContainerUtil.map2SetNotNull(

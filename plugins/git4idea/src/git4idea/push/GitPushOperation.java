@@ -44,6 +44,7 @@ import git4idea.update.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -74,6 +75,7 @@ public class GitPushOperation {
 
   private final Project myProject;
   private final @NotNull GitPushSupport myPushSupport;
+  @Unmodifiable
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
   private final @Nullable GitPushTagMode myTagMode;
   private final ForceMode myForceMode;
@@ -100,7 +102,7 @@ public class GitPushOperation {
 
   public GitPushOperation(@NotNull Project project,
                           @NotNull GitPushSupport pushSupport,
-                          @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                          @NotNull @Unmodifiable Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                           @Nullable GitPushTagMode tagMode,
                           @NotNull ForceMode forceMode,
                           boolean skipHook) {

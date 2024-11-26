@@ -165,13 +165,13 @@ public class TestPackage extends TestObject {
     return getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
   }
 
-  protected @NlsSafe String getFilters(Set<Location<?>> foundClasses, @NlsSafe String packageName) {
+  protected @NlsSafe String getFilters(Set<? extends Location<?>> foundClasses, @NlsSafe String packageName) {
     return "";
   }
 
-  protected void searchTests5(Module module, Set<Location<?>> classes) throws CantRunException { }
+  protected void searchTests5(Module module, Set<? super Location<?>> classes) throws CantRunException { }
 
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes) throws CantRunException {
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
       Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
       collectClassesRecursively(classFilter, acceptClassCondition, classes);
@@ -194,7 +194,7 @@ public class TestPackage extends TestObject {
 
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
-                                           Set<Location<?>> classes) throws CantRunException {
+                                           Set<? super Location<?>> classes) throws CantRunException {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
     List<PsiClass> allClasses = ContainerUtil.filter(
       PackageUtil.getClasses(getPackage(), Registry.is("junit4.accept.inner.classes", true), scope),

@@ -30,6 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -70,8 +71,9 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
+  @Unmodifiable
   private @NotNull Map<VirtualFile, T> doGetMappings() {
-    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value())));
+    return ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value()));
   }
 
   private void cleanup() {

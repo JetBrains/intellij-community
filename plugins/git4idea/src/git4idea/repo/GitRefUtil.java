@@ -14,10 +14,7 @@ import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitTag;
 import git4idea.validators.GitRefNameValidator;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -258,7 +255,7 @@ public final class GitRefUtil {
   }
 
 
-  public static @NotNull Map<String, Hash> getResolvedHashes(@NotNull Map<String, String> data) {
+  public static @NotNull Map<String, Hash> getResolvedHashes(@NotNull @Unmodifiable Map<String, String> data) {
     Map<String, Hash> resolved = new HashMap<>();
     for (Map.Entry<String, String> entry : data.entrySet()) {
       String refName = entry.getKey();

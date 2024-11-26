@@ -234,7 +234,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     renderers.add(renderer);
   }
 
-  private static void removeDuplicatedRangesForInjected(@NotNull List<? extends HighlightInfo> infos) {
+  private static @NotNull List<HighlightInfo> removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
+    infos = new ArrayList<>(infos);
     infos.sort((o1, o2) -> {
       int i = o1.startOffset - o2.startOffset;
       return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
@@ -251,6 +252,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
       prevInfo = info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT ? info : null;
     }
+    return infos;
   }
 
   @NotNull
@@ -264,6 +266,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @TestOnly
+  @Unmodifiable
   public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile psiFile,
                                                       @NotNull Editor editor,
                                                       int @NotNull [] toIgnore,
@@ -887,6 +890,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  @Unmodifiable
   public List<String> getCompletionVariants(String @NotNull ... filesBefore) {
     assertInitialized();
     configureByFiles(filesBefore);
@@ -897,6 +901,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @Nullable
+  @Unmodifiable
   public List<String> getLookupElementStrings() {
     assertInitialized();
     return myEditorTestFixture.getLookupElementStrings();
@@ -1768,7 +1773,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<HighlightInfo> infos;
     try {
       infos = doHighlighting();
-      removeDuplicatedRangesForInjected(infos);
+      infos = removeDuplicatedRangesForInjected(infos);
     }
     finally {
       Disposer.dispose(disposable);
@@ -1800,6 +1805,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
+  @Unmodifiable
   public List<HighlightInfo> doHighlighting() {
     return myEditorTestFixture.doHighlighting(myAllowDirt, myReadEditorMarkupModel);
   }

@@ -31,6 +31,7 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -59,6 +60,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private final @NotNull Map<GitRepository, GitRemoteBranch> myTrackedBranches;
 
   private final @NotNull Map<GitRepository, UnmergedBranchInfo> myUnmergedToBranches;
+  @Unmodifiable
   private final @NotNull Map<GitRepository, String> myDeletedBranchTips;
 
   GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,

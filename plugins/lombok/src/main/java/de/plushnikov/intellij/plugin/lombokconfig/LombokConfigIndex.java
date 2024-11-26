@@ -24,6 +24,7 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -64,6 +65,7 @@ public final class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, 
     };
   }
 
+  @Unmodifiable
   private static @NotNull Map<ConfigKey, ConfigValue> createConfigMapResult(@Nullable PsiFile psiFile) {
     if (!(psiFile instanceof LombokConfigFile)) {
       return Map.of();

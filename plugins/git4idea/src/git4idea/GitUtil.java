@@ -590,7 +590,8 @@ public final class GitUtil {
     }
   }
 
-  public static @NotNull Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<? extends GitRepository> repositories) {
+  @Unmodifiable
+  public static @NotNull Collection<VirtualFile> getRootsFromRepositories(@NotNull @Unmodifiable Collection<? extends GitRepository> repositories) {
     return ContainerUtil.map(repositories, Repository::getRoot);
   }
 

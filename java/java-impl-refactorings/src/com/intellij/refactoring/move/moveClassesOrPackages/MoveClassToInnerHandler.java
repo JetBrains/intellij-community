@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public interface MoveClassToInnerHandler {
   /**
    * filters out import usages from results. Returns all found import usages
    */
+  @Contract(mutates = "param1")
   List<PsiElement> filterImports(@NotNull List<UsageInfo> usageInfos, @NotNull Project project);
 
   void retargetClassRefsInMoved(@NotNull Map<PsiElement, PsiElement> mapping);

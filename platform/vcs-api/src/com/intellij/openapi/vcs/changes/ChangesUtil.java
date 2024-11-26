@@ -20,6 +20,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -74,11 +75,13 @@ public final class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
 
+  @Unmodifiable
   public static @NotNull Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     return ContainerUtil.map2SetNotNull(changes, change -> vcsManager.getVcsFor(getFilePath(change)));
   }
 
+  @Unmodifiable
   public static @NotNull Set<AbstractVcs> getAffectedVcsesForFilePaths(@NotNull Collection<? extends FilePath> files,
                                                                        @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);

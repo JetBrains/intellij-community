@@ -14,6 +14,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -42,14 +43,15 @@ final class TestDataNavigationElementFactory {
   }
 
   @NotNull
-  public static TestDataNavigationElement createForCreateMissingFilesOption(@NotNull List<TestDataFile> filePaths) {
+  public static TestDataNavigationElement createForCreateMissingFilesOption(@NotNull @Unmodifiable List<TestDataFile> filePaths) {
     return new CreateMissingTestDataFilesNavigationElement(filePaths);
   }
 
   private static final class CreateMissingTestDataFilesNavigationElement implements TestDataNavigationElement {
+    @Unmodifiable
     private final List<TestDataFile> myFilePaths;
 
-    private CreateMissingTestDataFilesNavigationElement(List<TestDataFile> filePaths) {
+    private CreateMissingTestDataFilesNavigationElement(@Unmodifiable List<TestDataFile> filePaths) {
       myFilePaths = filePaths;
     }
 

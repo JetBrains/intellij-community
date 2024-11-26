@@ -47,10 +47,7 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.*;
@@ -828,7 +825,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   @ApiStatus.Internal
   static void mergeSourceSetContentRootsInModulePerSourceSetMode(
     @NotNull ProjectResolverContext resolverContext,
-    @NotNull Map<? extends ProjectModel, DataNode<ModuleData>> moduleMap
+    @NotNull @Unmodifiable Map<? extends ProjectModel, DataNode<ModuleData>> moduleMap
   ) {
     var contentRootIndex = new GradleContentRootIndex();
 

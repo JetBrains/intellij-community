@@ -13,10 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -464,7 +461,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
-                                                                         @NotNull Set<String> missingCases,
+                                                                         @NotNull @Unmodifiable Set<String> missingCases,
                                                                          @NotNull List<String> allNames);
 
   @Nullable

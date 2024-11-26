@@ -31,10 +31,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -129,7 +126,7 @@ public class ExternalSystemTaskActivator {
     final Queue<Pair<ProjectSystemId, ExternalSystemTaskExecutionSettings>> tasksQueue =
       new LinkedList<>();
 
-    Map<ProjectSystemId, Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
+    Map<ProjectSystemId, @Unmodifiable Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
       FactoryMap.create(key -> {
         final AbstractExternalSystemTaskConfigurationType configurationType =
           ExternalSystemUtil.findConfigurationType(key);

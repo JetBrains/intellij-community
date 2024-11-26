@@ -11,6 +11,7 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,6 +64,7 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
    * <p>If the remote branch is being tracked not in all repositories, or if its local tracking branches have different names
    * in different repositories, it means that there is no common tracking branches, so an empty list is returned.</p>
    */
+  @Unmodifiable
   public @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch) {
     Collection<String> trackingBranches = null;
     for (GitRepository repository : myRepositories) {

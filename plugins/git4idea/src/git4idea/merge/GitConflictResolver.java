@@ -31,6 +31,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -47,6 +48,7 @@ public class GitConflictResolver {
   private static final Logger LOG = Logger.getInstance(GitConflictResolver.class);
 
   protected final @NotNull Project myProject;
+  @Unmodifiable
   private final @NotNull Collection<? extends VirtualFile> myRoots;
   private final @NotNull Params myParams;
 
@@ -111,7 +113,7 @@ public class GitConflictResolver {
     }
   }
 
-  public GitConflictResolver(@NotNull Project project, @NotNull Collection<? extends VirtualFile> roots, @NotNull Params params) {
+  public GitConflictResolver(@NotNull Project project, @NotNull @Unmodifiable Collection<? extends VirtualFile> roots, @NotNull Params params) {
     myProject = project;
     myRoots = roots;
     myParams = params;

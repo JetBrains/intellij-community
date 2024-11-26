@@ -66,6 +66,7 @@ import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -873,7 +874,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
-                                                                         @NotNull Set<String> missingCases,
+                                                                         @NotNull @Unmodifiable Set<String> missingCases,
                                                                          @NotNull List<String> allNames) {
     return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames).asIntention();
   }

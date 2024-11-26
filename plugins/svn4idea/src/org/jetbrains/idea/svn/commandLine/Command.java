@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
@@ -29,7 +30,8 @@ public class Command {
   @Nullable private LineCommandListener myResultBuilder;
   @Nullable private volatile Url myRepositoryUrl;
   @NotNull private Target myTarget;
-  @Nullable private Collection<File> myTargets;
+  @Unmodifiable
+  private Collection<? extends File> myTargets;
   @Nullable private PropertyValue myPropertyValue;
 
   @Nullable private ProgressTracker myCanceller;
@@ -152,7 +154,7 @@ public class Command {
     myTarget = target;
   }
 
-  public void setTargets(@Nullable Collection<File> targets) {
+  public void setTargets(@Nullable @Unmodifiable Collection<? extends File> targets) {
     myTargets = targets;
   }
 

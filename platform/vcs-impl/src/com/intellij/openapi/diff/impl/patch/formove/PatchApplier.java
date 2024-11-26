@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public final class PatchApplier {
   private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
-  @NotNull private final List<? extends FilePatch> myPatches;
+  @NotNull private final List<FilePatch> myPatches;
   private final CommitContext myCommitContext;
   @Nullable private final LocalChangeList myTargetChangeList;
   @NotNull private final List<FilePatch> myRemainingPatches;
@@ -66,9 +67,10 @@ public final class PatchApplier {
   @NlsContexts.Label @NotNull private final String myActivityName;
   @Nullable private final ActivityId myActivityId;
 
+  @Contract(mutates = "param3")
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<? extends FilePatch> patches,
+                      @NotNull List<FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext,
                       boolean reverseConflict,
@@ -95,9 +97,10 @@ public final class PatchApplier {
     myVerifier.setIgnoreContentRootsCheck(true);
   }
 
+  @Contract(mutates = "param3")
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
-                      @NotNull List<? extends FilePatch> patches,
+                      @NotNull List<FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext) {
     this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null,

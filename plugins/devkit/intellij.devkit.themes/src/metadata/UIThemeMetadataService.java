@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +24,7 @@ public final class UIThemeMetadataService {
   public static final ExtensionPointName<UIThemeMetadataProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.themeMetadataProvider");
 
-  private final Map<UIThemeMetadata, Map<String, UIThemeMetadata.UIKeyMetadata>> myCache = new HashMap<>();
+  private final Map<UIThemeMetadata, @Unmodifiable Map<String, UIThemeMetadata.UIKeyMetadata>> myCache = new HashMap<>();
 
   public static UIThemeMetadataService getInstance() {
     return ApplicationManager.getApplication().getService(UIThemeMetadataService.class);

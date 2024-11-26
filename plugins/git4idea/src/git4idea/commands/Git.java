@@ -15,6 +15,7 @@ import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collection;
@@ -63,6 +64,7 @@ public interface Git {
 
   @Deprecated
   @NotNull
+  @Unmodifiable
   Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                   @Nullable Collection<? extends VirtualFile> files) throws VcsException;
 

@@ -53,16 +53,16 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, Set<Location<?>> classes) {
+  protected void searchTests5(Module module, Set<? super Location<?>> classes) {
     searchTests(module, null, classes, true);
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes) {
     searchTests(module, classFilter, classes, false);
   }
 
-  private void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes, boolean junit5) {
+  private void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes, boolean junit5) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
@@ -108,7 +108,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
+  protected String getFilters(Set<? extends Location<?>> foundClasses, String packageName) {
     return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 

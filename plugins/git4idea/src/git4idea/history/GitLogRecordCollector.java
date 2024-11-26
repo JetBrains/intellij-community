@@ -12,6 +12,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -110,6 +111,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
   /*
    * This method calculates tree hashes for commits and their parents.
    */
+  @Unmodifiable
   private static @NotNull <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
                                                                                @NotNull VirtualFile root,
                                                                                @NotNull Collection<? extends R> records)
@@ -140,7 +142,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
    * This method places an empty record for parents that have same tree hash.
    */
   private void fillWithEmptyRecords(@NotNull List<R> records,
-                                    @NotNull Map<String, String> hashToTreeMap) {
+                                    @NotNull @Unmodifiable Map<String, String> hashToTreeMap) {
     R firstRecord = records.get(0);
     String commit = firstRecord.getHash();
     String[] parents = firstRecord.getParentsHashes();

@@ -638,6 +638,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Presentation testAction(@NotNull AnAction action);
 
   @Nullable
+  @Unmodifiable
   List<String> getCompletionVariants(@TestDataFile String @NotNull ... filesBefore);
 
   /**
@@ -651,6 +652,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return {@code null} if the only item was auto-completed
    */
   @Nullable
+  @Unmodifiable
   List<String> getLookupElementStrings();
 
   void finishLookup(@MagicConstant(valuesFromClass = Lookup.class) char completionChar);

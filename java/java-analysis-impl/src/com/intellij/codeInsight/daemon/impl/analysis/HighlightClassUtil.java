@@ -45,6 +45,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -1359,6 +1360,7 @@ public final class HighlightClassUtil {
     return null;
   }
 
+  @Unmodifiable
   private static @NotNull Map<PsiJavaCodeReferenceElement, PsiClass> getPermittedClassesRefs(@NotNull PsiClass psiClass) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     if (permitsList == null) return Collections.emptyMap();

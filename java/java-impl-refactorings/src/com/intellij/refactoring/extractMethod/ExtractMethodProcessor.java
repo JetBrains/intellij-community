@@ -895,12 +895,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  public void previewRefactoring(@Nullable Set<? extends TextRange> textRanges) {
+  public void previewRefactoring(@Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
     initDuplicates(textRanges);
     chooseAnchor();
   }
 
-  protected void initDuplicates(@Nullable Set<? extends TextRange> textRanges) {
+  protected void initDuplicates(@Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
     myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED, textRanges);
     if (myParametrizedDuplicates != null && !myParametrizedDuplicates.isEmpty()) {
       myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT, textRanges);

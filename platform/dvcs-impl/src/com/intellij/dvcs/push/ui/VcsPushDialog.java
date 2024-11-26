@@ -57,6 +57,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   protected final Project myProject;
   protected final PushController myController;
   private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
+  @Unmodifiable
   private final Map<String, VcsPushOptionsPanel> myCustomPanels;
   private final PushLog myListPanel;
   private final JComponent myTopPanel;

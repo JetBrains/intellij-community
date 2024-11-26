@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,9 +18,10 @@ public class FragmentGenerator {
   public static final class GreenFragment {
     @Nullable private final Integer myUpRedNode;
     @Nullable private final Integer myDownRedNode;
+    @Unmodifiable
     @NotNull private final Set<Integer> myMiddleGreenNodes;
 
-    private GreenFragment(@Nullable Integer upRedNode, @Nullable Integer downRedNode, @NotNull Set<Integer> middleGreenNodes) {
+    private GreenFragment(@Nullable Integer upRedNode, @Nullable Integer downRedNode, @NotNull @Unmodifiable Set<Integer> middleGreenNodes) {
       myUpRedNode = upRedNode;
       myDownRedNode = downRedNode;
       myMiddleGreenNodes = middleGreenNodes;
@@ -36,6 +38,7 @@ public class FragmentGenerator {
     }
 
     @NotNull
+    @Unmodifiable
     public Set<Integer> getMiddleGreenNodes() {
       return myMiddleGreenNodes;
     }

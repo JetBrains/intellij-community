@@ -13,6 +13,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -145,7 +146,7 @@ public final class PatchReader {
     myPatchFileInfo = PatchFileHeaderParser.parseHeader(Iterables.limit(myLines, headerLineNum).iterator());
   }
 
-  public @NotNull ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
+  public @NotNull ThrowableComputable<Map<String, @Unmodifiable Map<String, CharSequence>>, PatchSyntaxException> getAdditionalInfo(@Nullable Set<String> paths) {
     PatchSyntaxException e = myAdditionalInfoParser.getSyntaxException();
     if (e != null) {
       return () -> {
