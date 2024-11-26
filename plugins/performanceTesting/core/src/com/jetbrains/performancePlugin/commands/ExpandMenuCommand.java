@@ -42,7 +42,7 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
         ActionPlaces.isPopupPlace(getPlace()) ? ActionUiKind.POPUP : ActionUiKind.NONE);
       groupSpan.end();
       return actions;
-    }).withRoots(mainMenu.getChildren(null)).traverse().size();
+    }).withRoots(mainMenu).traverse().size();
     totalSpan.end();
     callback.setDone();
   }
