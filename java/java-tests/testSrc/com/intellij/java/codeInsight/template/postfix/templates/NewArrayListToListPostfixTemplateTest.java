@@ -20,9 +20,5 @@ public class NewArrayListToListPostfixTemplateTest extends PostfixTemplateTestCa
   public void testSimple() {
     doTestCompletion(null);
   }
-
-  public void testSimpleAsList() {
-    doTestCompletion(null);
-  }
 }
 

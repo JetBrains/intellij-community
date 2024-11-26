@@ -425,8 +425,16 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
     if (prefix.isNotEmpty()) {
-      val ranges = getMatchingFragments(prefix, name)
-      if (ranges != null) {
+      var ranges: List<TextRange>? = getMatchingFragments(prefix, name)
+      if (ranges == null) {
+        val startIndex = item.lookupString.indexOf(name)
+        if (startIndex != -1) {
+          ranges = getMatchingFragments(prefix, item.lookupString)
+            ?.map { TextRange((it.startOffset - startIndex).coerceIn(0, name.length), (it.endOffset - startIndex).coerceIn(0, name.length)) }
+            ?.filter { it.length != 0 }
+        }
+      }
+      if (ranges != null && ranges.isNotEmpty()) {
         val highlighted = SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR)
         SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted)
         renderItemNameDecoration(nameComponent, itemNameDecorations)

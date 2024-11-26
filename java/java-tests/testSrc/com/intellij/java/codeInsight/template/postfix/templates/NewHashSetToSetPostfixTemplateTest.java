@@ -20,9 +20,5 @@ public class NewHashSetToSetPostfixTemplateTest extends PostfixTemplateTestCase 
   public void testSimple() {
     doTestCompletion(null);
   }
-
-  public void testSimpleAsSet() {
-    doTestCompletion(null);
-  }
 }
 

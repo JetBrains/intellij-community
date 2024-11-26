@@ -21,8 +21,5 @@ public class AsListToListPostfixTemplateTest extends PostfixTemplateTestCase {
     doTestCompletion("asList");
   }
 
-  public void testSimpleAsList() {
-    doTestCompletion("asList");
-  }
 }
 

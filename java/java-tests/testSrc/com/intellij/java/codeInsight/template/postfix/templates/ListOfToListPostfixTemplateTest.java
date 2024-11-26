@@ -18,11 +18,7 @@ public class ListOfToListPostfixTemplateTest extends PostfixTemplateTestCase {
   }
 
   public void testSimple() {
-    doTestCompletion("listOf");
-  }
-
-  public void testSimpleAsList() {
-    doTestCompletion("listOf");
+    doTestCompletion("List.of");
   }
 }
 

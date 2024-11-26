@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.JavaContributorCollectors;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
@@ -19,6 +21,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.codeInsight.completion.JavaContributorCollectors.POSTFIX_TAG;
 
 @SuppressWarnings("PostfixTemplateDescriptionNotFound")
 public class JavaEditablePostfixTemplate
@@ -101,6 +105,7 @@ public class JavaEditablePostfixTemplate
 
   @Override
   protected @NotNull TextRange getRangeToRemove(@NotNull PsiElement element) {
+    JavaContributorCollectors.logInsertHandle(element.getProject(), POSTFIX_TAG, CompletionType.BASIC);
     PsiElement toRemove = getElementToRemove(element);
     if (toRemove instanceof PsiExpressionStatement) {
       PsiElement lastChild = toRemove.getLastChild();

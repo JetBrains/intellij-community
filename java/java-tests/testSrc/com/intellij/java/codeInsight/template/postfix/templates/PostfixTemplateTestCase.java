@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.template.postfix.templates;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,10 @@ abstract public class PostfixTemplateTestCase extends LightJavaCodeInsightFixtur
     LookupElement[] elements = myFixture.completeBasic();
     if (text != null) {
       for (LookupElement element : elements) {
-        if(element.getLookupString().toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT))) {
+        LookupElementPresentation presentation = new LookupElementPresentation();
+        element.renderElement(presentation);
+        if (presentation.getItemText().toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT)) ||
+            presentation.getTypeText().toLowerCase(Locale.ROOT).contains(text.toLowerCase(Locale.ROOT))) {
           myFixture.getLookup().setCurrentItem(element);
           break;
         }
