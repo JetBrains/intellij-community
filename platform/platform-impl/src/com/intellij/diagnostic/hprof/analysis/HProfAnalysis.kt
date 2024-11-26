@@ -98,7 +98,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
       val histogram = Histogram.create(parser, hprofMetadata.classStore)
 
-      val nominatedClasses = ClassNomination(histogram, 5).nominateClasses()
+      val nominatedClasses = ClassNomination(histogram, 10).nominateClasses()
 
       progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.id.mapping.file")
       progress.fraction = 0.2
