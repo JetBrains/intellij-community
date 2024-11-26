@@ -33,6 +33,8 @@ import com.jetbrains.python.sdk.add.addInterpretersAsync
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.*
 import com.jetbrains.python.sdk.uv.impl.detectUvExecutable
+import com.jetbrains.python.sdk.uv.impl.getUvExecutable
+import com.jetbrains.python.sdk.uv.impl.setUvExecutable
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
@@ -96,8 +98,10 @@ class PyAddNewUvPanel(
     addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileDescriptor())
     val field = textField as? JBTextField ?: return@apply
     service<PythonSdkCoroutineService>().cs.launch {
-      detectUvExecutable()?.let { field.emptyText.text = "Auto-detected: ${it.absolutePathString()}" }
-      PropertiesComponent.getInstance().uvPath?.let {
+      detectUvExecutable()?.let {
+          field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
+      }
+      getUvExecutable()?.let {
         field.text = it.pathString
       }
     }
@@ -153,7 +157,9 @@ class PyAddNewUvPanel(
     }
 
     val uvPath = uvPathField.text.nullize()?.let { Path.of(it) }
-    uvPath?.let { PropertiesComponent.getInstance().uvPath = it }
+    uvPath?.let {
+      setUvExecutable(it)
+    }
     val sdk = runBlockingCancellable {
       setupUvSdkUnderProgress(module, Path.of(path), existingSdks, Path.of(python))
     }

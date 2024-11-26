@@ -2,7 +2,9 @@
 package com.jetbrains.python.sdk.uv.impl
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.pathValidation.PlatformAndRoot
@@ -12,20 +14,21 @@ import com.jetbrains.python.sdk.runExecutable
 import com.jetbrains.python.sdk.uv.UvCli
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-
 import java.nio.file.Path
-
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-internal fun detectUvExecutable(): Path? {
-  val name = "uv"
-  return PathEnvironmentVariableUtil.findInPath(name)?.toPath() ?: SystemProperties.getUserHome().let { homePath ->
-    Path.of(homePath, ".cargo", "bin", name).takeIf { it.exists() }
-  }
-}
+private const val UV_PATH_SETTING: String = "PyCharm.Uv.Path"
 
-internal fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
+private var PropertiesComponent.uvPath: Path?
+  get() {
+    return getValue(UV_PATH_SETTING)?.let { Path.of(it) }
+  }
+  set(value) {
+    setValue(UV_PATH_SETTING, value.toString())
+  }
+
+private fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
   return validateExecutableFile(ValidationRequest(
     path = uvPath?.pathString,
     fieldIsEmpty = PyBundle.message("python.sdk.uv.executable.not.found"),
@@ -34,15 +37,15 @@ internal fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
   ))
 }
 
-internal suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): Result<String> {
+private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): Result<String> {
   return runExecutable(uv, workingDir, *args)
 }
 
-internal class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?): UvCli {
+private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : UvCli {
   val uv: Path
 
   init {
-    val path = uvPath ?: detectUvExecutable()
+    val path = uvPath ?: getUvExecutable()
     val error = validateUvExecutable(path)
     if (error != null) {
       throw RuntimeException(error.message)
@@ -52,10 +55,29 @@ internal class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?): Uv
   }
 
   override suspend fun runUv(workingDir: Path, vararg args: String): Result<String> {
-    with(Dispatchers.IO) {
+    with(dispatcher) {
       return runUv(uv, workingDir, *args)
     }
   }
+}
+
+fun detectUvExecutable(): Path? {
+  val name = when {
+    SystemInfo.isWindows -> "uv.exe"
+    else -> "uv"
+  }
+
+  return PathEnvironmentVariableUtil.findInPath(name)?.toPath() ?: SystemProperties.getUserHome().let { homePath ->
+    Path.of(homePath, ".local", "bin", name).takeIf { it.exists() } ?: Path.of(homePath, ".cargo", "bin", name).takeIf { it.exists() }
+  }
+}
+
+fun getUvExecutable(): Path? {
+  return PropertiesComponent.getInstance().uvPath?.takeIf { it.exists() } ?: detectUvExecutable()
+}
+
+fun setUvExecutable(path: Path) {
+  PropertiesComponent.getInstance().uvPath = path
 }
 
 fun createUvCli(dispatcher: CoroutineDispatcher = Dispatchers.IO, uv: Path? = null): UvCli {
