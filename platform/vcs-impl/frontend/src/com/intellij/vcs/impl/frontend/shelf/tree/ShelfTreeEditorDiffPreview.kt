@@ -4,7 +4,6 @@ package com.intellij.vcs.impl.frontend.shelf.tree
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.projectId
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeEditorDiffPreview
@@ -12,7 +11,7 @@ import com.intellij.vcs.impl.frontend.changes.SelectedData
 import com.intellij.vcs.impl.frontend.shelf.subscribeToShelfTreeSelectionChanged
 import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
-import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.ref
 import kotlinx.coroutines.CoroutineScope
@@ -50,11 +49,11 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
     return true
   }
 
-  private fun creteSelectedListsDto(): ChangeListDto? {
+  private fun creteSelectedListsDto(): ChangeListRpc? {
     val selectedLists = tree.getSelectedLists()
     if (selectedLists.size != 1) return null
     val selectedShelvedChanges = SelectedData(tree).iterateUserObjects(ShelvedChangeEntity::class.java).map { it.ref() }
-    return ChangeListDto(selectedLists.first().ref(), selectedShelvedChanges.toList())
+    return ChangeListRpc(selectedLists.first().ref(), selectedShelvedChanges.toList())
   }
 
   private fun selectNodeInTree(it: SelectShelveChangeEntity) {

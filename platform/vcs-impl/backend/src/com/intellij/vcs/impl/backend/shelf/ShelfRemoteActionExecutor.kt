@@ -11,11 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 import com.intellij.openapi.vcs.changes.shelf.*
-import com.intellij.platform.project.projectId
 import com.intellij.pom.NavigatableAdapter
 import com.intellij.util.OpenSourceUtil
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.ChangeListRpc
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,11 +29,11 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
   private val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
   private val shelveChangesManager = ShelveChangesManager.getInstance(project)
 
-  fun createPatchForShelvedChanges(changeListsDto: List<ChangeListDto>, silentClipboard: Boolean) {
+  fun createPatchForShelvedChanges(changeLists: List<ChangeListRpc>, silentClipboard: Boolean) {
     val patchBuilder: CreatePatchCommitExecutor.PatchBuilder
-    val changeNodes = changeListsDto.flatMap { shelfTreeHolder.findChangesInTree(it) }
+    val changeNodes = changeLists.flatMap { shelfTreeHolder.findChangesInTree(it) }
     val changeList = changeNodes.firstOrNull()?.shelvedChange?.changeList ?: return
-    if (changeListsDto.size == 1) {
+    if (changeLists.size == 1) {
       patchBuilder = CreatePatchCommitExecutor.ShelfPatchBuilder(project, changeList, changeNodes.map { it.shelvedChange.path })
     }
     else {
@@ -46,7 +45,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
-  fun unshelve(changeListDto: List<ChangeListDto>, withDialog: Boolean) {
+  fun unshelve(changeListRpc: List<ChangeListRpc>, withDialog: Boolean) {
     cs.launch {
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
@@ -54,7 +53,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
         }
       }
 
-      val nodes = changeListDto.flatMap {
+      val nodes = changeListRpc.flatMap {
         shelfTreeHolder.findChangesInTree(it)
       }
       val shelvedChanges = findChanges(nodes)
@@ -95,7 +94,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     return ShelvedChanges(changeLists, changes, files)
   }
 
-  fun delete(selectedLists: List<DurableRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
+  fun delete(selectedLists: List<DurableRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListRpc>) {
     cs.launch {
       val nodes = selectedChanges.flatMap {
         shelfTreeHolder.findChangesInTree(it)
@@ -108,7 +107,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
-  fun showStandaloneDiff(dtos: List<ChangeListDto>, withLocal: Boolean) {
+  fun showStandaloneDiff(dtos: List<ChangeListRpc>, withLocal: Boolean) {
     cs.launch(Dispatchers.EDT) {
       val shelvedChanges = dtos.flatMap { shelfTreeHolder.findChangesInTree(it) }.map { it.shelvedChange }
       val wrappers: ListSelection<ShelvedWrapper> = ListSelection.createAt(shelvedChanges, 0)
@@ -131,7 +130,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
-  fun navigateToSource(dtos: List<ChangeListDto>, focusEditor: Boolean) {
+  fun navigateToSource(dtos: List<ChangeListRpc>, focusEditor: Boolean) {
     val navigatables = dtos.flatMap { shelfTreeHolder.findChangesInTree(it) }
       .map { it.shelvedChange }
       .map { wrapper -> ShelvedChangeNavigatable(wrapper, project) }

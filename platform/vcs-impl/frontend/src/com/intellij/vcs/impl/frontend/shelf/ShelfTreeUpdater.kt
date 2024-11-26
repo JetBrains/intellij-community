@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.asEntity
 import com.intellij.platform.project.projectId
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
@@ -14,7 +13,7 @@ import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.vcs.impl.shared.rhizome.ShelfTreeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.ref
 import fleet.kernel.rete.collectLatest
@@ -84,7 +83,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     cs.launch(Dispatchers.IO) {
       withKernel {
         val changeListEntity = changeListNode.userObject as ShelvedChangeListEntity
-        val dto = ChangeListDto(changeListEntity.ref(), changeNodes.map { it.userObject as ShelvedChangeEntity }.map { it.ref() })
+        val dto = ChangeListRpc(changeListEntity.ref(), changeNodes.map { it.userObject as ShelvedChangeEntity }.map { it.ref() })
         RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), dto, false)
       }
     }

@@ -10,7 +10,7 @@ import com.intellij.platform.project.asProject
 import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.intellij.vcs.impl.shared.rpc.UpdateStatus
 import fleet.kernel.DurableRef
@@ -40,14 +40,14 @@ internal class BackendShelfApi : RemoteShelfApi {
     shelfTreeHolder.saveGroupings()
   }
 
-  override suspend fun showDiffForChanges(projectId: ProjectId, changeListDto: ChangeListDto) {
+  override suspend fun showDiffForChanges(projectId: ProjectId, changeListRpc: ChangeListRpc) {
     val project = projectId.findProject()
-    ShelfTreeHolder.getInstance(project).showDiff(changeListDto)
+    ShelfTreeHolder.getInstance(project).showDiff(changeListRpc)
   }
 
-  override suspend fun notifyNodeSelected(projectId: ProjectId, changeListDto: ChangeListDto, fromModelChange: Boolean) {
+  override suspend fun notifyNodeSelected(projectId: ProjectId, changeListRpc: ChangeListRpc, fromModelChange: Boolean) {
     val project = projectId.findProject()
-    ShelfTreeHolder.getInstance(project).updateDiffFile(changeListDto, fromModelChange)
+    ShelfTreeHolder.getInstance(project).updateDiffFile(changeListRpc, fromModelChange)
   }
 
   override suspend fun applyTreeGrouping(projectId: ProjectId, groupingKeys: Set<String>): Deferred<UpdateStatus> {

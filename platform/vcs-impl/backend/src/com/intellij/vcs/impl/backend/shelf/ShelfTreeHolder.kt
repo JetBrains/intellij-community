@@ -23,7 +23,7 @@ import com.intellij.vcs.impl.backend.shelf.diff.ShelvedPreviewProcessor
 import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.vcs.impl.shared.rhizome.*
-import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.ChangeListRpc
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.*
 import fleet.kernel.rete.Rete
@@ -144,12 +144,12 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  internal fun findChangesInTree(changeListDto: ChangeListDto): List<ShelvedChangeNode> {
-    val changeListNode = findChangeListNode(changeListDto.changeList)
+  internal fun findChangesInTree(changeListRpc: ChangeListRpc): List<ShelvedChangeNode> {
+    val changeListNode = findChangeListNode(changeListRpc.changeList)
                          ?: return emptyList()
     val selectedChanges = changeListNode.traverse().filterIsInstance<ShelvedChangeNode>().filter {
       val changeRef = it.getUserData(ENTITY_ID_KEY) as? DurableRef<*> ?: return@filter false
-      return@filter changeListDto.changes.isEmpty() || changeListDto.changes.contains(changeRef)
+      return@filter changeListRpc.changes.isEmpty() || changeListRpc.changes.contains(changeRef)
     }
     return selectedChanges.toList()
   }
@@ -165,8 +165,8 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
     changeListNode.changeList.description = newName
   }
 
-  fun showDiff(changeListDto: ChangeListDto) {
-    val selectedChanges = findChangesInTree(changeListDto)
+  fun showDiff(changeListRpc: ChangeListRpc) {
+    val selectedChanges = findChangesInTree(changeListRpc)
 
     val changesState = ShelfDiffChangesState(selectedChanges.map { it.shelvedChange })
     diffChangesProvider.changesStateFlow.tryEmit(changesState)
@@ -234,8 +234,8 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
     scheduleTreeUpdate()
   }
 
-  fun updateDiffFile(changeListDto: ChangeListDto, fromModelChange: Boolean) {
-    val selectedChanges = findChangesInTree(changeListDto).map { it.shelvedChange }
+  fun updateDiffFile(changeListRpc: ChangeListRpc, fromModelChange: Boolean) {
+    val selectedChanges = findChangesInTree(changeListRpc).map { it.shelvedChange }
     diffChangesProvider.changesStateFlow.tryEmit(ShelfDiffChangesState(selectedChanges, fromModelChange))
   }
 

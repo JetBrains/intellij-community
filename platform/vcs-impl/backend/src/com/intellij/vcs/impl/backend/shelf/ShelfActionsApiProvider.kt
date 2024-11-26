@@ -5,7 +5,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import fleet.kernel.DurableRef
 import fleet.rpc.remoteApiDescriptor
@@ -22,19 +22,19 @@ class ShelfActionsApiProvider : RemoteApiProvider {
 
 internal class BackendShelfActionsApi : RemoteShelfActionsApi {
 
-  override suspend fun unshelve(projectId: ProjectId, changeListDto: List<ChangeListDto>, withDialog: Boolean) {
-    getShelfRemoteActionExecutor(projectId).unshelve(changeListDto, withDialog)
+  override suspend fun unshelve(projectId: ProjectId, changeListRpc: List<ChangeListRpc>, withDialog: Boolean) {
+    getShelfRemoteActionExecutor(projectId).unshelve(changeListRpc, withDialog)
   }
 
-  override suspend fun delete(projectId: ProjectId, selectedLists: List<DurableRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
+  override suspend fun delete(projectId: ProjectId, selectedLists: List<DurableRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListRpc>) {
     getShelfRemoteActionExecutor(projectId).delete(selectedLists, selectedChanges)
   }
 
-  override suspend fun createPatchForShelvedChanges(projectId: ProjectId, changeListDto: List<ChangeListDto>, silentClipboard: Boolean) {
-    getShelfRemoteActionExecutor(projectId).createPatchForShelvedChanges(changeListDto, silentClipboard)
+  override suspend fun createPatchForShelvedChanges(projectId: ProjectId, changeListRpc: List<ChangeListRpc>, silentClipboard: Boolean) {
+    getShelfRemoteActionExecutor(projectId).createPatchForShelvedChanges(changeListRpc, silentClipboard)
   }
 
-  override suspend fun showStandaloneDiff(projectId: ProjectId, changeListsDto: List<ChangeListDto>, withLocal: Boolean) {
+  override suspend fun showStandaloneDiff(projectId: ProjectId, changeListsDto: List<ChangeListRpc>, withLocal: Boolean) {
     getShelfRemoteActionExecutor(projectId).showStandaloneDiff(changeListsDto, withLocal)
   }
 
@@ -42,7 +42,7 @@ internal class BackendShelfActionsApi : RemoteShelfActionsApi {
     getShelfRemoteActionExecutor(projectId).exportPatches()
   }
 
-  override suspend fun navigateToSource(projectId: ProjectId, navigatables: List<ChangeListDto>, focusEditor: Boolean) {
+  override suspend fun navigateToSource(projectId: ProjectId, navigatables: List<ChangeListRpc>, focusEditor: Boolean) {
     getShelfRemoteActionExecutor(projectId).navigateToSource(navigatables, focusEditor)
   }
 

@@ -13,7 +13,7 @@ import com.intellij.vcs.impl.shared.rhizome.DiffSplitterEntity
 import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.intellij.vcs.impl.shared.rpc.ChangeListDto
+import com.intellij.vcs.impl.shared.rpc.ChangeListRpc
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.jetbrains.rhizomedb.entity
@@ -62,8 +62,8 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     }
   }
 
-  private fun Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>.toDtos(): List<ChangeListDto> = map {
-    ChangeListDto(it.key.ref(), it.value.map { it.ref() })
+  private fun Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>.toDtos(): List<ChangeListRpc> = map {
+    ChangeListRpc(it.key.ref(), it.value.map { it.ref() })
   }
 
   fun renameChangeList(changeList: ShelvedChangeListEntity, newName: String) {
@@ -89,7 +89,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     cs.launch(Dispatchers.IO) {
       withKernel {
         val changeLists = lists.map {
-          ChangeListDto(changeList = it.key.ref(), changes = it.value.map { it.ref() })
+          ChangeListRpc(changeList = it.key.ref(), changes = it.value.map { it.ref() })
         }
         RemoteShelfActionsApi.getInstance().navigateToSource(project.projectId(), changeLists, focusEditor)
       }
@@ -102,7 +102,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
         val changeLists = changeLists.map {
           val changeListNode = it.changeListNode as ShelvedChangeListEntity
           val changes = it.changes.map { (it as ShelvedChangeEntity).ref() }
-          ChangeListDto(changeListNode.ref(), changes)
+          ChangeListRpc(changeListNode.ref(), changes)
         }
         RemoteShelfActionsApi.getInstance().createPatchForShelvedChanges(project.projectId(), changeLists, silentClipboard)
       }
