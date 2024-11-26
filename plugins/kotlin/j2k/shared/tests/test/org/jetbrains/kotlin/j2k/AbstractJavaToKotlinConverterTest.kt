@@ -6,16 +6,9 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
-import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-
-private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
 
 abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
@@ -41,18 +34,6 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
     protected fun deleteFile(virtualFile: VirtualFile) {
         runWriteAction { virtualFile.delete(this) }
     }
-
-    protected fun getDisableTestDirective(): String =
-        if (pluginMode === KotlinPluginMode.K2) IGNORE_K2 else IGNORE_K1
-
-    protected fun File.getFileTextWithoutDirectives(): String =
-        readText().getTextWithoutDirectives()
-
-    protected fun String.getTextWithoutDirectives(): String =
-        split("\n").filterNot { it.trim() in ignoreDirectives }.joinToString(separator = "\n")
-
-    protected fun KtFile.getFileTextWithErrors(): String =
-        if (pluginMode === KotlinPluginMode.K2) getK2FileTextWithErrors(this) else dumpTextWithErrors()
 
     // Needed to make the Kotlin compiler think it is running on JDK 16+
     // see org.jetbrains.kotlin.resolve.jvm.checkers.JvmRecordApplicabilityChecker

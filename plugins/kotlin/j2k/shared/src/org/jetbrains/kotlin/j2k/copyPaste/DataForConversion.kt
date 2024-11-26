@@ -63,7 +63,7 @@ class DataForConversion private constructor(
  * to strip `PsiElement`s that don't fit the conversion range, and transform the PSI to make it more suitable for J2K.
  * In our example above, this would make `file.elementsInRange(range)` return an incomplete `PsiMethod` instead of a bunch of leafs.
  *
- * See the test [org.jetbrains.kotlin.nj2k.NewJavaToKotlinCopyPasteConversionTestGenerated.testMethodDeclarationWithNoBody].
+ * See the test [org.jetbrains.kotlin.j2k.k2.K2JavaToKotlinCopyPasteConversionTestGenerated.testMethodDeclarationWithNoBody].
  */
 private fun ElementAndTextList.collectElementsToConvert(
     file: PsiJavaFile,

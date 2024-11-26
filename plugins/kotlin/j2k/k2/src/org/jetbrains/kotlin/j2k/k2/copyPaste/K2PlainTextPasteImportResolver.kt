@@ -9,20 +9,18 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
-import org.jetbrains.kotlin.idea.core.isVisible
-import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
@@ -33,9 +31,9 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 
 /**
- * Tests: [org.jetbrains.kotlin.nj2k.TextNewJavaToKotlinCopyPasteConversionTestGenerated].
+ * Tests: [org.jetbrains.kotlin.j2k.k2.K2TextJavaToKotlinCopyPasteConversionTestGenerated].
  */
-class K2PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
+internal class K2PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
     PlainTextPasteImportResolver {
     private val sourceJavaFile: PsiJavaFile = dataForConversion.sourceJavaFile
     private val javaFileImportList: PsiImportList = sourceJavaFile.importList!!
@@ -44,8 +42,6 @@ class K2PlainTextPasteImportResolver(private val dataForConversion: DataForConve
 
     private val psiElementFactory = PsiElementFactory.getInstance(project)
     private val shortNameCache = PsiShortNamesCache.getInstance(project)
-    private val bindingContext by lazy { targetKotlinFile.analyzeWithContent() }
-    private val resolutionFacade = targetKotlinFile.getResolutionFacade()
 
     private val failedToResolveReferenceNames: MutableSet<String> = mutableSetOf()
     private val importsToAddToKotlinFile: MutableList<PsiImportStatementBase> = mutableListOf()
@@ -222,31 +218,38 @@ class K2PlainTextPasteImportResolver(private val dataForConversion: DataForConve
 
     private fun findClassesByShortName(name: String): List<PsiClass> {
         return runReadAction {
-            val candidateClasses = shortNameCache.getClassesByName(name, scope)
-            candidateClasses.filter { psiClass ->
-                if (!RootKindFilter.everything.matches(psiClass.containingFile)) return@filter false
-                val descriptor = psiClass.getJavaMemberDescriptor() as? ClassDescriptor ?: return@filter false
-                canBeImported(descriptor)
+            analyze(targetKotlinFile) {
+                val candidateClasses = shortNameCache.getClassesByName(name, scope)
+                candidateClasses.filter { psiClass ->
+                    if (!RootKindFilter.everything.matches(psiClass.containingFile)) return@filter false
+                    val declarationSymbol = if (psiClass is KtLightClass) {
+                        psiClass.kotlinOrigin?.symbol
+                    } else {
+                        psiClass.namedClassSymbol
+                    }
+                    declarationSymbol != null && canBeImported(declarationSymbol)
+                }
             }
         }
     }
 
-    @OptIn(K1ModeProjectStructureApi::class)
     private fun findUniqueMemberByShortName(name: String): PsiMember? {
         return runReadAction {
-            val candidateMembers: List<PsiMember> =
-                shortNameCache.getMethodsByName(name, scope).asList() + shortNameCache.getFieldsByName(name, scope).asList()
-            candidateMembers.filter { member ->
-                if (member.moduleInfoOrNull == null) return@filter false
-                val descriptor = member.getJavaMemberDescriptor(resolutionFacade) as? DeclarationDescriptorWithVisibility
-                    ?: return@filter false
-                canBeImported(descriptor)
-            }.singleOrNull()
+            analyze(targetKotlinFile) {
+                val candidateMembers: List<PsiMember> =
+                    shortNameCache.getMethodsByName(name, scope).asList() + shortNameCache.getFieldsByName(name, scope).asList()
+                candidateMembers.filter { member ->
+                    if (member.module == null) return@filter false
+                    val callableSymbol = member.callableSymbol ?: return@filter false
+                    canBeImported(callableSymbol)
+                }.singleOrNull()
+            }
         }
     }
 
-    private fun canBeImported(descriptor: DeclarationDescriptorWithVisibility): Boolean {
-        return descriptor.canBeReferencedViaImport() && descriptor.isVisible(targetKotlinFile, null, bindingContext, resolutionFacade)
+    @OptIn(KaExperimentalApi::class, KaIdeApi::class)
+    private fun KaSession.canBeImported(symbol: KaDeclarationSymbol): Boolean {
+        return symbol.importableFqName != null && isVisible(symbol, targetKotlinFile.symbol, position = targetKotlinFile)
     }
 
     private fun runWriteActionOnEDTSync(runnable: () -> Unit) {

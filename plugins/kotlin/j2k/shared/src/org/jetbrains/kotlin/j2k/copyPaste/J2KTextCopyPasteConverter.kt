@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
@@ -55,8 +55,8 @@ internal class J2KTextCopyPasteConverter(
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-        if (j2kKind == K1_NEW) {
-            val postProcessor = J2kConverterExtension.extension(kind = K1_NEW).createPostProcessor()
+        if (j2kKind != K1_OLD) {
+            val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
             for (fqName in conversionResult.importsToAdd) {
                 postProcessor.insertImport(targetFile, fqName)
             }

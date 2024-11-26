@@ -29,7 +29,7 @@ private const val MAX_TEXT_LENGTH_TO_CONVERT_WITHOUT_ASKING_USER = 1000
  *
  * See also [ConvertTextJavaCopyPasteProcessor] for the related case of arbitrary code copy-pasted into a Kotlin file.
  *
- * Tests: [org.jetbrains.kotlin.nj2k.NewJavaToKotlinCopyPasteConversionTestGenerated].
+ * Tests: [org.jetbrains.kotlin.j2k.k2.K2JavaToKotlinCopyPasteConversionTestGenerated].
  */
 class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferableData>() {
     override fun extractTransferableData(content: Transferable): List<TextBlockTransferableData> {

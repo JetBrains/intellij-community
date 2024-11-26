@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor
 import java.awt.datatransfer.StringSelection
 import java.io.File
@@ -35,22 +37,32 @@ abstract class AbstractTextJavaToKotlinCopyPasteConversionTest : AbstractCopyPas
     }
 
     fun doTest(unused: String) {
-        val fileName = fileName()
-        myFixture.configureByFile(fileName)
+        val testFile = dataFile()
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testFile.toPath(), getDisableTestDirective(pluginMode)) {
+            withCustomCompilerOptions(testFile.readText(), project, module) {
+                doTest(testFile)
+            }
+        }
+    }
+
+    private fun doTest(testFile: File) {
+        val baseName = fileName().replace(".txt", "")
+
+        myFixture.configureByFile("$baseName.txt")
 
         val fileText = dataFile().readText()
         val noConversionExpected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// NO_CONVERSION_EXPECTED").isNotEmpty()
 
         // copy a file content directly to a buffer to keep it as is (keep original line endings etc)
-        CopyPasteManager.getInstance().setContents(StringSelection(fileText))
+        // TODO remove `getTextWithoutDirectives` call after we drop IGNORE_K2 directives in copy-paste tests (see KTIJ-15711)
+        CopyPasteManager.getInstance().setContents(StringSelection(fileText.getTextWithoutDirectives()))
 
-        configureByDependencyIfExists(fileName.replace(".txt", ".dependency.kt"))
-        configureByDependencyIfExists(fileName.replace(".txt", ".dependency.java"))
+        configureByDependencyIfExists("$baseName.dependency.kt")
+        configureByDependencyIfExists("$baseName.dependency.java")
 
-        configureTargetFile(fileName.replace(".txt", ".to.kt"))
+        configureTargetFile("$baseName.to.kt")
 
         ConvertTextJavaCopyPasteProcessor.Util.conversionPerformed = false
-
         myFixture.performEditorAction(IdeActions.ACTION_PASTE)
 
         kotlin.test.assertEquals(
@@ -58,8 +70,8 @@ abstract class AbstractTextJavaToKotlinCopyPasteConversionTest : AbstractCopyPas
             if (noConversionExpected) "Conversion to Kotlin should not be suggested" else "No conversion to Kotlin suggested"
         )
 
-        val testFile = dataFile()
-        val expectedFile = File(testFile.parent, testFile.nameWithoutExtension + ".expected.kt")
-        KotlinTestUtils.assertEqualsToFile(expectedFile, myFixture.file.text)
+        val expectedFile = getExpectedFile(testFile, isCopyPaste = true, pluginMode)
+        val actualText = myFixture.file.text
+        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
 }

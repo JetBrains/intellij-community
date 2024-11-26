@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
+import org.jetbrains.kotlin.j2k.k2.copyPaste.K2J2KCopyPasteConverter
+import org.jetbrains.kotlin.j2k.k2.copyPaste.K2PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.Conversion
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
@@ -51,7 +53,7 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         dataForConversion: DataForConversion,
         targetKotlinFile: KtFile
     ): PlainTextPasteImportResolver {
-        TODO("Not yet implemented")
+        return K2PlainTextPasteImportResolver(dataForConversion, targetKotlinFile)
     }
 
     override fun createCopyPasteConverter(
@@ -63,6 +65,6 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         targetBounds: RangeMarker,
         targetDocument: Document
     ): J2KCopyPasteConverter {
-        TODO("Not yet implemented")
+        return K2J2KCopyPasteConverter(project, editor, dataForConversion, j2kKind, targetFile, targetBounds, targetDocument)
     }
 }
