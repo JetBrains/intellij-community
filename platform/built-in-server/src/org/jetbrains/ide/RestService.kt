@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.github.benmanes.caffeine.cache.CacheLoader
@@ -12,6 +12,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.showYesNoDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -35,7 +36,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.builtInWebServer.isSignedRequest
+import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.ide.RestService.Companion.createJsonReader
 import org.jetbrains.ide.RestService.Companion.createJsonWriter
 import org.jetbrains.io.*
@@ -280,7 +281,7 @@ abstract class RestService : HttpRequestHandler() {
   @Throws(InterruptedException::class, InvocationTargetException::class)
   // e.g. upsource trust to configured host
   protected open fun isHostTrusted(request: FullHttpRequest): Boolean {
-    if (request.isSignedRequest() || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
+    if (service<BuiltInWebServerAuth>().isRequestSigned(request) || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
       return true
     }
 

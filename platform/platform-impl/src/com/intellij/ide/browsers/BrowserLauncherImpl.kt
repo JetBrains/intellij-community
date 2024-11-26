@@ -5,7 +5,6 @@ import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.impl.setTrusted
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -14,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.BuiltInServerManager
@@ -49,12 +47,11 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
 
   override fun signUrl(url: String): String {
     val parsedUrl = Urls.parse(url, false)
-    val serverManager = BuiltInServerManager.getInstance()
-    if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {
-      if (Registry.`is`("ide.built.in.web.server.activatable", false)) {
-        PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true)
+    if (parsedUrl != null) {
+      val serverManager = BuiltInServerManager.getInstance()
+      if (serverManager.isOnBuiltInWebServer(parsedUrl)) {
+        return serverManager.addAuthToken(parsedUrl).toExternalForm()
       }
-      return serverManager.addAuthToken(parsedUrl).toExternalForm()
     }
     return url
   }
