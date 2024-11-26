@@ -57,8 +57,11 @@ fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Se
   return createInitScript(MAIN_INIT_SCRIPT_NAME, initScript)
 }
 
-fun createIdeaPluginConfiguratorInitScript() : Path {
-  val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IdeaPluginConfigurator.gradle")
+fun createIdeaPluginConfiguratorInitScript(): Path {
+  val initScript = joinInitScripts(
+    loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
+    loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IdeaPluginConfigurator.gradle")
+  )
   return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
 }
 
