@@ -39,7 +39,7 @@ open class ChangesTree(val project: Project, private val cs: CoroutineScope, pri
   private val keyHandlers = ChangesTreeHandlers(this)
   private var isModelFlat: Boolean = true
   private val treeExpander = MyTreeExpander()
-  protected val groupingSupport = ChangesGroupingSupport(project, place, cs)
+  protected val groupingSupport: ChangesGroupingSupport = ChangesGroupingSupport(project, place, cs)
 
   init {
     val nodeRenderer = ChangesBrowserNodeRenderer(project, { false }, false)
@@ -86,7 +86,7 @@ open class ChangesTree(val project: Project, private val cs: CoroutineScope, pri
   }
 
   companion object {
-    val GROUPING_SUPPORT_KEY = DataKey.create<ChangesGroupingSupport>("grouping.support")
+    val GROUPING_SUPPORT_KEY: DataKey<ChangesGroupingSupport> = DataKey.create<ChangesGroupingSupport>("grouping.support")
   }
 }
 

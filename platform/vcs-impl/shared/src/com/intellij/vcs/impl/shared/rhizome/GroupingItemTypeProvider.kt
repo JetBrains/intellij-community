@@ -25,7 +25,7 @@ data class GroupingItemsEntity(override val eid: EID) : Entity {
   @ApiStatus.Internal
   companion object : DurableEntityType<GroupingItemsEntity>(GroupingItemsEntity::class.java.name, "com.intellij", ::GroupingItemsEntity) {
     val Place: Required<String> = requiredValue("place", String.serializer())
-    val Items: Many<GroupingItemEntity> = manyRef<GroupingItemEntity>("items", RefFlags.CASCADE_DELETE)
+    val Items: Many<GroupingItemEntity> = manyRef("items", RefFlags.CASCADE_DELETE)
   }
 }
 

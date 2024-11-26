@@ -148,6 +148,6 @@ class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: Co
     private val isOpenEditorDiffPreviewWithSingleClick = Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
     @NonNls
-    const val SHELF_CONTEXT_MENU = "Frontend.Vcs.Shelf.ContextMenu"
+    const val SHELF_CONTEXT_MENU: String = "Frontend.Vcs.Shelf.ContextMenu"
   }
 }

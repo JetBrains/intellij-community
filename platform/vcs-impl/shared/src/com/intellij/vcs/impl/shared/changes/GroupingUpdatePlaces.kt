@@ -9,5 +9,5 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 object GroupingUpdatePlaces {
-  val SHELF_TREE = "SHELF_TREE"
+  val SHELF_TREE: String = "SHELF_TREE"
 }

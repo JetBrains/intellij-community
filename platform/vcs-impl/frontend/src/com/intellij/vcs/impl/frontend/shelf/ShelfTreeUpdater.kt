@@ -105,6 +105,6 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
   companion object {
     fun getInstance(project: Project): ShelfTreeUpdater = project.getService(ShelfTreeUpdater::class.java)
 
-    val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ShelfToolWindowPanel?>("CONTENT_PROVIDER_SUPPLIER")
+    val CONTENT_PROVIDER_SUPPLIER_KEY: Key<() -> ShelfToolWindowPanel?> = Key.create("CONTENT_PROVIDER_SUPPLIER")
   }
 }

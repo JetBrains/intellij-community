@@ -36,8 +36,8 @@ sealed interface NodeEntity : Entity {
 
   @ApiStatus.Internal
   companion object : Mixin<NodeEntity>(NodeEntity::class.java.name, "com.intellij") {
-    val Children = manyRef<NodeEntity>("children", RefFlags.CASCADE_DELETE)
-    val Order = requiredValue("order", Int.serializer())
+    val Children: Many<NodeEntity> = manyRef<NodeEntity>("children", RefFlags.CASCADE_DELETE)
+    val Order: Required<Int> = requiredValue("order", Int.serializer())
   }
 }
 
@@ -62,12 +62,12 @@ data class ShelvedChangeListEntity(override val eid: EID) : NodeEntity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<ShelvedChangeListEntity>(ShelvedChangeListEntity::class.java.name, "com.intellij", ::ShelvedChangeListEntity, NodeEntity) {
-    val Name = requiredValue("name", String.serializer())
-    val Description = requiredValue("description", String.serializer())
-    val Date = requiredValue("date", Long.serializer())
-    val Error = optionalValue("error", String.serializer())
-    val Recycled = requiredValue("recycled", Boolean.serializer())
-    val Deleted = requiredValue("deleted", Boolean.serializer())
+    val Name: Required<String> = requiredValue("name", String.serializer())
+    val Description: Required<String> = requiredValue("description", String.serializer())
+    val Date: Required<Long> = requiredValue("date", Long.serializer())
+    val Error: Optional<String> = optionalValue("error", String.serializer())
+    val Recycled: Required<Boolean> = requiredValue("recycled", Boolean.serializer())
+    val Deleted: Required<Boolean> = requiredValue("deleted", Boolean.serializer())
   }
 }
 
@@ -80,9 +80,9 @@ data class ShelvedChangeEntity(override val eid: EID) : NodeEntity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<ShelvedChangeEntity>(ShelvedChangeEntity::class.java.name, "com.intellij", ::ShelvedChangeEntity, NodeEntity) {
-    val FilePath = requiredValue("filePath", String.serializer())
-    val AdditionalText = optionalValue("originText", String.serializer())
-    val FileStatus = requiredValue("fileStatus", String.serializer())
+    val FilePath: Required<String> = requiredValue("filePath", String.serializer())
+    val AdditionalText: Optional<String> = optionalValue("originText", String.serializer())
+    val FileStatus: Required<String> = requiredValue("fileStatus", String.serializer())
   }
 }
 
@@ -95,7 +95,7 @@ data class TagNodeEntity(override val eid: EID) : NodeEntity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<TagNodeEntity>(TagNodeEntity::class.java.name, "com.intellij", ::TagNodeEntity, NodeEntity) {
-    val Text = requiredValue("text", String.serializer())
+    val Text: Required<String> = requiredValue("text", String.serializer())
   }
 }
 
@@ -107,9 +107,9 @@ data class ModuleNodeEntity(override val eid: EID) : NodeEntity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<ModuleNodeEntity>(ModuleNodeEntity::class.java.name, "com.intellij", ::ModuleNodeEntity, NodeEntity) {
-    val Name = requiredValue("name", String.serializer())
-    val RootPath = requiredValue("rootPath", String.serializer())
-    val ModuleType = optionalValue("moduleType", String.serializer())
+    val Name: Required<String> = requiredValue("name", String.serializer())
+    val RootPath: Required<String> = requiredValue("rootPath", String.serializer())
+    val ModuleType: Optional<String> = optionalValue("moduleType", String.serializer())
   }
 }
 
@@ -125,12 +125,12 @@ data class RepositoryNodeEntity(override val eid: EID) : NodeEntity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<RepositoryNodeEntity>(RepositoryNodeEntity::class.java.name, "com.intellij", ::RepositoryNodeEntity, NodeEntity) {
-    val Name = requiredValue("name", String.serializer())
-    val BranchName = optionalValue("branchName", String.serializer())
-    val ToolTip = optionalValue("toolTip", String.serializer())
-    val ColorRed = requiredValue("colorRed", Int.serializer())
-    val ColorGreen = requiredValue("colorGreen", Int.serializer())
-    val ColorBlue = requiredValue("colorBlue", Int.serializer())
+    val Name: Required<String> = requiredValue("name", String.serializer())
+    val BranchName: Optional<String> = optionalValue("branchName", String.serializer())
+    val ToolTip: Optional<String> = optionalValue("toolTip", String.serializer())
+    val ColorRed: Required<Int> = requiredValue("colorRed", Int.serializer())
+    val ColorGreen: Required<Int> = requiredValue("colorGreen", Int.serializer())
+    val ColorBlue: Required<Int> = requiredValue("colorBlue", Int.serializer())
   }
 }
 
@@ -144,11 +144,11 @@ data class FilePathNodeEntity(override val eid: EID) : NodeEntity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<FilePathNodeEntity>(FilePathNodeEntity::class.java.name, "com.intellij", ::FilePathNodeEntity, NodeEntity) {
-    val Name = requiredValue("name", String.serializer())
-    val FileStatus = optionalValue("fileStatus", String.serializer())
-    val ParentPath = optionalValue("filePath", String.serializer())
-    val OriginText = optionalValue("originText", String.serializer())
-    val IsDirectory = requiredValue("isDirectory", Boolean.serializer())
+    val Name: Required<String> = requiredValue("name", String.serializer())
+    val FileStatus: Optional<String> = optionalValue("fileStatus", String.serializer())
+    val ParentPath: Optional<String> = optionalValue("filePath", String.serializer())
+    val OriginText: Optional<String> = optionalValue("originText", String.serializer())
+    val IsDirectory: Required<Boolean> = requiredValue("isDirectory", Boolean.serializer())
   }
 }
 
@@ -166,7 +166,7 @@ data class ShelfTreeEntity(override val eid: EID) : Entity {
 
   @ApiStatus.Internal
   companion object : DurableEntityType<ShelfTreeEntity>(ShelfTreeEntity::class.java.name, "com.intellij", ::ShelfTreeEntity) {
-    val Root = requiredRef<ShelvesTreeRootEntity>("root", RefFlags.CASCADE_DELETE)
-    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
+    val Root: Required<ShelvesTreeRootEntity> = requiredRef("root", RefFlags.CASCADE_DELETE)
+    val Project: Required<ProjectEntity> = requiredRef("project", RefFlags.UNIQUE)
   }
 }

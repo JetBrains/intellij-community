@@ -42,9 +42,9 @@ open class ChangesGroupingSupport(val project: Project, private val source: Stri
     }
   }
 
-  fun isNone() = groupingKeys.isEmpty()
+  fun isNone(): Boolean = groupingKeys.isEmpty()
 
   companion object {
-    const val PROP_GROUPING_KEYS = "ChangesGroupingKeys" // NON-NLS
+    const val PROP_GROUPING_KEYS: String = "ChangesGroupingKeys" // NON-NLS
   }
 }

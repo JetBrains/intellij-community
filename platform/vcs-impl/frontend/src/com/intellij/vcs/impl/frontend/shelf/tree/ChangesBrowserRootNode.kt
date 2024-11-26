@@ -6,6 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class ChangesBrowserRootNode : ChangesBrowserNode<String>(ROOT_NODE_VALUE) {
   companion object {
-    const val ROOT_NODE_VALUE = "root"
+    const val ROOT_NODE_VALUE: String = "root"
   }
 }
