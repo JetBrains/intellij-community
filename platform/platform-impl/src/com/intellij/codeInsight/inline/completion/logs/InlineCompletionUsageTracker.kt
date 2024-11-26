@@ -18,7 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 37)
+  private val GROUP = EventLogGroup("inline.completion", 38)
 
   const val INVOKED_EVENT_ID: String = "invoked"
   const val SHOWN_EVENT_ID: String = "shown"
@@ -26,7 +26,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   private class PluginInfoField(override val name: String, override val description: String?) : PrimitiveEventField<PluginInfo?>() {
     override val validationRule: List<String>
-      get() = listOf("{util#plugin_info}")
+      get() = listOf("{util#plugin}")
 
     override fun addData(
       fuData: FeatureUsageData,
