@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jb-jdi" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.37">
+    <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.38">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.37/jb-jdi-2.37.jar">
-          <sha256sum>e2e01941b253707ae47d0a9c6f7d2b5e3803f55deb4324f1d00e5f3dafd2580d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.38/jb-jdi-2.38.jar">
+          <sha256sum>80f942ceb94f457d6c4baa1ebfa3c88f85d4c47979b9f3ad8604b50c69570186</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.37/jb-jdi-2.37.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.38/jb-jdi-2.38.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.37/jb-jdi-2.37-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.38/jb-jdi-2.38-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
