@@ -39,6 +39,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -136,8 +137,10 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   public void reset() {
     if (myServiceDirectoryPathField != null) {
       BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(myInitialSettings.getProject());
-      String gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHome()); //NON-NLS
-      ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir);
+      Path gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHomePath()); //NON-NLS
+      if (gradleUserHomeDir != null) {
+        ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir.toString());
+      }
       myServiceDirectoryPathField.setLocalPath(myInitialSettings.getServiceDirectoryPath());
     }
 
@@ -348,7 +351,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (gradleUserHomeDir == null) {
       BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(settings.getProject());
-      String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
+      Path gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHomePath());
       if (gradleUserHome == null) {
         Messages.showErrorDialog(settings.getProject(),
                                  GradleBundle.message("gradle.settings.text.vm.options.migration.error.text",
@@ -357,7 +360,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
         return false;
       }
       else {
-        gradleUserHomeDir = new File(gradleUserHome);
+        gradleUserHomeDir = gradleUserHome.toFile();
       }
     }
 

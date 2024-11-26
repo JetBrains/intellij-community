@@ -38,7 +38,10 @@ import org.jetbrains.plugins.gradle.util.GradleBundle.PATH_TO_BUNDLE
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 @ApiStatus.Internal
 class LocalGradleExecutionAware : GradleExecutionAware {
@@ -67,18 +70,18 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
   override fun getDefaultBuildLayoutParameters(project: Project): BuildLayoutParameters = LocalBuildLayoutParameters(project, null)
 
-  override fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters =
+  override fun getBuildLayoutParameters(project: Project, projectPath: Path): BuildLayoutParameters =
     LocalBuildLayoutParameters(project, projectPath)
 
-  override fun isGradleInstallationHomeDir(project: Project, homePath: String): Boolean {
-    val libs = File(homePath, "lib")
-    if (!libs.isDirectory) {
+  override fun isGradleInstallationHomeDir(project: Project, homePath: Path): Boolean {
+    val libs = homePath.resolve("lib")
+    if (libs != null && !libs.isDirectory()) {
       if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
         LOG.info("Gradle sdk check failed for the path '$homePath'. Reason: it doesn't have a child directory named 'lib'")
       }
       return false
     }
-    val found = findGradleJar(libs.listFiles()) != null
+    val found = findGradleJar(libs) != null
     if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
       LOG.info("Gradle home check ${if (found) "passed" else "failed"} for the path '$homePath'")
     }
@@ -226,18 +229,18 @@ class LocalGradleExecutionAware : GradleExecutionAware {
   }
 
 
-  private fun findGradleJar(files: Array<File?>?): File? {
-    if (files == null) return null
-
-    for (file in files) {
-      if (GradleInstallationManager.GRADLE_JAR_FILE_PATTERN.matcher(file!!.name).matches()) {
-        return file
-      }
+  private fun findGradleJar(targetFolder: Path): Path? {
+    val gradleJar = targetFolder.listDirectoryEntries().find {
+      val fileName = it.fileName.toString()
+      GradleInstallationManager.GRADLE_JAR_FILE_PATTERN.matcher(fileName).matches()
+    }
+    if (gradleJar != null) {
+      return gradleJar
     }
     if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
       val filesInfo = StringBuilder()
-      for (file in files) {
-        filesInfo.append(file!!.absolutePath).append(';')
+      targetFolder.listDirectoryEntries().forEach {
+        filesInfo.append(it.absolutePathString()).append(';')
       }
       if (filesInfo.isNotEmpty()) {
         filesInfo.setLength(filesInfo.length - 1)

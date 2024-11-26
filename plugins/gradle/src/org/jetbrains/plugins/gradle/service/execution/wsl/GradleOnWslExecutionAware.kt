@@ -17,11 +17,13 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolv
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo.Resolved
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.IncorrectGradleJdkIssue
 import org.jetbrains.plugins.gradle.service.execution.*
 import org.jetbrains.plugins.gradle.util.GradleBundle.message
+import java.nio.file.Path
 
 @ApiStatus.Internal
 class GradleOnWslExecutionAware : GradleExecutionAware {
@@ -73,14 +75,15 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
     return WslBuildLayoutParameters(wslDistribution, project, null)
   }
 
-  override fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters? {
-    val wslDistribution = resolveWslDistribution(projectPath) ?: return null
-    return WslBuildLayoutParameters(wslDistribution, project, projectPath)
+  override fun getBuildLayoutParameters(project: Project, projectPath: Path): BuildLayoutParameters? {
+    val projectPathString = projectPath.toString()
+    val wslDistribution = resolveWslDistribution(projectPathString) ?: return null
+    return WslBuildLayoutParameters(wslDistribution, project, projectPathString)
   }
 
-  override fun isGradleInstallationHomeDir(project: Project, homePath: String): Boolean {
+  override fun isGradleInstallationHomeDir(project: Project, homePath: Path): Boolean {
     val wslDistribution = resolveWslDistribution(project.basePath ?: return false) ?: return false
-    val windowsPath = wslDistribution.getWindowsPath(homePath) ?: return false
+    val windowsPath = wslDistribution.getWindowsPath(homePath.toString()).toNioPathOrNull()!!
     return LocalGradleExecutionAware().isGradleInstallationHomeDir(project, windowsPath)
   }
 

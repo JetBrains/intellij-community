@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.PathAssembler
 import org.gradle.wrapper.WrapperConfiguration
@@ -11,19 +13,26 @@ import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.isDirectory
 
-internal open class LocalBuildLayoutParameters(private val project: Project,
-                                               private val projectPath: String?) : BuildLayoutParameters {
-  override val gradleHome: TargetValue<String>? by lazy { findGradleHome()?.let { TargetValue.fixed(it) } }
+internal open class LocalBuildLayoutParameters(
+  private val project: Project,
+  private val projectPath: Path?,
+) : BuildLayoutParameters {
+  override val gradleHome: TargetValue<Path>? by lazy { findGradleHome()?.let { TargetValue.fixed(it) } }
   override val gradleVersion: GradleVersion? by lazy { guessGradleVersion() }
-  override val gradleUserHome: TargetValue<String> by lazy { TargetValue.fixed(findGradleUserHomeDir()) }
+  override val gradleUserHomePath: TargetValue<Path> by lazy { TargetValue.fixed(findGradleUserHomeDir()) }
 
-  protected open fun getGradleProjectSettings() = projectPath?.let { getGradleSettings().getLinkedProjectSettings(it) }
+  protected open fun getGradleProjectSettings(): GradleProjectSettings? {
+    return projectPath?.let { getGradleSettings().getLinkedProjectSettings(it.toCanonicalPath()) }
+  }
+
   private fun getGradleSettings() = GradleSettings.getInstance(project)
 
   private val wrapperConfiguration: WrapperConfiguration? by lazy {
@@ -37,16 +46,24 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     }
   }
 
-  private fun findGradleHome(): String? {
-    val gradleProjectSettings = getGradleProjectSettings()
-    val distributionType = gradleProjectSettings?.distributionType
-                           ?: return GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)?.path
-    if (distributionType == DistributionType.LOCAL) return gradleProjectSettings.gradleHome
-    if (distributionType == DistributionType.WRAPPED) return GradleLocalSettings.getInstance(project).getGradleHome(projectPath)
+  private fun findGradleHome(): Path? {
+    val gradleProjectSettings = getGradleProjectSettings() ?: return null
+    return when (gradleProjectSettings.distributionType) {
+      null -> GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)?.toPath()
+      DistributionType.LOCAL -> gradleProjectSettings.gradleHome?.toNioPathOrNull()
+      DistributionType.WRAPPED -> {
+        val projectNioPath = projectPath?.toCanonicalPath()
+        val localSettings = GradleLocalSettings.getInstance(project)
+        return localSettings.getGradleHome(projectNioPath)?.toNioPathOrNull()
+      }
+      else -> tryToFindGradleInstallation(gradleProjectSettings)
+    }
+  }
 
+  private fun tryToFindGradleInstallation(gradleProjectSettings: GradleProjectSettings): Path? {
     if (wrapperConfiguration == null) return null
-    val localGradleUserHome = gradleUserHome.maybeGetLocalValue() ?: return null
-    val localDistribution = PathAssembler(File(localGradleUserHome), File(gradleProjectSettings.externalProjectPath))
+    val localGradleUserHome = gradleUserHomePath.maybeGetLocalValue() ?: return null
+    val localDistribution = PathAssembler(localGradleUserHome.toFile(), File(gradleProjectSettings.externalProjectPath))
       .getDistribution(wrapperConfiguration)
     val distributionDir = localDistribution.distributionDir ?: return null
     if (!distributionDir.exists()) return null
@@ -54,7 +71,7 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
       val dirs = Files.list(distributionDir.toPath()).use { it.filter { it.isDirectory() }.unordered().limit(2).toList() }
       if (dirs.size == 1) {
         // Expected to find exactly 1 directory, see org.gradle.wrapper.Install.verifyDistributionRoot
-        return dirs.first().toString()
+        return dirs.first()
       }
     }
     catch (e: Exception) {
@@ -91,12 +108,12 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     return null
   }
 
-  private fun findGradleUserHomeDir(): String {
+  private fun findGradleUserHomeDir(): Path {
     if (projectPath == null) return defaultGradleUserHome()
-    return getGradleSettings().serviceDirectoryPath ?: defaultGradleUserHome()
+    return getGradleSettings().serviceDirectoryPath?.toNioPathOrNull() ?: defaultGradleUserHome()
   }
 
-  private fun defaultGradleUserHome() = gradleUserHomeDir().path
+  private fun defaultGradleUserHome() = gradleUserHomeDir().toPath()
 
   companion object {
     private val log = logger<LocalGradleExecutionAware>()

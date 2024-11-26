@@ -10,7 +10,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredLocalTargetValue
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -20,13 +19,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.diagnostic.telemetry.rt.PlatformTelemetryRtClass
-import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
 import groovy.lang.MissingMethodException
-import io.opentelemetry.api.trace.Span
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.annotations.NotNull

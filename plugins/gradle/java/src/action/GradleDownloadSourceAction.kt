@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.VisibleForTesting
@@ -26,10 +26,9 @@ import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import org.jetbrains.plugins.gradle.util.isValidJar
 import java.io.File
 import java.nio.file.Path
-import java.util.EnumSet
+import java.util.*
 import java.util.function.Predicate
 import java.util.function.Supplier
-import kotlin.io.path.Path
 
 class GradleDownloadSourceAction(
   private val orderEntries: List<LibraryOrderEntry>,
@@ -122,11 +121,12 @@ class GradleDownloadSourceAction(
       return null
     }
     val buildLayoutParameters = GradleInstallationManager.getInstance().guessBuildLayoutParameters(project, projectPath)
-    val gradleUserHome = buildLayoutParameters.gradleUserHome.maybeGetLocalValue()
+    val gradleUserHome = buildLayoutParameters.gradleUserHomePath.maybeGetLocalValue()
     if (gradleUserHome == null) {
       return null
     }
-    if (!FileUtil.isAncestor(gradleUserHome, rootFiles[0].getPath(), false)) {
+    val filePath = rootFiles[0].path.toNioPathOrNull() ?: return null
+    if (!filePath.startsWith(gradleUserHome)) {
       return null
     }
     val coordinates = getLibraryUnifiedCoordinates(sourceArtifactNotation)
@@ -135,7 +135,7 @@ class GradleDownloadSourceAction(
     }
     val localArtifacts = GradleLocalCacheHelper.findArtifactComponents(
       coordinates,
-      Path.of(gradleUserHome),
+      gradleUserHome,
       EnumSet.of(LibraryPathType.SOURCE)
     )
     return localArtifacts[LibraryPathType.SOURCE]?.firstOrNull()

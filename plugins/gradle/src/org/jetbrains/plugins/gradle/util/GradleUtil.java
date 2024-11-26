@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -82,12 +83,28 @@ public final class GradleUtil {
    * if any; {@code null} otherwise
    */
   @Nullable
-  public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
+  public static WrapperConfiguration getWrapperConfiguration(@Nullable Path gradleProjectPath) {
     Path wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
     if (wrapperPropertiesFile == null) {
       return null;
     }
     return readWrapperConfiguration(wrapperPropertiesFile);
+  }
+
+  /**
+   * @deprecated Use {@link GradleUtil#getWrapperConfiguration(Path)} instead.
+   */
+  @Nullable
+  @Deprecated
+  public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
+    if (gradleProjectPath == null) {
+      return null;
+    }
+    Path projectPath = NioPathUtil.toNioPathOrNull(gradleProjectPath);
+    if (projectPath == null) {
+      return null;
+    }
+    return getWrapperConfiguration(projectPath);
   }
 
   public static @NotNull WrapperConfiguration generateGradleWrapperConfiguration(@NotNull GradleVersion gradleVersion) {
@@ -254,16 +271,30 @@ public final class GradleUtil {
     PropertiesComponent.getInstance().setValue(LAST_USED_GRADLE_HOME_KEY, gradleHomePath, null);
   }
 
+  /**
+   * @deprecated Use {@link GradleUtil#findDefaultWrapperPropertiesFile(Path)} instead.
+   */
   @Nullable
+  @Deprecated
   public static Path findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
-    Path file = Path.of(gradleProjectPath);
+    Path nioProjectPath = NioPathUtil.toNioPathOrNull(gradleProjectPath);
+    if (nioProjectPath == null) {
+      return null;
+    }
+    return findDefaultWrapperPropertiesFile(nioProjectPath);
+  }
 
+  @Nullable
+  public static Path findDefaultWrapperPropertiesFile(@Nullable Path root) {
+    if (root == null) {
+      return null;
+    }
     // There is a possible case that given path points to a gradle script (*.gradle) but it's also possible that
     // it references script's directory. We want to provide flexibility here.
-    Path gradleDir = Files.isRegularFile(file) ? file.resolveSibling("gradle") : file.resolve("gradle");
+    Path gradleDir = Files.isRegularFile(root) ? root.resolveSibling("gradle") : root.resolve("gradle");
     if (!Files.isDirectory(gradleDir)) {
       return null;
     }
