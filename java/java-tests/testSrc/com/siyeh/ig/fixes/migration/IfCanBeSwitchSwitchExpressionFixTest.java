@@ -30,4 +30,5 @@ public class IfCanBeSwitchSwitchExpressionFixTest extends IGQuickFixesTestCase {
 
   public void testJava14Expression() { doTest();}
   public void testJava14Comment() { doTest();}
+  public void testJavaCommentsOutsideLastStatement() { doTest();}
 }

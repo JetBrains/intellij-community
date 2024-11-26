@@ -1147,6 +1147,14 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       grabCommentsBeforeColon(label, ct, sb);
       sb.append("->");
       sb.append(myRuleResult.generate(ct, this));
+      if (!myUsedElements.isEmpty()) {
+        PsiElement element = PsiTreeUtil.nextCodeLeaf(myUsedElements.get(myUsedElements.size() - 1));
+        if(element instanceof PsiJavaToken javaToken && javaToken.textMatches("}") &&
+           element.getParent() instanceof PsiCodeBlock codeBlock &&
+           codeBlock.getParent() instanceof PsiSwitchBlock) {
+          sb.append(ct.commentsBefore(element));
+        }
+      }
       return sb.toString();
     }
 
