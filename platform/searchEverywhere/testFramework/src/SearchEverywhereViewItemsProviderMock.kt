@@ -15,7 +15,7 @@ class SearchEverywhereItemsProviderMock(
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
 ) : SearchEverywhereItemsProvider {
-  override val id: SearchEverywhereProviderId = SearchEverywhereProviderStringId("SearchEverywhereItemsProviderMock_$resultPrefix")
+  val id = SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_$resultPrefix")
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
     return flow {
@@ -38,9 +38,6 @@ class SearchEverywhereItemMock(val text: String) : SearchEverywhereItem {
   override fun weight(): Int = 0
   override fun presentation(): SearchEverywhereItemPresentation = ActionItemPresentation(text = text)
 }
-
-@ApiStatus.Internal
-data class SearchEverywhereProviderStringId(override val value: String) : SearchEverywhereProviderId
 
 @ApiStatus.Internal
 class SearchEverywhereItemDataMock(

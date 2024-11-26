@@ -6,6 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface SearchEverywhereItemsProvider {
-  val id: SearchEverywhereProviderId
   fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData>
 }

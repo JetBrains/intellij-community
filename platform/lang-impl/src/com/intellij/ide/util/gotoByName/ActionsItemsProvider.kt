@@ -20,19 +20,17 @@ import java.awt.Component
 
 @ApiStatus.Internal
 class ActionsItemsProvider(project: Project?, contextComponent: Component?, editor: Editor?): SearchEverywhereItemsProvider {
-  override val id: SearchEverywhereProviderId = object: SearchEverywhereProviderId {
-    override val value: String = "ActionsItemsProvider"
-  }
-
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+    val providerId = SearchEverywhereProviderId.of(this)
+
     return channelFlow {
       processItems(params) { value, weight ->
         val item = ActionSearchItem(weight, value)
         val itemId = params.session.saveItem(item)
-        channel.send(ActionSearchItemData(itemId, id, weight, item.presentation()))
+        channel.send(ActionSearchItemData(itemId, providerId, weight, item.presentation()))
 
         coroutineContext.isActive
       }

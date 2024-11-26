@@ -80,14 +80,14 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
     )
 
     val providersWithLimits = providers.mapIndexed { index, searchEverywhereViewItemsProvider ->
-      (searchEverywhereViewItemsProvider as SearchEverywhereItemsProvider).id to (index + 1) * 3
+      searchEverywhereViewItemsProvider.id to (index + 1) * 3
     }.toMap()
 
     val session = SearchEverywhereSessionMock()
 
     val existingResults = listOf("alpha 1", "bravo 2", "bravo 5").map { itemText ->
       val item = SearchEverywhereItemMock(itemText)
-      val itemId = session.saveItem(item)
+      val itemId = runBlocking { session.saveItem(item) }
       val providerId = providers.first { itemText.startsWith(it.resultPrefix) }.id
       SearchEverywhereItemDataMock(itemId, providerId, weight = 0, OptionItemPresentation(text = itemText))
     }

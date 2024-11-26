@@ -4,6 +4,8 @@ package com.intellij.platform.searchEverywhere
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface SearchEverywhereProviderId {
-  val value: String
+data class SearchEverywhereProviderId(val value: String) {
+  companion object {
+    fun of(provider: SearchEverywhereItemsProvider): SearchEverywhereProviderId = SearchEverywhereProviderId(provider.javaClass.name)
+  }
 }
