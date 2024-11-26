@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.searchEverywhere.frontend
+package com.intellij.platform.searchEverywhere.searchEverywhere.frontend
 
-import com.intellij.searchEverywhere.core.SearchEverywhereTab
-import com.intellij.searchEverywhere.shared.SearchEverywhereItemData
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
+import com.intellij.platform.searchEverywhere.searchEverywhere.core.SearchEverywhereTab
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

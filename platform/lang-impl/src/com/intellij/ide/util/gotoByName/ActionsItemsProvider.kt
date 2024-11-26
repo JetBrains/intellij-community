@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.impl.Utils.runSuspendingUpdateSessionFo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhere.shared.*
+import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow

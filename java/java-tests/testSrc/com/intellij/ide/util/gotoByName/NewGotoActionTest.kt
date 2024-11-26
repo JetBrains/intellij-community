@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
-import com.intellij.searchEverywhere.frontend.SearchEverywhereFrontendDispatcher
-import com.intellij.searchEverywhere.mocks.*
-import com.intellij.searchEverywhere.shared.OptionItemPresentation
-import com.intellij.searchEverywhere.shared.SearchEverywhereItemsProvider
+import com.intellij.platform.searchEverywhere.OptionItemPresentation
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
+import com.intellij.platform.searchEverywhere.searchEverywhere.frontend.SearchEverywhereFrontendDispatcher
+import com.intellij.platform.searchEverywhere.searchEverywhere.mocks.*
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

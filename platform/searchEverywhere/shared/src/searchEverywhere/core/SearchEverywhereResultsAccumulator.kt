@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.searchEverywhere.core
+package com.intellij.platform.searchEverywhere.searchEverywhere.core
 
-import com.intellij.searchEverywhere.shared.*
+import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus

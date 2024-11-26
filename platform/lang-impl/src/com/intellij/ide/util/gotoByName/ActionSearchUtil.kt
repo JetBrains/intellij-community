@@ -12,12 +12,12 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.searchEverywhere.ActionItemPresentation
+import com.intellij.platform.searchEverywhere.OptionItemPresentation
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemPresentation
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.WordPrefixMatcher
-import com.intellij.searchEverywhere.shared.ActionItemPresentation
-import com.intellij.searchEverywhere.shared.OptionItemPresentation
-import com.intellij.searchEverywhere.shared.SearchEverywhereItemPresentation
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.text.Matcher
 import com.intellij.util.text.nullize

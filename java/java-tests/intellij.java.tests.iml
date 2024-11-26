@@ -98,5 +98,6 @@
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere" scope="TEST" />
   </component>
 </module>
