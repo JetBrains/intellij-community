@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
@@ -15,14 +14,10 @@ import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import com.jetbrains.python.sdk.uv.impl.detectUvExecutable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.pathString
-
-internal const val UV_PATH_SETTING: String = "PyCharm.UV.Path"
 
 internal val Sdk.isUv: Boolean
   get() = sdkAdditionalData is UvSdkAdditionalData
@@ -49,18 +44,6 @@ val UV_LOCK: String = "uv.lock"
 
 // FIXME: move pyprojecttoml code out to common package
 val PY_PROJECT_TOML: String = "pyproject.toml"
-
-var PropertiesComponent.uvPath: Path?
-  get() {
-    return getValue(UV_PATH_SETTING)?.let { Path.of(it) }
-  }
-  set(value) {
-    setValue(UV_PATH_SETTING, value.toString())
-  }
-
-fun getUvExecutable(): Path? {
-  return PropertiesComponent.getInstance().uvPath?.takeIf { it.exists() } ?: detectUvExecutable()
-}
 
 suspend fun setupUvSdkUnderProgress(
   module: Module,

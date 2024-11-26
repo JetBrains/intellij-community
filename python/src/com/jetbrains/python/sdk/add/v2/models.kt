@@ -23,7 +23,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
-import com.jetbrains.python.sdk.uv.getUvExecutable
+import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.util.ErrorSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

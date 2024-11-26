@@ -14,7 +14,7 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.uv.PY_PROJECT_TOML
-import com.jetbrains.python.sdk.uv.getUvExecutable
+import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 import java.io.FileNotFoundException
 import java.nio.file.Path
