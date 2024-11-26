@@ -64,7 +64,6 @@ import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
-import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.Path
@@ -587,7 +586,7 @@ fun getTargetBytecodeVersionFromModule(
 ): String? {
     val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
     val project = module.project
-    return ExternalSystemApiUtil.findModuleNode(project, GradleConstants.SYSTEM_ID, projectPath)
+    return ExternalSystemApiUtil.findModuleNode(project, ProjectSystemId("GRADLE"), projectPath)
         ?.let { moduleDataNode ->
             val javaModuleData = ExternalSystemApiUtil.find(moduleDataNode, JavaModuleData.KEY)
             javaModuleData?.let {
