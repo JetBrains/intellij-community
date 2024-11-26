@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
-import com.intellij.util.containers.ContainerUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
@@ -296,7 +295,7 @@ fun loadToolingExtensionProvidingInitScript(vararg toolingExtensionClasses: Clas
 }
 
 fun loadToolingExtensionProvidingInitScript(toolingExtensionClasses: Set<Class<*>>): String {
-  val tapiClasspath = getToolingExtensionsJarPaths(toolingExtensionClasses)
+  val tapiClasspath = toolingExtensionClasses.mapNotNullTo(LinkedHashSet(), ::getToolingExtensionsJarPath)
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/ClassPathExtensionInitScript.gradle", mapOf(
     "EXTENSIONS_JARS_PATH" to tapiClasspath.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
   ))
@@ -307,24 +306,22 @@ private fun isContentEquals(path: Path, content: ByteArray): Boolean {
          content.contentEquals(path.readBytes())
 }
 
-private fun getToolingExtensionsJarPaths(toolingExtensionClasses: Set<Class<*>>): Set<String> {
-  return ContainerUtil.map2SetNotNull(toolingExtensionClasses) { aClass: Class<*> ->
-    val path = PathManager.getJarPathForClass(aClass) ?: return@map2SetNotNull null
-    if (FileUtilRt.getNameWithoutExtension(path) == "gradle-api-" + GradleVersion.current().baseVersion) {
-      LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {$aClass,$path}")
-      return@map2SetNotNull null
-    }
-    if (isExcluded(path)) {
-      val message = "Attempting to pass an excluded IDEA component path [$path] into Gradle Daemon for class [$aClass]"
-      if (ApplicationManagerEx.isInIntegrationTest()) {
-        throw IllegalArgumentException(message)
-      }
-      else {
-        LOG.warn(message)
-      }
-    }
-    return@map2SetNotNull FileUtil.toCanonicalPath(path)
+private fun getToolingExtensionsJarPath(toolingExtensionClass: Class<*>): String? {
+  val path = PathManager.getJarPathForClass(toolingExtensionClass) ?: return null
+  if (FileUtilRt.getNameWithoutExtension(path) == "gradle-api-" + GradleVersion.current().baseVersion) {
+    LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {$toolingExtensionClass,$path}")
+    return null
   }
+  if (isExcluded(path)) {
+    val message = "Attempting to pass an excluded IDEA component path [$path] into Gradle Daemon for class [$toolingExtensionClass]"
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      throw IllegalArgumentException(message)
+    }
+    else {
+      LOG.warn(message)
+    }
+  }
+  return FileUtil.toCanonicalPath(path)
 }
 
 private fun isExcluded(jarPath: String): Boolean {
