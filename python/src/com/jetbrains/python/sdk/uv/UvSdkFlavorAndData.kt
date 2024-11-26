@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv
 
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -39,16 +40,12 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
   }
 }
 
-object UvSdkFlavor : PythonSdkFlavor<PyFlavorData.Empty>() {
+object UvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getIcon() = UV_ICON
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
   override fun isValidSdkPath(pathStr: String): Boolean {
     return false
-  }
-
-  override fun getName(): String {
-    return "Uv";
   }
 }
 
