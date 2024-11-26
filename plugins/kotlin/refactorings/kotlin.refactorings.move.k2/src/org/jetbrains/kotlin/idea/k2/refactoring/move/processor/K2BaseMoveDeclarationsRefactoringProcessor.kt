@@ -40,10 +40,13 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = operationDescriptor.usageViewDescriptor()
 
     protected open fun getUsages(moveDescriptor: K2MoveDescriptor): List<UsageInfo> {
-        return moveDescriptor.source.elements.flatMap { elem ->
-            if (elem !is KtNamedDeclaration) return@flatMap emptyList()
-            elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
-        }
+        return moveDescriptor.source.elements
+            .flatMap { it.withChildDeclarations() }
+            .flatMap { elem ->
+                // We filter out constructors because calling bindTo on these references will break for light classes.
+                if (elem is KtPrimaryConstructor || elem is KtSecondaryConstructor) return@flatMap emptyList()
+                elem.findUsages(operationDescriptor.searchInComments, operationDescriptor.searchForText, moveDescriptor.target.pkgName)
+            }
     }
 
     protected open fun collectConflicts(moveDescriptor: K2MoveDescriptor,allUsages: MutableSet<UsageInfo>) {}
@@ -114,7 +117,7 @@ abstract class K2BaseMoveDeclarationsRefactoringProcessor<T : DeclarationsMoveDe
                         targetPkg = moveDescriptor.target.pkgName,
                         usages = usages
                             .filterIsInstance<MoveRenameUsageInfo>()
-                            .filter { it.referencedElement in moveDescriptor.source.elements },
+                            .filter { it.referencedElement.willBeMoved(operationDescriptor.sourceElements) },
                     )
                 )
             }
