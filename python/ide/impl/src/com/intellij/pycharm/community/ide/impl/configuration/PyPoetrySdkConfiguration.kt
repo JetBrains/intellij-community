@@ -29,21 +29,32 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.io.path.pathString
 
-/**
- *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
- */
-
 class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }
 
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, false)
+  override fun getIntention(module: Module): @IntentionName String? {
+    return runBlockingCancellable {
+      val toml = findAmongRoots(module, PY_PROJECT_TOML)
+      if (toml == null) {
+        return@runBlockingCancellable null
+      }
 
-  override fun getIntention(module: Module): @IntentionName String? =
-    module.pyProjectToml?.let { PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", it.name) }
+      val isPoetry = getPyProjectTomlForPoetry(toml) != null
+      if (!isPoetry) {
+        return@runBlockingCancellable null
+      }
 
-  override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, true)
+      PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", toml.name)
+    }
+  }
+
+  @RequiresBackgroundThread
+  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, false) }
+
+  @RequiresBackgroundThread
+  override fun createAndAddSdkForInspection(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, true) }
 
   override fun supportsHeadlessModel(): Boolean = true
 

@@ -54,16 +54,23 @@ import java.util.concurrent.ConcurrentMap
 
 const val PY_PROJECT_TOML: String = "pyproject.toml"
 
-fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): Pair<Long, VirtualFile?> {
-  return Pair(virtualFile.modificationStamp, try {
-    ReadAction.compute<VirtualFile, Throwable> {
-      Toml.parse(virtualFile.inputStream).getTable("tool.poetry")?.let { virtualFile }
+val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
+
+suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
+  withContext(Dispatchers.IO) {
+    readAction {
+      try {
+        Toml.parse(virtualFile.inputStream).getTable("tool.poetry")?.let { virtualFile }
+      }
+      catch (e: IOException) {
+        LOGGER.info(e)
+        null
+      }
     }
   }
-  catch (e: Throwable) {
-    null
-  })
-}
+
+
+private suspend fun poetryLock(module: Module) = withContext(Dispatchers.IO) { findAmongRoots(module, POETRY_LOCK) }
 
 /**
  * The PyProject.toml found in the main content root of the module.
