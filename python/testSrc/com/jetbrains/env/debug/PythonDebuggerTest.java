@@ -408,12 +408,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("z").hasValue("102");
         resume();
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-pypy"); //TODO: fix that for PyPy
-      }
     });
   }
 

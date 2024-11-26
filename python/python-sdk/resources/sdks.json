@@ -424,42 +424,6 @@
         }
       ],
       "title": "Python 3.8.10"
-    },
-    {
-      "version": "3.10.7313",
-      "product": "PyPy",
-      "sources": [
-        {
-          "url": "https://downloads.python.org/pypy/pypy3.10-v7.3.13-src.zip",
-          "size": 30067315,
-          "sha256": "828fc66eca1c097e44bc910c78ab773a98747268c7ce264da97022e5aca358dc",
-          "fileName": "pypy3.10-v7.3.13-src.zip",
-          "type": "COMPRESSED"
-        },
-        {
-          "url": "https://downloads.python.org/pypy/pypy3.10-v7.3.13-src.tar.bz2",
-          "size": 23067819,
-          "sha256": "4ac1733c19d014d3193c804e7f40ffccbf6924bcaaee1b6089b82b9bf9353a6d",
-          "fileName": "pypy3.10-v7.3.13-src.tar.bz2",
-          "type": "COMPRESSED"
-        }
-      ],
-      "binaries": [
-        {
-          "os": "Windows",
-          "cpuArch": "X86_64",
-          "resources": [
-            {
-              "url": "https://downloads.python.org/pypy/pypy3.10-v7.3.13-win64.zip",
-              "size": 31510169,
-              "sha256": "5b99422fb8978b2f4bbf97961bca49963a82dc47c2fa51b7d23c493db3a2e0f0",
-              "fileName": "pypy3.10-v7.3.13-win64.zip",
-              "type": "COMPRESSED"
-            }
-          ]
-        }
-      ],
-      "title": "PyPy 3.10.7313"
     }
   ],
   "conda": [

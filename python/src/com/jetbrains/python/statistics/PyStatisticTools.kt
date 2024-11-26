@@ -81,7 +81,7 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
 }
 
 val PYTHON_VERSION = EventFields.StringValidatedByRegexpReference("python_version", "version")
-val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("PyPy", "Jython", "Python"))
+val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("Jython", "Python"))
 
 
 enum class InterpreterTarget(val value: String) {
