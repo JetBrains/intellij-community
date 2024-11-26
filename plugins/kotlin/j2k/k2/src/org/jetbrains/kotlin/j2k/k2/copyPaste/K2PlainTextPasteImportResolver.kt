@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.j2k.copyPaste
+package org.jetbrains.kotlin.j2k.k2.copyPaste
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
+import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -33,7 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 /**
  * Tests: [org.jetbrains.kotlin.nj2k.TextNewJavaToKotlinCopyPasteConversionTestGenerated].
  */
-class K1PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
+class K2PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
     PlainTextPasteImportResolver {
     private val sourceJavaFile: PsiJavaFile = dataForConversion.sourceJavaFile
     private val javaFileImportList: PsiImportList = sourceJavaFile.importList!!
