@@ -34,24 +34,23 @@ internal class DelegatingHttpRequestHandler() : SimpleChannelInboundHandlerAdapt
       isSupported(request) && isAccessible(request) && process(urlDecoder, request, context)
 
     val prevHandlerAttribute = context.channel().attr(PREV_HANDLER)
-    val connectedHandler = prevHandlerAttribute.get()?.get()
-    if (connectedHandler != null) {
-      if (connectedHandler.checkAndProcess()) {
+
+    val prevHandler = prevHandlerAttribute.get()?.get()
+    if (prevHandler != null) {
+      if (prevHandler.checkAndProcess()) {
         return true
       }
-      // prev cached connectedHandler is not suitable for this request, so, let's find it again
+      // the cached handler is not suitable for this request, so let's find it again
       prevHandlerAttribute.set(null)
     }
 
-    return HttpRequestHandler.EP_NAME.findFirstSafe { handler ->
-      if (handler.checkAndProcess()) {
-        prevHandlerAttribute.set(WeakReference(handler))
-        true
-      }
-      else {
-        false
-      }
-    } != null
+    val handler = HttpRequestHandler.EP_NAME.findFirstSafe { it.checkAndProcess() }
+    if (handler != null) {
+      prevHandlerAttribute.set(WeakReference(handler))
+      return true
+    }
+
+    return false
   }
 
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {

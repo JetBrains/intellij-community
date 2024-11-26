@@ -35,9 +35,7 @@ f:org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt
 - sf:getBuiltInServerUrls(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String):java.util.List
 - sf:getBuiltInServerUrls(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z):java.util.List
 - sf:getBuiltInServerUrls(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode):java.util.List
-- sf:getBuiltInServerUrls(org.jetbrains.builtInWebServer.PathInfo,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode):com.intellij.util.SmartList
 - bs:getBuiltInServerUrls$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode,I,java.lang.Object):java.util.List
-- bs:getBuiltInServerUrls$default(org.jetbrains.builtInWebServer.PathInfo,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode,I,java.lang.Object):com.intellij.util.SmartList
 f:org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 - <init>():V
 - f:acquireToken():java.lang.String
@@ -95,9 +93,8 @@ f:org.jetbrains.builtInWebServer.StaticFileHandlerKt
 a:org.jetbrains.builtInWebServer.WebServerFileHandler
 - <init>():V
 - getPageFileExtensions():java.util.List
+- pf:getRequestPath(java.lang.CharSequence,java.lang.String):java.lang.String
 - a:process(org.jetbrains.builtInWebServer.PathInfo,java.lang.CharSequence,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.Channel,java.lang.String,io.netty.handler.codec.http.HttpHeaders):Z
-f:org.jetbrains.builtInWebServer.WebServerFileHandlerKt
-- sf:getRequestPath(java.lang.CharSequence,java.lang.String):java.lang.String
 org.jetbrains.builtInWebServer.WebServerPathHandler
 - a:process(java.lang.String,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext,java.lang.String,io.netty.handler.codec.http.HttpHeaders,Z):Z
 f:org.jetbrains.builtInWebServer.WebServerPathToFileManager

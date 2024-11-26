@@ -309,11 +309,11 @@ internal fun isOwnHostName(host: String): Boolean {
     }
 
     val localHostName = InetAddress.getLocalHost().hostName
-    // WEB-8889
-    // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
-    return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, true))
+    // WEB-8889: "host.local" is an own host name; "host." equals to "host.domain" (canonical host name)
+    return localHostName.equals(host, ignoreCase = true) ||
+           host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, ignoreCase = true)
   }
-  catch (ignored: IOException) {
+  catch (_: IOException) {
     return false
   }
 }

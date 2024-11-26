@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
@@ -11,20 +11,19 @@ abstract class WebServerFileHandler {
     get() = emptyList()
 
   /**
-   * canonicalRequestPath contains index file name (if not specified in the request)
+   * `canonicalRequestPath` contains index file name (if not specified in the request)
    */
-  abstract fun process(pathInfo: PathInfo,
-                       canonicalPath: CharSequence,
-                       project: Project,
-                       request: FullHttpRequest,
-                       channel: Channel,
-                       projectNameIfNotCustomHost: String?,
-                       extraHeaders: HttpHeaders): Boolean
-}
+  abstract fun process(
+    pathInfo: PathInfo,
+    canonicalPath: CharSequence,
+    project: Project,
+    request: FullHttpRequest,
+    channel: Channel,
+    projectNameIfNotCustomHost: String?,
+    extraHeaders: HttpHeaders,
+  ): Boolean
 
-fun getRequestPath(canonicalPath: CharSequence, projectNameIfNotCustomHost: String?): String {
-  return when (projectNameIfNotCustomHost) {
-    null -> "/$canonicalPath"
-    else -> "/$projectNameIfNotCustomHost/$canonicalPath"
-  }
+  protected fun getRequestPath(canonicalPath: CharSequence, projectNameIfNotCustomHost: String?): String =
+    if (projectNameIfNotCustomHost == null) "/${canonicalPath}"
+    else "/${projectNameIfNotCustomHost}/${canonicalPath}"
 }
