@@ -1367,7 +1367,7 @@
                                           nameKey="settings.inlay.java.annotations">
       <option bundle="messages.JavaBundle"
               optionId="showInferred"
-              enabledByDefault="true"
+              enabledByDefault="false"
               nameKey="settings.inlay.java.inferred.annotations"
               descriptionKey="inlay.annotation.hints.inferred.annotations" />
       <option bundle="messages.JavaBundle"
