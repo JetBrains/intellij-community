@@ -23,7 +23,6 @@ class GradleTaskManagerExtensionDebuggerBridge : GradleTaskManagerExtension {
 
     val toolingInitScripts = listOf(
       loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
-      loadCommonTasksUtilsScript(),
     )
 
     val dispatchPort = settings.getUserData(ExternalSystemRunnableState.DEBUGGER_DISPATCH_PORT_KEY)?.toString()

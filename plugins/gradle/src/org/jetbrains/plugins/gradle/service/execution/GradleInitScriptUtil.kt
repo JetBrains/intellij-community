@@ -135,14 +135,9 @@ fun createTestInitScript(): Path {
   return createInitScript(TEST_INIT_SCRIPT_NAME, initScript)
 }
 
-fun loadCommonTasksUtilsScript():String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle")
-}
-
 fun loadJvmDebugInitScript(): String {
   return joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
-    loadCommonTasksUtilsScript(),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle")
   )
 }

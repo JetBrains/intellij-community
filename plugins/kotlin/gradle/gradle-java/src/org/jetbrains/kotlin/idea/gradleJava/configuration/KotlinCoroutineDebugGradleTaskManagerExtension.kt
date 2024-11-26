@@ -9,8 +9,9 @@ import kotlinx.coroutines.DEBUG_PROPERTY_NAME
 import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_OFF
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade
+import org.jetbrains.plugins.gradle.service.execution.GRADLE_TOOLING_EXTENSION_CLASSES
 import org.jetbrains.plugins.gradle.service.execution.joinInitScripts
-import org.jetbrains.plugins.gradle.service.execution.loadCommonTasksUtilsScript
+import org.jetbrains.plugins.gradle.service.execution.loadToolingExtensionProvidingInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
@@ -35,7 +36,7 @@ class KotlinCoroutineDebugGradleTaskManagerExtension : GradleTaskManagerExtensio
             val allowCoroutineAgent = KotlinJvmDebuggerFacade.instance?.isCoroutineAgentAllowedInDebug ?: false
             if (allowCoroutineAgent && (gradleVersion == null || gradleVersion >= GradleVersion.version(MIN_SUPPORTED_GRADLE_VERSION))) {
                 val initScript = joinInitScripts(
-                    loadCommonTasksUtilsScript(),
+                    loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
                     createCoroutineDebuggerScript(gradleVersion == null)
                 )
                 settings.addInitScript(KOTLIN_COROUTINE_DEBUG_SCRIPT_NAME, initScript)
@@ -57,23 +58,25 @@ class KotlinCoroutineDebugGradleTaskManagerExtension : GradleTaskManagerExtensio
         }
         //language=Gradle
         return """
+            import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleTasksUtil
+            
             gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
                 $gradleVersionCheck
                 def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
                 def jvmTasks = taskGraph.allTasks.findAll { task -> task instanceof Test || (task instanceof JavaExecSpec && task instanceof JavaForkOptions) }
                 def matchedTasks = debugAllIsEnabled ? jvmTasks : GradleTasksUtil.filterStartTasks(jvmTasks, gradle, rootProject)
-
-                matchedTasks.each { Task task ->                    
+            
+                matchedTasks.each { Task task ->
                     for (arg in task.getJvmArgs()) {
                         if (arg == "-D$DEBUG_PROPERTY_NAME=$DEBUG_PROPERTY_VALUE_OFF") {
                             return
                         }
                     }
-
+            
                     FileCollection taskClasspath = task.classpath
                     task.jvmArgumentProviders.add(new CommandLineArgumentProvider() {
                         private static def VERSION_PATTERN = java.util.regex.Pattern.compile(/(\d+)\.(\d+)(\.(\d+))?.*/)
-                    
+            
                         @Override
                         Iterable<String> asArguments() {
                             List<String> emptyList = Collections.emptyList()
@@ -98,6 +101,6 @@ class KotlinCoroutineDebugGradleTaskManagerExtension : GradleTaskManagerExtensio
                     })
                 }
             }
-            """.trimIndent()
+        """.trimIndent()
     }
 }
