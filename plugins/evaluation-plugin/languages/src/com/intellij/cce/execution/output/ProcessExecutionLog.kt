@@ -4,4 +4,6 @@ interface ProcessExecutionLog {
   val out: String
   val error: String
   val exitCode: Int
+  val collectedInfo: MutableMap<String, Any>
+    get() = mutableMapOf()
 }

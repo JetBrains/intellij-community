@@ -1,8 +1,7 @@
 package com.intellij.cce.execution.output
 
-class PythonProcessExecutionLog(
+class ProcessExecutionLogImpl(
   override val out: String,
   override val error: String,
   override val exitCode: Int,
-  override val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 ) : ProcessExecutionLog
