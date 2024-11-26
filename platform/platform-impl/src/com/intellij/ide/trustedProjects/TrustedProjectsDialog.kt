@@ -92,8 +92,12 @@ object TrustedProjectsDialog {
             add(0, defenderTrustDir)
           }
         }
-        WindowsDefenderCheckerActivity.runAndNotify(project) {
-          checker.excludeProjectPaths(project, projectRoot, pathsToExclude)
+        if (project == null) {
+          checker.setPathsToExclude(pathsToExclude)
+        } else {
+          WindowsDefenderCheckerActivity.runAndNotify(project) {
+            checker.excludeProjectPaths(project, pathsToExclude)
+          }
         }
       }
     }

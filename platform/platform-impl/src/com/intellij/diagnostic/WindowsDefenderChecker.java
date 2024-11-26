@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -63,6 +64,7 @@ public class WindowsDefenderChecker {
   }
 
   private final Map<Path, @Nullable Boolean> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
+  private final List<Path> myPathsToExclude = Collections.synchronizedList(new ArrayList<>());
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
     return
@@ -85,6 +87,22 @@ public class WindowsDefenderChecker {
   @ApiStatus.Internal
   public final void markProjectPath(@NotNull Path projectPath) {
     myProjectPaths.put(projectPath, null);
+  }
+
+  @ApiStatus.Internal
+  public final void setPathsToExclude(@NotNull List<Path> paths) {
+    clearPathsToExclude();
+    myPathsToExclude.addAll(paths);
+  }
+
+  @ApiStatus.Internal
+  public final List<Path> getPathsToExclude() {
+    return myPathsToExclude;
+  }
+
+  @ApiStatus.Internal
+  public final void clearPathsToExclude() {
+    myPathsToExclude.clear();
   }
 
   @ApiStatus.Internal
@@ -291,17 +309,33 @@ public class WindowsDefenderChecker {
   }
 
   public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
-    return doExcludeProjectPaths(project, null, paths);
+    return doExcludeProjectPaths(project, paths);
   }
 
-  public final boolean excludeProjectPaths(@Nullable Project project, @NotNull Path projectPath, @NotNull List<Path> paths) {
-    return doExcludeProjectPaths(project, projectPath, paths);
+  public final boolean excludeSavedPaths(@NotNull Project project) {
+    List<Path> pathsToExclude = getPathsToExclude(project);
+    boolean result = doExcludeProjectPaths(project, pathsToExclude);
+    clearPathsToExclude();
+    return result;
   }
 
-  private boolean doExcludeProjectPaths(@Nullable Project project, @Nullable Path projectPath, List<Path> paths) {
-    logCaller("paths=" + paths + " project=" + (project != null ? project : projectPath));
+  public boolean hasPathsToExclude(Project project) {
+    List<Path> pathsToExclude = getPathsToExclude();
+    if (pathsToExclude.isEmpty()) return false;
+    String basePath = project.getBasePath();
+    if (basePath == null) {
+      return false;
+    }
+    for (Path path : pathsToExclude) {
+      if (Paths.get(basePath).startsWith(path)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-    var result = Boolean.FALSE;
+  private boolean doExcludeProjectPaths(@NotNull Project project, List<Path> paths) {
+    logCaller("paths=" + paths + " project=" + project);
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
@@ -352,21 +386,13 @@ public class WindowsDefenderChecker {
       }
       else {
         LOG.info("OK; script output:\n" + output.getStdout().trim());
-        if (project != null) {
-          PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
-        }
-        result = Boolean.TRUE;
+        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
         return true;
       }
     }
     catch (Exception e) {
       LOG.warn(e);
       return false;
-    }
-    finally {
-      if (project == null) {
-        myProjectPaths.put(projectPath, result);
-      }
     }
   }
 

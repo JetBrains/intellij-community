@@ -30,18 +30,11 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   companion object {
     private val LOG = logger<WindowsDefenderCheckerActivity>()
 
-    fun runAndNotify(project: Project?, process: () -> Boolean) {
+    fun runAndNotify(project: Project, process: () -> Boolean) {
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-        val success = if (project != null) {
-          @Suppress("DialogTitleCapitalization")
-          withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), cancellable = false) {
-            process()
-          }
-        }
-        else {
+        val success = @Suppress("DialogTitleCapitalization") withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), cancellable = false) {
           process()
         }
-
         WindowsDefenderStatisticsCollector.configured(project, success)
 
         if (success) {
@@ -66,6 +59,14 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
+    if (checker.hasPathsToExclude(project)) {
+      runAndNotify(project) {
+        checker.excludeSavedPaths(project)
+      }
+      return
+    } else {
+      checker.clearPathsToExclude()
+    }
     if (checker.isStatusCheckIgnored(project) || checker.isAlreadyProcessed(project)) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
