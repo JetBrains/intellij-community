@@ -72,9 +72,8 @@ class KotlinDistinctByHandler(callNumber: Int, private val call: IntermediateStr
             integerIteration(keys.size(), this) {
                 val key = declare(variable(KotlinSequenceTypes.NULLABLE_ANY, "key"), keys.get(loopVariable), false)
                 val lst = list(dsl.types.INT, "lst")
-                declare(lst, keys2TimesBefore.computeIfAbsent(key, lambda("k") {
-                    doReturn(newList(types.INT))
-                }), false)
+                declare(lst, true)
+                add(keys2TimesBefore.computeIfAbsent(dsl, key, newList(types.INT), lst))
                 statement { lst.add(beforeTimes.get(loopVariable)) }
             }
 

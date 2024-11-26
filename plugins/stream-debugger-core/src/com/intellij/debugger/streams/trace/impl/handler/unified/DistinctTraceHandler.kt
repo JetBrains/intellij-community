@@ -1,4 +1,3 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
 import com.intellij.debugger.streams.trace.dsl.CodeBlock
@@ -27,11 +26,9 @@ class DistinctTraceHandler(num: Int, private val myCall: IntermediateStreamCall,
       declare(eqClasses, TextExpression(eqClasses.type.defaultValue), false)
       forEachLoop(variable(types.INT, "beforeTime"), before.keys()) {
         val beforeValue = declare(variable(myCall.typeBefore, "beforeValue"), before.get(loopVariable), false)
-        val computeIfAbsentExpression = eqClasses.computeIfAbsent(beforeValue, lambda("key") {
-          doReturn(TextExpression(nestedMapType.defaultValue))
-        })
         val classItems = map(types.INT, myCall.typeBefore, "classItems")
-        declare(classItems, computeIfAbsentExpression, false)
+        declare(classItems, true)
+        add(eqClasses.computeIfAbsent(dsl, beforeValue, TextExpression(nestedMapType.defaultValue), classItems))
         statement { classItems.set(loopVariable, beforeValue) }
       }
 

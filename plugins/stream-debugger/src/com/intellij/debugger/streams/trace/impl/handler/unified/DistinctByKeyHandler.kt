@@ -73,9 +73,8 @@ open class DistinctByKeyHandler(callNumber: Int,
       integerIteration(myKeys.size(), block@ this) {
         val key = declare(variable(types.ANY, "key"), myKeys.get(loopVariable), false)
         val lst = list(dsl.types.INT, "lst")
-        declare(lst, keys2TimesBefore.computeIfAbsent(key, lambda("k") {
-          doReturn(newList(types.INT))
-        }), false)
+        declare(lst, true)
+        add(keys2TimesBefore.computeIfAbsent(dsl, key, newList(types.INT), lst))
         statement { lst.add(myBeforeTimes.get(loopVariable)) }
       }
 

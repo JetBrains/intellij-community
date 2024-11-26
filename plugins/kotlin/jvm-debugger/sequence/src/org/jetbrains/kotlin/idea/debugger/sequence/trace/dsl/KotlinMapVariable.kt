@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.Lambda
-import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
+import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.common.MapVariableBase
 import com.intellij.debugger.streams.trace.impl.handler.type.MapType
@@ -21,8 +19,13 @@ class KotlinMapVariable(type: MapType, name: String) : MapVariableBase(type, nam
 
     override fun keys(): Expression = TextExpression("${toCode()}.keys")
 
-    override fun computeIfAbsent(key: Expression, supplier: Lambda): Expression =
-        TextExpression("${toCode()}.computeIfAbsent(${key.toCode()}, ${supplier.toCode()})")
+    override fun computeIfAbsent(dsl: Dsl, key: Expression, valueIfAbsent: Expression, target: Variable): CodeBlock {
+        return dsl.block {
+            target assign call("computeIfAbsent", key, lambda("compIfAbsentKey") {
+                doReturn(valueIfAbsent)
+            })
+        }
+    }
 
     override fun defaultDeclaration(isMutable: Boolean): VariableDeclaration =
         KotlinVariableDeclaration(this, false, type.defaultValue)

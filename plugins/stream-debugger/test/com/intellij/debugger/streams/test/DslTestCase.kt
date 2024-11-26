@@ -295,9 +295,9 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
   fun testMapComputeIfAbsent() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.computeIfAbsent("key".expr, lambda("y") {
-        doReturn(map.call("method"))
-      })
+      val target = variable(types.ANY, "target")
+      declare(target, true)
+      add(map.computeIfAbsent(dsl, "key".expr, map.call("method"), target))
     }
   }
 
