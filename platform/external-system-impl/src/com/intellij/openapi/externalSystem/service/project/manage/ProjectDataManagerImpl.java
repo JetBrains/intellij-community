@@ -26,6 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
@@ -74,12 +75,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   @Override
   public <T> void importData(@NotNull DataNode<T> node, @NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    if (!app.isWriteIntentLockAcquired() && app.isReadAccessAllowed()) {
+    if (!EDT.isCurrentThreadEdt() && app.holdsReadLock()) {
       throw new IllegalStateException("importData() must not be called with a global read lock on a background thread. " +
                                       "It will deadlock committing project model changes in write action");
     }
 
-    if (app.isWriteIntentLockAcquired()) {
+    if (EDT.isCurrentThreadEdt()) {
       if (!myLock.tryLock()) {
         throw new IllegalStateException("importData() can not wait on write thread for imports on background threads." +
                                         " Consider running importData() on background thread.");

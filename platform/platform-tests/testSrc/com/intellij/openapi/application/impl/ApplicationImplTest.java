@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.application.RuntimeFlagsKt.isLockStoredInContext;
+
 @RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
   private TestTimeOut t;
@@ -399,7 +401,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   public void testProgressVsReadAction() throws Throwable {
     ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, Exception>)() -> {
       try {
-        assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
+        assertFalse(ApplicationManager.getApplication().holdsReadLock());
+        assertEquals(isLockStoredInContext(), ApplicationManager.getApplication().isReadAccessAllowed());
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
         ApplicationManager.getApplication().assertIsNonDispatchThread();
 

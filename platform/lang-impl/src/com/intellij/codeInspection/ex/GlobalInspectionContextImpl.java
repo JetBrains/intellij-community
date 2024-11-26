@@ -298,7 +298,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       throw new IncorrectOperationException("Must not start inspections from within write action");
     }
     // in offline inspection application we don't care about global read action
-    if (!isOfflineInspections && ApplicationManager.getApplication().isReadAccessAllowed()) {
+    if (!isOfflineInspections && ApplicationManager.getApplication().holdsReadLock()) {
       throw new IncorrectOperationException("Must not start inspections from within global read action");
     }
     InspectionManager inspectionManager = InspectionManager.getInstance(getProject());
@@ -687,7 +687,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                               @NotNull List<? extends Tools> globalTools,
                               boolean isOfflineInspections) {
     long timestamp = System.currentTimeMillis();
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections,
+    LOG.assertTrue(!ApplicationManager.getApplication().holdsReadLock() || isOfflineInspections,
                    "Must not run under read action, too unresponsive");
 
     if (isOfflineInspections && System.getProperty("idea.offline.no.global.inspections") != null) {

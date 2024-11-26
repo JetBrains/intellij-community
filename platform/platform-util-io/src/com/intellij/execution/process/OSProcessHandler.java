@@ -158,7 +158,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     if (application.isDispatchThread()) {
       message = "Synchronous execution on EDT: ";
     }
-    else if (application.isReadAccessAllowed()) {
+    else if (application.holdsReadLock()) {
       message = "Synchronous execution under ReadAction: ";
     }
     if (message != null && REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
