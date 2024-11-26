@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor.settings
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -13,7 +14,9 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyInclu
 import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.options.newEditor.AbstractEditor
 import com.intellij.openapi.options.newEditor.SettingsDialog
+import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
@@ -47,13 +50,13 @@ class SettingsVirtualFileHolder private constructor(private val project: Project
       if (settingsVirtualFile != null) {
         return@withContext settingsVirtualFile
       }
-      val settingsDialog = initializer.invoke()
-      val newVirtualFile = SettingsVirtualFile(settingsDialog.editor, project)
-      settingsDialog.addChildDisposable {
+      val settingsEditor = initializer.invoke().editor
+      val newVirtualFile = SettingsVirtualFile(settingsEditor, project)
+      Disposer.register(settingsEditor, Disposable {
         val fileEditorManager = FileEditorManager.getInstance(newVirtualFile.project) as FileEditorManagerEx;
         fileEditorManager.closeFile(newVirtualFile)
         settingsFileRef.set(null)
-      }
+      })
       settingsFileRef.compareAndSet(null, newVirtualFile)
       return@withContext newVirtualFile
     }
