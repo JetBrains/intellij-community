@@ -70,12 +70,6 @@ public class PyEnvTaskRunner {
       try {
         testTask.setUp(testName);
         wasExecuted = true;
-        if (isJython(root)) {
-          testTask.useLongTimeout();
-        }
-        else {
-          testTask.useNormalTimeout();
-        }
         final Path executable = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(root));
         assert executable != null : "No executable in " + root;
 
@@ -231,10 +225,6 @@ public class PyEnvTaskRunner {
     }
 
     return necessaryTags.isEmpty();
-  }
-
-  public static boolean isJython(@NotNull String sdkHome) {
-    return sdkHome.toLowerCase(Locale.ROOT).contains("jython");
   }
 
   @NotNull

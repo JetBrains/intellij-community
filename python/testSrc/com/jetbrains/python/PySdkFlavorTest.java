@@ -24,7 +24,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -46,24 +45,7 @@ public class PySdkFlavorTest extends PyTestCase {
     assertEquals(LanguageLevel.PYTHON34, flavor.getLanguageLevel(mockSdk));
   }
 
-  public void testJythonVersionString() {
-    final PythonSdkFlavor flavor = JythonSdkFlavor.getInstance();
-    final String versionOutput = "Jython 2.6.3\n";
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("Jython 2.6.3", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON26, flavor.getLanguageLevel(mockSdk));
-  }
 
-  public void testJythonWithWarningsVersionString() {
-    final PythonSdkFlavor flavor = JythonSdkFlavor.getInstance();
-    final String versionOutput = """
-      "my" variable $jythonHome masks earlier declaration in same scope at /usr/bin/jython line 15.
-      Jython 2.6.3
-      """;
-    final Sdk mockSdk = createMockSdk(flavor, versionOutput);
-    assertEquals("Jython 2.6.3", mockSdk.getVersionString());
-    assertEquals(LanguageLevel.PYTHON26, flavor.getLanguageLevel(mockSdk));
-  }
 
 
 

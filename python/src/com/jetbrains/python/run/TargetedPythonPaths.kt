@@ -31,7 +31,6 @@ import com.jetbrains.python.run.target.getTargetPathForPythonConsoleExecution
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.io.File
 import java.nio.file.Path
@@ -92,14 +91,6 @@ private fun collectPythonPath(context: Context,
                       shouldAddContentRoots,
                       shouldAddSourceRoots)
   )
-  if (isDebug && context.sdk?.let { PythonSdkFlavor.getFlavor(it) } is JythonSdkFlavor) {
-    //that fixes Jython problem changing sys.argv on execfile, see PY-8164
-    for (helpersResource in listOf("pycharm", "pydev")) {
-      val helperPath = PythonHelpersLocator.findPathStringInHelpers(helpersResource)
-      val targetHelperPath = targetPath(Path.of(helperPath))
-      pythonPath.add(targetHelperPath)
-    }
-  }
   return pythonPath
 }
 

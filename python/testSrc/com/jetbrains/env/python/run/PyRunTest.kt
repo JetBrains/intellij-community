@@ -90,7 +90,7 @@ class PyRunTest : PyEnvTestCase() {
         runInEdt {
           runner.execute(env)
         }
-        val await = latch.await(myTimeout.toLong(), TimeUnit.MILLISECONDS)
+        val await = latch.await(NORMAL_TIMEOUT.toLong(), TimeUnit.MILLISECONDS)
         handlerRef.get()?.destroyProcess()
         Assert.assertTrue("Test frozen", await)
         connection.disconnect()

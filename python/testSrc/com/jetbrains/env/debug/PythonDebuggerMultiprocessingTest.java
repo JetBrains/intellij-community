@@ -53,7 +53,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-iron", "-jython"})
   @Test
   public void testMultiprocessingSubprocess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_args.py") {
@@ -87,7 +86,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-iron", "-jython"})
   @Test
   public void testPythonSubprocessWithCParameter() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_python_subprocess_with_c_parameter.py") {
@@ -104,11 +102,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         waitForOutput("Hello!");
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython");
-      }
     });
   }
 
@@ -149,7 +142,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-iron", "-jython"})
   @Test
   public void testMultiprocessProcess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_process.py") {

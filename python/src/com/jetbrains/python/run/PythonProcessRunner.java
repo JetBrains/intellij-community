@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
 public final class PythonProcessRunner {
@@ -13,15 +12,10 @@ public final class PythonProcessRunner {
   }
 
   public static ProcessHandler createProcess(GeneralCommandLine commandLine, boolean softKillOnWin) throws ExecutionException {
-    if (PythonSdkFlavor.getFlavor(commandLine.getExePath()) instanceof JythonSdkFlavor) {
-      return JythonProcessHandler.createProcessHandler(commandLine);
+    if (isUnderDebugger(commandLine)) {
+      return new PyDebugProcessHandler(commandLine);
     }
-    else {
-      if (isUnderDebugger(commandLine)) {
-        return new PyDebugProcessHandler(commandLine);
-      }
-      return new PythonProcessHandler(commandLine);
-    }
+    return new PythonProcessHandler(commandLine);
   }
 
   public static ProcessHandler createProcess(GeneralCommandLine commandLine) throws ExecutionException {

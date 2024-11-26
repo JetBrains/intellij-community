@@ -75,7 +75,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   @Nullable
   @Override
   public Set<String> getTagsToCover() {
-    return Sets.newHashSet("python3.8", "python2.7", "ipython", "ipython780", "jython", "IronPython");
+    return Sets.newHashSet("python3.8", "python2.7", "ipython", "ipython780");
   }
 
   public PythonConsoleView getConsoleView() {

@@ -98,12 +98,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
                """);
         waitForOutput("101");
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Sets.newHashSet("-jython"); //jython doesn't support multiline execution: http://bugs.jython.org/issue2106
-      }
     });
   }
 
@@ -122,12 +116,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
         interrupt();
         waitForFinish();
         waitForReady();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Sets.newHashSet("-iron", "-jython");
       }
     });
   }
