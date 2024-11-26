@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -1050,7 +1049,7 @@ public final class ExternalSystemUtil {
   public static @Nullable VirtualFile refreshAndFindFileByIoFile(final @NotNull File file) {
     var app = ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
-      assert !((ApplicationEx)app).holdsReadLock();
+      assert !app.holdsReadLock();
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toPath());
   }
