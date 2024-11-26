@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere.searchEverywhere.frontend
 
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
-import com.intellij.platform.searchEverywhere.searchEverywhere.core.SearchEverywhereTab
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

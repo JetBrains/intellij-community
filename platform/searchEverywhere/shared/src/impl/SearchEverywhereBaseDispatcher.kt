@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.searchEverywhere.core
+package com.intellij.platform.searchEverywhere.impl
 
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
-import com.intellij.platform.searchEverywhere.SearchEverywhereParams
-import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
-import com.intellij.platform.searchEverywhere.searchEverywhere.shared.SearchEverywhereDispatcher
+import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
