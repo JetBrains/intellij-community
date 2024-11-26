@@ -412,7 +412,6 @@ internal suspend fun buildNonBundledPlugins(
 
     // buildPlugins pluginBuilt listener is called concurrently
     val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
-    val autoPublishPluginChecker = context.pluginAutoPublishList
     val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                         !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
     val mappings = buildPlugins(
@@ -436,7 +435,7 @@ internal suspend fun buildNonBundledPlugins(
         ).pluginVersion
       }
 
-      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) {
+      val targetDirectory = if (context.pluginAutoPublishList.test(plugin)) {
         context.nonBundledPluginsToBePublished
       } else {
         context.nonBundledPlugins

@@ -376,7 +376,7 @@ private suspend fun createDistributionState(context: BuildContext): Distribution
     }
     context.notifyArtifactBuilt(providedModuleFile)
     if (productLayout.buildAllCompatiblePlugins) {
-      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, result = pluginsToPublish, context = context)
+      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, pluginsToPublish = pluginsToPublish, context = context)
       filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
       // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts

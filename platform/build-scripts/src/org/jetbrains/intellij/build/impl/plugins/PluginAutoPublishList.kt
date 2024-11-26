@@ -12,9 +12,10 @@ import java.util.function.Predicate
 import kotlin.io.path.useLines
 
 /**
- * Predicate to test if the given plugin should be auto-published
+ * Predicate to test if the given plugin should be published to plugins.jetbrains.com
  *
  * @see `build/plugins-autoupload.txt` for the specification
+ * @see [org.jetbrains.intellij.build.ProductModulesLayout.buildAllCompatiblePlugins]
  * @see [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish]
  */
 @ApiStatus.Internal
