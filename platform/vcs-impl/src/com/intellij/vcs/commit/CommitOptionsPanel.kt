@@ -68,11 +68,11 @@ internal class CommitOptionsPanel(
       val postCommitChecks = options.postCommitChecksOptions
       if (postCommitChecks.isNotEmpty()) {
         group(postCommitChecksGroupTitle(actionName)) {
-          if (nonModalCommit) {
-            appendNonModalCommitSettingsRow(actionName)
-            separator()
-          }
           appendOptionRows(postCommitChecks)
+          if (nonModalCommit) {
+            separator()
+            appendNonModalCommitSettingsRow(actionName)
+          }
         }
       }
 
