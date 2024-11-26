@@ -274,6 +274,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
+  public void visitPyPassStatement(@NotNull PyPassStatement node) {
+    visitPyStatement(node);
+  }
+
   public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
     visitPyElement(node);
   }
