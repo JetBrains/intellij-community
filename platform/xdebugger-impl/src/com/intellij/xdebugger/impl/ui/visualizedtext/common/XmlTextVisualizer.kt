@@ -41,8 +41,14 @@ internal class XmlTextVisualizer : TextValueVisualizer {
   override fun detectFileType(value: @NlsSafe String): FileType? =
     if (tryParseAndPrettify(value) != null) xmlFileType else null
 
-  private fun tryParseAndPrettify(value: String): String? =
-    try {
+  private fun tryParseAndPrettify(value: String): String? {
+    if (value.firstOrNull { !it.isWhitespace() } != '<') {
+      // Fast-path for the trivial non-xml case.
+      // It takes much time to report an error about invalid XML, try to prevent it.
+      return null
+    }
+
+    return try {
       val src = InputSource(StringReader(value))
       val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
       builder.setErrorHandler(null) // suppress printing to stdout errors like "[Fatal Error] :1:1: Content is not allowed in prolog."
@@ -57,9 +63,11 @@ internal class XmlTextVisualizer : TextValueVisualizer {
       val out = StringWriter()
       transformer.transform(DOMSource(document), StreamResult(out))
       out.toString()
-    } catch (_: Exception) {
+    }
+    catch (_: Exception) {
       null
     }
+  }
 
   private val xmlFileType
     get() =
