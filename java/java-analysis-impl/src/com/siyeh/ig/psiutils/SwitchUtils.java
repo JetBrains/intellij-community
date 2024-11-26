@@ -25,6 +25,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -34,7 +35,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+
 public final class SwitchUtils {
+
+  public static final CallMatcher STRING_IS_EMPTY = instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
 
   private SwitchUtils() {}
 
@@ -167,6 +173,13 @@ public final class SwitchUtils {
     if (primitiveTypesInPatternsSufficient && isComparisonWithPrimitives(expression, switchExpression, existingCaseValues)) {
       return true;
     }
+
+    if (expression instanceof PsiMethodCallExpression methodCallExpression && STRING_IS_EMPTY.test(methodCallExpression) &&
+        EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
+          (methodCallExpression).getMethodExpression().getQualifierExpression(), switchExpression)) {
+      return existingCaseValues.add("");
+    }
+
     if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return false;
     }
@@ -418,6 +431,10 @@ public final class SwitchUtils {
     if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, expression)) {
       final PsiExpression patternSwitchExpression = findPatternSwitchExpression(expression);
       if (patternSwitchExpression != null) return patternSwitchExpression;
+    }
+    if (expression instanceof PsiMethodCallExpression methodCallExpression &&
+        STRING_IS_EMPTY.test(methodCallExpression)) {
+      return methodCallExpression.getMethodExpression().getQualifierExpression();
     }
     if (!(expression instanceof PsiPolyadicExpression polyadicExpression)) {
       return null;

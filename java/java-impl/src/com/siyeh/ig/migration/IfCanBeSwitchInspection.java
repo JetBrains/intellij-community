@@ -426,6 +426,12 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
 
   private static void extractCaseExpressions(PsiExpression expression, PsiExpression switchExpression, IfStatementBranch branch) {
     if (expression instanceof PsiMethodCallExpression methodCallExpression) {
+      if (SwitchUtils.STRING_IS_EMPTY.test(methodCallExpression)) {
+        final PsiElementFactory factory = PsiElementFactory.getInstance(methodCallExpression.getProject());
+        final PsiExpression caseWithEmptyText = factory.createExpressionFromText("\"\"", switchExpression.getContext());
+        branch.addCaseExpression(caseWithEmptyText);
+        return;
+      }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression argument = arguments[0];
