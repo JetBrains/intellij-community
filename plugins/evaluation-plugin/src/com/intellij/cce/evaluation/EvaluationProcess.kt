@@ -81,10 +81,6 @@ class EvaluationProcess private constructor (
         }
       }
 
-      if (shouldExecuteCode) {
-        factory.codeExecutionStep()?.let { steps.add(it) }
-      }
-
       if (shouldReorderElements) {
         steps.add(factory.reorderElements())
       }
