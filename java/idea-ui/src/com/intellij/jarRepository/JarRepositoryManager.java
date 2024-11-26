@@ -55,10 +55,13 @@ import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -78,6 +81,9 @@ public final class JarRepositoryManager {
   private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
 
   private static final Map<String, OrderRootType> ourClassifierToRootType = new HashMap<>();
+
+  // slf4j logger handles format strings with a throwable in the end
+  private static final org.slf4j.Logger slf4jLogger = LoggerFactory.getLogger(JarRepositoryManager.class);
 
   static {
     ourClassifierToRootType.put(ArtifactKind.ARTIFACT.getClassifier(), OrderRootType.CLASSES);
@@ -690,21 +696,38 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<Artifact> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
-      long ms = System.currentTimeMillis();
+      var startTime = Instant.now();
+
+      slf4jLogger.debug("LibraryResolveJob({}) #{} started", myDesc.getMavenId(), Thread.currentThread().getId());
+
       final String version = myDesc.getVersion();
       try {
         Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
                                                                              myDesc.isIncludeTransitiveDependencies(),
                                                                              myDesc.getExcludedDependencies());
+
+        slf4jLogger.debug("LibraryResolveJob({}) #{} successfully finished in {}ms with {} artifacts", myDesc.getMavenId(),
+                          Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis(),
+                          artifacts.size());
+
         return artifacts;
       }
       catch (TransferCancelledException e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         throw new ProcessCanceledException(e);
       }
       catch (RepositoryOfflineException e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         throw e;
       }
       catch (Exception e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         final String resolvedVersion = resolveVersion(manager, version);
         if (Objects.equals(version, resolvedVersion)) { // no changes
           throw e;
@@ -719,7 +742,7 @@ public final class JarRepositoryManager {
       }
       finally {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Artifact " + myDesc + " resolved in " + (System.currentTimeMillis() - ms) + "ms");
+          LOG.trace("Artifact " + myDesc + " resolved in " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
         }
       }
     }
@@ -761,7 +784,14 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<String> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
-      return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
+      var startTime = Instant.now();
+
+      slf4jLogger.debug("VersionResolveJob({}:{}) #{} started", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId());
+      try {
+        return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
+      } finally {
+        slf4jLogger.debug("VersionResolveJob({}:{}) #{} finished in {}ms", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis());
+      }
     }
 
     @Override
