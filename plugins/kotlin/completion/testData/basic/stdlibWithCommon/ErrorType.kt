@@ -1,11 +1,12 @@
 // FIR_IDENTICAL
-fun <T> T.foo() {}
-fun Any.foo() {}
+fun <T> T.fooo() {}
+fun Any.fooo() {}
 
 fun Foo.test() {
-    fo<caret>
+    foo<caret>
 }
 
-// EXIST: for
-// EXIST: floatArrayOf
+fun fooo1() {}
+
+// EXIST: fooo1
 // NOTHING_ELSE

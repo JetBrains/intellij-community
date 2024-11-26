@@ -11,6 +11,7 @@ import com.sun.jdi.*
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
@@ -106,7 +107,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     private fun rankingForClassName(fqName: String, descriptor: ClassDescriptor, bindingContext: BindingContext): Ranking {
         if (DescriptorUtils.isLocal(descriptor)) return ZERO
 
-        val expectedFqName = makeTypeMapper(bindingContext).mapType(descriptor).className
+        val expectedFqName = makeTypeMapper(bindingContext).mapType(descriptor.defaultType).className
         return when {
             checkClassFqName -> if (expectedFqName == fqName) MAJOR else LOW
             else -> if (expectedFqName.simpleName() == fqName.simpleName()) MAJOR else LOW
@@ -375,7 +376,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
             bindingContext,
             ClassBuilderMode.LIGHT_CLASSES,
             "debugger",
-            KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT, // TODO use proper LanguageVersionSettings
+            LanguageVersionSettingsImpl.DEFAULT, // TODO use proper LanguageVersionSettings
             useOldInlineClassesManglingScheme = false
         )
     }

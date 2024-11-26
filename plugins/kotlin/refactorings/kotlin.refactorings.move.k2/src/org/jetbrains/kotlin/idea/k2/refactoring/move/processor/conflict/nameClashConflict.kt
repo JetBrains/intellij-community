@@ -180,6 +180,9 @@ internal fun checkNameClashConflicts(
                 declaration.symbol.toSignatureData()
             }
             analyze(targetKaModule) {
+                // TODO(KTIJ-32265): logic should rewritten to support unrelated modules
+                if (!declaration.canBeAnalysed()) return@analyze
+
                 val packageSymbol = findPackage(targetPkg) ?: return@analyze
                 walkDeclarations(packageSymbol, signatureData) { conflictingSymbol, conflictingScope ->
                     val renderedDeclaration = analyze(declaration) {

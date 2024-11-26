@@ -2737,6 +2737,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             public void testInlineFunWithSamFromOtherModule() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/inlineFunWithSamFromOtherModule.kt");
             }
+
+            @TestMetadata("inlineInternal.kt")
+            public void testInlineInternal() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/inlineInternal.kt");
+            }
         }
     }
 }

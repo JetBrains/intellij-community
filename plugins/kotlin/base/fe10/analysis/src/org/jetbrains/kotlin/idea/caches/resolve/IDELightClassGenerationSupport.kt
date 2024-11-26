@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -39,7 +40,7 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
         private val module = ModuleUtilCore.findModuleForPsiElement(element)
 
         override val languageVersionSettings: LanguageVersionSettings
-            get() = module?.languageVersionSettings ?: KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT
+            get() = module?.languageVersionSettings ?: LanguageVersionSettingsImpl.DEFAULT
 
         private val resolutionFacade get() = element.getResolutionFacade()
 

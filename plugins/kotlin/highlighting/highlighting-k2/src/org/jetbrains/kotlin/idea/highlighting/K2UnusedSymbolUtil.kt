@@ -604,6 +604,8 @@ object K2UnusedSymbolUtil {
           when (element) {
               is KtClassOrObject -> {
                   analyze(element) {
+                      if (!element.canBeAnalysed()) return@any false
+
                       val callableSymbol = declaration.symbol as KaCallableSymbol
                       val overridingCallableSymbol = element.classSymbol
                           ?.memberScope
