@@ -396,7 +396,12 @@ private class WestPanel {
     vg.addComponent(first, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
     if (second != null) {
       hg.addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-      vg.addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
+      vg.addGroup(
+        layout.createSequentialGroup()
+          .addGap(JBUI.scale(1))
+          .addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
+          .addGap(JBUI.scale(1))
+      )
     }
   }
 
