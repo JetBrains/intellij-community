@@ -167,7 +167,7 @@ public final class JarRepositoryManager {
 
   @NotNull
   private static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
-                                                                       Collection<? extends OrderRoot> roots) {
+                                                                       Collection<OrderRoot> roots) {
     return new NewLibraryConfiguration(
       suggestLibraryName(props),
       RepositoryLibraryType.getInstance(),
@@ -302,7 +302,7 @@ public final class JarRepositoryManager {
   }
 
   /**
-   * Get list of remote repositories meeting the priority:
+   * Get a list of remote repositories meeting the priority:
    * <ol>
    * <li>from {@code repositories} param if not null and not empty</li>
    * <li>from {@code desc} library descriptor found by {@link JpsMavenRepositoryLibraryDescriptor#getJarRepositoryId} if present</li>
@@ -404,7 +404,7 @@ public final class JarRepositoryManager {
                                      String coord,
                                      String packaging,
                                      Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
-    if (coord == null || coord.length() == 0) {
+    if (coord == null || coord.isEmpty()) {
       return;
     }
     final RepositoryArtifactDescription template;
@@ -430,7 +430,7 @@ public final class JarRepositoryManager {
                 }
                 for (RepositoryArtifactDescription artifact : artifacts) {
                   final RemoteRepositoryDescription repository = map.get(artifact.getRepositoryId());
-                  // if the artifact is provided by an unsupported repository just skip it
+                  // if the artifact is provided by an unsupported repository, just skip it
                   // because it won't be resolved anyway
                   if (repository != null) {
                     resultList.add(Pair.create(artifact, repository));
@@ -642,7 +642,7 @@ public final class JarRepositoryManager {
         }
 
         if (DO_REFRESH) {
-          // search for jar file first otherwise lib root won't be found!
+          // search for a jar file first otherwise lib root won't be found!
           manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(toFile.getPath()));
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
           final VirtualFile file = manager.refreshAndFindFileByUrl(url);
