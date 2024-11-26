@@ -19,7 +19,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 9)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 10)
 
     // fields
     private val compilerField = EventFields.Enum<CompilerType>("compiler")
@@ -77,6 +77,7 @@ enum class StatisticsEvaluationResult {
     COMPILER_INTERNAL_ERROR,
     UNCLASSIFIED_COMPILATION_PROBLEM,
 
+    UNSUPPORTED_CALL, // Check KotlinEvaluator.calculateMainMethodCallArguments for examples
     UNCLASSIFIED_EVALUATION_PROBLEM,
     MISCOMPILED,
     ERROR_DURING_PARSING_EXCEPTION,

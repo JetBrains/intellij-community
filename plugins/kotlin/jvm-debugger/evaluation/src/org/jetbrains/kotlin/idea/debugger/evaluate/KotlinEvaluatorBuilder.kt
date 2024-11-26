@@ -165,6 +165,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         if (!hasCast && e.cause is ClassCastException) StatisticsEvaluationResult.MISCOMPILED
                         else StatisticsEvaluationResult.USER_EXCEPTION
                     e is EvaluateException && cause != null -> checkCauseOfEvaluateException(cause, hasCast)
+                    e is EvaluateException -> StatisticsEvaluationResult.UNSUPPORTED_CALL
                     isSpecialException(e) -> StatisticsEvaluationResult.WRONG_JVM_STATE
                     else -> StatisticsEvaluationResult.UNCLASSIFIED_EVALUATION_PROBLEM
                 }
@@ -184,7 +185,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 if (isApplicationInternalMode()) {
                     reportErrorWithAttachments(context, codeFragment, e,
                                                prepareBytecodes(compiledData),
-                                               "Can't perform evaluation. Compiled by ${compiledData.compilerType} compiler")
+                                               "Can't perform evaluation: $errorType. Compiled by ${compiledData.compilerType} compiler")
                 }
             }
             throw e
@@ -196,6 +197,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             try {
                 val exceptionFromCodeFragment = cause.exception()
                 val type = exceptionFromCodeFragment.type()
+                if (type.signature().equals("Ljava/lang/IllegalArgumentException;")) {
+                    if (DebuggerUtils.tryExtractExceptionMessage(exceptionFromCodeFragment) == "argument type mismatch") {
+                        return StatisticsEvaluationResult.MISCOMPILED
+                    }
+                }
                 if (type.signature().startsWith("Ljava/lang/invoke/") || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")) {
                     return StatisticsEvaluationResult.MISCOMPILED
                 }
