@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -17,8 +16,6 @@ import com.intellij.openapi.vcs.changes.ui.GroupingPolicyFactoryHolder
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update.Companion.create
 import com.intellij.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
 import com.intellij.vcs.impl.backend.shelf.diff.ShelfDiffChangesProvider
 import com.intellij.vcs.impl.backend.shelf.diff.ShelfDiffChangesState
@@ -31,18 +28,32 @@ import com.jetbrains.rhizomedb.entity
 import fleet.kernel.*
 import fleet.kernel.rete.Rete
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
+private const val UPDATE_DEBOUNCE_TIMEOUT = 200L
+
 @ApiStatus.Internal
+@OptIn(FlowPreview::class)
 @Service(Service.Level.PROJECT)
-class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable {
+class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
+
+  private val updateFlow = MutableSharedFlow<suspend () -> Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    project.messageBus.connect(this).subscribe(ShelveChangesManager.SHELF_TOPIC, ShelveChangesManagerListener { scheduleTreeUpdate() })
+    cs.launch {
+      updateFlow.debounce(UPDATE_DEBOUNCE_TIMEOUT).collectLatest {
+        model = buildTreeModelSync()
+        diffChangesProvider.treeModel = model
+        updateDbModel(it)
+      }
+    }
+    project.messageBus.connect(cs).subscribe(ShelveChangesManager.SHELF_TOPIC, ShelveChangesManagerListener { scheduleTreeUpdate() })
   }
-
-  private val updateQueue = MergingUpdateQueue("Update Shelf Content", 200, true, null, project, null, true)
 
   private val shelveChangesManager = ShelveChangesManager.getInstance(project)
 
@@ -67,39 +78,37 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  private fun updateDbModel(afterUpdate: () -> Unit = {}) {
-    cs.launch {
-      val root = model.root as ChangesBrowserNode<*>
-      withKernel {
-        val rootEntity = change {
-          shared {
-            entity(ShelfTreeEntity.Project, project.asEntity())?.delete()
-            ShelvesTreeRootEntity.new {
-              it[NodeEntity.Order] = 0
-            }
+  private suspend fun updateDbModel(afterUpdate: suspend () -> Unit = {}) {
+    val root = model.root as ChangesBrowserNode<*>
+    withKernel {
+      val rootEntity = change {
+        shared {
+          entity(ShelfTreeEntity.Project, project.asEntity())?.delete()
+          ShelvesTreeRootEntity.new {
+            it[NodeEntity.Order] = 0
           }
         }
-        try {
-          var order = 0
-          val rootNodes = mutableSetOf<NodeEntity>()
-          for (child in root.children()) {
-            val entity = dfs(child as ChangesBrowserNode<*>, rootEntity, order++) ?: continue
-            rootNodes.add(entity)
-          }
-          createTreeEntity(project, rootEntity)
+      }
+      try {
+        var order = 0
+        val rootNodes = mutableSetOf<NodeEntity>()
+        for (child in root.children()) {
+          val entity = dfs(child as ChangesBrowserNode<*>, rootEntity, order++) ?: continue
+          rootNodes.add(entity)
         }
-        catch (e: Exception) {
-          withContext(NonCancellable) {
-            change {
-              shared {
-                rootEntity.delete()
-              }
+        createTreeEntity(project, rootEntity)
+      }
+      catch (e: Exception) {
+        withContext(NonCancellable) {
+          change {
+            shared {
+              rootEntity.delete()
             }
           }
         }
       }
-      afterUpdate()
     }
+    afterUpdate()
   }
 
   private suspend fun dfs(node: ChangesBrowserNode<*>, parent: NodeEntity, orderInParent: Int): NodeEntity? {
@@ -166,12 +175,8 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  fun scheduleTreeUpdate(callback: () -> Unit = {}) {
-    updateQueue.queue(create("update") {
-      model = buildTreeModelSync()
-      diffChangesProvider.treeModel = model
-      updateDbModel(callback)
-    })
+  fun scheduleTreeUpdate(callback: suspend () -> Unit = {}) {
+    updateFlow.tryEmit(callback)
   }
 
   fun saveGroupings() {
@@ -193,23 +198,22 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  fun selectChangeListInTree(changeList: ShelvedChangeList) {
-    cs.launch {
-      val nodeToSelect = TreeUtil.findNodeWithObject(model.root as ChangesBrowserNode<*>, changeList) as? ChangesBrowserNode<*>
-                         ?: return@launch
-      val nodeRef = nodeToSelect.getUserData(ENTITY_ID_KEY) ?: return@launch
-      withKernel {
-        change {
-          shared {
-            val changeListEntity = nodeRef.deref() as? ShelvedChangeListEntity ?: return@shared
-            SelectShelveChangeEntity.new {
-              it[SelectShelveChangeEntity.ChangeList] = changeListEntity
-              it[SelectShelveChangeEntity.Project] = project.asEntity()
-            }
+  suspend fun selectChangeListInTree(changeList: ShelvedChangeList) {
+    val nodeToSelect = TreeUtil.findNodeWithObject(model.root as ChangesBrowserNode<*>, changeList) as? ChangesBrowserNode<*>
+                       ?: return
+    val nodeRef = nodeToSelect.getUserData(ENTITY_ID_KEY) ?: return
+    withKernel {
+      change {
+        shared {
+          val changeListEntity = nodeRef.deref() as? ShelvedChangeListEntity ?: return@shared
+          SelectShelveChangeEntity.new {
+            it[SelectShelveChangeEntity.ChangeList] = changeListEntity
+            it[SelectShelveChangeEntity.Project] = project.asEntity()
           }
         }
       }
     }
+
   }
 
   fun buildTreeModelSync(init: Boolean = false): DefaultTreeModel {
@@ -237,11 +241,6 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   fun isDirectoryGroupingEnabled(): Boolean {
     return grouping.isDirectory
-  }
-
-
-  override fun dispose() {
-    updateQueue.cancelAllUpdates()
   }
 
   companion object {
