@@ -128,6 +128,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private val myState = ThreadLocal.withInitial { ThreadState() }
   // We approximate "on stack" permits with "thread local" permits for shared main lock
   private val mySecondaryPermits = ThreadLocal.withInitial { ArrayList<Permit>() }
+  private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
   private val myImpatientReader = ThreadLocal.withInitial { false }
 
   @Volatile
@@ -231,8 +232,12 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
           }
         }
         release = false
+        checkWriteFromRead("Write Intent Read", "Write Intent")
       }
-      is WritePermit -> release = false
+      is WritePermit -> {
+        release = false
+        checkWriteFromRead("Write Intent Read", "Write")
+      }
     }
 
     val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
@@ -422,17 +427,20 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
           // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
           val sps = mySecondaryPermits.get()
           val last = sps.lastOrNull()
-          when (last) {
-            null, is WriteIntentPermit -> {
-              sps.add(acquireReadPermit(sharedLock))
-              releaseSecondary = true
-            }
-            is ReadPermit, is WritePermit -> {}
+          // If secondary lock does not protect this shared lock yet, get secondary lock
+          // If here is any secondary permit, then additional read permit will do nothing but prevent
+          // wil -> rl -> wl sequence which is (unfortunately) allowed and used now.
+          if (last == null ) {
+            sps.add(acquireReadPermit(sharedLock))
+            releaseSecondary = true
           }
         }
       }
       is ReadPermit, is WritePermit -> {}
     }
+
+    // For diagnostic purposes register that we in read action, even if we use stronger lock
+    myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
     val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
     ThreadingAssertions.setImplicitLockOnEDT(false)
@@ -444,6 +452,8 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
     finally {
       ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
+
+      myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (release) {
         ts.release()
       }
@@ -475,21 +485,24 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
           // We need a secondary permit, read one. Optimization: if we have on as last, do nothing
           val sps = mySecondaryPermits.get()
           val last = sps.lastOrNull()
-          when (last) {
-            null, is WriteIntentPermit -> {
-              val p = tryGetReadPermit(sharedLock)
-              if (p == null) {
-                return false
-              }
-              sps.add(p)
-              releaseSecondary = true
+          // If secondary lock does not protect this shared lock yet, get secondary lock
+          // If here is any secondary permit, then additional read permit will do nothing but prevent
+          // wil -> rl -> wl sequence which is (unfortunately) allowed and used now.
+          if (last == null) {
+            val p = tryGetReadPermit(sharedLock)
+            if (p == null) {
+              return false
             }
-            is ReadPermit, is WritePermit -> {}
+            sps.add(p)
+            releaseSecondary = true
           }
         }
       }
       is ReadPermit, is WritePermit -> {}
     }
+
+    // For diagnostic purposes register that we in read action, even if we use stronger lock
+    myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
     val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
     ThreadingAssertions.setImplicitLockOnEDT(false)
@@ -501,6 +514,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
     finally {
       ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
+      myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (release) {
         ts.release()
       }
@@ -577,6 +591,8 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
         ts.acquire(measureWriteLock { getWritePermit(ts) })
         release = true
       }
+      // Read permit is impossible here, as it is first check before all "pendings"
+      is ReadPermit -> {}
       is WriteIntentPermit -> {
         val sharedLock = ts.sharedLock
         if (sharedLock != null) {
@@ -603,9 +619,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
         // Upgrade main permit
         ts.acquire(measureWriteLock { getWritePermit(ts) })
         release = true
+        checkWriteFromRead("Write", "Write Intent")
       }
-      // Read permit is impossible here, as it is first check before all "pendings"
-      is ReadPermit, is WritePermit -> {}
+      is WritePermit -> {
+        checkWriteFromRead("Write", "Write")
+      }
     }
 
     myWriteAcquired = Thread.currentThread()
@@ -923,6 +941,18 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     private fun id(): String {
       return " [WriteAccessToken]"
+    }
+  }
+
+  private fun checkWriteFromRead(whatIsCalled: String, permitUsed: String) {
+    if (!reportInvalidActionChains) {
+      return
+    }
+    if (myReadActionsInThread.get() > 0) {
+      val stackBottom = if (permitUsed == "Write") "Write" else "WriteIntentRead"
+      logger.warn("${whatIsCalled} Action is called from Read Action with ${permitUsed} lock.\n" +
+                  "Looks like there is ${stackBottom}Action -> ReadAction -> ${whatIsCalled.replace(" ", "")}Action call chain." +
+                  "It is not error technically, as Read Action uses more strong lock, but looks like logical error.", Throwable())
     }
   }
 
