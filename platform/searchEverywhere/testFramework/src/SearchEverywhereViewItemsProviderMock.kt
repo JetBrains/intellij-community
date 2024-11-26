@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.searchEverywhere.testFramework
+package com.intellij.platform.searchEverywhere.testFramework
 
 import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.delay
@@ -56,7 +56,7 @@ class SearchEverywhereSessionMock : SearchEverywhereSession {
 
   private val items = mutableMapOf<SearchEverywhereItemId, SearchEverywhereItem>()
 
-  override fun saveItem(item: SearchEverywhereItem): SearchEverywhereItemId {
+  override suspend fun saveItem(item: SearchEverywhereItem): SearchEverywhereItemId {
     val id = SearchEverywhereItemId(
       if (item is SearchEverywhereItemMock) item.text
       else UUID.randomUUID().toString()
@@ -69,7 +69,7 @@ class SearchEverywhereSessionMock : SearchEverywhereSession {
     return items[itemId]
   }
 
-  override fun dispose() {
+  override suspend fun dispose() {
     items.clear()
   }
 }

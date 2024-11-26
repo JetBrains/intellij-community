@@ -3,8 +3,8 @@ package com.intellij.ide.util.gotoByName
 
 import com.intellij.platform.searchEverywhere.OptionItemPresentation
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
-import com.intellij.platform.searchEverywhere.searchEverywhere.frontend.SearchEverywhereFrontendDispatcher
-import com.intellij.platform.searchEverywhere.searchEverywhere.testFramework.*
+import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereFrontendDispatcher
+import com.intellij.platform.searchEverywhere.testFramework.*
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
