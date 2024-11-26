@@ -216,7 +216,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             match = false
           }
           else {
-            return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+            return TypeCheckingResult(false)
           }
         }
         val expectedType = expectedArguments[key]?.second
@@ -237,7 +237,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
               missingKeys.addAll(innerMissingKeys)
             }
             else if (!innerMatch) {
-              return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+              return TypeCheckingResult(false)
             }
           }
         }
@@ -254,7 +254,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             match = false
           }
           else {
-            return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+            return TypeCheckingResult(false)
           }
         }
       }
@@ -267,12 +267,12 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
           match = false
         }
         else {
-          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+          return TypeCheckingResult(false)
         }
       }
 
       return if (typedDictInstanceCreation) TypeCheckingResult(match, valueTypeErrors, missingKeys, extraKeys)
-      else TypeCheckingResult(true, emptyList(), emptyList(), emptyList())
+      else TypeCheckingResult(true)
     }
 
     private fun strictUnionMatch(expected: PyType?, actual: PyType?, context: TypeEvalContext): Boolean {
@@ -291,8 +291,7 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         val elementTypes = expected.elementTypes
         return TypeCheckingResult(elementTypes.size == 2
                                   && builtinCache.strType == elementTypes[0]
-                                  && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name), emptyList(),
-                                  emptyList(), emptyList())
+                                  && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name))
       }
 
       if (expected !is PyTypedDictType) return null
@@ -305,14 +304,14 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
             || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
             || expectedTypeAndTotality.qualifiers.isRequired != actualTypeAndTotality.qualifiers.isRequired) {
-          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+          return TypeCheckingResult(false)
         }
 
         if (!actual.fields.containsKey(it.key)) {
-          return TypeCheckingResult(false, emptyList(), emptyList(), emptyList())
+          return TypeCheckingResult(false)
         }
       }
-      return TypeCheckingResult(true, emptyList(), emptyList(), emptyList())
+      return TypeCheckingResult(true)
     }
   }
 
@@ -325,5 +324,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
   data class TypeCheckingResult(val match: Boolean,
                                 val valueTypeErrors: List<ValueTypeError>,
                                 val missingKeys: List<MissingKeysError>,
-                                val extraKeys: List<ExtraKeyError>)
+                                val extraKeys: List<ExtraKeyError>) {
+
+    constructor(match: Boolean) : this(match, emptyList(), emptyList(), emptyList())
+  }
 }
