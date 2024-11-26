@@ -20,14 +20,15 @@ import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ON
 final class LowMemoryNotifier implements Disposable {
   private static final Set<VMOptions.MemoryKind> ourNotifications = ConcurrentCollectionFactory.createConcurrentSet();
 
-  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(() -> showNotification(VMOptions.MemoryKind.HEAP, false), ONLY_AFTER_GC);
+  private final LowMemoryWatcher myWatcher =
+    LowMemoryWatcher.register(() -> showNotification(VMOptions.MemoryKind.HEAP, false, true), ONLY_AFTER_GC);
 
   @Override
   public void dispose() {
     myWatcher.stop();
   }
 
-  static void showNotification(@NotNull VMOptions.MemoryKind kind, boolean error) {
+  static void showNotification(@NotNull VMOptions.MemoryKind kind, boolean error, boolean suggestAnalyzing) {
     if (!ourNotifications.add(kind)) return;
 
     int currentXmx = VMOptions.readOption(VMOptions.MemoryKind.HEAP, true);
@@ -37,8 +38,11 @@ final class LowMemoryNotifier implements Disposable {
     var type = error ? NotificationType.ERROR : NotificationType.WARNING;
     var notification = new Notification("Low Memory", IdeBundle.message("low.memory.notification.title"), message, type);
 
-    notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("low.memory.notification.analyze.action"), () ->
-      new HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked, HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run()));
+    if (suggestAnalyzing) {
+      notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("low.memory.notification.analyze.action"), () ->
+        new HeapDumpSnapshotRunnable(MemoryReportReason.UserInvoked,
+                                     HeapDumpSnapshotRunnable.AnalysisOption.SCHEDULE_ON_NEXT_START).run()));
+    }
 
     if (VMOptions.canWriteOptions()) {
       notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("low.memory.notification.action"),
