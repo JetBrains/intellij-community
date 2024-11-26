@@ -1,0 +1,25 @@
+[
+  {
+    "path": "README.md",
+    "checksum": "719309aebc146a589bb23718505b7bca0fd2dbe86c6df80d173589020d58d604",
+    "sessionsCount": 1,
+    "actions": [
+      {
+        "sessionId": "b4c23b9a-861e-4386-a276-9a5da882650f",
+        "expectedText": "",
+        "offset": 1,
+        "nodeProperties": {
+          "tokenType": "METHOD",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "what does `spec.scramble` mean?",
+            "internal_relevant_files": "build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt,remote-dev/inline-completion/backend.split/src/BackendInlineCompletionHandler.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/RdctInlineCompletionTestBase.kt,remote-dev/rdct-tests/rdct-tests-distributed/src/com/jetbrains/rdct/common/distributed/inline/completion/LookupConflictInlineCompletionTest.kt,rider/test/framework/src/com/jetbrains/rider/test/scriptingApi/ScriptingAPI.Completion.kt",
+            "internal_context_items": "build/src/org/jetbrains/intellij/build/remoteDev/cwmLayout.kt"
+          }
+        },
+        "type": "CALL_FEATURE"
+      }
+    ]
+  }
+]
