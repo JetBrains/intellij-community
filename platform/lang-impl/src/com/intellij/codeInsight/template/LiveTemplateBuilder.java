@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -114,9 +115,9 @@ public final class LiveTemplateBuilder {
     }
 
     List<VarOccurence> variableOccurrences = getListWithLimit(myVariableOccurrences);
-    variableOccurrences.sort(Comparator.comparingInt(o -> o.myOffset));
+
     int last = 0;
-    for (VarOccurence occurence : variableOccurrences) {
+    for (VarOccurence occurence : ContainerUtil.sorted(variableOccurrences, Comparator.comparingInt(o -> o.myOffset))) {
       template.addTextSegment(myText.substring(last, occurence.myOffset));
       template.addVariableSegment(occurence.myName);
       last = occurence.myOffset;
@@ -126,6 +127,7 @@ public final class LiveTemplateBuilder {
     return template;
   }
 
+  @Unmodifiable
   private <T> List<T> getListWithLimit(List<T> list) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return list;

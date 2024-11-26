@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,21 +21,18 @@ import java.util.Objects;
 // Stores result of various `FSRecords#list*` methods and the current `FSRecords#getModCount` for optimistic locking support.
 final class ListResult {
   private final int parentModStamp;
+  @Unmodifiable
   final List<? extends ChildInfo> children;  // sorted by `#getId`
   private final int parentId;
 
-  ListResult(@NotNull FSRecordsImpl vfs,
-             @NotNull List<? extends ChildInfo> children,
-             int parentId) {
-    this(vfs.getModCount(parentId), children, parentId);
-  }
-
   ListResult(int parentModStamp,
-             @NotNull List<? extends ChildInfo> children, int parentId) {
+             @NotNull @Unmodifiable List<? extends ChildInfo> children,
+             int parentId) {
     this.parentModStamp = parentModStamp;
     this.children = children;
     this.parentId = parentId;
     Application app = ApplicationManager.getApplication();
+
     if (app != null && (app.isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || app.isInternal())) {
       assertSortedById(children);
     }
@@ -117,7 +115,7 @@ final class ListResult {
   @NotNull ListResult merge(@NotNull FSRecordsImpl vfs,
                             @NotNull List<? extends ChildInfo> newChildren,
                             boolean isCaseSensitive) {
-    ListResult newList = new ListResult(vfs, newChildren, parentId);  // assume the list is sorted
+    ListResult newList = new ListResult(vfs.getModCount(parentId), newChildren, parentId);  // assume the list is sorted
     if (children.isEmpty()) return newList;
     List<? extends ChildInfo> oldChildren = children;
     // Both `newChildren` and `oldChildren` are sorted by id, but not `nameId`, so plain O(N) merging is not possible.

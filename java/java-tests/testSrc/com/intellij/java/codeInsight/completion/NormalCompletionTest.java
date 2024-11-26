@@ -1478,8 +1478,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertTrue(strings.contains("new"));
     assertTrue(strings.contains("try"));
 
-    strings.remove("new");
-    assertFalse(strings.contains("new"));
+    int iNew = strings.indexOf("new");
+    assertFalse(strings.subList(iNew+1, strings.size()).contains("new"));
   }
 
   public void testExpressionKeywords() {

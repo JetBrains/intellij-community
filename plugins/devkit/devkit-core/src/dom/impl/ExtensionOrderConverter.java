@@ -22,6 +22,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import org.jetbrains.annotations.NonNls;
@@ -89,7 +90,7 @@ public final class ExtensionOrderConverter implements CustomReferenceConverter<S
           return Collections.singletonList(new InvalidOrderPartPsiReference(getElement(), range, orderPart));
         }
         if (idSubPart != null && idSubPart.isEmpty()) { // right after the before/after keyword
-          wordIndices.add(new TextRange(orderPart.length(), orderPart.length()));
+          wordIndices = ContainerUtil.append(wordIndices, new TextRange(orderPart.length(), orderPart.length()));
         }
 
         if (idSubPart == null) {

@@ -16,6 +16,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.io.NettyUtil;
 
 import java.lang.invoke.MethodHandle;
@@ -158,7 +159,7 @@ public final class ThreadLeakTracker {
   }
 
   private static void waitForThread(Thread thread,
-                                    Map<Thread, StackTraceElement[]> stackTraces,
+                                    @Unmodifiable Map<Thread, StackTraceElement[]> stackTraces,
                                     Map<String, Thread> all,
                                     Map<String, Thread> after) {
     if (!shouldWaitForThread(thread)) {
@@ -188,7 +189,6 @@ public final class ThreadLeakTracker {
     }
 
     // check once more because the thread name may be set via race
-    stackTraces.put(thread, stackTrace);
     if (shouldIgnore(thread, stackTrace)) {
       return;
     }
@@ -200,11 +200,13 @@ public final class ThreadLeakTracker {
     String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
 
     String internalDiagnostic = internalDiagnostic(stackTrace);
+    Map<Thread, StackTraceElement[]> newStackTraces = new HashMap<>(stackTraces);
+    newStackTraces.put(thread, stackTrace);
 
     throw new AssertionError(
       "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
       internalDiagnostic +
-      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, newStackTraces) +
       "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
     );
   }

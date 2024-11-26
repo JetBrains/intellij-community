@@ -179,7 +179,7 @@ public final class MatchPatchPaths {
           newOrWithoutMatches.add(patch); // just to be sure
         }
         else {
-          candidates.add(new PatchAndVariants(variants));
+          candidates.add(new PatchAndVariants(new ArrayList<>(variants)));
         }
       }
     }

@@ -13,6 +13,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -41,7 +42,7 @@ class PythonSdkComboBox extends ComboboxWithBrowseButton {
   }
 
   public void updateSdkList(Sdk sdkToSelect, boolean selectAnySdk) {
-    final List<Sdk> sdkList = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
+    final List<Sdk> sdkList = new ArrayList<>(ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance()));
     if (selectAnySdk && sdkList.size() > 0) {
       sdkToSelect = sdkList.get(0);
     }

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -256,7 +257,7 @@ public final class SdkConfigurationUtil {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
       if (!sdks.isEmpty()) {
         if (comparator != null) {
-          sdks.sort(comparator);
+          sdks = ContainerUtil.sorted(sdks, comparator);
         }
         return sdks.get(0);
       }

@@ -106,8 +106,7 @@ public final class SetterProcessor extends AbstractClassProcessor {
 
   @NotNull
   private Collection<PsiField> filterSetterFields(@NotNull PsiClass psiClass) {
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    filterToleratedElements(classMethods);
+    final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(psiClass));
 
     final SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
     final Collection<PsiField> setterFields = new ArrayList<>();
@@ -145,8 +144,7 @@ public final class SetterProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(containingClass);
-      filterToleratedElements(classMethods);
+      final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(containingClass));
 
       final SetterFieldProcessor fieldProcessor = getSetterFieldProcessor();
 

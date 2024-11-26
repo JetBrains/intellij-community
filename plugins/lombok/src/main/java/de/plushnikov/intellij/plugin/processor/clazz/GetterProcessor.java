@@ -108,8 +108,8 @@ public final class GetterProcessor extends AbstractClassProcessor {
   private Collection<PsiField> filterGetterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> getterFields = new ArrayList<>();
 
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    filterToleratedElements(classMethods);
+    Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(psiClass));
+
 
     final GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();
     final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
@@ -149,8 +149,8 @@ public final class GetterProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(containingClass);
-      filterToleratedElements(classMethods);
+      final Collection<PsiMethod> classMethods = filterToleratedElements(PsiClassUtil.collectClassMethodsIntern(containingClass));
+
 
       final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(containingClass);
       final GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();

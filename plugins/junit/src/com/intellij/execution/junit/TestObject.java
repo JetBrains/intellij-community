@@ -65,10 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
@@ -129,7 +126,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (elements.isEmpty() && perModule != null) {
         for (Module module : collectPackageModules(packageName)) {
-          perModule.put(module, composeDirectoryFilter(module));
+          perModule.put(module, new ArrayList<>(composeDirectoryFilter(module)));
         }
       }
 
@@ -267,6 +264,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
    * When 2 modules have e.g. the same package, one depends on another, and tests have to run in single module only,
    * by configuration settings or to avoid repetition in fork by module mode, additional filters per output directories are required.
    */
+  @Unmodifiable
   protected static List<String> composeDirectoryFilter(@NotNull Module module) {
     return ContainerUtil.map(OrderEnumerator.orderEntries(module)
                                .withoutSdk()

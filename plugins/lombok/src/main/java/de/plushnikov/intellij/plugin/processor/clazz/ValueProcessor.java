@@ -117,8 +117,7 @@ public final class ValueProcessor extends AbstractClassProcessor {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR,
                                                    LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
                                                    LombokClassNames.BUILDER)) {
-      final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-      filterToleratedElements(definedConstructors);
+      PsiClassUtil.collectClassConstructorIntern(psiClass);
 
       final String staticName = getStaticConstructorNameValue(psiAnnotation);
       final Collection<PsiField> requiredFields = AbstractConstructorClassProcessor.getAllFields(psiClass);

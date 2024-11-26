@@ -34,9 +34,11 @@ import com.intellij.pom.PsiDeclaredTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -323,7 +325,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static void clearHighlights(@NotNull Editor editor,
                                       @NotNull HighlightManager highlightManager,
-                                      @NotNull List<? extends TextRange> rangesToHighlight,
+                                      @NotNull @Unmodifiable List<? extends TextRange> rangesToHighlight,
                                       @Nullable TextAttributes attributes,
                                       @Nullable TextAttributesKey attributesKey) {
     assert attributes != null || attributesKey != null : "Both attributes and attributesKey are null";
@@ -331,7 +333,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
     RangeHighlighter[] highlighters = ((HighlightManagerImpl)highlightManager).getHighlighters(editor);
     Arrays.sort(highlighters, Comparator.comparingInt(RangeMarker::getStartOffset));
-    rangesToHighlight.sort(Comparator.comparingInt(TextRange::getStartOffset));
+    rangesToHighlight = ContainerUtil.sorted(rangesToHighlight, Comparator.comparingInt(TextRange::getStartOffset));
     int i = 0;
     int j = 0;
     while (i < highlighters.length && j < rangesToHighlight.size()) {

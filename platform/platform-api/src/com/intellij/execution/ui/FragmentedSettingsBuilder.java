@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -292,12 +293,11 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
            action.getTemplatePresentation().getDescription() : "";
   }
 
-  private @NotNull DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
+  private @NotNull DefaultActionGroup buildGroup(@Unmodifiable List<? extends SettingsEditorFragment<Settings, ?>> fragments,
                                                  Ref<? super JComponent> lastSelected) {
-    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
-    for (SettingsEditorFragment<Settings, ?> fragment : restoreGroups(fragments)) {
+    for (SettingsEditorFragment<Settings, ?> fragment : ContainerUtil.sorted(restoreGroups(fragments), Comparator.comparingInt(SettingsEditorFragment::getMenuPosition))) {
       if (fragment.isRemovable() && !Objects.equals(group, fragment.getGroup())) {
         group = fragment.getGroup();
         actionGroup.add(new Separator(group));

@@ -3,7 +3,9 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,10 +35,10 @@ public final class TextRangeUtil {
    * @param excludedRanges The list of ranges to exclude.
    * @return A list of ranges after excluded ranges have been applied.
    */
-  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
+  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull @Unmodifiable List<? extends TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
       if (excludedRanges.size() > 1) {
-        excludedRanges.sort(RANGE_COMPARATOR);
+        excludedRanges = ContainerUtil.sorted(excludedRanges, RANGE_COMPARATOR);
       }
       int enabledRangeStart = original.getStartOffset();
       List<TextRange> enabledRanges = new ArrayList<>();

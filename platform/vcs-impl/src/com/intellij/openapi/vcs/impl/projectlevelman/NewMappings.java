@@ -733,7 +733,7 @@ public final class NewMappings implements Disposable {
           filteredMappings.addAll(mappings);
         }
         else {
-          filteredMappings.addAll(ContainerUtil.map(vcs.filterUniqueRoots(objects, pair -> pair.getFirst()), Functions.pairSecond()));
+          filteredMappings.addAll(ContainerUtil.map(vcs.filterUniqueRoots(new ArrayList<>(objects), pair -> pair.getFirst()), Functions.pairSecond()));
         }
       }
     }

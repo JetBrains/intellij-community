@@ -312,17 +312,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   @ApiStatus.Internal
+  @Unmodifiable
   public @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile file) {
     checkReadAccess();
 
     int id = fileId(file);
     return areChildrenCached(id)
            ? vfsPeer.list(id).children
-           : persistAllChildren(file, id);
+           : persistAllChildren(file, id, file.isCaseSensitive());
   }
 
   // return actual children
-  private @NotNull List<? extends ChildInfo> persistAllChildren(VirtualFile dir, int dirId) {
+  private @NotNull List<? extends ChildInfo> persistAllChildren(@NotNull VirtualFile dir, int dirId, boolean isCaseSensitive) {
     NewVirtualFileSystem fs = getFileSystem(dir);
 
     try {

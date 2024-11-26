@@ -15,12 +15,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertNotEquals;
@@ -29,10 +30,9 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
 
   private static List<AttributesDescriptor> getDescriptors() {
     JavaColorSettingsPage page = new JavaColorSettingsPage();
-    List<AttributesDescriptor> result = Arrays.asList(page.getAttributeDescriptors());
-    Collections.sort(result,
-                     (o1, o2) -> o1.getKey().getExternalName().compareToIgnoreCase(o2.getKey().getExternalName()));
-    return result;
+    List<AttributesDescriptor> result = new ArrayList<>(Arrays.asList(page.getAttributeDescriptors()));
+    return ContainerUtil.sorted(result,
+                         (o1, o2) -> o1.getKey().getExternalName().compareToIgnoreCase(o2.getKey().getExternalName()));
   }
 
   private static void appendAttributes(@NotNull String name,

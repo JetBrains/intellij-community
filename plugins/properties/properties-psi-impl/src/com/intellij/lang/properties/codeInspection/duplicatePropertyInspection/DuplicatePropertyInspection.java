@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.Nls;
@@ -294,9 +295,8 @@ public final class DuplicatePropertyInspection extends GlobalSimpleInspectionToo
                                         PsiSearchHelper searchHelper,
                                         GlobalSearchScope scope,
                                         final Set<? super PsiFile> resultFiles) {
-    final List<String> words = StringUtil.getWordsIn(stringToFind);
+    final List<String> words = ContainerUtil.sorted(StringUtil.getWordsIn(stringToFind),(o1, o2) -> o2.length() - o1.length());
     if (words.isEmpty()) return;
-    words.sort((o1, o2) -> o2.length() - o1.length());
     for (String word : words) {
       final Set<PsiFile> files = new HashSet<>();
       searchHelper.processAllFilesWithWord(word, scope, Processors.cancelableCollectProcessor(files), true);

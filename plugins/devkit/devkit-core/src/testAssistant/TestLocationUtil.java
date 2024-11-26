@@ -39,9 +39,8 @@ public final class TestLocationUtil {
         final String relativePath = VfsUtilCore.getRelativePath(parent, contentRoot, '/');
         if (relativePath != null) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
-          final List<String> words = StringUtil.getWordsIn(relativePath);
+          final List<String> words = ContainerUtil.sorted(StringUtil.getWordsIn(relativePath), (o1, o2) -> o2.length() - o1.length());
           // put longer strings first
-          words.sort((o1, o2) -> o2.length() - o1.length());
 
           final GlobalSearchScope testScope = GlobalSearchScopesCore.projectTestScope(project);
           Set<PsiFile> resultFiles = null;

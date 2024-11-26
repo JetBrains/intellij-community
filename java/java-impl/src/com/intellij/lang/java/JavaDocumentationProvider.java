@@ -135,6 +135,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
+  @Unmodifiable
   public List<String> getUrlFor(final PsiElement element, final PsiElement originalElement) {
     return getExternalJavaDocUrl(element);
   }
@@ -915,6 +916,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     sb.append("<br>");
   }
 
+  @Unmodifiable
   public static @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
     List<String> urls = null;
 
@@ -926,7 +928,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       if (aClass != null) {
         urls = findUrlForClass(aClass);
         if (urls != null) {
-          urls.replaceAll(url -> url + "#" + field.getName());
+          urls = ContainerUtil.map(urls, url -> url + "#" + field.getName());
         }
       }
     }
@@ -959,8 +961,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return null;
     }
     else {
-      urls.replaceAll(FileUtil::toSystemIndependentName);
-      return urls;
+      return ContainerUtil.map(urls, FileUtil::toSystemIndependentName);
     }
   }
 
@@ -1002,6 +1003,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return PsiTreeUtil.getChildOfType(packageInfoFile, PsiDocComment.class);
   }
 
+  @Unmodifiable
   public static @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName != null) {
@@ -1033,6 +1035,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
+  @Unmodifiable
   public static @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 

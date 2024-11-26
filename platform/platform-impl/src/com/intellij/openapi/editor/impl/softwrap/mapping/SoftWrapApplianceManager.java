@@ -26,7 +26,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -134,7 +134,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   }
 
   @ApiStatus.Internal
-  public void recalculate(@NotNull List<? extends Segment> ranges) {
+  public void recalculate(@NotNull @Unmodifiable List<? extends Segment> ranges) {
     if (myIsDirty) {
       return;
     }
@@ -143,7 +143,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
       return;
     }
 
-    ranges.sort((o1, o2) -> {
+    ranges = ContainerUtil.sorted(ranges, (o1, o2) -> {
       int startDiff = o1.getStartOffset() - o2.getStartOffset();
       return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
     });

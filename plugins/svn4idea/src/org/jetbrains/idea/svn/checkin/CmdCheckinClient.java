@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -46,7 +47,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     return runCommit(paths, message);
   }
 
-  private CommitInfo @NotNull [] runCommit(@NotNull List<File> paths, @NotNull String message) throws VcsException {
+  private CommitInfo @NotNull [] runCommit(@NotNull @Unmodifiable List<File> paths, @NotNull String message) throws VcsException {
     if (ContainerUtil.isEmpty(paths)) return new CommitInfo[]{CommitInfo.EMPTY};
 
     Command command = newCommand(SvnCommandName.ci);
@@ -57,7 +58,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
     }
     command.put("-m", message);
     // TODO: seems that sort is not necessary here
-    ContainerUtil.sort(paths);
+    paths = ContainerUtil.sorted(paths);
     command.setTargets(paths);
 
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());

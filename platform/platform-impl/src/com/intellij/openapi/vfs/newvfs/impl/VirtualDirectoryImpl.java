@@ -454,7 +454,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       else {
         files = new VirtualFile[children.size()];
         int[] errorCount = {0};
-        children.sort((o1, o2) -> {
+        List<? extends ChildInfo> sorted = ContainerUtil.sorted(children, (o1, o2) -> {
           CharSequence name1 = o1.getName();
           CharSequence name2 = o2.getName();
           int cmp = compareNames(name1, name2, isCaseSensitive);
@@ -481,8 +481,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         });
         IntSet prevChildren = new IntOpenHashSet(myData.childrenIds);
         VfsData vfsData = getVfsData();
-        for (int i = 0; i < children.size(); i++) {
-          ChildInfo child = children.get(i);
+        for (int i = 0; i < sorted.size(); i++) {
+          ChildInfo child = sorted.get(i);
           int id = child.getId();
           assert id > 0 : child;
           result[i] = id;
