@@ -7,13 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
-import com.intellij.ui.content.Content
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
+import com.intellij.vcs.impl.shared.rhizome.ShelfTreeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.intellij.vcs.impl.shared.rhizome.ShelvesTreeRootEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.ref
@@ -47,9 +46,9 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
   private fun subscribeToTreeChanges() {
     cs.launch {
       withKernel {
-        ShelvesTreeRootEntity.each().collectLatest {
+        ShelfTreeEntity.each().collectLatest {
           val changes = tree.getSelectedChangesWithChangeLists()
-          val rootNode = it.convertToTreeNodeRecursive() ?: return@collectLatest
+          val rootNode = it.root.convertToTreeNodeRecursive() ?: return@collectLatest
           withContext(Dispatchers.EDT) {
             tree.model = ChangesTreeModel(rootNode)
             selectChangesInTree(changes)

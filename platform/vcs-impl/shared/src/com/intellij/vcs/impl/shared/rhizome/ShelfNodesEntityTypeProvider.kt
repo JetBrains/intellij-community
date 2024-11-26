@@ -19,7 +19,8 @@ class ShelfNodesEntityTypeProvider : EntityTypeProvider {
                                                            TagNodeEntity,
                                                            ModuleNodeEntity,
                                                            FilePathNodeEntity,
-                                                           RepositoryNodeEntity)
+                                                           RepositoryNodeEntity,
+                                                           ShelfTreeEntity)
 }
 
 /**
@@ -35,7 +36,7 @@ sealed interface NodeEntity : Entity {
 
   @ApiStatus.Internal
   companion object : Mixin<NodeEntity>(NodeEntity::class.java.name, "com.intellij") {
-    val Children = manyRef<NodeEntity>("children")
+    val Children = manyRef<NodeEntity>("children", RefFlags.CASCADE_DELETE)
     val Order = requiredValue("order", Int.serializer())
   }
 }
@@ -45,12 +46,8 @@ sealed interface NodeEntity : Entity {
  */
 @ApiStatus.Internal
 data class ShelvesTreeRootEntity(override val eid: EID) : NodeEntity {
-  val project: ProjectEntity by Project
-
   @ApiStatus.Internal
-  companion object : DurableEntityType<ShelvesTreeRootEntity>(ShelvesTreeRootEntity::class.java.name, "com.intellij", ::ShelvesTreeRootEntity, NodeEntity) {
-    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
-  }
+  companion object : DurableEntityType<ShelvesTreeRootEntity>(ShelvesTreeRootEntity::class.java.name, "com.intellij", ::ShelvesTreeRootEntity, NodeEntity)
 }
 
 @ApiStatus.Internal
@@ -152,5 +149,24 @@ data class FilePathNodeEntity(override val eid: EID) : NodeEntity {
     val ParentPath = optionalValue("filePath", String.serializer())
     val OriginText = optionalValue("originText", String.serializer())
     val IsDirectory = requiredValue("isDirectory", Boolean.serializer())
+  }
+}
+
+/**
+ * Represents the entity for a shelves tree structure.
+ *
+ * The only goal for this entity is to hold root, to allow frontend to subscribe to a new roots. We can't subscribe to ShelvesTreeRootEntity
+ * directly, because we want values to be assigned to their parents during one change block. In that case, if we sare subscribed to
+ * ShelvesTreeRootEntity, the tree will be updated too often.
+ */
+@ApiStatus.Internal
+data class ShelfTreeEntity(override val eid: EID) : Entity {
+  val root: ShelvesTreeRootEntity by Root
+  val project: ProjectEntity by Project
+
+  @ApiStatus.Internal
+  companion object : DurableEntityType<ShelfTreeEntity>(ShelfTreeEntity::class.java.name, "com.intellij", ::ShelfTreeEntity) {
+    val Root = requiredRef<ShelvesTreeRootEntity>("root", RefFlags.CASCADE_DELETE)
+    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
   }
 }

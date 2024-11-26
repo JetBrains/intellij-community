@@ -13,14 +13,15 @@ import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
 import com.intellij.platform.kernel.withKernel
 import com.intellij.vcs.impl.shared.rhizome.*
 import com.intellij.vcsUtil.VcsUtil
+import fleet.kernel.SharedChangeScope
 import fleet.kernel.change
 import fleet.kernel.shared
 import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
 @ApiStatus.Internal
-suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(orderInParent: Int, project: Project): NodeEntity? {
-  val converter = NodeToEntityConverter.getConverter(this)
+fun <T : ChangesBrowserNode<*>> SharedChangeScope.convertToEntity(node: T, orderInParent: Int, project: Project): NodeEntity? {
+  val converter = NodeToEntityConverter.getConverter(node)
   if (converter == null) {
     NodeToEntityConverter.LOG.error("No converter found for node ${this::class.simpleName}")
     return TagNodeEntity.new {
@@ -29,12 +30,14 @@ suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(orderInParent: Int, pr
     }
   }
   @Suppress("UNCHECKED_CAST")
-  return (converter as NodeToEntityConverter<T>).convert(this@convertToEntity, orderInParent, project)
+  return with(converter as NodeToEntityConverter<T>) {
+    convert(node, orderInParent, project)
+  }
 }
 
 @ApiStatus.Internal
 abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>>(private val nodeClass: KClass<N>) {
-  abstract suspend fun convert(node: N, orderInParent: Int, project: Project): NodeEntity
+  abstract fun SharedChangeScope.convert(node: N, orderInParent: Int, project: Project): NodeEntity
 
   fun isNodeAcceptable(node: ChangesBrowserNode<*>): Boolean = nodeClass.isInstance(node)
 
@@ -50,83 +53,57 @@ abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>>(private val node
 }
 
 internal class ShelvedChangeListToEntityConverter : NodeToEntityConverter<ShelvedListNode>(ShelvedListNode::class) {
-  override suspend fun convert(node: ShelvedListNode, orderInParent: Int, project: Project): ShelvedChangeListEntity {
-    return withKernel {
-      change {
-        shared {
-          ShelvedChangeListEntity.new {
-            val changeList = node.changeList
-            it[ShelvedChangeListEntity.Name] = changeList.name
-            it[ShelvedChangeListEntity.Description] = changeList.description
-            it[ShelvedChangeListEntity.Date] = changeList.date.toInstant().toEpochMilli()
-            it[ShelvedChangeListEntity.Recycled] = changeList.isRecycled
-            it[ShelvedChangeListEntity.Deleted] = changeList.isDeleted
-            it[NodeEntity.Order] = orderInParent
-          }
-        }
-      }
+  override fun SharedChangeScope.convert(node: ShelvedListNode, orderInParent: Int, project: Project): ShelvedChangeListEntity {
+    return ShelvedChangeListEntity.new {
+      val changeList = node.changeList
+      it[ShelvedChangeListEntity.Name] = changeList.name
+      it[ShelvedChangeListEntity.Description] = changeList.description
+      it[ShelvedChangeListEntity.Date] = changeList.date.toInstant().toEpochMilli()
+      it[ShelvedChangeListEntity.Recycled] = changeList.isRecycled
+      it[ShelvedChangeListEntity.Deleted] = changeList.isDeleted
+      it[NodeEntity.Order] = orderInParent
     }
   }
 }
 
 internal class ShelvedChangeNodeConverter : NodeToEntityConverter<ShelvedChangeNode>(ShelvedChangeNode::class) {
-  override suspend fun convert(node: ShelvedChangeNode, orderInParent: Int, project: Project): ShelvedChangeEntity {
-    return withKernel {
-      change {
-        shared {
-          ShelvedChangeEntity.new {
-            it[ShelvedChangeEntity.AdditionalText] = node.additionalText
-            it[ShelvedChangeEntity.FilePath] = node.shelvedChange.requestName
-            it[ShelvedChangeEntity.FileStatus] = node.shelvedChange.fileStatus.id
-            it[NodeEntity.Order] = orderInParent
-          }
-        }
-      }
+  override fun SharedChangeScope.convert(node: ShelvedChangeNode, orderInParent: Int, project: Project): ShelvedChangeEntity {
+    return ShelvedChangeEntity.new {
+      it[ShelvedChangeEntity.AdditionalText] = node.additionalText
+      it[ShelvedChangeEntity.FilePath] = node.shelvedChange.requestName
+      it[ShelvedChangeEntity.FileStatus] = node.shelvedChange.fileStatus.id
+      it[NodeEntity.Order] = orderInParent
     }
+
   }
 }
 
 
 internal class TagNodeToEntityConverter : NodeToEntityConverter<TagChangesBrowserNode>(TagChangesBrowserNode::class) {
-  override suspend fun convert(node: TagChangesBrowserNode, orderInParent: Int, project: Project): TagNodeEntity {
-    return withKernel {
-      change {
-        shared {
-          TagNodeEntity.new {
-            it[TagNodeEntity.Text] = node.textPresentation
-            it[NodeEntity.Order] = orderInParent
-          }
-        }
-      }
+  override fun SharedChangeScope.convert(node: TagChangesBrowserNode, orderInParent: Int, project: Project): TagNodeEntity {
+    return TagNodeEntity.new {
+      it[TagNodeEntity.Text] = node.textPresentation
+      it[NodeEntity.Order] = orderInParent
     }
   }
 }
 
 internal class ModuleNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserModuleNode>(ChangesBrowserModuleNode::class) {
-  override suspend fun convert(node: ChangesBrowserModuleNode, orderInParent: Int, project: Project): ModuleNodeEntity {
-    return withKernel {
-      change {
-        shared {
-          ModuleNodeEntity.new {
+  override fun SharedChangeScope.convert(node: ChangesBrowserModuleNode, orderInParent: Int, project: Project): ModuleNodeEntity {
+    return ModuleNodeEntity.new {
             val module = node.userObject
             it[ModuleNodeEntity.Name] = module.name
             it[ModuleNodeEntity.RootPath] = node.moduleRoot.toPresentablePath(project)
             it[ModuleNodeEntity.ModuleType] = module.moduleTypeName
             it[NodeEntity.Order] = orderInParent
-          }
-        }
-      }
     }
   }
 }
 
 
 internal class FilePathNodeToEntityConverter : NodeToEntityConverter<ChangesBrowserFilePathNode>(ChangesBrowserFilePathNode::class) {
-  override suspend fun convert(node: ChangesBrowserFilePathNode, orderInParent: Int, project: Project): FilePathNodeEntity {
-    return withKernel {
-      change {
-        shared {
-          FilePathNodeEntity.new {
+  override fun SharedChangeScope.convert(node: ChangesBrowserFilePathNode, orderInParent: Int, project: Project): FilePathNodeEntity {
+    return FilePathNodeEntity.new {
             val filePath = node.userObject ?: return@new
             val isFlatten = !ShelfTreeHolder.getInstance(project).isDirectoryGroupingEnabled()
             val name = if (isFlatten) filePath.name else node.getRelativeFilePath(project, filePath)
@@ -138,9 +115,6 @@ internal class FilePathNodeToEntityConverter : NodeToEntityConverter<ChangesBrow
             it[FilePathNodeEntity.IsDirectory] = filePath.isDirectory
             it[FilePathNodeEntity.Name] = name
             it[NodeEntity.Order] = orderInParent
-          }
-        }
-      }
     }
   }
 }

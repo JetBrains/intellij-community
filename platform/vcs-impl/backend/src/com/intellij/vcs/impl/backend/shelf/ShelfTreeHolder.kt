@@ -30,9 +30,7 @@ import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.*
 import fleet.kernel.rete.Rete
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
@@ -69,24 +67,33 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  fun updateDbModel(afterUpdate: () -> Unit = {}) {
+  private fun updateDbModel(afterUpdate: () -> Unit = {}) {
     cs.launch {
       val root = model.root as ChangesBrowserNode<*>
       withKernel {
-        var order = 0
-        val rootNodes = mutableSetOf<NodeEntity>()
-        for (child in root.children()) {
-          val entity = dfs(child as ChangesBrowserNode<*>, null, order++) ?: continue
-          rootNodes.add(entity)
-        }
-        change {
+        val rootEntity = change {
           shared {
-            val projectEntity = project.asEntity()
-            entity(ShelvesTreeRootEntity.Project, projectEntity)?.delete()
+            entity(ShelfTreeEntity.Project, project.asEntity())?.delete()
             ShelvesTreeRootEntity.new {
               it[NodeEntity.Order] = 0
-              it[NodeEntity.Children] = rootNodes
-              it[ShelvesTreeRootEntity.Project] = projectEntity
+            }
+          }
+        }
+        try {
+          var order = 0
+          val rootNodes = mutableSetOf<NodeEntity>()
+          for (child in root.children()) {
+            val entity = dfs(child as ChangesBrowserNode<*>, rootEntity, order++) ?: continue
+            rootNodes.add(entity)
+          }
+          createTreeEntity(project, rootEntity)
+        }
+        catch (e: Exception) {
+          withContext(NonCancellable) {
+            change {
+              shared {
+                rootEntity.delete()
+              }
             }
           }
         }
@@ -95,15 +102,15 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     }
   }
 
-  private suspend fun dfs(node: ChangesBrowserNode<*>, parent: NodeEntity?, orderInParent: Int): NodeEntity? {
-    val entity = node.save(orderInParent, project) ?: return null
-    if (parent != null) {
-      change {
-        shared {
-          parent.add(NodeEntity.Children, entity)
-        }
+  private suspend fun dfs(node: ChangesBrowserNode<*>, parent: NodeEntity, orderInParent: Int): NodeEntity? {
+    val entity = change {
+      shared {
+        val childNode = save(node, orderInParent, project) ?: return@shared null
+        parent.add(NodeEntity.Children, childNode)
+        return@shared childNode
       }
-    }
+    } ?: return null
+
     var order = 0
     for (child in node.children()) {
       dfs(child as ChangesBrowserNode<*>, entity, order++)
@@ -111,10 +118,21 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     return entity
   }
 
-  private suspend fun ChangesBrowserNode<*>.save(orderInParent: Int, project: Project): NodeEntity? {
-    val entity = this.convertToEntity(orderInParent, project) ?: return null
-    putUserData(ENTITY_ID_KEY, entity.ref())
+  private fun SharedChangeScope.save(node: ChangesBrowserNode<*>, orderInParent: Int, project: Project): NodeEntity? {
+    val entity = this.convertToEntity(node, orderInParent, project) ?: return null
+    node.putUserData(ENTITY_ID_KEY, entity.ref())
     return entity
+  }
+
+  private suspend fun createTreeEntity(project: Project, rootEntity: ShelvesTreeRootEntity): ShelfTreeEntity {
+    return change {
+      shared {
+        ShelfTreeEntity.new {
+          it[ShelfTreeEntity.Project] = project.asEntity()
+          it[ShelfTreeEntity.Root] = rootEntity
+        }
+      }
+    }
   }
 
   internal fun findChangesInTree(changeListDto: ChangeListDto): List<ShelvedChangeNode> {
