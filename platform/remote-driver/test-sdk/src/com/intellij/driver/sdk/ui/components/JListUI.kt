@@ -98,6 +98,8 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     driver.invokeAction("List-selectPreviousRow", component = component)
   }
 
+  fun isSelectedIndex(index: Int) = listComponent.isSelectedIndex(index)
+
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
     fixture.collectItems().indexOfFirst {
       if (fullMatch) it == itemText
@@ -124,4 +126,5 @@ interface JListFixtureRef {
 @Remote("javax.swing.JList")
 interface JListComponent {
   fun getCellBounds(index0: Int, index1: Int): Rectangle
+  fun isSelectedIndex(index: Int): Boolean
 }

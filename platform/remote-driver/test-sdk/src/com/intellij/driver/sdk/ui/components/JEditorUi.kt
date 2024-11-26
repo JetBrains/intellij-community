@@ -98,13 +98,13 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getFontSize() = editor.getColorsScheme().getEditorFontSize()
 
-  fun clickOn(text: String, button: RemoteMouseButton) {
-    val o = this.text.indexOf(text) + text.length / 2
+  fun clickOn(text: String, button: RemoteMouseButton, times: Int = 1) {
+    val offset = this.text.indexOf(text) + text.length / 2
     val point = interact {
-      val p = offsetToVisualPosition(o)
+      val p = offsetToVisualPosition(offset)
       visualPositionToXY(p)
     }
-    robot.click(component, point, button, 1)
+    robot.click(component, point, button, times)
   }
 
   fun setCaretPosition(line: Int, column: Int) {

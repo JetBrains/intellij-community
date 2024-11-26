@@ -22,6 +22,7 @@ class ActionButtonUi(data: ComponentData): UiComponent(data) {
   val icon: String get() = actionButtonComponent.getIcon().toString()
   val text: String get() = actionButtonComponent.getPresentation().getText()
   val isSelected: Boolean get() = actionButtonComponent.isSelected()
+  val popState: Int get() = actionButtonComponent.getPopState()
 }
 
 fun ActionButtonUi.waitSelected(selected: Boolean, timeout: Duration = 5.seconds) {
@@ -36,6 +37,7 @@ interface ActionButtonComponent {
   fun getIcon(): Icon
   fun getPresentation(): PresentationRef
   fun isSelected(): Boolean
+  fun getPopState(): Int
 }
 
 @Remote("com.intellij.openapi.actionSystem.Presentation")
