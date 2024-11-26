@@ -186,7 +186,7 @@ public abstract class PyEnvTestCase {
     PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-    EnvTestTagsRequired methodAnnotation = null;
+    EnvTestTagsRequired methodAnnotation;
     try {
       String methodName = myTestName.getMethodName();
       if (methodName.contains("[")) {

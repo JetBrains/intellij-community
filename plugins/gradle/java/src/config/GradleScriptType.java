@@ -55,13 +55,12 @@ public final class GradleScriptType extends GroovyRunnableScriptType {
   public GlobalSearchScope patchResolveScopeInner(@Nullable Module module, @NotNull GlobalSearchScope baseScope) {
     if (module == null) return GlobalSearchScope.EMPTY_SCOPE;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return baseScope;
-    GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Project project = module.getProject();
     GlobalSearchScope[] jdkScopes = Arrays.stream(ModuleRootManager.getInstance(module).getOrderEntries())
       .filter(entry -> entry instanceof JdkOrderEntry)
       .map(entry -> LibraryScopeCache.getInstance(project).getScopeForSdk((JdkOrderEntry)entry))
       .toArray(GlobalSearchScope[]::new);
-    result = jdkScopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(jdkScopes);
+    GlobalSearchScope result = jdkScopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(jdkScopes);
 
     String modulePath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (modulePath == null) return result;

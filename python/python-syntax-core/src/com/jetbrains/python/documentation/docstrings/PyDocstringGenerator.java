@@ -54,7 +54,7 @@ public final class PyDocstringGenerator {
   private final PsiElement mySettingsAnchor;
 
   private boolean myUseTypesFromDebuggerSignature = true;
-  private boolean myNewMode = false; // true - generate new string, false - update existing
+  private boolean myNewMode; // true - generate new string, false - update existing
   private boolean myAddFirstEmptyLine = false;
   private boolean myParametersPrepared = false;
   private String myQuotes = TRIPLE_DOUBLE_QUOTES;

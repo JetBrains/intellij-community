@@ -48,7 +48,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @NotNull
   private UUID myUUID = UUID.randomUUID();
 
-  private PyFlavorAndData<?, ?> myFlavorAndData = PyFlavorAndData.getUNKNOWN_FLAVOR_DATA();
+  private PyFlavorAndData<?, ?> myFlavorAndData;
   private String myAssociatedModulePath;
 
   private final Gson myGson = new Gson();
