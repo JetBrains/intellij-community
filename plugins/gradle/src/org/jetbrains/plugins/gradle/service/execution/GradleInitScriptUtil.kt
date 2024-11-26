@@ -139,15 +139,10 @@ fun loadCommonTasksUtilsScript():String {
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle")
 }
 
-fun loadCommonDebuggerUtilsScript():String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleDebuggerUtil.gradle")
-}
-
 fun loadJvmDebugInitScript(): String {
   return joinInitScripts(
     loadToolingExtensionProvidingInitScript(GRADLE_TOOLING_EXTENSION_CLASSES),
     loadCommonTasksUtilsScript(),
-    loadCommonDebuggerUtilsScript(),
     loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle")
   )
 }

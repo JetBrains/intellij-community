@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 //file:noinspection GrPackage
 
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleDebuggerUtil
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 
 gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
