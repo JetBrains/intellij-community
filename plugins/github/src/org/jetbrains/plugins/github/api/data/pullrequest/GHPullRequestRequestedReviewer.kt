@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.plugins.github.api.data.GHBot
+import org.jetbrains.plugins.github.api.data.GHMannequin
 import org.jetbrains.plugins.github.api.data.GHUser
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewerInfo.graphql")
@@ -12,6 +14,8 @@ import org.jetbrains.plugins.github.api.data.GHUser
               defaultImpl = GHPullRequestRequestedReviewer.Unknown::class)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "User", value = GHUser::class),
+  JsonSubTypes.Type(name = "Bot", value = GHBot::class),
+  JsonSubTypes.Type(name = "Mannequin", value = GHMannequin::class),
   JsonSubTypes.Type(name = "Team", value = GHTeam::class)
 )
 interface GHPullRequestRequestedReviewer {
