@@ -207,9 +207,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
 
     init();
-    myHeader.setResultsNotifyCallback(myListModel::addNotificationElement); // should be performed after myListModel creation in init()
-
     myHintHelper = new HintHelper(mySearchField);
+
+    myHeader.setResultsNotifyCallback(label -> {
+      // hack to don't modify semantic search plugin
+      String trimmedLabel = StringUtil.trimTrailing(label, ':');
+      myHintHelper.setHint(trimmedLabel);
+    }); // should be performed after myListModel creation in init()
 
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     SearchListener wrapperListener = createListenerWrapper();
