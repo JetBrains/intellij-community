@@ -30,6 +30,7 @@
     <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg" language="SVG"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
+    <ApplicationLoadListener implementation="org.intellij.images.util.imageio.ImageReaderSpiRegistrar"/>
 
     <filePasteProvider implementation="org.intellij.images.ide.ImagePasteProvider" order="last"/>
 
