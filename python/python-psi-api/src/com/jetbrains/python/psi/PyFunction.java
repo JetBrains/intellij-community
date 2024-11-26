@@ -8,9 +8,11 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.*;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +30,37 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];
 
+  /**
+   * Infers function's return type by analyzing <b>only return statements</b> (including implicit returns) in its control flow.
+   * Does not consider yield statements or return type annotations.
+   *
+   * @see PyFunction#getInferredReturnType(TypeEvalContext)
+   */
   @Nullable
   PyType getReturnStatementType(@NotNull TypeEvalContext context);
+
+  /**
+   * Infers function's return type by analyzing <b>return statements</b> (including implicit returns) and <b>yield expression</b>.
+   * In contrast with {@link TypeEvalContext#getReturnType(PyCallable)} does not consider 
+   * return type annotations or any other {@link PyTypeProvider}.
+   * 
+   * @apiNote Does not cache the result.
+   */
+  @ApiStatus.Internal
+  @Nullable
+  PyType getInferredReturnType(@NotNull TypeEvalContext context);
+
+  /**
+   * Returns a list of all function exit points that can return a value.
+   * This includes explicit 'return' statements and statements that can complete
+   * normally with an implicit 'return None', excluding statements that raise exceptions.
+   *
+   * @see PyFunction#getReturnStatementType(TypeEvalContext) 
+   * @return List of exit point statements, in control flow order
+   */
+  @ApiStatus.Internal
+  @NotNull
+  List<PyStatement> getReturnPoints(@NotNull TypeEvalContext context);
 
   /**
    * Checks whether the function contains a yield expression in its body.
