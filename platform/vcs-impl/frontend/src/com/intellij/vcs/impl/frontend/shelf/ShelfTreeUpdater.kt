@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
+import com.intellij.platform.project.projectId
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
@@ -34,7 +35,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     subscribeToTreeChanges()
     cs.launch(Dispatchers.IO) {
       withKernel {
-        RemoteShelfApi.getInstance().loadChangesAsync(project.asEntity().ref())
+        RemoteShelfApi.getInstance().loadChangesAsync(project.projectId())
       }
     }
   }
@@ -84,7 +85,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
       withKernel {
         val changeListEntity = changeListNode.userObject as ShelvedChangeListEntity
         val dto = ChangeListDto(changeListEntity.ref(), changeNodes.map { it.userObject as ShelvedChangeEntity }.map { it.ref() })
-        RemoteShelfApi.getInstance().notifyNodeSelected(project.asEntity().ref(), dto, false)
+        RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), dto, false)
       }
     }
   }

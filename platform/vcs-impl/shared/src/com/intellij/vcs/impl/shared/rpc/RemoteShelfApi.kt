@@ -2,6 +2,7 @@
 package com.intellij.vcs.impl.shared.rpc
 
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -16,11 +17,11 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface RemoteShelfApi : RemoteApi<Unit> {
-  suspend fun loadChangesAsync(projectRef: DurableRef<ProjectEntity>)
-  suspend fun showDiffForChanges(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto)
-  suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto, fromModelChange: Boolean)
-  suspend fun applyTreeGrouping(projectRef: DurableRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus>
-  suspend fun renameShelvedChangeList(projectRef: DurableRef<ProjectEntity>, changeList: DurableRef<ShelvedChangeListEntity>, newName: String)
+  suspend fun loadChangesAsync(projectId: ProjectId)
+  suspend fun showDiffForChanges(projectId: ProjectId, changeListDto: ChangeListDto)
+  suspend fun notifyNodeSelected(projectId: ProjectId, changeListDto: ChangeListDto, fromModelChange: Boolean)
+  suspend fun applyTreeGrouping(projectId: ProjectId, groupingKeys: Set<String>): Deferred<UpdateStatus>
+  suspend fun renameShelvedChangeList(projectId: ProjectId, changeList: DurableRef<ShelvedChangeListEntity>, newName: String)
 
   companion object {
     suspend fun getInstance(): RemoteShelfApi = RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>())

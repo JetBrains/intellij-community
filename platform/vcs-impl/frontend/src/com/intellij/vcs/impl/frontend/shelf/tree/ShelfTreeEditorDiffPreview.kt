@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
+import com.intellij.platform.project.projectId
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeEditorDiffPreview
 import com.intellij.vcs.impl.frontend.changes.SelectedData
@@ -33,7 +34,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
       cs.launch(Dispatchers.IO) {
         withKernel {
           val changeListDto = creteSelectedListsDto() ?: return@withKernel
-          RemoteShelfApi.getInstance().notifyNodeSelected(project.asEntity().ref(), changeListDto, false)
+          RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), changeListDto, false)
         }
       }
     }
@@ -43,7 +44,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
     cs.launch(Dispatchers.IO) {
       withKernel {
         val changeListDto = creteSelectedListsDto() ?: return@withKernel
-        RemoteShelfApi.getInstance().showDiffForChanges(project.asEntity().ref(), changeListDto)
+        RemoteShelfApi.getInstance().showDiffForChanges(project.projectId(), changeListDto)
       }
     }
     return true

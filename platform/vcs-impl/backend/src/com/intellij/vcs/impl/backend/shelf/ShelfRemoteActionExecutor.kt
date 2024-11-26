@@ -3,6 +3,7 @@ package com.intellij.vcs.impl.backend.shelf
 
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -10,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 import com.intellij.openapi.vcs.changes.shelf.*
+import com.intellij.platform.project.projectId
 import com.intellij.pom.NavigatableAdapter
 import com.intellij.util.OpenSourceUtil
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -47,7 +49,9 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
   fun unshelve(changeListDto: List<ChangeListDto>, withDialog: Boolean) {
     cs.launch {
       withContext(Dispatchers.EDT) {
-        FileDocumentManager.getInstance().saveAllDocuments()
+        writeIntentReadAction {
+          FileDocumentManager.getInstance().saveAllDocuments()
+        }
       }
 
       val nodes = changeListDto.flatMap {
@@ -106,14 +110,13 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
 
   fun showStandaloneDiff(dtos: List<ChangeListDto>, withLocal: Boolean) {
     cs.launch(Dispatchers.EDT) {
-      DiffShelvedChangesActionProvider.showShelvedChangesDiff(project, withLocal) {
-        val shelvedChanges = dtos.flatMap { shelfTreeHolder.findChangesInTree(it) }.map { it.shelvedChange }
-        val wrappers: ListSelection<ShelvedWrapper> = ListSelection.createAt(shelvedChanges, 0)
-        if (wrappers.list.size == 1 && shelvedChanges.size > 1) {
-          return@showShelvedChangesDiff ListSelection.create(shelvedChanges, wrappers.list.first())
-        }
-        return@showShelvedChangesDiff wrappers.asExplicitSelection()
+      val shelvedChanges = dtos.flatMap { shelfTreeHolder.findChangesInTree(it) }.map { it.shelvedChange }
+      val wrappers: ListSelection<ShelvedWrapper> = ListSelection.createAt(shelvedChanges, 0)
+      if (wrappers.list.size == 1 && shelvedChanges.size > 1) {
+        DiffShelvedChangesActionProvider.showShelvedChangesDiff(project, withLocal, ListSelection.create(shelvedChanges, wrappers.list.first()))
+        return@launch
       }
+      DiffShelvedChangesActionProvider.showShelvedChangesDiff(project, withLocal, wrappers.asExplicitSelection())
     }
   }
 

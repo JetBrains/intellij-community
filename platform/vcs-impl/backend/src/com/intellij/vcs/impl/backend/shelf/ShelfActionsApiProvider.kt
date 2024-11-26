@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf
 
-import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
@@ -21,40 +22,40 @@ class ShelfActionsApiProvider : RemoteApiProvider {
 
 internal class BackendShelfActionsApi : RemoteShelfActionsApi {
 
-  override suspend fun unshelve(projectRef: DurableRef<ProjectEntity>, changeListDto: List<ChangeListDto>, withDialog: Boolean) {
-    getShelfRemoteActionExecutor(projectRef).unshelve(changeListDto, withDialog)
+  override suspend fun unshelve(projectId: ProjectId, changeListDto: List<ChangeListDto>, withDialog: Boolean) {
+    getShelfRemoteActionExecutor(projectId).unshelve(changeListDto, withDialog)
   }
 
-  override suspend fun delete(projectRef: DurableRef<ProjectEntity>, selectedLists: List<DurableRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
-    getShelfRemoteActionExecutor(projectRef).delete(selectedLists, selectedChanges)
+  override suspend fun delete(projectId: ProjectId, selectedLists: List<DurableRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
+    getShelfRemoteActionExecutor(projectId).delete(selectedLists, selectedChanges)
   }
 
-  override suspend fun createPatchForShelvedChanges(projectRef: DurableRef<ProjectEntity>, changeListDto: List<ChangeListDto>, silentClipboard: Boolean) {
-    getShelfRemoteActionExecutor(projectRef).createPatchForShelvedChanges(changeListDto, silentClipboard)
+  override suspend fun createPatchForShelvedChanges(projectId: ProjectId, changeListDto: List<ChangeListDto>, silentClipboard: Boolean) {
+    getShelfRemoteActionExecutor(projectId).createPatchForShelvedChanges(changeListDto, silentClipboard)
   }
 
-  override suspend fun showStandaloneDiff(projectRef: DurableRef<ProjectEntity>, changeListsDto: List<ChangeListDto>, withLocal: Boolean) {
-    getShelfRemoteActionExecutor(projectRef).showStandaloneDiff(changeListsDto, withLocal)
+  override suspend fun showStandaloneDiff(projectId: ProjectId, changeListsDto: List<ChangeListDto>, withLocal: Boolean) {
+    getShelfRemoteActionExecutor(projectId).showStandaloneDiff(changeListsDto, withLocal)
   }
 
-  override suspend fun importShelvesFromPatches(projectRef: DurableRef<ProjectEntity>) {
-    getShelfRemoteActionExecutor(projectRef).exportPatches()
+  override suspend fun importShelvesFromPatches(projectId: ProjectId) {
+    getShelfRemoteActionExecutor(projectId).exportPatches()
   }
 
-  override suspend fun navigateToSource(projectRef: DurableRef<ProjectEntity>, navigatables: List<ChangeListDto>, focusEditor: Boolean) {
-    getShelfRemoteActionExecutor(projectRef).navigateToSource(navigatables, focusEditor)
+  override suspend fun navigateToSource(projectId: ProjectId, navigatables: List<ChangeListDto>, focusEditor: Boolean) {
+    getShelfRemoteActionExecutor(projectId).navigateToSource(navigatables, focusEditor)
   }
 
-  override suspend fun restoreShelves(projectRef: DurableRef<ProjectEntity>, changeLists: List<DurableRef<ShelvedChangeListEntity>>) {
-    getShelfRemoteActionExecutor(projectRef).restoreShelves(changeLists)
+  override suspend fun restoreShelves(projectId: ProjectId, changeLists: List<DurableRef<ShelvedChangeListEntity>>) {
+    getShelfRemoteActionExecutor(projectId).restoreShelves(changeLists)
   }
 
-  override suspend fun createPreviewDiffSplitter(projectRef: DurableRef<ProjectEntity>) {
-    getShelfRemoteActionExecutor(projectRef).createPreviewDiffSplitter()
+  override suspend fun createPreviewDiffSplitter(projectId: ProjectId) {
+    getShelfRemoteActionExecutor(projectId).createPreviewDiffSplitter()
   }
 
-  private suspend fun getShelfRemoteActionExecutor(projectRef: DurableRef<ProjectEntity>): ShelfRemoteActionExecutor {
-    val project = projectRef.asProject()
+  private fun getShelfRemoteActionExecutor(projectId: ProjectId): ShelfRemoteActionExecutor {
+    val project = projectId.findProject()
 
     return ShelfRemoteActionExecutor.getInstance(project)
   }

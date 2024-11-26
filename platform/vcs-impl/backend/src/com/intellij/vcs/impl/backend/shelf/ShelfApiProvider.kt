@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.asProject
+import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
@@ -27,8 +29,8 @@ class ShelfApiProvider : RemoteApiProvider {
 }
 
 internal class BackendShelfApi : RemoteShelfApi {
-  override suspend fun loadChangesAsync(projectRef: DurableRef<ProjectEntity>) {
-    val project = projectRef.asProject()
+  override suspend fun loadChangesAsync(projectId: ProjectId) {
+    val project = projectId.findProject()
     ShelveChangesManager.getInstance(project).allLists.forEach {
       it.loadChangesIfNeeded(project)
     }
@@ -38,25 +40,25 @@ internal class BackendShelfApi : RemoteShelfApi {
     shelfTreeHolder.saveGroupings()
   }
 
-  override suspend fun showDiffForChanges(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto) {
-    val project = projectRef.asProject()
+  override suspend fun showDiffForChanges(projectId: ProjectId, changeListDto: ChangeListDto) {
+    val project = projectId.findProject()
     ShelfTreeHolder.getInstance(project).showDiff(changeListDto)
   }
 
-  override suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto, fromModelChange: Boolean) {
-    val project = projectRef.asProject()
+  override suspend fun notifyNodeSelected(projectId: ProjectId, changeListDto: ChangeListDto, fromModelChange: Boolean) {
+    val project = projectId.findProject()
     ShelfTreeHolder.getInstance(project).updateDiffFile(changeListDto, fromModelChange)
   }
 
-  override suspend fun applyTreeGrouping(projectRef: DurableRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus> {
-    val project = projectRef.asProject()
+  override suspend fun applyTreeGrouping(projectId: ProjectId, groupingKeys: Set<String>): Deferred<UpdateStatus> {
+    val project = projectId.findProject()
 
     ShelfTreeHolder.getInstance(project).changeGrouping(groupingKeys)
     return CompletableDeferred(UpdateStatus.OK)
   }
 
-  override suspend fun renameShelvedChangeList(projectRef: DurableRef<ProjectEntity>, changeList: DurableRef<ShelvedChangeListEntity>, newName: String) {
-    val project = projectRef.asProject()
+  override suspend fun renameShelvedChangeList(projectId: ProjectId, changeList: DurableRef<ShelvedChangeListEntity>, newName: String) {
+    val project = projectId.findProject()
 
     ShelfTreeHolder.getInstance(project).renameChangeList(changeList, newName)
   }
