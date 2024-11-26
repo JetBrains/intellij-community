@@ -16,7 +16,6 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev
@@ -69,7 +68,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
                 }
 
                 if (classType != null) {
-                  final String exceptionMessage = tryExtractExceptionMessage((ObjectReference)reference);
+                  final String exceptionMessage = DebuggerUtils.tryExtractExceptionMessage((ObjectReference)reference);
                   final String description = "Evaluation failed: " + type.name() + " exception thrown";
                   final String descriptionWithReason = exceptionMessage == null ? description : description + ": " + exceptionMessage;
                   callback.evaluationFailed(streamTraceExpression, descriptionWithReason);
@@ -88,18 +87,5 @@ public class EvaluateExpressionTracer implements StreamTracer {
         }
       }, stackFrame.getSourcePosition());
     }
-  }
-
-  @Nullable
-  private static String tryExtractExceptionMessage(@NotNull ObjectReference exception) {
-    final ReferenceType type = exception.referenceType();
-    final Field messageField = DebuggerUtils.findField(type, "detailMessage");
-    if (messageField == null) return null;
-    final Value message = exception.getValue(messageField);
-    if (message instanceof StringReference) {
-      return ((StringReference)message).value();
-    }
-
-    return null;
   }
 }
