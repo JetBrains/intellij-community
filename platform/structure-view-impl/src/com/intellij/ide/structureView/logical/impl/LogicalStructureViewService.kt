@@ -18,6 +18,7 @@ class LogicalStructureViewService(
   }
 
   fun getLogicalStructureBuilder(psiFile: PsiFile): StructureViewBuilder? {
+    if (!psiFile.isValid) return null
     val assembledModel = LogicalStructureAssembledModel.getInstance(project, psiFile)
     if (assembledModel.getChildren().isEmpty()) return null
     return object: TreeBasedStructureViewBuilder() {
