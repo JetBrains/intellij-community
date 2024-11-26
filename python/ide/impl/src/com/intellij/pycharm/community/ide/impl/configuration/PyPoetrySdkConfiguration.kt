@@ -34,20 +34,29 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.io.path.pathString
 
-/**
- *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
- */
-
 class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }
 
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, false) }
+  override fun getIntention(module: Module): @IntentionName String? {
+    return runBlockingCancellable {
+      val toml = findAmongRoots(module, PY_PROJECT_TOML)
+      if (toml == null) {
+        return@runBlockingCancellable null
+      }
+
+      val isPoetry = getPyProjectTomlForPoetry(toml) != null
+      if (!isPoetry) {
+        return@runBlockingCancellable null
+      }
+
+      PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", toml.name)
+    }
+  }
 
   @RequiresBackgroundThread
-  override fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PY_PROJECT_TOML)?.let { PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", it.name) }
+  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, false) }
 
   @RequiresBackgroundThread
   override fun createAndAddSdkForInspection(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, true) }
