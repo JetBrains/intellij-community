@@ -61,7 +61,7 @@ const val POETRY_DEFAULT_SOURCE_URL: String = "https://pypi.org/simple"
 
 val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
 
-internal suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
+suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
   withContext(Dispatchers.IO) {
     readAction {
       try {
