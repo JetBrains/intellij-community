@@ -20,6 +20,10 @@ public final class PersistentFSConstants {
     FileUtilRt.MEGABYTE
   );
 
+  /** @deprecated {@linkplain #MAX_FILE_LENGTH_TO_CACHE} instead (or better not use at all, this is a constant for platform-internal use) */
+  @Deprecated
+  public static final long FILE_LENGTH_TO_CACHE_THRESHOLD = MAX_FILE_LENGTH_TO_CACHE;
+
   /**
    * Must always be in range [0, {@link FileUtilRt#LARGE_FOR_CONTENT_LOADING}]
    * <p>
