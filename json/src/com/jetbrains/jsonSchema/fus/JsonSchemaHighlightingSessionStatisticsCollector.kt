@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.psi.util.ReadActionCachedValue
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -28,38 +28,64 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
 
   // Expected to be zero, but let's collect it to prove there are no additional cases to consider
   private val requestsOutsideHighlightingCounter = AtomicInteger(0)
+  private val currentHighlightingSession = ThreadLocal<JsonSchemaHighlightingSession?>()
 
-  private val currentHighlightingSession = ReadActionCachedValue<JsonSchemaHighlightingSession> {
-    JsonSchemaHighlightingSession()
+  fun recordSchemaFeaturesUsage(schemaRoot: JsonSchemaObject, operation: Runnable) {
+    try {
+      startCollectingSchemaHighlightingFus(schemaRoot)
+      operation.run()
+    }
+    catch (exception: CancellationException) {
+      // fast clean-up to avoid sending incomplete session data
+      cleanupHighlightingSessionDataNoFlush()
+      throw exception
+    }
+    finally {
+      flushHighlightingSessionDataToFus()
+    }
   }
 
-  private fun getOrComputeCurrentSession(): JsonSchemaHighlightingSession? {
+  fun reportSchemaUsageFeature(featureKind: JsonSchemaFusFeature) {
+    val currentSession = getCurrentSession() ?: return
+    currentSession.featuresWithCount[featureKind] = currentSession.featuresWithCount.getOrDefault(featureKind, 0) + 1
+  }
+
+  fun reportUniqueUrlDownloadRequestUsage(schemaUrl: String) {
+    val currentSession = getCurrentSession() ?: return
+    currentSession.requestedRemoteSchemas.add(schemaUrl)
+  }
+
+  private fun createNewSession(): JsonSchemaHighlightingSession {
+    val newSession = JsonSchemaHighlightingSession()
+    currentHighlightingSession.set(newSession)
+    return newSession
+  }
+
+  private fun getCurrentSession(): JsonSchemaHighlightingSession? {
     if (!ApplicationManager.getApplication().isReadAccessAllowed) {
       thisLogger().debug("reportSchemaUsageFeature() must not be called outside read action")
       requestsOutsideHighlightingCounter.incrementAndGet()
       return null
     }
-
-    return currentHighlightingSession.getCachedOrEvaluate()
+    return currentHighlightingSession.get()
   }
 
-  fun reportSchemaType(schemaRoot: JsonSchemaObject) {
-    val currentSession = getOrComputeCurrentSession() ?: return
+  private fun cleanupHighlightingSessionDataNoFlush() {
+    currentHighlightingSession.set(null)
+  }
+
+  private fun startCollectingSchemaHighlightingFus(schemaRoot: JsonSchemaObject) {
+    val currentSession = createNewSession()
     currentSession.schemaType = guessBestSchemaId(schemaRoot)
   }
 
-  fun reportSchemaUsageFeature(featureKind: JsonSchemaFusFeature) {
-    val currentSession = getOrComputeCurrentSession() ?: return
-    currentSession.featuresWithCount[featureKind] = currentSession.featuresWithCount.getOrDefault(featureKind, 0) + 1
-  }
+  private fun flushHighlightingSessionDataToFus() {
+    val sessionData = getCurrentSession()
+    if (sessionData == null) {
+      thisLogger().debug("No JSON schema highlighting session FUS to collect")
+      return
+    }
 
-  fun reportUniqueUrlDownloadRequestUsage(schemaUrl: String) {
-    val currentSession = getOrComputeCurrentSession() ?: return
-    currentSession.requestedRemoteSchemas.add(schemaUrl)
-  }
-
-  fun flushHighlightingSessionDataToFus() {
-    val sessionData = currentHighlightingSession.getCachedOrEvaluate()
     val allCountEventsDuringSession = JsonSchemaFusCountedFeature.entries
       .map { feature -> feature to sessionData.featuresWithCount.getOrDefault(feature, 0) }
       .map { (feature, usagesCount) -> feature.event.with(usagesCount) }
