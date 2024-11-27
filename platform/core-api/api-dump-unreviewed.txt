@@ -282,9 +282,7 @@ com.intellij.ide.plugins.DynamicPluginListener
 - pluginUnloaded(com.intellij.ide.plugins.IdeaPluginDescriptor,Z):V
 f:com.intellij.ide.plugins.DynamicPluginListener$Companion
 com.intellij.ide.plugins.DynamicPluginVetoer
-- sf:Companion:com.intellij.ide.plugins.DynamicPluginVetoer$Companion
 - a:vetoPluginUnload(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
-f:com.intellij.ide.plugins.DynamicPluginVetoer$Companion
 @:com.intellij.ide.plugins.DynamicallyLoaded
 - java.lang.annotation.Annotation
 com.intellij.ide.plugins.IdeaPluginDependency
