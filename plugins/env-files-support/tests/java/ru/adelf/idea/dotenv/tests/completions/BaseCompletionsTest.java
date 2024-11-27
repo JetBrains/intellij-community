@@ -10,6 +10,7 @@ abstract class BaseCompletionsTest extends DotEnvLightCodeInsightFixtureTestCase
         myFixture.copyFileToProject(".env.example");
     }
 
+    @Override
     protected String getTestDataPath() {
         return basePath + "completions/fixtures";
     }
