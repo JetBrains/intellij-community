@@ -475,8 +475,8 @@ public class HighlightInfo implements Segment {
     return startOffset;
   }
 
-  @Override
-  public @NonNls String toString() {
+  @ApiStatus.Internal
+  public @NonNls String toStringCompact(boolean isFqdn) {
     String s = "HighlightInfo(" + getStartOffset() + "," + getEndOffset() + ")";
     if (isFileLevelAnnotation()) {
       s+=" (file level)";
@@ -490,14 +490,19 @@ public class HighlightInfo implements Segment {
     synchronized (this) {
       if (!myIntentionActionDescriptors.isEmpty()) {
         s += "; quickFixes: " + StringUtil.join(
-          myIntentionActionDescriptors, q -> ReportingClassSubstitutor.getClassToReport(q.myAction).getName(), ", ");
+          myIntentionActionDescriptors, q -> {
+            Class<?> quickClassName = ReportingClassSubstitutor.getClassToReport(q.myAction);
+            return isFqdn ? quickClassName.getName() : quickClassName.getSimpleName();
+          },
+          ", ");
       }
     }
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
     }
     if (toolId != null) {
-      s += "; toolId: " + toolId +" ("+toolId.getClass()+")";
+      s += isFqdn ? "; toolId: " + toolId + " (" + toolId.getClass() + ")" :
+           "; toolId: " + (toolId instanceof Class ? ((Class)toolId).getSimpleName() : "not specified");
     }
     if (group != HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP) {
       s += "; group: " + group;
@@ -512,6 +517,11 @@ public class HighlightInfo implements Segment {
       s += "; unresolvedReference: " + unresolvedReference.getClass() +"; qf completed: "+isUnresolvedReferenceQuickFixesComputed();
     }
     return s;
+  }
+
+  @Override
+  public @NonNls String toString() {
+    return toStringCompact(true);
   }
 
   public static @NotNull Builder newHighlightInfo(@NotNull HighlightInfoType type) {
