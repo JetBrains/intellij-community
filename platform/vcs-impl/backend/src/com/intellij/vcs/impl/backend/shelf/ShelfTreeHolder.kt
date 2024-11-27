@@ -42,14 +42,20 @@ private const val UPDATE_DEBOUNCE_TIMEOUT = 200L
 @Service(Service.Level.PROJECT)
 class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
 
-  private val updateFlow = MutableSharedFlow<suspend () -> Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val postUpdateActivities = mutableListOf<suspend () -> Unit>()
+  private val updateFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     cs.launch {
       updateFlow.debounce(UPDATE_DEBOUNCE_TIMEOUT).collectLatest {
         model = buildTreeModelSync()
         diffChangesProvider.treeModel = model
-        updateDbModel(it)
+        val activities = postUpdateActivities.toList()
+        updateDbModel()
+        withContext(NonCancellable) {
+          activities.forEach { it() }
+          postUpdateActivities.removeAll(activities)
+        }
       }
     }
     project.messageBus.connect(cs).subscribe(ShelveChangesManager.SHELF_TOPIC, ShelveChangesManagerListener { scheduleTreeUpdate() })
@@ -78,7 +84,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  private suspend fun updateDbModel(afterUpdate: suspend () -> Unit = {}) {
+  private suspend fun updateDbModel() {
     val root = model.root as ChangesBrowserNode<*>
     withKernel {
       val rootEntity = change {
@@ -108,7 +114,6 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
         }
       }
     }
-    afterUpdate()
   }
 
   private suspend fun dfs(node: ChangesBrowserNode<*>, parent: NodeEntity, orderInParent: Int): NodeEntity? {
@@ -175,8 +180,9 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  fun scheduleTreeUpdate(callback: suspend () -> Unit = {}) {
-    updateFlow.tryEmit(callback)
+  fun scheduleTreeUpdate(activity: suspend () -> Unit = {}) {
+    postUpdateActivities.add(activity)
+    updateFlow.tryEmit(Unit)
   }
 
   fun saveGroupings() {
