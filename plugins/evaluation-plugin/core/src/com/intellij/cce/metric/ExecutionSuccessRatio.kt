@@ -14,13 +14,14 @@ class ExecutionSuccessRatio : Metric {
     get() = sample.mean()
 
   override fun evaluate(sessions: List<Session>): Double {
+    if (sessions.isEmpty()) return Double.NaN
+
     val fileSample = Sample()
 
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        val successRatio =
-          it.additionalInfo.getOrDefault(AIA_EXECUTION_SUCCESS_RATIO, 0.0) as Double
+        val successRatio = it.additionalInfo.getOrDefault(AIA_EXECUTION_SUCCESS_RATIO, 0.0) as? Double ?: return Double.NaN
 
         if (successRatio < 0) return Double.NaN
 

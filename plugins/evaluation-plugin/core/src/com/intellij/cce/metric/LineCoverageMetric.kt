@@ -14,13 +14,14 @@ class LineCoverageMetric : Metric {
     get() = sample.mean()
 
   override fun evaluate(sessions: List<Session>): Double {
+    if (sessions.isEmpty()) return Double.NaN
+
     val fileSample = Sample()
 
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        val lineCoverage =
-          it.additionalInfo.getOrDefault(AIA_TEST_LINE_COVERAGE, 0.0) as Double
+        val lineCoverage = it.additionalInfo.getOrDefault(AIA_TEST_LINE_COVERAGE, 0.0) as? Double ?: return Double.NaN
 
         if (lineCoverage < 0) return Double.NaN
 
