@@ -81,12 +81,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponentKt.shouldHaveSplitterDiffPreview;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
@@ -566,7 +567,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myDisposed) return;
 
       boolean isVertical = isToolWindowTabVertical(myProject, LOCAL_CHANGES);
-      boolean hasSplitterPreview = !isVertical;
+      boolean hasSplitterPreview = shouldHaveSplitterDiffPreview(myProject, isVertical);
       boolean isPreviewPanelShown = hasSplitterPreview && myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
       myCommitPanelSplitter.setOrientation(isPreviewPanelShown || isVertical);
 
