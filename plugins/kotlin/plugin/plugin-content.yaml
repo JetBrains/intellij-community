@@ -32,6 +32,10 @@
   - name: kotlin.formatter.minimal
 - name: lib/kotlin-plugin.jar
   projectLibraries:
+  - name: jackson-dataformat-toml
+    files:
+    - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar
+    reason: withProjectLibrary
   - name: javax-inject
     files:
     - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar

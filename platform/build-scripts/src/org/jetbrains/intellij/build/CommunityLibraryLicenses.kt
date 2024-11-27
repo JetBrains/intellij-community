@@ -491,6 +491,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/FasterXML/jackson-dataformats-binary/blob/2.14/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
+    LibraryLicense("Jackson Dataformat TOML", libraryName = "jackson-dataformat-toml", url = "https://github.com/FasterXML/jackson-dataformats-text")
+      .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
+      .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
+
     LibraryLicense("Jackson Dataformat YAML", libraryName = "jackson-dataformat-yaml", url = "https://github.com/FasterXML/jackson-dataformats-text")
       .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),

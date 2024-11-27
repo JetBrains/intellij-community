@@ -322,6 +322,7 @@ object KotlinPluginBuilder {
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("vavr")
       spec.withProjectLibrary("javax-inject")
+      spec.withProjectLibrary("jackson-dataformat-toml")
 
       withKotlincInPluginDirectory(spec)
 
