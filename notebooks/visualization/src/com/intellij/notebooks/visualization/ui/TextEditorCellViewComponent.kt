@@ -83,7 +83,7 @@ class TextEditorCellViewComponent(
     this.highlighters = listOf(highlighter)
   }
 
-  override fun dispose() = cell.manager.update { ctx ->
+  override fun dispose() = editor.updateManager.update { ctx ->
     disposeExistingHighlighter()
     editor.contentComponent.removeMouseListener(mouseListener)
   }
