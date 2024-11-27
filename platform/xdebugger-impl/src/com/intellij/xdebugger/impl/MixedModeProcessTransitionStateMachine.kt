@@ -232,11 +232,9 @@ class MixedModeProcessTransitionStateMachine(
                   high.asXDebugProcess.startStepOver(event.highSuspendContext)
                 }
                 StepType.Into -> {
-                  low.continueAllThreads(exceptEventThread = false)
                   high.asXDebugProcess.startStepInto(event.highSuspendContext)
                 }
                 StepType.Out -> {
-                  low.continueAllThreads(exceptEventThread = false)
                   high.asXDebugProcess.startStepOut(event.highSuspendContext)
                 }
               }
