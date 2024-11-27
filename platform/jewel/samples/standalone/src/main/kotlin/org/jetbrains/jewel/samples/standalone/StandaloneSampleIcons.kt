@@ -15,6 +15,7 @@ object StandaloneSampleIcons {
     val welcome = PathIconKey("icons/meetNewUi.svg", StandaloneSampleIcons::class.java)
 
     object Components {
+        val banners = PathIconKey("icons/components/banners.svg", StandaloneSampleIcons::class.java)
         val borders = PathIconKey("icons/components/borders.svg", StandaloneSampleIcons::class.java)
         val button = PathIconKey("icons/components/button.svg", StandaloneSampleIcons::class.java)
         val checkbox = PathIconKey("icons/components/checkBox.svg", StandaloneSampleIcons::class.java)
