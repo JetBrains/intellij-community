@@ -1173,6 +1173,7 @@ com.intellij.openapi.application.ApplicationListener
 - applicationExiting():V
 - beforeWriteActionStart(java.lang.Object):V
 - canExitApplication():Z
+- canRestartApplication():Z
 - writeActionFinished(java.lang.Object):V
 - writeActionStarted(java.lang.Object):V
 c:com.intellij.openapi.application.ApplicationManager

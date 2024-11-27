@@ -18,6 +18,14 @@ public interface ApplicationListener extends EventListener {
   }
 
   /**
+   * This method is called before restarting an application (e.g., after installing a plugin). 
+   * Return {@code true} if the application can be restarted, or {@code false} to cancel restarting.
+   */
+  default boolean canRestartApplication() {
+    return canExitApplication();
+  }
+
+  /**
    * @deprecated Use {@link com.intellij.ide.AppLifecycleListener#appWillBeClosed(boolean)}
    */
   @Deprecated

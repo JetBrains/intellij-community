@@ -584,7 +584,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       AppLifecycleListener lifecycleListener = getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecycleListener.appClosing();
 
-      if (!force && !canExit()) {
+      if (!force && !canExit(restart)) {
         return null;
       }
 
@@ -807,9 +807,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return exitConfirmed;
   }
 
-  private boolean canExit() {
+  private boolean canExit(boolean restart) {
     for (ApplicationListener applicationListener : myDispatcher.getListeners()) {
-      if (!applicationListener.canExitApplication()) {
+      if (restart && !applicationListener.canRestartApplication() 
+          || !restart && !applicationListener.canExitApplication()) {
         return false;
       }
     }
