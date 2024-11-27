@@ -1,4 +1,4 @@
-package com.intellij.settingsSync.auth
+package com.intellij.settingsSync.jba.auth
 
 import com.intellij.ide.gdpr.Version
 import com.intellij.settingsSync.SettingsSyncEvents
@@ -40,7 +40,7 @@ object DummyJBAccountInfoService : JBAccountInfoService {
 
   override fun invokeJBALogin(userIdConsumer: Consumer<in String>?, onFailure: Runnable?) {
     refreshIdToken()
-    SettingsSyncEvents.getInstance().fireLoginStateChanged()
+    SettingsSyncEvents.Companion.getInstance().fireLoginStateChanged()
   }
 
   override fun getServiceConfiguration(): CompletableFuture<JBAccountInfoService.JbaServiceConfiguration> {

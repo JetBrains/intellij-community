@@ -11,6 +11,7 @@
 
   <content>
     <module name="intellij.settingsSync.git"/>
+    <module name="intellij.settingsSync.jba"/>
   </content>
 
   <depends>com.intellij.modules.platform</depends>
@@ -28,9 +29,6 @@
                              provider="com.intellij.settingsSync.config.SettingsSyncConfigurableProvider"
                              groupId="root"
                              groupWeight="5"/>
-    <applicationService serviceInterface="com.intellij.settingsSync.auth.SettingsSyncAuthService"
-                        serviceImplementation="com.intellij.settingsSync.auth.SettingsSyncDefaultAuthService"
-                        testServiceImplementation="com.intellij.settingsSync.SettingsSyncTestAuthService"/>
     <applicationService serviceInterface="com.intellij.settingsSync.plugins.PluginManagerProxy"
                         serviceImplementation="com.intellij.settingsSync.plugins.CorePluginManagerProxy"/>
     <notificationGroup displayType="STICKY_BALLOON" id="settingsSync.errors"
@@ -54,20 +52,19 @@
   <applicationListeners>
     <listener class="com.intellij.settingsSync.SettingsSynchronizer" topic="com.intellij.openapi.application.ApplicationActivationListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
-    <listener class="com.intellij.settingsSync.SettingsSyncPromotion" topic="com.intellij.openapi.options.newEditor.SettingsDialogListener"
+    <listener class="com.intellij.settingsSync.jba.SettingsSyncPromotion" topic="com.intellij.openapi.options.newEditor.SettingsDialogListener"
               activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.settingsSyncMigration" interface="com.intellij.settingsSync.SettingsSyncMigration" dynamic="true"/>
     <extensionPoint interface="com.intellij.settingsSync.SettingsProvider" dynamic="true" name="settingsProvider"/>
+    <extensionPoint interface="com.intellij.settingsSync.communicator.SettingsSyncCommunicatorProvider" dynamic="true" name="communicatorProvider"/>
   </extensionPoints>
 
   <actions>
     <group id="SettingsSync">
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
-      <action class="com.intellij.settingsSync.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot"
-              icon="AllIcons.General.Settings"/>
     </group>
 
     <action id="SettingsSyncSeparator" class="com.intellij.openapi.actionSystem.Separator">

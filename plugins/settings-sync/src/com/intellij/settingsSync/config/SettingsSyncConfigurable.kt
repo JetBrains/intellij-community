@@ -24,6 +24,8 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
+//import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.BottomGap
@@ -71,7 +73,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         },
         disposable!!)
 
-    override fun invoke() = SettingsSyncAuthService.getInstance().isLoggedIn()
+    override fun invoke() = RemoteCommunicatorHolder.getAuthService().isLoggedIn()
   }
 
   inner class EnabledPredicate : ComponentPredicate() {
@@ -138,7 +140,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       SettingsSyncSettings.getInstance(),
       SettingsSyncLocalSettings.getInstance(),
     )
-    val authService = SettingsSyncAuthService.getInstance()
+    val authService = RemoteCommunicatorHolder.getAuthService()
     val authAvailable = authService.isLoginAvailable()
     configPanel = panel {
       val isSyncEnabled = LoggedInPredicate().and(EnabledPredicate())
@@ -229,7 +231,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
     SettingsSyncEvents.getInstance().addListener(
       object : SettingsSyncEventListener {
         override fun loginStateChanged() {
-          if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
+          if (RemoteCommunicatorHolder.getAuthService().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
             syncEnabler.checkServerState()
           }
           reset()
@@ -427,7 +429,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun getUserName(): String {
-    return SettingsSyncAuthService.getInstance().getUserData()?.loginName ?: "?"
+    return RemoteCommunicatorHolder.getAuthService().getUserData().name ?: "?"
   }
 
   override fun syncStatusChanged() {

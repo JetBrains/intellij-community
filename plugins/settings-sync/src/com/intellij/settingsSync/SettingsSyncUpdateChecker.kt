@@ -1,12 +1,13 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
+class SettingsSyncUpdateChecker() {
 
   companion object {
     private val LOG = logger<SettingsSyncUpdateChecker>()
@@ -14,7 +15,7 @@ class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemo
 
   @RequiresBackgroundThread
   fun scheduleUpdateFromServer() : UpdateResult {
-    val updateResult = remoteCommunicator.receiveUpdates()
+    val updateResult = RemoteCommunicatorHolder.getRemoteCommunicator().receiveUpdates()
     when(updateResult) {
       is UpdateResult.Success -> {
         val snapshot = updateResult.settingsSnapshot

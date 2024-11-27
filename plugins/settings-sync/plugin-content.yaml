@@ -3,7 +3,7 @@
   - name: cloud-config-client
     files:
     - name: $MAVEN_REPOSITORY$/com/jetbrains/cloudconfig/cloudconfig/2023/cloudconfig-2023.jar
-    reason: <- intellij.settingsSync
+    reason: <- intellij.settingsSync.jba
   - name: jetbrains.intellij.deps.eclipse.jgit
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/org.eclipse.jgit/6/org.eclipse.jgit-6.jar
@@ -13,3 +13,4 @@
   - name: intellij.settingsSync
   contentModules:
   - name: intellij.settingsSync.git
+  - name: intellij.settingsSync.jba

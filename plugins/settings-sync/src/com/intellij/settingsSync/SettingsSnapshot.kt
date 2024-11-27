@@ -10,6 +10,7 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.time.Instant
 import java.util.*
 
@@ -77,6 +78,12 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
     catch (e: Throwable) {
       logger<SettingsSyncSettings>().error("Unable to deserialize content of ${SettingsSyncSettings.FILE_SPEC} into object", e)
       return SettingsSyncStateHolder()
+    }
+  }
+
+  companion object{
+    fun extractFromZip(zipFile: Path): SettingsSnapshot? {
+      return SettingsSnapshotZipSerializer.extractFromZip(zipFile)
     }
   }
 }

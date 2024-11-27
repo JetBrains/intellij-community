@@ -4,6 +4,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
+import com.intellij.settingsSync.communicator.SettingsSyncCommunicatorProvider
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -21,7 +23,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.hours
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
@@ -34,7 +35,7 @@ internal abstract class SettingsSyncTestBase {
 
   protected lateinit var application: ApplicationImpl
   protected lateinit var configDir: Path
-  protected lateinit var remoteCommunicator: TestRemoteCommunicator
+  protected lateinit var remoteCommunicator: MockRemoteCommunicator
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
 
@@ -51,11 +52,22 @@ internal abstract class SettingsSyncTestBase {
     SettingsSyncSettings.getInstance().state = SettingsSyncSettings.State()
 
     remoteCommunicator = if (isTestingAgainstRealCloudServer()) {
-      TestRemoteCommunicator()
+      TODO("Implement with real server via TestRemoteCommunicator()")
     }
     else {
       MockRemoteCommunicator().apply {this.isConnected = true  }
     }
+    val providerEP = SettingsSyncCommunicatorProvider.PROVIDER_EP.point
+    if (providerEP.extensions.size > 0) {
+      LOG.warn("SettingsSyncCommunicatorProvider.PROVIDER_EP is not empty: ${providerEP.extensions.toList()}")
+      providerEP.extensions.forEach {
+        LOG.warn("Unregistering extension: ${it.javaClass.name}")
+        providerEP.unregisterExtension(it)
+      }
+    }
+    providerEP.registerExtension(MockCommunicatorProvider(
+      remoteCommunicator
+    ), disposable)
 
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
@@ -71,6 +83,7 @@ internal abstract class SettingsSyncTestBase {
       bridge.waitForAllExecuted()
       bridge.stop()
     }
+    RemoteCommunicatorHolder.invalidateCommunicator()
   }
 
   protected fun <T> timeoutRunBlockingAndStopBridge(

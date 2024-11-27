@@ -3,23 +3,19 @@ package com.intellij.settingsSync
 import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.progress.withLockCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.time.Instant
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Handles events about settings change both from the current IDE, and from the server, merges the settings, logs them,
@@ -31,12 +27,14 @@ class SettingsSyncBridge(
   private val appConfigPath: Path,
   private val settingsLog: SettingsLog,
   private val ideMediator: SettingsSyncIdeMediator,
-  private val remoteCommunicator: SettingsSyncRemoteCommunicator,
   private val updateChecker: SettingsSyncUpdateChecker,
 ) {
 
   private val pendingExclusiveEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent.ExclusiveEvent>()
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent.StandardEvent>()
+
+  private val remoteCommunicator: SettingsSyncRemoteCommunicator
+    get() = RemoteCommunicatorHolder.getRemoteCommunicator()
 
   @Volatile
   private var queueJob: Job? = null
@@ -152,7 +150,7 @@ class SettingsSyncBridge(
     settingsLog.logExistingSettings()
     try {
       // We need to create this remote file before the first sync, otherwise the settings value (even if persisted) will be overwritten by
-      // the sync-server-side value when `com.intellij.settingsSync.CloudConfigServerCommunicator#currentSnapshotFilePath` applies
+      // the sync-server-side value when `com.intellij.settingsSync.AbstractServerCommunicator#currentSnapshotFilePath` applies
       // the remote config received in the first sync.
       val fileExists = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
       if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {

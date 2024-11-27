@@ -4,6 +4,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.settingsSync.*
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.config.SettingsSyncEnabler
 import com.jetbrains.performancePlugin.commands.Waiter
 import kotlinx.coroutines.*
@@ -80,10 +81,11 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
       }
       //there is no event that cross-ide sync was enabled, so we need to check that file appears and wait a bit :(
       startTime = System.currentTimeMillis()
-      while (CloudConfigServerCommunicator().isFileExists(CROSS_IDE_SYNC_MARKER_FILE) != isCrossIdeSync) {
+      val remoteCommunicator = RemoteCommunicatorHolder.getRemoteCommunicator()
+      while (remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE) != isCrossIdeSync) {
         delay(500)
         if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(5)) {
-          val fileExists = CloudConfigServerCommunicator().isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+          val fileExists = remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
           throw Exception("Cross-IDE sync marker file was not updated in 5 seconds. File exists=$fileExists, expected=$isCrossIdeSync")
         }
       }

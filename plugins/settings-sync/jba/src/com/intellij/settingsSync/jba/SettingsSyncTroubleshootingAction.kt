@@ -1,4 +1,4 @@
-package com.intellij.settingsSync
+package com.intellij.settingsSync.jba
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
@@ -19,11 +19,24 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.settingsSync.SettingsSnapshot
+import com.intellij.settingsSync.SettingsSyncBundle
+import com.intellij.settingsSync.SettingsSyncLocalSettings
+import com.intellij.settingsSync.SettingsSyncMain
+import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
+import com.intellij.settingsSync.communicator.SettingsSyncUserData
+import com.intellij.settingsSync.getLocalApplicationInfo
+import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.actionButton
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.io.Compressor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -34,12 +47,13 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
-import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
-import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+import javax.swing.ScrollPaneConstants
 
 internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
@@ -50,7 +64,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val remoteCommunicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
+    val remoteCommunicator = RemoteCommunicatorHolder.getRemoteCommunicator()
     if (remoteCommunicator !is CloudConfigServerCommunicator) {
       Messages.showErrorDialog(e.project,
                                SettingsSyncBundle.message("troubleshooting.dialog.error.wrong.configuration", remoteCommunicator::class),
@@ -133,7 +147,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
                                       val remoteCommunicator: CloudConfigServerCommunicator,
                                       val rootNode: TreeNode.Branch) : DialogWrapper(project, true) {
 
-    val userData = SettingsSyncAuthService.getInstance().getUserData()
+    val userData = RemoteCommunicatorHolder.getAuthService().getUserData()
 
     init {
       title = SettingsSyncBundle.message("troubleshooting.dialog.title")
@@ -181,7 +195,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     private fun Panel.statusRow() =
       row {
         label(SettingsSyncBundle.message("troubleshooting.dialog.local.status.label"))
-        label(if (SettingsSyncSettings.getInstance().syncEnabled) IdeBundle.message("plugins.configurable.enabled")
+        label(if (SettingsSyncSettings.Companion.getInstance().syncEnabled) IdeBundle.message("plugins.configurable.enabled")
               else IdeBundle.message("plugins.configurable.disabled"))
       }.layout(RowLayout.PARENT_GRID)
 
@@ -191,13 +205,13 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         copyableLabel(CloudConfigServerCommunicator.defaultUrl)
       }.layout(RowLayout.PARENT_GRID)
 
-    private fun Panel.loginNameRow(userData: JBAccountInfoService.JBAData?) =
+    private fun Panel.loginNameRow(userData: SettingsSyncUserData?) =
       row {
         label(SettingsSyncBundle.message("troubleshooting.dialog.login.label"))
-        copyableLabel(userData?.loginName)
+        copyableLabel(userData?.name)
       }.layout(RowLayout.PARENT_GRID)
 
-    private fun Panel.emailRow(userData: JBAccountInfoService.JBAData?) =
+    private fun Panel.emailRow(userData: SettingsSyncUserData?) =
       row {
         label(SettingsSyncBundle.message("troubleshooting.dialog.email.label"))
         copyableLabel(userData?.email)
@@ -241,7 +255,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         val appInfo = snapshot.metaInfo.appInfo
         val text = if (appInfo != null) {
           val appId = appInfo.applicationId
-          val thisOrThat = if (appId == SettingsSyncLocalSettings.getInstance().applicationId) "[this]  " else "[other]"
+          val thisOrThat = if (appId == SettingsSyncLocalSettings.Companion.getInstance().applicationId) "[this]  " else "[other]"
           "$thisOrThat ${appId.toString().shorten()} - ${appInfo.userName} - ${appInfo.hostName} - ${appInfo.configFolder}"
         }
         else {
@@ -259,7 +273,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       if (showHistoryButton) {
         actionButton(object : DumbAwareAction(AllIcons.Vcs.History) {
           override fun actionPerformed(e: AnActionEvent) {
-            showHistoryDialog(project, remoteCommunicator, version.filePath, userData?.loginName!!)
+            showHistoryDialog(project, remoteCommunicator, version.filePath, userData.name!!)
           }
         })
       }
@@ -324,7 +338,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         downloadFullHistory(project, remoteCommunicator, history, loginName)
       }
 
-      val scrollPanel = JBScrollPane(historyPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED)
+      val scrollPanel = JBScrollPane(historyPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED)
       val mainPanel = JBUI.Panels.simplePanel()
       mainPanel.add(scrollPanel, BorderLayout.CENTER)
       mainPanel.add(button, BorderLayout.SOUTH)
@@ -373,7 +387,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       if (choice == Messages.OK) {
         try {
           ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-            SettingsSyncSettings.getInstance().syncEnabled = false
+            SettingsSyncSettings.Companion.getInstance().syncEnabled = false
             remoteCommunicator.deleteFile(filePath)
           }, SettingsSyncBundle.message("troubleshooting.delete.file.from.server.progress.title"), false, project)
         }
@@ -396,7 +410,7 @@ private fun extractSnapshotFromZipStream(stream: InputStream): SettingsSnapshot?
   val tempFile = FileUtil.createTempFile(UUID.randomUUID().toString(), null)
   try {
     FileUtil.writeToFile(tempFile, stream.readAllBytes())
-    return SettingsSnapshotZipSerializer.extractFromZip(tempFile.toPath())
+    return SettingsSnapshot.extractFromZip(tempFile.toPath())
   }
   finally {
     FileUtil.delete(tempFile)

@@ -8,6 +8,7 @@ import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.SettingsSyncSettings
 import com.intellij.settingsSync.SettingsSyncStatusTracker
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.isSettingsSyncEnabledByKey
 import com.intellij.ui.BadgeIconSupplier
 import com.intellij.util.ui.JBUI
@@ -20,7 +21,7 @@ private enum class SyncStatus {ON, OFF, FAILED}
 
 private fun getStatus() : SyncStatus {
   if (SettingsSyncSettings.getInstance().syncEnabled &&
-      SettingsSyncAuthService.getInstance().isLoggedIn()) {
+      RemoteCommunicatorHolder.getAuthService().isLoggedIn()) {
     return if (SettingsSyncStatusTracker.getInstance().isSyncSuccessful()) SyncStatus.ON
     else SyncStatus.FAILED
   }
