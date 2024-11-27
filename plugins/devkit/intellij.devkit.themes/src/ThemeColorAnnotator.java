@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorLineMarkerProvider;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -95,12 +96,20 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
     @NotNull
     @Override
     public Icon getIcon() {
-      Color color = getColor(myColorText);
-      if (color != null) {
-        return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
-      }
-      return JBUIScale.scaleIcon(EmptyIcon.create(ICON_SIZE));
+      return IconDeferrer.getInstance().defer(
+        EmptyIcon.create(ICON_SIZE),
+        new MyColorKey(myColorText),
+        colorKey -> {
+          Color color = getColor(colorKey.myColorText);
+          if (color != null) {
+            return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
+          }
+          return JBUIScale.scaleIcon(EmptyIcon.create(ICON_SIZE));
+        }
+      );
     }
+
+    private record MyColorKey(String myColorText) { }
 
     @Override
     public boolean isNavigateAction() {
