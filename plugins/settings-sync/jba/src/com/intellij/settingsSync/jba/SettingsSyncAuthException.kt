@@ -1,4 +1,4 @@
-package com.intellij.settingsSync
+package com.intellij.settingsSync.jba
 
 import java.io.IOException
 

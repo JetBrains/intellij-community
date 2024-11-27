@@ -1,0 +1,9 @@
+<idea-plugin package="com.intellij.settingsSync.jba">
+  <extensions defaultExtensionNs="com.intellij">
+    <settingsSync.communicatorProvider implementation="com.intellij.settingsSync.jba.JbaCommunicatorProvider"/>
+  </extensions>
+  <actions resource-bundle="messages.SettingsSyncJbaBundle">
+    <action class="com.intellij.settingsSync.jba.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot"
+            icon="AllIcons.General.Settings"/>
+  </actions>
+</idea-plugin>

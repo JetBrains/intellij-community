@@ -4,10 +4,10 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
+import com.intellij.settingsSync.communicator.SettingsSyncUserData
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import org.eclipse.jgit.api.Git
@@ -50,14 +50,14 @@ internal class GitSettingsLogTest {
 
   private lateinit var configDir: Path
   private lateinit var settingsSyncStorage: Path
-  private var jbaData: JBAccountInfoService.JBAData? = null
+  private var userData: SettingsSyncUserData? = null
 
   @Before
   fun setUp() {
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
     settingsSyncStorage = configDir.resolve("settingsSync")
-    jbaData = null
+    userData = null
   }
 
   @Test
@@ -462,7 +462,7 @@ internal class GitSettingsLogTest {
     val jbaEmail = "some-jba-email@jba-mail.com"
     val jbaName = "JBA Name"
 
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, jbaEmail, null)
+    userData = SettingsSyncUserData(jbaName, jbaEmail)
     checkUsernameEmail(jbaName, jbaEmail)
   }
 
@@ -471,14 +471,14 @@ internal class GitSettingsLogTest {
   fun `use empty email if JBA doesn't provide one`() {
     val jbaName = "JBA Name 2"
 
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", jbaName, null, null)
+    userData = SettingsSyncUserData(jbaName, null)
     checkUsernameEmail(jbaName, "")
   }
 
   @Test
   @TestFor(issues = ["EA-844607"])
   fun `use empty name if JBA doesn't provide one`() {
-    jbaData = JBAccountInfoService.JBAData("some-dummy-user-id", null, null, null)
+    userData = SettingsSyncUserData(null, null)
     checkUsernameEmail("", "")
   }
 
@@ -669,7 +669,7 @@ internal class GitSettingsLogTest {
   }
 
   private fun initializeGitSettingsLog(vararg filesToCopyInitially: Path): GitSettingsLog {
-    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable, { jbaData }) {
+    val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable, { userData }) {
       val fileStates = collectFileStatesFromFiles(filesToCopyInitially.toSet(), configDir)
       SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), null), fileStates, plugins = null, emptyMap(), emptySet())
     }

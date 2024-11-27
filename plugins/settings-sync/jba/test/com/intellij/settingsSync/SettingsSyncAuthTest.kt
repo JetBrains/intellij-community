@@ -3,7 +3,9 @@ package com.intellij.settingsSync
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
-import com.intellij.settingsSync.auth.SettingsSyncDefaultAuthService
+import com.intellij.settingsSync.jba.CloudConfigServerCommunicator
+import com.intellij.settingsSync.jba.CloudConfigVersionContext
+import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.JBAccountInfoService
@@ -14,8 +16,12 @@ import com.jetbrains.cloudconfig.exception.UnauthorizedException
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import org.mockito.Mockito.*
-import java.util.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
+import java.util.Date
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncAuthTest : BasePlatformTestCase() {
@@ -39,14 +45,14 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
   @Test
   @TestFor(issues = ["IDEA-307565"])
   fun `idToken is invalidated after unauthorized exception`() {
-    val authServiceSpy = spy<SettingsSyncDefaultAuthService>()
+    val authServiceSpy = spy<JBAAuthService>()
     ApplicationManager.getApplication().replaceService(SettingsSyncAuthService::class.java, authServiceSpy, SettingsSyncMain.getInstance())
 
     val accountInfoService = mock<JBAccountInfoService>()
     `when`(accountInfoService.idToken).thenReturn("OLD-ID-TOKEN")
     `when`(authServiceSpy.getAccountInfoService()).thenReturn(accountInfoService)
 
-    val communicator = object : CloudConfigServerCommunicator() {
+    val communicator = object : CloudConfigServerCommunicator("http://localhost:7777/cloudconfig", authServiceSpy) {
       override fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
         // we retrieve the token in the parent method
         super.createCloudConfigClient(url, versionContext)
@@ -83,14 +89,14 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
 
-    val authServiceSpy = spy<SettingsSyncDefaultAuthService>()
+    val authServiceSpy = spy<JBAAuthService>()
     ApplicationManager.getApplication().replaceService(SettingsSyncAuthService::class.java, authServiceSpy, SettingsSyncMain.getInstance())
 
     val accountInfoService = mock<JBAccountInfoService>()
     `when`(accountInfoService.idToken).thenReturn(null)
     `when`(authServiceSpy.getAccountInfoService()).thenReturn(accountInfoService)
 
-    val communicator = object : CloudConfigServerCommunicator() {
+    val communicator = object : CloudConfigServerCommunicator("http://localhost:7777/cloudconfig", authServiceSpy) {
       override fun createCloudConfigClient(url: String, versionContext: CloudConfigVersionContext): CloudConfigFileClientV2 {
         // we retrieve the token in the parent method
         super.createCloudConfigClient(url, versionContext)
