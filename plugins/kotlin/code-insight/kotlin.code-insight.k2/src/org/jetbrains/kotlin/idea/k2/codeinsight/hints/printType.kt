@@ -77,13 +77,13 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
         }
         is KaFunctionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
-            type.receiverType?.let {
-                printKtType(it)
-                text(".")
-            }
             if (type.isSuspend) {
                 text(KtTokens.SUSPEND_KEYWORD.value)
                 text(" ")
+            }
+            type.receiverType?.let {
+                printKtType(it)
+                text(".")
             }
             val iterator = type.parameterTypes.iterator()
             text("(")
