@@ -138,7 +138,10 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
 
 
   private void checkFile(PsiJavaFile file, ProblemsHolder holder) {
-    PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(file.getContainingDirectory());
+    PsiDirectory directory = file.getContainingDirectory();
+    if (directory == null) return;
+
+    PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
     if (pkg == null) return;
 
     PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
