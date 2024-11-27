@@ -17,7 +17,7 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
       group("AccessibleStateSetContainsFocusableInspection") {
         row {
           // not focusable
-          button("Not focusable") {}
+          button("Not Focusable") {}
             .accessibleName("Button")
             .accessibleDescription("Button description")
             .applyToComponent {
@@ -59,7 +59,6 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
                 override fun getAccessibleValue(): AccessibleValue? {
                   return null
                 }
-
               }
             }
           }
@@ -79,7 +78,6 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
           val password = object : JPasswordField() {
             override fun getAccessibleContext(): AccessibleContext {
               return object : AccessibleJPasswordField() {
-
                 override fun getAccessibleText(): AccessibleText? {
                   return null
                 }
@@ -100,7 +98,6 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
         row {
           //stateSet is full and name is null
           val button = object : JButton() {
-
             override fun getAccessibleContext(): AccessibleContext {
               return object : AccessibleJComponent() {
                 override fun getAccessibleName(): String? {
@@ -114,11 +111,9 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
           button.accessibleContext.accessibleDescription = "stateSet is full and name is null"
           cell(button)
 
-          button("Normal button") {}
+          button("Normal Button") {}
         }
       }
-
     }
   }
-
 }
