@@ -202,7 +202,6 @@ private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUG
   "fleet.backend.mercury.kotlin.macos",
   "org.jetbrains.android",
   "androidx.compose.plugins.idea",
-  "org.jetbrains.plugins.kotlin.jupyter",
   "com.intellij.kmm",
   "com.jetbrains.kotlin.ocswift",
 ))
