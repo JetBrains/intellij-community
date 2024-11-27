@@ -5404,7 +5404,7 @@ c:com.intellij.psi.util.UnsupportedNodeElementTypeException
 - com.intellij.util.IncorrectOperationException
 - <init>(com.intellij.lang.ASTNode):V
 f:com.intellij.serviceContainer.AlreadyDisposedException
-- java.util.concurrent.CancellationException
+- com.intellij.openapi.progress.ProcessCanceledException
 - <init>(java.lang.String):V
 a:com.intellij.serviceContainer.BaseKeyedLazyInstance
 - com.intellij.serviceContainer.LazyExtensionInstance
