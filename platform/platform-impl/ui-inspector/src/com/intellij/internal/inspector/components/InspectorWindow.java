@@ -4,6 +4,7 @@ package com.intellij.internal.inspector.components;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
@@ -130,7 +131,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.addSeparator();
     actions.add(new MyNavigateAction());
     actions.addSeparator();
-    actions.add(new ShowAccessibilityIssuesAction());
+    ShowAccessibilityIssuesAction showAccessibilityIssuesAction = new ShowAccessibilityIssuesAction();
+    actions.add(showAccessibilityIssuesAction);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -193,6 +195,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     });
     updateHighlighting();
     getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
+
+    if (PropertiesComponent.getInstance().getBoolean(ShowAccessibilityIssuesAction.SHOW_ACCESSIBILITY_ISSUES_KEY, false)) {
+      showAccessibilityIssuesAction.updateTreeWithAccessibilityStatus();
+    }
   }
 
   @Override
@@ -464,16 +470,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ShowAccessibilityIssuesAction extends MyTextAction {
     private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", false);
-    private boolean showAccessibilityIssues = false;
+    public static final String SHOW_ACCESSIBILITY_ISSUES_KEY = "ui.inspector.show.accessibility.issues.key";
+    private boolean showAccessibilityIssues;
 
     private ShowAccessibilityIssuesAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
+      showAccessibilityIssues = PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       showAccessibilityIssues = !showAccessibilityIssues;
-
+      PropertiesComponent.getInstance().setValue(SHOW_ACCESSIBILITY_ISSUES_KEY, showAccessibilityIssues);
       updateTreeWithAccessibilityStatus();
     }
 
