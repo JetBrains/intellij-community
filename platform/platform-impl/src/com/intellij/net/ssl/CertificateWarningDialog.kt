@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
@@ -28,7 +27,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import fleet.util.logging.logger
-import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Component
 import java.awt.Point
@@ -265,46 +263,67 @@ internal class CertificateWarningDialog(
   private fun updateDetails() {
     val errors = certificateErrorsMap[currentCertificate.certificate] ?: emptyList()
     detailsPlaceholder.component = panel {
-      row {
-        label(IdeBundle.message("section.title.issued.to"))
-      }
-      indent {
-        addPrincipalData(currentCertificate.subjectFields, true)
-      }
+      panel {
+        customizeSpacingConfiguration(object : IntelliJSpacingConfiguration() {
+          override val verticalMediumGap: Int = 6
+          override val verticalSmallGap: Int = 2
+          override val verticalComponentGap: Int = 3
+          override val horizontalIndent: Int = 20
+        }) {
+          row {
+            label(IdeBundle.message("section.title.issued.to"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          indent {
+            addPrincipalData(currentCertificate.subjectFields, true)
+          }
 
-      row {
-        label(IdeBundle.message("section.title.issued.by"))
-      }
-      indent {
-        addPrincipalData(currentCertificate.issuerFields, false)
-      }
+          row {
+            label(IdeBundle.message("section.title.issued.by"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          indent {
+            addPrincipalData(currentCertificate.issuerFields, false)
+          }
 
-      row {
-        label(IdeBundle.message("section.title.validity.period"))
-      }
-      indent {
-        val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
-        row(IdeBundle.message("label.valid.from")) {
-          val notBefore = dateFormat.format(currentCertificate.notBefore)
-          cell(createColoredComponent(notBefore, IdeBundle.message("label.certificate.not.yet.valid"), errors.contains(CertificateError.NOT_YET_VALID)))
-        }
-        row(IdeBundle.message("label.valid.until")) {
-          val notAfter = dateFormat.format(currentCertificate.notAfter)
-          cell(createColoredComponent(notAfter, IdeBundle.message("label.certificate.expired"), errors.contains(CertificateError.EXPIRED)))
-        }
-      }
+          row {
+            label(IdeBundle.message("section.title.validity.period"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          indent {
+            val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
+            row(IdeBundle.message("label.valid.from")) {
+              val notBefore = dateFormat.format(currentCertificate.notBefore)
+              val hasError = errors.contains(CertificateError.NOT_YET_VALID)
+              val text = if (hasError) "$notBefore (${IdeBundle.message("label.certificate.not.yet.valid")})" else "$notBefore"
+              text(text).apply {
+                if (hasError) {
+                  component.foreground = errorColor
+                }
+              }
+            }
+            row(IdeBundle.message("label.valid.until")) {
+              val notAfter = dateFormat.format(currentCertificate.notAfter)
+              val hasError = errors.contains(CertificateError.EXPIRED)
+              val text = if (hasError) "$notAfter (${IdeBundle.message("label.certificate.expired")})" else "$notAfter"
+              text(text).apply {
+                if (hasError) {
+                  component.foreground = errorColor
+                }
+              }
+            }
+          }
 
-      row {
-        label(IdeBundle.message("section.title.fingerprints"))
-      }
-      @Suppress("HardCodedStringLiteral")
-      indent {
-        row("SHA-256:") {
-          val pane = getTextPane(formatHex(currentCertificate.sha256Fingerprint))
-          cell(pane).align(AlignX.FILL)
-        }
-        row("SHA-1:") {
-          cell(getTextPane(formatHex(currentCertificate.sha1Fingerprint))).align(AlignX.FILL)
+          row {
+            label(IdeBundle.message("section.title.fingerprints"))
+          }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
+          @Suppress("HardCodedStringLiteral")
+          indent {
+            row("SHA-256:") {
+              val pane = getTextPane(formatHex(currentCertificate.sha256Fingerprint))
+              cell(pane).align(AlignX.FILL)
+            }
+            row("SHA-1:") {
+              cell(getTextPane(formatHex(currentCertificate.sha1Fingerprint))).align(AlignX.FILL)
+            }
+          }
         }
       }
       row {
@@ -362,17 +381,6 @@ internal class CertificateWarningDialog(
         }
       }
     }
-  }
-
-  private fun createColoredComponent(mainText: @NlsContexts.Label String, errorText: @Nls String?, hasError: Boolean = true): JComponent {
-    val component = SimpleColoredComponent()
-    if (hasError && errorText != null) {
-      component.append("$mainText ($errorText)", SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, errorColor))
-    }
-    else {
-      component.append(mainText)
-    }
-    return component
   }
 
   fun formatHex(hex: String): String {
