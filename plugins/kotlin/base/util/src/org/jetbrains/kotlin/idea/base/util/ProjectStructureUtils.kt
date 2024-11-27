@@ -171,7 +171,7 @@ fun PsiElement.isUnderKotlinSourceRootTypes(): Boolean {
     return projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
 }
 
-private val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
+val GRADLE_SYSTEM_ID: ProjectSystemId = ProjectSystemId("GRADLE")
 
 val Module.isGradleModule: Boolean
     get() = ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)

@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight.navigation;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -13,7 +12,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 public class MockGradleRunConfiguration extends ExternalSystemRunConfiguration {
   public MockGradleRunConfiguration(Project project, String name) {
-    super(new ProjectSystemId(GradleConstants.SYSTEM_ID.getId()), project,
+    super(GradleConstants.SYSTEM_ID, project,
           new SimpleConfigurationType(
             "GradleRunConfiguration",
             "Gradle",
