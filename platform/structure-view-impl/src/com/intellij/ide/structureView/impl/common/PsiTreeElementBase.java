@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -108,6 +109,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return canNavigate();
   }
 
+  @Unmodifiable
   public abstract @NotNull Collection<StructureViewTreeElement> getChildrenBase();
 
   @ApiStatus.Internal

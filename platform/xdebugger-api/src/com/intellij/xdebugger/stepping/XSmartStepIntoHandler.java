@@ -7,6 +7,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -23,6 +24,7 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
    * @return list of function/method calls containing in the current line
    */
   @NotNull
+  @Unmodifiable
   public abstract List<Variant> computeSmartStepVariants(@NotNull XSourcePosition position);
 
   /**

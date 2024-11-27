@@ -48,6 +48,7 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
     return myNames;
   }
 
+  @Unmodifiable
   protected abstract @NotNull List<String> getAllNames(@NotNull PsiClass aClass, @NotNull PsiSwitchBlock switchBlock);
   protected abstract @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor();
 }

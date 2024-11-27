@@ -1784,6 +1784,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myRegisteredIndexes.isContentDependentIndex(indexId);
   }
 
+  @Unmodifiable
   public @NotNull Set<Project> getContainingProjects(@NotNull VirtualFile file) {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {

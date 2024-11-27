@@ -82,6 +82,7 @@ public class ExcludedFiles {
 
   public class State {
     @OptionTag("DO_NOT_FORMAT")
+    @Unmodifiable
     public List<FileSetDescriptor.State> getDescriptors() {
       return ContainerUtil.map(myDescriptors, descriptor -> descriptor.getState());
     }

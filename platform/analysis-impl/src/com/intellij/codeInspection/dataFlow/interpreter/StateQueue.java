@@ -9,6 +9,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -39,6 +40,7 @@ public class StateQueue {
     return true;
   }
 
+  @Unmodifiable
   public @NotNull List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
     DfaInstructionState state = myQueue.remove();
     final Instruction instruction = state.getInstruction();

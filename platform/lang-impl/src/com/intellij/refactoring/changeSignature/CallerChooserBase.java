@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -174,6 +175,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     return node;
   }
 
+  @Unmodifiable
   protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
     Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
     return ContainerUtil.mapNotNull(references, psiReference -> psiReference.getElement());

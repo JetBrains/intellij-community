@@ -43,6 +43,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -344,6 +345,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<EventPair<?>> getAdditionalUsageData() {
     PsiClass mainClass = getMainClass();
     List<EventPair<?>> additionalUsageData = super.getAdditionalUsageData();

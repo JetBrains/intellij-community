@@ -17,6 +17,7 @@ import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -146,6 +147,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
     }
 
     @Override
+    @Unmodifiable
     public @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items,
                                                                         final @NotNull ProcessingContext context) {
       return ContainerUtil.map(items, lookupElement -> new Pair<>(lookupElement, getWeight(lookupElement)));

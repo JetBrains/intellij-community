@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -15,6 +14,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.Collection;
@@ -59,6 +59,7 @@ public class KeymapConverter extends ResolvingConverter<XmlFile> {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<XmlFile> getKeymapFiles(ConvertContext context) {
     final PsiPackage keymapsPackage = JavaPsiFacade.getInstance(context.getProject()).findPackage("keymaps");
     if (keymapsPackage == null) {

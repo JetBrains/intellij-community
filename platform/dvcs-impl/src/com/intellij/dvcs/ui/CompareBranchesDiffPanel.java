@@ -35,6 +35,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -177,6 +178,7 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
 
     @NotNull
     @Override
+    @Unmodifiable
     protected List<AnAction> createToolbarActions() {
       return ContainerUtil.append(
         super.createToolbarActions(),
@@ -186,6 +188,7 @@ public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
 
     @NotNull
     @Override
+    @Unmodifiable
     protected List<AnAction> createPopupMenuActions() {
       return ContainerUtil.append(
         super.createPopupMenuActions(),

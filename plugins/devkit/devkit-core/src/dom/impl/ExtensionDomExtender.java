@@ -18,6 +18,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -395,6 +396,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     @NotNull
     @Override
+    @Unmodifiable
     public Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
       PsiClass enumClass = getEnumClass(context);
       if (enumClass == null) return Collections.emptyList();

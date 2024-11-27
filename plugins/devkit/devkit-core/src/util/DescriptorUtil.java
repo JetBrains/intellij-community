@@ -20,6 +20,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -105,6 +106,7 @@ public final class DescriptorUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -77,6 +78,7 @@ public interface CustomizableIntentionAction extends IntentionAction {
    * @param editor the host editor where the popup is displayed
    * @param file the host PSI file where the popup is displayed; the PSI may be uncommitted
    */
+  @Unmodifiable
   default @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     return List.of();
   }

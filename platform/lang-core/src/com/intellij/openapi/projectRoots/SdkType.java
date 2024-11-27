@@ -17,6 +17,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
@@ -82,6 +83,7 @@ public abstract class SdkType implements SdkTypeId {
    * @deprecated Use {@link #suggestHomePaths(Project)}
    */
   @Deprecated
+  @Unmodifiable
   public @NotNull Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
     return ContainerUtil.createMaybeSingletonList(home);

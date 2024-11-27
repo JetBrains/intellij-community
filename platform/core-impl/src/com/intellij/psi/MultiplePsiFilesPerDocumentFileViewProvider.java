@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -97,6 +98,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   }
 
   @Override
+  @Unmodifiable
   public final @NotNull List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.mapNotNull(myRoots.keySet(), this::getCachedPsi);
   }

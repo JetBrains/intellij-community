@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -37,10 +38,12 @@ public class TreeAnchorizer {
 
   public void freeAnchor(Object element) { }
 
+  @Unmodifiable
   public static @NotNull List<Object> anchorizeList(@NotNull Collection<Object> elements) {
     return ContainerUtil.map(elements, getService()::createAnchor);
   }
 
+  @Unmodifiable
   public static @NotNull List<Object> retrieveList(Collection<Object> anchors) {
     return ContainerUtil.mapNotNull(anchors, getService()::retrieveElement);
   }

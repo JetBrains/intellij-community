@@ -241,6 +241,7 @@ abstract class ProjectLayoutPanel<T extends Dependency> extends JPanel {
   @Unmodifiable
   protected abstract List<T> getEntries();
 
+  @Unmodifiable
   protected abstract Collection<? extends Dependency> getDependencies(T entry);
 
   @Nullable

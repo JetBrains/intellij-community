@@ -23,6 +23,7 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -313,6 +314,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return TypeAnnotationProvider.Static.create(ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true));
   }
 
+  @Unmodifiable
   private @NotNull List<PsiType> collectTypes() {
     List<PsiTypeElement> typeElements = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiTypeElement.class);
     return ContainerUtil.map(typeElements, typeElement -> typeElement.getType());

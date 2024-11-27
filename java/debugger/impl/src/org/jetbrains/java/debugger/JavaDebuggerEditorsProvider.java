@@ -21,6 +21,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +43,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
 
   @NotNull
   @Override
+  @Unmodifiable
   public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
     return ContainerUtil.map(DebuggerUtilsEx.getCodeFragmentFactories(context), factory -> factory.getFileType().getLanguage());
   }

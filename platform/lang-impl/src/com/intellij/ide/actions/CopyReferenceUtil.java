@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,6 +49,7 @@ public final class CopyReferenceUtil {
     }
   }
 
+  @Unmodifiable
   static @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
     List<PsiElement> elements = new ArrayList<>();
     if (editor != null) {

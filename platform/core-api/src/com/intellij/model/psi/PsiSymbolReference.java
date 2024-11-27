@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -43,6 +44,7 @@ public interface PsiSymbolReference {
    * @return collection of referenced symbols with additional data, or empty collection if there are no targets
    */
   @NotNull
+  @Unmodifiable
   Collection<? extends Symbol> resolveReference();
 
   /**

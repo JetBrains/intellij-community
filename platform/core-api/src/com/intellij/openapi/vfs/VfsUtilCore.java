@@ -481,6 +481,7 @@ public class VfsUtilCore {
    * @see #virtualToIoFile(VirtualFile)
    * @see VirtualFile#toNioPath()
    */
+  @Unmodifiable
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.map(files, file -> virtualToIoFile(file));
   }

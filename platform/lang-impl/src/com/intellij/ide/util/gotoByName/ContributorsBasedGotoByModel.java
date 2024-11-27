@@ -29,6 +29,7 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -151,6 +152,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ArrayUtilRt.toStringArray(allNames);
   }
 
+  @Unmodifiable
   private List<ChooseByNameContributor> filterDumb(List<? extends ChooseByNameContributor> contributors) {
     return ContainerUtil.filter(contributors, contributor -> DumbService.getInstance(myProject).isUsableInCurrentContext(contributor));
   }

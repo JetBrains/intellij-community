@@ -31,6 +31,7 @@ import com.intellij.util.xml.DomJavaUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -132,6 +133,7 @@ public final class LanguageResolvingUtil {
     return all;
   }
 
+  @Unmodifiable
   private static List<LanguageDefinition> collectLibraryLanguages(ConvertContext context, GlobalSearchScope scope) {
     return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), language -> getLibraryDefinition(context, language, scope));
   }

@@ -14,6 +14,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -185,6 +186,7 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
+  @Unmodifiable
   private List<PreContract> visitExpression(final List<ValueConstraint[]> states, @Nullable LighterASTNode expr) {
     if (expr == null) return emptyList();
     if (states.isEmpty()) return emptyList();
@@ -282,6 +284,7 @@ class ContractInferenceInterpreter {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<PreContract> asPreContracts(List<StandardMethodContract> contracts) {
     return ContainerUtil.map(contracts, KnownContract::new);
   }
@@ -328,6 +331,7 @@ class ContractInferenceInterpreter {
     return primitive == null ? null : primitive.getTokenType();
   }
 
+  @Unmodifiable
   static List<StandardMethodContract> toContracts(List<ValueConstraint[]> states, ContractReturnValue constraint) {
     return ContainerUtil.map(states, state -> new StandardMethodContract(state, constraint));
   }
@@ -344,10 +348,12 @@ class ContractInferenceInterpreter {
     return finalStates;
   }
 
+  @Unmodifiable
   private static List<StandardMethodContract> knownContracts(List<PreContract> values) {
     return ContainerUtil.mapNotNull(values, pc -> pc instanceof KnownContract ? ((KnownContract)pc).getContract() : null);
   }
 
+  @Unmodifiable
   private static List<ValueConstraint[]> antecedentsReturning(List<PreContract> values, ContractReturnValue result) {
     return ContainerUtil.mapNotNull(knownContracts(values),
                                     contract -> contract.getReturnValue().equals(result) ?

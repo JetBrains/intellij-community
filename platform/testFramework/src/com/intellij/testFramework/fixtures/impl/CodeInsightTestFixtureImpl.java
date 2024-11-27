@@ -1210,6 +1210,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
+  @Unmodifiable
   public List<GutterMark> findAllGutters() {
     Project project = getProject();
     SortedMap<Integer, List<GutterMark>> result = new TreeMap<>();

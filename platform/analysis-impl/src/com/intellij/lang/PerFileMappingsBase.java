@@ -230,6 +230,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
+  @Unmodifiable
   public abstract @NotNull List<T> getAvailableValues();
 
   protected abstract @Nullable String serialize(@NotNull T t);

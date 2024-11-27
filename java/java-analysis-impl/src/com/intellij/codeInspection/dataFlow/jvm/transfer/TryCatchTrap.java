@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -32,6 +33,7 @@ public class TryCatchTrap implements Trap {
   }
 
   public interface CatchClauseDescriptor {
+    @Unmodifiable
     @NotNull List<TypeConstraint> constraints();
     @Nullable VariableDescriptor parameter();
   }
@@ -44,6 +46,7 @@ public class TryCatchTrap implements Trap {
     }
 
     @Override
+    @Unmodifiable
     public @NotNull List<TypeConstraint> constraints() {
       PsiParameter parameter = mySection.getParameter();
       if (parameter == null) return Collections.emptyList();
@@ -60,6 +63,7 @@ public class TryCatchTrap implements Trap {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                      @NotNull DataFlowInterpreter interpreter,
                                                      DfaControlTransferValue.@NotNull TransferTarget target,

@@ -32,6 +32,7 @@ import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.indexing.PsiDependentFileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -185,6 +186,7 @@ public final class StubTreeBuilder {
   }
 
   /** Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} */
+  @Unmodifiable
   public static @NotNull List<Pair<IStubFileElementType<?>, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
     List<Trinity<Language, IStubFileElementType<?>, PsiFile>> roots =
       new SmartList<>();

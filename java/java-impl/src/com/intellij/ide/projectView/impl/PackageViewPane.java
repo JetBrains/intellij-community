@@ -30,10 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -73,6 +70,7 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object o = getValueFromNode(node);
     if (o instanceof PackageElement) {

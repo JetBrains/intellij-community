@@ -10,6 +10,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,11 +34,13 @@ public class MockPsiMethod extends MockMirror implements Method {
   }
 
   @Override
+  @Unmodifiable
   public List<String> argumentTypeNames() {
     return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());
   }
 
   @Override
+  @Unmodifiable
   public List<Type> argumentTypes() {
     return ContainerUtil.map(
       myPsiMethod.getParameterList().getParameters(),
@@ -121,6 +124,7 @@ public class MockPsiMethod extends MockMirror implements Method {
   }
 
   @Override
+  @Unmodifiable
   public List<LocalVariable> arguments() {
     return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), p -> new MockLocalVariable(myVirtualMachine, p));
   }

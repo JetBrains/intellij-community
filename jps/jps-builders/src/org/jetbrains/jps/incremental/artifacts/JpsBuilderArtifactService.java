@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts;
 
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.incremental.artifacts.impl.JpsBuilderArtifactServiceImpl;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -28,6 +29,7 @@ public abstract class JpsBuilderArtifactService {
     return ourInstance;
   }
 
+  @Unmodifiable
   public abstract Collection<JpsArtifact> getArtifacts(JpsModel model, boolean includeSynthetic);
 
   public abstract Collection<JpsArtifact> getSyntheticArtifacts(JpsModel model);

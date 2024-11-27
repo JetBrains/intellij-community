@@ -115,6 +115,7 @@ public final class DependenciesIndexedStatusService {
   }
 
 
+  @Unmodifiable
   public @NotNull List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
     LOG.assertTrue(shouldSaveStatus());
     List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
@@ -141,6 +142,7 @@ public final class DependenciesIndexedStatusService {
     return libraries;
   }
 
+  @Unmodifiable
   public @NotNull List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
     LOG.assertTrue(shouldSaveStatus());
     @NotNull List<IndexableSetContributorDescriptor> descriptors = IndexableSetContributorDescriptor.collectDescriptors(project);

@@ -222,6 +222,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     });
   }
 
+  @Unmodifiable
   private @NotNull List<LookupElement> completeJavadocReference(PsiElement position, PsiJavaReference ref) {
     JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, JavaCompletionProcessor.Options.CHECK_NOTHING, Conditions.alwaysTrue());
     ref.processVariants(processor);

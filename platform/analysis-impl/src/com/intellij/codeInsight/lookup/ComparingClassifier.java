@@ -9,6 +9,7 @@ import com.intellij.util.containers.FlatteningIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -61,6 +62,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, final @NotNull ProcessingContext context) {
     return ContainerUtil.map(items, t -> new Pair<>(t, getWeight(t, context)));
   }

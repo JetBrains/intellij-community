@@ -424,6 +424,7 @@ final class TestDataGuessByExistingFilesUtil {
     }
 
     @NotNull
+    @Unmodifiable
     public List<TestDataFile> restoreFiles() {
       return ContainerUtil.mapNotNull(myDescriptors, d -> {
         PsiFile file = ReadAction.compute(() -> d.filePointer.getElement());

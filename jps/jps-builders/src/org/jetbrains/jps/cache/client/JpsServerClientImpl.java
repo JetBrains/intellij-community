@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.cache.JpsCachesLoaderUtil;
 import org.jetbrains.jps.cache.model.AffectedModule;
 import org.jetbrains.jps.cache.model.DownloadableFileUrl;
@@ -84,6 +85,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
   }
 
   @Override
+  @Unmodifiable
   public List<OutputLoadResult> downloadCompiledModules(@NotNull JpsLoaderContext context, @NotNull List<AffectedModule> affectedModules) {
     File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesLoaderUtil.LOADER_TMP_FOLDER_NAME);
     if (targetDir.exists()) FileUtil.delete(targetDir);

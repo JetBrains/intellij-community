@@ -150,6 +150,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
     }
 
     @Override
+    @Unmodifiable
     public @NotNull List<CustomizableIntentionAction.@NotNull RangeToHighlight> getRangesToHighlight(Project project,
                                                                                                      ProblemDescriptor descriptor) {
       BlockData info = getBlockInfo(descriptor.getStartElement());

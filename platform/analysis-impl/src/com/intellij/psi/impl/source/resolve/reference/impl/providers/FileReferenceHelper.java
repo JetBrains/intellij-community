@@ -126,6 +126,7 @@ public abstract class FileReferenceHelper {
    *
    * @apiNote before running this method {@link #isMine(Project, VirtualFile)} should be called.
    */
+  @Unmodifiable
   public @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project,
                                                          @NotNull VirtualFile hostFile,
                                                          boolean isAbsoluteReference) {
@@ -162,6 +163,7 @@ public abstract class FileReferenceHelper {
    * @deprecated use {@link #getRoots(Module, VirtualFile)} that provides better context
    */
   @Deprecated
+  @Unmodifiable
   public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return emptyList();
   }

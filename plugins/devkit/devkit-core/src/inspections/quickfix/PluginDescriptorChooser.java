@@ -135,6 +135,7 @@ public final class PluginDescriptorChooser {
     return extensions;
   }
 
+  @Unmodifiable
   private static List<PluginDescriptorCandidate> createCandidates(final Module currentModule,
                                                                   @Unmodifiable List<? extends DomFileElement<IdeaPlugin>> elements) {
     ModuleGrouper grouper = ModuleGrouper.instanceFor(currentModule.getProject());

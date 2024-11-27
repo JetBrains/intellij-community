@@ -11,6 +11,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.util.Collection;
@@ -93,6 +94,7 @@ public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implem
 
   @NotNull
   @Override
+  @Unmodifiable
   public synchronized List<RefParameter> getParameters() {
     LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefParameter.class);

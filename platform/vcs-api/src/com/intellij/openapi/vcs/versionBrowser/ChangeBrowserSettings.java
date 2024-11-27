@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.time.Instant;
@@ -102,6 +103,7 @@ public class ChangeBrowserSettings {
   }
 
   // used externally
+  @Unmodifiable
   protected @NotNull List<Filter> createFilters() {
     return ContainerUtil.packNullables(
       createDateFilter(getDateBeforeFilter(), true),

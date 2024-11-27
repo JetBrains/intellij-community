@@ -38,6 +38,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -429,6 +430,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return Pair.create(panel, checkboxTree);
   }
 
+  @Unmodifiable
   private static @NotNull List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
     return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
   }

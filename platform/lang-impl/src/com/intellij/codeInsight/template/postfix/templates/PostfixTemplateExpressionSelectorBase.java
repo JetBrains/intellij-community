@@ -51,6 +51,7 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
     return element -> element.getText();
   }
 
+  @Unmodifiable
   protected abstract List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
 
   protected Condition<PsiElement> getFilters(int offset) {

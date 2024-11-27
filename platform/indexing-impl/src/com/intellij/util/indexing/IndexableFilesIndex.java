@@ -10,6 +10,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,6 +44,7 @@ public interface IndexableFilesIndex {
    */
   @RequiresBackgroundThread
   @NotNull
+  @Unmodifiable
   Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files);
 
   @RequiresBackgroundThread

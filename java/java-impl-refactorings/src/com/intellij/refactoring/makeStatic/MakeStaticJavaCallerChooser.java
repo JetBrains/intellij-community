@@ -31,6 +31,7 @@ import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -91,6 +92,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
     }
 
     @Override
+    @Unmodifiable
     protected List<PsiMethod> computeCallers() {
       if (getTopMember().equals(getMember())) {
         final ArrayList<UsageInfo> items = getTopLevelItems();

@@ -59,6 +59,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -577,6 +578,7 @@ final class PassExecutorService implements Disposable {
   }
 
   @NotNull
+  @Unmodifiable
   List<HighlightingPass> getAllSubmittedPasses() {
     return ContainerUtil.mapNotNull(mySubmittedPasses.get().keySet(),
                                     scheduledPass -> scheduledPass.myUpdateProgress.isCanceled() ? null : scheduledPass.myPass);

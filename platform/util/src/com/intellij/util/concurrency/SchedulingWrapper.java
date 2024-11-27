@@ -8,6 +8,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,6 +58,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<Runnable> shutdownNow() {
     List<Runnable> canceled = doShutdown();
     List<Runnable> backEndCanceled = backendExecutorService instanceof BoundedTaskExecutor

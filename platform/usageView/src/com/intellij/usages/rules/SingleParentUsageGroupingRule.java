@@ -21,6 +21,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -33,6 +34,7 @@ public abstract class SingleParentUsageGroupingRule implements UsageGroupingRule
 
   @NotNull
   @Override
+  @Unmodifiable
   public final List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     return ContainerUtil.createMaybeSingletonList(getParentGroupFor(usage, targets));
   }

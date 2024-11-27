@@ -55,6 +55,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -79,6 +80,7 @@ public final class RunDashboardServiceViewContributor
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<RunConfigurationContributor> getServices(@NotNull Project project) {
     RunDashboardManagerImpl runDashboardManager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
     return ContainerUtil.map(runDashboardManager.getRunConfigurations(),

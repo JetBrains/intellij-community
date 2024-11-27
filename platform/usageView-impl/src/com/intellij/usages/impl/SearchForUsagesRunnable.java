@@ -46,6 +46,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -163,6 +164,7 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
+  @Unmodifiable
   private Collection<String> getUnloadedModulesBelongingToScope() {
     return ReadAction.compute(() -> {
       if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();

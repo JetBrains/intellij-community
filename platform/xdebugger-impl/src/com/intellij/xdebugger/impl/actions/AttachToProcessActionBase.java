@@ -33,10 +33,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.attach.*;
 import com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessDialogFactory;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
@@ -139,6 +136,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }.queue();
   }
 
+  @Unmodifiable
   protected List<XAttachHostProvider<XAttachHost>> getAvailableHosts() {
     return ContainerUtil.map(XAttachHostProvider.EP.getExtensionList(), provider -> (XAttachHostProvider<XAttachHost>)provider);
   }

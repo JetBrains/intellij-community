@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -342,6 +343,7 @@ public final class PsiTestUtil {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<VirtualFile> getLibraryRoots(@NotNull List<String> classesRootPaths) {
     return ContainerUtil.map(classesRootPaths, path -> VirtualFileManager.getInstance().refreshAndFindFileByUrl(VfsUtil.getUrlForLibraryRoot(new File(path))));
   }

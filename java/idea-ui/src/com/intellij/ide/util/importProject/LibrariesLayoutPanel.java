@@ -40,6 +40,7 @@ class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
+  @Unmodifiable
   protected Collection<? extends Dependency> getDependencies(final LibraryDescriptor entry) {
     return ContainerUtil.map(entry.getJars(), FileDescriptor::new);
   }

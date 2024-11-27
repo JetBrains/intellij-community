@@ -617,6 +617,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
 
+  @Unmodifiable
   List<GutterMark> findAllGutters();
 
   void type(final char c);

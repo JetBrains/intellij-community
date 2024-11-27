@@ -55,10 +55,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -203,6 +200,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<BaseInjection> getInjections(final String injectorId) {
       return ContainerUtil.concat(myParentConfiguration.getInjections(injectorId), getOwnInjections(injectorId));
     }
@@ -548,6 +546,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
    * @param injectorId see {@link LanguageInjectionSupport#getId()}
    */
   @NotNull
+  @Unmodifiable
   public List<BaseInjection> getInjections(final String injectorId) {
     return Collections.unmodifiableList(myInjections.get(injectorId));
   }

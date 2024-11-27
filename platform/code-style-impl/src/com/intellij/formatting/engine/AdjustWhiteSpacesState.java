@@ -5,6 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -127,6 +128,7 @@ public final class AdjustWhiteSpacesState extends State {
     return myAlignmentsInsideRangesToModify.contains(alignment);
   }
 
+  @Unmodifiable
   private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
                                                                                 final WhiteSpace whiteSpace) {
     if (!(spaceProperty instanceof DependantSpacingImpl spacing)) return ContainerUtil.emptyList();

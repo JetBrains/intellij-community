@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
@@ -65,6 +66,7 @@ public final class DevkitActionsUtil {
   }
 
   @Nullable
+  @Unmodifiable
   private static List<XmlFile> choosePluginModuleDescriptors(@NotNull Module module) {
     List<Module> pluginModules = getCandidatePluginModules(module);
     if (pluginModules.isEmpty()) {

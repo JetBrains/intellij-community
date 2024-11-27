@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -98,6 +99,7 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     return myOptionInspectionFixes;
   }
 
+  @Unmodifiable
   public @NotNull List<IntentionAction> getOptionActions() {
     return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }

@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ class ContextFormattingRangesExtender {
     myFile = file;
   }
 
+  @Unmodifiable
   public List<TextRange> getExtendedRanges(@NotNull List<? extends TextRange> ranges) {
     return ContainerUtil.map(ranges, range -> processRange(range));
   }

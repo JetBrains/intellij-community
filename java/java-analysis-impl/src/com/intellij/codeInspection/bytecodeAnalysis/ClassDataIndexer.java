@@ -21,6 +21,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.InsnList;
@@ -265,6 +266,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     Key.create("com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer.Equations");
 
   @NotNull
+  @Unmodifiable
   static List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
     return ContainerUtil.mapNotNull(
       FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),

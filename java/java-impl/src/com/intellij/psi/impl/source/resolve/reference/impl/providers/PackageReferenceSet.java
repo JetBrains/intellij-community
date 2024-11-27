@@ -52,6 +52,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     return mySearchScope;
   }
 
+  @Unmodifiable
   public Collection<PsiPackage> resolvePackage() {
     final PsiPackageReference packageReference = getLastReference();
     if (packageReference == null) {

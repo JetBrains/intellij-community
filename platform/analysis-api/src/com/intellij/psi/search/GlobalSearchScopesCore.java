@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -273,6 +274,7 @@ public final class GlobalSearchScopesCore {
       return myWithSubdirectories ? contains(other.myDirectory) : equals(other);
     }
 
+    @Unmodifiable
     private static @NotNull Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
       if (addDir1 && addDir2) return ContainerUtil.newHashSet(dir1, dir2);
       if (addDir1) return Collections.singleton(dir1);

@@ -16,6 +16,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -161,6 +162,7 @@ public abstract class InspectionManagerBase extends InspectionManager {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<ProblemDescriptor> defaultProcessFile(@NotNull LocalInspectionTool tool, @NotNull PsiFile file) {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (indicator == null) {

@@ -30,6 +30,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
+  @Unmodifiable
   protected @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map(myAllNames, name -> mapToConvert.getOrDefault(name, name));

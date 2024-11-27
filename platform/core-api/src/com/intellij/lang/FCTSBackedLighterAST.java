@@ -6,6 +6,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.AbstractList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class FCTSBackedLighterAST extends LighterAST {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent) {
     final Ref<LighterASTNode[]> into = new Ref<>();
     final int numKids = myTreeStructure.getChildren(parent, into);

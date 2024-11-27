@@ -375,6 +375,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
+  @Unmodifiable
   protected static List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
                                                              @NotNull Editor editor,
                                                              @NotNull PsiFile file) {

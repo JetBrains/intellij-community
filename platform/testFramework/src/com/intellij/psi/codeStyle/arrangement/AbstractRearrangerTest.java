@@ -22,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -188,6 +189,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   }
 
   @NotNull
+  @Unmodifiable
   protected List<ArrangementSectionRule> getSectionRules(@Nullable List<?> rules) {
     if (rules == null) {
       return ContainerUtil.emptyList();

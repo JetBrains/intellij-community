@@ -9,6 +9,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
@@ -91,6 +92,7 @@ public final class JpsProjectConfigurationLoading {
     return false;
   }
 
+  @Unmodifiable
   static @NotNull List<Path> listXmlFiles(@NotNull Path dir) {
     try {
       try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> it.getFileName().toString().endsWith(".xml") && Files.isRegularFile(it))) {

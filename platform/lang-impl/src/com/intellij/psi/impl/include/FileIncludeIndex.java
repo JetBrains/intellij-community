@@ -16,6 +16,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 public final class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
   public static final ID<String,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
+  @Unmodifiable
   public static @NotNull List<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull Project project) {
     Map<String, List<FileIncludeInfoImpl>> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project);
     return ContainerUtil.flatten(data.values());
@@ -63,6 +65,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
       }
 
       @Override
+      @Unmodifiable
       public @NotNull Set<String> getSubIndexerVersion(@NotNull Set<FileIncludeProvider> providers) {
         return ContainerUtil.map2Set(providers, provider -> provider.getId() + ":" + provider.getVersion());
       }

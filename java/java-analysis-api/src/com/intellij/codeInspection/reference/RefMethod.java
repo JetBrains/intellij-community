@@ -7,6 +7,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UMethod;
 
 import java.util.Collection;
@@ -33,6 +34,7 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
    *
    * @return the collection of overriding methods.
    */
+  @Unmodifiable
   @NotNull Collection<RefMethod> getDerivedMethods();
 
   /**

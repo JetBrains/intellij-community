@@ -42,6 +42,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -440,6 +441,7 @@ public final class GuessManagerImpl extends GuessManager {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<PsiType> flattenAndGenerify(@NotNull PsiExpression expr, PsiType psiType) {
     if (psiType instanceof PsiIntersectionType intersection) {
       return ContainerUtil.mapNotNull(intersection.getConjuncts(), type -> DfaPsiUtil.tryGenerify(expr, type));

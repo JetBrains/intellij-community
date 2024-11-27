@@ -23,6 +23,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -171,6 +172,7 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   }
 
   @NotNull
+  @Unmodifiable
   protected List<AnAction> createToolbarActions() {
     return Collections.singletonList(myShowDiffAction);
   }
@@ -188,6 +190,7 @@ public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleD
   }
 
   @NotNull
+  @Unmodifiable
   protected List<AnAction> createPopupMenuActions() {
     List<AnAction> actions = new ArrayList<>();
     actions.add(myShowDiffAction);

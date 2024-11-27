@@ -5,6 +5,7 @@ package com.intellij.lang;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -36,6 +37,7 @@ public interface Commenter {
    *
    * @return the list of line comment prefixes
    */
+  @Unmodifiable
   default @NotNull List<String> getLineCommentPrefixes() {
     return ContainerUtil.createMaybeSingletonList(getLineCommentPrefix());
   }

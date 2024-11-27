@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collector;
@@ -64,6 +65,7 @@ final class StreamConversion {
     return Collections.emptyList();
   }
 
+  @Unmodifiable
   private static @NotNull List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
                                                                         PsiExpression qualifier,
                                                                         String changedQualifier,
@@ -234,6 +236,7 @@ final class StreamConversion {
     }
 
     @Override
+    @Unmodifiable
     public Set<String> getAllLookupStrings() {
       return ContainerUtil.newHashSet(myLookupString, myMethodName);
     }

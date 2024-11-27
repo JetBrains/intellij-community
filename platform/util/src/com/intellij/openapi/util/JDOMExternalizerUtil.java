@@ -4,10 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -81,6 +78,7 @@ public final class JDOMExternalizerUtil {
     return element != null ? element.getAttributeValue(Constants.VALUE) : null;
   }
 
+  @Unmodifiable
   public static @NotNull List<String> getChildrenValueAttributes(@NotNull Element parent, @NotNull String childTagName) {
     return ContainerUtil.mapNotNull(parent.getChildren(childTagName), e -> e.getAttributeValue(Constants.VALUE));
   }

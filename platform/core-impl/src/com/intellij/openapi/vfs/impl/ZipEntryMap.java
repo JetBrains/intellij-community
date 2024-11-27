@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -189,6 +190,7 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<ArchiveHandler.EntryInfo> values() {
     return ContainerUtil.filter(entries, Conditions.notNull());
   }

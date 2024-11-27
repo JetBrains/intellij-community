@@ -30,6 +30,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,6 +73,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     DnDManager.getInstance().registerTarget(this, this, this);
   }
 
+  @Unmodifiable
   private List<BeforeRunTaskProvider<BeforeRunTask<?>>> getProviders() {
     Set<? extends Key<?>> existing = ContainerUtil.map2Set(myTags, button -> button.myTask.getProviderId());
     return ContainerUtil.filter(BeforeRunTaskProvider.EP_NAME.getExtensions(myConfiguration.getProject()),

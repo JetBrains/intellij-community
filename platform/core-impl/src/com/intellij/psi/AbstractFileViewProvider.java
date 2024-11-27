@@ -41,6 +41,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -374,8 +375,10 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);
 
+  @Unmodifiable
   public abstract @NotNull List<PsiFile> getCachedPsiFiles();
 
+  @Unmodifiable
   public abstract @NotNull List<FileASTNode> getKnownTreeRoots();
 
   public final void markInvalidated() {

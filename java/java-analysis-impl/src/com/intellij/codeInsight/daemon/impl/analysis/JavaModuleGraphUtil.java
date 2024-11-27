@@ -42,6 +42,7 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -410,6 +411,7 @@ public final class JavaModuleGraphUtil {
    * Library/JDK modules are excluded in an assumption there can't be any lib -> src dependencies.
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
+  @Unmodifiable
   private static @NotNull List<Set<PsiJavaModule>> findCycles(@NotNull Project project) {
     Set<PsiJavaModule> projectModules = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {

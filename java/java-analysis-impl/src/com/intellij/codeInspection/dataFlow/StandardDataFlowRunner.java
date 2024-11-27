@@ -34,6 +34,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -188,6 +189,7 @@ public class StandardDataFlowRunner {
     return new StandardDataFlowInterpreter(flow, listener);
   }
 
+  @Unmodifiable
   protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
                                                                               @NotNull Collection<? extends DfaMemoryState> memStates,
                                                                               @NotNull ControlFlow flow) {

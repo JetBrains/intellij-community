@@ -302,6 +302,7 @@ public final class ChangesUtil {
     processItemsByVcs(files, filePath -> projectLevelVcsManager.getVcsFor(filePath), processor);
   }
 
+  @Unmodifiable
   public static @NotNull List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
     return ContainerUtil.map(filePaths, FilePath::getIOFile);
   }

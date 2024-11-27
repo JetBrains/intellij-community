@@ -17,6 +17,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -114,6 +115,7 @@ public class JavaMethodResolveHelper {
     NONE, STATIC, RESOLVE
   }
 
+  @Unmodifiable
   public Collection<JavaMethodCandidateInfo> getMethods() {
     return ContainerUtil.mapNotNull(getCandidates(),
                                     (Function<JavaResolveResult, JavaMethodCandidateInfo>)javaResolveResult -> new JavaMethodCandidateInfo((PsiMethod)javaResolveResult.getElement(), javaResolveResult.getSubstitutor()));

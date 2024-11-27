@@ -15,6 +15,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,7 @@ public final class FormatterBasedLineIndentInfoBuilder {
     myProgressIndicator = indicator;
   }
 
+  @Unmodifiable
   public List<LineIndentInfo> build() {
     List<Block> newLineBlocks = getBlocksStartingNewLine();
     

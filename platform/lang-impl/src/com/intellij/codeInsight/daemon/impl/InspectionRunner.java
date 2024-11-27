@@ -94,6 +94,7 @@ class InspectionRunner {
     }
   }
 
+  @Unmodifiable
   @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                      @Nullable HighlightSeverity minimumSeverity,
                                                      boolean addRedundantSuppressions,

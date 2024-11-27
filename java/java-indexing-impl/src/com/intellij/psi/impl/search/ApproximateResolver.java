@@ -8,6 +8,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -98,6 +99,7 @@ public final class ApproximateResolver {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<PsiMethod> getPossibleMethods(@NotNull Set<? extends PsiClass> classes, @NotNull String name, int callArgCount) {
     return ContainerUtil.flatMap(classes,
       aClass -> ContainerUtil.filter(aClass.findMethodsByName(name, true), m->canHaveArgCount(m, callArgCount)));

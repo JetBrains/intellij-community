@@ -4,6 +4,7 @@ package com.intellij.model;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -16,6 +17,7 @@ public abstract class SingleTargetReference {
    * Default implementation wraps target returned from {@link #resolveSingleTarget()} into resolve result list ,
    * or returns empty list if {@link #resolveSingleTarget()} returned {@code null}.
    */
+  @Unmodifiable
   public final @NotNull Collection<? extends Symbol> resolveReference() {
     return ContainerUtil.createMaybeSingletonList(resolveSingleTarget());
   }

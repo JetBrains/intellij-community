@@ -25,6 +25,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -182,6 +183,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<ImplementationViewElement> searchImplementationsInBackground(@NotNull ProgressIndicator indicator,
                                                                                     final @NotNull Processor<? super ImplementationViewElement> processor) {
     final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =

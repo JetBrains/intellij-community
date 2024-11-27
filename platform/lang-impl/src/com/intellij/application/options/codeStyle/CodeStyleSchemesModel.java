@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -162,6 +163,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     }
   }
 
+  @Unmodifiable
   private @NotNull List<CodeStyleScheme> getIdeSchemes() {
     return ContainerUtil.filter(mySchemes, scheme -> !(scheme instanceof ProjectScheme));
   }

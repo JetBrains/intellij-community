@@ -100,6 +100,7 @@ public class FindUsagesHandlerBase {
     return FindUsagesHelper.processUsagesInText(element, stringToSearch, false, searchScope, processor);
   }
 
+  @Unmodifiable
   protected @Nullable Collection<String> getStringsToSearch(final @NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());

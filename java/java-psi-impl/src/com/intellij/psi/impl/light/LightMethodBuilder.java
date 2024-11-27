@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -403,6 +404,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
     return getParameterList().getParametersCount();
   }
 
+  @Unmodifiable
   private @NotNull List<PsiType> getParameterTypes() {
     return ContainerUtil.map(getParameterList().getParameters(), PsiParameter::getType);
   }

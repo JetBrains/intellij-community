@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ public final class RecentTestsListProvider {
     myConfigurationProvider = configurationProvider;
   }
 
+  @Unmodifiable
   public List<RecentTestsPopupEntry> getTestsToShow() {
     if (myRecords == null) return ContainerUtil.emptyList();
 

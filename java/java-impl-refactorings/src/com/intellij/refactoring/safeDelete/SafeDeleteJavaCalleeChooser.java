@@ -23,6 +23,7 @@ import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -107,6 +108,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     }
 
     @Override
+    @Unmodifiable
     protected List<PsiElement> computeCallers() {
       PsiElement member = getMember();
       if (getTopMember().equals(member)) {

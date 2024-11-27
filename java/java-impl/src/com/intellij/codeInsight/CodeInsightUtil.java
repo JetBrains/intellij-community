@@ -28,6 +28,7 @@ import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -405,6 +406,7 @@ public final class CodeInsightUtil {
     return baseType.isAssignableFrom(result) ? result : null;
   }
 
+  @Unmodifiable
   public static @NotNull List<PsiType> getExpectedTypeArgs(PsiElement context,
                                                            PsiTypeParameterListOwner paramOwner,
                                                            Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {

@@ -8,6 +8,7 @@ import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class MockPsiInterfaceType extends MockPsiReferenceType implements Interf
   }
 
   @Override
+  @Unmodifiable
   public List<InterfaceType> superinterfaces() {
     return ContainerUtil.map(myClass.getInterfaces(), iFace -> (InterfaceType)myVirtualMachine.createReferenceType(iFace));
   }

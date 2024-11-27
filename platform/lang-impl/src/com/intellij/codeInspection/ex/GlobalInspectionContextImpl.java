@@ -892,6 +892,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return enabledInspectionsProvider.getEnabledTools(file, includeDoNotShow);
   }
 
+  @Unmodifiable
   public @NotNull <T extends @NotNull InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(
     @NotNull List<? extends Tools> localTools,
     @NotNull PsiFile file,

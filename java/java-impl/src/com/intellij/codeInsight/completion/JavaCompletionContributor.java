@@ -930,6 +930,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return null;
   }
 
+  @Unmodifiable
   private static Collection<LookupElement> getInnerScopeVariables(CompletionParameters parameters, PsiElement position) {
     PsiElement container = BringVariableIntoScopeFix.getContainer(position);
     if (container == null) return Collections.emptyList();
@@ -1009,6 +1010,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
            LambdaHighlightingUtil.insertSemicolon(position.getParent().getParent());
   }
 
+  @Unmodifiable
   private static List<LookupElement> processLabelReference(PsiLabelReference reference) {
     return ContainerUtil.map(reference.getVariants(), s -> TailTypeDecorator.withTail(LookupElementBuilder.create(s),
                                                                                       TailTypes.semicolonType()));

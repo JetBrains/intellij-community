@@ -8,6 +8,7 @@ package com.intellij.psi.stubs;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class StubTree extends ObjectStubTree<StubElement<?>> {
   }
 
   @Override
+  @Unmodifiable
   final @NotNull List<StubElement<?>> getPlainListFromAllRoots() {
     PsiFileStub<?>[] roots = ((PsiFileStubImpl<?>)getRoot()).getStubRoots();
     if (roots.length == 1) return super.getPlainListFromAllRoots();

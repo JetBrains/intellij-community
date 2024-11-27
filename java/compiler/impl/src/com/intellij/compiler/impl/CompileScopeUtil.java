@@ -10,6 +10,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -158,6 +159,7 @@ public final class CompileScopeUtil {
     return allModules.isEmpty();
   }
 
+  @Unmodifiable
   public static List<String> fetchFiles(CompileContextImpl context) {
     if (context.isRebuild()) {
       return Collections.emptyList();

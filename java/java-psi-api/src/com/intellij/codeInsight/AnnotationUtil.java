@@ -765,6 +765,7 @@ public class AnnotationUtil {
   //</editor-fold>
 
   @NotNull
+  @Unmodifiable
   public static List<PsiAnnotationMemberValue> arrayAttributeValues(@Nullable PsiAnnotationMemberValue attributeValue) {
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       return Arrays.asList(((PsiArrayInitializerMemberValue)attributeValue).getInitializers());

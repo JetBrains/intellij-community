@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,6 +68,7 @@ final class HighlighterRecycler {
   }
   //
   @NotNull
+  @Unmodifiable
   private synchronized Collection<? extends HighlightInfo> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }

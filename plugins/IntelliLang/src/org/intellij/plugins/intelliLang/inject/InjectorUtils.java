@@ -29,6 +29,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -172,6 +173,7 @@ public final class InjectorUtils {
   }
 
   @NotNull
+  @Unmodifiable
   public static Collection<String> getActiveInjectionSupportIds() {
     return ContainerUtil.map(LanguageInjectionSupport.EP_NAME.getExtensionList(), LanguageInjectionSupport::getId);
   }

@@ -34,6 +34,7 @@ public final class ExceptionUtil {
   /**
    * If there are matching throwables both in causes of the {@code error} and in suppressed throwables, causes are guaranteed to be first.
    */
+  @Unmodifiable
   public static <T> List<T> findCauseAndSuppressed(@NotNull Throwable error, @NotNull Class<T> klass) {
     Collection<Throwable> allThrowables = new LinkedHashSet<>();
     Deque<Throwable> deque = new ArrayDeque<>();

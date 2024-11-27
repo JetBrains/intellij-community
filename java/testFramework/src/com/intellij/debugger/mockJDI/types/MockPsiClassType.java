@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class MockPsiClassType extends MockPsiReferenceType implements ClassType 
   }
 
   @Override
+  @Unmodifiable
   public List<InterfaceType> interfaces() {
     return ContainerUtil.map(myClass.getInterfaces(), iFace -> (InterfaceType)myVirtualMachine.createReferenceType(iFace));
   }

@@ -7,6 +7,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
   }
 
   @Override
+  @Unmodifiable
   protected List<PsiMethod> computeCallers() {
     final PsiReference[] refs = MethodReferencesSearch.search(myMethod).toArray(PsiReference.EMPTY_ARRAY);
 

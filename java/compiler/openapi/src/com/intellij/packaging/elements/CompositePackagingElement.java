@@ -15,6 +15,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -218,6 +219,7 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
   }
 
   @NotNull
+  @Unmodifiable
   public List<PackagingElement<?>> getChildren() {
     if (myStorage == null) {
       return myGetChildren();

@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -163,6 +164,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     return myViewFactory;
   }
 
+  @Unmodifiable
   private static @NotNull List<LinkController> filterLinkControllerListeners(Object @NotNull [] listeners) {
     return ContainerUtil.mapNotNull(listeners, o -> ObjectUtils.tryCast(o, LinkController.class));
   }

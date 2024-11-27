@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -20,6 +21,7 @@ class LineFormattingRangesExtender {
     myDocument = document;
   }
 
+  @Unmodifiable
   public List<TextRange> getExtendedRanges(@NotNull List<? extends TextRange> ranges) {
     return ContainerUtil.map(ranges, range -> processRange(range));
   }

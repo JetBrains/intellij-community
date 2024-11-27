@@ -10,6 +10,7 @@ import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -128,6 +129,7 @@ public final class DfaControlTransferValue extends DfaValue {
     default void link(DfaControlTransferValue value) {
     }
 
+    @Unmodifiable
     @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                 @NotNull DataFlowInterpreter interpreter,
                                                 @NotNull TransferTarget target,

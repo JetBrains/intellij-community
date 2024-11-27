@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -24,6 +25,7 @@ public final class GitRepositoryUtil {
 
   private GitRepositoryUtil() {}
 
+  @Unmodifiable
   public static @NotNull List<String> fetchRepositoryCommits(@NotNull Project project, @NotNull String latestCommit) {
     String projectBasePath = project.getBasePath();
     if (projectBasePath == null) return Collections.emptyList();

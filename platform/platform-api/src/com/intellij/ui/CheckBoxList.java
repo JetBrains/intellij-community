@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -267,6 +268,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     }
   }
 
+  @Unmodifiable
   public @NotNull List<T> getCheckedItems() {
     return ContainerUtil.mapNotNull(myItemMap.entrySet(),
                                     entry -> entry.getValue().isSelected() ? entry.getKey() : null);

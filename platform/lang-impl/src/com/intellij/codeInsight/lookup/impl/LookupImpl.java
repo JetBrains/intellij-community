@@ -66,10 +66,7 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -357,6 +354,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
+  @Unmodifiable
   public List<LookupElement> getItems() {
     synchronized (uiLock) {
       return ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem));

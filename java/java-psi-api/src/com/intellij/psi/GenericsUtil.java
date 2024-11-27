@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -565,6 +566,7 @@ public final class GenericsUtil {
    * @return a list of type arguments which correspond to passed type parameters
    */
   @NotNull
+  @Unmodifiable
   public static List<PsiType> getExpectedTypeArguments(PsiElement context,
                                                        PsiClass aClass,
                                                        @NotNull Iterable<? extends PsiTypeParameter> typeParams,

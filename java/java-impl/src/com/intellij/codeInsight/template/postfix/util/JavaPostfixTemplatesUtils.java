@@ -62,6 +62,7 @@ public final class JavaPostfixTemplatesUtils {
   public static PostfixTemplateExpressionSelector selectorTopmost(Condition<? super PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
+      @Unmodifiable
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         return ContainerUtil.createMaybeSingletonList(getTopmostExpression(context));
       }

@@ -26,10 +26,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -234,6 +231,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     }
   }
 
+  @Unmodifiable
   protected @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
     return List.of(new Fragment(0, upd.oldText().length(), upd.newText().length()));
   }

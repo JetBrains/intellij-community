@@ -11,10 +11,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -94,6 +91,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, true));
   }
 
+  @Unmodifiable
   protected @NotNull List<T> getRepositories(Class<T> type) {
     return ContainerUtil.findAll(myGlobalRepositoryManager.getRepositories(), type);
   }
