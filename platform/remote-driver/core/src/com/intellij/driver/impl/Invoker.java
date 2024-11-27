@@ -333,10 +333,13 @@ public class Invoker implements InvokerMBean {
 
     if (targetMethods.isEmpty()) {
       throw new IllegalStateException(
-        String.format("No method '%s' with parameter count %s in class %s. Available methods: %n%s",
-                      call.getMethodName(), argCount, call.getClassName(),
-                      availableMethods.stream().map(it -> it.toString())
-                        .collect(Collectors.joining(" - " + System.lineSeparator()))
+        String.format(
+          "No method '%s' with parameter count %s in class %s. If your method is companion method in Kotlin, don't forget to add @JvmStatic." +
+          // https://youtrack.jetbrains.com/issue/AT-1744/Driver-make-it-not-neccessary-to-add-JvmStatic-to-kotlin-companion-methods
+          "\nAvailable methods: %n%s",
+          call.getMethodName(), argCount, call.getClassName(),
+          availableMethods.stream().map(it -> it.toString())
+            .collect(Collectors.joining(" - " + System.lineSeparator()))
         ));
     }
 
