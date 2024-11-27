@@ -40,7 +40,11 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
   @TestFor(issues = ["IDEA-307565"])
   fun `idToken is invalidated after unauthorized exception`() {
     val authServiceSpy = spy<SettingsSyncDefaultAuthService>()
-    ApplicationManager.getApplication().replaceService(SettingsSyncAuthService::class.java, authServiceSpy, SettingsSyncMain.getInstance())
+    ApplicationManager.getApplication().replaceService(
+      SettingsSyncAuthService::class.java,
+      authServiceSpy,
+      SettingsSyncMain.getInstance() as SettingsSyncMainImpl
+    )
 
     val accountInfoService = mock<JBAccountInfoService>()
     `when`(accountInfoService.idToken).thenReturn("OLD-ID-TOKEN")
@@ -84,7 +88,11 @@ internal class SettingsSyncAuthTest : BasePlatformTestCase() {
     assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
 
     val authServiceSpy = spy<SettingsSyncDefaultAuthService>()
-    ApplicationManager.getApplication().replaceService(SettingsSyncAuthService::class.java, authServiceSpy, SettingsSyncMain.getInstance())
+    ApplicationManager.getApplication().replaceService(
+      SettingsSyncAuthService::class.java,
+      authServiceSpy,
+      SettingsSyncMain.getInstance() as SettingsSyncMainImpl
+    )
 
     val accountInfoService = mock<JBAccountInfoService>()
     `when`(accountInfoService.idToken).thenReturn(null)

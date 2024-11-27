@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 
 @Service
-internal class SettingsSyncStatusTracker {
+class SettingsSyncStatusTracker {
   private var lastSyncTime = -1L
   private var errorMessage: String? = null
 

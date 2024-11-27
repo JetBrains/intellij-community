@@ -3,7 +3,7 @@ package com.intellij.settingsSync.auth
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.ui.JBAccountInfoService
 
-internal interface SettingsSyncAuthService {
+interface SettingsSyncAuthService {
   companion object {
     fun getInstance(): SettingsSyncAuthService = ApplicationManager.getApplication().getService(SettingsSyncAuthService::class.java)
   }

@@ -29,7 +29,7 @@ import java.util.function.Predicate
 import kotlin.concurrent.withLock
 import kotlin.io.path.*
 
-internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
+class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
                                            private val enabledCondition: () -> Boolean) : StreamProvider, SettingsSyncIdeMediator {
 
