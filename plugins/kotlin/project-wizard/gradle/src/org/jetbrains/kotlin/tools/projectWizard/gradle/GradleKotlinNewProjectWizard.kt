@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
+import com.fasterxml.jackson.dataformat.toml.TomlMapper
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
@@ -30,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.util.childrenOfType
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
@@ -40,7 +40,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
@@ -68,9 +67,6 @@ import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleB
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
-import org.toml.lang.psi.TomlFile
-import org.toml.lang.psi.TomlInlineTable
-import org.toml.lang.psi.TomlTable
 
 private const val GENERATE_MULTIPLE_MODULES_PROPERTY_NAME: String = "NewProjectWizard.generateMultipleModules"
 
@@ -314,18 +310,18 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             val buildSrcBuildFile = buildSrcModule.getBuildScriptPsiFile() ?: return false
 
             val gradleFolder = project.guessProjectDir()?.findChild("gradle") ?: return false
-            val tomlFile = gradleFolder.findChild("libs.versions.toml")?.toPsiFile(project) as? TomlFile ?: return false
+            val gradlePluginKey = runCatching {
+                val tomlFile = gradleFolder.findChild("libs.versions.toml")?.toNioPath()?.toFile() ?: return false
+                val tomlTree = TomlMapper().readTree(tomlFile)
+                // Find the library entries from the libraries table in the TOML file
+                val libraryEntries = tomlTree.get("libraries") ?: return false
+                // Find the name of the library entry that contains the Kotlin Gradle Plugin
+                libraryEntries.fields().asSequence().firstOrNull { (_, node) ->
+                    node.get("module")?.asText()?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
+                }?.key
+            }.getOrNull() ?: return false
 
-            val libraryTable = tomlFile.childrenOfType<TomlTable>().firstOrNull {
-                it.header.key?.text == "libraries"
-            } ?: return false
-
-            val gradlePluginKey = libraryTable.entries.firstOrNull { entry ->
-                val entryValue = entry.value as? TomlInlineTable ?: return@firstOrNull false
-                val moduleEntry = entryValue.entries.firstOrNull { it.key.text == "module" } ?: return@firstOrNull false
-                moduleEntry.value?.text?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
-            }?.key?.text ?: return false
-
+            // Make sure that the library entry that we found is actually referenced in the build script
             return buildSrcBuildFile.text.contains(gradlePluginKey)
         }
 
