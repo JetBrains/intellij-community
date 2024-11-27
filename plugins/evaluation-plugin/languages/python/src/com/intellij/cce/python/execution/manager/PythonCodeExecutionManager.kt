@@ -3,6 +3,7 @@ package com.intellij.cce.python.execution.manager
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.AIA_EXECUTION_SUCCESS_RATIO
 import com.intellij.cce.evaluable.AIA_TEST_BRANCH_COVERAGE
+import com.intellij.cce.evaluable.AIA_TEST_FILE_PROVIDED
 import com.intellij.cce.evaluable.AIA_TEST_LINE_COVERAGE
 import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
@@ -19,8 +20,25 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
 
   override fun getGeneratedCodeFile(code: String): File {
-    // ToDo check file path is provided in generated code
+    extractCodeDirectory(code)?.let {
+      val detectedPath = if (!it.startsWith("/")) "/$it" else it
+      collectedInfo.put(AIA_TEST_FILE_PROVIDED, true)
+      return File(project.basePath + detectedPath)
+    }
+    collectedInfo.put(AIA_TEST_FILE_PROVIDED, false)
     return File(project.basePath + defaultTestFilePath)
+  }
+
+  private fun extractCodeDirectory(code: String): String?{
+    // Regular expression to match the comment line with directory
+    val pattern = Regex("""^#\s*(?:[Ff]ile:\s*)?(.*)""") // Accepts both # file: <directory> and  # <directory>
+
+    // Split the code into lines, take the first line, and trim it
+    val firstLine = code.lines().firstOrNull()?.trim() ?: return null
+
+    // Match the pattern in the first line
+    val match = pattern.matchEntire(firstLine)
+    return match?.groups?.get(1)?.value?.trim()
   }
 
   override fun saveGeneratedCodeFile(code: String) {
