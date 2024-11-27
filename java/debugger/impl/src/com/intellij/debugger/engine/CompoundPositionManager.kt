@@ -66,12 +66,13 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
     cancellationCheck: () -> Unit,
     processor: (PositionManager) -> T?,
   ): T? {
+    val isCancellableSection = ProgressManager.getInstance().hasProgressIndicator()
     for (positionManager in myPositionManagers) {
       if (!acceptsFileType(positionManager, fileType)) continue
+      if (isCancellableSection) {
+        cancellationCheck()
+      }
       try {
-        if (!ignorePCE) {
-          cancellationCheck()
-        }
         return suppressExceptions(defaultValue, ignorePCE, NoDataException::class.java) { processor(positionManager) }
       }
       catch (_: NoDataException) {
