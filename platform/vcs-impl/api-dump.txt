@@ -1028,6 +1028,8 @@ f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent
 - closePreview():V
 - openPreview(Z):Z
 - f:updatePreview(Z):V
+f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponentKt
+- sf:shouldHaveSplitterDiffPreview(com.intellij.openapi.project.Project,Z):Z
 c:com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFileWithTabName
