@@ -371,6 +371,9 @@ public final class PsiUtil extends PsiUtilCore {
       PsiElement scope = variable.getParent() == null ? null : variable.getParent().getParent();
       codeBlock = getTopLevelEnclosingCodeBlock(variable, scope);
       if (codeBlock != null && codeBlock.getParent() instanceof PsiSwitchStatement) codeBlock = codeBlock.getParent().getParent();
+      if (codeBlock == null && scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchExpression) {
+        codeBlock = scope;
+      }
     }
     return codeBlock;
   }
