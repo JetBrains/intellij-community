@@ -106,6 +106,13 @@ public final class JUnit5TestFrameworkSetupUtil {
                        @Target({ ElementType.ANNOTATION_TYPE, ElementType.FIELD, ElementType.PARAMETER })
                        public @interface TempDir {}
                        """);
+    fixture.addClass("""
+                     package org.junit.jupiter.api;
+                     import org.junit.platform.commons.annotation.Testable;
+                     
+                     @Testable
+                     public @interface TestTemplate {}
+                     """);
     return fixture;
   }
 
@@ -119,15 +126,14 @@ public final class JUnit5TestFrameworkSetupUtil {
 
     fixture.addClass("""
                        package org.junitpioneer.jupiter;
-                       import org.junit.platform.commons.annotation.Testable;
+                       import org.junit.jupiter.api.TestTemplate;
                        
-                       @Testable
+                       @TestTemplate
                        @Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
                        public @interface RetryingTest {
                          int value() default 0;
                        }
                        """);
-
     return fixture;
   }
 }

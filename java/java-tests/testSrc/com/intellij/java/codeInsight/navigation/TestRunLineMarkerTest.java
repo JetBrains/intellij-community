@@ -195,7 +195,8 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
           }
       }
       """);
-    doTest();
+    GutterMark mark = findSingleGutterAtCaret();
+    assertEquals(ExecutionBundle.message("run.text"), mark.getTooltipText());
   }
 
   public void testRetryingTestAnnotationWithRegularTest() {
@@ -204,7 +205,7 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
       import org.junit.jupiter.api.Test;
       import org.junitpioneer.jupiter.RetryingTest;
       
-      public class ClassWithRetryingTEst {
+      public class ClassWithRetryingTest {
           @RetryingTest(value = 2)
           void <caret>retryingTest() {
           }
@@ -215,7 +216,28 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
       }
       """);
 
-    doTest();
+    GutterMark mark = findSingleGutterAtCaret();
+    assertEquals(ExecutionBundle.message("run.text"), mark.getTooltipText());
+  }
+
+  public void testRetryingTestAnnotationWithDifferentParameters() {
+    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
+    myFixture.configureByText("ClassWithRetryingTestWithDifferentParameters.java", """
+      import org.junit.jupiter.api.Test;
+      import org.junitpioneer.jupiter.RetryingTest;
+      
+      public class ClassWithRetryingTestWithDifferentParameters {
+          @RetryingTest(maxAttempts = 2, minSuccess = 1, suspendForMs = 0)
+          void <caret>retryingTest() {
+          }
+      
+          @Test
+          void regularTest() {
+          }
+      }
+      """);
+    GutterMark mark = findSingleGutterAtCaret();
+    assertEquals(ExecutionBundle.message("run.text"), mark.getTooltipText());
   }
 
   public void testRetryingTestAnnotationSupportGradle() {
@@ -233,12 +255,6 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     setupRunConfiguration(new MockGradleRunConfiguration(myFixture.getProject(), "ClassWithRetryingTest"));
     doTestState("java:suite://ClassWithRetryingTest/retryingTest", TestStateInfo.Magnitude.PASSED_INDEX.getValue(), AllIcons.RunConfigurations.TestState.Green2);
 
-  }
-
-  private void doTest() {
-    List<GutterMark> markList = myFixture.findGuttersAtCaret();
-    assertSize(1, markList);
-    assertEquals(ExecutionBundle.message("run.text"), ContainerUtil.getOnlyItem(markList).getTooltipText());
   }
 
   private void doTestClassWithMain(Runnable setupExisting) {
@@ -302,5 +318,11 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     finally {
       stateStorage.removeState(testUrl);
     }
+  }
+
+  private @NotNull GutterMark findSingleGutterAtCaret() {
+    List<GutterMark> markList = myFixture.findGuttersAtCaret();
+    assertSize(1, markList);
+    return ContainerUtil.getOnlyItem(markList);
   }
 }
