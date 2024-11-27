@@ -2,7 +2,7 @@
 
 fun foo() {
     for (value in f()) {
-
+        <caret>
     }
 }
 

@@ -6,7 +6,7 @@ fun foo(names: List<String>, name: String) {
     }
 
     for (value in names) {
-
+        <caret>
     }
 
     val name1 = ""

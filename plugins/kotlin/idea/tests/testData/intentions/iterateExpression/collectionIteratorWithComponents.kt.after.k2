@@ -10,7 +10,7 @@ operator fun Foo.component3() = "$name: $id"
 
 fun test() {
     for (value in listOf(Foo(123, "def"), Foo(456, "abc"))) {
-
+        <caret>
     }
 }
 

@@ -3,7 +3,7 @@
 // AFTER-WARNING: Variable 's' is never used
 fun test() {
     for (value in mapOf(1 to "1", 2 to "2")) {
-
+        <caret>
     }
 }
 

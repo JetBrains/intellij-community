@@ -1,6 +1,6 @@
 fun foo(list: List<String>) {
     for (value in list) {
-
+        <caret>
     }
 }
 
