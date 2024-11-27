@@ -6,7 +6,7 @@ import com.intellij.cce.metric.util.Sample
 
 class PreservedApi : Metric {
   override val name: String = "Preserved API"
-  override val description: String = "Ratio of sessions where public API hasn't been erased"
+  override val description: String = "Ratio of sessions where public API has not been erased"
   override val valueType: MetricValueType = MetricValueType.DOUBLE
   override val showByDefault: Boolean = true
 
