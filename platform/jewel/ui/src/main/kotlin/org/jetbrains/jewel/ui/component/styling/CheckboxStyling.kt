@@ -63,9 +63,9 @@ public class CheckboxMetrics(
     public fun outlineCornerSizeFor(state: CheckboxState): State<CornerSize> =
         rememberUpdatedState(
             when {
-                state.isFocused && state.isSelected -> outlineSelectedFocusedCornerSize
-                !state.isFocused && state.isSelected -> outlineSelectedCornerSize
-                state.isFocused && !state.isSelected -> outlineFocusedCornerSize
+                state.isFocused && state.isSelectedOrIndeterminate -> outlineSelectedFocusedCornerSize
+                !state.isFocused && state.isSelectedOrIndeterminate -> outlineSelectedCornerSize
+                state.isFocused && !state.isSelectedOrIndeterminate -> outlineFocusedCornerSize
                 else -> outlineCornerSize
             }
         )
@@ -74,9 +74,9 @@ public class CheckboxMetrics(
     public fun outlineSizeFor(state: CheckboxState): State<DpSize> =
         rememberUpdatedState(
             when {
-                state.isFocused && state.isSelected -> outlineSelectedFocusedSize
-                !state.isFocused && state.isSelected -> outlineSelectedSize
-                state.isFocused && !state.isSelected -> outlineFocusedSize
+                state.isFocused && state.isSelectedOrIndeterminate -> outlineSelectedFocusedSize
+                !state.isFocused && state.isSelectedOrIndeterminate -> outlineSelectedSize
+                state.isFocused && !state.isSelectedOrIndeterminate -> outlineFocusedSize
                 else -> outlineSize
             }
         )

@@ -291,7 +291,10 @@ private fun CheckboxImpl(
     val wrapperModifier =
         modifier.triStateToggleable(
             state = state,
-            onClick = onClick,
+            onClick = {
+                onClick()
+                state
+            },
             enabled = enabled,
             role = Role.Checkbox,
             interactionSource = interactionSource,
@@ -315,7 +318,7 @@ private fun CheckboxImpl(
             } else {
                 PainterHint.None
             },
-            Selected(checkboxState.toggleableState == ToggleableState.On),
+            Selected(checkboxState.toggleableState != ToggleableState.Off),
             Stateful(checkboxState),
         )
 

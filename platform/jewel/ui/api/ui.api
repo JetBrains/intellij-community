@@ -184,6 +184,8 @@ public final class org/jetbrains/jewel/ui/component/CheckboxState : org/jetbrain
 	public static fun isPressed-impl (J)Z
 	public fun isSelected ()Z
 	public static fun isSelected-impl (J)Z
+	public fun isSelectedOrIndeterminate ()Z
+	public static fun isSelectedOrIndeterminate-impl (J)Z
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (J)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()J
@@ -1037,6 +1039,8 @@ public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState : 
 	public static fun isPressed-impl (J)Z
 	public fun isSelected ()Z
 	public static fun isSelected-impl (J)Z
+	public fun isSelectedOrIndeterminate ()Z
+	public static fun isSelectedOrIndeterminate-impl (J)Z
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (J)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()J

@@ -20,7 +20,7 @@ fun Checkboxes() {
         TriStateCheckboxRow(
             "Checkbox",
             checked,
-            {
+            onClick = {
                 checked =
                     when (checked) {
                         ToggleableState.On -> ToggleableState.Off
@@ -32,7 +32,7 @@ fun Checkboxes() {
         TriStateCheckboxRow(
             "Error",
             checked,
-            {
+            onClick = {
                 checked =
                     when (checked) {
                         ToggleableState.On -> ToggleableState.Off
@@ -45,7 +45,7 @@ fun Checkboxes() {
         TriStateCheckboxRow(
             "Warning",
             checked,
-            {
+            onClick = {
                 checked =
                     when (checked) {
                         ToggleableState.On -> ToggleableState.Off
@@ -55,6 +55,6 @@ fun Checkboxes() {
             },
             outline = Outline.Warning,
         )
-        TriStateCheckboxRow("Disabled", checked, {}, enabled = false)
+        TriStateCheckboxRow("Disabled", checked, onClick = {}, enabled = false)
     }
 }

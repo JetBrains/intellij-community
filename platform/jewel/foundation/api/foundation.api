@@ -872,6 +872,7 @@ public abstract interface class org/jetbrains/jewel/foundation/state/ToggleableC
 	public static final field Companion Lorg/jetbrains/jewel/foundation/state/ToggleableComponentState$Companion;
 	public abstract fun getToggleableState ()Landroidx/compose/ui/state/ToggleableState;
 	public abstract fun isSelected ()Z
+	public abstract fun isSelectedOrIndeterminate ()Z
 }
 
 public final class org/jetbrains/jewel/foundation/state/ToggleableComponentState$Companion {
@@ -880,6 +881,7 @@ public final class org/jetbrains/jewel/foundation/state/ToggleableComponentState
 
 public final class org/jetbrains/jewel/foundation/state/ToggleableComponentState$DefaultImpls {
 	public static fun isSelected (Lorg/jetbrains/jewel/foundation/state/ToggleableComponentState;)Z
+	public static fun isSelectedOrIndeterminate (Lorg/jetbrains/jewel/foundation/state/ToggleableComponentState;)Z
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/theme/JewelTheme {
