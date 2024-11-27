@@ -158,7 +158,7 @@ public interface JBAccountInfoService {
 
   record JbaOAuthProvider(
     @NotNull String id,
-    @NotNull String name,
+    @NlsSafe @NotNull String name,
     @NotNull String logoUrl,
     @NotNull String logoDarkUrl
   ) { }
