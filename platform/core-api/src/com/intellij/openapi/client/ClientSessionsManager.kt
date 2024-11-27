@@ -11,8 +11,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -65,8 +63,7 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
      */
     @JvmStatic
     fun getAppSessionOrThrow(application: Application, clientId: ClientId): ClientAppSession {
-      val (session, disposed) = application.service<ClientSessionsManager<ClientAppSession>>().getSessionAndDisposedStatus(clientId)
-      if (disposed) cancelled("Application-level session is disposed for $clientId")
+      val session = application.service<ClientSessionsManager<ClientAppSession>>().getSession(clientId)
       return session ?: error("Application-level session is not set for $clientId")
     }
 
@@ -99,8 +96,7 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
      */
     @JvmStatic
     fun getProjectSessionOrThrow(project: Project, clientId: ClientId): ClientProjectSession {
-      val (session, disposed) = project.service<ClientSessionsManager<ClientProjectSession>>().getSessionAndDisposedStatus(clientId)
-      if (disposed) cancelled("Project-level session is disposed for $clientId")
+      val session = project.service<ClientSessionsManager<ClientProjectSession>>().getSession(clientId)
       return session ?: error("Project-level session is not set for $clientId")
     }
 
@@ -114,20 +110,17 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
       return project.service<ClientSessionsManager<ClientProjectSession>>().getSessions(kind)
     }
 
-    private fun cancelled(message: String): Nothing = throw ProcessCanceledException(AlreadyDisposedException(message))
-
     private val disposedRemovalDelay = 1.minutes
   }
 
   private val sessions = ConcurrentHashMap<ClientId, T>()
-  private val recentlyDisposedSessions = ContainerUtil.newConcurrentSet<ClientId>()
 
   fun getSessions(kind: ClientKind): List<T> {
     if (kind == ClientKind.ALL) {
-      return java.util.ArrayList(sessions.values)
+      return sessions.values.filter { !it.isDisposed }
     }
     else {
-      return sessions.values.filter { it.type.matches(kind) }
+      return sessions.values.filter { !it.isDisposed && it.type.matches(kind) }
     }
   }
 
@@ -137,22 +130,25 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
 
   fun registerSession(disposable: Disposable, session: T) {
     val clientId = session.clientId
-    // the same session probably can be disposed before
-    recentlyDisposedSessions.remove(clientId)
-    if (sessions.putIfAbsent(clientId, session) != null) {
-      LOG.error("Session $session with such clientId is already registered")
+    val oldSession = sessions.put(clientId, session)
+    if (oldSession != null) {
+      if (oldSession.isDisposed) {
+        LOG.info("A disposed session $oldSession for $clientId is replaced with a new $session")
+      }
+      else {
+        LOG.error("Session $oldSession with such clientId $clientId is already registered and will be replaced with $session")
+        Disposer.dispose(oldSession)
+      }
     }
     LOG.debug { "Session added '$session'" }
 
     Disposer.register(disposable, session)
     Disposer.register(disposable) {
-      recentlyDisposedSessions.add(clientId)
-      sessions.remove(clientId)
-      LOG.debug { "Session for '$clientId' removed and added to recently disposed" }
+      LOG.debug { "Session for '$clientId' will be removed after delay" }
       scope.launch {
         delay(disposedRemovalDelay)
-        recentlyDisposedSessions.remove(clientId)
-        LOG.debug("Session for '$clientId' removed from recently disposed after $disposedRemovalDelay")
+        sessions.remove(clientId)
+        LOG.debug { "Session for '$clientId' removed from after $disposedRemovalDelay" }
       }
     }
   }
@@ -162,11 +158,5 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
               level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("!session.isDisposed"))
   fun isValid(clientId: ClientId): Boolean {
     return getSession(clientId)?.isDisposed == false
-  }
-
-  private fun getSessionAndDisposedStatus(clientId: ClientId): Pair<T?, Boolean> {
-    val session = getSession(clientId)
-    if (session == null && recentlyDisposedSessions.contains(clientId)) return null to true
-    return session to (session?.isDisposed == true)
   }
 }
