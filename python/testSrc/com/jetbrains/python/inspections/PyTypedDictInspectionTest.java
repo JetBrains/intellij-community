@@ -242,6 +242,13 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                  "X = TypedDict('X', {'x': int}, total=<warning descr=\"Value of 'total' must be True or False\">1</warning>)");
   }
 
+  public void testUnexpectedInitClassArgument() {
+    doTestByText("""
+                   from typing import TypedDict
+                   class A(TypedDict, <warning descr="Unexpected argument 'ab' for __init_subclass__ of TypedDict">ab=False</warning>):
+                       i: int""");
+  }
+
   public void testGetWithIncorrectKeyType() {
     doTestByText("""
                    from typing import TypedDict

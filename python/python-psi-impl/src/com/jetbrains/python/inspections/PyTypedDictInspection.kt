@@ -69,14 +69,23 @@ class PyTypedDictInspection : PyInspection() {
 
     override fun visitPyArgumentList(node: PyArgumentList) {
       if (node.parent is PyClass && PyTypedDictTypeProvider.isTypingTypedDictInheritor(node.parent as PyClass, myTypeEvalContext)) {
-        val arguments = node.arguments
-        for (argument in arguments) {
+        for (argument in node.arguments) {
           val type = myTypeEvalContext.getType(argument)
           if (!isValidSuperclass(argument, type)) {
             registerProblem(argument, PyPsiBundle.message("INSP.typeddict.typeddict.cannot.inherit.from.non.typeddict.base.class"))
           }
-          if (argument is PyKeywordArgument && argument.keyword == TYPED_DICT_TOTAL_PARAMETER && argument.valueExpression != null) {
-            checkValidTotality(argument.valueExpression!!)
+          if (argument is PyKeywordArgument) {
+            val keyword = argument.keyword
+            if (keyword == TYPED_DICT_TOTAL_PARAMETER) {
+              val valueExpression = argument.valueExpression
+              if (valueExpression != null) {
+                checkValidTotality(valueExpression)
+              }
+            }
+            else if (keyword != PyNames.METACLASS) {
+              registerProblem(argument,
+                              PyPsiBundle.message("INSP.typeddict.unexpected.argument.for.__init_subclass__.of.TypedDict", keyword))
+            }
           }
         }
       }
