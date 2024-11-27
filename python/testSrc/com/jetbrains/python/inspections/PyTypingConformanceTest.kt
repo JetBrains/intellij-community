@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
 import com.intellij.util.io.URLUtil
@@ -83,10 +84,16 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     val document = myFixture.getDocument(myFixture.file)
     myFixture.file.accept(object : PyRecursiveElementVisitor() {
       override fun visitComment(comment: PsiComment) {
-        super.visitComment(comment)
+        val startOffset = comment.textRange.startOffset
+        val lineNumber = document.getLineNumber(startOffset)
+        val lineStartOffset = document.getLineStartOffset(lineNumber)
+        val lineWithoutComment = document.getText(TextRange(lineStartOffset, startOffset))
+        if (lineWithoutComment.isBlank()) {
+          return
+        }
         val error = tryParseError(comment.text)
         if (error != null) {
-          result[document.getLineNumber(comment.textRange.startOffset)] = error
+          result[lineNumber] = error
         }
       }
     })
