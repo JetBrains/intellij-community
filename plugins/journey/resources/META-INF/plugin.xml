@@ -57,6 +57,12 @@
       <keyboard-shortcut first-keystroke="meta alt B" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta alt B" keymap="Mac OS X 10.5+"/>
     </action>
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyGoToDeclarationOrUsagesAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyGoToDeclarationOrUsagesAction" text="Go To Declaration Or Usages">
+      <keyboard-shortcut first-keystroke="ctrl B" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta B" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta B" keymap="Mac OS X 10.5+"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

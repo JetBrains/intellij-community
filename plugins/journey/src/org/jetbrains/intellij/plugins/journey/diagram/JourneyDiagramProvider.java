@@ -2,6 +2,7 @@ package org.jetbrains.intellij.plugins.journey.diagram;// Copyright 2000-2024 Je
 
 import com.intellij.diagram.*;
 import com.intellij.diagram.extras.DiagramExtras;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.graph.builder.GraphBuilder;
@@ -14,13 +15,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.uml.presentation.DiagramPresentationModelImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.intellij.plugins.journey.diagram.persistence.JourneyUmlFileSnapshotLoader;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager.updateEditorSize;
@@ -29,6 +34,25 @@ import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager
 public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNodeIdentity> {
   public static final String ID = "JOURNEY";
   private static final Logger LOG = Logger.getInstance(JourneyDiagramProvider.class);
+
+  /**
+   For some reason {@link com.intellij.uml.UmlEditorProvider} (private method #getProviderFromFile) COPIES provider via ctor,
+   so models become diverged.
+   Therefore they are static for now.
+   TODO Make them non-static when Journey uses custom EditorProvider
+  */
+  private static final List<JourneyDiagramDataModel> myModels = new DisposableWrapperList<>();
+
+  public static @NotNull JourneyDiagramProvider getInstance() {
+    return DIAGRAM_PROVIDER.getExtensionList().stream()
+      .filter(it -> it instanceof JourneyDiagramProvider)
+      .map(it -> (JourneyDiagramProvider)it)
+      .findAny().orElseThrow();
+  }
+
+  public @Unmodifiable @NotNull List<JourneyDiagramDataModel> getModels() {
+    return Collections.unmodifiableList(myModels);
+  }
 
   private final DiagramElementManager<JourneyNodeIdentity> myElementManager;
   private final JourneyDiagramVfsResolver myVfsResolver = new JourneyDiagramVfsResolver();
@@ -72,6 +96,7 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
         LOG.error("Could not load snapshot from .uml file", e);
       }
 
+      myModels.add(dataModel);
       return dataModel;
     }
     catch (Exception e) {
@@ -93,8 +118,10 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
   }
 
   private static @Nullable JourneyNode findNodeForFile(JourneyDiagramDataModel model, PsiElement node) {
-    return ContainerUtil.find(model.getNodes(), e ->
-      e.getIdentifyingElement().element().isEquivalentTo(node));
+    return ReadAction.compute(
+      () -> ContainerUtil.find(model.getNodes(), e ->
+        e.getIdentifyingElement().element().isEquivalentTo(node))
+    );
   }
 
   @Override

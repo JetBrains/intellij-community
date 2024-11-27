@@ -2,7 +2,6 @@ package org.jetbrains.intellij.plugins.journey.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
-import com.intellij.codeInsight.navigation.UtilKt;
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.plugins.journey.JourneyDataKeys;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel;
-import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,24 +77,15 @@ public class JourneyGotoImplementationAction extends AnAction implements Journey
     }
     List<PsiElement> result = Arrays.asList(targets);
 
-    if (result.isEmpty()) {
-      LOG.info("No super elements found");
-    }
-    if (result.size() == 1) {
-      diagramDataModel.addEdge(result.get(0), psiMember);
-    }
-    if (result.size() > 1) {
-      createTargetPopup(FindBundle.message("show.usages.ambiguous.title"), result, (e1) -> {
-        PsiElement element = e1.getNavigationElement();
-        var member = PsiUtil.tryFindParentOrNull(element, it -> it instanceof PsiMember);
-        if (member != null) {
-          element = member;
-        }
-        return UtilKt.targetPresentation(element);
-      }, (e1) -> {
-        diagramDataModel.addEdge(e1, psiMember);
-      }).showInBestPositionFor(editor);
-    }
+    JourneyGoToActionUtil.navigateWithPopup(
+      editor,
+      FindBundle.message("show.usages.ambiguous.title"),
+      result,
+      JourneyGoToActionUtil::getPresentationOfClosestMember,
+      (e1) -> {
+        diagramDataModel.addEdgeAsync(e1, psiMember);
+      }
+    );
   }
 
   /**

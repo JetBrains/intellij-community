@@ -1,6 +1,5 @@
 package org.jetbrains.intellij.plugins.journey.actions;
 
-import com.intellij.codeInsight.navigation.UtilKt;
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,12 +16,9 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.plugins.journey.JourneyDataKeys;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel;
-import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static com.intellij.ui.list.TargetPopup.createTargetPopup;
 
 /**
  * Finds super class\method and instead of navigating to them, adds them on the journey.
@@ -53,24 +49,15 @@ public class JourneyGotoSuperAction extends AnAction implements JourneyEditorOve
 
     List<PsiElement> result = Arrays.asList(findSuperElements(psiFile, offset));
 
-    if (result.isEmpty()) {
-      LOG.info("No super elements found");
-    }
-    if (result.size() == 1) {
-      diagramDataModel.addEdge(psiMember, result.get(0));
-    }
-    if (result.size() > 1) {
-      createTargetPopup(FindBundle.message("show.usages.ambiguous.title"), result, (e1) -> {
-        PsiElement element = e1.getNavigationElement();
-        var member = PsiUtil.tryFindParentOrNull(element, it -> it instanceof PsiMember);
-        if (member != null) {
-          element = member;
-        }
-        return UtilKt.targetPresentation(element);
-      }, (e1) -> {
-        diagramDataModel.addEdge(psiMember, e1);
-      }).showInBestPositionFor(editor);
-    }
+    JourneyGoToActionUtil.navigateWithPopup(
+      editor,
+      FindBundle.message("show.usages.ambiguous.title"),
+      result,
+      JourneyGoToActionUtil::getPresentationOfClosestMember,
+      (e1) -> {
+        diagramDataModel.addEdgeAsync(psiMember, e1);
+      }
+    );
   }
 
   /**

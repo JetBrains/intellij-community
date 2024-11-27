@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
@@ -19,54 +18,89 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.list.createTargetPopup
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.plugins.journey.JourneyDataKeys
+import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel
 
 internal class JourneyGotoDeclarationOnlyHandler() : CodeInsightActionHandler {
 
   companion object {
 
-    fun navigateToLookupItem(project: Project): Boolean {
+    @ApiStatus.Internal
+    fun findDeclarations(
+      editor: Editor,
+      diagramDataModel: JourneyDiagramDataModel,
+      project: Project,
+      file: PsiFile,
+    ): NavigationActionResult? {
+      val actionResult: NavigationActionResult?
+
+      if (navigateToLookupItem(editor, diagramDataModel)) {
+        actionResult = null
+      }
+      else
+
+        if (EditorUtil.isCaretInVirtualSpace(editor)) {
+          actionResult = null
+        }
+        else {
+          val offset = editor.caretModel.offset
+          actionResult = try {
+            underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+              gotoDeclaration(project, editor, file, offset)?.result()
+            }
+          }
+          catch (_: IndexNotReadyException) {
+            DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+              CodeInsightBundle.message("popup.content.navigation.not.available.during.index.update"),
+              DumbModeBlockedFunctionality.GotoDeclarationOnly)
+            null
+          }
+        }
+      return actionResult
+    }
+
+    fun navigateToLookupItem(editor: Editor, model: JourneyDiagramDataModel): Boolean {
+      val project = editor.project
+      if (project == null) {
+        return false
+      }
+
       val activeLookup: Lookup? = LookupManager.getInstance(project).activeLookup
       if (activeLookup == null) {
         return false
       }
       val currentItem = activeLookup.currentItem
-      navigateRequestLazy(project) {
-        TargetElementUtil.targetElementFromLookupElement(currentItem)
+      val targetElementFromLookupElement = TargetElementUtil.targetElementFromLookupElement(currentItem)
+
+      navigateRequestLazy(project, editor, model) {
+        targetElementFromLookupElement
           ?.gtdTargetNavigatable()
           ?.navigationRequest()
       }
       return true
     }
 
-    internal fun PsiElement.gtdTargetNavigatable(): Navigatable? {
-      return TargetElementUtil.getInstance()
-        .getGotoDeclarationTarget(this, navigationElement)
-        ?.psiNavigatable()
-    }
+    internal fun PsiElement.gtdTargetNavigatable(): Navigatable? = TargetElementUtil.getInstance()
+      .getGotoDeclarationTarget(this, navigationElement)
+      ?.psiNavigatable()
 
-    internal fun PsiElement.psiNavigatable(): Navigatable? {
-      return this as? Navigatable
-             ?: EditSourceUtil.getDescriptor(this)
-    }
+    fun PsiElement.psiNavigatable(): Navigatable? = this as? Navigatable ?: EditSourceUtil.getDescriptor(this)
 
-    /**
-     * Obtains a [NavigationRequest] instance from [requestor] on a background thread, and calls [navigateRequest].
-     */
-    fun navigateRequestLazy(project: Project, requestor: NavigationRequestor) {
+    fun navigateRequestLazy(project: Project, editor: Editor, diagramDataModel: JourneyDiagramDataModel, requestor: NavigationRequestor) {
       EDT.assertIsEdt()
       @Suppress("DialogTitleCapitalization")
       val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
         requestor.navigationRequest()
       }
       if (request != null) {
-        navigateRequest(project, request)
+        diagramDataModel.addEdgeAsync(editor, request)
       }
     }
 
@@ -75,30 +109,24 @@ internal class JourneyGotoDeclarationOnlyHandler() : CodeInsightActionHandler {
              ?: gotoDeclaration(file, offset)
     }
 
-    internal fun gotoDeclaration(
+    @ApiStatus.Internal
+    fun gotoDeclaration(
       project: Project,
       editor: Editor,
       actionResult: NavigationActionResult,
+      model: JourneyDiagramDataModel,
     ) {
       when (actionResult) {
         is SingleTarget -> {
-          val diagramDataModel = editor.getUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL)
-          if (diagramDataModel != null) {
-            val navigationRequest = underModalProgress(project, "Journey goto declaration.") {
-              actionResult.requestor.navigationRequest()
-            }
-
-            diagramDataModel.addEdge(editor, navigationRequest)
-            return
-          }
-          navigateRequestLazy(project, actionResult.requestor)
+          navigateRequestLazy(project, editor, model, actionResult.requestor)
         }
         is MultipleTargets -> {
+          // never tested. not sure if used at all.
           val popup = createTargetPopup(
             CodeInsightBundle.message("declaration.navigation.title"),
             actionResult.targets, LazyTargetWithPresentation::presentation
           ) { (requestor, _, _) ->
-            navigateRequestLazy(project, requestor)
+            navigateRequestLazy(project, editor, model, requestor)
           }
           popup.showInBestPositionFor(editor)
         }
@@ -108,34 +136,21 @@ internal class JourneyGotoDeclarationOnlyHandler() : CodeInsightActionHandler {
 
   override fun startInWriteAction(): Boolean = false
 
+  @RequiresEdt
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    if (navigateToLookupItem(project)) {
+    val diagramDataModel = editor.getUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL)
+    if (diagramDataModel == null) {
       return
     }
 
-    if (EditorUtil.isCaretInVirtualSpace(editor)) {
-      return
-    }
-
-    val offset = editor.caretModel.offset
-    val actionResult: NavigationActionResult? = try {
-      underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
-        gotoDeclaration(project, editor, file, offset)?.result()
-      }
-    }
-    catch (_: IndexNotReadyException) {
-      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-        CodeInsightBundle.message("popup.content.navigation.not.available.during.index.update"),
-        DumbModeBlockedFunctionality.GotoDeclarationOnly)
-      return
-    }
+    val actionResult: NavigationActionResult? = findDeclarations(editor, diagramDataModel, project, file)
 
     if (actionResult == null) {
       //notifyNowhereToGo(project, editor, file, offset)
       throw UnsupportedOperationException("Journey TODO")
     }
     else {
-      gotoDeclaration(project, editor, actionResult)
+      gotoDeclaration(project, editor, actionResult, diagramDataModel)
     }
   }
 

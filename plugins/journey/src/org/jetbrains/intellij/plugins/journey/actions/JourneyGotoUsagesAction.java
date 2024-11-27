@@ -1,28 +1,21 @@
 package org.jetbrains.intellij.plugins.journey.actions;
 
-import com.intellij.codeInsight.navigation.UtilKt;
 import com.intellij.find.FindBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.plugins.journey.JourneyDataKeys;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel;
-import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.ui.list.TargetPopup.createTargetPopup;
 
 public class JourneyGotoUsagesAction extends AnAction implements JourneyEditorOverrideActionPromoter {
 
@@ -44,30 +37,25 @@ public class JourneyGotoUsagesAction extends AnAction implements JourneyEditorOv
 
     final List<PsiElement> result = new ArrayList<>();
     ReferencesSearch.search(psiMember).forEach(reference -> {
-      PsiElement resolve = reference.getElement();
-      result.add(resolve);
+      PsiElement element = reference.getElement();
+      var isImport = ReadAction.compute(() -> {
+        PsiImportList importBlock = PsiTreeUtil.getParentOfType(element, PsiImportList.class);
+        return importBlock != null;
+      });
+      if (isImport) {
+        return;
+      }
+      result.add(element);
     });
 
-    if (result.isEmpty()) {
-      return;
-    }
-
-    if (result.size() > 1) {
-      List<PsiElement> filteredResult = result.stream().filter(element -> element instanceof PsiReferenceExpressionImpl).toList();
-      // TODO replace createTargetPopup to getPsiElementPopup
-      createTargetPopup(FindBundle.message("show.usages.ambiguous.title"), filteredResult, (e1) -> {
-        PsiElement element = e1.getNavigationElement();
-        var member = PsiUtil.tryFindParentOrNull(element, it -> it instanceof PsiMember);
-        if (member != null) {
-          element = member;
-        }
-        return UtilKt.targetPresentation(element);
-      }, (e1) -> {
-        diagramDataModel.addEdge(e1, psiMember);
-      }).showInBestPositionFor(editor);
-    } else {
-      diagramDataModel.addEdge(result.get(0), psiMember);
-    }
+    JourneyGoToActionUtil.navigateWithPopup(
+      editor,
+      FindBundle.message("show.usages.ambiguous.title"),
+      result,
+      JourneyGoToActionUtil::getPresentationOfClosestMember,
+      (e2) -> {
+        diagramDataModel.addEdgeAsync(e2, psiMember);
+      });
   }
-
 }
+

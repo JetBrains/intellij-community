@@ -16,7 +16,7 @@ import java.util.Collections;
 
 public class JourneyShowDiagram extends ShowDiagram {
   public void showDiagram(PsiElement file) {
-    DiagramSeed seed = createSeed(file.getProject(), new JourneyDiagramProvider(), new JourneyNodeIdentity(file), Collections.emptyList());
+    DiagramSeed seed = createSeed(file.getProject(), JourneyDiagramProvider.getInstance(), new JourneyNodeIdentity(file), Collections.emptyList());
     showUnderProgress(seed, new RelativePoint(new Point()));
   }
 

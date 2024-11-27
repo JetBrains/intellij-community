@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import org.jetbrains.intellij.plugins.journey.JourneyBundle
-import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel.getCurrentModel
+import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramProvider
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyShowDiagram.getUmlVirtualFile
 import org.jetbrains.intellij.plugins.journey.util.JourneyNavigationUtil
 
@@ -26,7 +26,8 @@ class AddToJourneyIntentionAction: IntentionAction, Iconable, LowPriorityAction 
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    getCurrentModel().addElementWithLayout(requireNotNull(JourneyNavigationUtil.getPsiElement(editor, file)))
+    // TODO select active journey?
+    JourneyDiagramProvider.getInstance().models.lastOrNull()?.addElementWithLayout(requireNotNull(JourneyNavigationUtil.getPsiElement(editor, file)))
     if (editor != null) {
       FileEditorManagerEx.getInstanceExIfCreated(project)?.openFile(getUmlVirtualFile(), null, FileEditorOpenOptions().withRequestFocus())
     }

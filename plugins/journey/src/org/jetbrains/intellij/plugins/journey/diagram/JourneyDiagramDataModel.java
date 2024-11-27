@@ -229,4 +229,8 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     PsiElement toResult = JourneyNavigationUtil.findPsiElement(getProject(), to);
     JourneyDiagramProvider.addEdge(fromResult, toResult, this);
   }
+
+  public void addEdgeAsync(Object from, Object to) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> addEdge(from, to));
+  }
 }
