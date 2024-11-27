@@ -1,47 +1,47 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 //file:noinspection GrPackage
 
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleDebuggerUtil
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleTasksUtil
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 
-gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
-  //noinspection GroovyAssignabilityCheck
-  def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
-  logger.debug("idea.gradle.debug.all is ${debugAllIsEnabled}")
+def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
+logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
 
-  taskGraph.allTasks.each { Task task ->
-  }
-  def jvmTasks = taskGraph.allTasks.findAll { task -> task instanceof JavaForkOptions }
-  def matchedTasks = debugAllIsEnabled ? jvmTasks : GradleTasksUtil.filterStartTasks(jvmTasks, gradle, rootProject)
-  matchedTasks.each { task ->
-    def moduleDir = task.project.projectDir.path
-    task.doFirst {
-      if (!GradleDebuggerUtil.isDebuggerEnabled()) {
-        return
-      }
-      if (task instanceof Test) {
-        task.maxParallelForks = 1
-        task.forkEvery = 0
-      }
-      String debuggerId = GradleDebuggerUtil.getDebuggerId()
-      String processParameters = GradleDebuggerUtil.getProcessParameters()
-      List<String> processOptions = GradleDebuggerUtil.getProcessOptions()
+GradleLifecycleUtil.afterProject(gradle) { Project project ->
+  project.gradle.taskGraph.whenReady {
+    def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
+    for (task in tasks) {
+      if (task instanceof JavaForkOptions) {
+        def moduleDir = task.project.projectDir.path
+        task.doFirst {
+          if (GradleDebuggerUtil.isDebuggerEnabled()) {
+            if (task instanceof Test) {
+              task.maxParallelForks = 1
+              task.forkEvery = 0
+            }
+            String debuggerId = GradleDebuggerUtil.getDebuggerId()
+            String processParameters = GradleDebuggerUtil.getProcessParameters()
+            List<String> processOptions = GradleDebuggerUtil.getProcessOptions()
 
-      def options = task as JavaForkOptions
-      def debugPort = ForkedDebuggerHelper.setupDebugger(debuggerId, task.path, processParameters, moduleDir)
-      def jvmArgs = options.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
-      jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty + ':' + debugPort
-      jvmArgs.addAll(processOptions)
-      if (jvmArgs.contains("")) {
-        throw new IllegalArgumentException("JVM arguments must not contain empty strings. Current value: $jvmArgs")
-      }
-      options.jvmArgs = jvmArgs
-    }
-    task.doLast {
-      if (GradleDebuggerUtil.isDebuggerEnabled()) {
-        String debuggerId = GradleDebuggerUtil.getDebuggerId()
-        ForkedDebuggerHelper.signalizeFinish(debuggerId, task.path)
+            def options = task as JavaForkOptions
+            def debugPort = ForkedDebuggerHelper.setupDebugger(debuggerId, task.path, processParameters, moduleDir)
+            def jvmArgs = options.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
+            jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty + ':' + debugPort
+            jvmArgs.addAll(processOptions)
+            if (jvmArgs.contains("")) {
+              throw new IllegalArgumentException("JVM arguments must not contain empty strings. Current value: $jvmArgs")
+            }
+            options.jvmArgs = jvmArgs
+          }
+        }
+        task.doLast {
+          if (GradleDebuggerUtil.isDebuggerEnabled()) {
+            String debuggerId = GradleDebuggerUtil.getDebuggerId()
+            ForkedDebuggerHelper.signalizeFinish(debuggerId, task.path)
+          }
+        }
       }
     }
   }

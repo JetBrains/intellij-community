@@ -4,7 +4,6 @@ package com.intellij.gradle.toolingExtension.impl.initScript.util;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.invocation.Gradle;
-import org.gradle.api.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +11,7 @@ import java.util.*;
 
 public final class GradleTasksUtil {
 
-  private static @Nullable String getRelativeTaskPath(@Nullable Project project, @NotNull Task task) {
-    if (project == null) return null;
+  private static @Nullable String getRelativeTaskPath(@NotNull Project project, @NotNull Task task) {
     String taskPath = task.getPath();
     String projectPath = project.getPath();
     if (taskPath.startsWith(projectPath + ":")) {
@@ -27,7 +25,7 @@ public final class GradleTasksUtil {
     }
   }
 
-  private static @NotNull List<String> getPossibleTaskNames(@Nullable Project project, @NotNull Task task) {
+  private static @NotNull List<String> getPossibleTaskNames(@NotNull Project project, @NotNull Task task) {
     String relativeTaskPath = getRelativeTaskPath(project, task);
     List<String> possibleTaskNames = new ArrayList<>();
     if (relativeTaskPath == null) {
@@ -41,7 +39,7 @@ public final class GradleTasksUtil {
     return possibleTaskNames;
   }
 
-  private static @NotNull MatchResult isMatchedTask(@Nullable Project project, @NotNull Task task, @NotNull List<String> matchers) {
+  private static @NotNull MatchResult isMatchedTask(@NotNull Project project, @NotNull Task task, @NotNull List<String> matchers) {
     List<String> possibleNames = getPossibleTaskNames(project, task);
     for (String possibleName : possibleNames) {
       for (String matcher : matchers) {
@@ -60,13 +58,9 @@ public final class GradleTasksUtil {
     return MatchResult.NOT_MATCHED;
   }
 
-  private static @NotNull List<Task> filterMatchedTasks(
-    @Nullable Project project,
-    @NotNull List<Task> tasks,
-    @NotNull List<String> matchers
-  ) {
+  private static @NotNull List<Task> getMatchedTasks(@NotNull Project project, @NotNull List<String> matchers) {
     Map<Task, MatchResult> tasksMatchStatus = new LinkedHashMap<>();
-    for (Task task : tasks) {
+    for (Task task : project.getTasks()) {
       tasksMatchStatus.put(task, isMatchedTask(project, task, matchers));
     }
     List<Task> matchedTasks = new ArrayList<>();
@@ -88,16 +82,6 @@ public final class GradleTasksUtil {
 
   private enum MatchResult {
     MATCHED, PARTIALLY_MATCHED, NOT_MATCHED
-  }
-
-  public static @NotNull Project getCurrentProject(@NotNull Gradle gradle, @NotNull Project rootProject) {
-    String currentPath = gradle.getStartParameter().getCurrentDir().getPath();
-    for (Project project : rootProject.getAllprojects()) {
-      if (project.getProjectDir().getPath().equals(currentPath)) {
-        return project;
-      }
-    }
-    throw new IllegalArgumentException("Cannot find project by working directory " + currentPath);
   }
 
   private static @NotNull Gradle getRootGradle(@NotNull Gradle gradle) {
@@ -125,16 +109,15 @@ public final class GradleTasksUtil {
     return ":" + compositePathPrefixJoiner;
   }
 
-  public static @NotNull List<Task> filterStartTasks(@NotNull List<Task> tasks, @NotNull Gradle gradle, @NotNull Project rootProject) {
-    Project currentProject = getCurrentProject(gradle, rootProject);
-    Logger logger = currentProject.getLogger();
-    logger.debug("Current Project: {}", currentProject);
-
+  private static @NotNull List<String> getStartTaskNames(@NotNull Project project) {
+    Gradle gradle = project.getGradle();
     Gradle rootGradle = getRootGradle(gradle);
+
     List<String> startTaskNames = rootGradle.getStartParameter().getTaskNames();
-    logger.debug("Start Tasks Names: {}", startTaskNames);
 
     String compositePathPrefix = getCompositePathPrefix(gradle);
+    project.getLogger().debug("Composite path prefix: {}", compositePathPrefix);
+
     List<String> relativeStartTaskNames = new ArrayList<>();
     for (String startTaskName : startTaskNames) {
       relativeStartTaskNames.add(
@@ -144,15 +127,23 @@ public final class GradleTasksUtil {
       );
     }
     startTaskNames = relativeStartTaskNames;
-    logger.debug("Start Tasks Names after cleanup: {}", startTaskNames);
 
     if (startTaskNames.isEmpty()) {
-      startTaskNames = currentProject.getDefaultTasks();
+      startTaskNames = project.getDefaultTasks();
     }
 
-    List<Task> matchedTasks = filterMatchedTasks(currentProject, tasks, startTaskNames);
-    logger.debug("Matched tasks: {}", matchedTasks);
+    return startTaskNames;
+  }
 
-    return matchedTasks;
+  public static @NotNull List<Task> getStartTasks(@NotNull Project project) {
+    project.getLogger().debug("Project: {}", project);
+
+    List<String> startTaskNames = getStartTaskNames(project);
+    project.getLogger().debug("Start Tasks Names: {}", startTaskNames);
+
+    List<Task> startTasks = getMatchedTasks(project, startTaskNames);
+    project.getLogger().debug("Start Tasks: {}", startTasks);
+
+    return startTasks;
   }
 }

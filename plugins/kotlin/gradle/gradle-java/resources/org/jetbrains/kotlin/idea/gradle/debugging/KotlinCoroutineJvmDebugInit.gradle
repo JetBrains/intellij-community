@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 //file:noinspection GrPackage
 
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
 import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleTasksUtil
 import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 
@@ -15,17 +16,20 @@ interface Properties {
     public static final String disabledDebugJvmArgument = "-D$debugPropertyName=$debugPropertyValueOff"
 }
 
-gradle.taskGraph.whenReady { TaskExecutionGraph taskGraph ->
-    //noinspection GroovyAssignabilityCheck
-    def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
-    def jvmTasks = taskGraph.allTasks.findAll { task -> task instanceof Test || (task instanceof JavaExecSpec && task instanceof JavaForkOptions) }
-    def matchedTasks = debugAllIsEnabled ? jvmTasks : GradleTasksUtil.filterStartTasks(jvmTasks, gradle, rootProject)
+def debugAllIsEnabled = Boolean.valueOf(System.getProperty("idea.gradle.debug.all"))
+logger.debug("idea.gradle.debug.all is {}", debugAllIsEnabled)
 
-    matchedTasks.each { Task task ->
-        if (Properties.disabledDebugJvmArgument in task.getJvmArgs()) {
-            return
+GradleLifecycleUtil.afterProject(gradle) { Project project ->
+    project.gradle.taskGraph.whenReady {
+        def tasks = debugAllIsEnabled ? project.tasks : GradleTasksUtil.getStartTasks(project)
+        for (Task task in tasks) {
+            if (task instanceof Test || (task instanceof JavaExecSpec && task instanceof JavaForkOptions)) {
+                if (Properties.disabledDebugJvmArgument in task.getJvmArgs()) {
+                    continue
+                }
+                task.jvmArgumentProviders.add(new KotlinCoroutineJvmDebugArgumentsProvider(task))
+            }
         }
-        task.jvmArgumentProviders.add(new KotlinCoroutineJvmDebugArgumentsProvider(task))
     }
 }
 
