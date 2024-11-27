@@ -30,7 +30,6 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
-import kotlin.Throws
 
 @ApiStatus.Internal const val PACKAGE_ATTRIBUTE: String = "package"
 @ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE: String = "implementation-detail"
@@ -203,7 +202,6 @@ private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUG
   "fleet.backend.mercury.kotlin.macos",
   "org.jetbrains.android",
   "androidx.compose.plugins.idea",
-  "org.jetbrains.compose.desktop.ide",
   "org.jetbrains.plugins.kotlin.jupyter",
   "com.intellij.kmm",
   "com.jetbrains.kotlin.ocswift",

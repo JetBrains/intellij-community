@@ -1,4 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <module value="kotlin.plugin.k1"/>
+
   <xi:include href="/META-INF/analysis-api/analysis-api-fe10.xml"/> <!-- comes from the Kotlin compiler -->
 
   <xi:include href="kotlin-core.xml"/>

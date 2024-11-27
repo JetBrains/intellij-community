@@ -1,5 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
 
+  <module value="kotlin.plugin.k2"/>
+
   <dependencies>
     <plugin id="com.intellij.modules.platform"/>
     <plugin id="com.intellij.modules.java"/>
