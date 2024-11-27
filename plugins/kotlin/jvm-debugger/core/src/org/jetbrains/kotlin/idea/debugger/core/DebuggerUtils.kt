@@ -6,9 +6,9 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
@@ -59,15 +59,14 @@ object DebuggerUtils {
         scope: GlobalSearchScope,
         className: JvmClassName,
         fileName: String,
-    ): KtFile? = runBlockingMaybeCancellable {
-        findSourceFileForClass(
-            project,
-            listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
-            className,
-            fileName,
-            location = null
+    ): KtFile? = ReadAction.nonBlocking<KtFile?> {
+        val scopes = listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project))
+        val files = findSourceFilesForClass(
+            project, scopes, className, fileName,
+            hasLocation = false, classNameResolvesInline = false
         )
-    }
+        files.firstOrNull()
+    }.executeSynchronously()
 
     internal suspend fun findSourceFileForClass(
         project: Project,
