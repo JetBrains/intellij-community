@@ -35,11 +35,11 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    from typing import TypedDict
                    class Movie(TypedDict):
                        name: str
-                       def <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">my_method</weak_warning>(self):
-                           pass
-                       class <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">Horror</weak_warning>:
+                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">def my_method(self):
+                           pass</warning>
+                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">class Horror:
                            def __init__(self):
-                               ...""");
+                               ...</warning>""");
   }
 
   public void testInitializer() {
@@ -54,7 +54,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import TypedDict
                    class Movie(TypedDict):
-                       <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">...</weak_warning>
+                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">...</warning>
                    class HorrorMovie(TypedDict):
                        pass""");
   }

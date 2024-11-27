@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
@@ -142,21 +141,19 @@ class PyTypedDictInspection : PyInspection() {
           singleStatement is PyExpressionStatement &&
           singleStatement.expression is PyNoneLiteralExpression &&
           (singleStatement.expression as PyNoneLiteralExpression).isEllipsis) {
-        registerProblem(tryGetNameIdentifier(singleStatement),
-                        PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"),
-                        ProblemHighlightType.WEAK_WARNING)
+        registerProblem(singleStatement,
+                        PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"))
         return
       }
 
-      val classTypedDictType = PyTypedDictTypeProvider.Companion.getTypedDictTypeForResolvedElement(node, myTypeEvalContext)
+      val classTypedDictType = PyTypedDictTypeProvider.getTypedDictTypeForResolvedElement(node, myTypeEvalContext)
       node.processClassLevelDeclarations { element, _ ->
         if (element !is PyTargetExpression) {
           if (element is PyTypeParameter) {
             return@processClassLevelDeclarations true
           }
-          registerProblem(tryGetNameIdentifier(element),
-                          PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"),
-                          ProblemHighlightType.WEAK_WARNING)
+          registerProblem(element,
+                          PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"))
           return@processClassLevelDeclarations true
         }
         if (element.hasAssignedValue()) {
@@ -380,10 +377,6 @@ class PyTypedDictInspection : PyInspection() {
         }) {
         registerProblem(expression, PyPsiBundle.message("INSP.typeddict.value.must.be.type"), ProblemHighlightType.WEAK_WARNING)
       }
-    }
-
-    private fun tryGetNameIdentifier(element: PsiElement): PsiElement {
-      return if (element is PsiNameIdentifierOwner) element.nameIdentifier ?: element else element
     }
 
     private fun checkValidTotality(totalityValue: PyExpression) {
