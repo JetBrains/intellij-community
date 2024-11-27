@@ -23,26 +23,24 @@ class KotlinExtraSteppingFilter : ExtraSteppingFilter {
             return false
         }
 
+        val positionManager = KotlinPositionManager(debugProcess)
+        val sourcePosition = positionManager.safeGetSourcePosition(location) ?: return false
+        val settings = DebuggerSettings.getInstance()
         return runReadAction {
-            val positionManager = KotlinPositionManager(debugProcess)
-            val sourcePosition = positionManager.safeGetSourcePosition(location) ?: return@runReadAction false
+            if (!settings.TRACING_FILTERS_ENABLED) return@runReadAction false
+            val classNames = ClassNameProvider()
+                .getCandidates(sourcePosition)
+                .map { it.internalNameToFqn() }
 
-            val settings = DebuggerSettings.getInstance()
-            if (settings.TRACING_FILTERS_ENABLED) {
-                val classNames = ClassNameProvider()
-                    .getCandidates(sourcePosition)
-                    .map { it.internalNameToFqn() }
-
-                for (className in classNames) {
-                    for (filter in settings.steppingFilters) {
-                        if (filter.isEnabled && filter.matches(className)) {
-                            return@runReadAction true
-                        }
+            for (className in classNames) {
+                for (filter in settings.steppingFilters) {
+                    if (filter.isEnabled && filter.matches(className)) {
+                        return@runReadAction true
                     }
                 }
             }
 
-            return@runReadAction false
+            false
         }
     }
 

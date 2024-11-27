@@ -17,6 +17,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
@@ -620,7 +621,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                 // If we cannot get source debug extension information, we approximate information for inline functions.
                 // This allows us to stop on some breakpoints in inline functions, but does not work very well.
                 // Source debug extensions are not available on Android devices before Android O.
-                val inlineLocations = runReadAction { DebuggerUtils.getLocationsOfInlinedLine(type, position, debugProcess.searchScope) }
+                val inlineLocations = ReadAction.nonBlocking<List<Location>> {
+                    DebuggerUtils.getLocationsOfInlinedLine(type, position, debugProcess.searchScope)
+                }.executeSynchronously()
                 if (inlineLocations.isNotEmpty()) {
                     return inlineLocations
                 }

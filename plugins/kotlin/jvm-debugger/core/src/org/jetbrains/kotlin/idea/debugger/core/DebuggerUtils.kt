@@ -84,6 +84,7 @@ object DebuggerUtils {
         return chooseApplicableFile(files, location)
     }
 
+    @RequiresReadLock
     internal fun findSourceFilesForClass(
         project: Project,
         scopes: List<GlobalSearchScope>,
@@ -111,10 +112,8 @@ object DebuggerUtils {
                 return listOf(files.first())
             }
 
-            val singleFile = runReadAction {
-                val matchingFiles = KotlinFileFacadeFqNameIndex[partFqName.asString(), project, scope]
-                PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
-            }
+            val matchingFiles = KotlinFileFacadeFqNameIndex[partFqName.asString(), project, scope]
+            val singleFile = PackagePartClassUtils.getFilesWithCallables(matchingFiles).singleOrNull { it.name == fileName }
 
             if (singleFile != null) {
                 return listOf(singleFile)
