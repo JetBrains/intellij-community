@@ -45,6 +45,10 @@ public interface JBPopup extends Disposable, LightweightWindow {
    */
   void show(@NotNull RelativePoint point);
 
+  default void show(@NotNull RelativePoint point, @NotNull PopupShowOptions options) {
+    show(point);
+  }
+
   void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point);
 
   /**

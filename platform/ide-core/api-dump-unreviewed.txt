@@ -2134,6 +2134,7 @@ com.intellij.openapi.ui.popup.JBPopup
 - a:setUiVisible(Z):V
 - setUserData(java.util.List):V
 - a:show(com.intellij.ui.awt.RelativePoint):V
+- show(com.intellij.ui.awt.RelativePoint,com.intellij.openapi.ui.popup.PopupShowOptions):V
 - a:show(java.awt.Component):V
 - a:showCenteredInCurrentWindow(com.intellij.openapi.project.Project):V
 - a:showInBestPositionFor(com.intellij.openapi.actionSystem.DataContext):V
@@ -2181,6 +2182,7 @@ c:com.intellij.openapi.ui.popup.ListSeparator
 - <init>(java.lang.String,javax.swing.Icon):V
 - getIcon():javax.swing.Icon
 - getText():java.lang.String
+com.intellij.openapi.ui.popup.PopupShowOptions
 com.intellij.openapi.util.Expirable
 - a:isExpired():Z
 com.intellij.openapi.util.ExpirableRunnable

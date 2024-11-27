@@ -16228,6 +16228,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - setUserData(java.util.List):V
 - setWarning(java.lang.String):V
 - show(com.intellij.ui.awt.RelativePoint):V
+- show(com.intellij.ui.awt.RelativePoint,com.intellij.openapi.ui.popup.PopupShowOptions):V
 - show(java.awt.Component):V
 - show(java.awt.Component,I,I,Z):V
 - showCenteredInCurrentWindow(com.intellij.openapi.project.Project):V
@@ -16521,7 +16522,6 @@ a:com.intellij.ui.popup.WizardPopup
 - setOk(Z):V
 - pf:setParentValue(java.lang.Object):V
 - shouldBeShowing(java.lang.Object):Z
-- show(java.awt.Component,I,I,Z):V
 - pf:stopTimer():V
 f:com.intellij.ui.popup.async.AsyncPopupStep
 - com.intellij.openapi.ui.popup.PopupStep
