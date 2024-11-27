@@ -13,13 +13,10 @@ public class JavaEnvironmentClasses {
 
     @Nullable
     public static List<String> getClassNames(String methodName) {
-        switch (methodName) {
-            case "get":
-                return Arrays.asList("Dotenv", "DotEnv");
-            case "getProperty":
-                return Collections.singletonList("System");
-        }
-
-        return null;
+        return switch (methodName) {
+            case "get" -> Arrays.asList("Dotenv", "DotEnv");
+            case "getProperty" -> Collections.singletonList("System");
+            default -> null;
+        };
     }
 }
