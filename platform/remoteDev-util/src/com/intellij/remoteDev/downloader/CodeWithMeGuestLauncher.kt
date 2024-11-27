@@ -133,9 +133,26 @@ object CodeWithMeGuestLauncher {
       onDone(clientLifetime)
       return true
     }
+
+    val frontendInstallation = findFrontendInstallation(clientBuild)
+    if (frontendInstallation == null) return false
     
+    val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
+    val clientLifetime = CodeWithMeClientDownloader.runFrontendProcess(
+      lifetime = lifetime,
+      url = url,
+      frontendInstallation = frontendInstallation
+    )
+    onDone(clientLifetime)
+    return true
+  }
+
+  private fun findFrontendInstallation(clientBuild: BuildNumber): FrontendInstallation? {
+    val customSnapshotInstallation = CodeWithMeClientDownloader.createCustomFrontendSnapshotInstallation(clientBuild)
+    if (customSnapshotInstallation != null) return customSnapshotInstallation 
+
     if (!CodeWithMeClientDownloader.isClientDownloaded(clientBuild)) {
-      return false
+      return null
     }
     val sessionInfo = CodeWithMeClientDownloader.createSessionInfo(clientBuild, null, true)
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
@@ -146,14 +163,7 @@ object CodeWithMeGuestLauncher {
       cachesDir = service<JetBrainsClientDownloaderConfigurationProvider>().clientCachesDir,
       includeInManifest = CodeWithMeClientDownloader.getJetBrainsClientManifestFilter(sessionInfo.clientBuildNumber),
     )
-    val lifetime = aLifetime ?: project?.createLifetime() ?: Lifetime.Eternal
-    val clientLifetime = CodeWithMeClientDownloader.runFrontendProcess(
-      lifetime = lifetime,
-      url = url,
-      frontendInstallation = StandaloneFrontendInstallation(guestData.targetPath, clientBuild, null)
-    )
-    onDone(clientLifetime)
-    return true
+    return StandaloneFrontendInstallation(guestData.targetPath, clientBuild, null)
   }
 
   fun runDownloadedFrontend(lifetime: Lifetime, frontendInstallation: FrontendInstallation, urlForThinClient: String,

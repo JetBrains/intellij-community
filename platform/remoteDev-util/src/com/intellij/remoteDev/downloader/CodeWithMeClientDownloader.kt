@@ -285,6 +285,10 @@ object CodeWithMeClientDownloader {
   @ApiStatus.Experimental
   fun downloadFrontend(clientBuildNumber: BuildNumber, progressIndicator: ProgressIndicator): FrontendInstallation? {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val customSnapshotInstallation = createCustomFrontendSnapshotInstallation(clientBuildNumber)
+    if (customSnapshotInstallation != null) {
+      return customSnapshotInstallation
+    }
 
     val jdkBuildProgressIndicator = progressIndicator.createSubProgress(0.1)
     val jdkBuild = if (isClientWithBundledJre(clientBuildNumber)) {
@@ -588,6 +592,13 @@ object CodeWithMeClientDownloader {
       }
     }
     return null
+  }
+  
+  internal fun createCustomFrontendSnapshotInstallation(hostBuildNumber: BuildNumber): FrontendInstallation? {
+    if (!hostBuildNumber.isSnapshot) return null
+    val path = Registry.stringValue("rdct.path.to.custom.snapshot.frontend.installation").trim()
+    if (path.isEmpty()) return null
+    return StandaloneFrontendInstallation(Path(path), hostBuildNumber, jreDir = null)
   }
 
   private fun isAlreadyDownloaded(fileData: DownloadableFileData): Boolean {
