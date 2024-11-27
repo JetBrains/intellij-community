@@ -1,4 +1,7 @@
-<idea-plugin>
+<idea-plugin package="ru.adelf.idea.dotenv.ruby">
+  <dependencies>
+    <plugin id="com.intellij.modules.ruby"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="ruby" implementationClass="ru.adelf.idea.dotenv.ruby.RubyEnvCompletionProvider"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.ruby.RubyEnvCompletionProvider"/>
