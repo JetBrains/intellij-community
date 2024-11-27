@@ -20,7 +20,9 @@ class TestFileProvidedMetric : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        if (it.additionalInfo.getOrDefault(AIA_TEST_FILE_PROVIDED, false) as Boolean) {
+        val testFileProvided = it.additionalInfo.getOrDefault(AIA_TEST_FILE_PROVIDED, false)
+        if (testFileProvided !is Boolean) return Double.NaN
+        if (testFileProvided as Boolean) {
           sample.add(1.0)
           fileSample.add(1.0)
         }

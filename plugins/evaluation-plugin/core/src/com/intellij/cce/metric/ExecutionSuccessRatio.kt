@@ -22,6 +22,8 @@ class ExecutionSuccessRatio : Metric {
         val successRatio =
           it.additionalInfo.getOrDefault(AIA_EXECUTION_SUCCESS_RATIO, 0.0) as Double
 
+        if (successRatio < 0) return Double.NaN
+
         sample.add(successRatio)
         fileSample.add(successRatio)
       }

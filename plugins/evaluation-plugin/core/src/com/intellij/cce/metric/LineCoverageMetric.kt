@@ -19,11 +19,13 @@ class LineCoverageMetric : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        val successRatio =
+        val lineCoverage =
           it.additionalInfo.getOrDefault(AIA_TEST_LINE_COVERAGE, 0.0) as Double
 
-        sample.add(successRatio)
-        fileSample.add(successRatio)
+        if (lineCoverage < 0) return Double.NaN
+
+        sample.add(lineCoverage)
+        fileSample.add(lineCoverage)
       }
     return fileSample.mean()
   }

@@ -19,11 +19,13 @@ class BranchCoverageMetric : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        val successRatio =
+        val branchCoverage =
           it.additionalInfo.getOrDefault(AIA_TEST_BRANCH_COVERAGE, 0.0) as Double
 
-        sample.add(successRatio)
-        fileSample.add(successRatio)
+        if (branchCoverage < 0) return Double.NaN
+
+        sample.add(branchCoverage)
+        fileSample.add(branchCoverage)
       }
     return fileSample.mean()
   }
