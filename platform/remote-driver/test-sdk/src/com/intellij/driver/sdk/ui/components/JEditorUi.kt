@@ -82,6 +82,12 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun getSelection(): String? {
+    return interact {
+      getSelectionModel().getSelectedText()
+    }
+  }
+
 
   fun deleteFile() {
     driver.withWriteAction {

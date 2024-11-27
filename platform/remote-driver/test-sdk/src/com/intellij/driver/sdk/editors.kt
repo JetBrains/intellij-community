@@ -113,6 +113,7 @@ interface EditorColorsScheme {
 @Remote("com.intellij.openapi.editor.SelectionModel")
 interface SelectionModel {
   fun setSelection(startOffset: Int, endOffset: Int)
+  fun getSelectedText(): String?
 }
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
