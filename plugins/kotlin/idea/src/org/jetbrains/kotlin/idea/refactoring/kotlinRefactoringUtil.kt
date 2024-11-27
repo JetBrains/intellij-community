@@ -82,20 +82,6 @@ fun getOrCreateKotlinFile(
 ): KtFile =
     (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
 
-fun createKotlinFile(
-    fileName: String,
-    targetDir: PsiDirectory,
-    packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
-): KtFile {
-    targetDir.checkCreateFile(fileName)
-    val packageFqName = packageName?.let(::FqName) ?: FqName.ROOT
-    val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
-        fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName.quoteSegmentsIfNeeded()} \n\n" else ""
-    )
-
-    return targetDir.add(file) as KtFile
-}
-
 fun PsiElement.getUsageContext(): PsiElement {
     return when (this) {
         is KtElement -> PsiTreeUtil.getParentOfType(

@@ -25,16 +25,20 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.util.Query
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -42,6 +46,7 @@ import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.io.File
@@ -326,4 +331,52 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
         restOfName = cutLeftPart(restOfName)
     }
     return psiDirectory
+}
+
+@ApiStatus.Internal
+fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration, fileName: String? = declaration.name): KtFile? {
+    if (fileName == null) return null
+
+    val originalDir = declaration.containingFile.containingDirectory
+    val containerPackage = JavaDirectoryService.getInstance().getPackage(originalDir)
+    val packageDirective = declaration.containingKtFile.packageDirective
+    val directory = findOrCreateDirectoryForPackage(
+        module, containerPackage?.qualifiedName ?: ""
+    ) ?: return null
+    return runWriteAction {
+        val fileNameWithExtension = "$fileName.kt"
+        val existingFile = directory.findFile(fileNameWithExtension)
+        val packageName =
+            if (packageDirective?.packageNameExpression == null) directory.getFqNameWithImplicitPrefix()?.asString()
+            else packageDirective.fqName.asString()
+        if (existingFile is KtFile) {
+            val existingPackageDirective = existingFile.packageDirective
+            if (existingFile.declarations.isNotEmpty() &&
+                existingPackageDirective?.fqName != packageDirective?.fqName
+            ) {
+                val newName = KotlinNameSuggester.suggestNameByName(fileName) {
+                    directory.findFile("$it.kt") == null
+                } + ".kt"
+                createKotlinFile(newName, directory, packageName)
+            } else {
+                existingFile
+            }
+        } else {
+            createKotlinFile(fileNameWithExtension, directory, packageName)
+        }
+    }
+}
+
+fun createKotlinFile(
+    fileName: String,
+    targetDir: PsiDirectory,
+    packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
+): KtFile {
+    targetDir.checkCreateFile(fileName)
+    val packageFqName = packageName?.let { FqName(it) } ?: FqName.ROOT
+    val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
+        fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName.quoteIfNeeded().asString()} \n\n" else ""
+    )
+
+    return targetDir.add(file) as KtFile
 }

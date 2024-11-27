@@ -263,5 +263,17 @@ object CreateClassUtil {
     fun String.checkClassName(): Boolean = isNotEmpty() && Character.isUpperCase(first())
 
 
+    fun KtNamedDeclaration?.getTypeDescription(): String = when (this) {
+        is KtObjectDeclaration -> KotlinBundle.message("text.object")
+        is KtClass -> when {
+            isInterface() -> KotlinBundle.message("text.interface")
+            isEnum() -> KotlinBundle.message("text.enum.class")
+            isAnnotation() -> KotlinBundle.message("text.annotation.class")
+            else -> KotlinBundle.message("text.class")
+        }
 
+        is KtProperty, is KtParameter -> KotlinBundle.message("text.property")
+        is KtFunction -> KotlinBundle.message("text.function")
+        else -> KotlinBundle.message("text.declaration")
+    }
 }

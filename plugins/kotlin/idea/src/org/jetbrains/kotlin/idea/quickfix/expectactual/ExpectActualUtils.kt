@@ -3,26 +3,20 @@
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
 import com.intellij.ide.util.EditorHelper
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.expectActual.KotlinTypeInaccessibleException
-import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
-import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
-import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getTypeDescription
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -105,58 +99,6 @@ fun <D : KtNamedDeclaration> generateExpectOrActualInFile(
         )
     })
 }
-
-@ApiStatus.Internal
-fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration, fileName: String? = declaration.name): KtFile? {
-    if (fileName == null) return null
-
-    val originalDir = declaration.containingFile.containingDirectory
-    val containerPackage = JavaDirectoryService.getInstance().getPackage(originalDir)
-    val packageDirective = declaration.containingKtFile.packageDirective
-    val directory = findOrCreateDirectoryForPackage(
-        module, containerPackage?.qualifiedName ?: ""
-    ) ?: return null
-    return runWriteAction {
-        val fileNameWithExtension = "$fileName.kt"
-        val existingFile = directory.findFile(fileNameWithExtension)
-        val packageName =
-            if (packageDirective?.packageNameExpression == null) directory.getFqNameWithImplicitPrefix()?.asString()
-            else packageDirective.fqName.asString()
-        if (existingFile is KtFile) {
-            val existingPackageDirective = existingFile.packageDirective
-            if (existingFile.declarations.isNotEmpty() &&
-                existingPackageDirective?.fqName != packageDirective?.fqName
-            ) {
-                val newName = KotlinNameSuggester.suggestNameByName(fileName) {
-                    directory.findFile("$it.kt") == null
-                } + ".kt"
-                createKotlinFile(newName, directory, packageName)
-            } else {
-                existingFile
-            }
-        } else {
-            createKotlinFile(fileNameWithExtension, directory, packageName)
-        }
-    }
-}
-
-fun KtNamedDeclaration?.getTypeDescription(): String = when (this) {
-    is KtObjectDeclaration -> KotlinBundle.message("text.object")
-    is KtClass -> when {
-        isInterface() -> KotlinBundle.message("text.interface")
-        isEnum() -> KotlinBundle.message("text.enum.class")
-        isAnnotation() -> KotlinBundle.message("text.annotation.class")
-        else -> KotlinBundle.message("text.class")
-    }
-
-    is KtProperty, is KtParameter -> KotlinBundle.message("text.property")
-    is KtFunction -> KotlinBundle.message("text.function")
-    else -> KotlinBundle.message("text.declaration")
-}
-
-fun KtNamedDeclaration.isAlwaysActual(): Boolean = safeAs<KtParameter>()?.parent?.parent?.safeAs<KtPrimaryConstructor>()
-    ?.mustHaveValOrVar() ?: false
-
 
 fun TypeAccessibilityChecker.isCorrectAndHaveAccessibleModifiers(declaration: KtNamedDeclaration, showErrorHint: Boolean = false): Boolean {
     if (declaration.anyInaccessibleModifier(INACCESSIBLE_MODIFIERS, showErrorHint)) return false

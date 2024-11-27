@@ -493,6 +493,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddConsistentCopyVisibilityAnnotationFixFactories.errorFixFactory)
         registerFactory(AddConsistentCopyVisibilityAnnotationFixFactories.warningFixFactory)
 
+        registerFactory(ActualWithoutExpectFactory.fixFactory)
+
         registerPsiQuickFixes(KaFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
         registerPsiQuickFixes(KaFirDiagnostic.DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations::class, RemoveAnnotationFix)
