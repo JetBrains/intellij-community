@@ -148,6 +148,8 @@
   <technology name="http4s" root="org.http4s"/>
   <technology name="hystrix" root="com.netflix.hystrix"/>
   <technology name="infinispan" root="org.infinispan"/>
+  <technology name="intellij-api" root="com.intellij.openapi"/>
+  <technology name="intellij-psi" root="com.intellij.psi"/>
   <technology name="itextpdf" root="com.itextpdf"/>
   <technology name="jackson" root="com.fasterxml.jackson"/>
   <technology name="jaegertracing" root="io.jaegertracing"/>
