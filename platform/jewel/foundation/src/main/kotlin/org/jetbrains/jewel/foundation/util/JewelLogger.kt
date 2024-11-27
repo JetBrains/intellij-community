@@ -58,11 +58,11 @@ public abstract class JewelLogger {
 
                 // Create a new handler with a higher logging level
                 val handler = ConsoleHandler()
-                handler.level = Level.FINER
+                handler.level = Level.FINE
                 l.addHandler(handler)
 
                 // Tune the logger for level and duplicated messages
-                l.level = Level.FINER
+                l.level = Level.FINE
                 l.useParentHandlers = false
                 l
             }
@@ -101,31 +101,31 @@ public abstract class JewelLogger {
                     override fun trace(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.trace(message, t, logger)
-                        } catch (ignored: Exception) {}
+                        } catch (_: Exception) {}
                     }
 
                     override fun debug(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.debug(message, t, logger)
-                        } catch (ignored: Exception) {}
+                        } catch (_: Exception) {}
                     }
 
                     override fun info(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.info(message, t, logger)
-                        } catch (ignored: Exception) {}
+                        } catch (_: Exception) {}
                     }
 
                     override fun warn(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.warn(message, t, logger)
-                        } catch (ignored: Exception) {}
+                        } catch (_: Exception) {}
                     }
 
                     override fun error(message: String?, t: Throwable?) {
                         try {
                             this@ReflectionBasedFactory.error(message, t, logger)
-                        } catch (ignored: Exception) {}
+                        } catch (_: Exception) {}
                     }
                 }
             } catch (e: Exception) {
@@ -133,17 +133,17 @@ public abstract class JewelLogger {
             }
         }
 
-        @Throws(Exception::class) protected abstract fun trace(message: String?, t: Throwable?, logger: Any?)
+        @Throws(Exception::class) abstract fun trace(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class) protected abstract fun debug(message: String?, t: Throwable?, logger: Any?)
+        @Throws(Exception::class) abstract fun debug(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class) protected abstract fun error(message: String?, t: Throwable?, logger: Any?)
+        @Throws(Exception::class) abstract fun error(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class) protected abstract fun warn(message: String?, t: Throwable?, logger: Any?)
+        @Throws(Exception::class) abstract fun warn(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class) protected abstract fun info(message: String?, t: Throwable?, logger: Any?)
+        @Throws(Exception::class) abstract fun info(message: String?, t: Throwable?, logger: Any?)
 
-        @Throws(Exception::class) protected abstract fun getLogger(category: String?): Any
+        @Throws(Exception::class) abstract fun getLogger(category: String?): Any
     }
 
     private class IdeaFactory : ReflectionBasedFactory() {
@@ -259,10 +259,10 @@ public abstract class JewelLogger {
         private fun createFactory(): Factory =
             try {
                 IdeaFactory()
-            } catch (t: Throwable) {
+            } catch (_: Throwable) {
                 try {
                     Slf4JFactory()
-                } catch (t2: Throwable) {
+                } catch (_: Throwable) {
                     JavaFactory()
                 }
             }
