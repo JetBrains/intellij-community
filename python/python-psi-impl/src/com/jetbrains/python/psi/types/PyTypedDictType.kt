@@ -294,7 +294,13 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
                                   && (elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name))
       }
 
-      if (expected !is PyTypedDictType) return null
+      if (expected !is PyTypedDictType) {
+        // A TypedDict isn’t assignable to any Dict[...] type
+        if (expected is PyClassType && expected.classQName == PyNames.DICT) {
+          return TypeCheckingResult(false)
+        }
+        return null
+      }
 
       expected.fields.forEach {
         val expectedTypeAndTotality = it.value
