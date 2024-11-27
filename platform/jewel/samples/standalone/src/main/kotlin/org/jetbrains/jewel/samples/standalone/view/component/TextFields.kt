@@ -62,7 +62,7 @@ fun TextFields() {
 
 @Composable
 private fun TextFieldsRows(readOnly: Boolean) {
-    Column(modifier = Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = Modifier.padding(vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             val state1 = rememberTextFieldState("TextField")
             TextField(state = state1, modifier = Modifier.width(200.dp), readOnly = readOnly)
@@ -85,7 +85,7 @@ private fun TextFieldsRows(readOnly: Boolean) {
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             val state1 = rememberTextFieldState("")
             TextField(
                 state = state1,
@@ -99,7 +99,7 @@ private fun TextFieldsRows(readOnly: Boolean) {
             TextField(state = state2, enabled = false, modifier = Modifier.width(200.dp), readOnly = readOnly)
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
             val state1 = rememberTextFieldState("")
             TextField(
                 state = state1,
