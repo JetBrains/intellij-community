@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.uv.impl
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.util.io.delete
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
@@ -11,25 +12,40 @@ import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 internal class UvLowLevelImpl(val cwd: Path, val uvCli: UvCli) : UvLowLevel {
   override suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path> {
+    val addPythonArg: (MutableList<String>) -> Unit = { args ->
+      python?.let {
+        args.add("--python")
+        args.add(python.pathString)
+      }
+    }
+
     if (init) {
-      uvCli.runUv(cwd, "init").getOrElse {
+      val initArgs = mutableListOf("init")
+      addPythonArg(initArgs)
+      initArgs.add("--no-readme")
+      initArgs.add("--no-pin-python")
+      initArgs.add("--vcs")
+      initArgs.add("none")
+
+      uvCli.runUv(cwd, *initArgs.toTypedArray()).getOrElse {
         return Result.failure(it)
       }
     }
 
-    var args = mutableListOf("venv");
-    if (python != null) {
-      args.add("--python")
-      args.add(python.pathString)
-    }
-
-    uvCli.runUv(cwd, *args.toTypedArray()).getOrElse {
+    val venvArgs = mutableListOf("venv");
+    addPythonArg(venvArgs)
+    uvCli.runUv(cwd, *venvArgs.toTypedArray()).getOrElse {
       return Result.failure(it)
     }
+
+    // TODO: ask for an uv option not to create
+    val hello = cwd.resolve("hello.py").takeIf { it.exists() }
+    hello?.delete()
 
     val path = VirtualEnvReader.Instance.findPythonInPythonRoot(cwd.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
     if (path == null) {
