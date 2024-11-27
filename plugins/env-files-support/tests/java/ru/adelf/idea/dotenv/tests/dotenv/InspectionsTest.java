@@ -20,6 +20,7 @@ public class InspectionsTest extends DotEnvLightCodeInsightFixtureTestCase {
         myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("inspections.env"));
     }
 
+    @Override
     protected String getTestDataPath() {
         return basePath + "dotenv/fixtures";
     }

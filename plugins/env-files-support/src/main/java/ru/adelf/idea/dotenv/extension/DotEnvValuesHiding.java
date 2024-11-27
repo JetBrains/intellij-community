@@ -37,5 +37,5 @@ public class DotEnvValuesHiding extends FoldingBuilderEx implements DumbAware {
         return true;
     }
 
-    private static final FoldingDescriptor[] emptyResult = new FoldingDescriptor[0];
+    private static final FoldingDescriptor[] emptyResult = FoldingDescriptor.EMPTY_ARRAY;
 }
