@@ -249,6 +249,11 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                        i: int""");
   }
 
+  public void testUnexpectedArgumentAlternativeSyntax() {
+    doTestByText("from typing import TypedDict\n" +
+                 "X = TypedDict('X', {'x': int}, abb=False)");
+  }
+
   public void testGetWithIncorrectKeyType() {
     doTestByText("""
                    from typing import TypedDict

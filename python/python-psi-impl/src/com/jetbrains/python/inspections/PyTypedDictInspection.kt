@@ -104,7 +104,7 @@ class PyTypedDictInspection : PyInspection() {
             checkValueIsAType(it.value, it.value?.text)
           }
 
-          val totalityArgument = callExpression.getArgument(2, TYPED_DICT_TOTAL_PARAMETER, PyExpression::class.java)
+          val totalityArgument = callExpression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER)
           if (totalityArgument != null) {
             checkValidTotality(totalityArgument)
           }
