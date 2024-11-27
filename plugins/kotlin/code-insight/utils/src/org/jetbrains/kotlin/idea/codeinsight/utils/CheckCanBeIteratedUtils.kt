@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -23,6 +24,7 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = buildSet {
 }
 
 context(KaSession)
+@ApiStatus.Internal
 fun canBeIterated(type: KaType, checkNullability: Boolean = true): Boolean {
     return when (type) {
         is KaFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())

@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -42,11 +41,12 @@ class IterateExpressionIntention : KotlinApplicableModCommandAction<KtExpression
                 true,
                 KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
             )
-            /* TODO: to align with K1 for Maps: if `.iter`/`.for` postfixes ever start producing destructive declarations too:
-                Take two names from `KotlinNameSuggester().suggestTypeNames`, not only `first()`
-                val paramPattern = (names.singleOrNull()?.first()
-                ?: psiFactory.createDestructuringParameter(names.indices.joinToString(prefix = "(", postfix = ")") { "p$it" }))
-                */
+            /* After KTIJ-32329 `Support destructive declarations for .for/.iter postfixes, IterateExpressionIntention` is done:
+            to align with K1 for Maps:
+            Take two names from `KotlinNameSuggester().suggestTypeNames`, not only `first()`, then:
+            `psiFactory.createDestructuringParameter(names.indices.joinToString(prefix = "(", postfix = ")") { "p$it" }))`
+            See the K1 implementation around org/jetbrains/kotlin/idea/intentions/IterateExpressionIntention.kt:92
+            */
             with(KotlinNameSuggester()) {
                 suggestTypeNames(iterableType).map { typeName ->
                     KotlinNameSuggester.suggestNameByName(typeName) { nameValidator.validate(it) }
@@ -81,10 +81,7 @@ class IterateExpressionIntention : KotlinApplicableModCommandAction<KtExpression
         if (element.parent !is KtBlockExpression) return null
 
         return analyze(element) {
-            val expressionType = element.expressionType ?: return null
-            if (expressionType !is KaClassType) {
-                return null
-            }
+            val expressionType = element.expressionType as? KaClassType ?: return null
             if (!canBeIterated(expressionType)) return null
             Unit
         }
