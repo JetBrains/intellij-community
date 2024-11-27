@@ -39,25 +39,35 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
 
             else -> {
                 val allModules = buildList {
+                    add(module)
                     if (module is KaLibrarySourceModule) {
                         add(module.binaryLibrary)
-                    } else {
-                        add(module)
                     }
+
                     addAll(module.allDirectDependencies())
                 }
+
                 KotlinGlobalSearchScopeMerger.getInstance(project).union(allModules.map { it.contentScope })
             }
         }
+
+        // A dangling module already has builtins in the context module
+        val adjustedScope = if (module !is KaDanglingFileModule) {
+            // Workaround for KT-72988
+            scope.withBuiltInsScope(project)
+        } else {
+            scope
+        }
+
         return if (module is KaSourceModule) {
             // remove dependency on `ModuleInfo` after KT-69980 is fixed
             KotlinResolveScopeEnlarger.enlargeScope(
-                scope,
+                adjustedScope,
                 module.openapiModule,
-                isTestScope = module.sourceModuleKind == KaSourceModuleKind.TEST
+                isTestScope = module.sourceModuleKind == KaSourceModuleKind.TEST,
             )
         } else {
-            scope
+            adjustedScope
         }
     }
 
@@ -78,7 +88,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
 
     private fun GlobalSearchScope.withBuiltInsScope(project: Project): GlobalSearchScope {
         val builtinsScope = BuiltinsVirtualFileProvider.getInstance().createBuiltinsScope(project)
-        return GlobalSearchScope.union(listOf(this, builtinsScope))
+        return KotlinGlobalSearchScopeMerger.getInstance(project).union(listOf(this, builtinsScope))
     }
 
     /**
@@ -98,6 +108,6 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
 
         val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module.openapiModule, includeTests)
         if (ignored.isEmpty()) return searchScope
-        return (searchScope - KotlinGlobalSearchScopeMerger.getInstance(project).union(ignored)) as GlobalSearchScope
+        return searchScope - KotlinGlobalSearchScopeMerger.getInstance(project).union(ignored)
     }
 }

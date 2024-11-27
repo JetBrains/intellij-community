@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-k2-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-k2-tests-for-ide:2.1.20-dev-4555">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-k2-tests-for-ide:2.1.20-dev-4972">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.1.20-dev-4555/analysis-api-k2-tests-for-ide-2.1.20-dev-4555.jar">
-          <sha256sum>5a15253f4fe9ab3aaa2e607124af796fdbcee84102cdb32d9506c4aa552cce19</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.1.20-dev-4972/analysis-api-k2-tests-for-ide-2.1.20-dev-4972.jar">
+          <sha256sum>ba391f2c2d33d8bb9db3be03c66e32d73188918e04973a59abaaec89f85e30f2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.1.20-dev-4555/analysis-api-k2-tests-for-ide-2.1.20-dev-4555.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.1.20-dev-4972/analysis-api-k2-tests-for-ide-2.1.20-dev-4972.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.1.20-dev-4555/analysis-api-k2-tests-for-ide-2.1.20-dev-4555-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-k2-tests-for-ide/2.1.20-dev-4972/analysis-api-k2-tests-for-ide-2.1.20-dev-4972-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
