@@ -99,6 +99,8 @@ class BuildContextImpl internal constructor(
 
   override val nonBundledPluginsToBePublished: Path by lazy { nonBundledPlugins.resolve("auto-uploading") }
 
+  override val bundledRuntime: BundledRuntime = BundledRuntimeImpl(this)
+
   init {
     @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {
@@ -118,6 +120,9 @@ class BuildContextImpl internal constructor(
     if (!options.compatiblePluginsToIgnore.isEmpty()) {
       productProperties.productLayout.compatiblePluginsToIgnore =
         productProperties.productLayout.compatiblePluginsToIgnore.addAll(options.compatiblePluginsToIgnore)
+    }
+    check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix) {
+      "The runtime type doesn't match the one specified in the product properties: ${bundledRuntime.prefix} != ${productProperties.runtimeDistribution.artifactPrefix}"
     }
   }
 
