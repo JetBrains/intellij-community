@@ -182,7 +182,9 @@ fun JComponent.bindTooltipTextIn(scope: CoroutineScope, tooltipTextFlow: Flow<@N
 fun JTextComponent.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
-      text = it
+      if (text != it) {
+        text = it
+      }
     }
   }
 }
