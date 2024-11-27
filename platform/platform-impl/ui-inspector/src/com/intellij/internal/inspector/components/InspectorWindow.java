@@ -104,6 +104,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
 
       @Override
+      public void onAccessibleChanged(Accessible a) {
+        switchAccessibleInfo(a);
+        updateHighlighting();
+      }
+
+      @Override
       public void onClickInfoChanged(java.util.List<? extends PropertyBean> info) {
         switchClickInfo(info);
         updateHighlighting();
@@ -261,6 +267,15 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     Disposer.dispose(myInspectorTable);
     myInspectorTable = new InspectorTable(provider, myProject);
+    myWrapperPanel.setContent(myInspectorTable);
+  }
+
+  private void switchAccessibleInfo(@NotNull Accessible accessible) {
+    myComponents.clear();
+    myInfo = null;
+    setTitle(accessible.getClass().getName());
+    Disposer.dispose(myInspectorTable);
+    myInspectorTable = new InspectorTable(accessible, myProject);
     myWrapperPanel.setContent(myInspectorTable);
   }
 
@@ -496,10 +511,17 @@ public final class InspectorWindow extends JDialog implements Disposable {
         Object node = path.getLastPathComponent();
         if (node instanceof HierarchyTree.ComponentNode componentNode) {
           if (showAccessibilityIssues) {
-            Component c = componentNode.getComponent();
+            Component component = componentNode.getComponent();
+            Accessible accessible = componentNode.getAccessible();
+            AccessibleContext ac = null;
 
-            if (c instanceof Accessible a) {
-              AccessibleContext ac = a.getAccessibleContext();
+            if (component instanceof Accessible a) {
+              ac = a.getAccessibleContext();
+            }
+            else if (component == null && accessible != null) {
+              ac = accessible.getAccessibleContext();
+            }
+            if (ac != null) {
               componentNode.runAccessibilityTests(ac);
             }
           } else {
