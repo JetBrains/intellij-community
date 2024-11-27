@@ -559,7 +559,8 @@ public final class ListPluginComponent extends JPanel {
         myVersion.setText(NewUiUtil.getVersion(plugin, descriptor));
       }
       if (plugin.getProductCode() == null && descriptor.getProductCode() != null &&
-          !plugin.isBundled() && !LicensePanel.isEA2Product(descriptor.getProductCode())) {
+          !plugin.isBundled() && !LicensePanel.isEA2Product(descriptor.getProductCode()) &&
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(descriptor)) {
         if (myUpdateLicensePanel == null) {
           myLayout.addLineComponent(myUpdateLicensePanel = new LicensePanel(true));
           myUpdateLicensePanel.setBorder(JBUI.Borders.emptyTop(3));

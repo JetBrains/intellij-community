@@ -1239,11 +1239,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       return
     }
     if (productCode == null) {
-      if (updateDescriptor != null && updateDescriptor!!.productCode != null &&
-          !LicensePanel.isEA2Product(updateDescriptor!!.productCode)
+      val update = updateDescriptor
+      if (update != null && update.productCode != null &&
+          !LicensePanel.isEA2Product(update.productCode) &&
+          !LicensePanel.shouldSkipPluginLicenseDescriptionPublishing(update)
       ) {
         licensePanel.showBuyPluginWithText(IdeBundle.message("label.next.plugin.version.is"), true, false,
-                                           { updateDescriptor }, true,
+                                           { update }, true,
                                            true)
       }
       else {
