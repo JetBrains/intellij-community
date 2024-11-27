@@ -21,9 +21,9 @@ import kotlin.reflect.KClass
 private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, EditorCellExtension>>("CELL_EXTENSION_CONTAINER_KEY")
 
 class EditorCell(
-  private val editor: EditorEx,
-  val manager: NotebookCellInlayManager,
+  val notebook: EditorNotebook,
   var intervalPointer: NotebookIntervalPointer,
+  private val editor: EditorImpl,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
   val source = AtomicProperty<String>(getSource())
@@ -33,7 +33,7 @@ class EditorCell(
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
   val view: EditorCellView?
-    get() = manager.views[this]
+    get() = NotebookCellInlayManager.get(editor)!!.views[this]
 
   var visible = AtomicBooleanProperty(true)
 
@@ -67,7 +67,7 @@ class EditorCell(
   }
 
   fun update() {
-    manager.update { ctx -> update(ctx) }
+    editor.updateManager.update { ctx -> update(ctx) }
   }
 
   fun update(updateCtx: UpdateContext) {
@@ -97,7 +97,7 @@ class EditorCell(
   @PublishedApi
   internal fun createLazyControllers(factory: NotebookCellInlayController.LazyFactory) {
     factory.cellOrdinalsInCreationBlock.add(interval.ordinal)
-    manager.update { ctx ->
+    editor.updateManager.update { ctx ->
       update(ctx)
     }
     factory.cellOrdinalsInCreationBlock.remove(interval.ordinal)
@@ -110,7 +110,7 @@ class EditorCell(
       .firstOrNull { it.getControllerClass() == type.java }
   }
 
-  fun updateOutputs() {
+  fun updateOutputs() = editor.updateManager.update {
     outputs.updateOutputs()
   }
 

@@ -148,7 +148,7 @@ class EditorCellView(
     }
   }
 
-  private fun recreateControllers() = cell.manager.update { updateContext ->
+  private fun recreateControllers() = editor.updateManager.update { updateContext ->
     updateContext.addInlayOperation {
       val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
         .filter { it !is InputFactory }
