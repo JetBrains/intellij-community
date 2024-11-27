@@ -156,6 +156,8 @@
   - name: kotlin.gradle.gradle
   - name: kotlin.gradle.code-insight-common
   - name: kotlin.gradle.gradle-java
+  - name: kotlin.gradle.gradle-java.k1
+  - name: kotlin.gradle.gradle-java.k2
   - name: kotlin.gradle.code-insight-groovy
   - name: kotlin.gradle.code-insight-toml
   - name: kotlin.native

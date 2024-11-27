@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.gradle.highlighting.AbstractK2GradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.GRADLE
 
 internal fun MutableTWorkspace.generateK2GradleBuildScriptHighlighterTests() {
-    testGroup("gradle/gradle-java/tests.k2", testDataPath = "../../../idea/tests/testData", category = GRADLE) {
+    testGroup("gradle/gradle-java/k2", testDataPath = "../../../idea/tests/testData", category = GRADLE) {
         testClass<AbstractK2GradleBuildFileHighlightingTest> {
             model(
                 "gradle/highlighting/gradle8",

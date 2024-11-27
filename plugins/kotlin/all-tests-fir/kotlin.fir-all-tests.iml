@@ -53,7 +53,7 @@
     <orderEntry type="module" module-name="kotlin.highlighting.shared.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.k2" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k2" />
     <orderEntry type="module" module-name="kotlin.k2.lombok.tests" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit.kotlin.tests.k2" scope="RUNTIME" />

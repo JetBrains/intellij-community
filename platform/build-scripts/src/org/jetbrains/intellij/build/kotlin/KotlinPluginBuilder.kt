@@ -96,6 +96,8 @@ object KotlinPluginBuilder {
     "kotlin.gradle.gradle",
     "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
+    "kotlin.gradle.gradle-java.k1",
+    "kotlin.gradle.gradle-java.k2",
     "kotlin.gradle.code-insight-groovy",
     "kotlin.gradle.code-insight-toml",
     "kotlin.native",

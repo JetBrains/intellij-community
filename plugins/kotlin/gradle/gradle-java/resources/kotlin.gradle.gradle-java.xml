@@ -1,6 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava" xmlns:xi="http://www.w3.org/2001/XInclude">
-  <id>kotlin.gradle.gradle-java</id>
-  <vendor>JetBrains</vendor>
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava">
 
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
@@ -10,9 +8,6 @@
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.base.external-build-system"/>
   </dependencies>
-
-  <xi:include href="kotlin.gradle.gradle-java.k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
-  <xi:include href="kotlin.gradle.gradle-java.k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
 
   <projectListeners>
     <listener
