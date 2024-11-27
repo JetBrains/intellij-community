@@ -17,7 +17,11 @@ class XMixedModeExecutionStack(
   val highLevelExecutionStack: XExecutionStack?,
   val framesMatcher: MixedModeFramesBuilder,
   val coroutineScope: CoroutineScope,
-) : XExecutionStack(lowLevelExecutionStack.displayName) {
+) : XExecutionStack(lowLevelExecutionStack.displayName), XExecutionStackWithNativeThreadId {
+
+  init {
+    assert((highLevelExecutionStack == null || lowLevelExecutionStack.nativeThreadId == highLevelExecutionStack.nativeThreadId))
+  }
 
   var computationCompleted: CompletableDeferred<Unit> = CompletableDeferred()
 
@@ -40,7 +44,7 @@ class XMixedModeExecutionStack(
         container.addStackFrames(lowLevelFrames, true)
       }
       else {
-        requireNotNull(highLevelExecutionStack).computeStackFrames(firstFrameIndex, highLevelAcc)
+        highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
         val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
 
         val combinedFrames = measureTimedValue { framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames) }.also { logger.info("Mixed stack built in ${it.duration}") }.value
@@ -52,11 +56,13 @@ class XMixedModeExecutionStack(
   }
 
   private suspend fun prepareThreadBeforeFrameComputation() {
-    val threadId = (lowLevelExecutionStack as XExecutionStackWithNativeThreadId).getNativeThreadId()
+    val threadId = lowLevelExecutionStack.nativeThreadId
     val lowLevel = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
     val highLevel = session.getDebugProcess(false) as XMixedModeHighLevelDebugProcess
     lowLevel.prepareThreadBeforeFramesComputation({ highLevel.triggerBringingManagedThreadsToUnBlockedState() }, threadId)
   }
+
+  override fun getNativeThreadId(): Long = lowLevelExecutionStack.nativeThreadId
 
   private class MyAccumulatingContainer : XStackFrameContainer {
     private val mutableFrames = mutableListOf<XStackFrame>()

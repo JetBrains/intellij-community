@@ -4,3 +4,6 @@ package com.intellij.xdebugger.frame
 interface XExecutionStackWithNativeThreadId {
   fun getNativeThreadId(): Long
 }
+
+val XExecutionStack.nativeThreadId: Long
+  get() = (this as XExecutionStackWithNativeThreadId).getNativeThreadId()
