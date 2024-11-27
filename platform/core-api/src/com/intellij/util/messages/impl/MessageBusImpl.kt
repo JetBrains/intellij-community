@@ -4,9 +4,6 @@
 package com.intellij.util.messages.impl
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.ide.plugins.CannotUnloadPluginException
-import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.isMessageBusErrorPropagationEnabled
 import com.intellij.openapi.application.isMessageBusThrowsWhenDisposed
@@ -23,9 +20,7 @@ import com.intellij.util.messages.Topic.BroadcastDirection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.lang.invoke.MethodHandle
 import java.lang.reflect.InvocationHandler
@@ -790,37 +785,5 @@ private class SimpleMessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConne
     this.bus = null
     // reset as bus will not remove disposed connection from a list immediately
     bus.notifyConnectionTerminated(subscriptions.getAndSet(ArrayUtilRt.EMPTY_OBJECT_ARRAY))
-  }
-}
-
-/**
- * Fallback implementation to receive exceptions from a message bus listener.
- * The [BroadcastDirection] is not being honored
- *
- * Use [com.intellij.ide.plugins.DynamicPluginVetoer] instead.
- */
-@ApiStatus.Internal
-fun queryPluginUnloadVetoers(pluginDescriptor: IdeaPluginDescriptor, messageBus: MessageBus): @Nls String? {
-  try {
-    if (messageBus !is MessageBusImpl) return null
-
-    val subscribers = messageBus.computeSubscribers(DynamicPluginListener.TOPIC)
-    for (subscriber in subscribers) {
-      if (subscriber is DynamicPluginListener) {
-        subscriber.checkUnloadPlugin(pluginDescriptor)
-      }
-    }
-
-    return null
-  }
-  catch (e: CannotUnloadPluginException) {
-    return e.cause?.localizedMessage ?: "checkUnloadPlugin listener blocked plugin unload"
-  }
-  catch (_: kotlinx.coroutines.CancellationException) {
-    return null
-  }
-  catch (e: Throwable) {
-    Logger.getInstance(DynamicPluginListener::class.java).error(e)
-    return null
   }
 }
