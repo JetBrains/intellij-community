@@ -23,6 +23,7 @@ internal class BackendProjectEntitiesStorage : ProjectEntitiesStorage() {
         }
       }
     }
+    LOG.info("Project entity created for $projectId")
   }
 
   override suspend fun removeProjectEntity(project: Project): Unit = withKernel {
