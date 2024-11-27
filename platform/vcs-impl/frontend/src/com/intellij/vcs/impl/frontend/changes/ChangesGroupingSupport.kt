@@ -3,15 +3,18 @@ package com.intellij.vcs.impl.frontend.changes
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.impl.frontend.shelf.ShelfTreeUpdater
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTreeGroupingUpdateScheduler
 import com.intellij.vcs.impl.shared.rpc.UpdateStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 
 @ApiStatus.Internal
@@ -20,6 +23,22 @@ open class ChangesGroupingSupport(val project: Project, private val source: Stri
   private val groupingUpdateScheduler = ShelfTreeGroupingUpdateScheduler.getInstance(project)
   private val groupingStatesHolder = ChangesGroupingStatesHolder.getInstance(project)
   private val groupingKeys get() = groupingStatesHolder.getGroupingsForPlace(source)
+
+  private val updateFlow = MutableSharedFlow<Set<String>>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    cs.launch {
+      updateFlow.collectLatest {
+        val newValue = groupingStatesHolder.getGroupingsForPlace(source)
+        if (groupingUpdateScheduler.requestUpdateGrouping(newValue, project) == UpdateStatus.OK) {
+          withContext(Dispatchers.EDT) {
+            changeSupport.firePropertyChange(PROP_GROUPING_KEYS, it, newValue)
+
+          }
+        }
+      }
+    }
+  }
 
 
   fun get(groupingKey: @NonNls String): Boolean {
@@ -32,14 +51,7 @@ open class ChangesGroupingSupport(val project: Project, private val source: Stri
     if (currentState == state) return
 
     groupingStatesHolder.setGroupingEnabled(source, groupingKey, state)
-    cs.launch(Dispatchers.IO) {
-      val newValue = groupingStatesHolder.getGroupingsForPlace(source)
-      if (groupingUpdateScheduler.requestUpdateGrouping(newValue, project) == UpdateStatus.OK) {
-        withContext(Dispatchers.EDT) {
-          changeSupport.firePropertyChange(PROP_GROUPING_KEYS, oldGroupingKeys, newValue)
-        }
-      }
-    }
+    updateFlow.tryEmit(oldGroupingKeys)
   }
 
   fun isNone(): Boolean = groupingKeys.isEmpty()

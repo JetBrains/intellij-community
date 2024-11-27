@@ -44,7 +44,9 @@ abstract class EntityNodeConverter<E : NodeEntity, N : ChangesBrowserNode<*>>(va
 @ApiStatus.Internal
 object ShelvedChangeListNodeConverter : EntityNodeConverter<ShelvedChangeListEntity, ShelvedChangeListNode>(ShelvedChangeListEntity::class) {
   override fun convert(entity: ShelvedChangeListEntity): ShelvedChangeListNode {
-    return ShelvedChangeListNode(entity)
+    val shelvedChangeListNode = ShelvedChangeListNode(entity)
+    shelvedChangeListNode.putUserData(SELECTION_IDENTIFIER_KEY, ChangelistSelectionIdentifier(entity))
+    return shelvedChangeListNode
   }
 }
 
@@ -65,7 +67,9 @@ object TagNodeConverter : EntityNodeConverter<TagNodeEntity, TagNode>(TagNodeEnt
 @ApiStatus.Internal
 object ShelvedChangeNodeConverter : EntityNodeConverter<ShelvedChangeEntity, ShelvedChangeNode>(ShelvedChangeEntity::class) {
   override fun convert(entity: ShelvedChangeEntity): ShelvedChangeNode {
-    return ShelvedChangeNode(entity)
+    val shelvedChangeNode = ShelvedChangeNode(entity)
+    shelvedChangeNode.putUserData(SELECTION_IDENTIFIER_KEY, ChangeSelectionIdentifier(entity))
+    return shelvedChangeNode
   }
 }
 

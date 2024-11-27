@@ -5,6 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeEditorDiffPreview
 import com.intellij.vcs.impl.frontend.changes.SelectedData
@@ -16,12 +17,15 @@ import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.ref
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultMutableTreeNode
 
 @ApiStatus.Internal
 class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope, private val project: Project) : ChangesTreeEditorDiffPreview<ShelfTree>(tree) {
+
+  private val selectionUpdateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
 
   init {
     subscribeToShelfTreeSelectionChanged(project, cs, ::selectNodeInTree)
@@ -31,9 +35,11 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
   private fun trackTreeSelection() {
     tree.addTreeSelectionListener {
       cs.launch(Dispatchers.IO) {
-        withKernel {
-          val changeListDto = creteSelectedListsDto() ?: return@withKernel
-          RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), changeListDto, false)
+        selectionUpdateSemaphore.withPermit {
+          withKernel {
+            val changeListDto = creteSelectedListsDto() ?: return@withKernel
+            RemoteShelfApi.getInstance().notifyNodeSelected(project.projectId(), changeListDto, false)
+          }
         }
       }
     }

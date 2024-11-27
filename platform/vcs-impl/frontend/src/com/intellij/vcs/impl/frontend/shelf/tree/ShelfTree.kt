@@ -18,7 +18,6 @@ import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
 @ApiStatus.Internal
@@ -61,12 +60,17 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
   }
 
   fun getSelectedChangesWithChangeLists(): Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>> {
+    return getSelectedChangeNodesGrouped()
+      .map { entry ->
+        entry.key.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
+      }.toMap()
+  }
+
+  fun getSelectedChangeNodesGrouped(): Map<ShelvedChangeListNode, List<ShelvedChangeNode>> {
     return SelectedData(this).iterateRawNodes()
       .filter { it.userObject is ShelvedChangeEntity }
-      .groupBy { it.findParentOfType(ShelvedChangeListNode::class.java) }
-      .map { entry ->
-        entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
-      }.toMap()
+      .filterIsInstance<ShelvedChangeNode>()
+      .groupBy { it.findParentOfType(ShelvedChangeListNode::class.java) as ShelvedChangeListNode }
   }
 
   fun getSelectedLists(): Set<ShelvedChangeListEntity> {

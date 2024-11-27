@@ -9,7 +9,7 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
-import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
+import com.intellij.vcs.impl.frontend.shelf.tree.*
 import com.intellij.vcs.impl.shared.rhizome.ShelfTreeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -47,7 +47,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     cs.launch {
       withKernel {
         ShelfTreeEntity.each().collectLatest {
-          val changes = tree.getSelectedChangesWithChangeLists()
+          val changes = tree.getSelectedChangeNodesGrouped()
           val rootNode = it.root.convertToTreeNodeRecursive() ?: return@collectLatest
           withContext(Dispatchers.EDT) {
             tree.model = ChangesTreeModel(rootNode)
@@ -58,18 +58,15 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     }
   }
 
-  suspend fun selectChangesInTree(changes: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>) {
+  suspend fun selectChangesInTree(changes: Map<ShelvedChangeListNode, List<ShelvedChangeNode>>) {
     withKernel {
-      val firstChangeList = changes.entries.firstOrNull()
-      val list = firstChangeList?.key ?: return@withKernel
+      val firstChangeList = changes.entries.firstOrNull() ?: return@withKernel
       val changeListNode = TreeUtil.findNode(tree.getRoot()) {
-        val changeList = it.userObject as? ShelvedChangeListEntity ?: return@findNode false
-        return@findNode changeList.name == list.name && changeList.date == list.date
+        shouldNodeBeSelected(firstChangeList.key, it)
       } ?: return@withKernel
       val changeNodes = firstChangeList.value.mapNotNull { oldChange ->
         TreeUtil.findNode(changeListNode) {
-          val change = it.userObject as? ShelvedChangeEntity ?: return@findNode false
-          return@findNode change.filePath == oldChange.filePath
+          return@findNode shouldNodeBeSelected(oldChange, it)
         }
       }
       val pathsToSelect = changeNodes.map { TreeUtil.getPathFromRoot(it) }
@@ -77,6 +74,11 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
 
       notifyNodesSelected(changeListNode, changeNodes)
     }
+  }
+
+  private fun shouldNodeBeSelected(oldNode: EntityChangesBrowserNode<*>, newNode: DefaultMutableTreeNode): Boolean {
+    if (newNode !is EntityChangesBrowserNode<*>) return false
+    return oldNode.getUserData(SELECTION_IDENTIFIER_KEY)?.shouldBeSelected(newNode) ?: false
   }
 
   private fun notifyNodesSelected(changeListNode: DefaultMutableTreeNode, changeNodes: List<DefaultMutableTreeNode>) {

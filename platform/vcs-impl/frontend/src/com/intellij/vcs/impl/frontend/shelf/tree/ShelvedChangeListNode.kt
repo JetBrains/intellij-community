@@ -2,13 +2,10 @@
 package com.intellij.vcs.impl.frontend.shelf.tree
 
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.platform.kernel.KernelService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import com.jetbrains.rhizomedb.asOf
-import fleet.kernel.rete.Rete
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
