@@ -64,11 +64,15 @@ class IterateExpressionIntention : KotlinApplicableModCommandAction<KtExpression
         }
         forExpression.body?.let { forExpressionBody ->
             if (forExpressionBody is KtBlockExpression) {
+                // The function call below is the same hack as done in K1 implementation in
+                // ~org/jetbrains/kotlin/idea/intentions/IterateExpressionIntention.kt:105
                 modTemplateBuilder.field(
-                    forExpressionBody.statements.single(),
+                    // We replace the placeholder `x` with "" to make a PSI-element to put the caret near it.
+                    // It's impossible to reflect an empty element above in the pattern
+                    forExpressionBody.statements.single(), // it's `x`
                     /* varName = */ "",
                     /* dependantVariableName = */ "",
-                    /* alwaysStopAt = */ false
+                    /* alwaysStopAt = */ false // This is needed to not making this place editable when staying there with the caret
                 )
             }
             modTemplateBuilder.finishAt(forExpressionBody.endOffset - 2)
