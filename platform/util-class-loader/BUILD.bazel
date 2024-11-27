@@ -1,13 +1,13 @@
 ### auto-generated section `build intellij.platform.util.classLoader` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "util-classLoader",
   module_name = "intellij.platform.util.classLoader",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/util/rt-java8",

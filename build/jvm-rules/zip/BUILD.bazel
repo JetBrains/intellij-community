@@ -5,8 +5,6 @@ kt_jvm_library(
   module_name = "intellij.idea.community.build.zip",
   visibility = ["//visibility:public"],
   srcs = glob(["src/*.kt"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:netty-buffer",

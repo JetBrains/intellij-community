@@ -1,13 +1,19 @@
 ### auto-generated section `build kotlin.jvm-debugger.evaluation.k1` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  opt_in = ["org.jetbrains.kotlin.analysis.api.KaNonPublicApi"]
+)
 
 jvm_library(
   name = "kotlin-jvm-debugger-evaluation-k1",
   module_name = "kotlin.jvm-debugger.evaluation.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
     "//plugins/kotlin/jvm-debugger/evaluation:kotlin-jvm-debugger-evaluation",

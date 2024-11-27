@@ -1,13 +1,11 @@
 ### auto-generated section `build intellij.java.testFramework` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "testFramework",
   module_name = "intellij.java.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
     "//platform/util",
@@ -17,6 +15,7 @@ jvm_library(
     "//platform/lang-impl",
     "//java/compiler/impl:java-compiler-impl",
     "//java/java-impl:impl",
+    "//platform/ide-core-impl",
     "//java/execution/impl:java-execution-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/testFramework",

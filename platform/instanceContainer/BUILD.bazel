@@ -1,13 +1,11 @@
 ### auto-generated section `build intellij.platform.instanceContainer` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "instanceContainer",
   module_name = "intellij.platform.instanceContainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -20,19 +18,11 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "instanceContainer-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "instanceContainer-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",

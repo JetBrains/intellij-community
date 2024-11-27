@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.j2k.k1.new` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -13,8 +13,7 @@ jvm_library(
   name = "kotlin-j2k-k1-new",
   module_name = "kotlin.j2k.k1.new",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "//platform/core-api:core",
@@ -34,6 +33,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/idea",
   ]
 )
 ### auto-generated section `build kotlin.j2k.k1.new` end

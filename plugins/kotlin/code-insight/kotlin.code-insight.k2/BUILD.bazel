@@ -1,8 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.k2` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
@@ -24,8 +22,7 @@ jvm_library(
   name = "kotlin-code-insight-k2",
   module_name = "kotlin.code-insight.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -60,6 +57,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
     "//java/openapi:java",
     "//plugins/kotlin/kotlin.searching/base",
+    "//platform/ide-core-impl",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
     "//plugins/kotlin/kotlin.ide:ide",
     "@lib//:velocity",
@@ -74,11 +72,10 @@ jvm_library(
   runtime_deps = [":kotlin-code-insight-k2_resources"]
 )
 
-kt_jvm_test(
-  name = "kotlin-code-insight-k2_test",
+jvm_library(
+  name = "kotlin-code-insight-k2_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":kotlin-code-insight-k2"],
   deps = [
@@ -89,16 +86,20 @@ kt_jvm_test(
     "@lib//:kotlinc_analysis-api-platform-interface",
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight_test_lib",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
-    "//plugins/kotlin/tests-common:tests-common_test",
-    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
-    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
+    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//platform/lang-impl",
     "//platform/core-ui",
@@ -119,6 +120,7 @@ kt_jvm_test(
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
     "//java/openapi:java",
     "//plugins/kotlin/kotlin.searching/base",
+    "//platform/ide-core-impl",
     "//plugins/kotlin/base/indices:kotlin-base-indices",
     "//plugins/kotlin/kotlin.ide:ide",
     "@lib//:velocity",
@@ -131,5 +133,10 @@ kt_jvm_test(
     "//plugins/kotlin/base/statistics:kotlin-base-statistics",
   ],
   runtime_deps = [":kotlin-code-insight-k2_resources"]
+)
+
+jvm_test(
+  name = "kotlin-code-insight-k2_test",
+  runtime_deps = [":kotlin-code-insight-k2_test_lib"]
 )
 ### auto-generated section `build kotlin.code-insight.k2` end

@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.bazel
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.net.URI
@@ -16,7 +17,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
 import java.util.*
-import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.moveTo
 
@@ -25,6 +25,7 @@ internal data class CacheEntry(
   @JvmField val path: String,
   @JvmField val url: String,
   @JvmField val sha256: String,
+  @Transient @JvmField var used: Boolean = false,
 )
 
 internal data class JarRepository(@JvmField val url: String, @JvmField val isPrivate: Boolean)
@@ -44,9 +45,11 @@ private val authHeaderValue by lazy {
 }
 
 internal class UrlCache(private val cacheFile: Path) {
+  private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+
   private val cache: MutableMap<String, CacheEntry> by lazy {
-    if (cacheFile.exists()) {
-      Json.decodeFromString<List<CacheEntry>>(Files.readString(cacheFile)).associateTo(HashMap()) { it.path to it}
+    if (Files.exists(cacheFile)) {
+      Json.decodeFromString<List<CacheEntry>>(Files.readString(cacheFile)).associateTo(HashMap()) { it.path to it }
     }
     else {
       HashMap<String, CacheEntry>()
@@ -55,7 +58,7 @@ internal class UrlCache(private val cacheFile: Path) {
 
   @OptIn(ExperimentalSerializationApi::class)
   fun save() {
-    val entries = cache.values.toTypedArray()
+    val entries = cache.values.filter { it.used }.toTypedArray()
     entries.sortBy { it.path }
     val tempFile = Files.createTempFile(cacheFile.fileName.toString(), ".tmp")
     @Suppress("JSON_FORMAT_REDUNDANT")
@@ -66,16 +69,14 @@ internal class UrlCache(private val cacheFile: Path) {
     tempFile.moveTo(target = cacheFile, overwrite = true)
   }
 
-  fun getEntry(jarPath: String): CacheEntry? = cache.get(jarPath)
+  fun getEntry(jarPath: String): CacheEntry? = cache.get(jarPath)?.also { it.used = true }
 
   fun putUrl(jarPath: String, url: String, repo: JarRepository): CacheEntry {
     val hash = calculateHash(url, repo)
-    val entry = CacheEntry(path = jarPath, url = url, sha256 = hash)
+    val entry = CacheEntry(path = jarPath, url = url, sha256 = hash, used = true)
     cache.put(jarPath, entry)
     return entry
   }
-
-  private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
 
   fun checkUrl(url: String, repo: JarRepository): Boolean {
     val requestBuilder = HttpRequest.newBuilder()

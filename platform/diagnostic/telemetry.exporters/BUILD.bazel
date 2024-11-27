@@ -1,7 +1,6 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.exporters` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -19,10 +18,9 @@ jvm_library(
   name = "telemetry-exporters",
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
   kotlinc_opts = ":custom",
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

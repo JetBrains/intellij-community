@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.platform.collaborationTools` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "collaborationTools_resources",
@@ -13,13 +11,12 @@ jvm_library(
   name = "collaborationTools",
   module_name = "intellij.platform.collaborationTools",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-api:ide",
     "//platform/vcs-log/impl:vcs-log-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
@@ -45,17 +42,18 @@ jvm_library(
   runtime_deps = [":collaborationTools_resources"]
 )
 
-kt_jvm_test(
-  name = "collaborationTools_test",
+jvm_library(
+  name = "collaborationTools_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":collaborationTools"],
   deps = [
     "//platform/platform-api:ide",
     "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
@@ -68,8 +66,9 @@ kt_jvm_test(
     "@lib//:junit4",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/vcs-log/api:vcs-log",
     "@lib//:caffeine",
@@ -80,11 +79,18 @@ kt_jvm_test(
     "@lib//:kotlin-test",
     "@lib//:kotlinx-coroutines-test",
     "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//platform/util/coroutines",
     "@lib//:io_mockk",
     "@lib//:io_mockk_jvm",
     "//platform/credential-store-impl:credentialStore-impl",
+    "//platform/credential-store-impl:credentialStore-impl_test_lib",
   ],
   runtime_deps = [":collaborationTools_resources"]
+)
+
+jvm_test(
+  name = "collaborationTools_test",
+  runtime_deps = [":collaborationTools_test_lib"]
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end

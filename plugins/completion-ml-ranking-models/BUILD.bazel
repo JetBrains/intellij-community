@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.completionMlRankingModels` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "completionMlRankingModels_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "completionMlRankingModels",
   module_name = "intellij.completionMlRankingModels",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/completion-ml-ranking:completionMlRanking",
@@ -44,19 +41,11 @@ jvm_library(
 
 ### auto-generated section `build intellij.completionMlRankingModels.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "completionMlRankingModels-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "completionMlRankingModels-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//java/testFramework",
     "@lib//:junit4",

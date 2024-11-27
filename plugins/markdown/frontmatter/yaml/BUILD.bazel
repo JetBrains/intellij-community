@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.markdown.frontmatter.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "markdown-frontmatter-yaml_resources",
@@ -12,14 +11,13 @@ jvm_library(
   name = "markdown-frontmatter-yaml",
   module_name = "intellij.markdown.frontmatter.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//plugins/IntelliLang:langInjection",
     "//plugins/markdown/core:markdown",
     "//plugins/yaml",
+    "//plugins/yaml/editing",
     "//platform/monolith",
   ],
   runtime_deps = [":markdown-frontmatter-yaml_resources"]

@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.testng` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "testng_resources",
@@ -19,14 +17,13 @@ jvm_library(
   name = "testng",
   module_name = "intellij.testng",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
     "//java/execution/impl:java-execution-impl",
     "//java/debugger/impl:java-debugger-impl",
     "//java/debugger/openapi:java-debugger",
+    "//platform/ide-core-impl",
     "//platform/testRunner",
     "//java/java-runtime:rt",
     "//plugins/testng_rt:testng-rt",
@@ -51,19 +48,19 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "testng_test",
+jvm_library(
+  name = "testng_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   associates = [":testng"],
   deps = [
     "//java/openapi:java",
     "//java/execution/impl:java-execution-impl",
     "//java/debugger/impl:java-debugger-impl",
     "//java/debugger/openapi:java-debugger",
+    "//platform/ide-core-impl",
     "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
     "//java/java-runtime:rt",
     "//plugins/testng_rt:testng-rt",
     "//java/testFramework",
@@ -74,7 +71,9 @@ kt_jvm_test(
     "//java/java-indexing-api:indexing",
     "//xml/impl",
     "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
     "//java/typeMigration",
+    "//java/typeMigration:typeMigration_test_lib",
     "//platform/external-system-api:externalSystem",
     "//platform/core-ui",
     "@lib//:junit4",
@@ -87,5 +86,10 @@ kt_jvm_test(
     ":testng_resources",
     ":testng_resources_1",
   ]
+)
+
+jvm_test(
+  name = "testng_test",
+  runtime_deps = [":testng_test_lib"]
 )
 ### auto-generated section `build intellij.testng` end

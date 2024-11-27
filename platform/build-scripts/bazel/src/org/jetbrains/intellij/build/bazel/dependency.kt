@@ -1,56 +1,86 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
-import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
+import org.jetbrains.jps.model.module.JpsTestModuleProperties
+import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
 
+internal data class ModuleDeps(
+  @JvmField val deps: List<String>,
+  @JvmField val provided: List<String>,
+  @JvmField val runtimeDeps: List<String>,
+  @JvmField val exports: List<String>,
+  @JvmField val associates: List<String>,
+  @JvmField val plugins: List<String>,
+)
+
 internal fun generateDeps(
-  target: Target,
   module: ModuleDescriptor,
-  resourceDependencies: List<String>,
   hasSources: Boolean,
-  isTest: Boolean = false,
+  isTest: Boolean,
   context: BazelBuildFileGenerator,
-) {
-  val deps = ArrayList<String>()
+): ModuleDeps {
+  val deps = mutableListOf<String>()
+  val associates = mutableListOf<String>()
   val exports = mutableListOf<String>()
   val runtimeDeps = mutableListOf<String>()
+  val provided = mutableListOf<String>()
+  val plugins = TreeSet<String>()
 
-  resourceDependencies.mapTo(runtimeDeps) { ":$it" }
+  if (isTest && module.sources.isNotEmpty()) {
+    // associates also is a dependency
+    associates.add(":${module.targetName}")
+  }
 
+  val testModuleProperties = context.javaExtensionService.getTestModuleProperties(module.module)
+
+  val dependentModuleName = module.module.name
   for (element in module.module.dependenciesList.dependencies) {
     val dependencyExtension = context.javaExtensionService.getDependencyExtension(element) ?: continue
     val scope = dependencyExtension.scope
+    val isProvided = scope == JpsJavaDependencyScope.PROVIDED
 
     if (element is JpsModuleDependency) {
-      val dependency = element.moduleReference.resolve()!!
+      val dependencyModule = element.moduleReference.resolve()!!
       // todo runtime dependency (getBazelDependencyLabel() is null only because fake "main" modules do not have content roots, and we don't know where to create BUILD file)
-      val dependencyModuleDescriptor = context.getKnownModuleDescriptorOrError(dependency)
-      val label = context.getBazelDependencyLabel(descriptor = dependencyModuleDescriptor, dependentIsCommunity = module.isCommunity) ?: continue
+      val dependencyModuleDescriptor = context.getKnownModuleDescriptorOrError(dependencyModule)
+      val label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module) ?: continue
 
+      // intellij.platform.configurationStore.tests uses internal symbols from intellij.platform.configurationStore.impl
+      val dependencyModuleName = dependencyModule.name
+      val effectiveDepContainer = if (isTestFriend(dependentModuleName, dependencyModuleName, testModuleProperties)) {
+        associates
+      }
+      else {
+        deps
+      }
       addDep(
         isTest = isTest,
         scope = scope,
-        deps = deps,
+        deps = effectiveDepContainer,
         dependencyLabel = label,
         runtimeDeps = runtimeDeps,
         hasSources = hasSources,
-        dependentModule = module.module,
+        dependentModule = module,
         dependencyModuleDescriptor = dependencyModuleDescriptor,
         exports = exports,
+        provided = provided,
         isExported = dependencyExtension.isExported,
       )
 
-      if (dependency.name == "intellij.libraries.compose.desktop") {
-        target.option("plugins", arrayOf("@lib//:compose_plugin"))
+      if (dependencyModuleName == "intellij.libraries.compose.desktop" ||
+          dependencyModuleName == "intellij.platform.jewel.markdown.ideLafBridgeStyling" ||
+          dependencyModuleName == "intellij.platform.jewel.foundation") {
+        plugins.add("@lib//:compose-plugin")
       }
     }
     else if (element is JpsLibraryDependency) {
@@ -58,45 +88,71 @@ internal fun generateDeps(
       val library = untypedLib.asTyped(JpsRepositoryLibraryType.INSTANCE)
       if (library == null) {
         val files = untypedLib.getPaths(JpsOrderRootType.COMPILED)
-        val targetName = camelToSnakeCase(escapeBazelLabel(files.first().nameWithoutExtension))
-        val projectBasedDirectoryPath = files.first().relativeTo(if (module.isCommunity) projectDir.resolve("community") else projectDir).parent.invariantSeparatorsPathString
-        val bazelLabel = "${if (module.isCommunity) "" else "@community"}//$projectBasedDirectoryPath:$targetName"
-        context.libs.add(LocalLibrary(files = files, bazelLabel = bazelLabel, targetName = targetName, isProvided = true, isCommunity = module.isCommunity))
-        deps.add(bazelLabel)
+        val firstFile = files.first()
+        val targetName = camelToSnakeCase(escapeBazelLabel(firstFile.nameWithoutExtension))
+        val isCommunityLibrary = firstFile.startsWith(context.communityDir)
+
+        val libBuildFileDir = firstFile.relativeTo(if (isCommunityLibrary) context.communityDir else projectDir).parent.invariantSeparatorsPathString
+        context.addLocalLibrary(
+          LocalLibrary(
+            files = files,
+            lib = Library(targetName = targetName, isCommunity = isCommunityLibrary),
+          ),
+          isProvided,
+        )
+
+        if (!isCommunityLibrary) {
+          require(!module.isCommunity)
+        }
+
+        val prefix = when {
+          libBuildFileDir == "lib" -> if (isCommunityLibrary) "@lib//" else "@ultimate_lib//"
+          libBuildFileDir.startsWith("lib/") -> libBuildFileDir.replace("lib/", if (isCommunityLibrary) "@lib//" else "@ultimate_lib//")
+          else -> "${if (module.isCommunity || !isCommunityLibrary) "//" else "@community//"}${libBuildFileDir.removePrefix("community/")}"
+        }
+
+        deps.add("$prefix:$targetName${if (isProvided) PROVIDED_SUFFIX else ""}")
         continue
       }
 
       val data = library.properties.data
       val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
 
-      var targetName = camelToSnakeCase(escapeBazelLabel(if (isModuleLibrary) {
-        val moduleRef = element.libraryReference.parentReference as JpsModuleReference
-        val name = library.name.takeIf { !it.startsWith("#") && it.isNotEmpty() } ?: "${data.artifactId}_${data.version}"
-        "${moduleRef.moduleName.removePrefix("intellij.")}_${name}"
-      }
-      else {
-        library.name
-      }))
+      var targetName = camelToSnakeCase(
+        escapeBazelLabel(
+          name = if (isModuleLibrary) {
+          val moduleRef = element.libraryReference.parentReference as JpsModuleReference
+          val name = library.name.takeIf { !it.startsWith("#") && it.isNotEmpty() } ?: "${data.artifactId}_${data.version}"
+          "${moduleRef.moduleName.removePrefix("intellij.")}_${name}"
+        }
+        else {
+          library.name
+        }
+      ))
 
-      val isProvided = scope == JpsJavaDependencyScope.PROVIDED
+      var isLibCommunity = module.isCommunity
       if (isProvided) {
-        targetName += ".provided"
+        if (!isLibCommunity && context.libs.any { it.lib.isCommunity && it.lib.targetName == targetName }) {
+          isLibCommunity = true
+        }
       }
 
       // we process community modules first, so, `addOrGet` (library equality ignores `isCommunity` flag)
-      val isCommunityLibrary = context.libs.addOrGet(
+      val isCommunityLibrary = context.addMavenLibrary(
         MavenLibrary(
           mavenCoordinates = "${data.groupId}:${data.artifactId}:${data.version}",
           jars = library.getPaths(JpsOrderRootType.COMPILED),
           sourceJars = library.getPaths(JpsOrderRootType.SOURCES),
           javadocJars = library.getPaths(JpsOrderRootType.DOCUMENTATION),
-          targetName = targetName,
-          isProvided = isProvided,
-          isCommunity = module.isCommunity,
-        )
-      ).isCommunity
+          lib = Library(
+            targetName = targetName,
+            isCommunity = isLibCommunity,
+          ),
+        ),
+        isProvided,
+      ).lib.isCommunity
 
-      val libLabel = "${if (isCommunityLibrary) "@lib" else "@ultimate_lib"}//:$targetName"
+      val libLabel = getLibLabel(isCommunityLibrary = isCommunityLibrary, targetName = targetName, isProvided = isProvided)
 
       addDep(
         isTest = isTest,
@@ -105,30 +161,55 @@ internal fun generateDeps(
         dependencyLabel = libLabel,
         runtimeDeps = runtimeDeps,
         hasSources = hasSources,
-        dependentModule = module.module,
+        dependentModule = module,
         dependencyModuleDescriptor = null,
         exports = exports,
+        provided = provided,
         isExported = dependencyExtension.isExported,
       )
 
-      if (data.artifactId == "kotlinx-serialization-core-jvm") {
-        target.option("plugins", arrayOf("@lib//:serialization_plugin"))
-      }
-      if (element.libraryReference.libraryName == "jetbrains-jewel-markdown-laf-bridge-styling") {
-        target.option("plugins", arrayOf("@lib//:compose_plugin"))
+      val libName = element.libraryReference.libraryName
+      if (libName == "jetbrains-jewel-markdown-laf-bridge-styling" ||
+          libName == "org.jetbrains.compose.foundation.foundation.desktop" ||
+          libName == "jetbrains.kotlin.compose.compiler.plugin") {
+        plugins.add("@lib//:compose-plugin")
+        // poko fails with "java.lang.NoSuchMethodError: 'org.jetbrains.kotlin.com.intellij.psi.PsiElement org.jetbrains.kotlin.js.resolve.diagnostics.SourceLocationUtilsKt.findPsi(org.jetbrains.kotlin.descriptors.DeclarationDescriptor)'"
+        //plugins.add("@lib//:poko-plugin")
       }
     }
   }
 
-  if (deps.isNotEmpty()) {
-    target.option("deps", deps)
-  }
   if (exports.isNotEmpty()) {
-    target.option("exports", exports)
+    require(!exports.contains("@lib//:kotlinx-serialization-core")) {
+      "Do not export kotlinx-serialization-core (module=$dependentModuleName})"
+    }
+    require(!exports.contains("jetbrains-jewel-markdown-laf-bridge-styling")) {
+      "Do not export jetbrains-jewel-markdown-laf-bridge-styling (module=$dependentModuleName})"
+    }
   }
-  if (runtimeDeps.isNotEmpty()) {
-    target.option("runtime_deps", runtimeDeps)
+  return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
+}
+
+private fun getLibLabel(isCommunityLibrary: Boolean, targetName: String, isProvided: Boolean): String {
+  var libLabel = "${if (isCommunityLibrary) "@lib" else "@ultimate_lib"}//:$targetName"
+  if (isProvided) {
+    libLabel += PROVIDED_SUFFIX
   }
+  return libLabel
+}
+
+private fun isTestFriend(
+  dependentModuleName: @NlsSafe String,
+  dependencyModuleName: @NlsSafe String,
+  testModuleProperties: JpsTestModuleProperties?,
+): Boolean {
+  if (testModuleProperties != null) {
+    return testModuleProperties.productionModuleReference.moduleName == dependencyModuleName
+  }
+  return dependentModuleName.endsWith(".tests") &&
+         dependentModuleName != "intellij.platform.core.nio.fs" &&
+         (dependencyModuleName.endsWith(".impl")) &&
+         dependentModuleName.removeSuffix(".tests") == dependencyModuleName.removeSuffix(".impl")
 }
 
 private fun addDep(
@@ -138,77 +219,98 @@ private fun addDep(
   dependencyLabel: String,
   runtimeDeps: MutableList<String>,
   hasSources: Boolean,
-  dependentModule: JpsModule,
+  dependentModule: ModuleDescriptor,
   dependencyModuleDescriptor: ModuleDescriptor?,
   exports: MutableList<String>,
+  provided: MutableList<String>,
   isExported: Boolean,
 ) {
-  if (isExported && !isTest) {
-    exports.add(dependencyLabel)
-  }
+  if (isTest) {
+    when (scope) {
+      JpsJavaDependencyScope.COMPILE -> {
+        deps.add(dependencyLabel)
 
-  when {
-    isTest -> {
-      when {
-        scope == JpsJavaDependencyScope.COMPILE -> {
-          if (hasSources) {
-            deps.add(dependencyLabel)
-          }
-          else {
-            println("WARN: ignoring dependency on $dependencyLabel (module=${dependencyModuleDescriptor?.module?.name})")
-          }
+        if (dependencyModuleDescriptor != null && dependencyModuleDescriptor.testSources.isNotEmpty()) {
+          deps.add(getLabelForTest(dependencyLabel))
         }
-        scope == JpsJavaDependencyScope.TEST -> {
-          if (dependencyModuleDescriptor == null) {
-            deps.add(dependencyLabel)
-          }
-          else {
-            val hasTestSource = dependencyModuleDescriptor.testSources.isNotEmpty()
-            if (dependencyModuleDescriptor.sources.isNotEmpty() || !hasTestSource) {
-              deps.add(dependencyLabel)
-            }
-            if (hasTestSource) {
-              val testLabel = if (dependencyLabel.contains(':')) {
-                "${dependencyLabel}_test"
-              }
-              else {
-                "$dependencyLabel:${dependencyLabel.substringAfterLast('/')}_test"
-              }
-              deps.add(testLabel)
-            }
-          }
-        }
-        scope == JpsJavaDependencyScope.PROVIDED && !hasSources -> {
-          if (dependencyModuleDescriptor != null) {
-            println("WARN: moduleContent not expected: (moduleContent=${dependencyModuleDescriptor.module.name}, module=${dependentModule.name})")
-          }
+      }
+      JpsJavaDependencyScope.TEST, JpsJavaDependencyScope.PROVIDED -> {
+        if (dependencyModuleDescriptor == null) {
           deps.add(dependencyLabel)
+        }
+        else {
+          val hasTestSource = dependencyModuleDescriptor.testSources.isNotEmpty()
+
+          if (isExported && hasTestSource) {
+            println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+          }
+
+          if (dependencyModuleDescriptor.sources.isNotEmpty() || !hasTestSource) {
+            deps.add(dependencyLabel)
+          }
+          if (hasTestSource) {
+            deps.add(getLabelForTest(dependencyLabel))
+          }
+        }
+      }
+      JpsJavaDependencyScope.RUNTIME -> {
+        if (dependentModule.sources.isEmpty()) {
+          runtimeDeps.add(dependencyLabel)
         }
       }
     }
-    scope == JpsJavaDependencyScope.RUNTIME -> {
+
+    return
+  }
+
+  if (isExported) {
+    exports.add(dependencyLabel)
+  }
+
+  when (scope) {
+    JpsJavaDependencyScope.RUNTIME -> {
       runtimeDeps.add(dependencyLabel)
     }
-    scope == JpsJavaDependencyScope.COMPILE -> {
+    JpsJavaDependencyScope.COMPILE -> {
       if (hasSources) {
         deps.add(dependencyLabel)
       }
       else {
         if (!isExported) {
-          println("WARN: dependency scope for $dependencyLabel should be RUNTIME and not COMPILE (module=$dependentModule)")
+          println("WARN: dependency scope for $dependencyLabel should be RUNTIME and not COMPILE (module=${dependentModule.module.name})")
         }
         runtimeDeps.add(dependencyLabel)
       }
     }
-    scope == JpsJavaDependencyScope.PROVIDED -> {
+    JpsJavaDependencyScope.PROVIDED -> {
       // ignore deps if no sources, as `exports` in Bazel means "compile" scope
       if (hasSources) {
-        deps.add(dependencyLabel)
+        if (dependencyModuleDescriptor == null) {
+          // lib supports `provided`
+          deps.add(dependencyLabel)
+        }
+        else {
+          provided.add(dependencyLabel)
+        }
       }
       else {
         println("WARN: ignoring dependency on $dependencyLabel (module=$dependentModule)")
       }
     }
+    JpsJavaDependencyScope.TEST -> {
+      // we produce separate Bazel targets for production and test source roots
+    }
+  }
+}
+
+internal const val TEST_LIB_NAME_SUFFIX = "_test_lib"
+
+private fun getLabelForTest(dependencyLabel: String): String {
+  if (dependencyLabel.contains(':')) {
+    return "${dependencyLabel}$TEST_LIB_NAME_SUFFIX"
+  }
+  else {
+    return "$dependencyLabel:${dependencyLabel.substringAfterLast('/')}$TEST_LIB_NAME_SUFFIX"
   }
 }
 
@@ -218,7 +320,7 @@ private fun camelToSnakeCase(s: String): String {
   return when {
     s.startsWith("JUnit") -> "junit" + s.removePrefix("JUnit")
     s.all { it.isUpperCase() } -> s.lowercase()
-    else -> s.replace(" ", "").replace("_RC", "_rc").replace(camelCaseToSnakeCasePattern, "_$0").lowercase()
+    else -> s.replace(" ", "").replace("_RC", "_rc").replace("SNAPSHOT", "snapshot").replace(camelCaseToSnakeCasePattern, "_$0").lowercase()
   }
 }
 

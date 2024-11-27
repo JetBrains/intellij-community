@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.util` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "util_resources",
@@ -8,14 +7,18 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_provided_library(
+  name = "troveCompileOnly_provided",
+  lib = "//platform/util/troveCompileOnly"
+)
+
 jvm_library(
   name = "util",
   module_name = "intellij.platform.util",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util/jdom",
     "@lib//:log4_j",
@@ -35,8 +38,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:caffeine",
-    "//platform/util/troveCompileOnly",
     "//platform/util/coroutines",
+    ":troveCompileOnly_provided",
   ],
   exports = [
     "@lib//:jetbrains-annotations",
@@ -51,9 +54,61 @@ jvm_library(
 )
 ### auto-generated section `build intellij.platform.util` end
 
+### auto-generated section `build intellij.platform.util.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "util-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "util-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "@lib//:assert_j",
+    "@lib//:junit4",
+    "@lib//:jna",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "@lib//:jet_check",
+    "@lib//:commons-compress",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:memoryfilesystem",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//platform/util/diff",
+    "@lib//:junit5",
+    "//platform/util/jdom",
+    "//platform/boot",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:kotlinx-coroutines-debug",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/util/coroutines",
+    "@lib//:jetbrains_kotlinx_lincheck_jvm",
+    "@lib//:mockito",
+  ]
+)
+
+jvm_test(
+  name = "util-tests_test",
+  runtime_deps = [":util-tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.util.tests` end
+
 ### auto-generated section `build intellij.platform.util.ui` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
 
 kt_javac_options(
@@ -76,12 +131,10 @@ jvm_library(
   name = "util-ui",
   module_name = "intellij.platform.util.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["ui/src/**/*.kt", "ui/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["ui/src/**/*.kt", "ui/src/**/*.java"], allow_empty = True),
   javac_opts = ":custom-javac-options",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "//lib:eawtstub",
+    "@lib//:eawtstub-provided",
     "//platform/util",
     "@lib//:imgscalr",
     "@lib//:jna",

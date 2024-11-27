@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.devkit.i18n` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "i18n_resources",
@@ -13,12 +11,11 @@ jvm_library(
   name = "i18n",
   module_name = "intellij.devkit.i18n",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/ide-core-impl",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:psi-impl",
     "//plugins/java-i18n",
@@ -32,31 +29,36 @@ jvm_library(
   runtime_deps = [":i18n_resources"]
 )
 
-kt_jvm_test(
-  name = "i18n_test",
+jvm_library(
+  name = "i18n_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":i18n"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/ide-core-impl",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:psi-impl",
     "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test_lib",
     "//jvm/jvm-analysis-api:analysis",
     "//xml/dom-openapi:dom",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//plugins/devkit/devkit-core:core",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//spellchecker",
-    "//spellchecker:spellchecker_test",
+    "//spellchecker:spellchecker_test_lib",
     "//platform/core-ui",
   ],
   runtime_deps = [":i18n_resources"]
+)
+
+jvm_test(
+  name = "i18n_test",
+  runtime_deps = [":i18n_test_lib"]
 )
 ### auto-generated section `build intellij.devkit.i18n` end

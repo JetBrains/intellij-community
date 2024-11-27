@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.platform.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "testFramework_resources",
@@ -13,15 +11,14 @@ jvm_library(
   name = "testFramework",
   module_name = "intellij.platform.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:junit4",
+    "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "//platform/analysis-impl",
@@ -41,9 +38,9 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:junit5Launcher.provided",
-    "@lib//:junit5.provided",
-    "@lib//:junit5Params.provided",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
     "//platform/util/jdom",
     "//platform/testFramework/common",
     "//platform/backend/workspace",
@@ -55,16 +52,14 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "@lib//:junit4",
+    "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//java/java-runtime:rt",
-    "//xml/dom-impl",
-    "//images",
-    "//RegExpSupport:regexp",
     "@lib//:jet_check",
     "//platform/testFramework/core",
     "//platform/core-ui",
-    "@lib//:junit5.provided",
-    "@lib//:junit5Params.provided",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
     "//platform/testFramework/common",
   ],
   runtime_deps = [
@@ -76,12 +71,10 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "testFramework_test",
+jvm_library(
+  name = "testFramework_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":testFramework"],
   deps = [
     "//platform/lang-api:lang",
@@ -89,7 +82,9 @@ kt_jvm_test(
     "//platform/execution-impl",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:junit4",
+    "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/testFramework/bootstrap:tools-testsBootstrap",
     "//platform/analysis-impl",
     "//java/java-runtime:rt",
@@ -98,8 +93,10 @@ kt_jvm_test(
     "@lib//:jet_check",
     "//platform/testFramework/core",
     "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
     "//platform/workspace/jps",
     "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/workspace/storage",
     "@lib//:kotlinx-coroutines-core",
     "//platform/util-class-loader:util-classLoader",
@@ -108,6 +105,9 @@ kt_jvm_test(
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
     "//platform/util/jdom",
     "//platform/testFramework/common",
     "@lib//:jackson",
@@ -120,8 +120,13 @@ kt_jvm_test(
     "//platform/util/coroutines",
     "@lib//:assert_j",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
   ],
   runtime_deps = [":testFramework_resources"]
+)
+
+jvm_test(
+  name = "testFramework_test",
+  runtime_deps = [":testFramework_test_lib"]
 )
 ### auto-generated section `build intellij.platform.testFramework` end

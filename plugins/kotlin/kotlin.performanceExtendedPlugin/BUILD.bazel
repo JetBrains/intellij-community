@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.performanceExtendedPlugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "performanceExtendedPlugin_resources",
@@ -12,17 +11,16 @@ jvm_library(
   name = "performanceExtendedPlugin",
   module_name = "kotlin.performanceExtendedPlugin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//platform/ide-core-impl",
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
-    "@lib//:kotlinc_analysis-api-platform-interface.provided",
-    "@lib//:kotlinc_analysis-api.provided",
+    "@lib//:kotlinc_analysis-api-platform-interface-provided",
+    "@lib//:kotlinc_analysis-api-provided",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",

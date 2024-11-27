@@ -1,7 +1,6 @@
 ### auto-generated section `build kotlin.compiler-plugins.assignment.common.k2` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -19,8 +18,7 @@ jvm_library(
   name = "kotlin-compiler-plugins-assignment-common-k2",
   module_name = "kotlin.compiler-plugins.assignment.common.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",

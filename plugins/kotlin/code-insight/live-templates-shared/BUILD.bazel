@@ -1,7 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.live-templates.shared` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -23,8 +22,7 @@ jvm_library(
   name = "kotlin-code-insight-live-templates-shared",
   module_name = "kotlin.code-insight.live-templates.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",

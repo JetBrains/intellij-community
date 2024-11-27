@@ -1,19 +1,18 @@
 ### auto-generated section `build intellij.java.impl.inspections` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "impl-inspections",
   module_name = "intellij.java.impl.inspections",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
     "//java/java-analysis-impl:analysis-impl",
     "@lib//:stream_ex",
     "//java/java-impl:impl",
     "@lib//:fastutil-min",
+    "//platform/ide-core-impl",
     "//java/compiler/openapi:java-compiler",
     "@lib//:asm",
     "//java/java-impl-refactorings:impl-refactorings",

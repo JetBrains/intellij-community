@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.groovy` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "groovy_resources",
@@ -9,13 +7,21 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_provided_library(
+  name = "ant_provided",
+  lib = "//plugins/ant"
+)
+
+jvm_provided_library(
+  name = "java-byteCodeViewer_provided",
+  lib = "//plugins/ByteCodeViewer:java-byteCodeViewer"
+)
+
 jvm_library(
   name = "groovy",
   module_name = "intellij.groovy",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//xml/dom-openapi:dom",
     "//java/openapi:java",
@@ -23,6 +29,7 @@ jvm_library(
     "//plugins/groovy/rt",
     "//plugins/groovy/spock-rt",
     "//java/compiler/impl:java-compiler-impl",
+    "//platform/ide-core-impl",
     "//java/debugger/impl:java-debugger-impl",
     "//platform/lang-api:lang",
     "//platform/editor-ui-ex:editor-ex",
@@ -34,7 +41,6 @@ jvm_library(
     "//java/java-impl:impl",
     "//plugins/copyright",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/ant",
     "@lib//:guava",
     "//plugins/IntelliLang:java-langInjection",
     "//jps/jps-builders:build",
@@ -43,7 +49,6 @@ jvm_library(
     "//plugins/junit_rt:junit-rt",
     "//java/java-indexing-api:indexing",
     "//plugins/groovy/jps-plugin:jps",
-    "//plugins/ByteCodeViewer:java-byteCodeViewer",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/groovy/groovy-psi:psi",
     "//platform/external-system-api:externalSystem",
@@ -59,17 +64,17 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//java/unscramble",
+    ":ant_provided",
+    ":java-byteCodeViewer_provided",
   ],
   exports = ["//plugins/groovy/groovy-psi:psi"],
   runtime_deps = [":groovy_resources"]
 )
 
-kt_jvm_test(
-  name = "groovy_test",
+jvm_library(
+  name = "groovy_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":groovy"],
   deps = [
     "//xml/dom-openapi:dom",
@@ -78,6 +83,7 @@ kt_jvm_test(
     "//plugins/groovy/rt",
     "//plugins/groovy/spock-rt",
     "//java/compiler/impl:java-compiler-impl",
+    "//platform/ide-core-impl",
     "//java/debugger/impl:java-debugger-impl",
     "//platform/lang-api:lang",
     "//platform/editor-ui-ex:editor-ex",
@@ -88,23 +94,29 @@ kt_jvm_test(
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
     "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
     "//plugins/IntelliLang:langInjection",
+    "//plugins/ant",
+    "//plugins/ant:ant_test_lib",
     "@lib//:guava",
     "//java/testFramework",
     "//plugins/IntelliLang:java-langInjection",
     "//plugins/IntelliLang:xml-langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
     "//plugins/junit",
     "//plugins/junit_rt:junit-rt",
     "//java/java-indexing-api:indexing",
     "//plugins/groovy/jps-plugin:jps",
+    "//plugins/ByteCodeViewer:java-byteCodeViewer",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/groovy/groovy-psi:psi",
     "//platform/external-system-api:externalSystem",
     "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test_lib",
     "//platform/external-system-impl:externalSystem-impl",
-    "//platform/lang-impl:lang-tests_test",
+    "//platform/lang-impl:lang-tests_test_lib",
     "@lib//:protobuf",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
@@ -117,13 +129,18 @@ kt_jvm_test(
     "//platform/build-scripts/downloader:buildScripts-downloader",
     "@lib//:assert_j",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/unscramble",
   ],
   runtime_deps = [":groovy_resources"]
+)
+
+jvm_test(
+  name = "groovy_test",
+  runtime_deps = [":groovy_test_lib"]
 )
 ### auto-generated section `build intellij.groovy` end

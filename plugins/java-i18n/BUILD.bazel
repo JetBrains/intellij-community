@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.java.i18n` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "java-i18n_resources",
@@ -13,14 +11,13 @@ jvm_library(
   name = "java-i18n",
   module_name = "intellij.java.i18n",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/lang-api:lang",
     "//java/openapi:java",
     "//plugins/properties",
     "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//xml/impl",
     "//spellchecker",
@@ -44,21 +41,22 @@ jvm_library(
   runtime_deps = [":java-i18n_resources"]
 )
 
-kt_jvm_test(
-  name = "java-i18n_test",
+jvm_library(
+  name = "java-i18n_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":java-i18n"],
   deps = [
     "//platform/lang-api:lang",
     "//java/openapi:java",
     "//plugins/properties",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//xml/impl",
     "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
     "//java/java-impl:impl",
     "//java/jsp-base-openapi:jsp-base",
     "//java/jsp-openapi:jsp",
@@ -73,8 +71,13 @@ kt_jvm_test(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
   runtime_deps = [":java-i18n_resources"]
+)
+
+jvm_test(
+  name = "java-i18n_test",
+  runtime_deps = [":java-i18n_test_lib"]
 )
 ### auto-generated section `build intellij.java.i18n` end

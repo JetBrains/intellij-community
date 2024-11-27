@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.evaluationPlugin` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "evaluationPlugin_resources",
@@ -12,15 +11,14 @@ jvm_library(
   name = "evaluationPlugin",
   module_name = "intellij.evaluationPlugin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
     "//plugins/evaluation-plugin/core:evaluationPlugin-core",
     "//plugins/completion-ml-ranking:completionMlRanking",
     "//plugins/stats-collector:statsCollector",
+    "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/core-ui",
@@ -43,31 +41,23 @@ jvm_library(
 
 ### auto-generated section `build intellij.evaluationPlugin.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "evaluationPlugin-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "evaluationPlugin-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/evaluation-plugin/core:evaluationPlugin-core",
     "//plugins/evaluation-plugin:evaluationPlugin",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test",
+    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:mockito",
     "@lib//:junit5",
     "@lib//:gson",
     "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.tests` end

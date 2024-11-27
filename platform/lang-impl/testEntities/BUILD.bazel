@@ -1,22 +1,25 @@
 ### auto-generated section `build intellij.platform.lang.testEntities` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "lang-testEntities",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "lang-testEntities_test",
+jvm_library(
+  name = "lang-testEntities_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/workspace/storage",
   ]
+)
+
+jvm_test(
+  name = "lang-testEntities_test",
+  runtime_deps = [":lang-testEntities_test_lib"]
 )
 ### auto-generated section `build intellij.platform.lang.testEntities` end

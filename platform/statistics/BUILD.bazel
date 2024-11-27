@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.platform.statistics` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "statistics_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "statistics",
   module_name = "intellij.platform.statistics",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",
@@ -33,6 +29,7 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/editor-ui-api:editor",
     "//platform/ide-core",
+    "//platform/ide-core/plugins:ide-core-plugins",
     "//platform/projectModel-api:projectModel",
     "@lib//:jackson",
     "@lib//:jackson-databind",
@@ -44,12 +41,10 @@ jvm_library(
   runtime_deps = [":statistics_resources"]
 )
 
-kt_jvm_test(
-  name = "statistics_test",
+jvm_library(
+  name = "statistics_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":statistics"],
   deps = [
     "//platform/core-impl",
@@ -68,6 +63,7 @@ kt_jvm_test(
     "@lib//:caffeine",
     "//platform/editor-ui-api:editor",
     "//platform/ide-core",
+    "//platform/ide-core/plugins:ide-core-plugins",
     "//platform/projectModel-api:projectModel",
     "@lib//:jackson",
     "@lib//:jackson-databind",
@@ -78,5 +74,10 @@ kt_jvm_test(
     "@lib//:assert_j",
   ],
   runtime_deps = [":statistics_resources"]
+)
+
+jvm_test(
+  name = "statistics_test",
+  runtime_deps = [":statistics_test_lib"]
 )
 ### auto-generated section `build intellij.platform.statistics` end

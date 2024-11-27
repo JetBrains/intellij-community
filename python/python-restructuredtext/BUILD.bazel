@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.restructuredtext.python` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "restructuredtext-python_resources",
@@ -8,26 +7,49 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_provided_library(
+  name = "lang-impl_provided",
+  lib = "//platform/lang-impl"
+)
+
+jvm_provided_library(
+  name = "execution-impl_provided",
+  lib = "//platform/execution-impl"
+)
+
+jvm_provided_library(
+  name = "python-community-impl_provided",
+  lib = "//python:python-community-impl"
+)
+
+jvm_provided_library(
+  name = "core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_provided_library(
+  name = "spellchecker_provided",
+  lib = "//spellchecker"
+)
+
 jvm_library(
   name = "restructuredtext-python",
   module_name = "intellij.restructuredtext.python",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/lang-impl",
-    "//platform/execution-impl",
     "@lib//:guava",
-    "//python:python-community-impl",
-    "//platform/core-ui",
     "@lib//:jsoup",
     "//platform/util/jdom",
     "@lib//:jcef",
-    "//spellchecker",
     "//plugins/restructuredtext",
     "//platform/ui.jcef:ui-jcef",
+    ":lang-impl_provided",
+    ":execution-impl_provided",
+    ":python-community-impl_provided",
+    ":core-ui_provided",
+    ":spellchecker_provided",
   ],
   runtime_deps = [":restructuredtext-python_resources"]
 )

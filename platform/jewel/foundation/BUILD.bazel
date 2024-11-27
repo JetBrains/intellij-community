@@ -1,0 +1,81 @@
+### auto-generated section `build intellij.platform.jewel.foundation` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "foundation_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "foundation",
+  module_name = "intellij.platform.jewel.foundation",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_foundation_foundation_desktop",
+    "//libraries/skiko",
+  ],
+  exports = ["@lib//:platform_jewel_foundation_org_jetbrains_compose_foundation_foundation_desktop"],
+  runtime_deps = [":foundation_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "foundation_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":foundation"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_foundation_foundation_desktop",
+    "//libraries/skiko",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_test_junit4",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_test_junit4_desktop",
+    "@lib//:platform_jewel_foundation_org_hamcrest_hamcrest_core",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_test",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_test_desktop",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_runtime_runtime",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_text",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_unit",
+    "@lib//:platform_jewel_foundation_org_jetbrains_annotations",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_desktop_desktop",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_desktop_desktop_jvm",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_runtime_runtime2",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui2",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_tooling_preview",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_ui_ui_tooling_preview_desktop",
+    "@lib//:platform_jewel_foundation_org_jetbrains_compose_runtime_runtime3",
+    "//libraries/junit4",
+    "@lib//:kotlinx-coroutines-test",
+  ],
+  runtime_deps = [":foundation_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "foundation_test",
+  runtime_deps = [":foundation_test_lib"]
+)
+### auto-generated section `build intellij.platform.jewel.foundation` end

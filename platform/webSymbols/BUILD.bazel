@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.platform.webSymbols` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "webSymbols_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "webSymbols",
   module_name = "intellij.platform.webSymbols",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
@@ -36,17 +32,16 @@ jvm_library(
   runtime_deps = [":webSymbols_resources"]
 )
 
-kt_jvm_test(
-  name = "webSymbols_test",
+jvm_library(
+  name = "webSymbols_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":webSymbols"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-api:core",
@@ -59,9 +54,15 @@ kt_jvm_test(
     "@lib//:jetbrains_markdown",
     "@lib//:gson",
     "//platform/markdown-utils",
+    "//platform/markdown-utils:markdown-utils_test_lib",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
   ],
   runtime_deps = [":webSymbols_resources"]
+)
+
+jvm_test(
+  name = "webSymbols_test",
+  runtime_deps = [":webSymbols_test_lib"]
 )
 ### auto-generated section `build intellij.platform.webSymbols` end

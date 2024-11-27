@@ -1,7 +1,6 @@
 ### auto-generated section `build intellij.gradle.native.tooling` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -19,8 +18,8 @@ jvm_library(
   name = "gradle-native-tooling",
   module_name = "intellij.gradle.native.tooling",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:jetbrains-annotations",
@@ -35,26 +34,18 @@ jvm_library(
 
 ### auto-generated section `build intellij.gradle.native.tooling.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "gradle-native-tooling-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "gradle-native-tooling-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
     "//plugins/gradle/native/tooling:gradle-native-tooling",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "//platform/object-serializer:objectSerializer",
-    "//platform/object-serializer:objectSerializer_test",
+    "//platform/object-serializer:objectSerializer_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
   ]
 )

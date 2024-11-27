@@ -22,6 +22,8 @@ import java.util.zip.ZipEntry
 import kotlin.math.min
 
 val W_CREATE_NEW: EnumSet<StandardOpenOption> = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
+private val WRITE = EnumSet.of(StandardOpenOption.WRITE)
+private val READ = EnumSet.of(StandardOpenOption.READ)
 
 // 1 MB
 private const val largeFileThreshold = 1_048_576
@@ -29,11 +31,23 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
+@Suppress("DuplicatedCode")
+fun ZipArchiveOutputStream.file(nameString: String, file: Path) {
+  val name = nameString.toByteArray()
+  FileChannel.open(file, READ).use { channel ->
+    val size = channel.size()
+    assert(size <= Int.MAX_VALUE)
+    writeEntryHeaderWithoutCrc(name = name, size = size.toInt())
+    transferFrom(channel, size.toLong())
+  }
+  return
+}
+
 fun transformZipUsingTempFile(file: Path, indexWriter: IkvIndexBuilder?, task: (ZipFileWriter) -> Unit) {
   val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
   try {
     ZipFileWriter(
-      channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)),
+      channel = FileChannel.open(tempFile, WRITE),
       zipIndexWriter = ZipIndexWriter(indexWriter),
     ).use {
       task(it)
@@ -64,7 +78,6 @@ inline fun writeNewZipWithoutIndex(
 class ZipFileWriter(
   channel: GatheringByteChannel,
   private val deflater: Deflater? = null,
-  private val withCrc: Boolean = true,
   private val zipIndexWriter: ZipIndexWriter,
 ) : AutoCloseable {
   // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
@@ -82,23 +95,13 @@ class ZipFileWriter(
     var isCompressed = deflater != null && !nameString.endsWith(".png")
 
     val name = nameString.toByteArray()
-    if (!withCrc) {
-      FileChannel.open(file, EnumSet.of(StandardOpenOption.READ)).use { channel ->
-        val size = channel.size()
-        assert(size <= Int.MAX_VALUE)
-        resultStream.writeEntryHeaderWithoutCrc(name = name, size = size.toInt())
-        resultStream.transferFrom(fileChannel = channel, size.toLong())
-      }
-      return
-    }
-
     crc32.reset()
 
     val headerSize = 30 + name.size
     var input: ByteBuf? = null
     try {
       val size: Int
-      FileChannel.open(file, EnumSet.of(StandardOpenOption.READ)).use { channel ->
+      FileChannel.open(file, READ).use { channel ->
         size = channel.size().toInt()
         if (size == 0) {
           resultStream.writeEmptyFile(name = name)

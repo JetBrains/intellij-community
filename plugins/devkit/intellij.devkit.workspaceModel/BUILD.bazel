@@ -1,6 +1,17 @@
 ### auto-generated section `build intellij.devkit.workspaceModel` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
 
 jvm_resources(
   name = "workspaceModel_resources",
@@ -12,15 +23,14 @@ jvm_library(
   name = "workspaceModel",
   module_name = "intellij.devkit.workspaceModel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "//platform/ide-core",
     "//platform/editor-ui-api:editor",
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinc_kotlin-compiler-common.provided",
+    "@lib//:kotlinc_kotlin-compiler-common-provided",
     "//platform/analysis-api:analysis",
     "//java/java-psi-impl:psi-impl",
     "@lib//:kotlinx-collections-immutable",
@@ -31,7 +41,7 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
     "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "@lib//:kotlinc_kotlin-compiler-fe10.provided",
+    "@lib//:kotlinc_kotlin-compiler-fe10-provided",
     "//platform/lang-impl",
     "//plugins/devkit/devkit-core:core",
     "//java/idea-ui:ui",
@@ -40,7 +50,7 @@ jvm_library(
     "@lib//:workspace-model-codegen",
     "//platform/util-class-loader:util-classLoader",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
-    "@lib//:kotlinc_kotlin-jps-common.provided",
+    "@lib//:kotlinc_kotlin-jps-common-provided",
     "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
   ],
   runtime_deps = [":workspaceModel_resources"]

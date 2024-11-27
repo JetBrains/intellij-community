@@ -1,14 +1,11 @@
 ### auto-generated section `build intellij.terminal.completion` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "completion",
   module_name = "intellij.terminal.completion",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:terminal_completion_terminal-completion-spec",
@@ -17,19 +14,22 @@ jvm_library(
   exports = ["@lib//:terminal_completion_terminal-completion-spec"]
 )
 
-kt_jvm_test(
-  name = "completion_test",
+jvm_library(
+  name = "completion_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":completion"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:terminal_completion_terminal-completion-spec",
     "//platform/util",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
   ]
+)
+
+jvm_test(
+  name = "completion_test",
+  runtime_deps = [":completion_test_lib"]
 )
 ### auto-generated section `build intellij.terminal.completion` end

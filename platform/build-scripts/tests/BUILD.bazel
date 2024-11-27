@@ -1,18 +1,16 @@
 ### auto-generated section `build intellij.platform.buildScripts.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "buildScripts-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "buildScripts-tests_test",
+jvm_library(
+  name = "buildScripts-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//platform/build-scripts:buildScripts",
     "@lib//:junit4",
@@ -22,12 +20,12 @@ kt_jvm_test(
     "//platform/build-scripts/downloader:buildScripts-downloader",
     "//platform/util",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
     "@lib//:junit5",
     "//platform/testFramework/extensions:testExtensions",
     "//build/tasks",
-    "//build/tasks:tasks_test",
+    "//build/tasks:tasks_test_lib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:commons-compress",
     "//build",
@@ -36,5 +34,10 @@ kt_jvm_test(
     "//platform/util/jdom",
     "@rules_jvm//zip:build-zip",
   ]
+)
+
+jvm_test(
+  name = "buildScripts-tests_test",
+  runtime_deps = [":buildScripts-tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.execution` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "execution_resources",
@@ -12,13 +11,12 @@ jvm_library(
   name = "execution",
   module_name = "intellij.platform.execution",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/ide-core",
+    "//platform/ide-core/plugins:ide-core-plugins",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util:util-ui",
     "//platform/util/jdom",

@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.java.coverage` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "java-coverage_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "java-coverage",
   module_name = "intellij.java.coverage",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:java_coverage__ja_co_co",
     "//plugins/coverage-common:coverage",
@@ -25,6 +21,7 @@ jvm_library(
     "//platform/testRunner",
     "//plugins/testng_rt:testng-rt",
     "//plugins/junit_rt:junit-rt",
+    "//platform/ide-core-impl",
     "//java/compiler/openapi:java-compiler",
     "//plugins/coverage/coverage_rt:java-coverage-rt",
     "//java/java-psi-impl:psi-impl",
@@ -46,29 +43,30 @@ jvm_library(
   runtime_deps = [":java-coverage_resources"]
 )
 
-kt_jvm_test(
-  name = "java-coverage_test",
+jvm_library(
+  name = "java-coverage_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":java-coverage"],
   deps = [
     "@lib//:java_coverage__ja_co_co",
     "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
     "//java/execution/openapi:java-execution",
     "//java/openapi:java",
     "//java/execution/impl:java-execution-impl",
     "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
     "//plugins/testng_rt:testng-rt",
     "//plugins/junit_rt:junit-rt",
+    "//platform/ide-core-impl",
     "//java/compiler/openapi:java-compiler",
     "//plugins/coverage/coverage_rt:java-coverage-rt",
     "//java/java-psi-impl:psi-impl",
     "//platform/lang-impl",
     "//java/java-impl:impl",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "//platform/util-class-loader:util-classLoader",
     "//platform/core-ui",
@@ -79,5 +77,10 @@ kt_jvm_test(
     "@lib//:fastutil-min",
   ],
   runtime_deps = [":java-coverage_resources"]
+)
+
+jvm_test(
+  name = "java-coverage_test",
+  runtime_deps = [":java-coverage_test_lib"]
 )
 ### auto-generated section `build intellij.java.coverage` end

@@ -1,5 +1,8 @@
 # https://bazel.build/docs/bazel-and-java#hermetic-testing
 # The code is compiled for, executed, and tested on this JVM.
+
+build --@rules_jvm//:default-kotlinc-opts=//:k17
+
 common --java_language_version=17
 common --java_runtime_version=remotejdk_21
 

@@ -1,6 +1,6 @@
 ### auto-generated section `build kotlin.uast.uast-kotlin.k2` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
@@ -16,8 +16,8 @@ jvm_library(
   name = "kotlin-uast-uast-kotlin-k2",
   module_name = "kotlin.uast.uast-kotlin.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",

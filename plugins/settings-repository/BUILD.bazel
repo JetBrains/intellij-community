@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.settingsRepository` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "settingsRepository_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "settingsRepository",
   module_name = "intellij.settingsRepository",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
@@ -53,36 +50,30 @@ jvm_library(
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
 
-java_library(
-  name = "settingsRepository-tests",
-  visibility = ["//visibility:public"]
-)
-
-kt_jvm_test(
+jvm_test(
   name = "settingsRepository-tests_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/projectModel-impl",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:jna",
     "@lib//:junit4",
     "//platform/configuration-store-impl:configurationStore-impl",
-    "//platform/util/testSrc:tests_test",
+    "//platform/util:util-tests_test_lib",
     "//plugins/settings-repository:settingsRepository",
     "@lib//:assert_j",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/testFramework/extensions:testExtensions",
-    "//platform/configuration-store-impl:configurationStore-tests_test",
+    "//platform/configuration-store-impl:configurationStore-tests_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fastutil-min",
     "//platform/util/jdom",

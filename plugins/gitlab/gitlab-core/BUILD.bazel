@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.vcs.gitlab` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "vcs-gitlab_resources",
@@ -13,10 +11,7 @@ jvm_library(
   name = "vcs-gitlab",
   module_name = "intellij.vcs.gitlab",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/core-ui",
@@ -32,7 +27,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin.provided",
+    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin-provided",
     "@lib//:jackson",
     "@lib//:jackson-module-kotlin",
     "@lib//:jackson-databind",
@@ -54,29 +49,29 @@ jvm_library(
   runtime_deps = [":vcs-gitlab_resources"]
 )
 
-kt_jvm_test(
-  name = "vcs-gitlab_test",
+jvm_library(
+  name = "vcs-gitlab_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "testApi/**/*.kt", "testApi/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "testApi/**/*.kt", "testApi/**/*.java"], allow_empty = True),
   associates = [":vcs-gitlab"],
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/util:util-ui",
     "//platform/vcs-api:vcs",
     "//platform/collaboration-tools:collaborationTools",
+    "//platform/collaboration-tools:collaborationTools_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin-provided",
     "@lib//:jackson",
     "@lib//:jackson-module-kotlin",
     "@lib//:jackson-databind",
@@ -84,27 +79,37 @@ kt_jvm_test(
     "@lib//:kotlinx-coroutines-test",
     "@lib//:assert_j",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
     "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
     "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
     "@lib//:jetbrains_markdown",
     "//platform/markdown-utils",
+    "//platform/markdown-utils:markdown-utils_test_lib",
     "@lib//:miglayout-swing",
     "@lib//:caffeine",
     "//platform/diff-impl",
     "//platform/lang-impl",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//platform/vcs-log/api:vcs-log",
     "@lib//:jsoup",
     "@lib//:testcontainers",
     "//platform/testFramework/junit5",
-    "//platform/testFramework/junit5:junit5_test",
+    "//platform/testFramework/junit5:junit5_test_lib",
     "//json",
     "//platform/util/coroutines",
     "@lib//:io_mockk",
     "@lib//:io_mockk_jvm",
   ],
   runtime_deps = [":vcs-gitlab_resources"]
+)
+
+jvm_test(
+  name = "vcs-gitlab_test",
+  runtime_deps = [":vcs-gitlab_test_lib"]
 )
 ### auto-generated section `build intellij.vcs.gitlab` end

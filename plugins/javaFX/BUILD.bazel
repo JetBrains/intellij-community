@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.javaFX` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "javaFX_resources",
@@ -13,13 +11,12 @@ jvm_library(
   name = "javaFX",
   module_name = "intellij.javaFX",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl:java-execution-impl",
+    "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//xml/openapi:xml",
@@ -42,21 +39,19 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
   ],
-  exports = ["//plugins/javaFX/common"],
   runtime_deps = [":javaFX_resources"]
 )
 
-kt_jvm_test(
-  name = "javaFX_test",
+jvm_library(
+  name = "javaFX_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":javaFX"],
   deps = [
     "//platform/lang-api:lang",
     "//java/execution/openapi:java-execution",
     "//java/execution/impl:java-execution-impl",
+    "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//xml/openapi:xml",
@@ -68,26 +63,33 @@ kt_jvm_test(
     "//java/compiler/impl:java-compiler-impl",
     "//plugins/javaFX/common",
     "//java/manifest",
+    "//java/manifest:manifest_test_lib",
     "//java/idea-ui:ui",
     "//plugins/properties",
     "//java/testFramework",
     "//java/typeMigration",
+    "//java/typeMigration:typeMigration_test_lib",
     "//platform/util/nanoxml",
-    "//java/java-tests:tests_test",
+    "//java/java-tests:tests_test_lib",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
   ],
   runtime_deps = [":javaFX_resources"]
 )
+
+jvm_test(
+  name = "javaFX_test",
+  runtime_deps = [":javaFX_test_lib"]
+)
 ### auto-generated section `build intellij.javaFX` end
 
 ### auto-generated section `build intellij.javaFX.properties` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "javaFX-properties_resources",
@@ -99,9 +101,7 @@ jvm_library(
   name = "javaFX-properties",
   module_name = "intellij.javaFX.properties",
   visibility = ["//visibility:public"],
-  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/platform-impl:ide-impl",
     "//xml/xml-psi-impl:psi-impl",

@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.vcs.git.coverage` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "vcs-git-coverage_resources",
@@ -13,9 +11,7 @@ jvm_library(
   name = "vcs-git-coverage",
   module_name = "intellij.vcs.git.coverage",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/platform-api:ide",
@@ -30,12 +26,9 @@ jvm_library(
   runtime_deps = [":vcs-git-coverage_resources"]
 )
 
-kt_jvm_test(
+jvm_test(
   name = "vcs-git-coverage_test",
-  visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":vcs-git-coverage"],
   deps = [
     "@lib//:junit5",
@@ -43,11 +36,15 @@ kt_jvm_test(
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//plugins/coverage-common:coverage",
+    "//plugins/coverage-common:coverage_test_lib",
     "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
     "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
   ],
   runtime_deps = [":vcs-git-coverage_resources"]
 )

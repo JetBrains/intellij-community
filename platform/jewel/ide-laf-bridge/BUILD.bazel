@@ -1,0 +1,94 @@
+### auto-generated section `build intellij.platform.jewel.ideLafBridge` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
+  ]
+)
+
+jvm_resources(
+  name = "ideLafBridge_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "ideLafBridge",
+  module_name = "intellij.platform.jewel.ideLafBridge",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/foundation",
+    "//platform/jewel/ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:jna",
+    "//libraries/skiko",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [
+    ":ideLafBridge_resources",
+    "//libraries/skiko",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_test(
+  name = "ideLafBridge_test",
+  srcs = glob(["ide-laf-bridge-tests/src/test/kotlin/**/*.kt", "ide-laf-bridge-tests/src/test/kotlin/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":ideLafBridge"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:jna",
+    "//libraries/skiko",
+    "//platform/core-ui",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_test_junit4",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_test_junit4_desktop",
+    "@lib//:platform_jewel_ide_laf_bridge_org_hamcrest_hamcrest_core",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_test",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_test_desktop",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_runtime_runtime",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_text",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_unit",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_annotations",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_desktop_desktop",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_desktop_desktop_jvm",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_runtime_runtime2",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui2",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_tooling_preview",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_ui_ui_tooling_preview_desktop",
+    "@lib//:platform_jewel_ide_laf_bridge_org_jetbrains_compose_runtime_runtime3",
+    "//libraries/junit4",
+    "@lib//:kotlinx-coroutines-test",
+  ],
+  runtime_deps = [":ideLafBridge_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.jewel.ideLafBridge` end

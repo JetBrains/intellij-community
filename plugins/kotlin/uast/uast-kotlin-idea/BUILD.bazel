@@ -1,13 +1,11 @@
 ### auto-generated section `build kotlin.uast.uast-kotlin-idea` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "kotlin-uast-uast-kotlin-idea",
   module_name = "kotlin.uast.uast-kotlin-idea",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:vavr",
     "@lib//:kotlin-stdlib",

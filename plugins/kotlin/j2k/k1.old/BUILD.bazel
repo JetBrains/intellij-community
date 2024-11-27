@@ -1,7 +1,6 @@
 ### auto-generated section `build kotlin.j2k.k1.old` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
@@ -19,8 +18,7 @@ jvm_library(
   name = "kotlin-j2k-k1-old",
   module_name = "kotlin.j2k.k1.old",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -29,6 +27,7 @@ jvm_library(
     "@lib//:kotlinc_analysis-api",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/core",
+    "//plugins/kotlin/idea",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//platform/lang-api:lang",
     "//java/java-psi-impl:psi-impl",
@@ -37,6 +36,7 @@ jvm_library(
     "//java/java-analysis-impl:analysis-impl",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/j2k/k1.new:kotlin-j2k-k1-new",
   ],
   runtime_deps = [":kotlin-j2k-k1-old_resources"]
 )

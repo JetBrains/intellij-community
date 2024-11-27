@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.groovy.jps` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "jps_resources",
@@ -12,9 +11,9 @@ jvm_library(
   name = "jps",
   module_name = "intellij.groovy.jps",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j11",
-  kotlinc_opts = "@rules_jvm//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j11",
+  kotlinc_opts = "@community//:k11",
   deps = [
     "//jps/model-api:model",
     "//jps/jps-builders:build",
@@ -22,7 +21,7 @@ jvm_library(
     "//jps/model-serialization",
     "//jps/model-impl",
     "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
-    "//lib:ecj-4_25",
+    "@lib//:ecj-4_25-provided",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:asm",
     "//platform/util/jdom",
@@ -35,25 +34,28 @@ jvm_library(
 
 ### auto-generated section `build intellij.groovy.jps.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "jps-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "jps-tests_test",
+jvm_library(
+  name = "jps-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/groovy/jps-plugin:jps",
     "//plugins/groovy/rt-constants:constants-rt",
     "@lib//:kotlin-stdlib",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
   ]
+)
+
+jvm_test(
+  name = "jps-tests_test",
+  runtime_deps = [":jps-tests_test_lib"]
 )
 ### auto-generated section `build intellij.groovy.jps.tests` end

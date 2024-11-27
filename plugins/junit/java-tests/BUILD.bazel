@@ -1,18 +1,16 @@
 ### auto-generated section `build intellij.junit.java.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "java-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "java-tests_test",
+jvm_library(
+  name = "java-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//platform/util/jdom",
     "//plugins/junit_rt:junit-rt",
@@ -20,5 +18,10 @@ kt_jvm_test(
     "//plugins/junit/testFramework",
     "//platform/platform-util-io:ide-util-io",
   ]
+)
+
+jvm_test(
+  name = "java-tests_test",
+  runtime_deps = [":java-tests_test_lib"]
 )
 ### auto-generated section `build intellij.junit.java.tests` end

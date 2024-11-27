@@ -1,6 +1,5 @@
 ### auto-generated section `build kotlin.jvm-debugger.evaluation.k2` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "kotlin-jvm-debugger-evaluation-k2_resources",
@@ -12,9 +11,7 @@ jvm_library(
   name = "kotlin-jvm-debugger-evaluation-k2",
   module_name = "kotlin.jvm-debugger.evaluation.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
     "//java/debugger/impl:java-debugger-impl",

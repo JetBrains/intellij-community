@@ -1,28 +1,31 @@
 ### auto-generated section `build intellij.xml.dom.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
   name = "dom-tests",
   visibility = ["//visibility:public"]
 )
 
-kt_jvm_test(
-  name = "dom-tests_test",
+jvm_library(
+  name = "dom-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = ["//xml/dom-impl"],
   deps = [
-    "//xml/dom-impl",
     "//xml/impl",
     "//java/testFramework",
     "//java/java-psi-impl:psi-impl",
     "//java/java-impl:impl",
     "@lib//:assert_j",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/libraries/cglib",
   ]
+)
+
+jvm_test(
+  name = "dom-tests_test",
+  runtime_deps = [":dom-tests_test_lib"]
 )
 ### auto-generated section `build intellij.xml.dom.tests` end

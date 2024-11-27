@@ -1,13 +1,11 @@
-### auto-generated section `build intellij.platform.eel.provider` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+### auto-generated section `build intellij.platform.eel.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "eel-provider",
-  module_name = "intellij.platform.eel.provider",
+  name = "eel-impl",
+  module_name = "intellij.platform.eel.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
@@ -22,6 +20,7 @@ jvm_library(
     "@lib//:jna",
     "@lib//:pty4j",
     "//platform/ide-core",
+    "//platform/eel-provider",
   ]
 )
-### auto-generated section `build intellij.platform.eel.provider` end
+### auto-generated section `build intellij.platform.eel.impl` end

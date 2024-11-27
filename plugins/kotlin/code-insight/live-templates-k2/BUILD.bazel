@@ -1,8 +1,6 @@
 ### auto-generated section `build kotlin.code-insight.live-templates.k2` start
-load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
@@ -21,8 +19,7 @@ jvm_library(
   name = "kotlin-code-insight-live-templates-k2",
   module_name = "kotlin.code-insight.live-templates.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -40,11 +37,10 @@ jvm_library(
   runtime_deps = [":kotlin-code-insight-live-templates-k2_resources"]
 )
 
-kt_jvm_test(
-  name = "kotlin-code-insight-live-templates-k2_test",
+jvm_library(
+  name = "kotlin-code-insight-live-templates-k2_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":kotlin-code-insight-live-templates-k2"],
   deps = [
@@ -54,6 +50,7 @@ kt_jvm_test(
     "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight_test_lib",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
     "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
     "//platform/core-impl",
@@ -62,12 +59,17 @@ kt_jvm_test(
     "//java/java-psi-api:psi",
     "//java/testFramework",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
-    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/util:kotlin-base-util_test",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
     "@lib//:kotlinc_kotlin-compiler-tests",
   ],
   runtime_deps = [":kotlin-code-insight-live-templates-k2_resources"]
+)
+
+jvm_test(
+  name = "kotlin-code-insight-live-templates-k2_test",
+  runtime_deps = [":kotlin-code-insight-live-templates-k2_test_lib"]
 )
 ### auto-generated section `build kotlin.code-insight.live-templates.k2` end

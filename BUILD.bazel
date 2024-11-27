@@ -1,3 +1,23 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+
+load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
+
+load("//build:compiler-options.bzl", "create_javac_options", "create_kotlinc_options")
+
+create_javac_options(name = "j8", release = "8")
+create_kotlinc_options(name= "k8", jvm_target="1.8")
+
+create_javac_options(name = "j11", release = "11")
+create_kotlinc_options(name= "k11", jvm_target= "11")
+
+create_javac_options(name = "j17", release = "17")
+create_kotlinc_options(name = "k17", jvm_target = "17")
+
+define_kt_toolchain(
+  name = "kotlin_toolchain",
+  javac_options = ":j17",
+)
+
 java_binary(
   name = "main_run",
   runtime_deps = [":main"],
@@ -61,7 +81,6 @@ load("@rules_java//java:defs.bzl", "java_library")
 java_library(
   name = "main",
   visibility = ["//visibility:public"],
-  exports = ["//java/ide-customization"],
   runtime_deps = [
     "//platform/main/intellij.platform.monolith.main:monolith-main",
     "//plugins/coverage:java-coverage",
@@ -137,7 +156,7 @@ java_library(
     "//plugins/java-i18n",
     "//plugins/tasks/tasks-api:tasks",
     "//plugins/tasks/tasks-java:java",
-    "//plugins/github:vcs-github",
+    "//plugins/github/github-core:vcs-github",
     "//plugins/hg4idea:vcs-hg",
     "//xml/relaxng",
     "//plugins/gradle/java",
@@ -174,6 +193,7 @@ java_library(
     "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
     "//plugins/settings-sync:settingsSync",
     "//plugins/settings-sync/git:settingsSync-git",
+    "//plugins/settings-sync/jba:settingsSync-jba",
     "//java/java-features-trainer:featuresTrainer",
     "//plugins/ml-local-models/java:ml-models-local-java",
     "//plugins/kotlin:kotlin-plugin-community-main",
@@ -189,7 +209,6 @@ java_library(
     "//plugins/keymaps/netbeans5.6-keymap:keymap-netbeans",
     "//plugins/evaluation-plugin:evaluationPlugin",
     "//plugins/evaluation-plugin/languages/java:evaluationPlugin-languages-java",
-    "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//platform/warmup",
     "//plugins/remote-control:remoteControl",
     "//platform/webSymbols",
@@ -202,14 +221,17 @@ java_library(
     "//plugins/kotlin/onboarding-promoter",
     "//platform/execution-process-elevation",
     "//plugins/github/community:vcs-github-community",
+    "//plugins/gitlab/gitlab-community:vcs-gitlab-community",
+    "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
     "//plugins/yaml/editing",
     "//java/compiler/charts:java-compiler-charts",
     "//platform/compose",
     "//json/split",
     "//java/java-terminal:terminal-tests",
     "//java/java-terminal:terminal",
-    "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
     "//jvm/jvm-analysis-impl:analysis-impl",
+    "//plugins/ByteCodeViewer:java-byteCodeViewer",
+    "//plugins/github/github-json:vcs-github-json",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

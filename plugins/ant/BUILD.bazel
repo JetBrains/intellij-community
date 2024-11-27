@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.ant` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "ant_resources",
@@ -13,12 +11,11 @@ jvm_library(
   name = "ant",
   module_name = "intellij.ant",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
-    "//lib/ant/lib:ant-antlr",
+    "@lib//ant/lib:ant-antlr",
+    "//platform/ide-core-impl",
     "//java/compiler/impl:java-compiler-impl",
     "//java/java-runtime:rt",
     "//java/execution/impl:java-execution-impl",
@@ -49,18 +46,17 @@ jvm_library(
   runtime_deps = [":ant_resources"]
 )
 
-kt_jvm_test(
-  name = "ant_test",
+jvm_library(
+  name = "ant_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/src/**/*.kt", "tests/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["tests/src/**/*.kt", "tests/src/**/*.java"], allow_empty = True),
   associates = [":ant"],
   deps = [
     "//java/openapi:java",
     "//java/testFramework",
     "@lib//:junit4",
-    "//lib/ant/lib:ant-antlr",
+    "@lib//ant/lib:ant-antlr",
+    "//platform/ide-core-impl",
     "//java/compiler/impl:java-compiler-impl",
     "//java/java-runtime:rt",
     "//java/execution/impl:java-execution-impl",
@@ -74,12 +70,14 @@ kt_jvm_test(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/ant/jps-plugin:jps",
     "//xml/dom-impl",
     "//plugins/properties/properties-psi-api:psi",
     "//platform/util/nanoxml",
     "@lib//:stream_ex",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "@lib//:fastutil-min",
     "//platform/external-system-api:externalSystem",
     "//platform/util-class-loader:util-classLoader",
@@ -88,8 +86,13 @@ kt_jvm_test(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
   runtime_deps = [":ant_resources"]
+)
+
+jvm_test(
+  name = "ant_test",
+  runtime_deps = [":ant_test_lib"]
 )
 ### auto-generated section `build intellij.ant` end

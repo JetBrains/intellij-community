@@ -11,10 +11,10 @@ jvm_resources(
 java_library(
   name = "vcs-github-community",
   visibility = ["//visibility:public"],
-  exports = ["//plugins/github:vcs-github"],
+  exports = ["//plugins/github/github-core:vcs-github"],
   runtime_deps = [
     ":vcs-github-community_resources",
-    "//plugins/github:vcs-github",
+    "//plugins/github/github-core:vcs-github",
   ]
 )
 ### auto-generated section `build intellij.vcs.github.community` end

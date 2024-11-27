@@ -1,16 +1,16 @@
 ### auto-generated section `build intellij.cucumber.jvmFormatter5` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "cucumber-jvmFormatter5",
   module_name = "intellij.cucumber.jvmFormatter5",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",
-    "@lib//:cucumber_jvm_formatter5_cucumber-java_5_0_0-_r_c1.provided",
+    "@lib//:cucumber_jvm_formatter5_cucumber-java_5_0_0-_r_c1-provided",
   ]
 )
 ### auto-generated section `build intellij.cucumber.jvmFormatter5` end

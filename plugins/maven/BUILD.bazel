@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.maven` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "maven_resources",
@@ -8,14 +7,23 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_provided_library(
+  name = "java-guiForms-rt_provided",
+  lib = "//platform/forms_rt:java-guiForms-rt"
+)
+
+jvm_provided_library(
+  name = "artifactResolver-m31_provided",
+  lib = "//plugins/maven/artifact-resolver-m31:artifactResolver-m31"
+)
+
 jvm_library(
   name = "maven",
   module_name = "intellij.maven",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/ide-core-impl",
     "//java/openapi:java",
     "//plugins/maven-server-api:maven-server",
     "//platform/platform-impl:ide-impl",
@@ -32,7 +40,6 @@ jvm_library(
     "//java/execution/impl:java-execution-impl",
     "//java/debugger/impl:java-debugger-impl",
     "//java/idea-ui:ui",
-    "//platform/forms_rt:java-guiForms-rt",
     "@lib//:jgoodies-forms",
     "@lib//:gson",
     "//plugins/groovy",
@@ -40,7 +47,6 @@ jvm_library(
     "//platform/lang-impl",
     "//jps/model-impl",
     "//plugins/maven/jps-plugin:jps",
-    "//plugins/maven/artifact-resolver-m31:artifactResolver-m31",
     "//spellchecker",
     "//platform/vcs-api:vcs",
     "//plugins/properties/properties-psi-api:psi",
@@ -82,11 +88,14 @@ jvm_library(
     "//platform/diagnostic/telemetry-impl",
     "//plugins/maven/maven-server-telemetry:server-telemetry",
     "@lib//:asm",
-    "//platform/eelProvider:eel-provider",
+    "//platform/eel-provider",
     "//platform/eel",
     "//platform/ijent",
+    "//platform/eel-impl",
     "@lib//:opentelemetry",
     "//java/debugger/shared:java-debugger-impl-shared",
+    ":java-guiForms-rt_provided",
+    ":artifactResolver-m31_provided",
   ],
   exports = [
     "//java/openapi:java",

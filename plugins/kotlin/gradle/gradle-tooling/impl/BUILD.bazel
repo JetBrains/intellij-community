@@ -1,7 +1,5 @@
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "kotlin-gradle-gradle-tooling-impl_resources",
@@ -9,13 +7,18 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_provided_library(
+  name = "extensions_provided",
+  lib = "//platform/extensions"
+)
+
 jvm_library(
   name = "kotlin-gradle-gradle-tooling-impl",
   module_name = "kotlin.gradle.gradle-tooling.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
@@ -27,17 +30,17 @@ jvm_library(
     "//plugins/kotlin/base/project-model:kotlin-base-project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "//platform/extensions",
+    ":extensions_provided",
   ],
   runtime_deps = [":kotlin-gradle-gradle-tooling-impl_resources"]
 )
 
-kt_jvm_test(
-  name = "kotlin-gradle-gradle-tooling-impl_test",
+jvm_library(
+  name = "kotlin-gradle-gradle-tooling-impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   associates = [":kotlin-gradle-gradle-tooling-impl"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -53,7 +56,13 @@ kt_jvm_test(
     "@lib//:junit4",
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
+    "//platform/extensions",
   ],
   runtime_deps = [":kotlin-gradle-gradle-tooling-impl_resources"]
+)
+
+jvm_test(
+  name = "kotlin-gradle-gradle-tooling-impl_test",
+  runtime_deps = [":kotlin-gradle-gradle-tooling-impl_test_lib"]
 )
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end

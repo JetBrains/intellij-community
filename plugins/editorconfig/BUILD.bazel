@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.editorconfig` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "editorconfig_resources",
@@ -19,16 +17,14 @@ jvm_library(
   name = "editorconfig",
   module_name = "intellij.editorconfig",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
-  plugins = ["@lib//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
+    "//platform/ide-core-impl",
     "@lib//:kotlin-reflect",
     "@lib//:gson",
     "//spellchecker",
@@ -48,34 +44,35 @@ jvm_library(
   ]
 )
 
-kt_jvm_test(
-  name = "editorconfig_test",
+jvm_library(
+  name = "editorconfig_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":editorconfig"],
-  plugins = ["@lib//:serialization_plugin"],
   deps = [
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
+    "//platform/ide-core-impl",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlin-reflect",
     "@lib//:gson",
     "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
     "@lib//:automaton",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util/jdom",
     "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:ec4j-core",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/settings",
     "@lib//:kotlinx-serialization-core",
   ],
@@ -83,5 +80,10 @@ kt_jvm_test(
     ":editorconfig_resources",
     ":editorconfig_resources_1",
   ]
+)
+
+jvm_test(
+  name = "editorconfig_test",
+  runtime_deps = [":editorconfig_test_lib"]
 )
 ### auto-generated section `build intellij.editorconfig` end

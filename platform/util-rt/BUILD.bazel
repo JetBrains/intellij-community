@@ -1,27 +1,31 @@
 ### auto-generated section `build intellij.platform.util.rt` start
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "util-rt",
   module_name = "intellij.platform.util.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   deps = ["@lib//:jetbrains-annotations-java5"]
 )
 
-kt_jvm_test(
-  name = "util-rt_test",
+jvm_library(
+  name = "util-rt_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j8",
-  kotlinc_opts = "@rules_jvm//:k8",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  javac_opts = "@community//:j8",
+  kotlinc_opts = "@community//:k8",
   associates = [":util-rt"],
   deps = [
     "@lib//:jetbrains-annotations-java5",
     "@lib//:junit4",
   ]
+)
+
+jvm_test(
+  name = "util-rt_test",
+  runtime_deps = [":util-rt_test_lib"]
 )
 ### auto-generated section `build intellij.platform.util.rt` end

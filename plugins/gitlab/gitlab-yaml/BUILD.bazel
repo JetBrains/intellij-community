@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.vcs.gitlab.yaml` start
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
-load("@rules_jvm//:rules.bzl", "jvm_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "vcs-gitlab-yaml_resources",
@@ -13,34 +11,39 @@ jvm_library(
   name = "vcs-gitlab-yaml",
   module_name = "intellij.vcs.gitlab.yaml",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/yaml",
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
+    "//plugins/yaml/editing",
   ],
   runtime_deps = [":vcs-gitlab-yaml_resources"]
 )
 
-kt_jvm_test(
-  name = "vcs-gitlab-yaml_test",
+jvm_library(
+  name = "vcs-gitlab-yaml_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  javac_opts = "@rules_jvm//:j17",
-  kotlinc_opts = "@rules_jvm//:k17",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":vcs-gitlab-yaml"],
   deps = [
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
+    "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
+    "//plugins/yaml/editing",
     "//platform/testFramework",
-    "//platform/testFramework:testFramework_test",
-    "//json/tests:tests_test",
+    "//platform/testFramework:testFramework_test_lib",
+    "//json/tests:tests_test_lib",
   ],
   runtime_deps = [":vcs-gitlab-yaml_resources"]
+)
+
+jvm_test(
+  name = "vcs-gitlab-yaml_test",
+  runtime_deps = [":vcs-gitlab-yaml_test_lib"]
 )
 ### auto-generated section `build intellij.vcs.gitlab.yaml` end
