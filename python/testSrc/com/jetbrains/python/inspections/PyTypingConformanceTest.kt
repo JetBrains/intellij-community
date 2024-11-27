@@ -4,7 +4,6 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
@@ -76,11 +75,12 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     val errors = myFixture.doHighlighting(HighlightSeverity.WARNING).associate {
       document.getLineNumber(it.startOffset) to it.description
     }
-    compareErrors(document, extractExpectedErrors(), errors)
+    compareErrors(extractExpectedErrors(), errors)
   }
 
-  private fun extractExpectedErrors(): Map<Int, Error> {
-    val result = mutableMapOf<Int, Error>()
+  private fun extractExpectedErrors(): Errors {
+    val lineToError = mutableMapOf<Int, Error>()
+    val errorGroups = mutableMapOf<CharSequence, MutableList<Int>>()
     val document = myFixture.getDocument(myFixture.file)
     myFixture.file.accept(object : PyRecursiveElementVisitor() {
       override fun visitComment(comment: PsiComment) {
@@ -88,19 +88,17 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
         val lineNumber = document.getLineNumber(startOffset)
         val lineStartOffset = document.getLineStartOffset(lineNumber)
         val lineWithoutComment = document.getText(TextRange(lineStartOffset, startOffset))
-        if (lineWithoutComment.isBlank()) {
-          return
-        }
-        val error = tryParseError(comment.text)
-        if (error != null) {
-          result[lineNumber] = error
+        if (lineWithoutComment.isNotBlank()) {
+          parseComment(comment.text,
+                       { lineToError[lineNumber] = it },
+                       { errorGroups.computeIfAbsent(it) { mutableListOf() }.add(lineNumber) })
         }
       }
     })
-    return result
+    return Errors(lineToError, errorGroups)
   }
 
-  private fun tryParseError(comment: CharSequence): Error? {
+  private fun parseComment(comment: CharSequence, onError: (Error) -> Unit, onErrorTag: (CharSequence) -> Unit) {
     assert(comment.startsWith("#"))
     var index = 1
     while (index < comment.length && comment[index].isWhitespace()) {
@@ -108,59 +106,75 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     }
     if (index < comment.length && comment[index] == 'E') {
       index++
-      val optional: Boolean
-      if (index < comment.length && comment[index] == '?') {
-        optional = true
-        index++
+
+      if (index < comment.length && comment[index] == '[') {
+        val endIndex = comment.indexOfAny(charArrayOf(']', '\n'), index + 1, false)
+        if (endIndex != -1 && comment[endIndex] != '\n') {
+          onErrorTag(comment.subSequence(index + 1, endIndex))
+        }
       }
       else {
-        optional = false
+        val optional: Boolean
+        if (index < comment.length && comment[index] == '?') {
+          optional = true
+          index++
+        }
+        else {
+          optional = false
+        }
+        val message: CharSequence?
+        if (index < comment.length && comment[index] == ':') {
+          index++
+          message = comment.subSequence(index, comment.length).trimStart()
+        }
+        else {
+          message = null
+        }
+        onError(Error(message, optional))
       }
-      val message: CharSequence?
-      if (index < comment.length && comment[index] == ':') {
-        index++
-        message = comment.subSequence(index, comment.length).trimStart()
-      }
-      else {
-        message = null
-      }
-      return Error(message, optional)
     }
-    return null
   }
 
-  private class Error(val message: CharSequence?, val isOptional: Boolean)
+  private data class Error(val message: CharSequence?, val isOptional: Boolean)
 
-  private fun compareErrors(
-    document: Document,
-    expectedErrors: Map<Int, Error>,
-    actualErrors: Map<Int, @NlsContexts.DetailedDescription String>,
-  ) {
+  private data class Errors(val lineToError: Map<Int, Error>, val errorGroups: Map<CharSequence, List<Int>>)
+
+  private fun compareErrors(expectedErrors: Errors, actualErrors: Map<Int, @NlsContexts.DetailedDescription String>) {
     var failure = false
     val failMessage = StringBuilder()
-    for (lineNumber in 0..<document.lineCount) {
-      val expectedError = expectedErrors[lineNumber]
-      if (expectedError != null) {
-        if (CHECK_OPTIONAL_ERRORS || !expectedError.isOptional) {
-          val actualError = actualErrors[lineNumber]
-          if (actualError == null) {
-            failure = true
-            failMessage.append("Missing error at ").appendLocation(lineNumber)
-            if (expectedError.message != null) {
-              failMessage.append(": ").append(expectedError.message)
-            }
-            failMessage.appendLine()
-          }
-        }
-      }
-      else {
+
+    for ((lineNumber, expectedError) in expectedErrors.lineToError) {
+      if (CHECK_OPTIONAL_ERRORS || !expectedError.isOptional) {
         val actualError = actualErrors[lineNumber]
-        if (actualError != null) {
+        if (actualError == null) {
           failure = true
-          failMessage.append("Unexpected error at ").appendLocation(lineNumber).append(": ").appendLine(actualError)
+          failMessage.append("Missing error at ").appendLocation(lineNumber)
+          if (expectedError.message != null) {
+            failMessage.append(": ").append(expectedError.message)
+          }
+          failMessage.appendLine()
         }
       }
     }
+
+    for ((tag, lineNumbers) in expectedErrors.errorGroups) {
+      if (!lineNumbers.isEmpty() && lineNumbers.all { it !in actualErrors }) {
+        failure = true
+        failMessage.append("Missing error (tag $tag) at ").appendLocation(lineNumbers[0])
+        lineNumbers.subList(1, lineNumbers.size).map { it + 1 }.joinTo(failMessage, ", ", "[", "]")
+        failMessage.appendLine()
+      }
+    }
+
+    val linesUsedByGroups = expectedErrors.errorGroups.values.flatten().toSet()
+
+    for ((lineNumber, message) in actualErrors) {
+      if (lineNumber !in expectedErrors.lineToError && !linesUsedByGroups.contains(lineNumber)) {
+        failure = true
+        failMessage.append("Unexpected error at ").appendLocation(lineNumber).append(": ").appendLine(message)
+      }
+    }
+
     if (failure) {
       fail(failMessage.toString())
     }
