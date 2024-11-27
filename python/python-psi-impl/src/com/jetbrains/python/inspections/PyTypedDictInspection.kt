@@ -136,16 +136,6 @@ class PyTypedDictInspection : PyInspection() {
         }
       }
 
-      val singleStatement = node.statementList.statements.singleOrNull()
-      if (singleStatement != null &&
-          singleStatement is PyExpressionStatement &&
-          singleStatement.expression is PyNoneLiteralExpression &&
-          (singleStatement.expression as PyNoneLiteralExpression).isEllipsis) {
-        registerProblem(singleStatement,
-                        PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"))
-        return
-      }
-
       val classTypedDictType = PyTypedDictTypeProvider.getTypedDictTypeForResolvedElement(node, myTypeEvalContext)
       node.processClassLevelDeclarations { element, _ ->
         if (element !is PyTargetExpression) {

@@ -54,7 +54,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import TypedDict
                    class Movie(TypedDict):
-                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">...</warning>
+                       ...
                    class HorrorMovie(TypedDict):
                        pass""");
   }
