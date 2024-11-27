@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 internal object JsonFeatureUsageCollector : CounterUsagesCollector() {
   private val jsonSchemaGroup = EventLogGroup(
     id = "json.schema.features",
-    version = 3,
+    version = 4,
   )
 
   internal val jsonSchemaHighlightingSessionData =
@@ -46,7 +46,6 @@ enum class JsonSchemaFusAllowedListFeature(override val event: StringEventField)
 
 enum class JsonSchemaFusCountedUniqueFeature(override val event: RoundedIntEventField) : JsonSchemaFusFeature {
   UniqueRemoteUrlDownloadRequest(EventFields.RoundedInt("unique_remote_url_download_request", "Number of unique remote (URL) references collected during highlighting session")),
-  SchemaAccessWithoutReadLock(EventFields.RoundedInt("schema_access_without_read_lock", "Number of all JSON schema resolve/validation features access attempts outside of the highlighting read action")),
 }
 
 @ApiStatus.Internal

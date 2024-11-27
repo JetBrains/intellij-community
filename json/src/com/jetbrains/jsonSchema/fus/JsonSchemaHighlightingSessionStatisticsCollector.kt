@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.fus
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicInteger
 
 @Service(Service.Level.APP)
 @ApiStatus.Internal
@@ -26,8 +24,6 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
     val requestedRemoteSchemas = mutableSetOf<String>()
   }
 
-  // Expected to be zero, but let's collect it to prove there are no additional cases to consider
-  private val requestsOutsideHighlightingCounter = AtomicInteger(0)
   private val currentHighlightingSession = ThreadLocal<JsonSchemaHighlightingSession?>()
 
   fun recordSchemaFeaturesUsage(schemaRoot: JsonSchemaObject, operation: Runnable) {
@@ -62,11 +58,6 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
   }
 
   private fun getCurrentSession(): JsonSchemaHighlightingSession? {
-    if (!ApplicationManager.getApplication().isReadAccessAllowed) {
-      thisLogger().debug("reportSchemaUsageFeature() must not be called outside read action")
-      requestsOutsideHighlightingCounter.incrementAndGet()
-      return null
-    }
     return currentHighlightingSession.get()
   }
 
@@ -90,10 +81,9 @@ class JsonSchemaHighlightingSessionStatisticsCollector {
       .map { feature -> feature to sessionData.featuresWithCount.getOrDefault(feature, 0) }
       .map { (feature, usagesCount) -> feature.event.with(usagesCount) }
     val uniqueSchemasCount = JsonSchemaFusCountedUniqueFeature.UniqueRemoteUrlDownloadRequest.event.with(sessionData.requestedRemoteSchemas.size)
-    val schemaAccessOutsideHighlightingCount = JsonSchemaFusCountedUniqueFeature.SchemaAccessWithoutReadLock.event.with(requestsOutsideHighlightingCounter.getAndSet(0))
     val schemaId = JsonSchemaFusAllowedListFeature.JsonFusSchemaId.event.with(sessionData.schemaType)
 
-    val allDataAccumulated = allCountEventsDuringSession + uniqueSchemasCount + schemaAccessOutsideHighlightingCount + schemaId
+    val allDataAccumulated = allCountEventsDuringSession + uniqueSchemasCount + schemaId
     JsonFeatureUsageCollector.jsonSchemaHighlightingSessionData.log(allDataAccumulated)
 
     if (thisLogger().isDebugEnabled) {
