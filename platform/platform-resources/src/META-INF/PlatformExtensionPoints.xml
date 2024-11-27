@@ -601,7 +601,7 @@
                     interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
     <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
 
-    <extensionPoint name="iconSerializer" interface="com.intellij.ide.ui.icons.IconSerializer" dynamic="true"/>
+    <extensionPoint name="customTypeRpcSerializer" interface="com.intellij.ide.rpc.CustomTypeRpcSerializer" dynamic="true"/>
 
     <extensionPoint name="projectTaskManagerListener" interface="com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint" dynamic="true" />
 
