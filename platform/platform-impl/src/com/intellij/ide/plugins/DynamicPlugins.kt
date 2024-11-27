@@ -43,6 +43,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -78,8 +79,8 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
+import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
-import com.intellij.util.messages.impl.queryPluginUnloadVetoers
 import com.intellij.util.ref.GCWatcher
 import com.intellij.util.xmlb.clearPropertyCollectorCache
 import org.jetbrains.annotations.Nls
@@ -98,6 +99,8 @@ private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
 
 object DynamicPlugins {
+  private val VETOER_EP_NAME: ExtensionPointName<DynamicPluginVetoer> = ExtensionPointName.create("com.intellij.ide.dynamicPluginVetoer");
+
   private var myProcessRun = 0
   private val myProcessCallbacks = mutableListOf<Runnable>()
   private val myLock = Any()
@@ -270,7 +273,7 @@ object DynamicPlugins {
         return null
       }
 
-      val vetoMessage = DynamicPluginVetoer.EP_NAME.computeSafeIfAny {
+      val vetoMessage = VETOER_EP_NAME.computeSafeIfAny {
         it.vetoPluginUnload(module)
       }
       if (vetoMessage != null) return vetoMessage
@@ -1441,11 +1444,11 @@ private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
 
 internal class FallbackPluginVetoer : DynamicPluginVetoer {
   override fun vetoPluginUnload(pluginDescriptor: IdeaPluginDescriptor): @Nls String? {
-    val vetoMessage = queryPluginUnloadVetoers(pluginDescriptor, ApplicationManager.getApplication().messageBus)
+    val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, ApplicationManager.getApplication().messageBus)
     if (vetoMessage != null) return vetoMessage
 
     for (project in ProjectManager.getInstance().openProjects) {
-      val vetoMessage = queryPluginUnloadVetoers(pluginDescriptor, project.messageBus)
+      val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, project.messageBus)
       if (vetoMessage != null) return vetoMessage
     }
     return null
