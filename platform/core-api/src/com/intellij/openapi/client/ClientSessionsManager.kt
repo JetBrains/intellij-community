@@ -3,8 +3,7 @@ package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -12,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -136,14 +136,22 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
         LOG.info("A disposed session $oldSession for $clientId is replaced with a new $session")
       }
       else {
-        LOG.error("Session $oldSession with such clientId $clientId is already registered and will be replaced with $session")
-        Disposer.dispose(oldSession)
+        // don't throw an error here because in a fast reconnection scenario (RdSeamlessReconnectTest.testReconnect_WireStorageBufferOverflow_Controller)
+        // it may happen that a new session of a client is handled earlier than its previous session is disposed and removed.
+        // It happens because `disposable` of the prev session is disposed with some delay in WireStorage.terminateWire (it's scheduled with launch {}).
+        LOG.warn("Session $oldSession with such clientId $clientId is already registered and will be replaced with $session")
+        scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          writeIntentReadAction {
+            Disposer.dispose(oldSession)
+          }
+        }
       }
     }
     LOG.debug { "Session added '$session'" }
 
-    Disposer.register(disposable, session)
     Disposer.register(disposable) {
+      // write intent lock is already here because the disposable takes it when disposing on EDT
+      Disposer.dispose(session)
       LOG.debug { "Session for '$clientId' will be removed after delay" }
       scope.launch {
         delay(disposedRemovalDelay)
