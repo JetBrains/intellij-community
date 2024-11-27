@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -317,5 +317,57 @@ public class CreateMethodFromUsageTemplateTest extends LightJavaCodeInsightFixtu
     finally {
       CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
     }
+  }
+  
+  public void testObjectArrayArgs() {
+    myFixture.configureByText("a.java", """
+      import java.util.List;
+      
+      public final class CreateMethodArray {
+          public static void main(String[] args) {
+              List<?>[] settings = {List.of(), List.of(1)};
+              <caret>useThem(settings);
+          }
+      }""");
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    doAction("Create method 'useThem' in 'CreateMethodArray'");
+    myFixture.type('\n');
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            import java.util.List;
+                            
+                            public final class CreateMethodArray {
+                                public static void main(String[] args) {
+                                    List<?>[] settings = {List.of(), List.of(1)};
+                                    useThem(settings);
+                                }
+                            
+                                private static void useThem(List<?>[] <selection>settings<caret></selection>) {
+                                }
+                            }""");
+  }
+
+  public void testPrimitiveArrayArgs() {
+    myFixture.configureByText("a.java", """
+      public final class X {
+          public static void main(String[] args) {
+              int[] is = {1, 2, 4};
+              <caret>f(is);
+          }
+      }""");
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    doAction("Create method 'f' in 'X'");
+    myFixture.type('\n');
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            public final class X {
+                                public static void main(String[] args) {
+                                    int[] is = {1, 2, 4};
+                                    f(is);
+                                }
+                            
+                                private static void f(int[] <selection>is<caret></selection>) {
+                                }
+                            }""");
   }
 }
