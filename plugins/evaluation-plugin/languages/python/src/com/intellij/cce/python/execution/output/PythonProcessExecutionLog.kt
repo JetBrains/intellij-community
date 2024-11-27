@@ -1,4 +1,6 @@
-package com.intellij.cce.execution.output
+package com.intellij.cce.python.execution.output
+
+import com.intellij.cce.execution.output.ProcessExecutionLog
 
 class PythonProcessExecutionLog(
   override val out: String,

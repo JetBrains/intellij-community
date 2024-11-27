@@ -1,4 +1,4 @@
-package com.intellij.cce.execution.output
+package com.intellij.cce.python.execution.output
 
 class PythonErrorLogProcessor(val errorLog: String) {
 

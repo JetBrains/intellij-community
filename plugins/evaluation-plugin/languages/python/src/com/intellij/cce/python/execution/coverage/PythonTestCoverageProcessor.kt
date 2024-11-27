@@ -1,8 +1,9 @@
-package com.intellij.cce.execution.coverage
+package com.intellij.cce.python.execution.coverage
 
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
 import java.io.File
+import kotlin.collections.get
 
 class PythonTestCoverageProcessor(
   coverageFilePath: String,

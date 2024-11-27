@@ -1,13 +1,14 @@
-package com.intellij.cce.execution.manager
+package com.intellij.cce.python.execution.manager
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.AIA_EXECUTION_SUCCESS_RATIO
 import com.intellij.cce.evaluable.AIA_TEST_BRANCH_COVERAGE
 import com.intellij.cce.evaluable.AIA_TEST_LINE_COVERAGE
-import com.intellij.cce.execution.coverage.PythonTestCoverageProcessor
+import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
-import com.intellij.cce.execution.output.PythonErrorLogProcessor
-import com.intellij.cce.execution.output.PythonProcessExecutionLog
+import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
+import com.intellij.cce.python.execution.output.PythonErrorLogProcessor
+import com.intellij.cce.python.execution.output.PythonProcessExecutionLog
 import com.intellij.openapi.roots.ProjectRootManager
 import java.io.File
 
