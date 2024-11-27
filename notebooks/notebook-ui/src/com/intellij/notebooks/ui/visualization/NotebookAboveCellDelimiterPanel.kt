@@ -1,5 +1,6 @@
 package com.intellij.notebooks.ui.visualization
 
+import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.scale.JBUIScale
@@ -26,9 +27,12 @@ class NotebookAboveCellDelimiterPanel(
   private var cellRoofColor: Color? = null
   private var isHighlighted: Boolean = false
   private val standardDelimiterHeight = editor.notebookAppearance.cellBorderHeight / 2
-  private val delimiterPanelHeight = when (isFirstCell) {
-    true -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
-    false ->  editor.notebookAppearance.distanceBetweenCells
+
+  private val isConsole = editor.getUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW) == true
+  private val delimiterPanelHeight = when {
+    isFirstCell && isConsole -> 0  // todo: maybe for this case just don't show delimiterPanel?
+    isFirstCell -> editor.notebookAppearance.aboveFirstCellDelimiterHeight
+    else ->  editor.notebookAppearance.distanceBetweenCells
   }
 
   val project get() = editor.project ?: ProjectManager.getInstance().defaultProject
