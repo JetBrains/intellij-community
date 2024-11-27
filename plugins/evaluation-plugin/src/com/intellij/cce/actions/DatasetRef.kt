@@ -46,10 +46,6 @@ internal data class ConfigRelativeRef(val relativePath: String) : DatasetRef {
   override fun prepare(datasetContext: DatasetContext) {
     val targetPath = datasetContext.path(this)
 
-    if (targetPath.exists()) {
-      return
-    }
-
     val configPath = checkNotNull(datasetContext.configPath) {
       "Path $relativePath supposed to be relative to config, but there is no config explicitly provided. " +
       "Note that this option is only for test purposes and not supposed to be used in production."
