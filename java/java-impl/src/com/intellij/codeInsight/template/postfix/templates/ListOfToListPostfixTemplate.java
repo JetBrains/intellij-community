@@ -20,16 +20,6 @@ public class ListOfToListPostfixTemplate extends JavaEditablePostfixTemplate imp
           LanguageLevel.JDK_1_9, false, provider);
   }
 
-
-  //
-  //      super("format",
-  //        "String.format($EXPR$, $END$)",
-  //        "String.format(expr)",
-  //        Collections.singleton(
-  //        new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(CommonClassNames.JAVA_LANG_STRING)),
-  //  LanguageLevel.JDK_1_3, false, provider);
-  //}
-
   @Override
   public boolean isBuiltin() {
     return true;
