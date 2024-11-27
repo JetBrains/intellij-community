@@ -58,7 +58,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     }
   }
 
-  suspend fun selectChangesInTree(changes: Map<ShelvedChangeListNode, List<ShelvedChangeNode>>) {
+  private suspend fun selectChangesInTree(changes: Map<ShelvedChangeListNode, List<ShelvedChangeNode>>) {
     withKernel {
       val firstChangeList = changes.entries.firstOrNull() ?: return@withKernel
       val changeListNode = TreeUtil.findNode(tree.getRoot()) {

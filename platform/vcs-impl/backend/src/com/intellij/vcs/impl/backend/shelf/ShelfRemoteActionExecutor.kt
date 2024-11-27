@@ -29,7 +29,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
   private val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
   private val shelveChangesManager = ShelveChangesManager.getInstance(project)
 
-  fun createPatchForShelvedChanges(changeLists: List<ChangeListRpc>, silentClipboard: Boolean) {
+  suspend fun createPatchForShelvedChanges(changeLists: List<ChangeListRpc>, silentClipboard: Boolean) {
     val patchBuilder: CreatePatchCommitExecutor.PatchBuilder
     val changeNodes = changeLists.flatMap { shelfTreeHolder.findChangesInTree(it) }
     val changeList = changeNodes.firstOrNull()?.shelvedChange?.changeList ?: return
@@ -39,7 +39,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     else {
       patchBuilder = CreatePatchCommitExecutor.DefaultPatchBuilder(project)
     }
-    cs.launch(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT) {
       val changes = changeNodes.map { it.shelvedChange.getChangeWithLocal(project) }
       CreatePatchFromChangesAction.createPatch(project, changeList.description, changes, silentClipboard, patchBuilder)
     }

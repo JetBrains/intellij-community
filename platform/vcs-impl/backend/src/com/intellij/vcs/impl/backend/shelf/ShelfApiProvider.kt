@@ -64,7 +64,3 @@ internal class BackendShelfApi : RemoteShelfApi {
   }
 
 }
-
-internal suspend fun DurableRef<ProjectEntity>.asProject(): Project {
-  return withKernel { deref().asProject() }
-}

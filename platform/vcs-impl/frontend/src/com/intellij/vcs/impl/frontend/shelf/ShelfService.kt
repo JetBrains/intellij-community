@@ -129,9 +129,10 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   fun deleteSplitterPreview() {
     cs.launch {
       withKernel {
+        val projectEntity = project.asEntity()
         change {
           shared {
-            entity(DiffSplitterEntity.Project, project.asEntity())?.delete()
+            entity(DiffSplitterEntity.Project, projectEntity)?.delete()
           }
         }
       }
@@ -147,7 +148,8 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
 fun subscribeToShelfTreeSelectionChanged(project: Project, cs: CoroutineScope, listener: (SelectShelveChangeEntity) -> Unit) {
   cs.launch {
     withKernel {
-      SelectShelveChangeEntity.each().filter { entity -> entity.project == project.asEntity() }.collectLatest { listener(it) }
+      val projectEntity = project.asEntity()
+      SelectShelveChangeEntity.each().filter { entity -> entity.project == projectEntity }.collectLatest { listener(it) }
     }
   }
 }
@@ -155,7 +157,8 @@ fun subscribeToShelfTreeSelectionChanged(project: Project, cs: CoroutineScope, l
 fun subscribeToDiffPreviewChanged(project: Project, cs: CoroutineScope, listener: (DiffSplitterEntity) -> Unit) {
   cs.launch {
     withKernel {
-      DiffSplitterEntity.each().filter { entity -> entity.project == project.asEntity() }.collectLatest { listener(it) }
+      val projectEntity = project.asEntity()
+      DiffSplitterEntity.each().filter { entity -> entity.project == projectEntity }.collectLatest { listener(it) }
     }
   }
 }

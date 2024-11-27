@@ -7,8 +7,10 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.util.containers.JBIterable
 import com.intellij.vcs.impl.backend.shelf.ShelvedListNode
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreeModel
 
+@ApiStatus.Internal
 class ShelfDiffChangesProvider(var treeModel: TreeModel) {
   val changesStateFlow: MutableStateFlow<ShelfDiffChangesState> = MutableStateFlow(ShelfDiffChangesState())
 
@@ -26,4 +28,5 @@ class ShelfDiffChangesProvider(var treeModel: TreeModel) {
   }
 }
 
+@ApiStatus.Internal
 class ShelfDiffChangesState(val selectedChanges: List<Wrapper> = emptyList(), val fromModelChange: Boolean = false)

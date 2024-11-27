@@ -4,15 +4,18 @@ package com.intellij.vcs.impl.frontend.shelf.tree
 import com.intellij.openapi.util.Key
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Since we delete our entities when replacing the root, we can't use them for restoring the selection.
  * Therefore, we now need to save the data required for restoring the selection to `DataContext`.
  */
+@ApiStatus.Internal
 sealed interface SelectionIdentifier {
   fun shouldBeSelected(item: EntityChangesBrowserNode<*>): Boolean
 }
 
+@ApiStatus.Internal
 class ChangelistSelectionIdentifier(oldChangelist: ShelvedChangeListEntity) : SelectionIdentifier {
   private val name = oldChangelist.name
   private val date = oldChangelist.date
@@ -23,6 +26,7 @@ class ChangelistSelectionIdentifier(oldChangelist: ShelvedChangeListEntity) : Se
   }
 }
 
+@ApiStatus.Internal
 class ChangeSelectionIdentifier(oldChange: ShelvedChangeEntity) : SelectionIdentifier {
   private val filePath = oldChange.filePath
 
@@ -32,4 +36,5 @@ class ChangeSelectionIdentifier(oldChange: ShelvedChangeEntity) : SelectionIdent
   }
 }
 
+@ApiStatus.Internal
 val SELECTION_IDENTIFIER_KEY: Key<SelectionIdentifier> = Key<SelectionIdentifier>("ChangesTree.SelectionIdentifier")

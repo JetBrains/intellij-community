@@ -758,7 +758,7 @@ f:com.intellij.openapi.vcs.changes.ChangeListUtil
 - sf:onChangeListAvailabilityChanged(com.intellij.util.messages.MessageBusConnection,java.lang.Runnable):V
 a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - com.intellij.diff.impl.CacheDiffRequestProcessor$Simple
-- com.intellij.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
+- com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
 - clear():V
 - collectDiffProducers(Z):com.intellij.openapi.ListSelection
@@ -2909,6 +2909,7 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 - f:selectContent(java.lang.String,Z):V
 - setSelectedContent(com.intellij.ui.content.Content):V
 - setSelectedContent(com.intellij.ui.content.Content,Z):V
+- sf:shouldHaveSplitterDiffPreview(com.intellij.openapi.project.Project,Z):Z
 f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
 - f:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -2916,6 +2917,7 @@ f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$Companion
 - f:getToolWindowIdFor(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 - f:isCommitToolWindowShown(com.intellij.openapi.project.Project):Z
 - f:isToolWindowTabVertical(com.intellij.openapi.project.Project,java.lang.String):Z
+- f:shouldHaveSplitterDiffPreview(com.intellij.openapi.project.Project,Z):Z
 e:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
 - java.lang.Enum
 - sf:BRANCHES:com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager$TabOrderWeight
@@ -3366,6 +3368,7 @@ a:com.intellij.openapi.vcs.changes.ui.VcsToolWindowFactory
 a:com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - <init>():V
 - s:all(javax.swing.JTree):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+- s:all(javax.swing.tree.TreeModel):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:allUnder(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:allUnderTag(javax.swing.JTree,java.lang.Object):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 - s:exactlySelected(javax.swing.JTree):com.intellij.openapi.vcs.changes.ui.VcsTreeModelData

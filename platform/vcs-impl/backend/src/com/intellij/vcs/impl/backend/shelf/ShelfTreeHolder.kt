@@ -70,13 +70,14 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
   private val diffChangesProvider = ShelfDiffChangesProvider(model)
   private val diffPreview = BackendShelveEditorDiffPreview(project, cs, diffChangesProvider)
 
-  fun createPreviewDiffSplitter() {
-    cs.launch(Dispatchers.EDT) {
+  suspend fun createPreviewDiffSplitter() {
+    withContext(Dispatchers.EDT) {
       val processor = ShelvedPreviewProcessor(project, cs, false, diffChangesProvider)
       val previewDiffSplitterComponent = PreviewDiffSplitterComponent(processor, SHELVE_PREVIEW_SPLITTER_PROPORTION)
       withKernel {
+        val projectEntity = project.asEntity()
         change {
-          DiffSplitterEntity.upsert(DiffSplitterEntity.Project, project.asEntity()) {
+          DiffSplitterEntity.upsert(DiffSplitterEntity.Project, projectEntity) {
             it[DiffSplitterEntity.Splitter] = previewDiffSplitterComponent
           }.onDispose(coroutineContext[Rete]!!) { Disposer.dispose(processor) }
         }
@@ -87,9 +88,10 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
   private suspend fun updateDbModel() {
     val root = model.root as ChangesBrowserNode<*>
     withKernel {
+      val projectEntity = project.asEntity()
       val rootEntity = change {
         shared {
-          entity(ShelfTreeEntity.Project, project.asEntity())?.delete()
+          entity(ShelfTreeEntity.Project, projectEntity)?.delete()
           ShelvesTreeRootEntity.new {
             it[NodeEntity.Order] = 0
           }
@@ -111,6 +113,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
               rootEntity.delete()
             }
           }
+          throw e
         }
       }
     }
@@ -139,10 +142,11 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
   }
 
   private suspend fun createTreeEntity(project: Project, rootEntity: ShelvesTreeRootEntity): ShelfTreeEntity {
+    val projectEntity = project.asEntity()
     return change {
       shared {
         ShelfTreeEntity.new {
-          it[ShelfTreeEntity.Project] = project.asEntity()
+          it[ShelfTreeEntity.Project] = projectEntity
           it[ShelfTreeEntity.Root] = rootEntity
         }
       }
@@ -170,12 +174,12 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
     changeListNode.changeList.description = newName
   }
 
-  fun showDiff(changeListRpc: ChangeListRpc) {
+  suspend fun showDiff(changeListRpc: ChangeListRpc) {
     val selectedChanges = findChangesInTree(changeListRpc)
 
     val changesState = ShelfDiffChangesState(selectedChanges.map { it.shelvedChange })
     diffChangesProvider.changesStateFlow.tryEmit(changesState)
-    cs.launch(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT) {
       diffPreview.performDiffAction()
     }
   }
@@ -185,19 +189,17 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
     updateFlow.tryEmit(Unit)
   }
 
-  fun saveGroupings() {
-    cs.launch {
-      GroupingPolicyFactoryHolder.getInstance().saveGroupingKeysToDb()
-      withKernel {
-        change {
-          shared {
-            val shelfTreeGroup = GroupingItemsEntity.new {
-              it[GroupingItemsEntity.Place] = GroupingUpdatePlaces.SHELF_TREE
-            }
-            shelveChangesManager.grouping.forEach {
-              val groupingItem = entity(GroupingItemEntity.Name, it) ?: return@forEach
-              shelfTreeGroup.add(GroupingItemsEntity.Items, groupingItem)
-            }
+  suspend fun saveGroupings() {
+    GroupingPolicyFactoryHolder.getInstance().saveGroupingKeysToDb()
+    withKernel {
+      change {
+        shared {
+          val shelfTreeGroup = GroupingItemsEntity.new {
+            it[GroupingItemsEntity.Place] = GroupingUpdatePlaces.SHELF_TREE
+          }
+          shelveChangesManager.grouping.forEach {
+            val groupingItem = entity(GroupingItemEntity.Name, it) ?: return@forEach
+            shelfTreeGroup.add(GroupingItemsEntity.Items, groupingItem)
           }
         }
       }
@@ -209,12 +211,13 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
                        ?: return
     val nodeRef = nodeToSelect.getUserData(ENTITY_ID_KEY) ?: return
     withKernel {
+      val projectEntity = project.asEntity()
       change {
         shared {
           val changeListEntity = nodeRef.deref() as? ShelvedChangeListEntity ?: return@shared
           SelectShelveChangeEntity.new {
             it[SelectShelveChangeEntity.ChangeList] = changeListEntity
-            it[SelectShelveChangeEntity.Project] = project.asEntity()
+            it[SelectShelveChangeEntity.Project] = projectEntity
           }
         }
       }

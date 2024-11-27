@@ -7,11 +7,16 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.kernel.withLastKnownDb
-import com.intellij.platform.project.asEntity
+import com.intellij.platform.project.ProjectEntity
+import com.intellij.platform.project.projectId
 import com.intellij.vcs.impl.frontend.changes.ChangesGroupingStatesHolder
 import com.intellij.vcs.impl.frontend.changes.ChangesTree
 import com.intellij.vcs.impl.shared.rhizome.RepositoryCountEntity
+import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.entity
+import fleet.kernel.rete.each
+import fleet.kernel.rete.filter
+import fleet.kernel.rete.first
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -62,7 +67,8 @@ class GroupByRepositoryAction : SelectChangesGroupingAction("repository") {
   override fun update(e: AnActionEvent) {
     super.update(e)
     withLastKnownDb {
-      val projectEntity = e.project?.asEntity() ?: return@withLastKnownDb
+      val project = e.project ?: return@withLastKnownDb
+      val projectEntity = entities(ProjectEntity.ProjectIdValue, project.projectId()).singleOrNull() ?: return@withLastKnownDb
       val repositoryCount = entity(RepositoryCountEntity.Project, projectEntity)?.count ?: 0
       e.presentation.isEnabledAndVisible = repositoryCount > 1
     }

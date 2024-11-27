@@ -1,11 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.shared.changes
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.DiffPreview
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isCommitToolWindowShown
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.JBUI.emptySize
 import javax.swing.SwingUtilities.updateComponentTreeUI
@@ -54,8 +50,4 @@ class PreviewDiffSplitterComponent(
     validate()
     repaint()
   }
-}
-
-fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
-  return !isContentVertical || !isCommitToolWindowShown(project)
 }

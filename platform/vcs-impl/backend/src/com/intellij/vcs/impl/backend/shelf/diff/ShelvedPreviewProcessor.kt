@@ -23,6 +23,7 @@ import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.jetbrains.rhizomedb.entity
+import fleet.kernel.change
 import fleet.kernel.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,16 +72,17 @@ class ShelvedPreviewProcessor(
         withKernel {
           val nodeToSelect = TreeUtil.findNodeWithObject(changesProvider.treeModel.root as ChangesBrowserNode<*>, change) as? ChangesBrowserNode<*>
                              ?: return@withKernel
-          val changeListNode = nodeToSelect.path.firstOrNull { it is ShelvedListNode } as ChangesBrowserNode<*>
-          val changeEntity = nodeToSelect.getUserData(ENTITY_ID_KEY)?.derefOrNull() as ShelvedChangeEntity
-          val changeListEntity = changeListNode.getUserData(ENTITY_ID_KEY)?.derefOrNull() as ShelvedChangeListEntity
-          fleet.kernel.change {
+          val changeListNode = nodeToSelect.path.firstOrNull { it is ShelvedListNode } as? ChangesBrowserNode<*> ?: return@withKernel
+          val changeEntity = nodeToSelect.getUserData(ENTITY_ID_KEY)?.derefOrNull() as? ShelvedChangeEntity ?: return@withKernel
+          val changeListEntity = changeListNode.getUserData(ENTITY_ID_KEY)?.derefOrNull() as? ShelvedChangeListEntity ?: return@withKernel
+          val projectEntity = project.asEntity()
+          change {
             shared {
-              entity(SelectShelveChangeEntity.Project, project.asEntity())?.delete()
+              entity(SelectShelveChangeEntity.Project, projectEntity)?.delete()
               SelectShelveChangeEntity.new {
                 it[SelectShelveChangeEntity.Change] = changeEntity
                 it[SelectShelveChangeEntity.ChangeList] = changeListEntity
-                it[SelectShelveChangeEntity.Project] = project.asEntity()
+                it[SelectShelveChangeEntity.Project] = projectEntity
               }
             }
           }

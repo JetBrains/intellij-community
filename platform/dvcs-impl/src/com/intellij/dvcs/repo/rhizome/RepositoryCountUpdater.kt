@@ -6,23 +6,30 @@ import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
+import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.vcs.impl.shared.rhizome.RepositoryCountEntity
 import fleet.kernel.change
 import fleet.kernel.shared
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class RepositoryCountUpdater(private val project: Project, private val cs: CoroutineScope) : VcsRepositoryMappingListener {
 
+  private val updateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
+
   override fun mappingChanged() {
     cs.launch {
-      withKernel {
-        change {
-          shared {
-            RepositoryCountEntity.upsert(RepositoryCountEntity.Project, project.asEntity()) {
-              it[RepositoryCountEntity.Count] = RepositoryChangesBrowserNode.getColorManager(project).paths.size
+      updateSemaphore.withPermit {
+        withKernel {
+          val projectEntity = project.asEntity()
+          change {
+            shared {
+              RepositoryCountEntity.upsert(RepositoryCountEntity.Project, projectEntity) {
+                it[RepositoryCountEntity.Count] = RepositoryChangesBrowserNode.getColorManager(project).paths.size
+              }
             }
           }
         }

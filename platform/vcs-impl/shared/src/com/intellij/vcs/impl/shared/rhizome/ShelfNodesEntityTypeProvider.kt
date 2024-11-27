@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * A provider that supplies a list of entity types related to shelf nodes.
  */
+@ApiStatus.Internal
 class ShelfNodesEntityTypeProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity,
                                                            ShelvedChangeListEntity,
@@ -156,7 +157,7 @@ data class FilePathNodeEntity(override val eid: EID) : NodeEntity {
  * Represents the entity for a shelves tree structure.
  *
  * The only goal for this entity is to hold root, to allow frontend to subscribe to a new roots. We can't subscribe to ShelvesTreeRootEntity
- * directly, because we want values to be assigned to their parents during one change block. In that case, if we sare subscribed to
+ * directly, because we want values to be assigned to their parents during one change block. In that case, if we are subscribed to
  * ShelvesTreeRootEntity, the tree will be updated too often.
  */
 @ApiStatus.Internal

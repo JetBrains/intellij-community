@@ -7,6 +7,7 @@ import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class GroupingItemTypeProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> = listOf(GroupingItemsEntity, GroupingItemEntity)
 }

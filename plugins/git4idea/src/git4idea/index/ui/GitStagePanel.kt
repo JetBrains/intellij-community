@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.DiffPreview.Companion.setPreviewVisible
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExperimentalUI

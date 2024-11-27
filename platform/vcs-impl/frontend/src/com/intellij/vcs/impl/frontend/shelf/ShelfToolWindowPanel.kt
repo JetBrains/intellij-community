@@ -144,7 +144,6 @@ class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: Co
 
   companion object {
     private const val SHELVED_CHANGES_TOOLBAR_ID = "ShelvedChangesToolbarFrontend"
-    private const val GROUP_BY_GROUP_ID = "ChangesView.GroupBy"
     private val isOpenEditorDiffPreviewWithSingleClick = Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
     @NonNls

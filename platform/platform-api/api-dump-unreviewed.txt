@@ -11266,6 +11266,7 @@ f:com.intellij.util.ui.tree.TreeUtil
 - s:isOverSelection(javax.swing.JTree,java.awt.Point):Z
 - s:listChildren(javax.swing.tree.TreeNode):java.util.List
 - s:makeVisible(javax.swing.JTree,com.intellij.ui.tree.TreeVisitor,java.util.function.Consumer):V
+- s:modelTraverser(javax.swing.tree.TreeModel):com.intellij.util.containers.JBTreeTraverser
 - s:moveDown(javax.swing.JTree):com.intellij.openapi.util.ActionCallback
 - s:movePageDown(javax.swing.JTree):com.intellij.openapi.util.ActionCallback
 - s:movePageUp(javax.swing.JTree):com.intellij.openapi.util.ActionCallback

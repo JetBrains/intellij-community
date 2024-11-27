@@ -315,6 +315,11 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       return toolWindow != null && !toolWindow.anchor.isHorizontal
     }
 
+    @JvmStatic
+    fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
+      return !isContentVertical || !isCommitToolWindowShown(project)
+    }
+
     /**
      * Specified tab order in toolwindow.
      *

@@ -109,7 +109,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup", "org.jetbrains.r.actions.DebugSelection"},
       {"ctrl alt F",               "IntroduceField", "ShowFilterPopup"},
       {"ctrl alt RIGHT",           "AIAssistant.Editor.AcceptOneLineCompletion", "Forward"},
-      {"ctrl alt U",               "ShowUmlDiagramPopup", "ChangesView.UnshelveSilently"},
+      {"ctrl alt U",               "ChangesView.UnshelveSilently", "Frontend.ChangesView.UnshelveSilently", "ShowUmlDiagramPopup"},
       {"shift DELETE",             "$Cut", "Maven.Uml.Exclude"},
       {"shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "DatabaseView.PropertiesAction",
                                    "EditorStartNewLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit",
