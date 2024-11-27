@@ -8,47 +8,28 @@ import com.sun.jdi.ObjectCollectedException
 import com.sun.jdi.VMDisconnectedException
 import kotlin.coroutines.cancellation.CancellationException
 
-inline fun <T, E : Exception> suppressExceptions(
+internal inline fun <T, E : Exception> suppressExceptions(
   defaultValue: T?,
-  ignorePCE: Boolean,
   rethrow: Class<E>? = null,
   supplier: () -> T?,
-): T? {
-  try {
-    return supplier()
-  }
-  catch (e: ProcessCanceledException) {
-    if (!ignorePCE) {
+): T? = try {
+  supplier()
+}
+catch (e: Throwable) {
+  when (e) {
+    is ProcessCanceledException, is CancellationException, is VMDisconnectedException, is ObjectCollectedException -> {
       throw e
     }
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: VMDisconnectedException) {
-    throw e
-  }
-  catch (e: ObjectCollectedException) {
-    throw e
-  }
-  catch (e: InternalException) {
-    fileLogger().info(e)
-  }
-  catch (e: Exception) {
-    if (rethrow != null && rethrow.isInstance(e)) {
-      throw e
+    is InternalException -> {
+      fileLogger().info(e)
     }
-    else {
+    is Exception, is AssertionError -> {
+      if (rethrow != null && rethrow.isInstance(e)) {
+        throw e
+      }
       fileLogger().error(e)
     }
+    else -> throw e
   }
-  catch (e: AssertionError) {
-    if (rethrow != null && rethrow.isInstance(e)) {
-      throw e
-    }
-    else {
-      fileLogger().error(e)
-    }
-  }
-  return defaultValue
+  defaultValue
 }

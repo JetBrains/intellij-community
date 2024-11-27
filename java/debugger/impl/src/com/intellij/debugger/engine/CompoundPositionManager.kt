@@ -58,11 +58,11 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
 
   private inline fun <T> iterate(position: SourcePosition, defaultValue: T?, processor: (PositionManager) -> T?): T? {
     val fileType = position.getFile().getFileType()
-    return iterate<T>(defaultValue, fileType, true, ProgressManager::checkCanceled, processor)
+    return iterate<T>(defaultValue, fileType, ProgressManager::checkCanceled, processor)
   }
 
   private inline fun <T> iterate(
-    defaultValue: T?, fileType: FileType?, ignorePCE: Boolean,
+    defaultValue: T?, fileType: FileType?,
     cancellationCheck: () -> Unit,
     processor: (PositionManager) -> T?,
   ): T? {
@@ -73,7 +73,7 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
         cancellationCheck()
       }
       try {
-        return suppressExceptions(defaultValue, ignorePCE, NoDataException::class.java) { processor(positionManager) }
+        return suppressExceptions(defaultValue, NoDataException::class.java) { processor(positionManager) }
       }
       catch (_: NoDataException) {
       }
@@ -87,13 +87,13 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
 
   override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? =
     getCachedSourcePosition(location, { action -> readAction(action) }) { fileType: FileType? ->
-      iterate<SourcePosition?>(null, fileType, false, { checkCanceled() }) { getSourcePositionAsync(it, location) }
+      iterate<SourcePosition?>(null, fileType, { checkCanceled() }) { getSourcePositionAsync(it, location) }
     }
 
   override fun getSourcePosition(location: Location?): SourcePosition? =
     getCachedSourcePosition(location, { action -> runReadAction(action) }) { fileType: FileType? ->
       ReadAction.nonBlocking<SourcePosition?> {
-        iterate<SourcePosition?>(null, fileType, false, ProgressManager::checkCanceled) { it.getSourcePosition(location) }
+        iterate<SourcePosition?>(null, fileType, ProgressManager::checkCanceled) { it.getSourcePosition(location) }
       }.executeSynchronously()
     }
 
@@ -162,7 +162,7 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
     }!!
 
   fun createStackFrames(descriptor: StackFrameDescriptorImpl): MutableList<XStackFrame>? =
-    iterate(null, null, false, ProgressManager::checkCanceled) {
+    iterate(null, null, ProgressManager::checkCanceled) {
       if (it is PositionManagerWithMultipleStackFrames) {
         val stackFrames = it.createStackFrames(descriptor)
         if (stackFrames != null) {
