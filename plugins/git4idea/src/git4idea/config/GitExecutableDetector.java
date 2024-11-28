@@ -65,9 +65,9 @@ public class GitExecutableDetector {
     AppExecutorUtil.createBoundedScheduledExecutorService("GitExecutableDetector WSL thread", 1);
 
   private final @NotNull Object DETECTED_EXECUTABLE_LOCK = new Object();
-  private final @NotNull AtomicReference<DetectedPath> myEnvExecutable = new AtomicReference<>();
-  private final @NotNull AtomicReference<DetectedPath> mySystemExecutable = new AtomicReference<>();
-  private final @NotNull Map<WSLDistribution, DetectedPath> myWslExecutables = new ConcurrentHashMap<>();
+  private final @NotNull AtomicReference<DetectionResult> myEnvExecutable = new AtomicReference<>();
+  private final @NotNull AtomicReference<DetectionResult> mySystemExecutable = new AtomicReference<>();
+  private final @NotNull Map<WSLDistribution, DetectionResult> myWslExecutables = new ConcurrentHashMap<>();
   private volatile boolean myWslDistributionsProcessed;
 
   /**
@@ -107,16 +107,16 @@ public class GitExecutableDetector {
     boolean fireEvent = false;
     synchronized (DETECTED_EXECUTABLE_LOCK) {
       for (Detector detector : detectors) {
-        DetectedPath detectedPath = detector.getPath();
-        if (detectedPath == null) {
+        DetectionResult detectionResult = detector.getPath();
+        if (detectionResult == null) {
           detector.runDetection();
           fireEvent = true;
 
-          detectedPath = detector.getPath();
+          detectionResult = detector.getPath();
         }
 
-        if (detectedPath != null && detectedPath.path != null) {
-          path = detectedPath.path;
+        if (detectionResult != null && detectionResult.detectedPath != null) {
+          path = detectionResult.detectedPath;
           break;
         }
       }
@@ -151,9 +151,9 @@ public class GitExecutableDetector {
    */
   private static @Nullable String getExecutable(@NotNull List<Detector> detectors) {
     for (Detector detector : detectors) {
-      DetectedPath path = detector.getPath();
+      DetectionResult path = detector.getPath();
       if (path == null) return null; // not detected yet
-      if (path.path != null) return path.path;
+      if (path.detectedPath != null) return path.detectedPath;
     }
     return getDefaultExecutable();
   }
@@ -187,14 +187,14 @@ public class GitExecutableDetector {
     /**
      * @return 'null' if detection was not completed yet.
      */
-    @Nullable DetectedPath getPath();
+    @Nullable DetectionResult getPath();
 
     void runDetection();
   }
 
   private class EnvDetector implements Detector {
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       return myEnvExecutable.get();
     }
 
@@ -203,20 +203,20 @@ public class GitExecutableDetector {
       String executableName = SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
       File executableFromEnv = PathEnvironmentVariableUtil.findInPath(executableName, getPathEnv(), null);
       String path = executableFromEnv != null ? executableFromEnv.getAbsolutePath() : null;
-      myEnvExecutable.set(new DetectedPath(path));
+      myEnvExecutable.set(new DetectionResult(path));
     }
   }
 
   private class UnixSystemPathDetector implements Detector {
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       return mySystemExecutable.get();
     }
 
     @Override
     public void runDetection() {
       String executable = detectForUnix();
-      mySystemExecutable.set(new DetectedPath(executable));
+      mySystemExecutable.set(new DetectionResult(executable));
     }
 
     private static @Nullable String detectForUnix() {
@@ -232,14 +232,14 @@ public class GitExecutableDetector {
 
   private class WinSystemPathDetector implements Detector {
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       return mySystemExecutable.get();
     }
 
     @Override
     public void runDetection() {
       String executable = detectForWindows();
-      mySystemExecutable.set(new DetectedPath(executable));
+      mySystemExecutable.set(new DetectionResult(executable));
     }
 
     private @Nullable String detectForWindows() {
@@ -351,27 +351,27 @@ public class GitExecutableDetector {
     }
 
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       return myWslExecutables.get(myDistribution);
     }
 
     @Override
     public void runDetection() {
       String result = checkWslDistributionSafe(myDistribution);
-      myWslExecutables.put(myDistribution, new DetectedPath(result));
+      myWslExecutables.put(myDistribution, new DetectionResult(result));
     }
   }
 
   private class GlobalWslDetector implements Detector {
     @Override
-    public @Nullable DetectedPath getPath() {
+    public @Nullable DetectionResult getPath() {
       if (!myWslDistributionsProcessed) return null;
 
-      List<String> knownDistros = ContainerUtil.mapNotNull(myWslExecutables.values(), it -> it.path);
-      if (knownDistros.size() != 1) return new DetectedPath(null);
+      List<String> knownDistros = ContainerUtil.mapNotNull(myWslExecutables.values(), it -> it.detectedPath);
+      if (knownDistros.size() != 1) return new DetectionResult(null);
 
       String path = knownDistros.iterator().next();
-      return new DetectedPath(path);
+      return new DetectionResult(path);
     }
 
     @Override
@@ -379,17 +379,17 @@ public class GitExecutableDetector {
       List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
       for (WSLDistribution distribution : distributions) {
         String result = checkWslDistributionSafe(distribution);
-        myWslExecutables.put(distribution, new DetectedPath(result));
+        myWslExecutables.put(distribution, new DetectionResult(result));
       }
       myWslDistributionsProcessed = true;
     }
   }
 
-  private static class DetectedPath {
-    public final @Nullable String path;
+  private static class DetectionResult {
+    public final @Nullable String detectedPath;
 
-    private DetectedPath(@Nullable String path) {
-      this.path = path;
+    private DetectionResult(@Nullable String path) {
+      detectedPath = path;
     }
   }
 
