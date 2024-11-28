@@ -47,8 +47,21 @@ class XMixedModeExecutionStack(
         highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
         val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
 
-        val combinedFrames = measureTimedValue { framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames) }.also { logger.info("Mixed stack built in ${it.duration}") }.value
-        container.addStackFrames(combinedFrames, true)
+        val combinedFrames = logger.runCatching {
+          measureTimedValue {
+            framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames)
+          }.also { logger.info("Mixed stack built in ${it.duration}") }.value
+        }
+
+        val framesToAdd = if (combinedFrames.isFailure) {
+          logger.error("Failed to build mixed stack. Will use low level frames only", combinedFrames.exceptionOrNull())
+          lowLevelFrames
+        }
+        else {
+          combinedFrames.getOrThrow()
+        }
+
+        container.addStackFrames(framesToAdd, true)
       }
     }.invokeOnCompletion {
       computationCompleted.complete(Unit)
