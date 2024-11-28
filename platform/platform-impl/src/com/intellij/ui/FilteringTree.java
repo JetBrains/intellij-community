@@ -343,6 +343,9 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         }
       }
 
+      if (acceptedList.size() != acceptedSet.size()) {
+        throw new AssertionError("Duplicate nodes will cause failure");
+      }
       removeNotAccepted(node, acceptedSet);
       mergeAcceptedNodes(node, acceptedList);
     }
