@@ -337,7 +337,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     ): TDFields {
       val result = TDFields()
       for (field in fields) {
-        result[field.name] = parseTypedDictField(anchor, field.type.orElse(null), context, total)
+        result[field.name] = parseTypedDictField(anchor, field.type, context, total)
       }
       return result
     }

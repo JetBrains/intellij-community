@@ -35,7 +35,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
     for ((name, type, isReadOnly) in fields) {
       stream.writeName(name)
-      stream.writeName(type.orElse(null))
+      stream.writeName(type)
       stream.writeBoolean(isReadOnly)
     }
   }
@@ -113,7 +113,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
         val readOnly = stream.readBoolean()
 
         if (name != null) {
-          fields.add(PyTypedDictFieldStub(name, Optional.ofNullable(type), readOnly))
+          fields.add(PyTypedDictFieldStub(name, type, readOnly))
         }
       }
 
@@ -131,7 +131,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
         if (name !is PyStringLiteralExpression) return null
 
-        result.add(PyTypedDictFieldStub(name.stringValue, Optional.ofNullable(type?.text), true))
+        result.add(PyTypedDictFieldStub(name.stringValue, type?.text, true))
       }
 
       return result
