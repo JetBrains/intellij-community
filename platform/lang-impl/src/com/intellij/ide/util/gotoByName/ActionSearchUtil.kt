@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.searchEverywhere.ActionItemPresentation
-import com.intellij.platform.searchEverywhere.OptionItemPresentation
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemPresentation
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
@@ -75,7 +74,7 @@ object ActionPresentationProvider: (GotoActionModel.MatchedValue) -> SearchEvery
     }
     else if (value is OptionDescription) {
       val hit = calcHit(value)
-      var presentation = OptionItemPresentation(text = hit)
+      var presentation = ActionItemPresentation(text = hit)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run { copy(switcherState = it) }

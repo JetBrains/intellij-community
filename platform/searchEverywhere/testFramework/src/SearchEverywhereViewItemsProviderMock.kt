@@ -70,8 +70,3 @@ class SearchEverywhereSessionMock : SearchEverywhereSession {
     items.clear()
   }
 }
-
-@ApiStatus.Internal
-class SearchEverywhereParamsMock(override val text: String) : SearchEverywhereParams {
-  override val session: SearchEverywhereSession = SearchEverywhereSessionMock()
-}

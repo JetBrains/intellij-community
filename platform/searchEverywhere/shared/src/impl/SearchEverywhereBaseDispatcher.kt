@@ -22,8 +22,9 @@ open class SearchEverywhereBaseDispatcher(): SearchEverywhereDispatcher {
 
     return providers.asFlow().flatMapMerge { provider ->
       provider.getItems(params).mapNotNull {
-        when (accumulator.add(it)) {
-          is SearchEverywhereResultsAccumulator.Added, is SearchEverywhereResultsAccumulator.Replaced -> it
+        val event = accumulator.add(it)
+        when {
+          event.isAdded || event.isReplaced -> it
           else -> null
         }
       }

@@ -18,12 +18,3 @@ data class ActionItemPresentation(
   val isEnabled: Boolean = true,
   val shortcut: String? = null,
 ): SearchEverywhereItemPresentation
-
-@ApiStatus.Internal
-data class OptionItemPresentation(
-  val icon: Icon? = null,
-  override val text: String,
-  val location: String? = null,
-  val switcherState: Boolean? = null,
-  val isEnabled: Boolean = true
-): SearchEverywhereItemPresentation

@@ -81,12 +81,6 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
 }
 
 @ApiStatus.Internal
-data class ActionSearchParams(override val text: String,
-                              override val session: SearchEverywhereSession,
-                              val includeDisabled: Boolean): SearchEverywhereParams
-
-
-@ApiStatus.Internal
 class ActionSearchItem(private val weight: Int, private val matchedValue: MatchedValue): SearchEverywhereItem {
   override fun weight(): Int = weight
   override fun presentation(): SearchEverywhereItemPresentation = ActionPresentationProvider.invoke(matchedValue)

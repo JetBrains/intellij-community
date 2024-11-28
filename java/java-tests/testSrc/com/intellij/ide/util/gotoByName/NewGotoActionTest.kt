@@ -1,10 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
-import com.intellij.platform.searchEverywhere.OptionItemPresentation
+import com.intellij.platform.searchEverywhere.ActionItemPresentation
+import com.intellij.platform.searchEverywhere.ActionSearchParams
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
+import com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
 import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereFrontendDispatcher
-import com.intellij.platform.searchEverywhere.testFramework.*
+import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemDataMock
+import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
+import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemsProviderMock
+import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionMock
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -30,7 +35,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test mocked provider`() {
     runBlocking {
-      val params = SearchEverywhereParamsMock("it")
+      val params = SearchEverywhereTextSearchParams("it", SearchEverywhereSessionMock())
 
       defaultProvider.getItems(params).collect {
         println(it.presentation.text)
@@ -50,7 +55,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
     runBlocking {
       val searchJob = launch {
 
-        val params = SearchEverywhereParamsMock("item")
+        val params = SearchEverywhereTextSearchParams("item", SearchEverywhereSessionMock())
         SearchEverywhereFrontendDispatcher().getItems(params, providers, emptyMap(), emptyList()).collect {
           println(it.presentation.text)
         }
@@ -89,13 +94,13 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
       val item = SearchEverywhereItemMock(itemText)
       val itemId = runBlocking { session.saveItem(item) }
       val providerId = providers.first { itemText.startsWith(it.resultPrefix) }.id
-      SearchEverywhereItemDataMock(itemId, providerId, weight = 0, OptionItemPresentation(text = itemText))
+      SearchEverywhereItemDataMock(itemId, providerId, weight = 0, ActionItemPresentation(text = itemText))
     }
 
     runBlocking {
       val searchJob = launch {
         println("Search will start")
-        SearchEverywhereFrontendDispatcher().getItems(SearchEverywhereParamsMock("item"), providers, providersWithLimits, existingResults).collect {
+        SearchEverywhereFrontendDispatcher().getItems(SearchEverywhereTextSearchParams("item", session), providers, providersWithLimits, existingResults).collect {
           println(it.presentation.text)
         }
       }

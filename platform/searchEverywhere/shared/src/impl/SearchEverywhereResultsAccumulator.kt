@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.impl
 
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemId
+import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
@@ -11,10 +13,11 @@ import kotlin.coroutines.coroutineContext
 class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywhereProviderId, Int>,
                                          alreadyFoundResults: List<SearchEverywhereItemData>) {
 
-  sealed class Event
-  data class Added(val itemData: SearchEverywhereItemData): Event()
-  data class Replaced(val oldItemData: SearchEverywhereItemData, val newItemData: SearchEverywhereItemData): Event()
-  data class None(val itemData: SearchEverywhereItemData): Event()
+  class Event(val oldItemData: SearchEverywhereItemData? = null, val newItemData: SearchEverywhereItemData? = null) {
+    val isAdded: Boolean get() = oldItemData == null && newItemData != null
+    val isReplaced: Boolean get() = oldItemData != null && newItemData != null
+    val isNone: Boolean get() = oldItemData == null && newItemData == null
+  }
 
   private val alreadyFoundIds = alreadyFoundResults.map { idForItem(it) }.toSet()
   private val itemIdToItem = HashMap<SearchEverywhereItemId, SearchEverywhereItemData>()
@@ -24,7 +27,7 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
 
   suspend fun add(newItem: SearchEverywhereItemData): Event {
     val newId = idForItem(newItem)
-    val newCountDownLatch = providerToCountDownLatch[newItem.providerId] ?: return None(newItem)
+    val newCountDownLatch = providerToCountDownLatch[newItem.providerId] ?: return Event()
     newCountDownLatch.decrementOrAwait()
 
     synchronized(this) {
@@ -35,15 +38,15 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
 
         if (oldItem != null) {
           providerToCountDownLatch[oldItem.providerId]?.increment()
-          return Replaced(oldItem, newItem)
+          return Event(oldItem, newItem)
         }
         else {
-          return Added(newItem)
+          return Event(newItem)
         }
       }
       else {
         newCountDownLatch.increment()
-        return None(newItem)
+        return Event()
       }
     }
   }
@@ -57,10 +60,6 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
     }
 
     if (oldItem.providerId == newItem.providerId) {
-      return true
-    }
-
-    if (oldItem.presentation is OptionItemPresentation && newItem.presentation is ActionItemPresentation) {
       return true
     }
 
