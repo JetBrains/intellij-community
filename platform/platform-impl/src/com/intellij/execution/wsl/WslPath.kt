@@ -27,13 +27,23 @@ data class WslPath internal constructor(private val prefix: String = WslConstant
   fun toWindowsUncPath(): String = prefix + distributionId + toSystemDependentName(linuxPath)
 
   companion object {
+
+    /**
+     * Parses a Windows UNC path and returns a `WslPath` object if successful.
+     * The path should start with `\\wsl.localhost\` or `\\wsl$\` prefix.
+     * Both prefixes are supported regardless of the preferred prefix on the particular Windows.
+     *
+     * @param windowsUncPath The Windows UNC path to be parsed.
+     * @return A `WslPath` object if the path is successfully parsed, or `null` otherwise.
+     *         On OSes not supporting WSL, the method returns null.
+     */
     @JvmStatic
     fun parseWindowsUncPath(windowsUncPath: String): WslPath? {
       if (!WSLUtil.isSystemCompatible()) return null
       val path = toSystemDependentName(windowsUncPath, '\\')
 
       val legacyWslPrefix = WslConstants.UNC_PREFIX
-      val modernWslPrefix = WSLUtil.getUncPrefix()
+      val modernWslPrefix = WSLUtil.DEFAULT_UNC_PREFIX
 
       return parseWindowsUncPath(path, legacyWslPrefix) ?: parseWindowsUncPath(path, modernWslPrefix)
     }
