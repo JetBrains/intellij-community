@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsHolder
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptModel
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
@@ -74,7 +75,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
         if (sync != null && KotlinPluginModeProvider.isK2Mode()) {
             val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
-            project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.updateDefinitions(definitions)
+            GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
 
             val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
                 val path = Path.of(it.file)

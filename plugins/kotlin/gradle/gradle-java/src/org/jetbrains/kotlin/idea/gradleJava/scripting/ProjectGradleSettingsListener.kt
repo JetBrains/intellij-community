@@ -86,7 +86,7 @@ class ProjectGradleSettingsListener(
             }
         }.toSet()
 
-        project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.updateDefinitions(definitions)
+        GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
         project.scriptConfigurationsSourceOfType<GradleScriptConfigurationsSource>()?.updateDependenciesAndCreateModules(gradleScripts)
     }
 }
