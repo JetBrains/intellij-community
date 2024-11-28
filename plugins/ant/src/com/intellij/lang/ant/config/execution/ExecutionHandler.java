@@ -148,6 +148,7 @@ public final class ExecutionHandler {
               }
             }
             catch (Throwable e) {
+              future.complete(null);
               LOG.error(e);
               listenerWrapper.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
             }
