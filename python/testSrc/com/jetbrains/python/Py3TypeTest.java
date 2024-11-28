@@ -1910,6 +1910,34 @@ public class Py3TypeTest extends PyTestCase {
     assertProjectFilesNotParsed(expr.getContainingFile());
   }
 
+  // PY-77796
+  public void testTypedDictReadOnlyItemType() {
+    doTest("str",
+           """
+             from typing import TypedDict, ReadOnly
+             class A(TypedDict):
+                 x: ReadOnly[str]
+             def f(a: A):
+                 expr = a['x']
+             """);
+    doTest("int",
+           """
+             from typing import TypedDict, Required, ReadOnly
+             class A(TypedDict):
+                 x: Required[ReadOnly[int]]
+             def f(a: A):
+                 expr = a['x']
+             """);
+    doTest("str",
+           """
+             from typing import TypedDict, Required, Annotated, ReadOnly
+             class A(TypedDict):
+                 x: Required[Annotated[ReadOnly[str], 1]]
+             def f(a: A):
+                 expr = a['x']
+             """);
+  }
+
   // PY-53612
   public void testLiteralStringConcatenation() {
     doTest("LiteralString",

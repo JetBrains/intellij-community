@@ -167,10 +167,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
-    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL, ANNOTATED, REQUIRED, NOT_REQUIRED)
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL, ANNOTATED, REQUIRED, NOT_REQUIRED, READONLY)
     // type aliases
     .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, ORDERED_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
-    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT, ANNOTATED_EXT, REQUIRED_EXT, NOT_REQUIRED_EXT)
+    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT, ANNOTATED_EXT, REQUIRED_EXT, NOT_REQUIRED_EXT, READONLY_EXT)
     .build();
 
   /**
@@ -215,6 +215,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .add(TYPE_ALIAS, TYPE_ALIAS_EXT)
     .add(REQUIRED, REQUIRED_EXT)
     .add(NOT_REQUIRED, NOT_REQUIRED_EXT)
+    .add(READONLY, READONLY_EXT)
     .add(SELF, SELF_EXT)
     .build();
 
@@ -920,7 +921,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (annotatedType != null) {
         return annotatedType;
       }
-      final Ref<PyType> requiredOrNotRequiredType = getRequiredOrNotRequiredType(resolved, context);
+      final Ref<PyType> requiredOrNotRequiredType = getTypedDictSpecialItemType(resolved, context);
       if (requiredOrNotRequiredType != null) {
         return requiredOrNotRequiredType;
       }
@@ -1226,13 +1227,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
-  private static Ref<PyType> getRequiredOrNotRequiredType(@NotNull PsiElement resolved, @NotNull Context context) {
+  private static Ref<PyType> getTypedDictSpecialItemType(@NotNull PsiElement resolved, @NotNull Context context) {
     if (resolved instanceof PySubscriptionExpression subscriptionExpr) {
       final PyExpression operand = subscriptionExpr.getOperand();
 
       Collection<String> resolvedNames = resolveToQualifiedNames(operand, context.getTypeContext());
-      if (resolvedNames.stream().anyMatch(name -> REQUIRED.equals(name) || REQUIRED_EXT.equals(name) ||
-                                                  NOT_REQUIRED.equals(name) || NOT_REQUIRED_EXT.equals(name))) {
+      if (ContainerUtil.exists(resolvedNames, name -> REQUIRED.equals(name) || REQUIRED_EXT.equals(name) ||
+                                                      NOT_REQUIRED.equals(name) || NOT_REQUIRED_EXT.equals(name) ||
+                                                      READONLY.equals(name) || READONLY_EXT.equals(name))) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         final PyExpression type = indexExpr instanceof PyTupleExpression ? ((PyTupleExpression)indexExpr).getElements()[0] : indexExpr;
         if (type != null) {
