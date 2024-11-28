@@ -96,11 +96,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   }
 
   public void testMethodRef() throws Exception {
-    doHierarchyTest(() -> {
-      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
-      PsiMember method = psiClass.findMethodsByName("testMethod", false) [0];
-      return new CalleeMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    }, JavaHierarchyUtil.getComparator(myProject),"A.java");
+    doJavaCalleeTypeHierarchyTest("A", "testMethod", "A.java");
   }
 
   public void testField() throws Exception {
@@ -109,6 +105,14 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
       PsiField field = psiClass.findFieldByName("testField", false);
       return new CallerMethodsTreeStructure(getProject(), field, HierarchyBrowserBaseEx.SCOPE_PROJECT);
     }, JavaHierarchyUtil.getComparator(myProject),"A.java");
+  }
+
+  public void testStaticallyImportedField() throws Exception {
+    doHierarchyTest(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("java.util.Collections", ProjectScope.getAllScope(getProject()));
+      PsiMember field = psiClass.findFieldByName("EMPTY_LIST", false);
+      return new CallerMethodsTreeStructure(getProject(), field, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(myProject), "A.java");
   }
 
   public void testAnonymous() throws Exception {

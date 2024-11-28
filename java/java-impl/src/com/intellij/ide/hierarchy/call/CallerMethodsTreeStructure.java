@@ -130,7 +130,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       .search(enclosingElement, searchScope).findAll().stream()
       .map(PsiReference::getElement)
       .distinct()
-      .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false)).toArray();
+      .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false))
+      .filter(n -> n.getEnclosingElement() != null)
+      .toArray();
   }
 
   private static boolean areClassesRelated(@NotNull PsiClass expectedQualifierClass, @NotNull PsiClass receiverClass) {
