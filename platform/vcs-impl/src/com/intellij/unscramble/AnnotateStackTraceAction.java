@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -6,10 +6,8 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +27,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
+import com.intellij.openapi.vcs.actions.VcsAnnotateUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -55,12 +55,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
+  private static final String ACTION_ID = "AnnotateStackTraceAction.show.files.modification.info";
 
   private boolean myIsLoading = false;
 
@@ -71,10 +72,52 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    boolean enabled = isEnabled(e);
+    e.getPresentation().setEnabled(enabled);
+  }
+
+  boolean isEnabled(@NotNull AnActionEvent e) {
     ConsoleViewImpl consoleView = ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
     Editor editor = consoleView != null ? consoleView.getEditor() : null;
     boolean isShown = editor != null && editor.getGutter().isAnnotationsShown();
-    e.getPresentation().setEnabled(editor != null && !isShown && !myIsLoading);
+    return editor != null && !isShown && !myIsLoading;
+  }
+
+  @ApiStatus.Internal
+  public static class Provider implements AnnotateToggleAction.Provider {
+
+    @Override
+    public boolean isEnabled(@NotNull AnActionEvent e) {
+      AnnotateStackTraceAction annotateStackTraceAction =
+        (AnnotateStackTraceAction)ActionManager.getInstance().getAction(ACTION_ID);
+      return annotateStackTraceAction.isEnabled(e);
+    }
+
+    @Override
+    public boolean isSuspended(@NotNull AnActionEvent e) {
+      AnnotateStackTraceAction annotateStackTraceAction =
+        (AnnotateStackTraceAction)ActionManager.getInstance().getAction(ACTION_ID);
+      return annotateStackTraceAction.myIsLoading;
+    }
+
+    @Override
+    public boolean isAnnotated(AnActionEvent e) {
+      VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+      if (file == null) return false;
+      Editor editor = VcsAnnotateUtil.getEditorFor(file, e.getDataContext());
+      if (editor == null) return false;
+      List<TextAnnotationGutterProvider> annotations = editor.getGutter().getTextAnnotations();
+      return !ContainerUtil.filterIsInstance(annotations, MyActiveAnnotationGutter.class).isEmpty();
+    }
+
+    @Override
+    public void perform(@NotNull AnActionEvent e, boolean selected) {
+      AnnotateStackTraceAction annotateStackTraceAction =
+        (AnnotateStackTraceAction)ActionManager.getInstance().getAction(ACTION_ID);
+      if (annotateStackTraceAction == null) return;
+
+      ActionUtil.invokeAction(annotateStackTraceAction, e, null);
+    }
   }
 
   @Override
