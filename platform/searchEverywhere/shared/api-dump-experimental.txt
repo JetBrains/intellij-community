@@ -1,0 +1,18 @@
+*:com.intellij.platform.searchEverywhere.SearchEverywhereItem
+- a:presentation():com.intellij.platform.searchEverywhere.SearchEverywhereItemPresentation
+- a:weight():I
+*:com.intellij.platform.searchEverywhere.SearchEverywhereItemPresentation
+- a:getText():java.lang.String
+*:com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
+- a:getItems(com.intellij.platform.searchEverywhere.SearchEverywhereParams):kotlinx.coroutines.flow.Flow
+*:com.intellij.platform.searchEverywhere.SearchEverywhereParams
+- a:getText():java.lang.String
+*f:com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
+- com.intellij.platform.searchEverywhere.SearchEverywhereParams
+- <init>(java.lang.String):V
+- f:component1():java.lang.String
+- f:copy(java.lang.String):com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
+- bs:copy$default(com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams,java.lang.String,I,java.lang.Object):com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
+- equals(java.lang.Object):Z
+- getText():java.lang.String
+- hashCode():I

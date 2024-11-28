@@ -3,17 +3,14 @@ package com.intellij.platform.searchEverywhere
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface SearchEverywhereParams {
   val text: String
-  val session: SearchEverywhereSession
 }
 
-@ApiStatus.Internal
-data class SearchEverywhereTextSearchParams(override val text: String,
-                                            override val session: SearchEverywhereSession) : SearchEverywhereParams
+@ApiStatus.Experimental
+data class SearchEverywhereTextSearchParams(override val text: String) : SearchEverywhereParams
 
 @ApiStatus.Internal
 data class ActionSearchParams(override val text: String,
-                              override val session: SearchEverywhereSession,
                               val includeDisabled: Boolean): SearchEverywhereParams

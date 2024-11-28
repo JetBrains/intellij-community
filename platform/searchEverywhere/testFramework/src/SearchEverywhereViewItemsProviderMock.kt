@@ -11,20 +11,20 @@ import java.util.*
 @ApiStatus.Internal
 class SearchEverywhereItemsProviderMock(
   val resultPrefix: String = "item",
+  val session: SearchEverywhereSession = SearchEverywhereSessionMock(),
   private val size: Int = 100,
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
 ) : SearchEverywhereItemsProvider {
   val id = SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_$resultPrefix")
 
-  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem> {
     return flow {
       if (delayStep <= 0) delay(delayMillis)
 
       repeat(size) { index ->
         val item = SearchEverywhereItemMock("$resultPrefix $index")
-        val itemId = params.session.saveItem(item)
-        emit(SearchEverywhereItemDataMock(itemId, id, item.weight(), item.presentation()))
+        emit(item)
         if (delayStep > 0 && delayMillis > 0 && (index + 1) % delayStep == 0) {
           delay(delayMillis)
         }

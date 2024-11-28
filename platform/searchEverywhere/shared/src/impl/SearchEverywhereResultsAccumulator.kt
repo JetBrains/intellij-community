@@ -13,7 +13,7 @@ import kotlin.coroutines.coroutineContext
 class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywhereProviderId, Int>,
                                          alreadyFoundResults: List<SearchEverywhereItemData>) {
 
-  class Event(val oldItemData: SearchEverywhereItemData? = null, val newItemData: SearchEverywhereItemData? = null) {
+  class Event(val oldItemData: SearchEverywhereItemData?, val newItemData: SearchEverywhereItemData?) {
     val isAdded: Boolean get() = oldItemData == null && newItemData != null
     val isReplaced: Boolean get() = oldItemData != null && newItemData != null
     val isNone: Boolean get() = oldItemData == null && newItemData == null
@@ -27,8 +27,8 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
 
   suspend fun add(newItem: SearchEverywhereItemData): Event {
     val newId = idForItem(newItem)
-    val newCountDownLatch = providerToCountDownLatch[newItem.providerId] ?: return Event()
-    newCountDownLatch.decrementOrAwait()
+    val newCountDownLatch = providerToCountDownLatch[newItem.providerId]
+    newCountDownLatch?.decrementOrAwait()
 
     synchronized(this) {
       val oldItem = itemIdToItem[newId]
@@ -41,12 +41,12 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
           return Event(oldItem, newItem)
         }
         else {
-          return Event(newItem)
+          return Event(null, newItem)
         }
       }
       else {
-        newCountDownLatch.increment()
-        return Event()
+        newCountDownLatch?.increment()
+        return Event(null, null)
       }
     }
   }

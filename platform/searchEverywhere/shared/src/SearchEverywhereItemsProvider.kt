@@ -4,7 +4,7 @@ package com.intellij.platform.searchEverywhere
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface SearchEverywhereItemsProvider {
-  fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData>
+  fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem>
 }

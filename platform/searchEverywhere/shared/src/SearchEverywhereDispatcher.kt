@@ -8,8 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 interface SearchEverywhereDispatcher {
   fun getItems(
     params: SearchEverywhereParams,
-    providers: Collection<SearchEverywhereItemsProvider>,
-    providersAndLimits: Map<SearchEverywhereProviderId, Int>,
     alreadyFoundResults: List<SearchEverywhereItemData>,
   ): Flow<SearchEverywhereItemData>
 }

@@ -4,7 +4,7 @@ package com.intellij.platform.searchEverywhere
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface SearchEverywhereItemPresentation {
   val text: String
 }

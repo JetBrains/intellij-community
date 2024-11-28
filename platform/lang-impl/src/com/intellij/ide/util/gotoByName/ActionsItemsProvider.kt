@@ -23,15 +23,11 @@ class ActionsItemsProvider(project: Project?, contextComponent: Component?, edit
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 
-  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
-    val providerId = SearchEverywhereProviderId.of(this)
-
+  override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem> {
     return channelFlow {
       processItems(params) { value, weight ->
         val item = ActionSearchItem(weight, value)
-        val itemId = params.session.saveItem(item)
-        channel.send(ActionSearchItemData(itemId, providerId, weight, item.presentation()))
-
+        channel.send(item)
         coroutineContext.isActive
       }
     }
