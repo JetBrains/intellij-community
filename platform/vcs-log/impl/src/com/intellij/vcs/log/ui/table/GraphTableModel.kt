@@ -20,7 +20,7 @@ import javax.swing.table.AbstractTableModel
 import kotlin.math.max
 import kotlin.properties.Delegates
 
-class GraphTableModel(
+class GraphTableModel @ApiStatus.Internal constructor(
   val logData: VcsLogData,
   private val requestMore: Runnable,
   val properties: VcsLogUiProperties

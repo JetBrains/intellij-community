@@ -53,10 +53,7 @@ import com.intellij.vcs.log.ui.table.links.VcsLinksRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -119,6 +116,7 @@ public class VcsLogGraphTable extends TableWithProgress
 
   private boolean myDisposed = false;
 
+  @ApiStatus.Internal
   public VcsLogGraphTable(@NotNull VcsLogUiEx logUi, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
                           @NotNull Runnable requestMore, @NotNull Disposable disposable) {
