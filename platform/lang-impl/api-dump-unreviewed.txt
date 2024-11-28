@@ -6618,7 +6618,7 @@ c:com.intellij.execution.console.BasicGutterContentProvider
 - hasText():Z
 - f:isShowSeparatorLine(I,com.intellij.openapi.editor.Editor):Z
 c:com.intellij.execution.console.ConsoleConfigurable
-- com.intellij.openapi.options.Configurable$NoScroll
+- com.intellij.openapi.options.CompositeConfigurable
 - com.intellij.openapi.options.SearchableConfigurable
 - <init>():V
 - addRule(java.lang.String):V
@@ -6631,6 +6631,9 @@ c:com.intellij.execution.console.ConsoleConfigurable
 - getId():java.lang.String
 - isModified():Z
 - reset():V
+f:com.intellij.execution.console.ConsoleConfigurableEP
+- com.intellij.openapi.options.ConfigurableEP
+- <init>():V
 c:com.intellij.execution.console.ConsoleExecuteAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>(com.intellij.execution.console.LanguageConsoleView,com.intellij.execution.console.BaseConsoleExecuteActionHandler):V
