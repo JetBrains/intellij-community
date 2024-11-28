@@ -602,6 +602,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
-    return immediateMethodCalls(targets).filter(t -> t.getMethod().equals(psiMethod));
+    return immediateMethodCalls(targets)
+      .filter(t -> psiMethod.getManager().areElementsEquivalent(psiMethod, t.getMethod()));
   }
 }
