@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui
@@ -12,11 +12,11 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asContextElement
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 
@@ -39,8 +39,9 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
 
   // Due to a critical bug (https://youtrack.jetbrains.com/issue/IDEA-320644/Improve-Smart-PSI-pointer-equals-implementation),
   // we are not using "caffeine".
-  private val iconCache = CollectionFactory.createSoftKeySoftValueMap<Any, Icon>()
-
+  // Furthermore,  a size-bounded cache is unnecessary for us because our application has frequent cache clearances,
+  // such as during PSI modifications.
+  private val iconCache = ConcurrentHashMap<Any, Icon>()
   @Volatile
   private var mightBePopulated = false // used to avoid multiple calls PHM#clear() which might be expensive, no need to be atomic or something else
   private val lastClearTimestamp = LongAdder()
