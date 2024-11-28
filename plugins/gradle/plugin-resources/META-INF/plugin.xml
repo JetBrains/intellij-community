@@ -225,6 +225,7 @@
                  description="Enable performance trace collection in the Gradle daemon collected by OTLP java agent"/>
     <registryKey key="gradle.daemon.experimental.dependency.resolver" defaultValue="false"
                  description="Use ArtifactView to resolve Javadoc/Sources"/>
+    <registryKey key="gradle.sync.use.eel.for.wsl" defaultValue="false" description="Use EEL API for WSL projects"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>

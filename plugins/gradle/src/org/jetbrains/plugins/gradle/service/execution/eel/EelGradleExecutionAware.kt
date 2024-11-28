@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.impl.utils.getEelApiBlocking
@@ -78,7 +79,8 @@ class EelGradleExecutionAware : GradleExecutionAware {
   }
 
   private fun Project.isEelSyncAvailable(): Boolean {
-    return projectFilePath != null
+    return Registry.`is`("gradle.sync.use.eel.for.wsl", false)
+           && projectFilePath != null
            && WSLUtil.isSystemCompatible()
            && WslPath.getDistributionByWindowsUncPath(projectFilePath!!) != null
            && getEelApiBlocking() !is LocalEelApi
