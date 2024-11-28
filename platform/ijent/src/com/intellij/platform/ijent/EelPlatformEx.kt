@@ -10,4 +10,5 @@ val EelPlatform.executableName: String
     EelPlatform.Aarch64Linux -> "ijent-aarch64-unknown-linux-musl-release"
     EelPlatform.X8664Linux -> "ijent-x86_64-unknown-linux-musl-release"
     EelPlatform.X64Windows -> "ijent-x86_64-pc-windows-gnu-release.exe"
+    EelPlatform.Arm64Windows -> "ijent-aarch64-pc-windows-gnu-release" // todo: refine later when we support windows
   }

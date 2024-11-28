@@ -50,7 +50,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
   }
 
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalTunnelsWindowsApi
-  override val platform: EelPlatform.Windows get() = if (SystemInfo.isAarch64) TODO("Not yet implemented") else EelPlatform.X64Windows
+  override val platform: EelPlatform.Windows get() = if (SystemInfo.isAarch64) EelPlatform.Arm64Windows else EelPlatform.X64Windows
   override val exec: EelExecApi = EelLocalExecApi()
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome(EelPath.Absolute.OS.WINDOWS))
   override val mapper: EelPathMapper = LocalEelPathMapper(this)

@@ -279,7 +279,7 @@ data class JdkPredicate(
         EelPlatform.Aarch64Linux -> setOf(JdkPlatform("linux", "aarch64"))
         EelPlatform.X8664Linux -> setOf(JdkPlatform("linux", "x86_64"))
         EelPlatform.X64Windows -> setOf(JdkPlatform("windows", "x86_64"))
-        // TODO Windows aarch64
+        EelPlatform.Arm64Windows -> setOf(JdkPlatform("windows", "aarch64"))
       }
       return JdkPredicate(buildNumber, platform)
     }

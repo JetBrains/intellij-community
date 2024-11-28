@@ -12,8 +12,8 @@ sealed interface EelPlatform {
 
   data object Arm64Darwin : Darwin
   data object Aarch64Linux : Linux
+  data object Arm64Windows : Windows
 
-  // TODO: data object Aarch64Windows : Windows
   data object X8664Darwin : Darwin
   data object X8664Linux : Linux
   data object X64Windows : Windows
@@ -33,6 +33,7 @@ sealed interface EelPlatform {
         }
         "windows" -> when (arch.lowercase()) {
           "amd64", "x86_64", "x86-64" -> X64Windows
+          "arm64", "aarch64" -> Arm64Windows
           else -> null
         }
         else -> null
