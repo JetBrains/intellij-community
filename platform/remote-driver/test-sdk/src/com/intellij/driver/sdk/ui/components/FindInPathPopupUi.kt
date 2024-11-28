@@ -1,6 +1,8 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.ActionManager
 import com.intellij.driver.sdk.ActionUtils
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
@@ -86,7 +88,9 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
     val selectedItem: String? get() = getSelectedRow().let { if (it != -1) items[it] else null }
 
     init {
-      replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
+      replaceCellRendererReader(
+        driver.new(AccessibleNameCellRendererReader::class, rdTarget = (fixture as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT)
+      )
     }
 
     fun rightClickItemAtRow(row: Int) {
