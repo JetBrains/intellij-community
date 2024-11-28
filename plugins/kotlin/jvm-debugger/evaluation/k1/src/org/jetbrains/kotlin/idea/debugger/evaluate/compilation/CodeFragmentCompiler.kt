@@ -8,8 +8,7 @@ import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+import org.jetbrains.kotlin.config.doNotClearBindingContext
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -72,7 +71,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         val compilerConfiguration = CompilerConfiguration().apply {
             languageVersionSettings = codeFragment.languageVersionSettings
-            fragmentCompilerBackend.configureCompiler(this)
+            doNotClearBindingContext = true
         }
 
         val parameterInfo = fragmentCompilerBackend.computeFragmentParameters(executionContext, codeFragment, bindingContext)
@@ -86,20 +85,17 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper,
             bindingContext, filesToCompile, compilerConfiguration
         ).apply {
-            fragmentCompilerBackend.configureGenerationState(
-                this,
-                bindingContext,
-                compilerConfiguration,
-                classDescriptor,
-                methodDescriptor,
-                parameterInfo
+            codegenFactory(
+                fragmentCompilerBackend.codegenFactory(
+                    bindingContext, compilerConfiguration, classDescriptor, methodDescriptor, parameterInfo,
+                )
             )
             generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
         }.build()
 
         try {
             KotlinCodegenFacade.compileCorrectFiles(generationState)
-            return fragmentCompilerBackend.extractResult(methodDescriptor, parameterInfo, generationState).also {
+            return fragmentCompilerBackend.extractResult(parameterInfo, generationState).also {
                 generationState.destroy()
             }
         } catch (e: ProcessCanceledException) {
