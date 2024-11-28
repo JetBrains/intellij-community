@@ -127,7 +127,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     assert enclosingElement instanceof PsiField : "Enclosing element should be a field, but was " + enclosingElement.getClass() + ", text: " + enclosingElement.getText();
 
     return ReferencesSearch
-      .search(enclosingElement, enclosingElement.getUseScope()).findAll().stream()
+      .search(enclosingElement, searchScope).findAll().stream()
       .map(PsiReference::getElement)
       .distinct()
       .map(e -> new CallHierarchyNodeDescriptor(myProject, nodeDescriptor, e, false, false)).toArray();
