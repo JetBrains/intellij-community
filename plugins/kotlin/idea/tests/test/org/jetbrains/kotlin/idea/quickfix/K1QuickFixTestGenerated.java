@@ -8112,6 +8112,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/innerType.kt");
                 }
 
+                @TestMetadata("lambdaReplacement.kt")
+                public void testLambdaReplacement() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/lambdaReplacement.kt");
+                }
+
                 @TestMetadata("nestedClassToNestedClass.kt")
                 public void testNestedClassToNestedClass() throws Exception {
                     runTest("testData/quickfix/deprecatedSymbolUsage/classUsages/nestedClassToNestedClass.kt");

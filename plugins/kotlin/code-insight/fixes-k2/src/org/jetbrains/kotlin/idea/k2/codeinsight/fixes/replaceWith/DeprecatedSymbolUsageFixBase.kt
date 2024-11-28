@@ -186,6 +186,13 @@ abstract class DeprecatedSymbolUsageFixBase(
                         if (e is ControlFlowException) throw e
                         val replacement = createReplacement(target as KtDeclaration, element, replaceWith, isUnitType) ?: return null
 
+                        val mainExpression = replacement.mainExpression
+                        if (target is KtClassLikeDeclaration &&
+                            mainExpression !is KtReferenceExpression &&
+                            mainExpression !is KtQualifiedExpression) {
+                            return null
+                        }
+
                         return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
                     }
 
