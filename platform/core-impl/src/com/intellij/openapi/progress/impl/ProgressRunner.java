@@ -303,7 +303,8 @@ public final class ProgressRunner<R> {
   private @NotNull CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                                     @NotNull Semaphore modalityEntered,
                                                     @NotNull Function<ProgressIndicator, R> onThreadCallable) {
-    CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture);
+    final CoroutineContext sharedPermit = isModal && isSync ? getLockPermitContext(true) : EmptyCoroutineContext.INSTANCE;
+    CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture, sharedPermit);
     CompletableFuture<R> resultFuture;
 
     if (isModal) {
@@ -343,6 +344,8 @@ public final class ProgressRunner<R> {
       if (!resultFuture.isDone()) {
         throw new IllegalStateException("Result future must be done at this point");
       }
+      // Shared permit is not needed anymore
+      closeLockPermitContext(sharedPermit);
     }
     return resultFuture;
   }
@@ -368,7 +371,8 @@ public final class ProgressRunner<R> {
       });
     }
 
-    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture);
+    final CoroutineContext sharedPermit = isModal && isSync ? getLockPermitContext(true) : EmptyCoroutineContext.INSTANCE;
+    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture, sharedPermit);
 
     if (isModal) {
       CompletableFuture<Void> modalityExitFuture = resultFuture
@@ -389,6 +393,7 @@ public final class ProgressRunner<R> {
 
     if (isSync) {
       waitForFutureUnlockingThread(resultFuture);
+      closeLockPermitContext(sharedPermit);
     }
     return resultFuture;
   }
@@ -441,7 +446,8 @@ public final class ProgressRunner<R> {
 
   private @NotNull CompletableFuture<R> launchTask(
     @NotNull Function<@NotNull ProgressIndicator, R> task,
-    @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
+    @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture,
+    @NotNull CoroutineContext sharedPermit
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
     ChildContext childContext = Propagation.createChildContext("ProgressRunner: " + task);
@@ -457,7 +463,6 @@ public final class ProgressRunner<R> {
       });
     }
     // Capture lock here, where we asked for execution, not in Future context
-    final CoroutineContext sharedPermit = isModal && isSync ? getLockPermitContext(true) : EmptyCoroutineContext.INSTANCE;
     progressIndicatorFuture.whenComplete((progressIndicator, throwable) -> {
       if (throwable != null) {
         resultFuture.completeExceptionally(throwable);
@@ -471,9 +476,6 @@ public final class ProgressRunner<R> {
             ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()).plus(sharedPermit));
           try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, true)) {
             runnable.run();
-          }
-          finally {
-            closeLockPermitContext(sharedPermit);
           }
         });
       };
