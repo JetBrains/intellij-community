@@ -1204,7 +1204,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testRequiredWithReadOnly() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTestByText(
       """
-        from typing_extensions import TypedDict, Required, NotRequired
+        from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
         
         class Movie(TypedDict):
             name: ReadOnly[Required[str]]
