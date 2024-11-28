@@ -88,19 +88,27 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
       return collector.collectTestDataReferences(method);
     }
 
-    return ReadAction.compute(() -> {
-      final Location<?> location = Location.DATA_KEY.getData(context);
-      if (location instanceof PsiMemberParameterizedLocation) {
-        PsiClass parametrizedTestClass = findParametrizedClass(context);
-        if (parametrizedTestClass != null) {
-          String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(parametrizedTestClass);
-          String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-          String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
-          return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, parametrizedTestClass);
-        }
-      }
+    List<TestDataFile> result = ReadAction.compute(() -> {
+     final Location<?> location = Location.DATA_KEY.getData(context);
+     if (location instanceof PsiMemberParameterizedLocation) {
+       PsiClass parametrizedTestClass = findParametrizedClass(context);
+       if (parametrizedTestClass != null) {
+         String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(parametrizedTestClass);
+         String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+         String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
+         return TestDataGuessByExistingFilesUtil.suggestTestDataFiles(baseFileName, testDataPath, parametrizedTestClass);
+       }
+     }
       return Collections.emptyList();
     });
+
+    if (result.isEmpty()) {
+      String testDataPath = ReadAction.compute(() -> TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass()));
+      final TestDataReferenceCollector collector = new TestDataReferenceCollector(testDataPath, name);
+      return collector.collectTestDataReferences(method);
+    } else {
+      return result;
+    }
   }
 
   @Override
