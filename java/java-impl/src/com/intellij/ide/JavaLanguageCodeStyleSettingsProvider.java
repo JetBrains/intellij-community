@@ -611,7 +611,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           private Boolean secondPrivateAnnotatedField = true;
       }
       
-      record SampleRecord(@NotNull Double s, @Nullable String t, @NotNull Double w) {}
+      public record SampleRecord(@NotNull Double s, @Nullable String t, @NotNull Double w) {}
       
       interface TestInterface {
           int MAX = 10;
@@ -673,7 +673,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           }
       }
       interface Abba {}
-      record Rec(String s, int i) {}
+      public record Rec(String s, int i) {}
       
       class SimpleClass {
         class EmptyClass{}
@@ -759,7 +759,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           Dalmatian(), Labrador(), Dachshund()
       }
       
-      record SampleRecord(@Annotation1 @Annotation2 String s, @Annotation1 @Annotation3(param1="value1", param2="value2") Integer t, @Annotation3(param1="value1", param2="value2") @Annotation1 Double u, @Annotation3(param1="value1", param2="value2") @Annotation4(param1="value1", param2="value2") Float w) {}
+      public record SampleRecord(@Annotation1 @Annotation2 String s, @Annotation1 @Annotation3(param1="value1", param2="value2") Integer t, @Annotation3(param1="value1", param2="value2") @Annotation1 Double u, @Annotation3(param1="value1", param2="value2") @Annotation4(param1="value1", param2="value2") Float w) {}
 
       @Annotation1 @Annotation2 @Annotation3(param1="value1", param2="value2") @Annotation4 class Foo {
           @Annotation1 @Annotation3(param1="value1", param2="value2") public static void foo(){
