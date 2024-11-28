@@ -88,7 +88,7 @@ class CommandCompletionService(
     val offsetOfFullIndex = lookup.lookupOriginalStart - index
     if (offsetOfFullIndex < 0 ||
         offsetOfFullIndex >= lookup.editor.document.textLength ||
-        lookup.editor.document.immutableCharSequence.substring(offsetOfFullIndex, offsetOfFullIndex + fullSuffix.length) != fullSuffix) return
+        lookup.editor.document.immutableCharSequence.substring(offsetOfFullIndex, lookup.lookupOriginalStart) != fullSuffix) return
     lookup.putUserData(INSTALLED_ADDITIONAL_MATCHER_KEY, true)
     lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
     lookup.arranger.prefixChanged(lookup);
