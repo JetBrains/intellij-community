@@ -8,10 +8,10 @@ import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -262,13 +262,26 @@ public class GitExecutableDetector {
     }
 
     private @Nullable String checkProgramFiles() {
-      String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
+      File winRootInTests = getWinRootInTests();
+      File winRoot = ObjectUtils.chooseNotNull(winRootInTests, new File("C:\\"));
+
+      String programFiles = System.getenv("PROGRAMFILES");
+      String programFilesX86 = System.getenv("PROGRAMFILES(X86)");
+
+      File programFilesFile = !StringUtil.isEmpty(programFiles) && winRootInTests == null ?
+                              new File(programFiles) :
+                              new File(winRoot, "Program Files");
+
+      File programFilesX86File = !StringUtil.isEmpty(programFilesX86) && winRootInTests == null ?
+                                 new File(programFilesX86) :
+                                 new File(winRoot, "Program Files (x86)");
+
+      List<File> dirsToCheck = List.of(programFilesFile, programFilesX86File);
 
       // collecting all potential msys distributives
       List<File> distrs = new ArrayList<>();
-      for (String programFiles : PROGRAM_FILES) {
-        File pf = new File(getWinRoot(), programFiles);
-        distrs.addAll(findGitDistrsIn(pf));
+      for (File dir : dirsToCheck) {
+        distrs.addAll(findGitDistrsIn(dir));
       }
 
       return getPreferredDistrExecutablePath(distrs);
@@ -278,21 +291,27 @@ public class GitExecutableDetector {
       String appLocal = System.getenv("LocalAppData");
       if (StringUtil.isEmpty(appLocal)) return null;
 
-      File[] PROGRAM_FILES = {new File(appLocal + "\\Programs")};
+      File appLocalFile = new File(appLocal + "\\Programs");
+      List<File> dirsToCheck = List.of(appLocalFile);
 
       // collecting all potential msys distributives
       List<File> distrs = new ArrayList<>();
-      for (File programFiles : PROGRAM_FILES) {
-        distrs.addAll(findGitDistrsIn(programFiles));
+      for (File dir : dirsToCheck) {
+        distrs.addAll(findGitDistrsIn(dir));
       }
 
       return getPreferredDistrExecutablePath(distrs);
     }
 
     private @Nullable String checkCygwin() {
-      final String[] OTHER_WINDOWS_PATHS = {FileUtil.toSystemDependentName("cygwin/bin/git.exe")};
-      for (String otherPath : OTHER_WINDOWS_PATHS) {
-        File file = new File(getWinRoot(), otherPath);
+      File winRootInTests = getWinRootInTests();
+      File winRoot = ObjectUtils.chooseNotNull(winRootInTests, new File("C:\\"));
+
+      File defaultCygwinExe = new File(winRoot, "cygwin/bin/git.exe");
+
+      List<File> exeToCheck = List.of(defaultCygwinExe);
+
+      for (File file : exeToCheck) {
         if (file.exists()) {
           return file.getPath();
         }
@@ -422,8 +441,8 @@ public class GitExecutableDetector {
   }
 
   @VisibleForTesting
-  protected @NotNull File getWinRoot() {
-    return new File("C:\\");
+  protected @Nullable File getWinRootInTests() {
+    return null;
   }
 
   @VisibleForTesting
