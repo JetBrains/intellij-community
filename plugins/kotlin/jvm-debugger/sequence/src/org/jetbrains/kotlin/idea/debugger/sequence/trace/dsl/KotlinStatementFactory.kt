@@ -60,7 +60,13 @@ class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : Sta
     override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement =
         KotlinAssignmentStatement(variable, expression)
 
-    override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
+    override fun createMapVariable(
+        keyType: GenericType,
+        valueType: GenericType,
+        name: String,
+        linked: Boolean,
+        args: Array<out Expression>
+    ): MapVariable =
         KotlinMapVariable(if (linked) types.linkedMap(keyType, valueType) else types.map(keyType, valueType), name)
 
     override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =

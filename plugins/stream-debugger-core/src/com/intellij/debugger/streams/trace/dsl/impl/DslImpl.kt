@@ -37,8 +37,8 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
   override fun newSizedArray(elementType: GenericType, size: Expression): Expression =
     statementFactory.createNewSizedArray(elementType, size)
 
-  override fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
-    statementFactory.createMapVariable(keyType, valueType, name, false)
+  override fun map(keyType: GenericType, valueType: GenericType, name: String, vararg args: Expression): MapVariable =
+    statementFactory.createMapVariable(keyType, valueType, name, false, args)
 
   override fun list(elementType: GenericType, name: String): ListVariable =
     statementFactory.createListVariable(elementType, name)
@@ -46,8 +46,8 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
   override fun newList(elementType: GenericType, vararg args: Expression): Expression =
     statementFactory.createNewListExpression(elementType, *args)
 
-  override fun linkedMap(keyType: GenericType, valueType: GenericType, name: String): MapVariable =
-    statementFactory.createMapVariable(keyType, valueType, name, true)
+  override fun linkedMap(keyType: GenericType, valueType: GenericType, name: String, vararg args: Expression): MapVariable =
+    statementFactory.createMapVariable(keyType, valueType, name, true, args)
 
   override fun lambda(argName: String, init: LambdaBody.(Expression) -> Unit): Lambda {
     val lambdaBody = statementFactory.createEmptyLambdaBody(argName)

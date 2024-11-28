@@ -25,9 +25,9 @@ interface DslFactory {
 
   fun newSizedArray(elementType: GenericType, size: Int): Expression = newSizedArray(elementType, "$size".expr)
 
-  fun map(keyType: GenericType, valueType: GenericType, name: String): MapVariable
+  fun map(keyType: GenericType, valueType: GenericType, name: String, vararg args: Expression): MapVariable
 
-  fun linkedMap(keyType: GenericType, valueType: GenericType, name: String): MapVariable
+  fun linkedMap(keyType: GenericType, valueType: GenericType, name: String, vararg args: Expression): MapVariable
 
   fun declaration(variable: Variable, init: Expression, isMutable: Boolean): VariableDeclaration
 

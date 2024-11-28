@@ -50,7 +50,7 @@ interface StatementFactory {
 
   fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement
 
-  fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable
+  fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean, args: Array<out Expression>): MapVariable
 
   fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable
 
