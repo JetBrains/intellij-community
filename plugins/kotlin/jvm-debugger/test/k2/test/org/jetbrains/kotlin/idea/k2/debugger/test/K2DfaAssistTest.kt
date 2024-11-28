@@ -783,6 +783,64 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testFunCapture() {
+        val text = """
+            fun main() {
+                test(1)
+            }
+            
+            fun test(i: Int) {
+                block2 {
+                    block(fun() {
+                        <caret>if (i > 0/*TRUE*/) {
+                            print("foo")
+                        }
+                    })
+                }
+            }
+            
+            fun block2(block: () -> Unit) {
+                block()
+            }
+            
+            inline fun block(block: () -> Unit) {
+                block()
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$i", MockIntegerValue(vm,  1))
+        }
+    }
+
+    fun testLambdaArgCapture() {
+        val text = """
+            fun main() {
+                test(1)
+            }
+            
+            fun test(i: Int) {
+                block2 {
+                    block({
+                        <caret>if (i > 0/*TRUE*/) {
+                            print("foo")
+                        }
+                    })
+                }
+            }
+            
+            fun block2(block: () -> Unit) {
+                block()
+            }
+            
+            inline fun block(block: () -> Unit) {
+                block()
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$i", MockIntegerValue(vm,  1))
+        }
+    }
+
     private fun doTest(text: String, mockValues: BiConsumer<MockVirtualMachine, MockStackFrame>) {
         doTest(text, mockValues, "Test.kt")
     }

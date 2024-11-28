@@ -97,9 +97,12 @@ class K2DfaAssistProvider : DfaAssistProvider {
         while(true) {
             val function = current.parentOfType<KtFunction>()
             if (function != null) {
-                val lambda = function.parent as? KtLambdaExpression
-                val arg = lambda?.parent as? KtLambdaArgument
-                val call = arg?.parent as? KtCallExpression
+                val realFun = function.parent as? KtLambdaExpression ?: function
+                val arg = realFun?.parent as? KtValueArgument
+                val call = when(arg) {
+                    is KtLambdaArgument -> arg.parent
+                    else -> arg?.parent?.parent
+                } as? KtCallExpression
                 if (call != null) {
                     val inline = analyze(call) {
                         val functionCall = call.resolveToCall()?.singleFunctionCallOrNull()
@@ -122,7 +125,6 @@ class K2DfaAssistProvider : DfaAssistProvider {
     ): Value? {
         val qualifier = dfaVar.qualifier
         val descriptor = dfaVar.descriptor
-        val scope = anchor.getScope()
         val variables = (proxy as StackFrameProxyImpl).visibleVariables()
         val inlineDepth = getInlineDepth(variables)
         val inlineSuffix = KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX.repeat(inlineDepth)
@@ -201,6 +203,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         var value: Value? = null
                         if (variable == null) {
                             val psi = symbol.psi
+                            val scope = anchor.getScope()
                             if (psi != null && scope != null && psi.containingFile == scope.containingFile && !scope.isAncestor(psi)) {
                                 // Captured variable
                                 val capturedName = AsmUtil.CAPTURED_PREFIX + name
