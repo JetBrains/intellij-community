@@ -19,7 +19,7 @@ class GenerateCompletionCommand(private val action: BaseGenerateAction) : OldCom
     get() = "Generate \'" + action.templateText + "\'"
   override val i18nName: @Nls String
     get() = JavaBundle.message(
-      "completion.command.generate.name",
+      "command.completion.generate.text",
       action.templateText)
   override val icon: Icon?
     get() = null
