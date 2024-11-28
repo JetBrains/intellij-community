@@ -1880,58 +1880,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                     """);
   }
 
-  //// PY-53611
-  //public void testTypedDictRequiredNotRequiredKeys() {
-  //  runWithLanguageLevel(LanguageLevel.getLatest(),
-  //                       () -> doTestByText("""
-  //                                            from typing import TypedDict
-  //                                            from typing_extensions import Required, NotRequired
-  //                                            class WithTotalFalse(TypedDict, total=False):
-  //                                                x: Required[int]
-  //                                            class WithTotalTrue(TypedDict, total=True):
-  //                                                x: NotRequired[int]
-  //                                            class WithoutTotal(TypedDict):
-  //                                                x: NotRequired[int]
-  //                                            class WithoutTotalWithExplicitRequired(TypedDict):
-  //                                                x: Required[int]
-  //                                                y: NotRequired[int]
-  //                                            AlternativeSyntax = TypedDict("AlternativeSyntax", {'x': NotRequired[int]})
-  //                                            with_total_false: WithTotalFalse = <warning descr="TypedDict 'WithTotalFalse' has missing key: 'x'">{}</warning>
-  //                                            with_total_true: WithTotalTrue = {}
-  //                                            without_total: WithoutTotal = {}
-  //                                            without_total_with_explicit_required: WithoutTotalWithExplicitRequired = <warning descr="TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'">{}</warning>
-  //                                            alternative_syntax: AlternativeSyntax = {}
-  //                                            """));
-  //}
-
-  //// PY-53611
-  //public void testTypedDictRequiredNotRequiredEquivalence() {
-  //  runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
-  //}
-  //
-  //// PY-53611
-  //public void testTypedDictRequiredNotRequiredMixedWithAnnotated() {
-  //  runWithLanguageLevel(LanguageLevel.getLatest(),
-  //                       () -> doTestByText("""
-  //                                            from typing_extensions import TypedDict, Required, NotRequired, Annotated
-  //                                            class A(TypedDict):
-  //                                                x: Annotated[NotRequired[int], 'Some constraint']
-  //                                            def f(a: A):
-  //                                                pass
-  //                                            f({})
-  //                                            class B(TypedDict, total=False):
-  //                                                x: Annotated[Required[int], 'Some constraint']
-  //                                            def g(b: B):
-  //                                                pass
-  //                                            g(<warning descr="TypedDict 'B' has missing key: 'x'">{}</warning>)
-  //                                            """));
-  //}
-  //
-  //// PY-53611
-  //public void testTypingRequiredTypeSpecificationsMultiFile() {
-  //  doMultiFileTest();
-  //}
-
   // PY-56785
   public void testTypingSelfNoInspectionReturnSelfMethod() {
     doTestByText("""
