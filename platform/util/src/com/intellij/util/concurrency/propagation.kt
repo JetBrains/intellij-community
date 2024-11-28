@@ -338,10 +338,8 @@ fun capturePropagationContext(r: Runnable, expired: Condition<*>, signalRunnable
   var expired = expired
   command = ContextRunnable(childContext, command)
   val cont = childContext.continuation
-  if (cont != null) {
-    val childJob = cont.context.job
-    expired = cancelIfExpired(expired, childJob)
-  }
+  val childJob = cont?.context?.job
+  expired = cleanupIfExpired(expired, childContext, childJob)
   return JBPair.create(command, expired)
 }
 
@@ -353,17 +351,18 @@ fun <T, U> captureBiConsumerThreadContext(f: BiConsumer<T, U>): BiConsumer<T, U>
   return f
 }
 
-private fun <T> cancelIfExpired(expiredCondition: Condition<in T>, childJob: Job): Condition<T> {
+private fun <T> cleanupIfExpired(expiredCondition: Condition<in T>, childContext: ChildContext, childJob: Job?): Condition<T> {
   return Condition { t: T ->
     val expired = expiredCondition.value(t)
     if (expired) {
       // Cancel to avoid a hanging child job which will prevent completion of the parent one.
-      childJob.cancel(null)
+      childJob?.cancel(null)
+      childContext.applyContextActions(false).finish()
       true
     }
     else {
       // Treat runnable as expired if its job was already cancelled.
-      childJob.isCancelled
+      childJob?.isCancelled == true
     }
   }
 }

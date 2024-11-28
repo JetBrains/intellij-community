@@ -11,6 +11,7 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
@@ -348,6 +349,19 @@ class ThreadContextPropagationTest {
       val future = service.schedule(Callable<Unit> { Assertions.fail() }, 10, TimeUnit.SECONDS) // should never be executed
       future.cancel(false)
     }
+    Assertions.assertTrue(tracker.get())
+  }
+
+  @Test
+  fun `cancellation of invokeLater triggers cleanup events`() = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    val expiration = AtomicBoolean(false)
+    withContext(Dispatchers.EDT + MyIjElement(tracker)) {
+      @Suppress("ForbiddenInSuspectContextMethod")
+      application.invokeLater({ Assertions.fail() }, { expiration.get() })
+      expiration.set(true)
+    }
+    delay(100)
     Assertions.assertTrue(tracker.get())
   }
 }
