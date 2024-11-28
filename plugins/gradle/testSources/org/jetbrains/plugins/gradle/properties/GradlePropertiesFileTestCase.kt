@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.createDirectories
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.*
@@ -20,14 +20,14 @@ abstract class GradlePropertiesFileTestCase {
   val projectPropertiesPath: Path
     get() = projectPath.resolve(GRADLE_PROPERTIES_FILE_NAME)
 
-  fun createGradlePropertiesFile(configure: Properties.() -> Unit) {
+  fun createGradlePropertiesFile(projectPath: Path, configure: Properties.() -> Unit) {
     val properties = Properties()
     properties.configure()
-    projectPropertiesPath.createParentDirectories()
-    properties.store(projectPropertiesPath.outputStream(), null)
+    projectPath.createDirectories()
+    properties.store(projectPath.resolve(GRADLE_PROPERTIES_FILE_NAME).outputStream(), null)
   }
 
-  fun assertGradlePropertiesFile(assertion: GradleProperties. () -> Unit) {
+  fun assertGradlePropertiesFile(projectPath: Path, assertion: GradleProperties. () -> Unit) {
     val properties = GradlePropertiesFile.getProperties(null, projectPath)
     properties.assertion()
   }

@@ -10,6 +10,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 const val USER_HOME = "user.home"
 
@@ -71,7 +72,22 @@ object GradlePropertiesFile {
   }
 
   private fun getGradlePropertiesPathInProject(projectPath: Path): Path {
-    return projectPath.resolve(GRADLE_PROPERTIES_FILE_NAME)
+    return resolveGradleProjectRoot(projectPath)
+      .resolve(GRADLE_PROPERTIES_FILE_NAME)
+  }
+
+  private fun resolveGradleProjectRoot(projectPath: Path): Path {
+    var buildRoot: Path? = projectPath
+    while (buildRoot != null) {
+      for (settingsFileName in GradleConstants.KNOWN_GRADLE_SETTINGS_FILES) {
+        val settingsFile = buildRoot.resolve(settingsFileName)
+        if (settingsFile.exists()) {
+          return buildRoot
+        }
+      }
+      buildRoot = buildRoot.parent
+    }
+    return projectPath
   }
 
   private fun loadGradleProperties(propertiesPath: Path): GradleProperties? {

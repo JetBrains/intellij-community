@@ -42,7 +42,6 @@ import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -343,29 +342,11 @@ public final class GradleExecutionHelper {
     }
   }
 
-  private static @Nullable Path getWorkingRoot(@Nullable BuildEnvironment buildEnvironment) {
+  private static @Nullable Path getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
     if (buildEnvironment == null) {
       return null;
     }
     return buildEnvironment.getBuildIdentifier().getRootDir().toPath();
-  }
-
-  private static @Nullable Path getBuildRoot(@Nullable BuildEnvironment buildEnvironment) {
-    return ObjectUtils.doIfNotNull(getWorkingRoot(buildEnvironment), it -> resolveBuildRoot(it));
-  }
-
-  private static @NotNull Path resolveBuildRoot(@NotNull Path workingDirectory) {
-    var buildRoot = workingDirectory;
-    while (buildRoot != null) {
-      for (var settingsFileName : GradleConstants.KNOWN_GRADLE_SETTINGS_FILES) {
-        var settingsFile = buildRoot.resolve(settingsFileName);
-        if (Files.exists(settingsFile)) {
-          return buildRoot;
-        }
-      }
-      buildRoot = buildRoot.getParent();
-    }
-    return workingDirectory;
   }
 
   private static void setupEnvironment(
