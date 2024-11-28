@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
@@ -39,6 +40,7 @@ open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharm
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
+    additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
     qodanaProductProperties = QodanaProductProperties("QDPYC", "Qodana Community for Python")
   }
 
