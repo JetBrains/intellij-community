@@ -94,6 +94,7 @@
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinFragmentDataService"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslSyncListener"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonToolchainMigrateNotificationListener"/>
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptNotificationProvider"/>
 
