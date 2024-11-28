@@ -13,7 +13,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 
-private const val PLUGIN_VERIFIER_VERSION = "1.379"
+private const val PLUGIN_VERIFIER_VERSION = "1.381"
 private const val PLUGIN_VERIFIER = "https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/$PLUGIN_VERIFIER_VERSION/verifier-cli-$PLUGIN_VERIFIER_VERSION-all.jar"
 
 suspend fun createPluginVerifier(
@@ -138,11 +138,13 @@ class PluginVerifier(
     "com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper.<init>",
     "com.intellij.ide.util.gotoByName.GotoActionModel.getGroupMapping",
     "com.jetbrains.rdclient.util.idea.RangeUtilKt",
+    "com.intellij.lang.javascript.DialectOptionHolder",
 
     // new 243.1
     "com.intellij.database.run.ConsoleDataRequest.CONSOLE_DATA_REQUEST",
     "com.intellij.vcs.ShelveTitlePatch",
-    "com.intellij.vcs.ShelveTitleProvider"
+    "com.intellij.vcs.ShelveTitleProvider",
+
 
     )
 
