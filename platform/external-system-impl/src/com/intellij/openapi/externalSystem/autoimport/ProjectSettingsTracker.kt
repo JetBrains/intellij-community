@@ -116,13 +116,15 @@ class ProjectSettingsTracker(
     }
     for (path in created) {
       val context = SettingsFilesModificationContext(Event.CREATE, modificationType, reloadStatus)
-      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
-        oldCRC[path] = newCRC[path]!!
+      val newCRCValue = newCRC[path]!!
+      if (projectAware.isIgnoredSettingsFileEvent(path, context) || newCRCValue == 0L) {
+        oldCRC[path] = newCRCValue
       }
     }
     for (path in deleted) {
       val context = SettingsFilesModificationContext(Event.DELETE, modificationType, reloadStatus)
-      if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
+      val deletedPathCRCValue = oldCRC[path]!!
+      if (projectAware.isIgnoredSettingsFileEvent(path, context) || deletedPathCRCValue == 0L) {
         oldCRC.remove(path)
       }
     }
