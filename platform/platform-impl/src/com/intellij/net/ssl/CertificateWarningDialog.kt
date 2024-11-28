@@ -56,6 +56,7 @@ internal class CertificateWarningDialog(
   private var expandedByButton = false
   private var currentCertificate = CertificateWrapper(certificates.first())
   private val certificateErrorsMap = getCertificateErrorsMap()
+  private val hasUntrusted = certificateErrorsMap.entries.any { it.value.contains(CertificateError.UNTRUSTED_AUTHORITY) }
 
 
   private val tree = createCertificateTree()
@@ -87,10 +88,10 @@ internal class CertificateWarningDialog(
           certificates.forEach {
             val errors = certificateErrorsMap[it]!!
             when {
-              errors.contains(CertificateError.SELF_SIGNED) -> IdeBundle.message("label.certificate.self.signed")
-              errors.contains(CertificateError.NOT_YET_VALID) -> IdeBundle.message("label.certificate.not.yet.valid")
-              errors.contains(CertificateError.EXPIRED) -> IdeBundle.message("label.certificate.expired")
-              errors.contains(CertificateError.UNTRUSTED_AUTHORITY) -> IdeBundle.message("label.certificate.signed.by.untrusted.authority")
+              errors.contains(CertificateError.SELF_SIGNED) -> IdeBundle.message("ssl.certificate.error.self.signed")
+              errors.contains(CertificateError.NOT_YET_VALID) -> IdeBundle.message("ssl.certificate.error.not.yet.valid")
+              errors.contains(CertificateError.EXPIRED) -> IdeBundle.message("ssl.certificate.error.expired")
+              errors.contains(CertificateError.UNTRUSTED_AUTHORITY) -> IdeBundle.message("ssl.certificate.error.untrusted.authority")
               else -> null
             }?.let {
               error = it
@@ -99,7 +100,7 @@ internal class CertificateWarningDialog(
           }
         }
         icon(AllIcons.General.WarningDialog)
-        val errorText = error?.let { IdeBundle.message("ssl.certificate.warning", it) }
+        val errorText = error?.let { IdeBundle.message("ssl.certificate.warning", it, if (hasUntrusted) IdeBundle.message("ssl.certificate.warning.plural") else IdeBundle.message("ssl.certificate.warning.singular")) }
                         ?: IdeBundle.message("ssl.certificate.warning.default")
         text(HtmlChunk.text(errorText).bold().toString())
       }
@@ -123,7 +124,7 @@ internal class CertificateWarningDialog(
             expandedByButton = false
           }
           if (it && !isDetailsShown) {
-            setOKButtonText(IdeBundle.message("trust.certificate"))
+            setOKButtonText(IdeBundle.message("save.as.trusted.certificate") + if (hasUntrusted && certificates.size > 1 && selectedCerts.isNotEmpty()) " (${selectedCerts.size})" else "")
             isDetailsShown = true
             isOKActionEnabled = selectedCerts.isNotEmpty()
             updateDetails()
@@ -156,9 +157,8 @@ internal class CertificateWarningDialog(
   }
 
   private fun createCertificateTree(): JTree {
-    val untrusted = certificateErrorsMap.entries.filter { it.value.contains(CertificateError.UNTRUSTED_AUTHORITY) }
     val certificatesTree =
-      if ((untrusted.isNotEmpty() && certificates.size > 1) || certificateErrorsMap.filter { entry -> entry.value.isNotEmpty() }.size > 1) {
+      if ((hasUntrusted && certificates.size > 1) || certificateErrorsMap.filter { entry -> entry.value.isNotEmpty() }.size > 1) {
         val root = CheckedTreeNode("root").apply { isChecked = false }
         var lastNode = root
         certificates.reversed().forEach {
@@ -185,6 +185,7 @@ internal class CertificateWarningDialog(
             val userObject = node?.userObject as? X509Certificate ?: return
             if (node.isChecked) selectedCerts.add(userObject)
             else selectedCerts.remove(userObject)
+            setOKButtonText(IdeBundle.message("save.as.trusted.certificate") + if (selectedCerts.isNotEmpty()) " (${selectedCerts.size})" else "")
             if (isDetailsShown) {
               isOKActionEnabled = selectedCerts.isNotEmpty()
             }
