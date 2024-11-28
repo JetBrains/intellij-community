@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportList
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -74,7 +75,7 @@ class NewJavaToKotlinConverter(
             val javaFile = files[i]
             withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
             runUndoTransparentActionInEdt(inWriteAction = true) {
-                KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                KtPsiFactory.contextual(javaFile.parent ?: javaFile).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                     .also { it.addImports(result.importsToAdd) }
             }
         }
