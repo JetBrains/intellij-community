@@ -2,7 +2,10 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionHolder;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -17,7 +20,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.NumericMnemonicItem;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -364,9 +366,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         ShortcutSet set = ((ShortcutProvider)value).getShortcut();
         String shortcutText = null;
         if (set != null) {
-          Shortcut shortcut = ArrayUtil.getFirstElement(set.getShortcuts());
-          if (shortcut != null) {
-            shortcutText = KeymapUtil.getShortcutText(shortcut);
+          var firstShortcutText = KeymapUtil.getShortcutText(set);
+          if (!firstShortcutText.isEmpty()) {
+            shortcutText = firstShortcutText;
           }
         }
         if (shortcutText == null && value instanceof AnActionHolder) {

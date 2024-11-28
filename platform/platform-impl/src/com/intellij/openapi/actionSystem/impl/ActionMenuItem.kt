@@ -186,7 +186,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   private var firstShortcutTextFromPresentation: @NlsSafe String? = null
 
   private val defaultFirstShortcutText: @NlsSafe String
-    get() = KeymapUtil.getFirstKeyboardShortcutText(actionRef.getAction())
+    get() = KeymapUtil.getShortcutText(actionRef.getAction().shortcutSet)
 
   val firstShortcutText: @NlsSafe String
     get() = firstShortcutTextFromPresentation ?: defaultFirstShortcutText
