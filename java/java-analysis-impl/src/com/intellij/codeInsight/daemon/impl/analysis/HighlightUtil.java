@@ -51,8 +51,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
@@ -69,8 +69,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -1867,9 +1867,11 @@ public final class HighlightUtil {
       List<IntentionAction> registrar = new ArrayList<>();
       HighlightFixUtil.registerFixesForExpressionStatement(statement, registrar);
       QuickFixAction.registerQuickFixActions(error, null, registrar);
-      IntentionAction action = PriorityIntentionActionWrapper
-        .lowPriority(getFixFactory().createDeleteSideEffectAwareFix(expressionStatement));
-      error.registerFix(action, null, null, null, null);
+      if (expressionStatement.getParent() instanceof PsiCodeBlock) {
+        IntentionAction action = PriorityIntentionActionWrapper
+          .lowPriority(getFixFactory().createDeleteSideEffectAwareFix(expressionStatement));
+        error.registerFix(action, null, null, null, null);
+      }
     }
     return error;
   }
