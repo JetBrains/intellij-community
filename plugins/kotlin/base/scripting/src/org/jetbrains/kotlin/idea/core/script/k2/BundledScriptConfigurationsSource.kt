@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -50,7 +51,7 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
     }
 
     override suspend fun updateConfigurations(scripts: Iterable<BaseScriptModel>) {
-        val sdk = ProjectRootManager.getInstance(project).projectSdk
+        val sdk = ProjectRootManager.getInstance(project).projectSdk ?: ProjectJdkTable.getInstance().allJdks.firstOrNull()
 
         val configurations = scripts.associate {
             val scriptSource = VirtualFileScriptSource(it.virtualFile)
