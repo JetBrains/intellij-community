@@ -2441,6 +2441,7 @@ f:com.intellij.openapi.keymap.KeymapUtil
 - s:getPreferredShortcutText(com.intellij.openapi.actionSystem.Shortcut[]):java.lang.String
 - s:getPrimaryShortcut(java.lang.String):com.intellij.openapi.actionSystem.Shortcut
 - s:getShortcutText(com.intellij.openapi.actionSystem.Shortcut):java.lang.String
+- s:getShortcutText(com.intellij.openapi.actionSystem.ShortcutSet):java.lang.String
 - s:getShortcutText(java.lang.String):java.lang.String
 - s:getShortcutTextOrNull(java.lang.String):java.lang.String
 - s:getShortcutsForMnemonicChar(C):com.intellij.openapi.actionSystem.CustomShortcutSet
