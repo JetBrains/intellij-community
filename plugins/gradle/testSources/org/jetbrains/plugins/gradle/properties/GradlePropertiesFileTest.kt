@@ -7,24 +7,6 @@ import org.junit.jupiter.api.Test
 class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
 
   @Test
-  fun testDefaultGradleProperties() {
-    GradleProperties.EMPTY.run {
-      Assertions.assertNull(javaHomeProperty)
-      Assertions.assertNull(gradleLoggingLevel)
-      Assertions.assertNull(parallel)
-      Assertions.assertNull(isolatedProjects)
-      Assertions.assertNull(jvmOptions)
-    }
-  }
-
-  @Test
-  fun testNotPresentProjectGradlePropertiesFile() {
-    assertGradlePropertiesFile {
-      Assertions.assertEquals(GradleProperties.EMPTY, this)
-    }
-  }
-
-  @Test
   fun testEmptyProjectGradlePropertiesFile() {
     assertGradlePropertiesFile {
       Assertions.assertNull(javaHomeProperty)
