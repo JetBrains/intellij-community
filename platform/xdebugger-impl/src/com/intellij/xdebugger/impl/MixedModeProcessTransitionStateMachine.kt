@@ -133,6 +133,7 @@ class MixedModeProcessTransitionStateMachine(
                 low.pauseMixedModeSession(stopThreadId)
               }
               else {
+                // No native evaluation is possible on blocked in kernel thread
                 low.pauseMixedModeSessionUnBlockStopEventThread(stopThreadId) {
                   high.triggerBringingManagedThreadsToUnBlockedState()
                 }

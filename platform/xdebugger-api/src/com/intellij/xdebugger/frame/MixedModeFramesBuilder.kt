@@ -4,6 +4,9 @@ package com.intellij.xdebugger.frame
 import com.intellij.xdebugger.XDebugSession
 
 interface MixedModeFramesBuilder {
+  /**
+  * On exception only low level threads will be shown
+   */
   suspend fun buildMixedStack(
     session: XDebugSession,
     lowLevelFrames: List<XStackFrame>,
