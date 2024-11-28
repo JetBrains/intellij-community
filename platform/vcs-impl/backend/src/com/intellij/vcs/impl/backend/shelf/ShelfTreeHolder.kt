@@ -238,9 +238,11 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) {
   }
 
 
-  fun changeGrouping(groupingKeys: Set<String>) {
+  suspend fun changeGrouping(groupingKeys: Set<String>) {
     grouping.setGroupingKeys(groupingKeys)
-    scheduleTreeUpdate()
+    val deferred = CompletableDeferred<Unit>()
+    scheduleTreeUpdate { deferred.complete(Unit) }
+    deferred.await()
   }
 
   fun updateDiffFile(changeListRpc: ChangeListRpc, fromModelChange: Boolean) {

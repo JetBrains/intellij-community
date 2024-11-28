@@ -1,12 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.impl.backend.shelf
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
-import com.intellij.platform.kernel.withKernel
-import com.intellij.platform.project.ProjectEntity
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.asProject
 import com.intellij.platform.project.findProject
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
@@ -17,6 +13,7 @@ import fleet.kernel.DurableRef
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -29,15 +26,17 @@ class ShelfApiProvider : RemoteApiProvider {
 }
 
 internal class BackendShelfApi : RemoteShelfApi {
-  override suspend fun loadChangesAsync(projectId: ProjectId) {
+  override suspend fun loadChanges(projectId: ProjectId) {
     val project = projectId.findProject()
     ShelveChangesManager.getInstance(project).allLists.forEach {
       it.loadChangesIfNeeded(project)
     }
 
     val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
-    shelfTreeHolder.scheduleTreeUpdate()
+    val onUpdateFinished = CompletableDeferred<Unit>()
+    shelfTreeHolder.scheduleTreeUpdate { onUpdateFinished.complete(Unit) }
     shelfTreeHolder.saveGroupings()
+    onUpdateFinished.await()
   }
 
   override suspend fun showDiffForChanges(projectId: ProjectId, changeListRpc: ChangeListRpc) {
@@ -52,7 +51,6 @@ internal class BackendShelfApi : RemoteShelfApi {
 
   override suspend fun applyTreeGrouping(projectId: ProjectId, groupingKeys: Set<String>): Deferred<UpdateStatus> {
     val project = projectId.findProject()
-
     ShelfTreeHolder.getInstance(project).changeGrouping(groupingKeys)
     return CompletableDeferred(UpdateStatus.OK)
   }

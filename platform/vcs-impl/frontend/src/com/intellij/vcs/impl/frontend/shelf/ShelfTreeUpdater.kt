@@ -18,23 +18,35 @@ import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import fleet.kernel.ref
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.tree.DefaultMutableTreeNode
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineScope) {
   private val tree = ShelfTree(project, cs)
+  private val activeUpdateOperations = AtomicInteger(0)
+  private val busy = MutableStateFlow(false)
 
   init {
+    cs.launch {
+      busy.collectLatest {
+        tree.setPaintBusy(it)
+      }
+    }
+    cs.launch { loadChanges() }
     subscribeToTreeChanges()
-    cs.launch(Dispatchers.IO) {
+  }
+
+  private suspend fun loadChanges() {
+    executeUpdateOperation {
       withKernel {
-        RemoteShelfApi.getInstance().loadChangesAsync(project.projectId())
+        RemoteShelfApi.getInstance().loadChanges(project.projectId())
       }
     }
   }
@@ -47,11 +59,15 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     cs.launch {
       withKernel {
         ShelfTreeEntity.each().collectLatest {
-          val changes = tree.getSelectedChangeNodesGrouped()
-          val rootNode = it.root.convertToTreeNodeRecursive() ?: return@collectLatest
-          withContext(Dispatchers.EDT) {
-            tree.model = ChangesTreeModel(rootNode)
-            selectChangesInTree(changes)
+          executeUpdateOperation {
+            withKernel {
+              val changes = tree.getSelectedChangeNodesGrouped()
+              val rootNode = it.root.convertToTreeNodeRecursive() ?: return@withKernel
+              withContext(Dispatchers.EDT) {
+                tree.model = ChangesTreeModel(rootNode)
+                selectChangesInTree(changes)
+              }
+            }
           }
         }
       }
@@ -73,6 +89,20 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
       TreeUtil.selectPaths(tree, pathsToSelect)
 
       notifyNodesSelected(changeListNode, changeNodes)
+    }
+  }
+
+  suspend fun executeUpdateOperation(updateExecutor: suspend () -> Unit) {
+    try {
+      if (activeUpdateOperations.incrementAndGet() == 1) {
+        busy.tryEmit(true)
+      }
+      updateExecutor()
+    }
+    finally {
+      if (activeUpdateOperations.decrementAndGet() == 0) {
+        busy.tryEmit(false)
+      }
     }
   }
 

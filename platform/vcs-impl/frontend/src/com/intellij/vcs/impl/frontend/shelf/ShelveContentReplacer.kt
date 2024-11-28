@@ -22,7 +22,7 @@ class ShelveContentReplacer() : ToolWindowContentPostProcessor {
 
   override fun postprocessContent(project: Project, content: Content, toolWindow: ToolWindow) {
     val listener = ShelfTabListener(toolWindow)
-    content.putUserData(ShelfTreeUpdater.CONTENT_PROVIDER_SUPPLIER_KEY) { ShelfTreeUpdater.getInstance(project).createToolWindowPanel() }
+    content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY) { ShelfTreeUpdater.getInstance(project).createToolWindowPanel() }
     toolWindow.contentManager.addContentManagerListener(listener)
   }
 

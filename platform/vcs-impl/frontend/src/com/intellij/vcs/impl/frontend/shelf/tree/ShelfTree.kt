@@ -51,6 +51,8 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
     }
   }
 
+  override fun shouldShowBusyIconIfNeeded(): Boolean = true
+
   private fun ChangesBrowserNode<*>.findParentOfType(clazz: Class<*>): ChangesBrowserNode<*>? {
     var parent = this
     while (true) {

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface RemoteShelfApi : RemoteApi<Unit> {
-  suspend fun loadChangesAsync(projectId: ProjectId)
+  suspend fun loadChanges(projectId: ProjectId)
   suspend fun showDiffForChanges(projectId: ProjectId, changeListRpc: ChangeListRpc)
   suspend fun notifyNodeSelected(projectId: ProjectId, changeListRpc: ChangeListRpc, fromModelChange: Boolean)
   suspend fun applyTreeGrouping(projectId: ProjectId, groupingKeys: Set<String>): Deferred<UpdateStatus>
