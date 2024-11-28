@@ -8,6 +8,7 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
 
   @Test
   fun testEmptyProjectGradlePropertiesFile() {
+    createGradlePropertiesFile {}
     assertGradlePropertiesFile {
       Assertions.assertNull(javaHomeProperty)
       Assertions.assertNull(gradleLoggingLevel)
@@ -43,15 +44,15 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
     }
     assertGradlePropertiesFile {
       Assertions.assertEquals("javaHome", javaHomeProperty?.value)
-      Assertions.assertEquals(gradlePropertiesPath, javaHomeProperty?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), javaHomeProperty?.location)
       Assertions.assertEquals("info", gradleLoggingLevel?.value)
-      Assertions.assertEquals(gradlePropertiesPath, gradleLoggingLevel?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), gradleLoggingLevel?.location)
       Assertions.assertEquals(true, parallel?.value)
-      Assertions.assertEquals(gradlePropertiesPath, parallel?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), parallel?.location)
       Assertions.assertEquals(true, isolatedProjects?.value)
-      Assertions.assertEquals(gradlePropertiesPath, isolatedProjects?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), isolatedProjects?.location)
       Assertions.assertEquals( "-Xmx20G", jvmOptions?.value)
-      Assertions.assertEquals(gradlePropertiesPath, jvmOptions?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), jvmOptions?.location)
     }
   }
 
@@ -68,15 +69,15 @@ class GradlePropertiesFileTest : GradlePropertiesFileTestCase() {
     }
     assertGradlePropertiesFile {
       Assertions.assertEquals("value2", javaHomeProperty?.value)
-      Assertions.assertEquals(gradlePropertiesPath, javaHomeProperty?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), javaHomeProperty?.location)
       Assertions.assertEquals("value3", gradleLoggingLevel?.value)
-      Assertions.assertEquals(gradlePropertiesPath, gradleLoggingLevel?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), gradleLoggingLevel?.location)
       Assertions.assertEquals(true, parallel?.value)
-      Assertions.assertEquals(gradlePropertiesPath, parallel?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), parallel?.location)
       Assertions.assertEquals(true, isolatedProjects?.value)
-      Assertions.assertEquals(gradlePropertiesPath, isolatedProjects?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), isolatedProjects?.location)
       Assertions.assertEquals("-Xmx20G", jvmOptions?.value)
-      Assertions.assertEquals(gradlePropertiesPath, jvmOptions?.location)
+      Assertions.assertEquals(projectPropertiesPath.toString(), jvmOptions?.location)
     }
   }
 }
