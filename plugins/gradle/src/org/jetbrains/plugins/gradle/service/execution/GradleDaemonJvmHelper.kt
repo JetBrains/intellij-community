@@ -5,6 +5,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
@@ -75,6 +76,7 @@ object GradleDaemonJvmHelper {
     project: Project,
     externalProjectPath: String,
     daemonJvmCriteria: GradleDaemonJvmCriteria?,
+    taskCallback: TaskCallback? = null,
     executionMode: ProgressExecutionMode = ProgressExecutionMode.START_IN_FOREGROUND_ASYNC,
   ) {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
@@ -94,6 +96,7 @@ object GradleDaemonJvmHelper {
       .withProgressExecutionMode(executionMode)
       .withActivateToolWindowBeforeRun(true)
       .withUserData(taskUserData)
+      .withCallback(taskCallback)
       .build()
 
     ExternalSystemUtil.runTask(executionSpec)

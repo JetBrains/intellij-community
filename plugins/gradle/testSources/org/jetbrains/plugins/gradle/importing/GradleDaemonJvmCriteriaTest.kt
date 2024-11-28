@@ -17,7 +17,7 @@ class GradleDaemonJvmCriteriaTest : GradleImportingTestCase() {
     importProject("")
     val projectDir = project.guessProjectDir()!!
     GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(
-      project, projectDir.path, GradleDaemonJvmCriteria("17", "JETBRAINS"), ProgressExecutionMode.NO_PROGRESS_SYNC
+      project, projectDir.path, GradleDaemonJvmCriteria("17", "JETBRAINS"), null, ProgressExecutionMode.NO_PROGRESS_SYNC
     )
 
     GradleDaemonJvmPropertiesFile.getProperties(projectDir.toNioPath())!!.run {
