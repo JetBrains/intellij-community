@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -253,11 +252,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         val canonicalPathToExpectedFile = filePath + afterFileNameSuffix(mainFile)
                         val afterFile = dataFile(canonicalPathToExpectedFile)
                         if (filePath == mainFilePath) {
-                            try {
-                                myFixture.checkResultByFile(canonicalPathToExpectedFile)
-                            } catch (_: FileComparisonFailedError) {
-                                KotlinTestUtils.assertEqualsToFile(afterFile, editor.document.text)
-                            }
+                            myFixture.checkResultByFile(canonicalPathToExpectedFile)
                         } else {
                             KotlinTestUtils.assertEqualsToFile(afterFile, value.text)
                         }
