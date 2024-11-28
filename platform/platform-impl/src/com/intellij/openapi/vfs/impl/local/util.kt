@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.ijent.community.impl.nio.getOrThrowFileSystemException
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
@@ -23,12 +23,17 @@ private val map = ContainerUtil.createConcurrentWeakMap<Path, EelApi>();
  * This is unacceptable in the remote setting when each request to IO results in RPC.
  * Here we try to invoke a specialized function that can read all bytes from [path] in one request.
  */
+@Suppress("RAW_RUN_BLOCKING")
 internal fun readWholeFileIfNotTooLargeWithEel(path: Path): ByteArray? {
   if (!Registry.`is`("vfs.try.eel.for.content.loading", false)) {
     return null
   }
   val root = path.root ?: return null
-  val api = map.computeIfAbsent(root) { root.getEelApiBlocking() }
+  val api = map.computeIfAbsent(root) {
+    runBlocking {
+      root.getEelApi()
+    }
+  }
   if (api is LocalEelApi) {
     return null
   }

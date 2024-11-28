@@ -355,6 +355,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   protected static byte @NotNull [] readIfNotTooLarge(Path nioFile) throws IOException {
+    byte[] maybeContent = LocalFileSystemEelUtil.readWholeFileIfNotTooLargeWithEel(nioFile);
+    if (maybeContent != null) {
+      return maybeContent;
+    }
+
     //MAYBE RC: The only reason to get file size here is to check it is not too big. We could skip this check, and start
     //          to load the file, and throw the exception if _loaded_ size exceeds the limit -- huge files are infrequent
     //          cases, so this approach optimizes the fast path.
@@ -362,11 +367,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     //          and OSes cache file-system requests, so 2 file.size() requests one after another cost almost the same
     //          as a first file.size() request alone. So that optimization needs to be carefully benchmarked to prove it
     //          does provide anything -- and my guess: it probably doesn't
-
-    byte[] maybeContent = LocalFileSystemEelUtil.readWholeFileIfNotTooLargeWithEel(nioFile);
-    if (maybeContent != null) {
-      return maybeContent;
-    }
 
     var length = Files.size(nioFile);
 
