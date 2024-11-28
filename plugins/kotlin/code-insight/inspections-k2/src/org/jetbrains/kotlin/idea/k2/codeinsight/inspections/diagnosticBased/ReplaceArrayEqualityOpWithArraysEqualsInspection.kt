@@ -48,12 +48,12 @@ internal class ReplaceArrayEqualityOpWithArraysEqualsInspection :
         context: Context,
     ): KotlinModCommandQuickFix<KtExpression> = object : KotlinModCommandQuickFix<KtExpression>() {
 
-        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.contentequals3")
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.content.equals")
 
         override fun getName(): String = if (context.isNotEqualOperator) {
-            KotlinBundle.message("replace.with.contentequals")
+            KotlinBundle.message("replace.not.equal.with.content.equals")
         } else {
-            KotlinBundle.message("replace.with.contentequals2")
+            KotlinBundle.message("replace.equal.with.content.equals")
         }
 
         override fun applyFix(
