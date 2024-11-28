@@ -147,7 +147,9 @@ class DecoratedEditor private constructor(
     if (selectionUpdateScheduled.compareAndSet(false, true)) {
       ApplicationManager.getApplication().invokeLater {
         try {
-          updateSelectionByCarets()
+          if (!editorImpl.isDisposed) {
+            updateSelectionByCarets()
+          }
         }
         finally {
           selectionUpdateScheduled.set(false)
