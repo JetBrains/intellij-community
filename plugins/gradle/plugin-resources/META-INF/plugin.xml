@@ -135,6 +135,8 @@
     <externalIconProvider key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.ui.GradleIconProvider"/>
     <externalExecutionAware id="gradleOnWsl" order="before gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.wsl.GradleOnWslExecutionAware"/>
     <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware"/>
+    <externalExecutionAware  id="gradleOnEel" order="before gradleOnWsl" key="GRADLE"
+                             implementationClass="org.jetbrains.plugins.gradle.service.execution.eel.EelGradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
     <externalSystemTaskProgressIndicatorUpdater
