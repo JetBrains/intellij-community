@@ -1230,6 +1230,38 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testTypedDictsReadonlyConsistency() {
+    doTestByText("""
+                   from typing import TypedDict, Required, NotRequired, ReadOnly
+                   
+                   class A1(TypedDict):
+                       x: NotRequired[str]
+                   
+                   class B1(TypedDict):
+                       x: NotRequired[ReadOnly[str]]
+                   
+                   class B2(TypedDict):
+                       x: ReadOnly[NotRequired[str]]
+                   
+                   class C(TypedDict):
+                       x: Required[str]
+                   
+                   def func1(b1: B1, b2: B2, c: C):
+                       v1: A1 = <warning descr="Expected type 'A1', got 'B1' instead">b1</warning>
+                       v2: A1 = <warning descr="Expected type 'A1', got 'B2' instead">b2</warning>
+                       v3: B1 = c
+                   
+                   class A2(TypedDict):
+                       x: ReadOnly[NotRequired[object]]
+                   
+                   class B3(TypedDict):
+                       pass
+                   
+                   def func2(b: B3):
+                       a: A2 = b
+                   """);
+  }
+
   // PY-53611
   public void testTypingRequiredTypeSpecificationsMultiFile() {
     doMultiFileTest();

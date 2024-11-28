@@ -136,7 +136,10 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
    */
   data class TypedDictFieldQualifiers(val isRequired: Boolean? = true, val isReadOnly: Boolean = false)
 
-  data class FieldTypeAndTotality(val value: PyExpression?, val type: PyType?, val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers())
+  data class FieldTypeAndTotality(val value: PyExpression?, val type: PyType?, val qualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers()) {
+    val isRequired: Boolean get() = qualifiers.isRequired ?: true
+    val isReadOnly: Boolean get() = qualifiers.isReadOnly
+  }
 
   companion object {
 
@@ -302,15 +305,33 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
         return null
       }
 
-      expected.fields.forEach {
-        val expectedTypeAndTotality = it.value
-        val actualTypeAndTotality = actual.fields[it.key]
-
-        if (actualTypeAndTotality == null
-            || !strictUnionMatch(expectedTypeAndTotality.type, actualTypeAndTotality.type, context)
-            || !strictUnionMatch(actualTypeAndTotality.type, expectedTypeAndTotality.type, context)
-            || expectedTypeAndTotality.qualifiers.isRequired != actualTypeAndTotality.qualifiers.isRequired) {
+      for ((expectedKey, expectedField) in expected.fields) {
+        if (expectedField.isReadOnly && !expectedField.isRequired && expectedField.type?.name == PyNames.OBJECT) {
+          continue
+        }
+        val actualField = actual.fields[expectedKey]
+        if (actualField == null) {
           return TypeCheckingResult(false)
+        }
+        if (!strictUnionMatch(expectedField.type, actualField.type, context)) {
+          return TypeCheckingResult(false)
+        }
+        if (!expectedField.isReadOnly) {
+          if (!(strictUnionMatch(actualField.type, expectedField.type, context) && !actualField.isReadOnly)) {
+            return TypeCheckingResult(false)
+          }
+        }
+        if (expectedField.isRequired) {
+          if (!actualField.isRequired) {
+            return TypeCheckingResult(false)
+          }
+        }
+        else {
+          if (!expectedField.isReadOnly) {
+            if (actualField.isRequired) {
+              return TypeCheckingResult(false)
+            }
+          }
         }
       }
       return TypeCheckingResult(true)
