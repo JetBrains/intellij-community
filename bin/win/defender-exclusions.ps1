@@ -34,10 +34,18 @@ try {
     return $result
   }
 
+  # returns `$true` when the given path is a sub-path of the given parent
+  function Test-StartsWith ([string] $path, [string] $parent) {
+    $pathNorm = $path.Trim('\') + '\'
+    $parentNorm = $parent.Trim('\') + '\'
+    return $pathNorm.Equals($parentNorm, [StringComparison]::OrdinalIgnoreCase) -or `
+           $pathNorm.StartsWith($parentNorm, [StringComparison]::OrdinalIgnoreCase)
+  }
+
   # returns `$true` when a path is already covered by the exclusion list
   function Test-Excluded ([string] $path, [string[]] $exclusions) {
     foreach ($exclusion in $exclusions) {
-      if (((Get-Item -Path $exclusion) -is [System.IO.DirectoryInfo])  -and ([cultureinfo]::InvariantCulture.CompareInfo.IsPrefix($path, $exclusion, @("IgnoreCase"))) -and ($exclusion.TrimEnd('\').split('\').Count -gt $path.TrimEnd('\').Split('\').Count)) {
+      if (Test-StartsWith $path $exclusion) {
         return $true
       }
     }
