@@ -1370,17 +1370,28 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     PopupLocationTracker.register(this);
 
-    if (
-      bounds.x < screen.x ||
-      bounds.y < screen.y ||
-      bounds.x + bounds.width > screen.x + screen.width ||
-      bounds.y + bounds.height > screen.y + screen.height
-    ) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Bounds won't fit into the screen, adjusting");
+    if (myLocateWithinScreen) {
+      if (
+        bounds.x < screen.x ||
+        bounds.y < screen.y ||
+        bounds.x + bounds.width > screen.x + screen.width ||
+        bounds.y + bounds.height > screen.y + screen.height
+      ) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds won't fit into the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
       }
-      ScreenUtil.fitToScreen(bounds);
-      window.setBounds(bounds);
+    }
+    else {
+      if (bounds.width > screen.width || bounds.height > screen.height) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds are larger than the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
+      }
     }
 
     if (LOG.isDebugEnabled()) {
