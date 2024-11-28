@@ -1263,7 +1263,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         // or when PCE happened in queuePassesCreation
         String reason = "Couldn't create session for " + activeEditors
                         + (pce == null ? "" : "; PCE was thrown: " + pce)
-                        + (wasCanceledDuringSubmit ? "; was canceled during queuePassesCreation(): "+getUpdateProgress() : "");
+                        + (wasCanceledDuringSubmit ? "; was canceled during queuePassesCreation(): "+createdIndicators : "");
         ApplicationManager.getApplication().invokeLater(() -> stopProcess(true, reason), __->myDisposed);
       }
     }
