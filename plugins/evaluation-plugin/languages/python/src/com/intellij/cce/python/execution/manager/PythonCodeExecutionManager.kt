@@ -18,6 +18,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   private val defaultTestFilePath = "/tests/eval-plugin-test.py"
 
+  override var shouldSetup: Boolean = true
 
   override fun getGeneratedCodeFile(code: String): File {
     extractCodeDirectory(code)?.let {
@@ -29,7 +30,20 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return File(project.basePath + defaultTestFilePath)
   }
 
-  private fun extractCodeDirectory(code: String): String?{
+  override fun setupEnvironment(): PythonProcessExecutionLog {
+    val setupFile = File("${project.basePath}/setup_tests.sh")
+    if (!setupFile.exists()) return PythonProcessExecutionLog("", "Bash script file not found", -1)
+    val executionLog =
+      runPythonProcess(
+        ProcessBuilder("/bin/bash", setupFile.path.toString())
+      )
+
+    if (executionLog.exitCode != 0) throw IllegalStateException("Setup was not successful")
+
+    return executionLog
+  }
+
+  private fun extractCodeDirectory(code: String): String? {
     // Regular expression to match the comment line with directory
     val pattern = Regex("""^#\s*(?:[Ff]ile:\s*)?(.*)""") // Accepts both # file: <directory> and  # <directory>
 
@@ -41,7 +55,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return match?.groups?.get(1)?.value?.trim()
   }
 
-  override fun saveGeneratedCodeFile(code: String) {
+  override fun saveGeneratedCodeFile(code: String, codeFilePath: File) {
     if (!codeFilePath.exists()) {
       codeFilePath.createNewFile()
     }
@@ -53,33 +67,28 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return PythonProcessExecutionLog("", "", 0)
   }
 
-  override fun executeGeneratedCode(target: String): ProcessExecutionLog {
-    val bashScriptFile = File("${project.basePath}/bash_script_setup_tests.sh")
+  override fun executeGeneratedCode(target: String, codeFilePath: File): ProcessExecutionLog {
+    val runFile = File("${project.basePath}/run_tests.sh")
 
-    if (!bashScriptFile.exists()) return PythonProcessExecutionLog("", "Bash script file not found", -1)
+    if (!runFile.exists()) return PythonProcessExecutionLog("", "Bash script file not found", -1)
     if (!codeFilePath.exists()) return PythonProcessExecutionLog("", "The Python test file does not exist", -1)
 
-    val testName = codeFilePath.path.removePrefix(project.basePath.toString()).removePrefix("/").removeSuffix(".py").replace("/", ".")
-    val processBuilder = ProcessBuilder("/bin/bash", bashScriptFile.path.toString(), testName, target)
+    val testName = codeFilePath.path
+      .removePrefix(project.basePath.toString())
+      .removePrefix("/")
+      .removeSuffix(".py")
+      .replace("/", ".")
 
-    processBuilder.environment()["PYTHON"] = ProjectRootManager.getInstance(project).projectSdk!!.homePath
-
-
-    processBuilder.directory(File(project.basePath!!))
+    val coverageFilePath = "${project.basePath}/$testName-coverage"
 
     try {
-      // Start the process
-      val process = processBuilder.start()
-      // Capture and print the output
-      val output = process.inputStream.bufferedReader().readText()
-      val error = process.errorStream.bufferedReader().readText()
-      val coverageFilePath = "${project.basePath}/$testName-coverage"
-      // Wait for the process to finish and get the exit code
-      val exitCode = process.waitFor()
+      val executionLog = runPythonProcess(
+        ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target)
+      )
+      // Collect Test Success Ratio
+      val successRatio =
+        PythonErrorLogProcessor(executionLog.error).getTestExecutionSuccessRate()
 
-      // Collect execution information
-      // Collect Test Failure
-      val successRatio = PythonErrorLogProcessor(error).getTestExecutionSuccessRate()
       collectedInfo.put(AIA_EXECUTION_SUCCESS_RATIO, successRatio)
       // Collect Coverage
       val coverageProcessor = PythonTestCoverageProcessor(coverageFilePath)
@@ -88,11 +97,30 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       val branchCoverage = coverageProcessor.getBranchCoverage()
       collectedInfo.put(AIA_TEST_BRANCH_COVERAGE, branchCoverage)
 
-      return PythonProcessExecutionLog(output, error, exitCode, collectedInfo)
+      File(coverageFilePath).delete()
+
+      return executionLog
     }
     catch (e: Exception) {
       e.printStackTrace()
       return PythonProcessExecutionLog("", "", -1, collectedInfo)
     }
+  }
+
+  private fun runPythonProcess(processBuilder: ProcessBuilder):
+    PythonProcessExecutionLog {
+    // Set the correct Python interpreter
+    processBuilder.environment()["PYTHON"] = ProjectRootManager.getInstance(project).projectSdk!!.homePath
+    // Move to project's root
+    processBuilder.directory(File(project.basePath!!))
+    // Start the process
+    val process = processBuilder.start()
+    // Capture and print the output
+    val output = process.inputStream.bufferedReader().readText()
+    val error = process.errorStream.bufferedReader().readText()
+    // Wait for the process to finish and get the exit code
+    val exitCode = process.waitFor()
+
+    return PythonProcessExecutionLog(output, error, exitCode)
   }
 }
