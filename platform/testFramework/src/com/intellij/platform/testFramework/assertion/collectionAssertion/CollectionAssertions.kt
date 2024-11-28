@@ -7,6 +7,26 @@ object CollectionAssertions {
 
   @JvmStatic
   fun <T> assertEqualsUnordered(
+    expected: Collection<T>?,
+    actual: Array<T>?,
+    messageSupplier: (() -> String)? = null,
+  ) {
+    if (expected == null && actual == null) return
+    if (expected == null || actual == null) {
+      val message = (messageSupplier?.invoke() ?: "") + """|
+                |Expecting:
+                |  ${actual?.contentToString()}
+                |to match:
+                |  $expected
+                |but one of them is null.
+            """.trimMargin()
+      throw AssertionError(message)
+    }
+    assertEqualsUnordered(expected, actual.toList(), messageSupplier)
+  }
+
+  @JvmStatic
+  fun <T> assertEqualsUnordered(
     expected: Collection<T>,
     actual: Collection<T>,
     messageSupplier: (() -> String)? = null,
