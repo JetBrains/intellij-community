@@ -16,6 +16,7 @@ import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaListener
 import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
 import com.intellij.debugger.jdi.StackFrameProxyEx
+import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -35,9 +36,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.base.psi.hasInlineModifier
 import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
+import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem
@@ -122,12 +123,14 @@ class K2DfaAssistProvider : DfaAssistProvider {
         val qualifier = dfaVar.qualifier
         val descriptor = dfaVar.descriptor
         val scope = anchor.getScope()
-        val inlined = (scope as? KtNamedFunction)?.hasInlineModifier() ?: false
+        val variables = (proxy as StackFrameProxyImpl).visibleVariables()
+        val inlineDepth = getInlineDepth(variables)
+        val inlineSuffix = KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX.repeat(inlineDepth)
         if (qualifier == null) {
             if (descriptor is KtLambdaThisVariableDescriptor) {
                 val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
                 val scopePart = scopeName?.let(Regex::escape) ?: ".+"
-                val inlinedPart = if (inlined) Regex.escape(KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX) else ""
+                val inlinedPart = Regex.escape(inlineSuffix)
                 val regex = Regex("\\\$this\\\$${scopePart}(_\\w+)?_u\\d+lambda_u\\d+$inlinedPart")
                 val lambdaThis = proxy.stackFrame.visibleVariables().filter { it.name().matches(regex) }
                 if (lambdaThis.size == 1) {
@@ -138,10 +141,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 val pointer = descriptor.classDef?.pointer
                 val contextName = descriptor.contextName
                 if (contextName != null) {
-                    var thisName = "\$this\$${contextName}"
-                    if (inlined) {
-                        thisName += KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
-                    }
+                    val thisName = "\$this\$${contextName}$inlineSuffix"
                     val thisVar = proxy.visibleVariableByName(thisName)
                     if (thisVar != null) {
                         return postprocess(proxy.getVariableValue(thisVar))
@@ -149,9 +149,8 @@ class K2DfaAssistProvider : DfaAssistProvider {
                 }
                 val nameString = analyze(anchor) { (pointer?.restoreSymbol() as? KaNamedClassSymbol)?.classId?.asSingleFqName() }
                 if (nameString != null) {
-                    if (inlined) {
-                        val thisName =
-                            AsmUtil.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+                    if (inlineDepth > 0) {
+                        val thisName = AsmUtil.INLINE_DECLARATION_SITE_THIS + inlineSuffix
                         val thisVar = proxy.visibleVariableByName(thisName)
                         if (thisVar != null) {
                             return postprocess(proxy.getVariableValue(thisVar))
@@ -197,10 +196,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         return null
                     }
                     if (symbol is KaVariableSymbol) {
-                        var name = symbol.name.asString()
-                        if (inlined) {
-                            name += KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
-                        }
+                        val name = symbol.name.asString() + inlineSuffix
                         var variable = proxy.visibleVariableByName(name)
                         var value: Value? = null
                         if (variable == null) {
@@ -228,7 +224,7 @@ class K2DfaAssistProvider : DfaAssistProvider {
                         }
                         if (value != null) {
                             val expectedType = symbol.returnType
-                            if (inlined && value.type() is PrimitiveType && !(expectedType.isPrimitive && !expectedType.canBeNull)) {
+                            if (inlineDepth > 0 && value.type() is PrimitiveType && !(expectedType.isPrimitive && !expectedType.canBeNull)) {
                                 val typeKind = JvmPrimitiveTypeKind.getKindByName(value.type().name())
                                 if (typeKind != null) {
                                     val referenceType = proxy.virtualMachine.classesByName(typeKind.boxedFqn).firstOrNull()

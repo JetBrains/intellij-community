@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.load.java.JvmAbi
 import java.lang.annotation.ElementType
 import java.util.function.BiConsumer
 
@@ -377,6 +378,37 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testInlineFunctionMultiLevel() {
+        val text = """
+            fun main() {
+                foo(::println)
+            }
+            
+            inline fun foo(block: (String) -> Unit) {
+                println("before")
+                bar(block)
+                println("after")
+            }
+            
+            inline fun bar(block: (String) -> Unit) {
+                val name = fetchName()
+                <caret>if (name != ""/*TRUE*/) {
+                    block(name)
+                }
+            }
+            
+            fun fetchName(): String = "name"          
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}foo", MockIntegerValue(vm, 0))
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}bar", MockIntegerValue(vm, 0))
+            frame.addVariable(
+                "name${KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX}${KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX}",
+                MockValue.createValue("name", String::class.java, vm)
+            )
+        }
+    }
+
     fun testInlineFunctionThis() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -399,6 +431,36 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
             frame.addVariable(
                 AsmUtil.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
                 MockValue.createValue(Nested(-1), vm))
+        }
+    }
+
+    fun testInlineFunctionMultiLevelThis() {
+        val text = """
+            fun main() {
+                foo(::println)
+            }
+            
+            inline fun foo(block: (String) -> Unit) {
+                println("before")
+                fetchName().bar(block)
+                println("after")
+            }
+            
+            inline fun String.bar(block: (String) -> Unit) {
+                <caret>if(this != ""/*TRUE*/) {
+                    block(this)
+                }
+            }
+            
+            fun fetchName(): String = "name" 
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}foo", MockIntegerValue(vm, 0))
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}bar", MockIntegerValue(vm, 0))
+            frame.addVariable(
+                AsmUtil.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
+                MockValue.createValue("name", String::class.java, vm)
+            )
         }
     }
 
