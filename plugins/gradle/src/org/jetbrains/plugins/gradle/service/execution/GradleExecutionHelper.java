@@ -25,14 +25,12 @@ import com.intellij.util.lang.JavaVersion;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
-import org.gradle.api.logging.LogLevel;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
-import org.jetbrains.plugins.gradle.properties.GradleProperties;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension;
@@ -323,7 +321,7 @@ public final class GradleExecutionHelper {
     var buildRoot = getBuildRoot(buildEnvironment);
     if (buildRoot != null) {
       var properties = GradlePropertiesFile.getProperties(settings.getServiceDirectory(), buildRoot);
-      var logLevel = getGradleLoggingLevel(properties);
+      var logLevel = properties.getGradleLogLevel();
       if (logLevel != null) {
         switch (logLevel) {
           case DEBUG -> settings.withArgument("-d");
@@ -342,22 +340,6 @@ public final class GradleExecutionHelper {
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
       settings.withArgument("--info");
-    }
-  }
-
-  private static @Nullable LogLevel getGradleLoggingLevel(@NotNull GradleProperties properties) {
-    var property = properties.getGradleLoggingLevel();
-    if (property == null) {
-      return null;
-    }
-    var value = property.getValue();
-    var name = value.toUpperCase(Locale.ROOT);
-    try {
-      return LogLevel.valueOf(name);
-    }
-    catch (IllegalArgumentException e) {
-      LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
-      return null;
     }
   }
 

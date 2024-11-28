@@ -78,7 +78,7 @@ object GradlePropertiesFile {
     val properties = GradleUtil.readGradleProperties(propertiesPath) ?: return null
     return GradlePropertiesImpl(
       javaHomeProperty = properties.getStringProperty(GRADLE_JAVA_HOME_PROPERTY, propertiesPath),
-      gradleLoggingLevel = properties.getStringProperty(GRADLE_LOGGING_LEVEL_PROPERTY, propertiesPath),
+      logLevel = properties.getStringProperty(GRADLE_LOGGING_LEVEL_PROPERTY, propertiesPath),
       parallel = properties.getBooleanProperty(GRADLE_PARALLEL_PROPERTY, propertiesPath),
       isolatedProjects = properties.getBooleanProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, propertiesPath),
       jvmOptions = properties.getStringProperty(GRADLE_JVM_OPTIONS_PROPERTY, propertiesPath)
@@ -88,7 +88,7 @@ object GradlePropertiesFile {
   private fun mergeGradleProperties(most: GradleProperties, other: GradleProperties): GradleProperties {
     return GradlePropertiesImpl(
       javaHomeProperty = most.javaHomeProperty ?: other.javaHomeProperty,
-      gradleLoggingLevel = most.gradleLoggingLevel ?: other.gradleLoggingLevel,
+      logLevel = most.logLevel ?: other.logLevel,
       parallel = most.parallel ?: other.parallel,
       isolatedProjects = most.isolatedProjects ?: other.isolatedProjects,
       jvmOptions = most.jvmOptions ?: other.jvmOptions
@@ -97,7 +97,7 @@ object GradlePropertiesFile {
 
   private val EMPTY_GRADLE_PROPERTIES = GradlePropertiesImpl(
     javaHomeProperty = null,
-    gradleLoggingLevel = null,
+    logLevel = null,
     parallel = null,
     isolatedProjects = null,
     jvmOptions = null,
