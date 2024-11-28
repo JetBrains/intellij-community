@@ -134,6 +134,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     val offset = parameters.offset
     val text = parameters.editor.document.immutableCharSequence
     var indexOf = findActualIndex(suffix, text, offset)
+    if (offset - indexOf < 0) return null
     if (indexOf == 1) {
       return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset), text.substring(offset - indexOf, offset - indexOf + 1))
     }
