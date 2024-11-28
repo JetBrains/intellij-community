@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
@@ -111,8 +111,16 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     }, JavaHierarchyUtil.getComparator(myProject),"A.java");
   }
 
+  public void testAnonymous() throws Exception {
+    doJavaCallerTypeHierarchyTest("A", "A", "A.java"); // IDEA-56615
+  }
+
   public void testAnonymous2() throws Exception {
     doJavaCallerTypeHierarchyTest("A", "doIt", "A.java");
+  }
+
+  public void testAnonymous3() throws Exception {
+    doJavaCallerTypeHierarchyTest("B", "foo", "A.java"); // IDEA-140031
   }
 
   public void testActionAvailableInXml() {

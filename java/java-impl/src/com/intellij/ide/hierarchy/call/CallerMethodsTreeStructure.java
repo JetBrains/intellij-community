@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -57,6 +57,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       else {
         expectedQualifierClass = enclosingClass;
       }
+    }
+    else if (enclosingElement instanceof PsiAnonymousClass) {
+      enclosingElement = CallHierarchyNodeDescriptor.getEnclosingElement(enclosingElement.getParent());
+      expectedQualifierClass = enclosingElement == null ? null : enclosingElement.getContainingClass();
     }
     else {
       expectedQualifierClass = enclosingClass;
