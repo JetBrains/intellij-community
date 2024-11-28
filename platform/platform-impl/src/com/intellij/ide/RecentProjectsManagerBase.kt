@@ -142,6 +142,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       this.state = state
       state.pid = null
 
+      for ((path, value) in state.additionalInfo) {
+        checkForNonsenseBounds("com.intellij.ide.RecentProjectsManagerBase.loadState(path=$path)", value.frame?.bounds)
+      }
+
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
       val recentPaths = state.recentPaths

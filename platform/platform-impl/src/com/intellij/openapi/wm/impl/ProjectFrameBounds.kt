@@ -26,6 +26,7 @@ internal class ProjectFrameBounds {
   }
 
   fun markDirty(bounds: Rectangle?) {
+    checkForNonsenseBounds("ProjectFrameBounds.markDirty.bounds", bounds)
     if (bounds != null) {
       pendingBounds = Rectangle(bounds)
     }

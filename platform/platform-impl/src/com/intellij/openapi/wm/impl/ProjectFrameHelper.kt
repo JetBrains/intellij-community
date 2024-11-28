@@ -398,6 +398,7 @@ abstract class ProjectFrameHelper internal constructor(
   @RequiresEdt
   internal fun setInitBounds(bounds: Rectangle?) {
     if (bounds != null && frame.isInFullScreen) {
+      checkForNonsenseBounds("ProjectFrameHelper.setInitBounds.bounds", bounds)
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
     }
   }
@@ -407,13 +408,16 @@ abstract class ProjectFrameHelper internal constructor(
       val bounds = frame.rootPane.getClientProperty(INIT_BOUNDS_KEY)
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
       if (bounds is Rectangle) {
+        checkForNonsenseBounds("ProjectFrameHelper.applyInitBounds.initBounds", bounds)
         ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
         IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for full screen from client property: $bounds" }
       }
     }
     else {
-      ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
-      IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for non-fullscreen from the frame: ${frame.bounds}" }
+      val frameBounds = frame.bounds
+      checkForNonsenseBounds("ProjectFrameHelper.applyInitBounds.frameBounds", frameBounds)
+      ProjectFrameBounds.getInstance(project!!).markDirty(frameBounds)
+      IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for non-fullscreen from the frame: $frameBounds" }
     }
   }
 

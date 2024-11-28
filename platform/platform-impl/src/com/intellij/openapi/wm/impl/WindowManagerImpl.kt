@@ -468,6 +468,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
 
     val extendedState = frame.extendedState
     val bounds = frame.bounds
+    checkForNonsenseBounds("FrameStateListener.update.bounds", bounds)
     var normalBoundsOnCurrentScreen: Rectangle? = null
     if (rootPane != null) {
       val oldScreen = frame.screenBounds
@@ -503,6 +504,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
 private fun getNormalFrameBounds(frame: IdeFrameImpl, oldScreen: Rectangle?, newScreen: Rectangle?): Rectangle? {
   val nativeBounds = frame.getNativeNormalBounds()
   if (nativeBounds != null) {
+    checkForNonsenseBounds("getNormalFrameBounds.nativeBounds", nativeBounds)
     IDE_FRAME_EVENT_LOG.debug { "Got native bounds: $nativeBounds" }
     FrameBoundsConverter.scaleDown(nativeBounds, frame.graphicsConfiguration)
     IDE_FRAME_EVENT_LOG.debug { "Updated normal frame bounds from native bounds: $nativeBounds" }
@@ -510,6 +512,7 @@ private fun getNormalFrameBounds(frame: IdeFrameImpl, oldScreen: Rectangle?, new
   }
   var result: Rectangle? = null
   val normalBounds = frame.normalBounds
+  checkForNonsenseBounds("getNormalFrameBounds.normalBounds", normalBounds)
   if (normalBounds == null) {
     IDE_FRAME_EVENT_LOG.debug("Not updating frame bounds because normalBounds == null")
   }
@@ -523,6 +526,7 @@ private fun getNormalFrameBounds(frame: IdeFrameImpl, oldScreen: Rectangle?, new
       // The frame was moved to another screen after it had been maximized, move/scale its "normal" bounds accordingly.
       result = Rectangle(result)
       ScreenUtil.moveAndScale(result, oldScreen, newScreen)
+      checkForNonsenseBounds("getNormalFrameBounds.result (moved from $oldScreen to $newScreen)", result)
       if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
         IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${result} after moving from $oldScreen to $newScreen")
       }
