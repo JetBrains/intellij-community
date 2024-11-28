@@ -14,7 +14,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
@@ -51,12 +50,7 @@ import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.SocketTimeoutException
-import java.net.URI
-import java.net.URLConnection
-import java.net.UnknownHostException
-import java.net.URLEncoder
+import java.net.*
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -127,7 +121,37 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     @JvmStatic
     @JvmOverloads
     fun getLastCompatiblePluginUpdate(
-      ids: Set<PluginId>,
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
+    ): List<IdeCompatibleUpdate> {
+      val chunks = mutableListOf<MutableList<PluginId>>()
+      chunks.add(mutableListOf())
+
+      val maxLength = 7000 // 8k minus safety gap
+      var currentLength = 0
+      val pluginXmlIdsLength = "&pluginXmlId=".length
+
+      for (id in allIds) {
+        val adder = id.idString.length + pluginXmlIdsLength
+        val newLength = currentLength + adder
+        if (newLength > maxLength) {
+          chunks.add(mutableListOf(id))
+          currentLength = adder
+        }
+        else {
+          currentLength = newLength
+          chunks.last().add(id)
+        }
+      }
+
+      return chunks.flatMap {
+        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions)
+      }
+    }
+
+    private fun loadLastCompatiblePluginsUpdate(
+      ids: Collection<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false
     ): List<IdeCompatibleUpdate> {
@@ -136,32 +160,31 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           return emptyList()
         }
 
-        var url = URI(MarketplaceUrls.getSearchCompatibleUpdatesUrl())
+        var url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
         val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
-        val uid = PermanentInstallationID.get()
         val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
           .takeIf { PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
 
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
           append("&os=$os")
-          append("&uuid=$uid")
           if (machineId != null) {
-            append("&machineId=$machineId")
+            append("&mid=$machineId")
+          }
+          for (id in ids) {
+            append("&pluginXmlId=${URLEncoder.encode(id.idString, CharsetToolkit.UTF8)}")
           }
         }
 
         val urlString = url.withQuery(query).toString()
 
-        val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        return HttpRequests.post(urlString, HttpRequests.JSON_CONTENT_TYPE).run {
-          productNameAsUserAgent()
-          throwStatusCodeException(throwExceptions)
-          connect {
-            it.write(data)
+        return HttpRequests.request(urlString)
+          .accept(HttpRequests.JSON_CONTENT_TYPE)
+          .productNameAsUserAgent()
+          .throwStatusCodeException(throwExceptions)
+          .connect {
             objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
           }
-        }
       }
       catch (e: Exception) {
         LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
@@ -380,7 +403,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         return Files.newInputStream(pluginXmlIdsFile).use(::parseXmlIds)
       }
     }
-    catch (ignore: IOException) {
+    catch (_: IOException) {
     }
     return null
   }
@@ -668,7 +691,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     } catch (_: IOException) { }
 
-    // can't find/read jb plugins xml ids cache file, schedule reload
+    // can't find/read jb plugins XML ids cache file, schedule reload
     schedulePluginIdsUpdate()
     return null
   }
@@ -761,7 +784,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 }
 
 /**
- * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
+ * NB!: this call will overwrite any previous tuners set by {@link RequestBuilder#tuner}
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
   return if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
@@ -785,7 +808,7 @@ private fun loadETagForFile(file: Path): String {
     LOG.warn("Can't load ETag from '" + eTagFile + "'. Unexpected number of lines: " + lines.size)
     Files.deleteIfExists(eTagFile)
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
   }
   catch (e: IOException) {
     LOG.warn("Can't load ETag from '$eTagFile'", e)
