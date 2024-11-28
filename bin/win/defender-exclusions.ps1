@@ -23,7 +23,7 @@ try {
         $expanded = [System.Environment]::ExpandEnvironmentVariables($exclusion)
         $resolvedPaths = Resolve-Path -Path $expanded -ErrorAction Stop
         foreach ($resolved in $resolvedPaths) {
-          $result += $resolved.ProviderPath.ToString()
+          $result += $resolved.ProviderPath
         }
       } catch [System.Management.Automation.ItemNotFoundException] {
       } catch [System.Management.Automation.DriveNotFoundException] {
