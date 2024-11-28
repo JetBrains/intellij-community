@@ -24,7 +24,7 @@ class ClientSystemInfo private constructor() {
 
     @ApiStatus.Internal
     fun getInstance(): ClientSystemInfo? {
-      return ApplicationManager.getApplication().currentSessionOrNull?.takeIf { it.isRemote }?.getUserData(CLIENT_INFO_KEY)
+      return ApplicationManager.getApplication()?.currentSessionOrNull?.takeIf { it.isRemote }?.getUserData(CLIENT_INFO_KEY)
     }
 
     private val CLIENT_INFO_KEY = KeyWithDefaultValue.create("ClientSystemInfo") { ClientSystemInfo() }
