@@ -1129,6 +1129,78 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                  }""");
   }
 
+  public void testEnterAfterFirstAnnotationOfRecordComponent() {
+    doTextTest("java",
+      """
+        record ExampleRecord(
+                @MyAnno<caret>
+                @MyAnno2
+                String a) { }
+        """,
+      """
+        record ExampleRecord(
+                @MyAnno
+                <caret>
+                @MyAnno2
+                String a) { }
+        """
+    );
+  }
+
+  public void testEnterAfterLastAnnotationOfRecordComponent() {
+    doTextTest("java",
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2<caret>
+                         String a) { }
+                 """,
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2
+                         <caret>
+                         String a) { }
+                 """
+    );
+  }
+
+  public void testEnterBeforeAnnotationOfRecordComponent() {
+    doTextTest("java",
+               """
+                 record ExampleRecord(<caret>
+                         @MyAnno
+                         @MyAnno2
+                         String a) { }
+                 """,
+               """
+                 record ExampleRecord(
+                         <caret>
+                         @MyAnno
+                         @MyAnno2
+                         String a) { }
+                 """
+    );
+  }
+
+  public void testEnterAfterIdentifierOfRecordComponent() {
+    doTextTest("java",
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2
+                         String a,<caret>) { }
+                 """,
+               """
+                 record ExampleRecord(
+                         @MyAnno
+                         @MyAnno2
+                         String a,
+                         <caret>) { }
+                 """
+    );
+  }
+
   public void testPerformance() {
     configureByFile("/codeInsight/enterAction/Performance.java");
     Benchmark.newBenchmark("enter in " + getFile(), () -> {
