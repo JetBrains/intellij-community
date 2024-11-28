@@ -52,7 +52,7 @@ public class JourneyDiagramExtras extends DiagramExtras<JourneyNodeIdentity> {
    */
   @Override
   public @Nullable String suggestDiagramFileName(JourneyNodeIdentity element) {
-    if (element.element() instanceof PsiMember member) {
+    if (element.calculatePsiElement() instanceof PsiMember member) {
       return member.getName();
     }
     

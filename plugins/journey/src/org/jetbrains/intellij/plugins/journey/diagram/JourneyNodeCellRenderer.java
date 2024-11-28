@@ -2,22 +2,21 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 
 import com.intellij.diagram.DiagramBuilder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.graph.view.Graph2DView;
 import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.uml.core.renderers.DefaultUmlRenderer;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.plugins.journey.JourneyDataKeys;
 import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorWrapper;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
-import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramVfsResolver.getQualifiedName;
+import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager.updateEditorSize;
 
 /**
  * There is no specific reason to inherit {@link DefaultUmlRenderer}, need to write custom implementation later,
@@ -35,12 +34,6 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
     myDataModel = ((JourneyDiagramDataModel)builder.getDataModel());
   }
 
-  private static final Map<PsiElement, JourneyEditorWrapper> NODE_PANELS = new HashMap<>();
-
-  public static NodeRealizer getRealizer(@NotNull PsiElement psiElement) {
-    return NODE_PANELS.get(psiElement).getRealizer();
-  }
-
   @Override
   protected @NotNull JComponent createNodeRealizerComponent(@NotNull Graph2DView view,
                                                             @NotNull NodeRealizer realizer,
@@ -48,29 +41,36 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
                                                             boolean isSelected) {
     final var node = myBuilder.getNodeObject(realizer.getNode());
     if (node instanceof JourneyNode journeyNode) {
-      PsiElement psiElement = journeyNode.getIdentifyingElement().calculatePsiElement();
-      JourneyEditorWrapper cached = NODE_PANELS.get(psiElement);
+      JourneyNodeIdentity identity = journeyNode.getIdentifyingElement();
+      PsiMember psiMember = identity.getOriginalElement();
+      PsiFile psiFile = identity.calculatePsiElement();
+      JourneyEditorWrapper cached = myDataModel.myEditorManager.NODE_PANELS.get(psiFile);
       if (cached != null) {
         cached.updateRealizer(realizer);
         return cached;
       }
 
-      Editor editor = myDataModel.myEditorManager.openPsiElementInEditor(psiElement, (float)view.getZoom());
+      Editor editor = myDataModel.myEditorManager.openEditor(psiMember);
+      updateEditorSize(editor, psiMember, (float)view.getZoom(), true);
       if (editor == null) {
-        throw new IllegalStateException("Can't open " + psiElement);
+        throw new IllegalStateException("Can't open " + psiFile);
       }
       editor.putUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL, myDataModel);
 
-      JourneyEditorWrapper editorWrapper = new JourneyEditorWrapper(editor, realizer, psiElement, view, myDataModel);
+      JourneyEditorWrapper editorWrapper = new JourneyEditorWrapper(editor, identity, realizer, psiMember, view);
       myDataModel.myEditorManager.closeEditor.addListener(it -> {
         if (it == editor) {
           view.getCanvasComponent().remove(editorWrapper.getEditorComponent());
-          NODE_PANELS.remove(psiElement);
+          myDataModel.myEditorManager.NODE_PANELS.remove(psiFile);
         }
       });
 
       view.getCanvasComponent().add(editorWrapper.getEditorComponent());
-      NODE_PANELS.put(psiElement, editorWrapper);
+      identity.setEditor(editor);
+      AsyncEditorLoader.Companion.performWhenLoaded(editor, () -> {
+        identity.addElement(psiMember);
+      });
+      myDataModel.myEditorManager.NODE_PANELS.put(psiFile, editorWrapper);
       return editorWrapper;
     }
     return super.createNodeRealizerComponent(view, realizer, object, isSelected);

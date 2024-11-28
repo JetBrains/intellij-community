@@ -3,19 +3,17 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 import com.intellij.diagram.*;
 import com.intellij.diagram.presentation.DiagramLineType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.graph.base.Edge;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.graph.base.Node;
-import com.intellij.openapi.graph.builder.GraphBuilder;
-import com.intellij.openapi.graph.services.GraphLayoutService;
-import com.intellij.openapi.graph.services.GraphUndoService;
-import com.intellij.openapi.graph.util.Futures;
 import com.intellij.openapi.graph.view.Graph2D;
 import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager;
@@ -24,14 +22,15 @@ import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.*;
 
+import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramLayout.LAYOUT_OFFSET;
+import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramLayout.layout;
+
 public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeIdentity> {
 
   private final DiagramProvider<JourneyNodeIdentity> myProvider;
   private final Collection<JourneyNode> myNodes = new HashSet<>();
   private final List<JourneyEdge> myEdges = new ArrayList<>();
   public final JourneyEditorManager myEditorManager;
-  private static final double LAYOUT_OFFSET = 800;
-  private static JourneyDiagramDataModel currentModel;
 
   public JourneyDiagramDataModel(
     @NotNull Project project,
@@ -49,7 +48,6 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     myProvider = provider;
     myEditorManager = new JourneyEditorManager();
     Disposer.register(this, myEditorManager);
-    currentModel = this;
   }
 
   public JourneyDiagramDataModel(
@@ -64,11 +62,6 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     myProvider = provider;
     myEditorManager = new JourneyEditorManager();
     Disposer.register(this, myEditorManager);
-    currentModel = this;
-  }
-
-  public static JourneyDiagramDataModel getCurrentModel() {
-    return currentModel;
   }
 
   @Override
@@ -91,38 +84,13 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   }
 
   @Override
-  public @NotNull JourneyNode addElement(@Nullable JourneyNodeIdentity element) {
-    if (element == null) throw new IllegalArgumentException("element must not be null");
-    PsiElement psiElement = element.element();
-    psiElement = PsiUtil.tryFindParentOrNull(psiElement, it -> it instanceof PsiMember);
-    if (psiElement == null) throw new IllegalArgumentException("element must be a member");
-    JourneyNodeIdentity identity = new JourneyNodeIdentity(psiElement);
+  public @NotNull JourneyNode addElement(@Nullable JourneyNodeIdentity identity) {
+    if (identity == null) throw new IllegalArgumentException("element must not be null");
+
     String title = myProvider.getVfsResolver().getQualifiedName(identity);
     JourneyNode node = new JourneyNode(myProvider, identity, title);
     myNodes.add(node);
     return node;
-  }
-
-  private static void layout(GraphBuilder<?, ?> builder, List<Node> nodesToLayout, List<Edge> edgesToLayout) {
-    final var layouter = builder.getGraphPresentationModel().getSettings().getCurrentLayouter();
-    final var basicQuery = GraphLayoutService.getInstance().queryLayout(builder).animated().withLayouter(layouter);
-
-    final var partialLayouter = GraphLayoutService.getInstance().getPartialLayouter(layouter, true);
-    GraphLayoutService.getInstance().markElementsForPartialLayout(builder.getGraph(), nodesToLayout, edgesToLayout);
-    final var adjustedQuery = basicQuery
-      .withLayouter(partialLayouter)
-      .withFitContent(GraphLayoutService.GraphLayoutQueryParams.FitContentOption.NEVER);
-
-    GraphLayoutService.getInstance()
-      .calcLayoutAsync(builder, Objects.requireNonNull(adjustedQuery.getLayouter()))
-      .thenAcceptAsync(
-        layout -> GraphUndoService.getInstance().performPositionsOnlyChangingAction(
-          builder,
-          "JourneyLayout",
-          () -> adjustedQuery.withCustomLayout(layout).run()
-        ),
-        Futures.inEdt()
-      );
   }
 
   private static Optional<NodeRealizer> getRealizer(DiagramBuilder builder, JourneyNode journeyNode) {
@@ -136,8 +104,12 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     return getRealizer(this.getBuilder(), node).isPresent();
   }
 
-  public void addNewPairUpdate(JourneyNode fromJourneyNode, JourneyNode toJourneyNode, boolean isLeftToRight) {
+  public void addNewPairUpdate(JourneyNode fromJourneyNode, JourneyNode toJourneyNode, boolean isLeftToRight, boolean needLayout) {
     queryUpdate(() -> {
+      if (!needLayout) {
+        return;
+      }
+
       var edgesToLayout = List.of(getBuilder().getGraphBuilder().getGraph().getEdgeArray());
       List<Node> nodesToLayout = new ArrayList<>();
       var fromNode = getRealizer(this.getBuilder(), fromJourneyNode);
@@ -170,7 +142,6 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   public void queryUpdate(Runnable thenRun) {
     ApplicationManager.getApplication().invokeLater(() -> {
       getBuilder().queryUpdate()
-        .withAllNodeSizeUpdate()
         .withDataReload()
         .withNodePresentationsUpdate(true)
         .runAsync()
@@ -185,11 +156,28 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
 
   @Override
   public void removeNode(@NotNull DiagramNode<JourneyNodeIdentity> node) {
+    List<JourneyEdge> edgesFromNode = findEdgesFrom(node.getIdentifyingElement());
+    List<JourneyEdge> edgesToNode = findEdgesTo(node.getIdentifyingElement());
+    if (edgesToNode.size() == 1 && edgesFromNode.size() == 1) {
+      createEdge(edgesToNode.get(0).getSource(), edgesFromNode.get(0).getTarget());
+    }
+    myEdges.removeAll(edgesFromNode);
+    myEdges.removeAll(edgesToNode);
+    myEditorManager.closeNode(node.getIdentifyingElement().calculatePsiElement());
     myNodes.removeIf(it -> Objects.equals(it, node));
-    myEdges.removeIf(it -> it.getSource().equals(node) ||
-                           it.getTarget().equals(node));
-    myEditorManager.closeNode(node.getIdentifyingElement().element());
     queryUpdate(() -> {});
+  }
+
+  public List<JourneyEdge> findEdgesFrom(JourneyNodeIdentity nodeIdentity) {
+    return myEdges.stream().filter(it -> it.getSource().equals(getNode(nodeIdentity))).toList();
+  }
+
+  public List<JourneyEdge> findEdgesTo(JourneyNodeIdentity nodeIdentity) {
+    return myEdges.stream().filter(it -> it.getTarget().equals(getNode(nodeIdentity))).toList();
+  }
+
+  public @Nullable JourneyNode getNode(JourneyNodeIdentity nodeIdentity) {
+    return ContainerUtil.find(myNodes, it -> it.getIdentifyingElement().equals(nodeIdentity));
   }
 
   @Override
@@ -197,7 +185,9 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
                                                                @NotNull DiagramNode<JourneyNodeIdentity> to) {
     if (from.equals(to)) return null;
     JourneyEdge edge = new JourneyEdge(from, to, MANY_TO_ONE);
-    myEdges.add(edge);
+    if (!myEdges.contains(edge)) {
+      myEdges.add(edge);
+    }
     return edge;
   }
 

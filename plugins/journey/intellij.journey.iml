@@ -42,5 +42,6 @@
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
   </component>
 </module>

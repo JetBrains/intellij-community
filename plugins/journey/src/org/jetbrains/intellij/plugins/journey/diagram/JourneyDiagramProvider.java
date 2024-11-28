@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.uml.presentation.DiagramPresentationModelImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
@@ -108,20 +110,34 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
   public static void addEdge(PsiElement from, PsiElement to, JourneyDiagramDataModel model) {
     var fromNode = Optional.ofNullable(findNodeForFile(model, from)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(from)));
     var toNode = Optional.ofNullable(findNodeForFile(model, to)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(to)));
-    if (toNode == null || fromNode == null) {
-      return;
-    }
 
-    boolean isLeftToRight = model.isNodeExist(fromNode);
     model.createEdge(fromNode, toNode);
-    model.addNewPairUpdate(fromNode, toNode, isLeftToRight);
+    if (!model.isNodeExist(toNode) || !model.isNodeExist(fromNode)) {
+      boolean isLeftToRight = model.isNodeExist(fromNode);
+      model.addNewPairUpdate(fromNode, toNode, isLeftToRight, true);
+
+      if (isLeftToRight) {
+        fromNode.getIdentifyingElement().addElement((PsiMember)from);
+      }
+      else {
+        toNode.getIdentifyingElement().addElement((PsiMember)to);
+      }
+    } else {
+      model.addNewPairUpdate(fromNode, toNode, false, false);
+      fromNode.getIdentifyingElement().addElement((PsiMember)from);
+      toNode.getIdentifyingElement().addElement((PsiMember)to);
+    }
   }
 
-  private static @Nullable JourneyNode findNodeForFile(JourneyDiagramDataModel model, PsiElement node) {
-    return ReadAction.compute(
-      () -> ContainerUtil.find(model.getNodes(), e ->
-        e.getIdentifyingElement().element().isEquivalentTo(node))
-    );
+  private static @Nullable JourneyNode findNodeForFile(JourneyDiagramDataModel model, PsiElement from) {
+    if (from == null) return null;
+    return ReadAction.compute(() -> {
+      PsiFile fromFile = ReadAction.nonBlocking(() -> from.getContainingFile()).executeSynchronously();
+      return ContainerUtil.find(model.getNodes(), node -> {
+        PsiFile toFile = node.getIdentifyingElement().calculatePsiElement();
+        return toFile.isEquivalentTo(fromFile);
+      });
+    });
   }
 
   @Override
@@ -164,7 +180,7 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
               Editor editor = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.get(psi);
               // TODO such revalidation cause to flickering
               SwingUtilities.invokeLater(() -> {
-                updateEditorSize(editor, JourneyNodeCellRenderer.getRealizer(psi), psi, (float)builder.getZoom());
+                updateEditorSize(editor, psi, (float)builder.getZoom(), false);
                 editor.getComponent().revalidate();
               });
             }

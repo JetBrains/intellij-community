@@ -28,7 +28,7 @@ class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNodeIdentit
     if (identity == null) {
       return null;
     }
-    PsiElement element = identity.element();
+    PsiElement element = identity.calculatePsiElement();
     String psiQualifiedname = getPsiFqnRecursive(element);
     if (psiQualifiedname != null) return psiQualifiedname;
     return psiElementToPathAndOffsetFQN(element);
@@ -118,7 +118,7 @@ class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNodeIdentit
   private static @Nullable PsiElement resolveByFQN(@NotNull String fqn, @NotNull Project project) {
     final var facadeEx = JavaPsiFacade.getInstance(project);
     final var psiClass = facadeEx.findClass(fqn, GlobalSearchScope.allScope(project));
-    return psiClass == null ? facadeEx.findPackage(fqn) : psiClass;
+    return psiClass;
   }
 
   private static @Nullable PsiFile resolveByPath(@NotNull String path, @NotNull Project project) {

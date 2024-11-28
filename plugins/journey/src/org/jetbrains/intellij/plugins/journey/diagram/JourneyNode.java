@@ -3,17 +3,29 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 import com.intellij.diagram.DiagramNodeBase;
 import com.intellij.diagram.DiagramProvider;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.openapi.editor.ScrollType.CENTER_UP;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
@@ -39,7 +51,7 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
 
   @Override
   public @Nullable @Nls String getTooltip() {
-    return "Journey node tooltip " + identity.element().getText();
+    return "Journey node tooltip " + identity.calculatePsiElement().getText();
   }
 
   @Override
@@ -59,8 +71,8 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
     if (obj == null || getClass() != obj.getClass()) return false;
 
     final var that = (JourneyNode)obj;
-    PsiElement psi1 = this.identity.element();
-    PsiElement psi2 = that.identity.element();
+    PsiElement psi1 = this.identity.calculatePsiElement();
+    PsiElement psi2 = that.identity.calculatePsiElement();
 
     if (psi1 == psi2) {
       return true;
@@ -72,5 +84,4 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
     }
     return super.equals(obj);
   }
-
 }

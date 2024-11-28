@@ -1,13 +1,20 @@
 package org.jetbrains.intellij.plugins.journey.diagram;
 
+import com.intellij.diagram.DiagramBuilder;
+import com.intellij.diagram.DiagramDataKeys;
 import com.intellij.diagram.DiagramEdge;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,10 +28,11 @@ public class JourneyDiagramDataModelTest extends LightJavaCodeInsightFixtureTest
   public void setUp() {
     myProject = getFixture().getProject();
     myDataModel = new JourneyDiagramDataModel(myProject, new JourneyDiagramProvider());
+    myDataModel.putUserData(DiagramDataKeys.GRAPH_BUILDER, Mockito.mock(DiagramBuilder.class));
   }
 
   @Test
-  public void test() {
+  public void testCreateEdge() {
     JourneyDiagramDataModel model = myDataModel;
     JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "a")));
     assertNotNull(nodeA);
@@ -34,6 +42,33 @@ public class JourneyDiagramDataModelTest extends LightJavaCodeInsightFixtureTest
     assertNotNull(edgeAB);
     assertEquals(2, model.getNodes().size());
     assertEquals(1, model.getEdges().size());
+  }
+
+  /**
+   * [A] -> [B] -> [C]
+   * delete(B)
+   * [A] -> [C]
+   */
+  @Test
+  void testDeleteTransitNode() {
+    JourneyDiagramDataModel model = myDataModel;
+    JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "a")));
+    assertNotNull(nodeA);
+    JourneyNode nodeB = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "b")));
+    assertNotNull(nodeB);
+    JourneyNode nodeC = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "c")));
+    assertNotNull(nodeC);
+    DiagramEdge<JourneyNodeIdentity> edgeAB = model.createEdge(nodeA, nodeB);
+    assertNotNull(edgeAB);
+    DiagramEdge<JourneyNodeIdentity> edgeBC = model.createEdge(nodeB, nodeC);
+    assertNotNull(edgeBC);
+    model.removeNode(nodeB);
+
+    List<JourneyEdge> edges = model.getEdges();
+    assertEquals(1, edges.size());
+    JourneyEdge edge = edges.get(0);
+    assertEquals(nodeA, edge.getSource());
+    assertEquals(nodeC, edge.getTarget());
   }
 
   private static PsiMethod createPsiMethod(Project project, String method) {

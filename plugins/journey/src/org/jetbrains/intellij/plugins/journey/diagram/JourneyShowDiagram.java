@@ -21,7 +21,7 @@ public class JourneyShowDiagram extends ShowDiagram {
   }
 
   public static VirtualFile getUmlVirtualFile() {
-    final var url = UmlVirtualFileSystem.PROTOCOL_PREFIX + "JOURNEY/JourneyEditorTab";
+    final var url = UmlVirtualFileSystem.PROTOCOL_PREFIX + "JOURNEY/" + System.currentTimeMillis();
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
