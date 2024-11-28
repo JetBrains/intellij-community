@@ -12,7 +12,7 @@ class GithubApiUrlQueryBuilder {
   private val builder = StringBuilder()
 
   fun param(name: String, value: String?) {
-    if (value != null) append("$name=${URLUtil.encodeURIComponent(value)}")
+    if (value != null) append("${URLUtil.encodeURIComponent(name)}=${URLUtil.encodeURIComponent(value)}")
   }
 
   fun param(pagination: GithubRequestPagination?) {
@@ -33,6 +33,11 @@ class GithubApiUrlQueryBuilder {
       val query = GithubApiUrlQueryBuilder()
       init(query)
       return query.builder.toString()
+    }
+
+    @JvmStatic
+    fun paginationQuery(pagination: GithubRequestPagination?) : String = urlQuery {
+      param(pagination)
     }
   }
 }

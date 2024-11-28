@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.api.data.request
 /**
  * Additional params for [`GET /user/repos`](https://developer.github.com/v3/repos/#list-your-repositories) request
  */
-enum class Type(private val value: String) {
-  ALL(""),
+enum class Type(val value: String) {
+  ALL("all"),
   OWNER("owner"),
   PUBLIC("public"),
   PRIVATE("private"),
@@ -13,35 +13,35 @@ enum class Type(private val value: String) {
 
   companion object {
     val DEFAULT = ALL
-  }
 
-  override fun toString() = if (value.isEmpty()) value else "type=$value"
+    const val KEY: String = "type"
+  }
 }
 
-enum class Visibility(private val value: String) {
-  ALL(""),
+enum class Visibility(val value: String?) {
+  ALL("all"),
   PUBLIC("public"),
   PRIVATE("private");
 
   companion object {
     val DEFAULT = ALL
-  }
 
-  override fun toString() = if (value.isEmpty()) value else "visibility=$value"
+    const val KEY: String = "visibility"
+  }
 }
 
-class Affiliation private constructor(private val value: String) {
+class Affiliation private constructor(val value: String?) {
   companion object {
     val OWNER = Affiliation("owner")
     val COLLABORATOR = Affiliation("collaborator")
     @Suppress("unused") // API
     val ORG_MEMBER = Affiliation("organization_member")
-    val DEFAULT = Affiliation("")
+    val DEFAULT = Affiliation("owner,collaborator,organization_member")
+
+    const val KEY = "affiliation"
 
     fun combine(vararg affiliations: Affiliation): Affiliation {
-      return Affiliation(affiliations.toSet().joinToString(",") { it.value })
+      return Affiliation(affiliations.toSet().joinToString(",") { it.value ?: "" })
     }
   }
-
-  override fun toString() = if (value.isEmpty()) value else "affiliation=$value"
 }
