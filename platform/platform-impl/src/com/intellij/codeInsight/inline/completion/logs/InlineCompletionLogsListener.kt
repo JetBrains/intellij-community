@@ -162,7 +162,7 @@ private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
   val REQUEST_ID = registerBasic(EventFields.Long("request_id"))
   val REQUEST_EVENT = register(EventFields.Class("request_event"))
   val INLINE_API_PROVIDER = registerBasic(EventFields.Class("inline_api_provider"))
-  val FILE_LANGUAGE = register(EventFields.Language("file_language"))
+  val FILE_LANGUAGE = registerBasic(EventFields.Language("file_language"))
 }
 
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
