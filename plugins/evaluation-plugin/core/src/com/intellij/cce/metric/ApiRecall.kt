@@ -1,16 +1,17 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
+import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
 
 class ApiRecall : Metric {
-  private val sample = Sample()
+  private val sample = mutableListOf<Double>()
   override val name: String = "API Recall"
   override val description: String = "The fraction of correctly guessed project-defined API calls"
   override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
-    get() = sample.mean()
+    get() = sample.average()
 
   @Suppress("UNCHECKED_CAST")
   override fun evaluate(sessions: List<Session>): Number {
@@ -26,6 +27,8 @@ class ApiRecall : Metric {
       }
     return fileSample.mean()
   }
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
 
   private fun calculateApiRecallForLookupSnippets(
     predictedApiCalls: List<String>,
