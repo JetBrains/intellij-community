@@ -69,6 +69,12 @@ fun Module.getTopLevelBuildScriptSettingsPsiFile(): PsiFile? {
         ?.getPsiFile(project)
 }
 
+fun Project.getTopLevelBuildScriptSettingsPsiFile(): PsiFile? {
+    val projectDir = this.guessProjectDir() ?: return null
+    return findBuildGradleFile(projectDir.path, SETTINGS_FILE_NAME, KOTLIN_SETTINGS_SCRIPT_NAME)
+        ?.getPsiFile(this)
+}
+
 private fun Module.getBuildScriptFile(vararg fileNames: String): Path? {
     moduleNioFile.parent?.let { moduleDir ->
         findBuildGradleFile(moduleDir.pathString, *fileNames)?.let {
