@@ -17,7 +17,7 @@ class PythonTestCoverageProcessor(
     coverageInfo = parsedJson["totals"] as? Map<String, Number> ?: emptyMap()
   }
 
-  fun getLineCoverage(): Double = coverageInfo["percent_covered"]?.toDouble() ?: 0.0
+  fun getLineCoverage(): Double = (coverageInfo["percent_covered"]?.toDouble() ?: 0.0) / 100
 
   fun getBranchCoverage(): Double {
     val totalBranches = coverageInfo["num_branches"]?.toDouble() ?: 0.0
