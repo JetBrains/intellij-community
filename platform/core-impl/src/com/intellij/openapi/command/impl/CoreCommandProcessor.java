@@ -299,7 +299,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void enterModal() {
-    ThreadingAssertions.assertWriteIntentReadAccess();
+    ThreadingAssertions.assertEventDispatchThread();
     CommandDescriptor currentCommand = myCurrentCommand;
     myInterruptedCommands.push(currentCommand);
     if (currentCommand != null) {
@@ -309,7 +309,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void leaveModal() {
-    ThreadingAssertions.assertWriteIntentReadAccess();
+    ThreadingAssertions.assertEventDispatchThread();
     CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
