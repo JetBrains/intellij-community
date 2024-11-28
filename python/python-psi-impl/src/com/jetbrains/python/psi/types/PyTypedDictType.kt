@@ -312,10 +312,6 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
             || expectedTypeAndTotality.qualifiers.isRequired != actualTypeAndTotality.qualifiers.isRequired) {
           return TypeCheckingResult(false)
         }
-
-        if (!actual.fields.containsKey(it.key)) {
-          return TypeCheckingResult(false)
-        }
       }
       return TypeCheckingResult(true)
     }
