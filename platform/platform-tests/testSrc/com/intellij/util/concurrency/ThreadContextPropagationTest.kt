@@ -340,4 +340,14 @@ class ThreadContextPropagationTest {
     assertTrue(tracker.get())
   }
 
+  @Test
+  fun `cancellation of scheduled task triggers cleanup events`() = timeoutRunBlocking {
+    val service = AppExecutorUtil.createBoundedScheduledExecutorService("Test service", 1);
+    val tracker = AtomicBoolean(false)
+    withContext(MyIjElement(tracker)) {
+      val future = service.schedule(Callable<Unit> { Assertions.fail() }, 10, TimeUnit.SECONDS) // should never be executed
+      future.cancel(false)
+    }
+    Assertions.assertTrue(tracker.get())
+  }
 }

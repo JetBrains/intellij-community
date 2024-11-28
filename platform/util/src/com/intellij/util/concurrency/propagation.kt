@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.Throws
 import kotlin.coroutines.*
 import kotlin.coroutines.cancellation.CancellationException
 import com.intellij.openapi.util.Pair as JBPair
@@ -410,16 +410,14 @@ internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callab
   }
   val callable = captureClientIdInCallable(c)
   val childContext = createChildContext("$c (scheduled: $ns)")
-  val wrappedCallable = ContextCallable(false, childContext, callable)
+  val cancellationTracker = AtomicBoolean(false)
+  val wrappedCallable = ContextCallable(false, childContext, Callable<V> {
+    cancellationTracker.takeOrThrowCancellationException()
+    callable.call()
+  })
 
   val cont = childContext.continuation
-  if (cont != null) {
-    val childJob = cont.context.job
-    return CancellationScheduledFutureTask(wrapper, childJob, wrappedCallable, ns)
-  }
-  else {
-    return wrapper.MyScheduledFutureTask(wrappedCallable, ns)
-  }
+  return CancellationScheduledFutureTask(wrapper, childContext, cont?.context?.job, cancellationTracker, wrappedCallable, ns)
 }
 
 internal fun capturePropagationContext(
@@ -431,6 +429,7 @@ internal fun capturePropagationContext(
   val childContext = createChildContext("$runnable (scheduled: $ns, period: $period)")
   val capturedRunnable1 = captureClientIdInRunnable(runnable)
   val capturedRunnable2 = Runnable {
+    // no cancellation tracker here: this is a periodic runnable that is restarted
     installThreadContext(childContext.context, false).use {
       childContext.applyContextActions(false).use {
         capturedRunnable1.run()
@@ -438,13 +437,20 @@ internal fun capturePropagationContext(
     }
   }
   val cont = childContext.continuation
-  if (cont != null) {
+  val (finalCapturedRunnable, job) = if (cont != null) {
     val capturedRunnable3 = PeriodicCancellationRunnable(childContext.continuation, capturedRunnable2)
     val childJob = cont.context.job
-    return CancellationScheduledFutureTask<Void>(wrapper, childJob, capturedRunnable3, ns, period)
+    capturedRunnable3 to childJob
   }
   else {
-    return wrapper.MyScheduledFutureTask<Void>(capturedRunnable2, null, ns, period)
+    capturedRunnable2 to null
+  }
+  return CancellationScheduledFutureTask<Void>(wrapper, childContext, job, finalCapturedRunnable, ns, period)
+}
+
+private fun AtomicBoolean.takeOrThrowCancellationException() {
+  if (getAndSet(true)) {
+    throw ProcessCanceledException()
   }
 }
 
