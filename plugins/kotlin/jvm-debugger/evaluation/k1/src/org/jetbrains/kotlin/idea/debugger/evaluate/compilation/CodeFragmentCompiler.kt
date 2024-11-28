@@ -106,11 +106,11 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
     }
 
     private class GeneratedClassFilterForCodeFragment(private val codeFragment: KtCodeFragment) : GenerationState.GenerateClassFilter() {
-        override fun shouldGeneratePackagePart(@Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") file: KtFile) = file == codeFragment
-        override fun shouldAnnotateClass(processingClassOrObject: KtClassOrObject) = true
-        override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject) = processingClassOrObject.containingFile == codeFragment
-        override fun shouldGenerateCodeFragment(script: KtCodeFragment) = script == this.codeFragment
-        override fun shouldGenerateScript(script: KtScript) = false
+        override fun shouldGeneratePackagePart(ktFile: KtFile): Boolean =
+            ktFile == codeFragment
+
+        override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject): Boolean =
+            processingClassOrObject.containingFile == codeFragment
     }
 
     private fun getReturnType(
