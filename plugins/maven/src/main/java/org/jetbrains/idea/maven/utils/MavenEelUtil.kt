@@ -28,9 +28,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.impl.utils.getEelApi
+import com.intellij.platform.eel.impl.utils.where
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.eel.provider.utils.where
 import com.intellij.platform.eel.toNioPath
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress

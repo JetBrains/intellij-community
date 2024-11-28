@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -60,6 +59,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
 
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
@@ -201,7 +202,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
-    return JavaHomeFinder.suggestHomePaths(EelProviderUtil.getEelApiBlocking(project), false);
+    return JavaHomeFinder.suggestHomePaths(getEelApiBlocking(project), false);
   }
 
   @Override

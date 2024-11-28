@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.toNioPath
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile

@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.eel.provider.forwardLocalPort
+import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch

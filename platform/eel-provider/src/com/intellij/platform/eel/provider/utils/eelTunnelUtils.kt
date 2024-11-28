@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentTunnelsUtil")
 
-package com.intellij.platform.eel.provider
+package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.EelTunnelsApi

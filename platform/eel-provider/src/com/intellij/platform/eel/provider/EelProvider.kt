@@ -3,70 +3,25 @@
 
 package com.intellij.platform.eel.provider
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.*
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.LocalEelApi
-import com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl
-import com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.Path
 
-private val CannotGuessProjectDirLoggingKey = Key.create<MutableSet<String>>("Eel.CannotGuessProjectDirLoggingKey")
 
-private fun Project.guessProjectDirAndLogWarn(callLocation: String): VirtualFile? {
-  val dirResult = runCatching { guessProjectDir() }
-  val dir = dirResult.getOrNull()
-
-  if (dir == null) {
-    val shouldLog = (if (this is UserDataHolderEx) {
-      getOrCreateUserData(CannotGuessProjectDirLoggingKey) { mutableSetOf<String>() }
-    }
-    else getOrCreateUserDataUnsafe(CannotGuessProjectDirLoggingKey) { mutableSetOf<String>() }).add(callLocation)
-
-    if (shouldLog) {
-      LOG.warn("$callLocation: Cannot guess project dir for $this", dirResult.exceptionOrNull())
-    }
-  }
-
-  return dir
-}
-
-private fun Project?.computeProjectPath(callLocation: String): Path? {
-  if (this == null || this.isDefault) return null
-
-  val projectDir = guessProjectDirAndLogWarn(callLocation)
-  val basePath = basePath?.let(::Path)
-
-  return try {
-    projectDir?.toNioPath() ?:basePath
-  }
-  catch (e: UnsupportedOperationException) {
-    basePath
-  }
-}
-
-suspend fun Project?.getEelApi(): EelApi {
-  return computeProjectPath("Project?.getEelApi")?.getEelApi() ?: localEel
-}
-
-@RequiresBlockingContext
-fun Project?.getEelApiBlocking(): EelApi {
-  if (this == null) return localEel
-  return runBlockingMaybeCancellable { getEelApi() }
-}
-
-fun Project?.getEelApiKey(): EelApiKey {
-  return computeProjectPath("Project?.getEelApiKey")?.getEelApiKey() ?: LocalEelKey
-}
+interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
+interface LocalPosixEelApi : LocalEelApi, EelPosixApi
 
 private val LOG by lazy { logger<EelProvider>() }
 
@@ -106,7 +61,7 @@ fun Path.getEelApiKey(): EelApiKey {
 }
 
 val localEel: LocalEelApi by lazy {
-  if (SystemInfo.isWindows) LocalWindowsEelApiImpl() else LocalPosixEelApiImpl()
+  if (SystemInfo.isWindows) ApplicationManager.getApplication().service<LocalWindowsEelApi>() else ApplicationManager.getApplication().service<LocalPosixEelApi>()
 }
 
 abstract class EelApiKey {

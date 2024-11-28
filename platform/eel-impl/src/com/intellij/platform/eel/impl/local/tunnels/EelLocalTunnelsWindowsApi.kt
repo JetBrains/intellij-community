@@ -4,7 +4,6 @@ package com.intellij.platform.eel.impl.local.tunnels
 import com.intellij.platform.eel.EelConnectionError
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsApi
-import com.intellij.platform.eel.EelTunnelsPosixApi
 import com.intellij.platform.eel.EelTunnelsWindowsApi
 
 internal object EelLocalTunnelsWindowsApi : EelTunnelsWindowsApi {

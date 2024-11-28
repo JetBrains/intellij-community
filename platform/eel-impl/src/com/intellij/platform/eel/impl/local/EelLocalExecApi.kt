@@ -4,7 +4,7 @@ package com.intellij.platform.eel.impl.local
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.provider.EelProcessResultImpl
+import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
 import com.pty4j.PtyProcessBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.io.File

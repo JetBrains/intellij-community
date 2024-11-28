@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.getEelApiBlocking
+import com.intellij.platform.eel.impl.utils.getEelApiBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path

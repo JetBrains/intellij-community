@@ -74,7 +74,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiBlocking;
+import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
+
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
   private static final ExtensionPointName<MavenRemoteConnectionCreator> EP_NAME =

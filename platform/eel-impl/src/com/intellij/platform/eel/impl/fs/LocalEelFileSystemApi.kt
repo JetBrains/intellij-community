@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.eel.provider.fs
+package com.intellij.platform.eel.impl.fs
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelResult
@@ -9,7 +9,6 @@ import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
-import com.intellij.platform.eel.provider.EelFsResultImpl
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.impl.utils.getEelApiBlocking
+import com.intellij.platform.eel.impl.utils.getEelApiKey
 import com.intellij.platform.eel.provider.LocalEelKey
-import com.intellij.platform.eel.provider.getEelApiBlocking
-import com.intellij.platform.eel.provider.getEelApiKey
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport

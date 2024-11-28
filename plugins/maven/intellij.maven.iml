@@ -111,6 +111,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.ijent" />
+    <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
   </component>

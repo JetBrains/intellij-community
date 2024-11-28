@@ -654,7 +654,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/intellij.platform.editor.ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/intellij.platform.editor.ex.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" filepath="$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/eelProvider/intellij.platform.eel.provider.iml" filepath="$PROJECT_DIR$/platform/eelProvider/intellij.platform.eel.provider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/eel-impl/intellij.platform.eel.impl.iml" filepath="$PROJECT_DIR$/platform/eel-impl/intellij.platform.eel.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/eel-provider/intellij.platform.eel.provider.iml" filepath="$PROJECT_DIR$/platform/eel-provider/intellij.platform.eel.provider.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/eel/intellij.platform.eel.tests.iml" filepath="$PROJECT_DIR$/platform/eel/intellij.platform.eel.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/eel-helper/intellij.platform.eelHelper.iml" filepath="$PROJECT_DIR$/platform/platform-tests/eel-helper/intellij.platform.eelHelper.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" filepath="$PROJECT_DIR$/platform/execution/intellij.platform.execution.iml" />

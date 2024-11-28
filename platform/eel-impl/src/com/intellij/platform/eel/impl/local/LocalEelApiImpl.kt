@@ -5,23 +5,24 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryError
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.impl.fs.EelFsResultImpl
+import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Ok
+import com.intellij.platform.eel.impl.fs.EelFsResultImpl.Other
+import com.intellij.platform.eel.impl.fs.EelUserPosixInfoImpl
+import com.intellij.platform.eel.impl.fs.EelUserWindowsInfoImpl
+import com.intellij.platform.eel.impl.fs.PosixNioBasedEelFileSystemApi
+import com.intellij.platform.eel.impl.fs.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsPosixApi
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalTunnelsWindowsApi
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.EelFsResultImpl.Error
-import com.intellij.platform.eel.provider.EelFsResultImpl.Ok
-import com.intellij.platform.eel.provider.EelFsResultImpl.Other
-import com.intellij.platform.eel.provider.EelUserPosixInfoImpl
-import com.intellij.platform.eel.provider.EelUserWindowsInfoImpl
-import com.intellij.platform.eel.provider.fs.PosixNioBasedEelFileSystemApi
-import com.intellij.platform.eel.provider.fs.WindowsNioBasedEelFileSystemApi
+import com.intellij.platform.eel.provider.LocalPosixEelApi
+import com.intellij.platform.eel.provider.LocalWindowsEelApi
 import com.intellij.util.text.nullize
 import com.sun.security.auth.module.UnixSystem
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,7 @@ internal class LocalEelPathMapper(private val eelApi: EelApi) : EelPathMapper {
   }
 }
 
-internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalEelApi, EelWindowsApi {
+internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalWindowsEelApi {
   init {
     check(SystemInfo.isWindows)
   }
@@ -65,7 +66,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
 }
 
 @VisibleForTesting
-class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalEelApi, EelPosixApi {
+class LocalPosixEelApiImpl(nioFs: FileSystem = FileSystems.getDefault()) : LocalPosixEelApi {
   init {
     check(SystemInfo.isUnix)
   }
@@ -119,7 +120,7 @@ private fun doCreateTemporaryDirectory(
     ?: run {
       val path = Path.of(FileUtilRt.getTempDirectory())
       if (mapper.getOriginalPath(path) == null) {
-        return Error(Other(EelPath.Absolute.parse(path.toString(), null), "Can't map this path"))
+        return EelFsResultImpl.Error(Other(EelPath.Absolute.parse(path.toString(), null), "Can't map this path"))
       }
       path.toFile()
     }
@@ -133,7 +134,7 @@ private fun doCreateTemporaryDirectory(
   return if (tempDirectoryEel != null)
     Ok(tempDirectoryEel)
   else
-    Error(Other(EelPath.Absolute.parse(tempDirectory.toString(), null), "Can't map this path"))
+    EelFsResultImpl.Error(Other(EelPath.Absolute.parse(tempDirectory.toString(), null), "Can't map this path"))
 }
 
 private val LOG = Logger.getInstance(EelApi::class.java)

@@ -6,7 +6,7 @@ package com.intellij.openapi.roots.ui.configuration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.platform.eel.provider.getEelApiKey
+import com.intellij.platform.eel.impl.utils.getEelApiKey
 import java.util.function.Predicate
 
 internal fun filterSdkByEel(project: Project): Predicate<Sdk> {

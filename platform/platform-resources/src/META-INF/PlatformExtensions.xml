@@ -69,6 +69,11 @@
                        displayNameKey="configurable.group.other.settings.display.name"
                        descriptionKey="configurable.group.other.settings.description"/>
 
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalPosixEelApi"
+                        serviceImplementation="com.intellij.platform.eel.impl.local.LocalPosixEelApiImpl"/>
+
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
     <applicationService serviceInterface="com.intellij.ide.actions.ReportFeedbackService"

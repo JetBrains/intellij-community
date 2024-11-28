@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.impl.utils.getEelApiKey
 import com.intellij.platform.eel.provider.LocalEelKey
 import com.intellij.platform.eel.provider.getEelApiBlocking
-import com.intellij.platform.eel.provider.getEelApiKey
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.zip.JBZipFile
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole

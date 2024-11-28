@@ -13,12 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
-import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
-import com.intellij.platform.eel.provider.EelProcessResultImpl
+import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
 import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
@@ -48,7 +46,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.*
 import java.io.File
-import java.lang.reflect.Field
 import java.nio.file.FileSystems
 import java.util.stream.Stream
 import kotlin.reflect.full.memberProperties

@@ -29,7 +29,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelApi
 import com.intellij.platform.eel.provider.getEelApiBlocking
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete

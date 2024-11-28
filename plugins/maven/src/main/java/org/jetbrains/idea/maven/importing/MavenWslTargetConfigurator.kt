@@ -12,8 +12,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
+import com.intellij.platform.eel.impl.utils.getEelApiBlocking
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager

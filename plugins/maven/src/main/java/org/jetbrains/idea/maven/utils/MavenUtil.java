@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.LocalEelApi;
-import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
@@ -99,7 +98,8 @@ import java.util.zip.CRC32;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.platform.eel.fs.EelFileSystemApiKt.getPath;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiBlocking;
+import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
+import static com.intellij.platform.eel.provider.utils.EelUtilsKt.fetchLoginShellEnvVariablesBlocking;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
@@ -684,7 +684,7 @@ public class MavenUtil {
     List<MavenHomeType> result = new ArrayList<>();
 
     var eel = getEelApiBlocking(project);
-    var envs = EelUtilsKt.fetchLoginShellEnvVariablesBlocking(eel.getExec());
+    var envs = fetchLoginShellEnvVariablesBlocking(eel.getExec());
 
     String m2home = envs.get(ENV_M2_HOME);
     if (!isEmptyOrSpaces(m2home)) {

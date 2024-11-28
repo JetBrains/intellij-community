@@ -28,7 +28,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.impl.utils.getEelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.lang.JavaVersion

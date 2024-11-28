@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineScope
 import java.io.IOException

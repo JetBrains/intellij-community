@@ -8,7 +8,7 @@ import com.intellij.platform.eel.fs.EelFileInfo.Type.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.*
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.EelFsResultImpl
+import com.intellij.platform.eel.impl.fs.EelFsResultImpl
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.Companion.newFileSystemMap
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
