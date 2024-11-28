@@ -71,6 +71,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
             model("${idea}/inspectionsLocal/replaceIsEmptyWithIfEmpty")
             model("${idea}/inspectionsLocal/booleanLiteralArgument")
+            model("${idea}/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
@@ -93,6 +94,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/unusedSymbol", pattern = pattern)
             model("${idea}/inspections/arrayInDataClass", pattern = pattern)
             model("${idea}/inspections/publicApiImplicitType", pattern = pattern)
+            model("${idea}/inspections/replaceArrayEqualityOpWithArraysEquals", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileInspectionTest> {
