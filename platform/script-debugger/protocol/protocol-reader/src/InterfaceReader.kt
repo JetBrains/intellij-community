@@ -2,10 +2,7 @@
 package org.jetbrains.protocolReader
 
 import org.jetbrains.io.JsonReaderEx
-import org.jetbrains.jsonProtocol.JsonField
-import org.jetbrains.jsonProtocol.JsonSubtype
-import org.jetbrains.jsonProtocol.Optional
-import org.jetbrains.jsonProtocol.StringIntPair
+import org.jetbrains.jsonProtocol.*
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -157,7 +154,7 @@ internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Clas
         type == Any::class.java -> RAW_STRING_OR_MAP_PARSER
         type == JsonReaderEx::class.java -> JSON_PARSER
         type == StringIntPair::class.java -> STRING_INT_PAIR_PARSER
-        type.isArray -> ArrayReader(getFieldTypeParser(null, type.componentType, false, null), false)
+        type.isArray -> ArrayReader(getFieldTypeParser(null, type.componentType, false, null), false, member?.annotation<JsonArray>()?.allowSingleObject == true)
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
           val ref = getTypeRef(type)
@@ -176,7 +173,7 @@ internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Clas
           }
         }
         val componentParser = getFieldTypeParser(null, argumentType, false, method)
-        return if (isList) ArrayReader(componentParser, true) else MapReader(componentParser)
+        return if (isList) ArrayReader(componentParser, true, member?.annotation<JsonArray>()?.allowSingleObject == true) else MapReader(componentParser)
       }
       else {
         throw UnsupportedOperationException("Method return type $type (generic) not supported")
