@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator.Input;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.Input;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.ManyEntriesPerFileInputGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.ManyKeysIntegerToIntegerIndexExtension;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -36,8 +36,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Measurement(iterations = 2, time = 15, timeUnit = SECONDS)
 @Fork(1)
 public class IndexStorageLayoutBenchmark {
-
-
   @State(Scope.Benchmark)
   public static class InputContext {
 

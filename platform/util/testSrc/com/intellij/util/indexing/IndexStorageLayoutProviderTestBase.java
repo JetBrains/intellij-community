@@ -414,22 +414,21 @@ public abstract class IndexStorageLayoutProviderTestBase {
     /** deterministic function of a substrate -- repeated call with the same substrate must produce same Input */
     @NotNull Input<K, V> unpackSubstrate(long substrate);
 
-    record Input<K, V>(int inputId,
-                       @NotNull Map<K, V> inputData) {
-      public Input {
-        if (inputId <= 0) {
-          throw new IllegalArgumentException("inputId(=" + inputId + ") must be >0");
-        }
-      }
+  }
 
-      InputData<K, V> asInputData() {
-        return new InputData<>(inputData());
+  public record Input<K, V>(int inputId, @NotNull Map<K, V> inputData) {
+    public Input {
+      if (inputId <= 0) {
+        throw new IllegalArgumentException("inputId(=" + inputId + ") must be >0");
       }
+    }
+
+    InputData<K, V> asInputData() {
+      return new InputData<>(inputData());
     }
   }
 
-
-  public static class MocksBuildingBlocks {
+  public static final class MocksBuildingBlocks {
     private MocksBuildingBlocks() {
       throw new AssertionError("Not for instantiation, just a namespace");
     }
