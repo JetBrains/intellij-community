@@ -70,7 +70,7 @@ private fun notifyInvalidGradleJavaHomeInfo(
   javaHomeProperty: Property<String>,
   reason: JavaHomeValidationStatus
 ) {
-  val propertyLocation = createLinkToFile(project, javaHomeProperty.location)
+  val propertyLocation = createLinkToFile(project, javaHomeProperty.location.toString())
   val notificationContent = GradleBundle.message("gradle.notifications.java.home.property.content", propertyLocation)
   notifyInvalidGradleJvmInfo(project, notificationContent, reason)
 }

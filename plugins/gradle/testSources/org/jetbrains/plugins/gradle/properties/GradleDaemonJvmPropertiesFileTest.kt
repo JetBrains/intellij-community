@@ -44,9 +44,9 @@ class GradleDaemonJvmPropertiesFileTest : GradleDaemonJvmPropertiesFileTestCase(
     }
     assertGradleDaemonJvmPropertiesFile {
       Assertions.assertEquals("value2", version?.value)
-      Assertions.assertEquals(projectPropertiesPath.toString(), version?.location)
+      Assertions.assertEquals(projectPropertiesPath, version?.location)
       Assertions.assertEquals("value4", vendor?.value)
-      Assertions.assertEquals(projectPropertiesPath.toString(), vendor?.location)
+      Assertions.assertEquals(projectPropertiesPath, vendor?.location)
     }
   }
 }

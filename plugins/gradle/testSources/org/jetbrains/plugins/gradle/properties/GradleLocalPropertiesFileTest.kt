@@ -32,7 +32,7 @@ class GradleLocalPropertiesFileTest : GradleLocalPropertiesFileTestCase() {
     }
     asserGradleLocalPropertiesFile {
       Assertions.assertEquals("javaHome", javaHomeProperty?.value)
-      Assertions.assertEquals(projectPropertiesPath.toString(), javaHomeProperty?.location)
+      Assertions.assertEquals(projectPropertiesPath, javaHomeProperty?.location)
     }
   }
 
@@ -45,7 +45,7 @@ class GradleLocalPropertiesFileTest : GradleLocalPropertiesFileTestCase() {
     }
     asserGradleLocalPropertiesFile {
       Assertions.assertEquals("value2", javaHomeProperty?.value)
-      Assertions.assertEquals(projectPropertiesPath.toString(), javaHomeProperty?.location)
+      Assertions.assertEquals(projectPropertiesPath, javaHomeProperty?.location)
     }
   }
 }
