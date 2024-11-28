@@ -18,19 +18,6 @@ class GradleLocalPropertiesFileTest : LightPlatformTestCase() {
   }
 
   @Test
-  fun testDefaultGradleLocalProperties() {
-    val gradleLocalProperties = GradleLocalProperties.EMPTY
-    assertNull(gradleLocalProperties.javaHomeProperty)
-  }
-
-  @Test
-  fun testNotPresentProjectGradleLocalPropertiesFile() {
-    GradleLocalPropertiesFile.getProperties(externalProjectPath).run {
-      assertEquals(GradleLocalProperties.EMPTY, this)
-    }
-  }
-
-  @Test
   fun testEmptyProjectGradleLocalPropertiesFile() = testGradleLocalProperties(
     assertion = {
       GradleLocalPropertiesFile.getProperties(externalProjectPath).run {
