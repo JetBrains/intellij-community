@@ -315,6 +315,18 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
 
     @JvmStatic
     fun getCurrentCommand(): DebuggerCommandImpl? = myCurrentCommands.get().peek()
+
+    /**
+     * Debugger thread runs in a progress indicator itself, so we need to check whether we have any other progress indicator additionally.
+     */
+    internal fun hasNonDefaultProgressIndicator(): Boolean {
+      val hasProgressIndicator = ProgressManager.getInstance().hasProgressIndicator()
+      if (!hasProgressIndicator) return false
+      if (!isManagerThread()) return true
+      val currentIndicator = ProgressManager.getInstance().progressIndicator
+      val debuggerIndicator = currentThread().currentRequest.progressIndicator
+      return currentIndicator !== debuggerIndicator
+    }
   }
 }
 

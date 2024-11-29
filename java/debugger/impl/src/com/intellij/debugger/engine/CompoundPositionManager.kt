@@ -66,7 +66,7 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
     cancellationCheck: () -> Unit,
     processor: (PositionManager) -> T?,
   ): T? {
-    val isCancellableSection = ProgressManager.getInstance().hasProgressIndicator()
+    val isCancellableSection = DebuggerManagerThreadImpl.hasNonDefaultProgressIndicator()
     for (positionManager in myPositionManagers) {
       if (!acceptsFileType(positionManager, fileType)) continue
       if (isCancellableSection) {

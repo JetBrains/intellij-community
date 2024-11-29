@@ -69,6 +69,11 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       return myProgressIndicator.isCanceled() || future.isCancelled() || future.isDone();
     }
 
+    @ApiStatus.Internal
+    public @NotNull ProgressIndicator getProgressIndicator() {
+      return myProgressIndicator;
+    }
+
     public void join() throws InterruptedException, ExecutionException {
       assert myRequestFuture != null;
       try {
