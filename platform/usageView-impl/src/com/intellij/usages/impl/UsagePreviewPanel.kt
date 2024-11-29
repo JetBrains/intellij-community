@@ -417,6 +417,9 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
   @Internal
   companion object {
+
+    val DO_NOT_ADJUST_NAME_RANGE: Key<Boolean> = Key.create<Boolean>("UsageViewPanel.DO_NOT_ADJUST_NAME_RANGE")
+
     const val LINE_HEIGHT_PROPERTY = "UsageViewPanel.lineHeightProperty"
     private val LOG = Logger.getInstance(UsagePreviewPanel::class.java)
 
@@ -499,9 +502,9 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
      */
     @JvmStatic
     fun getNameElementTextRange(psiElement: PsiElement): TextRange {
+      if (psiElement.getUserData(DO_NOT_ADJUST_NAME_RANGE) == true)
+        return psiElement.textRange
       val psiFile = psiElement.containingFile
-      if (psiElement.textOffset == 0 && psiElement.textRange == TextRange.EMPTY_RANGE /*reference equals!!*/)
-        return TextRange.EMPTY_RANGE
       val nameElement = psiFile.findElementAt(psiElement.textOffset)
       return if (nameElement != null) {
         nameElement.textRange
