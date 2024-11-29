@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -60,6 +60,7 @@ public final class JBCefApp {
   private static final boolean SKIP_VERSION_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_version_check");
   private static final boolean SKIP_MODULE_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_module_check");
   private static final boolean IS_REMOTE_ENABLED;
+  static final String REGISTRY_REMOTE_KEY = "ide.browser.jcef.out-of-process.enabled";
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
@@ -93,18 +94,14 @@ public final class JBCefApp {
     addCefCustomSchemeHandlerFactory(new JBCefSourceSchemeHandlerFactory());
     addCefCustomSchemeHandlerFactory(new JBCefFileSchemeHandlerFactory());
 
-    if (RegistryManager.getInstance().is("ide.browser.jcef.out-of-process.enabled")) {
+    if (RegistryManager.getInstance().is(REGISTRY_REMOTE_KEY)) {
       boolean isTemporaryDisabled = false;
       if (!Boolean.getBoolean("force_enable_out_of_process_jcef")) {
         isTemporaryDisabled = true;
-        if (Boolean.getBoolean("idea.debug.mode"))
-          LOG.debug("Out-of-process jcef mode is disabled (because idea.debug.mode=true)");
-        else if (SystemInfo.isWayland)
+        if (SystemInfo.isWayland)
           LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
         else if (SystemInfo.isWindows)
           LOG.debug("Out-of-process jcef mode is temporarily disabled in Windows");
-        else if (SystemInfo.isLinux)
-          LOG.debug("Out-of-process jcef mode is temporarily disabled in Linux");
         else
           isTemporaryDisabled = false;
       }
@@ -158,6 +155,9 @@ public final class JBCefApp {
           }
         });
       }
+
+      if (IS_REMOTE_ENABLED)
+        myCefApp.onInitialization(state -> StartupTest.checkBrowserCreation());
     }
 
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
