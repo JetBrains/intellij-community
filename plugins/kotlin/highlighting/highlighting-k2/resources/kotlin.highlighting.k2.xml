@@ -12,6 +12,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightVisitor"/>
+    <highlightRangeExtension implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinSemanticHighlightingVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinScriptHighlightingVisitor"/>
 
