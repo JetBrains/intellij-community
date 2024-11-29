@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="KtLint plugin">
+    <ktlintMode>MANUAL</ktlintMode>
+    <externalJarPaths>
+      <list>
+        <option value="$PROJECT_DIR$/../ktlint-compose-0.4.11-all.jar" />
+      </list>
+    </externalJarPaths>
+  </component>
+  <component name="com.nbadal.ktlint.KtlintProjectSettings">
+    <ktlintMode>MANUAL</ktlintMode>
+    <attachToIntellijFormat>false</attachToIntellijFormat>
+  </component>
+</project>
