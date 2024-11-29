@@ -909,5 +909,15 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         public void testVarArgs() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/VarArgs.kt"));
         }
+
+        @TestMetadata("wildcardWithoutArguments.kt")
+        public void testWildcardWithoutArguments() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/wildcardWithoutArguments.kt"));
+        }
+
+        @TestMetadata("wildcardWithoutArgumentsOnType.kt")
+        public void testWildcardWithoutArgumentsOnType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/wildcardWithoutArgumentsOnType.kt"));
+        }
     }
 }
