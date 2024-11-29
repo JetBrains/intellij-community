@@ -22,7 +22,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorLineMarkerProvider;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -86,30 +85,27 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
 
     private final String myColorText;
     private JsonStringLiteral myLiteral;
-
+    private final Icon myIcon;
 
     private MyRenderer(@NotNull String colorText, @NotNull JsonStringLiteral literal) {
       myColorText = colorText;
       myLiteral = literal;
+      myIcon = computeIcon(colorText);
+    }
+
+    private @NotNull EmptyIcon computeIcon(String colorText) {
+      Color color = getColor(colorText);
+      if (color != null) {
+        return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
+      }
+      return JBUIScale.scaleIcon(EmptyIcon.create(ICON_SIZE));
     }
 
     @NotNull
     @Override
     public Icon getIcon() {
-      return IconDeferrer.getInstance().defer(
-        EmptyIcon.create(ICON_SIZE),
-        new MyColorKey(myColorText),
-        colorKey -> {
-          Color color = getColor(colorKey.myColorText);
-          if (color != null) {
-            return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
-          }
-          return JBUIScale.scaleIcon(EmptyIcon.create(ICON_SIZE));
-        }
-      );
+      return myIcon;
     }
-
-    private record MyColorKey(String myColorText) { }
 
     @Override
     public boolean isNavigateAction() {
