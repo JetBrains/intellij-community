@@ -118,6 +118,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return canNavigate();
         }
 
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -130,6 +131,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return true;
         }
 
+        @Override
         public int hashCode() {
             return myTemplate.hashCode();
         }

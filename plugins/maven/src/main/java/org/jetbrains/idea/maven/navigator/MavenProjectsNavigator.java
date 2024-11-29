@@ -57,7 +57,7 @@ import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.MavenWslUtil;
+import org.jetbrains.idea.maven.utils.MavenEelUtil;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -259,13 +259,13 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
       });
 
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
-      MavenWslUtil.checkWslJdkAndShowNotification(myProject);
-      MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
+      MavenEelUtil.checkJdkAndShowNotification(myProject);
+      MavenEelUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
     });
 
     StartupManager.getInstance(myProject).runAfterOpened(() -> {
       DumbService.getInstance(myProject).runWhenSmart(() -> {
-        MavenWslUtil.checkWslJdkAndShowNotification(myProject);
+        MavenEelUtil.checkJdkAndShowNotification(myProject);
       });
     });
   }

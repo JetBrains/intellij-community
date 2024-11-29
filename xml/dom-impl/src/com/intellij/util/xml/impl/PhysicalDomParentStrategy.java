@@ -80,6 +80,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return true;
   }
 
+  @Override
   @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   public boolean equals(final Object o) {
     return strategyEquals(this, o);
@@ -141,6 +142,7 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return nav1 != null && nav1.equals(nav2);
   }
 
+  @Override
   public int hashCode() {
     if (!myElement.isPhysical()) {
       return myElement.getNavigationElement().hashCode();

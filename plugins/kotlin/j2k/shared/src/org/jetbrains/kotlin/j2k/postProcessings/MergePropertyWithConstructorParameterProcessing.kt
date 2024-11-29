@@ -62,19 +62,19 @@ class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcess
         }
     }
 
-    context(KaSession)
     override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
         val context = prepareContext(elements)
         return Applier(context)
     }
 
-    context(KaSession)
     private fun prepareContext(elements: List<PsiElement>): Map<KtClass, List<Initialization<*>>> {
         val context = mutableMapOf<KtClass, List<Initialization<*>>>()
 
         for (klass in elements.descendantsOfType<KtClass>()) {
-            val initializations = collectPropertyInitializations(klass)
-            context[klass] = initializations
+            analyze(klass) {
+                val initializations = collectPropertyInitializations(klass)
+                context[klass] = initializations
+            }
         }
 
         return context

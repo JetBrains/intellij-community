@@ -28,6 +28,7 @@ public class ReturnInstruction extends InstructionImpl {
     super(finallyClause);
   }
 
+  @Override
   public String toString() {
     return super.toString() + " RETURN";
   }

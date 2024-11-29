@@ -1,0 +1,24 @@
+### auto-generated section `build fleet.rpc.server` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "rpc-server",
+  module_name = "fleet.rpc.server",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/rpc",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/util/core:fleet-util-core",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+  ]
+)
+### auto-generated section `build fleet.rpc.server` end

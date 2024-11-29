@@ -15,7 +15,7 @@
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.0.21-RC-0.1/rhizomedb-compiler-plugin-2.0.21-RC-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.0-RC2-0.3/rhizomedb-compiler-plugin-2.1.0-RC2-0.3.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -32,13 +32,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
     <orderEntry type="library" scope="PROVIDED" name="rhizomedb-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="fleet.kernel" exported="" />
-    <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" exported="" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />

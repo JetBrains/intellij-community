@@ -78,7 +78,13 @@ private class AsyncLog {
     GlobalScope.launch(dispatcher + CoroutineName("AsyncLog")) {
       for (event in queue) {
         when (event) {
-          is LogEvent -> event.logNow()
+          is LogEvent -> try {
+            event.logNow()
+          }
+          catch (t: Throwable) {
+            System.err.println("Logger failure while trying to log $event")
+            t.printStackTrace()
+          }
           is AwaitQueueEvent -> event.continuation.resume(Unit)
         }
       }

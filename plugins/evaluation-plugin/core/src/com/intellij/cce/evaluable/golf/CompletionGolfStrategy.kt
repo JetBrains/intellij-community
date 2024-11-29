@@ -32,21 +32,18 @@ data class CompletionGolfStrategy(
 
   val suggestionsProvider: String,
   val pathToZipModel: String?,
-  val completionType: CompletionType) : EvaluationStrategy {
+  val completionType: CompletionType,
+) : EvaluationStrategy {
   override val filters: Map<String, EvaluationFilter> = emptyMap()
-
-  companion object {
-    const val DEFAULT_PROVIDER: String = "DEFAULT"
-  }
 
   class Builder(val mode: CompletionGolfMode) {
     var checkLine: Boolean = true
-    var invokeOnEachChar: Boolean = false
+    var invokeOnEachChar: Boolean = true
 
     var source: SuggestionSource? = null
     var topN: Int = -1
 
-    var suggestionsProvider: String = DEFAULT_PROVIDER
+    lateinit var suggestionsProvider: String
     var pathToZipModel: String? = null
     var completionType: CompletionType = CompletionType.ML
 

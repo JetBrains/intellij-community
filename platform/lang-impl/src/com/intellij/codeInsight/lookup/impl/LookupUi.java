@@ -82,18 +82,24 @@ final class LookupUi {
 
     MenuAction menuAction = new MenuAction();
     menuAction.add(new ChangeSortingAction());
-    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
-      }
+    AnAction quickJavaDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
+    if (quickJavaDocAction != null) {
+      menuAction.add(new DelegatedAction(quickJavaDocAction) {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
+        }
 
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
-      }
-    });
-    menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)));
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.BGT;
+        }
+      });
+    }
+    AnAction quickImplementationsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS);
+    if (quickImplementationsAction != null) {
+      menuAction.add(new DelegatedAction(quickImplementationsAction));
+    }
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
 
@@ -485,9 +491,9 @@ final class LookupUi {
   }
 
   private static class DelegatedAction extends DumbAwareAction implements HintManagerImpl.ActionToIgnore {
-    private final AnAction delegateAction;
+    private final @NotNull AnAction delegateAction;
 
-    private DelegatedAction(AnAction action) {
+    private DelegatedAction(@NotNull AnAction action) {
       delegateAction = action;
       getTemplatePresentation().setText(delegateAction.getTemplateText(), true);
       copyShortcutFrom(delegateAction);

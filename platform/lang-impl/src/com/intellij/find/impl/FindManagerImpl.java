@@ -62,8 +62,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.SoftReference;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -571,7 +571,7 @@ public final class FindManagerImpl extends FindManager {
         currentThreadData.highlighter.restart(text);
       }
       finally {
-        LayeredLexer.ourDisableLayersFlag.set(null);
+        LayeredLexer.ourDisableLayersFlag.remove();
       }
 
       data.set(new SoftReference<>(currentThreadData));

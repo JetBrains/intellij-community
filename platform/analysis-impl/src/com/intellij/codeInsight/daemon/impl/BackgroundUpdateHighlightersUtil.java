@@ -240,7 +240,6 @@ public final class BackgroundUpdateHighlightersUtil {
       });
       for (HighlightInfo info : infosToCreateHighlightersFor) {
         assert !info.isFromInspection() && !info.isFromAnnotator() && !info.isFromHighlightVisitor() && !info.isInjectionRelated(): info; // all these types are handled in GHP/LHP separately
-        assert !info.isFromInspection() && !info.isFromAnnotator() && !info.isFromHighlightVisitor() && !info.isInjectionRelated(): info; // all these types are handled in GHP/LHP separately
         createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, recycler, range2markerCache, severityRegistrar, session);
       }
       ((HighlightingSessionImpl)session).updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()), recycler);

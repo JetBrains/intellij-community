@@ -63,7 +63,7 @@ internal class JavaFieldRenderer(
     var field = renderField()
     field = insertField(field, javaUsage?.anchor)
     if (request.fieldType.isEmpty() || request.fieldType.size > 1 || request.isStartTemplate) {
-      tryStartTemplate(field)
+      startTemplate(field)
     }
   }
 
@@ -101,11 +101,11 @@ internal class JavaFieldRenderer(
     return helper.insertFieldImpl(targetClass, field, anchor)
   }
 
-  internal fun tryStartTemplate(field: PsiField) {
+  internal fun startTemplate(field: PsiField) {
     val targetFile = targetClass.containingFile ?: return
     val newEditor = positionCursor(field.project, targetFile, field) ?: return
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val template = helper.setupTemplateImpl(field, expectedTypes, targetClass, newEditor, javaUsage?.reference, constantField, request.isStartTemplate, substitutor) ?: return
+    val template = helper.setupTemplateImpl(field, expectedTypes, targetClass, newEditor, javaUsage?.reference, constantField, request.isStartTemplate, substitutor)
     val listener = MyTemplateListener(project, newEditor, targetFile)
     startTemplate(newEditor, template, project, listener, null)
   }

@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
@@ -271,6 +272,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       .toList();
   }
 
+  @Unmodifiable
   static @NotNull List<PsiFileSystemItem> getContextsForScope(@NotNull Project project,
                                                               @NotNull String packageName,
                                                               @NotNull GlobalSearchScope scope) {

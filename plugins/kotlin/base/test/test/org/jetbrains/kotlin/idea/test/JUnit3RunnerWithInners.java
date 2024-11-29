@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.test;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.TestIndexingModeSupporter;
+import com.intellij.util.ArrayUtil;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode;
 import org.junit.Ignore;
 import org.junit.internal.MethodSorter;
@@ -158,7 +161,11 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
         for (Class<?> currentClass = klass; Test.class.isAssignableFrom(currentClass); currentClass = currentClass.getSuperclass()) {
             TestIndexingMode indexingMode = currentClass.getAnnotation(TestIndexingMode.class);
             if (indexingMode != null) {
-                return indexingMode.value();
+                TestIndexingModeSupporter.@NotNull IndexingMode[] value = indexingMode.value();
+                if (!Registry.is("ide.dumb.mode.check.awareness")) {
+                    return ArrayUtil.remove(value, TestIndexingModeSupporter.IndexingMode.DUMB_EMPTY_INDEX);
+                }
+                return value;
             }
         }
         return null;

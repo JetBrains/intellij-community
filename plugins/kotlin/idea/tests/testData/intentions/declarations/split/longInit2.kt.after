@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 // AFTER-WARNING: The value 'if (n > 0)<br>        "> 0"<br>    else<br>        "<= 0"' assigned to 'var x: String defined in foo' is never used
 // AFTER-WARNING: Variable 'x' is assigned but never accessed
 fun foo(n: Int) {

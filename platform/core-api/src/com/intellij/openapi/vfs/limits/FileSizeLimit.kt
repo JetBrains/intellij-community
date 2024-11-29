@@ -21,10 +21,6 @@ interface FileSizeLimit {
 
     private val limitsByExtension: AtomicReference<Map<String, ExtensionSizeLimitInfo>?> = AtomicReference(null)
 
-    @JvmStatic
-    @ApiStatus.Internal
-    fun getFileLengthToCacheThreshold(): Int = FileUtilRt.LARGE_FOR_CONTENT_LOADING
-
     private fun getLimitsByExtension(): Map<String, ExtensionSizeLimitInfo> {
       return limitsByExtension.get() ?: limitsByExtension.updateAndGet { getLimits() }!!
     }
@@ -55,12 +51,12 @@ interface FileSizeLimit {
     @JvmStatic
     fun getContentLoadLimit(extension: String?): Int {
       @Suppress("DEPRECATION")
-      val limit = findApplicable(extension ?: "")?.content ?: FileUtilRt.LARGE_FOR_CONTENT_LOADING
+      val limit = findApplicable(extension ?: "")?.content ?: getDefaultContentLoadLimit()
       return limit
     }
 
     @JvmStatic
-    fun getDefaultContentLoadLimit(): Int = getContentLoadLimit(null)
+    fun getDefaultContentLoadLimit(): Int = FileUtilRt.LARGE_FOR_CONTENT_LOADING
 
     @JvmStatic
     fun getIntellisenseLimit(): Int = getIntellisenseLimit(null)

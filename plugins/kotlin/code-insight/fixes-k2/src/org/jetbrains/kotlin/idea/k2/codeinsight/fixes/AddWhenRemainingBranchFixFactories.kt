@@ -1,25 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 object AddWhenRemainingBranchFixFactories {
 
-    val noElseInWhen = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoElseInWhen ->
+    val noElseInWhen = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoElseInWhen ->
         val whenExpression = diagnostic.psi
         val subjectExpression = whenExpression.subjectExpression
-            ?: return@IntentionBased emptyList()
+            ?: return@ModCommandBased emptyList()
 
         buildList {
             val missingCases = diagnostic.missingWhenCases.takeIf {
@@ -28,7 +26,7 @@ object AddWhenRemainingBranchFixFactories {
             add(
                 AddRemainingWhenBranchesQuickFix(
                     whenExpression,
-                    AddRemainingWhenBranchesUtils.Context(missingCases, null),
+                    AddRemainingWhenBranchesUtils.ElementContext(missingCases, null),
                 )
             )
 
@@ -38,7 +36,7 @@ object AddWhenRemainingBranchFixFactories {
                 add(
                     AddRemainingWhenBranchesQuickFix(
                         whenExpression,
-                        AddRemainingWhenBranchesUtils.Context(missingCases, enumToStarImport),
+                        AddRemainingWhenBranchesUtils.ElementContext(missingCases, enumToStarImport),
                     )
                 )
             }
@@ -46,11 +44,14 @@ object AddWhenRemainingBranchFixFactories {
     }
 
     private class AddRemainingWhenBranchesQuickFix(
-        target: KtWhenExpression,
-        @SafeFieldForPreview private val context: AddRemainingWhenBranchesUtils.Context,
-    ) : AbstractKotlinApplicableQuickFix<KtWhenExpression>(target) {
-        override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(context.enumToStarImport != null)
-        override fun apply(element: KtWhenExpression, project: Project, editor: Editor?, file: KtFile) =
-            addRemainingWhenBranches(element, context)
+        element: KtWhenExpression,
+        private val elementContext: AddRemainingWhenBranchesUtils.ElementContext,
+    ) : PsiUpdateModCommandAction<KtWhenExpression>(element) {
+        override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(elementContext.enumToStarImport != null)
+        override fun invoke(
+            context: ActionContext,
+            element: KtWhenExpression,
+            updater: ModPsiUpdater,
+        ) = addRemainingWhenBranches(element, elementContext)
     }
 }

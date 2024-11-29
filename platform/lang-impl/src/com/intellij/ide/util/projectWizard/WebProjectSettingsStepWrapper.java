@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
@@ -41,6 +42,7 @@ public final class WebProjectSettingsStepWrapper implements SettingsStep {
     return myStepBase != null ? myStepBase.getWizardContext() : null;
   }
 
+  @Unmodifiable
   public List<LabeledComponent<? extends JComponent>> getFields() {
     return ContainerUtil.map(myFields, (Pair<@NotNull @Nls String, @NotNull JComponent> pair) -> LabeledComponent.create(pair.second, pair.first));
   }

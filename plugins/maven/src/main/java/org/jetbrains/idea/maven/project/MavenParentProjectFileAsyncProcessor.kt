@@ -57,7 +57,7 @@ abstract class MavenParentProjectFileAsyncProcessor<RESULT_TYPE>(private val myP
   private suspend fun findInLocalRepository(generalSettings: MavenGeneralSettings, parentDesc: MavenParentDesc): RESULT_TYPE? {
     var result: RESULT_TYPE? = null
     val parentFile: VirtualFile?
-    val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveLocalRepository, parentDesc.parentId, "pom")
+    val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveRepositoryPath, parentDesc.parentId, "pom")
     parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
     if (parentFile != null) {
       result = processRepositoryParent(parentFile)

@@ -35,6 +35,7 @@ public final class AnnotationSessionImpl extends AnnotationSession {
    * @return text range (inside the {@link #getFile()}) for which annotators should be calculated sooner than for the remaining range in the file.
    * Usually this priority range corresponds to the range visible on screen.
    */
+  @Override
   public @NotNull TextRange getPriorityRange() {
     return Objects.requireNonNullElseGet(myPriorityRange, ()->getFile().getTextRange());
   }

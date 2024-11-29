@@ -10,11 +10,13 @@ import com.intellij.debugger.mockJDI.values.MockIntegerValue
 import com.intellij.debugger.mockJDI.values.MockObjectReference
 import com.intellij.debugger.mockJDI.values.MockValue
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.load.java.JvmAbi
 import java.lang.annotation.ElementType
 import java.util.function.BiConsumer
 
@@ -376,6 +378,37 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         }
     }
 
+    fun testInlineFunctionMultiLevel() {
+        val text = """
+            fun main() {
+                foo(::println)
+            }
+            
+            inline fun foo(block: (String) -> Unit) {
+                println("before")
+                bar(block)
+                println("after")
+            }
+            
+            inline fun bar(block: (String) -> Unit) {
+                val name = fetchName()
+                <caret>if (name != ""/*TRUE*/) {
+                    block(name)
+                }
+            }
+            
+            fun fetchName(): String = "name"          
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}foo", MockIntegerValue(vm, 0))
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}bar", MockIntegerValue(vm, 0))
+            frame.addVariable(
+                "name${KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX}${KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX}",
+                MockValue.createValue("name", String::class.java, vm)
+            )
+        }
+    }
+
     fun testInlineFunctionThis() {
         val text = """
             package org.jetbrains.kotlin.idea.k2.debugger.test
@@ -396,8 +429,38 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         """
         doTest(text) { vm, frame ->
             frame.addVariable(
-                KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
+                AsmUtil.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
                 MockValue.createValue(Nested(-1), vm))
+        }
+    }
+
+    fun testInlineFunctionMultiLevelThis() {
+        val text = """
+            fun main() {
+                foo(::println)
+            }
+            
+            inline fun foo(block: (String) -> Unit) {
+                println("before")
+                fetchName().bar(block)
+                println("after")
+            }
+            
+            inline fun String.bar(block: (String) -> Unit) {
+                <caret>if(this != ""/*TRUE*/) {
+                    block(this)
+                }
+            }
+            
+            fun fetchName(): String = "name" 
+        """
+        doTest(text) { vm, frame ->
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}foo", MockIntegerValue(vm, 0))
+            frame.addVariable("${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION}bar", MockIntegerValue(vm, 0))
+            frame.addVariable(
+                AsmUtil.INLINE_DECLARATION_SITE_THIS + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX + KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX,
+                MockValue.createValue("name", String::class.java, vm)
+            )
         }
     }
 
@@ -564,6 +627,45 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
             frame.addVariable("\$this\$useClazz_u24lambda_u240", MockValue.createValue(Nested(1), vm))
         }
     }
+    
+    fun testLambdaInsideInlineFunction() {
+        val text = """
+            inline fun useClazz(clazz: Any) {
+                with(clazz) {
+                    <caret>if (this is String/*TRUE*/) {
+                        println("String")
+                    }
+                }
+            }
+
+            fun main() {
+                useClazz("foo")
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$useClazz_u24lambda_u240\$iv", MockValue.createValue("foo", String::class.java, vm))
+        }
+    }
+
+    fun testLambdaUsesInlineClass() {
+        val text = """
+            @JvmInline
+            value class InlineClass(val i: Int)
+            
+            fun useInlineClass(ic: InlineClass) {
+                with(ic) {
+                    <caret>if (i > 3/*FALSE*/) /*unreachable_start*/println("hello")/*unreachable_end*/
+                }
+            }
+            
+            fun main() {
+                useInlineClass(InlineClass(1))
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$useInlineClass_yCnC9sY_u24lambda_u240", MockIntegerValue(vm, 1))
+        }
+    }
 
     fun testJavaStaticField() {
         val text = """
@@ -614,6 +716,128 @@ class K2DfaAssistTest : DfaAssistTest(), ExpectedPluginModeProvider {
         """.trimIndent()
         doTest(text) { vm, frame ->
             frame.addVariable("clazz", MockValue.createValue("foo", String::class.java, vm))
+        }
+    }
+    
+    fun testGenericExtensionMethod() {
+        val text = """
+            fun <T> T.check() {
+                <caret>val b = this is String/*TRUE*/
+            }
+
+            fun main() {
+                "foo".check()
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$this\$check", MockValue.createValue("foo", String::class.java, vm))
+        }
+    }
+
+    class Outer(@Suppress("unused") val outerName: String) {
+        inner class `Mid$dle` {
+            inner class Inner
+        }
+    }
+
+    fun testInnerClass() {
+        val text = """
+            package org.jetbrains.kotlin.idea.k2.debugger.test
+            class K2DfaAssistTest {
+                class Outer(val outerName: String) {
+                    inner class `Mid${'$'}dle` {
+                        inner class Inner {
+                            fun innerFun() {
+                                <caret>if (outerName == ""/*FALSE*/) /*unreachable_start*/println("outerName is empty")/*unreachable_end*/
+                                if (outerName == "foo"/*TRUE*/) println("outerName is foo")
+                            }
+                        }
+                    }
+                }
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            val o = Outer("foo").`Mid$dle`().Inner()
+            frame.setThisValue(MockObjectReference.createObjectReference(o, o.javaClass, vm))
+        }
+    }
+
+    fun testLambdaCapture() {
+        val text = """
+            fun compareUsingLambda(a: Int, b: Int) {
+                val lam = { it: Int ->
+                    <caret>if (it > a/*TRUE*/) println("bigger")
+                }
+                lam(b)
+            }
+
+            fun main() {
+                compareUsingLambda(1, 2)
+            }
+        """.trimIndent()
+        // This test is for Kotlin code compiled for K2 only
+        // While K1-compiled code should also be supported, we have no test for it
+        doTest(text) { vm, frame ->
+            frame.addVariable("it", MockIntegerValue(vm, 2))
+            frame.addVariable("\$a", MockIntegerValue(vm,  1))
+        }
+    }
+
+    fun testFunCapture() {
+        val text = """
+            fun main() {
+                test(1)
+            }
+            
+            fun test(i: Int) {
+                block2 {
+                    block(fun() {
+                        <caret>if (i > 0/*TRUE*/) {
+                            print("foo")
+                        }
+                    })
+                }
+            }
+            
+            fun block2(block: () -> Unit) {
+                block()
+            }
+            
+            inline fun block(block: () -> Unit) {
+                block()
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$i", MockIntegerValue(vm,  1))
+        }
+    }
+
+    fun testLambdaArgCapture() {
+        val text = """
+            fun main() {
+                test(1)
+            }
+            
+            fun test(i: Int) {
+                block2 {
+                    block({
+                        <caret>if (i > 0/*TRUE*/) {
+                            print("foo")
+                        }
+                    })
+                }
+            }
+            
+            fun block2(block: () -> Unit) {
+                block()
+            }
+            
+            inline fun block(block: () -> Unit) {
+                block()
+            }
+        """.trimIndent()
+        doTest(text) { vm, frame ->
+            frame.addVariable("\$i", MockIntegerValue(vm,  1))
         }
     }
 

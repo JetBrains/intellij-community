@@ -29,6 +29,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -357,12 +359,13 @@ public final class PluginInstaller {
 
       if (file.toString().endsWith(".zip") && keepArchive()) {
         var tempFile = MarketplacePluginDownloadService.getPluginTempFile();
-        Files.copy(file, tempFile);
+        Files.copy(file, tempFile, StandardCopyOption.REPLACE_EXISTING);
         MarketplacePluginDownloadService.renameFileToZipRoot(tempFile);
       }
     }
     catch (IOException ex) {
-      MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
+      LOG.error(ex);
+      MessagesEx.showErrorDialog(parent, IoErrorText.message(ex), CommonBundle.getErrorTitle());
     }
   }
 

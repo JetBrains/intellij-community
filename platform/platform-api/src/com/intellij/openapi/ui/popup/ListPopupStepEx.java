@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import java.awt.event.InputEvent;
 
 public interface ListPopupStepEx<T> extends ListPopupStep<T> {
@@ -29,4 +30,6 @@ public interface ListPopupStepEx<T> extends ListPopupStep<T> {
   void setEmptyText(@NotNull StatusText emptyText);
 
   default @Nls @Nullable String getSecondaryTextFor(T t) { return null; }
+
+  default @Nls @Nullable Icon getSecondaryIconFor(T t) { return null; }
 }

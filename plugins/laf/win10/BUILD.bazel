@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.laf.win10` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "win10_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "win10",
+  module_name = "intellij.laf.win10",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "@lib//:java_compatibility",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":win10_resources"]
+)
+### auto-generated section `build intellij.laf.win10` end

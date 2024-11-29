@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.ide.newUiOnboarding` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "ide-newUiOnboarding_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-newUiOnboarding",
+  module_name = "intellij.platform.ide.newUiOnboarding",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/ui:ide-ui",
+    "//platform/core-ui",
+    "//platform/execution",
+    "//platform/execution-impl",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/statistics",
+    "@lib//:jcef",
+  ],
+  runtime_deps = [":ide-newUiOnboarding_resources"]
+)
+### auto-generated section `build intellij.platform.ide.newUiOnboarding` end

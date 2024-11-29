@@ -33,6 +33,7 @@ public class XmlName implements Comparable<XmlName> {
     return myNamespaceKey;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -43,6 +44,7 @@ public class XmlName implements Comparable<XmlName> {
     return Objects.equals(myNamespaceKey, xmlName.myNamespaceKey);
   }
 
+  @Override
   public int hashCode() {
     return myHashCode;
   }
@@ -57,6 +59,7 @@ public class XmlName implements Comparable<XmlName> {
     return Comparing.compare(myNamespaceKey, o.myNamespaceKey);
   }
 
+  @Override
   public String toString() {
     return myNamespaceKey + " : " + myLocalName;
   }

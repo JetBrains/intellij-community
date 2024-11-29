@@ -65,7 +65,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   @Override
   public ProcessingItem @NotNull [] getProcessingItems(final @NotNull CompileContext context) {
     final Project project = context.getProject();
-    if (GuiDesignerConfiguration.getInstance(project).INSTRUMENT_CLASSES) {
+    GuiDesignerConfiguration designerConfiguration = GuiDesignerConfiguration.getInstance(project);
+
+    if (designerConfiguration.INSTRUMENT_CLASSES || designerConfiguration.GENERATE_SOURCES_ON_SAVE) {
       return ProcessingItem.EMPTY_ARRAY;
     }
 

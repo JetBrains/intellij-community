@@ -22,18 +22,17 @@ public final class JBZipFileWrapper implements GenericZipFile {
   }
 
   @Override
-  public @Nullable GenericZipEntry getEntry(String entryName) throws IOException {
+  public @Nullable GenericZipEntry getEntry(@NotNull String entryName) throws IOException {
     JBZipEntry entry = myZipFile.getEntry(entryName);
-    if (entry == null) return null;
-    return new JBZipFileEntryWrapper(entry);
+    return entry != null ? new EntryWrapper(entry) : null;
   }
 
   @Override
   public @NotNull List<? extends GenericZipEntry> getEntries() {
     List<JBZipEntry> entries = myZipFile.getEntries();
-    ArrayList<JBZipFileEntryWrapper> list = new ArrayList<>(entries.size());
+    List<EntryWrapper> list = new ArrayList<>(entries.size());
     for (JBZipEntry entry : entries) {
-      list.add(new JBZipFileEntryWrapper(entry));
+      list.add(new EntryWrapper(entry));
     }
     return list;
   }
@@ -42,36 +41,35 @@ public final class JBZipFileWrapper implements GenericZipFile {
   public void close() throws IOException {
     myZipFile.close();
   }
-}
 
-class JBZipFileEntryWrapper implements GenericZipEntry {
-  private final JBZipEntry entry;
+  private static class EntryWrapper implements GenericZipEntry {
+    private final JBZipEntry myEntry;
 
-  JBZipFileEntryWrapper(JBZipEntry entry) { this.entry = entry; }
+    EntryWrapper(JBZipEntry entry) { myEntry = entry; }
 
+    @Override
+    public long getSize() {
+      return myEntry.getSize();
+    }
 
-  @Override
-  public long getSize() {
-    return entry.getSize();
-  }
+    @Override
+    public @NotNull String getName() {
+      return myEntry.getName();
+    }
 
-  @Override
-  public String getName() {
-    return entry.getName();
-  }
+    @Override
+    public long getCrc() {
+      return myEntry.getCrc();
+    }
 
-  @Override
-  public long getCrc() {
-    return entry.getCrc();
-  }
+    @Override
+    public boolean isDirectory() {
+      return myEntry.isDirectory();
+    }
 
-  @Override
-  public boolean isDirectory() {
-    return entry.isDirectory();
-  }
-
-  @Override
-  public InputStream getInputStream() throws IOException {
-    return entry.getInputStream();
+    @Override
+    public @Nullable InputStream getInputStream() throws IOException {
+      return myEntry.getInputStream();
+    }
   }
 }

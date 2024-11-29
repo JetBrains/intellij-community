@@ -1,17 +1,17 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.jps.model` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "jps-model",
+jvm_library(
+  name = "model",
   module_name = "intellij.platform.jps.model",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@community//platform/util",
-    "@libraries//:annotations",
+    "//platform/util",
+    "@lib//:jetbrains-annotations",
   ],
-  exports = ["@libraries//:annotations"]
+  exports = ["@lib//:jetbrains-annotations"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.jps.model` end

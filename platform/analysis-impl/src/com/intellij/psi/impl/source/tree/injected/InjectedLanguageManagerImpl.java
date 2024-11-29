@@ -43,7 +43,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   private static final Logger LOG = Logger.getInstance(InjectedLanguageManagerImpl.class);
   static final Object ourInjectionPsiLock = ObjectUtils.sentinel("injectionPsiLock");
   public static final Object INJECTION_BACKGROUND_TOOL_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
-  public static final Object INJECTION_SYNTAX_TOOL_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
+  public static final Object INJECTION_SYNTAX_TOOL_ID = ObjectUtils.sentinel("INJECTION_SYNTAX_ID");
   private final Project myProject;
   private final DumbService myDumbService;
   private final PsiDocumentManager myDocManager;
@@ -410,8 +410,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     Place shreds = ((DocumentWindowImpl)document).getShreds();
     Project project = shreds.getHostPointer().getProject();
     DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
-    Place place = new Place();
-    place.addAll(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
+    Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
     return new DocumentWindowImpl(delegate, place);
   }
 

@@ -18,6 +18,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.Assert;
 
 import java.io.DataInput;
@@ -112,6 +113,7 @@ public class StringIndex {
     };
   }
 
+  @Unmodifiable
   public List<String> getFilesByWord(@NotNull String word) throws StorageException {
     return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
   }

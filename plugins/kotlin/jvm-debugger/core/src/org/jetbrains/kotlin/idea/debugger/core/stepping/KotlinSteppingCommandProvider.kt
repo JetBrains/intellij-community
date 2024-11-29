@@ -197,20 +197,23 @@ fun getStepOverAction(
     return KotlinStepAction.KotlinStepOver(filter)
 }
 
-private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean  =
-    runReadAction {
-        val sourcePosition = positionManager.getSourcePosition(this) ?: return@runReadAction false
+private fun Location.isOnFunctionDeclaration(positionManager: PositionManager): Boolean {
+    val sourcePosition = positionManager.getSourcePosition(this) ?: return false
+    return runReadAction {
         val file = sourcePosition.file as? KtFile ?: return@runReadAction false
         val elementAtLine = findElementAtLine(file, sourcePosition.line)
         elementAtLine is KtNamedFunction || elementAtLine?.parentOfType<KtParameterList>() != null
     }
+}
 
-private fun Location.getContainingNamedFunction(positionManager: PositionManager): KtDeclarationWithBody? =
-    runReadAction {
-        positionManager.getSourcePosition(this)
+private fun Location.getContainingNamedFunction(positionManager: PositionManager): KtDeclarationWithBody? {
+    val sourcePosition = positionManager.getSourcePosition(this)
+    return runReadAction {
+        sourcePosition
             ?.elementAt
             ?.parentOfType<KtNamedFunction>(withSelf = true)
     }
+}
 
 internal fun createKotlinInlineFilter(suspendContext: SuspendContextImpl): KotlinInlineFilter? {
     val location = suspendContext.location ?: return null
@@ -260,8 +263,9 @@ private fun isInlineFunctionFromLibrary(positionManager: PositionManager, locati
         return getDeclarationName(declaration.parent)
     }
 
+    val sourcePosition = positionManager.getSourcePosition(location)
     val fqn = runReadAction {
-        val element = positionManager.getSourcePosition(location)?.elementAt
+        val element = sourcePosition?.elementAt
         getDeclarationName(element)?.takeIf { !it.isRoot }?.asString()
     } ?: return false
 

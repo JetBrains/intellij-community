@@ -5,15 +5,22 @@ import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
+  
+  
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     String description = element.getErrorDescription();
+    if (isJavaDocProblem(element)) return false;
     if (description.equals(JavaPsiBundle.message("expected.semicolon"))) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiExpressionStatement && !PsiUtil.isStatement(parent)) {
@@ -39,6 +46,16 @@ public final class JavaHighlightErrorFilter extends HighlightErrorFilter {
       }
     }
     return true;
+  }
+
+  /**
+   * @param element error element to check
+   * @return true if this error is javadoc parsing problem. In this case, it's covered by JavadocParsingInspection.
+   */
+  public static boolean isJavaDocProblem(@NotNull PsiErrorElement element) {
+    PsiElement parent = element.getParent();
+    return parent instanceof PsiDocComment || parent instanceof PsiDocTag || parent instanceof PsiDocTagValue ||
+           parent != null && parent.getNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER;
   }
 
   private static boolean isAfterUnclosedStringLiteral(@NotNull PsiErrorElement element) {

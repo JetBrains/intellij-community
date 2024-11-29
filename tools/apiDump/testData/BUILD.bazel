@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.tools.apiDump.testData` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "tools-apiDump-testData",
+  module_name = "intellij.tools.apiDump.testData",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.tools.apiDump.testData` end

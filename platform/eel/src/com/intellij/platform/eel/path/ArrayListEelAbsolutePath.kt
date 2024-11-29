@@ -272,7 +272,7 @@ internal class ArrayListEelAbsolutePath private constructor(
       if (raw.length < 3) return null
       if (!raw[0].isLetter()) return null
       if (raw[1] != ':') return null
-      if (raw[2] != '\\') return null
+      if (raw[2] != '\\' && raw[2] != '/') return null
 
       val parts = raw.substring(3)
         .splitToSequence('/', '\\')
@@ -284,7 +284,8 @@ internal class ArrayListEelAbsolutePath private constructor(
         if (error != null) throw EelPathException(raw, error)
       }
 
-      return ArrayListEelAbsolutePath(Root.Windows(raw.substring(0, 3)), parts)
+      val driveRoot = raw.substring(0, 3).replace('/', '\\') // sometimes we have DOS paths containing forward slashes from users or VFS
+      return ArrayListEelAbsolutePath(Root.Windows(driveRoot), parts)
     }
 
     private fun findAbsoluteUnixPath(raw: String): ArrayListEelAbsolutePath? {

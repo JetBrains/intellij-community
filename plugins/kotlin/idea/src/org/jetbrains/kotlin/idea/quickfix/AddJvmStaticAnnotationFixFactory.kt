@@ -8,6 +8,6 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 internal object AddJvmStaticAnnotationFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
         val nameReference = diagnostic.psiElement as? KtNameReferenceExpression ?: return null
-        return AddJvmStaticAnnotationFix.createIfApplicable(nameReference)
+        return AddJvmStaticAnnotationFix.createIfApplicable(nameReference)?.asIntention()
     }
 }

@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.platform.structuralSearch` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "structuralSearch_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structuralSearch",
+  module_name = "intellij.platform.structuralSearch",
+  visibility = ["//visibility:public"],
+  srcs = glob(["source/**/*.kt", "source/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/util",
+    "//platform/util/jdom",
+    "//xml/impl",
+    "@lib//:org_codehaus_groovy_groovy",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/duplicates-analysis",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+  ],
+  exports = ["//platform/duplicates-analysis"],
+  runtime_deps = [":structuralSearch_resources"]
+)
+### auto-generated section `build intellij.platform.structuralSearch` end
+
+### auto-generated section `build intellij.platform.structuralSearch.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "structuralSearch-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "structuralSearch-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/structuralsearch:structuralSearch",
+    "//java/testFramework",
+    "//xml/impl",
+    "//java/structuralsearch-java:structuralSearch",
+    "//platform/util/jdom",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ]
+)
+### auto-generated section `build intellij.platform.structuralSearch.tests` end

@@ -13,29 +13,21 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.security.CompositeX509TrustManager
-import com.intellij.util.io.DigestUtil.sha1
-import com.intellij.util.net.NetUtils
-import com.intellij.util.net.ssl.CertificateUtil
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import kotlinx.coroutines.*
-import java.io.ByteArrayInputStream
-import java.io.IOException
-import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 import java.net.URLEncoder
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
-import java.security.GeneralSecurityException
-import java.security.KeyStore
-import java.security.cert.CertificateEncodingException
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
+import java.time.Duration
 import java.util.zip.GZIPOutputStream
-import javax.net.ssl.*
 
 @Service
 internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
@@ -54,14 +46,16 @@ internal object ITNProxy {
   private const val DEFAULT_PASS = "guest"
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
-  private val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
+  internal val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
 
   private val TEMPLATE: Map<String, String?> by lazy {
     val template = LinkedHashMap<String, String?>()
     template["protocol.version"] = "1.1"
-    template["os.name"] = SystemInfo.OS_NAME
+    template["os.cpu.arch"] = if (CpuArch.isEmulated()) "${CpuArch.CURRENT}(emulated)" else "${CpuArch.CURRENT}"
+    template["os.name"] = OS.CURRENT.name
+    template["os.version"] = OS.CURRENT.version
     template["host.id"] = DEVICE_ID
-    template["java.version"] = SystemInfo.JAVA_VERSION
+    template["java.version"] = SystemInfo.JAVA_RUNTIME_VERSION
     template["java.vm.vendor"] = SystemInfo.JAVA_VENDOR
     val appInfo = ApplicationInfoEx.getInstanceEx()
     val namesInfo = ApplicationNamesInfo.getInstance()
@@ -99,31 +93,37 @@ internal object ITNProxy {
     if (PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))) NEW_THREAD_VIEW_URL + threadId
     else null
 
-  private val ourSslContext: SSLContext by lazy { initContext() }
+  private val httpClient by lazy {
+    HttpClient.newBuilder()
+      .followRedirects(HttpClient.Redirect.NORMAL)
+      .connectTimeout(Duration.ofMinutes(2))
+      .build()
+  }
 
+  @Throws(Exception::class)
   suspend fun sendError(error: ErrorBean, newThreadPostUrl: String): Int {
     val context = currentCoroutineContext()
-    val connection = post(URL(newThreadPostUrl), createRequest(error))
-    val responseCode = connection.responseCode
+
+    val response = post(newThreadPostUrl, createRequest(error))
+    val responseCode = response.statusCode()
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode))
     }
+
     context.ensureActive()
-    val response: String
-    InputStreamReader(connection.inputStream, StandardCharsets.UTF_8).use { reader ->
-      response = StreamUtil.readText(reader)
-    }
-    if ("unauthorized" == response) {
+
+    val responseText = response.body()
+    if (responseText == "unauthorized") {
       throw InternalEAPException("Authorization failed")
     }
-    if (response.startsWith("update ")) {
-      throw UpdateAvailableException(response.substring(7))
+    if (responseText.startsWith("update ")) {
+      throw UpdateAvailableException(responseText.substring(7))
     }
-    if (response.startsWith("message ")) {
-      throw InternalEAPException(response.substring(8))
+    if (responseText.startsWith("message ")) {
+      throw InternalEAPException(responseText.substring(8))
     }
     try {
-      return response.trim().toInt()
+      return responseText.trim().toInt()
     }
     catch (_: NumberFormatException) {
       throw InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"))
@@ -219,117 +219,19 @@ internal object ITNProxy {
          s.split("[^\\w']+".toRegex()).dropLastWhile { it.isEmpty() }.size + "/" + s.length
   }
 
-  @Throws(IOException::class)
-  private fun post(url: URL, formData: CharSequence): HttpURLConnection {
-    val connection = url.openConnection() as HttpsURLConnection
-    connection.sslSocketFactory = ourSslContext.socketFactory
-    if (!NetUtils.isSniEnabled()) {
-      connection.hostnameVerifier = EaHostnameVerifier()
-    }
+  @Throws(Exception::class)
+  private fun post(url: String, formData: CharSequence): HttpResponse<String> {
     val compressed = BufferExposingByteArrayOutputStream(formData.length)
     OutputStreamWriter(GZIPOutputStream(compressed), StandardCharsets.UTF_8).use { writer ->
       for (element in formData) {
         writer.write(element.code)
       }
     }
-    connection.requestMethod = "POST"
-    connection.doInput = true
-    connection.doOutput = true
-    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name())
-    connection.setRequestProperty("Content-Length", compressed.size().toString())
-    connection.setRequestProperty("Content-Encoding", "gzip")
-    connection.outputStream.use { out ->
-      out.write(compressed.internalBuffer, 0, compressed.size())
-    }
-    return connection
+    val request = HttpRequest.newBuilder(URI(url))
+      .header("Content-Type", "application/x-www-form-urlencoded; charset=" + StandardCharsets.UTF_8.name())
+      .header("Content-Encoding", "gzip")
+      .POST(HttpRequest.BodyPublishers.ofByteArray(compressed.toByteArray(), 0, compressed.size()))
+      .build()
+    return httpClient.send(request, HttpResponse.BodyHandlers.ofString())
   }
-
-  @Synchronized
-  @Throws(GeneralSecurityException::class, IOException::class)
-  private fun initContext(): SSLContext {
-    val cf = CertificateFactory.getInstance(CertificateUtil.X509)
-    val ca = cf.generateCertificate(ByteArrayInputStream(JB_CA_CERT.toByteArray(StandardCharsets.US_ASCII)))
-    val ks = KeyStore.getInstance(CertificateUtil.JKS)
-    ks.load(null, null)
-    ks.setCertificateEntry("JetBrains CA", ca)
-    val jbTmf = TrustManagerFactory.getInstance(CertificateUtil.X509)
-    jbTmf.init(ks)
-    val sysTmf = TrustManagerFactory.getInstance(CertificateUtil.X509)
-    sysTmf.init(null as KeyStore?)
-    val ctx = SSLContext.getInstance("TLS")
-    val composite: TrustManager = CompositeX509TrustManager(jbTmf.trustManagers, sysTmf.trustManagers)
-    ctx.init(null, arrayOf(composite), null)
-    return ctx
-  }
-
-  private class EaHostnameVerifier : HostnameVerifier {
-    override fun verify(hostname: String, session: SSLSession): Boolean {
-      try {
-        val certificates = session.peerCertificates
-        if (certificates.size > 1) {
-          val certificate = certificates[0]
-          if (certificate is X509Certificate) {
-            val cn = CertificateUtil.getCommonName(certificate)
-            if (cn.endsWith(".jetbrains.com") || cn.endsWith(".intellij.net")) {
-              return true
-            }
-          }
-          val ca = certificates[certificates.size - 1]
-          if (ca is X509Certificate) {
-            val cn = CertificateUtil.getCommonName(ca)
-            val digest = sha1().digest(ca.encoded)
-            val fp = StringBuilder(2 * digest.size)
-            for (b in digest) fp.append(Integer.toHexString(b.toInt() and 0xFF))
-            if (JB_CA_CN == cn && JB_CA_FP.contentEquals(fp)) {
-              return true
-            }
-          }
-        }
-      }
-      catch (_: SSLPeerUnverifiedException) { }
-      catch (_: CertificateEncodingException) { }
-      return false
-    }
-  }
-
-  @Suppress("SpellCheckingInspection")
-  private val JB_CA_CERT = """
-      -----BEGIN CERTIFICATE-----
-      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
-      -----END CERTIFICATE-----
-
-      """.trimIndent()
-
-  private const val JB_CA_CN = "JetBrains Enterprise CA"
-  private const val JB_CA_FP = "604d3c703a13a3be2d452f14442be11b37e186f"
 }

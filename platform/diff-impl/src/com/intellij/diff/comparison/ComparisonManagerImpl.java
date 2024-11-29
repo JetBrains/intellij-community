@@ -23,6 +23,7 @@ import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -349,6 +350,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
   @NotNull
   @ApiStatus.Experimental
+  @Unmodifiable
   public List<LineFragment> compareLinesWordFirst(@NotNull CharSequence text1,
                                                   @NotNull CharSequence text2,
                                                   @NotNull LineOffsets lineOffsets1,
@@ -646,6 +648,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
    * Compare two texts by-line and then compare changed fragments by-word
    */
   @NotNull
+  @Unmodifiable
   public List<LineFragment> compareLinesWithIgnoredRanges(@NotNull Range boundaryRange,
                                                           @NotNull CharSequence text1,
                                                           @NotNull CharSequence text2,
@@ -791,6 +794,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<InlineChunk> getNonIgnoredWords(int index,
                                                       @NotNull CharSequence text,
                                                       @NotNull LineOffsets lineOffsets,

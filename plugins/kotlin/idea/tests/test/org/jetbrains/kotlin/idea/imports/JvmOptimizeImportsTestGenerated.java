@@ -219,6 +219,16 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/jvm/FromCompanionObjectGeneric.kt");
             }
 
+            @TestMetadata("JavaLangDeprecated_annotationPosition.kt")
+            public void testJavaLangDeprecated_annotationPosition() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/JavaLangDeprecated_annotationPosition.kt");
+            }
+
+            @TestMetadata("JavaLangDeprecated_expressionPosition.kt")
+            public void testJavaLangDeprecated_expressionPosition() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/JavaLangDeprecated_expressionPosition.kt");
+            }
+
             @TestMetadata("JavaStaticField.kt")
             public void testJavaStaticField() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/JavaStaticField.kt");
@@ -619,9 +629,14 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/common/DefaultObjectReference.kt");
             }
 
-            @TestMetadata("EnumEntryUsedInsideEnum.kt")
-            public void testEnumEntryUsedInsideEnum() throws Exception {
-                runTest("testData/editor/optimizeImports/common/EnumEntryUsedInsideEnum.kt");
+            @TestMetadata("EnumStaticMembersUsedInsideEnum.kt")
+            public void testEnumStaticMembersUsedInsideEnum() throws Exception {
+                runTest("testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideEnum.kt");
+            }
+
+            @TestMetadata("EnumStaticMembersUsedInsideUnrelatedClass.kt")
+            public void testEnumStaticMembersUsedInsideUnrelatedClass() throws Exception {
+                runTest("testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideUnrelatedClass.kt");
             }
 
             @TestMetadata("Enums.kt")

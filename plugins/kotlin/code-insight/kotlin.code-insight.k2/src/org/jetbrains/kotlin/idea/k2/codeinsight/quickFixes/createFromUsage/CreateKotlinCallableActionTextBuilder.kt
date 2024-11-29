@@ -81,7 +81,7 @@ object CreateKotlinCallableActionTextBuilder {
                 val receiverType = receiverSymbol.returnType
                 (if (receiverType is KaFunctionType) "($receiverTypeText)." else "$receiverTypeText.") to receiverTypeText
             } else {
-                (receiverTypeText + if (receiverSymbol is KaClassLikeSymbol && !(receiverSymbol is KaClassSymbol && receiverSymbol.classKind == KaClassKind.OBJECT)) ".Companion." else ".") to receiverTypeText
+                (receiverTypeText + if (request.isForCompanion) ".Companion." else ".") to receiverTypeText
             }
         }
     }

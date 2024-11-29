@@ -34,7 +34,7 @@ internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *
 sealed class SchemeManagerFactoryBase(
   private val componentManager: ComponentManager?,
   private val cs: CoroutineScope?
-) : SchemeManagerFactory(), SettingsSavingComponent {
+) : SchemeManagerFactory(componentManager as? Project), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
 
   protected open fun createFileChangeSubscriber(): FileChangeSubscriber? = null
@@ -58,7 +58,7 @@ sealed class SchemeManagerFactoryBase(
     }
     val streamProvider = streamProvider ?: componentManager?.stateStore?.storageManager?.streamProvider
     val ioDirectory = directoryPath ?: pathToFile(path)
-    val manager = SchemeManagerImpl(path, processor, streamProvider, ioDirectory, roamingType, presentableName, schemeNameToFileName, fileChangeSubscriber, settingsCategory, cs)
+    val manager = SchemeManagerImpl(project, path, processor, streamProvider, ioDirectory, roamingType, presentableName, schemeNameToFileName, fileChangeSubscriber, settingsCategory, cs)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -141,7 +141,7 @@ sealed class SchemeManagerFactoryBase(
   }
 
   @Suppress("unused")
-  private class ProjectSchemeManagerFactory(private val project: Project, cs: CoroutineScope) : SchemeManagerFactoryBase(project, cs) {
+  private class ProjectSchemeManagerFactory(override val project: Project, cs: CoroutineScope) : SchemeManagerFactoryBase(project, cs) {
     override fun createFileChangeSubscriber(): FileChangeSubscriber = { schemeManager ->
       if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
         project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))

@@ -239,5 +239,6 @@
     <orderEntry type="library" name="netty" level="project" />
     <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
   </component>
 </module>

@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.Pair
 import kotlin.coroutines.*
 import kotlin.coroutines.cancellation.CancellationException
 import com.intellij.openapi.util.Pair as JBPair
@@ -139,6 +139,19 @@ fun createChildContext(debugName: @NonNls String) : ChildContext = doCreateChild
 
 @Internal
 fun createChildContextWithContextJob(debugName: @NonNls String) : ChildContext = doCreateChildContext(debugName, true)
+
+/**
+ * Creates a child context without attaching a computation via coroutine to the current BlockingJob.
+ *
+ * This is useful when some computations should not block outer scope from finishing.
+ */
+@Internal
+fun createChildContextIgnoreStructuredConcurrency(debugName: @NonNls String) : ChildContext {
+  // probably we need to exclude some elements like PlatformActivityTrackerService.ObservationTracker
+  installThreadContext(currentThreadContext().minusKey(BlockingJob), true).use {
+    return createChildContext(debugName)
+  }
+}
 
 /**
  * Use `unconditionalCancellationPropagation` only when you are sure that the current context will always outlive a child computation.
@@ -337,10 +350,8 @@ fun capturePropagationContext(r: Runnable, expired: Condition<*>, signalRunnable
   var expired = expired
   command = ContextRunnable(childContext, command)
   val cont = childContext.continuation
-  if (cont != null) {
-    val childJob = cont.context.job
-    expired = cancelIfExpired(expired, childJob)
-  }
+  val childJob = cont?.context?.job
+  expired = cleanupIfExpired(expired, childContext, childJob)
   return JBPair.create(command, expired)
 }
 
@@ -352,17 +363,18 @@ fun <T, U> captureBiConsumerThreadContext(f: BiConsumer<T, U>): BiConsumer<T, U>
   return f
 }
 
-private fun <T> cancelIfExpired(expiredCondition: Condition<in T>, childJob: Job): Condition<T> {
+private fun <T> cleanupIfExpired(expiredCondition: Condition<in T>, childContext: ChildContext, childJob: Job?): Condition<T> {
   return Condition { t: T ->
     val expired = expiredCondition.value(t)
     if (expired) {
       // Cancel to avoid a hanging child job which will prevent completion of the parent one.
-      childJob.cancel(null)
+      childJob?.cancel(null)
+      childContext.applyContextActions(false).finish()
       true
     }
     else {
       // Treat runnable as expired if its job was already cancelled.
-      childJob.isCancelled
+      childJob?.isCancelled == true
     }
   }
 }
@@ -397,16 +409,14 @@ internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callab
   }
   val callable = captureClientIdInCallable(c)
   val childContext = createChildContext("$c (scheduled: $ns)")
-  val wrappedCallable = ContextCallable(false, childContext, callable)
+  val cancellationTracker = AtomicBoolean(false)
+  val wrappedCallable = ContextCallable(false, childContext, Callable<V> {
+    cancellationTracker.takeOrThrowCancellationException()
+    callable.call()
+  })
 
   val cont = childContext.continuation
-  if (cont != null) {
-    val childJob = cont.context.job
-    return CancellationScheduledFutureTask(wrapper, childJob, wrappedCallable, ns)
-  }
-  else {
-    return wrapper.MyScheduledFutureTask(wrappedCallable, ns)
-  }
+  return CancellationScheduledFutureTask(wrapper, childContext, cont?.context?.job, cancellationTracker, wrappedCallable, ns)
 }
 
 internal fun capturePropagationContext(
@@ -418,6 +428,7 @@ internal fun capturePropagationContext(
   val childContext = createChildContext("$runnable (scheduled: $ns, period: $period)")
   val capturedRunnable1 = captureClientIdInRunnable(runnable)
   val capturedRunnable2 = Runnable {
+    // no cancellation tracker here: this is a periodic runnable that is restarted
     installThreadContext(childContext.context, false).use {
       childContext.applyContextActions(false).use {
         capturedRunnable1.run()
@@ -425,13 +436,20 @@ internal fun capturePropagationContext(
     }
   }
   val cont = childContext.continuation
-  if (cont != null) {
+  val (finalCapturedRunnable, job) = if (cont != null) {
     val capturedRunnable3 = PeriodicCancellationRunnable(childContext.continuation, capturedRunnable2)
     val childJob = cont.context.job
-    return CancellationScheduledFutureTask<Void>(wrapper, childJob, capturedRunnable3, ns, period)
+    capturedRunnable3 to childJob
   }
   else {
-    return wrapper.MyScheduledFutureTask<Void>(capturedRunnable2, null, ns, period)
+    capturedRunnable2 to null
+  }
+  return CancellationScheduledFutureTask<Void>(wrapper, childContext, job, finalCapturedRunnable, ns, period)
+}
+
+private fun AtomicBoolean.takeOrThrowCancellationException() {
+  if (getAndSet(true)) {
+    throw ProcessCanceledException()
   }
 }
 

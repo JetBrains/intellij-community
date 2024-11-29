@@ -134,6 +134,15 @@ public final class JsonReaders {
     }
   }
 
+  public static <T> List<T> readObjectArrayOrSingleObject(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<? extends T> factory) {
+    if (reader.peek() == JsonToken.BEGIN_OBJECT) {
+      return Collections.singletonList(factory.read(reader));
+    }
+    else {
+      return readObjectArray(reader, factory);
+    }
+  }
+
   public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<? extends T> factory) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();

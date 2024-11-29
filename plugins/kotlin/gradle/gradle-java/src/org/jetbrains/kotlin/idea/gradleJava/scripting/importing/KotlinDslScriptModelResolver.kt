@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
@@ -9,10 +9,12 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsHolder
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptModel
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
@@ -73,7 +75,7 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
         if (sync != null && KotlinPluginModeProvider.isK2Mode()) {
             val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
-            project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.updateDefinitions(definitions)
+            GradleScriptDefinitionsHolder.getInstance(project).updateDefinitions(definitions)
 
             val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
                 val path = Path.of(it.file)
@@ -82,7 +84,8 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 }
             }
 
-            GradleScriptConfigurationsSource.getInstance(project)?.updateDependenciesAndCreateModules(gradleScripts, storage)
+            project.scriptConfigurationsSourceOfType<GradleScriptConfigurationsSource>()
+                ?.updateDependenciesAndCreateModules(gradleScripts, storage)
         }
     }
 }

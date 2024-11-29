@@ -43,6 +43,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,12 +242,11 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
 
   private void createAndRegisterInjected(Language forcedLanguage) {
     StringBuilder decodedChars = new StringBuilder();
-    Place place = new Place();
-    for (PlaceInfo info : placeInfos) {
-      ShredImpl shred = createShred(info, decodedChars, myHostPsiFile);
-      place.add(shred);
-      info.newInjectionHostRange = shred.getSmartPointer().getRange();
-    }
+    Place place = new Place(ContainerUtil.map(placeInfos, info->{
+          ShredImpl shred = createShred(info, decodedChars, myHostPsiFile);
+          info.newInjectionHostRange = shred.getSmartPointer().getRange();
+          return shred;
+        }));
     DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, place);
     String fileName = PathUtil.makeFileName(myHostVirtualFile.getName(), fileExtension);
 
@@ -356,10 +356,9 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
     currentThread = Thread.currentThread();
 
     addPlace(prefix, suffix, host, rangeInsideHost);
-    Place place = new Place();
     StringBuilder decodedChars = new StringBuilder();
     ShredImpl shred = createShred(placeInfos.get(0), decodedChars, myHostPsiFile);
-    place.add(shred);
+    Place place = new Place(List.of(shred));
     addReferenceToResults(Pair.create(injector, place));
     clear();
   }
@@ -630,19 +629,18 @@ class InjectionRegistrarImpl implements MultiHostRegistrar {
               diffLog.doActualPsiChange(oldFiles.get(i));
 
               // create new shreds after commit is complete because otherwise the range markers will be changed in MarkerCache.updateMarkers
-              Place newPlace = new Place();
-              for (int j = 0; j < oldPlace.size(); j++) {
-                PsiLanguageInjectionHost.Shred shred = oldPlace.get(j);
-                PlaceInfo info = placeInfos.get(j);
+              List<ShredImpl> newShreds = ContainerUtil.map(ContainerUtil.zip(oldPlace, placeInfos), pair ->{
+                PsiLanguageInjectionHost.Shred shred = pair.getFirst();
+                PlaceInfo info = pair.getSecond();
                 TextRange rangeInDecodedPSI = info.rangeInDecodedPSI;
                 TextRange rangeInHostElementPSI = info.rangeInHostElement;
                 // now find the injection host in the newly committed file
                 FileASTNode root = hostPsiFile.getNode();
                 PsiLanguageInjectionHost newHost = findNewInjectionHost(hostPsiFile, root, root, info.host, info.newInjectionHostRange);
                 ShredImpl newShred = ((ShredImpl)shred).withRange(rangeInDecodedPSI, rangeInHostElementPSI, newHost);
-                newPlace.add(newShred);
-              }
-
+                return newShred;
+              });
+              Place newPlace = new Place(newShreds);
               cacheEverything(newPlace, oldDocumentWindow, oldInjectedPsiViewProvider, oldFiles.get(i));
               String docText = oldDocumentWindow.getText();
               assert docText.equals(newText) : "=\n" + docText + "\n==\n" + newDocumentText + "\n===\n";

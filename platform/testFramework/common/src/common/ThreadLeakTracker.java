@@ -13,10 +13,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import java.util.concurrent.locks.LockSupport;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.io.NettyUtil;
 
 import java.lang.invoke.MethodHandle;
@@ -25,6 +25,7 @@ import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -74,6 +75,7 @@ public final class ThreadLeakTracker {
       "CompilerThread0",
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
+      "EventQueueMonitor-ComponentEvtDispatch", // com.sun.java.accessibility.util.ComponentEvtDispatchThread
       "External compiler",
       FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
@@ -100,6 +102,7 @@ public final class ThreadLeakTracker {
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
       "process reaper", // Thread[#46,process reaper(pid7496),10,InnocuousThreadGroup] (since JDK-8279488 part of InnocuousThreadGroup)
+      "qtp", // used in tests for mocking via WireMock in integration testing
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",
@@ -156,7 +159,7 @@ public final class ThreadLeakTracker {
   }
 
   private static void waitForThread(Thread thread,
-                                    Map<Thread, StackTraceElement[]> stackTraces,
+                                    @Unmodifiable Map<Thread, StackTraceElement[]> stackTraces,
                                     Map<String, Thread> all,
                                     Map<String, Thread> after) {
     if (!shouldWaitForThread(thread)) {
@@ -186,7 +189,6 @@ public final class ThreadLeakTracker {
     }
 
     // check once more because the thread name may be set via race
-    stackTraces.put(thread, stackTrace);
     if (shouldIgnore(thread, stackTrace)) {
       return;
     }
@@ -198,11 +200,13 @@ public final class ThreadLeakTracker {
     String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
 
     String internalDiagnostic = internalDiagnostic(stackTrace);
+    Map<Thread, StackTraceElement[]> newStackTraces = new HashMap<>(stackTraces);
+    newStackTraces.put(thread, stackTrace);
 
     throw new AssertionError(
       "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
       internalDiagnostic +
-      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, newStackTraces) +
       "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
     );
   }

@@ -2,10 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
-import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -154,7 +153,7 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     inner class JobsContainer(val suspendContext: SuspendContextImpl) :
         RendererContainer(renderer.renderNoIconNode(KotlinDebuggerCoroutinesBundle.message("coroutine.view.node.jobs"))) {
         override fun computeChildren(node: XCompositeNode) {
-            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+            invokeInSuspendContext(suspendContext) { suspendContext ->
                 val coroutineCache = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
                 if (!coroutineCache.isOk()) {
                     node.addChildren(XValueChildrenList.singleton(ErrorNode("coroutine.view.fetching.error")), true)
@@ -219,7 +218,7 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
 
         override fun computeChildren(node: XCompositeNode) {
             node.setAlreadySorted(true)
-            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+            invokeInSuspendContext(suspendContext) { suspendContext ->
                 val children = XValueChildrenList()
 
                 jobs.forEach {
@@ -243,7 +242,7 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     inner class DispatchersContainer(val suspendContext: SuspendContextImpl) :
         RendererContainer(renderer.renderNoIconNode(KotlinDebuggerCoroutinesBundle.message("coroutine.view.node.dispatchers"))) {
         override fun computeChildren(node: XCompositeNode) {
-            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+            invokeInSuspendContext(suspendContext) { suspendContext ->
                 val coroutineCache = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
                 if (!coroutineCache.isOk()) {
                     node.addChildren(XValueChildrenList.singleton(ErrorNode("coroutine.view.fetching.error")), true)
@@ -275,7 +274,7 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
         private val coroutines: List<CoroutineInfoData>?
     ) : RendererContainer(renderer.renderThreadGroup(groupName, isCurrent)) {
         override fun computeChildren(node: XCompositeNode) {
-            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+            invokeInSuspendContext(suspendContext) { suspendContext ->
                 val children = XValueChildrenList()
                 coroutines?.forEach {
                     val isCurrent = it.isRunningOnCurrentThread(suspendContext)
@@ -303,7 +302,7 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
         override fun computeChildren(node: XCompositeNode) {
             node.setAlreadySorted(true)
 
-            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+            invokeInSuspendContext(suspendContext) { suspendContext ->
                 val children = XValueChildrenList()
                 val doubleFrameList = CoroutineFrameBuilder.build(infoData, suspendContext)
                 doubleFrameList?.frames?.forEach {
@@ -369,14 +368,9 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
         CoroutineSelectedNodeListener(debugProcess, tree).install()
 }
 
-private fun DebugProcessImpl.invokeInSuspendContext(
+private fun invokeInSuspendContext(
     suspendContext: SuspendContextImpl,
     command: (SuspendContextImpl) -> Unit
-): Unit =
-    managerThread.invoke(object : SuspendContextCommandImpl(suspendContext) {
-        override fun getPriority() =
-            PrioritizedTask.Priority.NORMAL
-
-        override fun contextAction(suspendContext: SuspendContextImpl): Unit =
-            command(suspendContext)
-    })
+): Unit = executeOnDMT(suspendContext, PrioritizedTask.Priority.NORMAL) {
+    command(suspendContext)
+}

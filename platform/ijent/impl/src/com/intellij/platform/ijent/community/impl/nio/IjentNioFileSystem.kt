@@ -49,10 +49,8 @@ class IjentNioFileSystem internal constructor(
   }
 
   override fun getFileStores(): Iterable<FileStore> {
-    val home = fsBlocking {
-      ijentFs.userHome()
-    }
-    return listOf(IjentNioFileStore(home!!, ijentFs))
+    val home = ijentFs.user.home
+    return listOf(IjentNioFileStore(home, ijentFs))
   }
 
   override fun supportedFileAttributeViews(): Set<String> =

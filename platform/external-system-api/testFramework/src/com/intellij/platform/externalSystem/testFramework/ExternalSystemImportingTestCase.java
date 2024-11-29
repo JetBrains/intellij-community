@@ -41,12 +41,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.externalSystem.testFramework.utils.module.ExternalSystemSourceRootAssertion;
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
-import com.intellij.testFramework.utils.module.ModuleAssertions;
-import com.intellij.testFramework.utils.module.SourceRootAssertions;
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions;
+import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
@@ -118,7 +119,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
     var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
-    ModuleAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
+    ContentRootAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
   }
 
   protected void assertNoSourceRoots(String moduleName) {

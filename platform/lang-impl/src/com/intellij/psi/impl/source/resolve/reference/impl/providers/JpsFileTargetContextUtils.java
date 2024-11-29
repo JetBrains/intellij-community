@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -25,6 +26,7 @@ public final class JpsFileTargetContextUtils {
    * @see com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix
    * @see com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider
    */
+  @Unmodifiable
   public static @NotNull Collection<FileTargetContext> prepareTargetContexts(@NotNull Project project,
                                                                     @NotNull VirtualFile file,
                                                                     @NotNull Collection<FileTargetContext> targetContexts) {
@@ -86,6 +88,7 @@ public final class JpsFileTargetContextUtils {
     return true;
   }
 
+  @Unmodifiable
   private static List<FileTargetContextWrapper> findSourceRootTypes(Collection<? extends FileTargetContext> targetContexts) {
     return ContainerUtil.map(targetContexts, c -> {
       Project project = c.getFileSystemItem().getProject();

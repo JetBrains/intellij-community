@@ -955,9 +955,6 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
 
   private static @NotNull String getExternalDocumentationRoot(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
-    if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
-      return "http://jython.org/docs/library/";
-    }
     final String pyVersion = PythonDocumentationProvider.pyVersion(versionString);
     StringBuilder urlBuilder = new StringBuilder("https://docs.python.org/");
     if (pyVersion != null) {

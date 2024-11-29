@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.jvm.analysis.testFramework` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "analysis-testFramework",
+  module_name = "intellij.jvm.analysis.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/testFramework",
+  ],
+  exports = ["//java/testFramework"]
+)
+### auto-generated section `build intellij.jvm.analysis.testFramework` end

@@ -23,8 +23,8 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.utils.Flags;
-import com.intellij.vcs.log.graph.utils.IntList;
-import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
+import it.unimi.dsi.fastutil.ints.IntImmutableList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +35,13 @@ import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.USUAL;
 public class PermanentLinearGraphImpl implements LinearGraph {
   @NotNull private final Flags mySimpleNodes;
 
-  // myNodeToEdgeIndex.length = nodesCount() + 1.
   @NotNull private final IntList myNodeToEdgeIndex;
   @NotNull private final IntList myLongEdges;
 
   /*package*/ PermanentLinearGraphImpl(@NotNull Flags simpleNodes, int[] nodeToEdgeIndex, int[] longEdges) {
     mySimpleNodes = simpleNodes;
-    myNodeToEdgeIndex = CompressedIntList.newInstance(nodeToEdgeIndex);
-    myLongEdges = CompressedIntList.newInstance(longEdges);
+    myNodeToEdgeIndex = new IntImmutableList(nodeToEdgeIndex);
+    myLongEdges = new IntImmutableList(longEdges);
   }
 
   @Override
@@ -58,8 +57,8 @@ public class PermanentLinearGraphImpl implements LinearGraph {
     boolean hasUpSimpleEdge = nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1);
     if (hasUpSimpleEdge && filter.upNormal) result.add(new GraphEdge(nodeIndex - 1, nodeIndex, null, USUAL));
 
-    for (int i = myNodeToEdgeIndex.get(nodeIndex); i < myNodeToEdgeIndex.get(nodeIndex + 1); i++) {
-      int adjacentNode = myLongEdges.get(i);
+    for (int i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
+      int adjacentNode = myLongEdges.getInt(i);
 
       if (adjacentNode < 0 && filter.special) {
         result.add(GraphEdge.createEdgeWithTargetId(nodeIndex, adjacentNode, GraphEdgeType.NOT_LOAD_COMMIT));

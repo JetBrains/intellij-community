@@ -44,14 +44,16 @@ public class GradleClassBuildModelProvider<T> implements ProjectImportModelProvi
   }
 
   @Override
-  public void populateBuildModels(
+  public void populateModels(
     @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
+    @NotNull Collection<? extends @NotNull GradleBuild> buildModels,
     @NotNull GradleModelConsumer modelConsumer
   ) {
-    T instance = controller.findModel(buildModel, modelClass);
-    if (instance != null) {
-      modelConsumer.consumeBuildModel(buildModel, instance, modelClass);
+    for (GradleBuild buildModel : buildModels) {
+      T instance = controller.findModel(buildModel, modelClass);
+      if (instance != null) {
+        modelConsumer.consumeBuildModel(buildModel, instance, modelClass);
+      }
     }
   }
 

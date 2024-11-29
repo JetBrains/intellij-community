@@ -1,0 +1,80 @@
+### auto-generated section `build intellij.devkit.core` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.devkit.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//java/compiler/openapi:java-compiler",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/impl:java-execution-impl",
+    "//java/java-impl:impl",
+    "//java/compiler/impl:java-compiler-impl",
+    "//plugins/properties",
+    "//xml/impl",
+    "//java/openapi:java",
+    "@lib//:guava",
+    "@lib//:xerces",
+    "//spellchecker",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/lang-impl",
+    "//xml/dom-impl",
+    "//uast/uast-common:uast",
+    "//java/idea-ui:ui",
+    "//jvm/jvm-analysis-api:analysis",
+    "@lib//:protobuf",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//platform/service-container:serviceContainer",
+    "//platform/platform-api:ide",
+    "//jps/jps-builders:build",
+    "@lib//:stream_ex",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//java/debugger/impl:java-debugger-impl",
+    "@lib//:netty-codec-http",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:netty-buffer",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/boot",
+    "//platform/util/text-matching",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/smart-update",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//json",
+    "@lib//:kotlinx-serialization-protobuf",
+    "//platform/built-in-server-api:builtInServer",
+    "@lib//:caffeine",
+    "//platform/ijent/buildConstants:community-buildConstants",
+    "//platform/markdown-utils",
+    "@lib//:snakeyaml",
+  ],
+  runtime_deps = [":core_resources"]
+)
+### auto-generated section `build intellij.devkit.core` end

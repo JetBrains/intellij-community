@@ -203,14 +203,14 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       if (canTerminateGracefullyWithWinP() && !Registry.is("disable.winp")) {
         try {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
+            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLineForLog());
             return true;
           }
           return WinProcessTerminator.terminateWinProcessGracefully(this, processService);
         }
         catch (Throwable e) {
           if (!myProcess.isAlive()) {
-            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
+            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLineForLog());
             return true;
           }
           String message = e.getMessage();
@@ -221,14 +221,14 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             // Let's fall back to the default termination without logging an error.
             String msg = "Cannot send Ctrl+C to process without a console (fallback to default termination)";
             if (LOG.isDebugEnabled()) {
-              LOG.debug(msg + " " + getCommandLine());
+              LOG.debug(msg + " " + getCommandLineForLog());
             }
             else {
               LOG.info(msg);
             }
           }
           else {
-            LOG.error("Cannot send Ctrl+C (fallback to default termination) " + getCommandLine(), e);
+            LOG.error("Cannot send Ctrl+C (fallback to default termination) " + getCommandLineForLog(), e);
           }
         }
       }

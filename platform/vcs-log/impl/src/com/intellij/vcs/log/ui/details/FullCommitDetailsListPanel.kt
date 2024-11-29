@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SimpleTextAttributes
@@ -61,10 +62,15 @@ abstract class FullCommitDetailsListPanel(
   @RequiresBackgroundThread
   @Throws(VcsException::class)
   protected abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
+
+  val changesBrowser: ChangesBrowserBase
+    get() {
+      return changesBrowserWithLoadingPanel.changesBrowser
+    }
 }
 
 private class ChangesBrowserWithLoadingPanel(project: Project, disposable: Disposable) : JPanel(BorderLayout()) {
-  private val changesBrowser = SimpleAsyncChangesBrowser(project, false, false)
+  val changesBrowser = SimpleAsyncChangesBrowser(project, false, false)
     .also {
       it.hideViewerBorder()
       Disposer.register(disposable) { it.shutdown() }

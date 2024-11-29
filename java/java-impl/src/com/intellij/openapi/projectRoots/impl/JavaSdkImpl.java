@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -58,6 +59,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
 
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
@@ -184,12 +187,22 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String suggestHomePath() {
-    return JavaHomeFinder.defaultJavaLocation();
+    return JavaHomeFinder.defaultJavaLocation(null);
+  }
+
+  @Override
+  public @Nullable String suggestHomePath(@NotNull Path path) {
+    return JavaHomeFinder.defaultJavaLocation(path);
   }
 
   @Override
   public @NotNull Collection<String> suggestHomePaths() {
-    return JavaHomeFinder.suggestHomePaths();
+    return suggestHomePaths(null);
+  }
+
+  @Override
+  public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+    return JavaHomeFinder.suggestHomePaths(getEelApiBlocking(project), false);
   }
 
   @Override

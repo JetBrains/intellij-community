@@ -14,6 +14,7 @@ import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -208,6 +209,7 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
                                                                @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
     List<ConfigurableBuilder.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();

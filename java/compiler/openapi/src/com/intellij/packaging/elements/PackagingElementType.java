@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
@@ -48,6 +45,7 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
   public abstract boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact);
 
   @NotNull
+  @Unmodifiable
   public abstract List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                       @NotNull CompositePackagingElement<?> parent);
 

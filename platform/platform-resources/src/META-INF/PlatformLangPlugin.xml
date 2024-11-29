@@ -23,6 +23,7 @@
   <xi:include href="/META-INF/AnalysisImpl.xml"/>
   <xi:include href="/META-INF/ProjectModel.xml"/>
   <xi:include href="/META-INF/ProjectModelImpl.xml"/>
+  <xi:include href="/META-INF/ProjectModelPlatform.xml"/>
   <xi:include href="/META-INF/Indexing.xml"/>
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>
@@ -50,6 +51,7 @@
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
+  <xi:include href="/META-INF/PlatformExecutionExtensions.xml"/>
 
   <xi:include href="/META-INF/credential-store.xml">
     <xi:fallback/>

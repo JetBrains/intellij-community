@@ -124,6 +124,7 @@ public class MatchOptions implements JDOMExternalizable {
     return caseSensitiveMatch;
   }
 
+  @Override
   public String toString() {
     return "match options:\n" +
            "pattern:\n" + pattern +
@@ -253,6 +254,7 @@ public class MatchOptions implements JDOMExternalizable {
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchOptions matchOptions)) return false;
@@ -271,6 +273,7 @@ public class MatchOptions implements JDOMExternalizable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = looseMatching ? 1 : 0;
     result = 29 * result + (recursiveSearch ? 1 : 0);

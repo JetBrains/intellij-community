@@ -67,11 +67,6 @@ public class GradleModelHolderState implements Serializable {
   }
 
   @Contract(pure = true)
-  public @NotNull GradleModelHolderState current() {
-    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, myPhase);
-  }
-
-  @Contract(pure = true)
   public @NotNull GradleModelHolderState withPhase(@NotNull GradleModelFetchPhase phase) {
     return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, phase);
   }

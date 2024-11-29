@@ -108,9 +108,9 @@ class ScriptExternalHighlightingPass(
     }
 
     class Factory : TextEditorHighlightingPassFactory {
-        override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-            if (file !is KtFile) return null
-            return ScriptExternalHighlightingPass(file, editor.document)
+        override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+            if (psiFile !is KtFile) return null
+            return ScriptExternalHighlightingPass(psiFile, editor.document)
         }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
@@ -24,15 +24,15 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class VMOptions {
   private static final Logger LOG = Logger.getInstance(VMOptions.class);
   private static final ReadWriteLock ourUserFileLock = new ReentrantReadWriteLock();
+
+  private VMOptions() { }
 
   public enum MemoryKind {
     HEAP("Xmx", "", "change.memory.max.heap"),
@@ -63,7 +63,7 @@ public final class VMOptions {
    * @see #readOption(String, boolean)
    */
   public static int readOption(@NotNull MemoryKind kind, boolean effective) {
-    String strValue = readOption(kind.option, effective);
+    var strValue = readOption(kind.option, effective);
     if (strValue != null) {
       try {
         return (int)(parseMemoryOption(strValue) >> 20);
@@ -82,10 +82,10 @@ public final class VMOptions {
    *                  otherwise it reads a user's .vmoptions {@link #getUserOptionsFile() file}.
    */
   public static @Nullable String readOption(@NotNull String prefix, boolean effective) {
-    List<String> lines = options(effective);
+    var lines = options(effective);
     // the list is iterated in the reverse order, because the last value wins
     for (int i = lines.size() - 1; i >= 0; i--) {
-      String line = lines.get(i).trim();
+      var line = lines.get(i).trim();
       if (line.startsWith(prefix)) {
         return line.substring(prefix.length());
       }
@@ -99,9 +99,9 @@ public final class VMOptions {
    * @see #readOption(String, boolean)
    */
   public static @NotNull List<String> readOptions(@NotNull String prefix, boolean effective) {
-    List<String> lines = options(effective), values = new SmartList<>();
-    for (String s : lines) {
-      String line = s.trim();
+    var values = new SmartList<String>();
+    for (var s : options(effective)) {
+      var line = s.trim();
       if (line.startsWith(prefix)) {
         values.add(line.substring(prefix.length()));
       }
@@ -116,7 +116,7 @@ public final class VMOptions {
     else {
       List<String> platformOptions = List.of(), userOptions = List.of();
 
-      Path platformFile = getPlatformOptionsFile();
+      var platformFile = getPlatformOptionsFile();
       if (Files.exists(platformFile)) {
         try {
           platformOptions = Files.readAllLines(platformFile, getFileCharset());
@@ -126,7 +126,7 @@ public final class VMOptions {
         }
       }
 
-      Path userFile = getUserOptionsFile();
+      var userFile = getUserOptionsFile();
       if (userFile != null && Files.exists(userFile)) {
         ourUserFileLock.readLock().lock();
         try {
@@ -140,7 +140,7 @@ public final class VMOptions {
         }
       }
 
-      List<String> result = new ArrayList<>(platformOptions.size() + userOptions.size());
+      var result = new ArrayList<String>(platformOptions.size() + userOptions.size());
       result.addAll(platformOptions);
       result.addAll(userOptions);
       return result;
@@ -197,26 +197,26 @@ public final class VMOptions {
    * Sets or deletes multiple options in one pass. See {@link #setOption(String, String)} for details.
    */
   public static void setOptions(@NotNull List<? extends Pair<@NotNull String, @Nullable String>> _options) throws IOException {
-    Path file = getUserOptionsFile();
+    var file = getUserOptionsFile();
     if (file == null) {
       throw new IOException("The IDE is not configured for using custom VM options (jb.vmOptionsFile=" + System.getProperty("jb.vmOptionsFile") + ')');
     }
 
-    List<String> lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file, getFileCharset())) : new ArrayList<>();
-    List<Pair<String, @Nullable String>> options = new ArrayList<>(_options);
-    boolean modified = false;
+    var lines = Files.exists(file) ? new ArrayList<>(Files.readAllLines(file, getFileCharset())) : new ArrayList<String>();
+    var options = new ArrayList<Pair<String, @Nullable String>>(_options);
+    var modified = false;
 
-    for (ListIterator<String> il = lines.listIterator(lines.size()); il.hasPrevious(); ) {
-      String line = il.previous().trim();
-      for (Iterator<Pair<String, String>> io = options.iterator(); io.hasNext(); ) {
-        Pair<String, String> option = io.next();
+    for (var il = lines.listIterator(lines.size()); il.hasPrevious(); ) {
+      var line = il.previous().trim();
+      for (var io = options.iterator(); io.hasNext(); ) {
+        var option = io.next();
         if (line.startsWith(option.first)) {
           if (option.second == null) {
             il.remove();
             modified = true;
           }
           else {
-            String newLine = option.first + option.second;
+            var newLine = option.first + option.second;
             if (!newLine.equals(line)) {
               il.set(newLine);
               modified = true;
@@ -228,7 +228,7 @@ public final class VMOptions {
       }
     }
 
-    for (Pair<String, String> option : options) {
+    for (var option : options) {
       if (option.second != null) {
         lines.add(option.first + option.second);
         modified = true;
@@ -262,19 +262,19 @@ public final class VMOptions {
 
   @ApiStatus.Internal
   public static @Nullable Path getUserOptionsFile() {
-    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+    var vmOptionsFile = System.getProperty("jb.vmOptionsFile");
     if (vmOptionsFile == null) {
       // launchers should specify a path to a VM options file used to configure a JVM
       return null;
     }
 
-    Path candidate = Path.of(vmOptionsFile).toAbsolutePath();
+    var candidate = Path.of(vmOptionsFile).toAbsolutePath();
     if (!PathManager.isUnderHomeDirectory(candidate)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite
       return candidate;
     }
 
-    String location = PathManager.getCustomOptionsDirectory();
+    var location = PathManager.getCustomOptionsDirectory();
     if (location == null) {
       return null;
     }
@@ -284,7 +284,7 @@ public final class VMOptions {
 
   @ApiStatus.Internal
   public static @NotNull String getFileName() {
-    String fileName = ApplicationNamesInfo.getInstance().getScriptName();
+    var fileName = ApplicationNamesInfo.getInstance().getScriptName();
     if (!SystemInfo.isMac) fileName += "64";
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
@@ -297,7 +297,6 @@ public final class VMOptions {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
   /** @deprecated ignores write errors; please use {@link #setProperty} instead */
   @Deprecated(forRemoval = true)
   public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
@@ -340,6 +339,5 @@ public final class VMOptions {
   public static @Nullable Path getWriteFile() {
     return getUserOptionsFile();
   }
-
   //</editor-fold>
 }

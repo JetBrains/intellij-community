@@ -18,6 +18,7 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     super(new StructuralSearchFakeInspection(configurations));
   }
 
+  @Override
   public int hashCode() {
     return myTool.getShortName().hashCode();
   }

@@ -1,12 +1,7 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ide` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
-
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
-)
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -18,55 +13,61 @@ kt_javac_options(
   ]
 )
 
-kt_jvm_library(
+jvm_resources(
+  name = "ide_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
   name = "ide",
   module_name = "intellij.platform.ide",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = ":custom-javac-options",
-  kotlinc_opts = "//:k17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/util",
-    "@community//platform/extensions",
-    "@community//platform/core-api:core",
-    "@community//platform/forms_rt:java-guiForms-rt",
-    "@community//platform/icons",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/analysis-api:analysis",
-    "@community//platform/editor-ui-api:editor",
-    "@libraries//:jna-platform",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util-ex",
-    "@community//platform/util/concurrency",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/core-ui",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@libraries//:jcef",
-    "@community//platform/code-style-api:codeStyle",
-    "@community//platform/credential-store:credentialStore",
-    "@community//platform/remote-core",
-    "@community//platform/ide-core",
-    "@community//platform/util/text-matching:util-text-matching",
-    "@community//platform/diagnostic",
-    "@libraries//:jackson-core",
-    "@libraries//:caffeine",
-    "@community//platform/progress/shared:ide-progress",
-    "@community//platform/util/diff:util-diff",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/icons",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor",
+    "@lib//:jna",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/jdom",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jcef",
+    "//platform/code-style-api:codeStyle",
+    "//platform/credential-store:credentialStore",
+    "//platform/remote-core",
+    "//platform/ide-core",
+    "//platform/util/text-matching",
+    "//platform/diagnostic",
+    "@lib//:jackson",
+    "@lib//:caffeine",
+    "//platform/progress/shared:ide-progress",
+    "//platform/util/diff",
   ],
   exports = [
-    "@community//platform/util",
-    "@community//platform/core-api:core",
-    "@community//platform/forms_rt:java-guiForms-rt",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/analysis-api:analysis",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/credential-store:credentialStore",
-    "@community//platform/remote-core",
-    "@community//platform/ide-core",
-    "@community//platform/progress/shared:ide-progress",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor",
+    "//platform/credential-store:credentialStore",
+    "//platform/remote-core",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":ide_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ide` end

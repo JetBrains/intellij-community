@@ -213,32 +213,6 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
-  public void testEpydocReturnType() {
-    doTest("str",
-           """
-             def foo(*args):
-                 '''@rtype: C{str}'''
-                 return args[0]expr = foo('')""");
-  }
-
-  public void testEpydocParamType() {
-    doTest("str",
-           """
-             def foo(s):
-                 '''@type s: C{str}'''
-                 expr = s""");
-  }
-
-  public void testEpydocIvarType() {
-    doTest("int",
-           """
-             class C:
-                 s = None
-                 '''@type: C{int}'''
-                 def foo(self):
-                     expr = self.s""");
-  }
-
   public void testRestParamType() {
     doTest("int",
            """
@@ -4699,6 +4673,30 @@ public class PyTypeTest extends PyTestCase {
   // PY-28076
   public void testAssignmentParens() {
     doTest("int", "((expr)) = 42");
+  }
+
+  public void testElif() {
+    doTest("float",
+           """
+             def foo(a: int | str | float):
+                 if isinstance(a, int):
+                     pass
+                 elif isinstance(a, str):
+                     pass
+                 else:
+                     expr = a
+             """);
+  }
+
+  public void testElif2() {
+    doTest("float",
+           """
+             def foo(a: int | str | float):
+                 if isinstance(a, int):
+                     pass
+                 elif not isinstance(a, str):
+                     expr = a
+             """);
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

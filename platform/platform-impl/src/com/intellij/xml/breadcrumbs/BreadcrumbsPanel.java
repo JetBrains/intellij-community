@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.ui.UISettings;
@@ -29,7 +28,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
@@ -340,14 +338,5 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   private static Font getEditorFont(Editor editor) {
     return ComplementaryFontsRegistry.getFontAbleToDisplay('a', Font.PLAIN, editor.getColorsScheme().getFontPreferences(),
                                                            null).getFont();
-  }
-
-  protected static @Nullable FileBreadcrumbsCollector findCollectorFor(@NotNull Project project,
-                                                                       @Nullable VirtualFile file,
-                                                                       @NotNull BreadcrumbsPanel panel) {
-    if (file == null) return null;
-    FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, file);
-    collector.watchForChanges(file, panel.myEditor, panel, () -> panel.queueUpdate());
-    return collector;
   }
 }

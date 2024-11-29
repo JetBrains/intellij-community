@@ -7,6 +7,8 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.xdebugger.frame.XNamedValue
 import com.sun.jdi.ObjectReference
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ContinuationHolder
@@ -52,7 +54,7 @@ class CoroutineFrameBuilder {
         /**
          * Used by CoroutineAsyncStackTraceProvider to build XFramesView
          */
-        fun build(
+        internal fun build(
             preflightFrame: CoroutinePreflightFrame,
             suspendContext: SuspendContextImpl,
             withPreFrames: Boolean = true
@@ -65,37 +67,37 @@ class CoroutineFrameBuilder {
             if (withPreFrames) {
                 // @TODO perhaps we need to merge the dropped variables with the frame below...
                 val framesLeft = preflightFrame.threadPreCoroutineFrames
-                stackFrames.addAll(framesLeft.mapIndexedNotNull { _, stackFrameProxyImpl ->
+                stackFrames.addAll(framesLeft.mapNotNull { stackFrameProxyImpl ->
                     suspendContext.invokeInManagerThread { buildRealStackFrameItem(stackFrameProxyImpl) }
                 })
             }
 
-            return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineInfoData.creationStackFrames)
+            return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineStacksInfoData.creationStackFrames)
         }
 
         private fun restoredStackTrace(
             preflightFrame: CoroutinePreflightFrame,
         ): Pair<List<CoroutineStackFrameItem>, List<XNamedValue>> {
             val preflightFrameLocation = preflightFrame.stackFrameProxy.location()
-            val coroutineStackFrame = preflightFrame.coroutineInfoData.continuationStackFrames
+            val coroutineStackFrame = preflightFrame.coroutineStacksInfoData.continuationStackFrames
             val preCoroutineTopFrameLocation = preflightFrame.threadPreCoroutineFrames.firstOrNull()?.location()
 
             val variablesRemovedFromTopRestoredFrame = mutableListOf<XNamedValue>()
             val stripTopStackTrace = coroutineStackFrame.dropWhile {
-                it.location.isFilterFromTop(preflightFrameLocation).apply {
-                    if (this)
-                        variablesRemovedFromTopRestoredFrame.addAll(it.spilledVariables)
+                val isFilteredFromTop = it.location.isFilterFromTop(preflightFrameLocation)
+                if (isFilteredFromTop) {
+                    variablesRemovedFromTopRestoredFrame.addAll(it.spilledVariables)
                 }
+                isFilteredFromTop
             }
             // @TODO Need to merge variablesRemovedFromTopRestoredFrame into stripTopStackTrace.firstOrNull().spilledVariables
             val variablesRemovedFromBottomRestoredFrame = mutableListOf<XNamedValue>()
             val restoredFrames = when (preCoroutineTopFrameLocation) {
                 null -> stripTopStackTrace
-                else ->
-                    stripTopStackTrace.dropLastWhile {
-                        it.location.isFilterFromBottom(preCoroutineTopFrameLocation)
-                            .apply { variablesRemovedFromBottomRestoredFrame.addAll(it.spilledVariables) }
-                    }
+                else -> stripTopStackTrace.dropLastWhile {
+                    it.location.isFilterFromBottom(preCoroutineTopFrameLocation)
+                        .apply { variablesRemovedFromBottomRestoredFrame.addAll(it.spilledVariables) }
+                }
             }
             return Pair(restoredFrames, variablesRemovedFromBottomRestoredFrame)
         }
@@ -118,7 +120,7 @@ class CoroutineFrameBuilder {
         /**
          * Used by CoroutineStackFrameInterceptor to check if that frame is 'exit' coroutine frame.
          */
-        fun coroutineExitFrame(
+        internal fun coroutineExitFrame(
             frame: StackFrameProxyImpl,
             suspendContext: SuspendContextImpl
         ): CoroutinePreflightFrame? {
@@ -128,7 +130,7 @@ class CoroutineFrameBuilder {
         }
 
         // Fast check to get the whole coroutine information only for the first suspend frame
-        fun isFirstSuspendFrame(frame: StackFrameProxyImpl): Pair<Boolean, Boolean> {
+        internal fun isFirstSuspendFrame(frame: StackFrameProxyImpl): Pair<Boolean, Boolean> {
             if (extractContinuation(frame, frame.getSuspendExitMode()) == null) {
                 return Pair(false, false)
             }
@@ -136,27 +138,24 @@ class CoroutineFrameBuilder {
             return Pair(true, theFollowingFrames(frame).second)
         }
 
+        @ApiStatus.Internal
+        @VisibleForTesting
         fun lookupContinuation(suspendContext: SuspendContextImpl, frame: StackFrameProxyImpl): CoroutinePreflightFrame? {
             val mode = frame.getSuspendExitMode()
-            if (!mode.isCoroutineFound())
-                return null
+            if (!mode.isCoroutineFound()) return null
 
             val continuation = extractContinuation(frame, mode) ?: return null
-            if (threadAndContextSupportsEvaluation(suspendContext, frame)) {
-                val (theFollowingFrames, isFirstSuspendFrame) = theFollowingFrames(frame)
-                val context = DefaultExecutionContext(suspendContext, frame)
-                val continuationHolder = ContinuationHolder.instance(context)
-                val coroutineInfo = continuationHolder.extractCoroutineInfoData(continuation) ?: return null
-                return CoroutinePreflightFrame(
-                    coroutineInfo,
-                    frame,
-                    theFollowingFrames,
-                    mode,
-                    isFirstSuspendFrame,
-                    coroutineInfo.topFrameVariables
-                )
-            }
-            return null
+            if (!threadAndContextSupportsEvaluation(suspendContext, frame)) return null
+            val (theFollowingFrames, _) = theFollowingFrames(frame)
+            val context = DefaultExecutionContext(suspendContext, frame)
+            val continuationHolder = ContinuationHolder.instance(context)
+            val coroutineStacksInfo = continuationHolder.extractCoroutineStacksInfoData(continuation) ?: return null
+            return CoroutinePreflightFrame(
+                coroutineStacksInfo,
+                frame,
+                theFollowingFrames,
+                coroutineStacksInfo.topFrameVariables
+            )
         }
 
         private fun getLVTContinuation(frame: StackFrameProxyImpl?) =
@@ -168,20 +167,20 @@ class CoroutineFrameBuilder {
         private fun theFollowingFrames(frame: StackFrameProxyImpl): Pair<List<StackFrameProxyImpl>, Boolean> {
             val frames = frame.threadProxy().frames()
             val indexOfCurrentFrame = frames.indexOf(frame)
-            if (indexOfCurrentFrame >= 0) {
-                val indexOfGetCoroutineSuspended = hasGetCoroutineSuspended(frames)
-                // @TODO if found - skip this thread stack
-                if (indexOfGetCoroutineSuspended < 0 && frames.size > indexOfCurrentFrame + 1) {
-                    return Pair(
-                        frames.asSequence()
-                            .drop(indexOfCurrentFrame + 1)
-                            .dropWhile { it.getSuspendExitMode() != SuspendExitMode.NONE }
-                            .toList(),
-                        isFirstSuspendFrame(indexOfCurrentFrame, frames)
-                    )
-                }
-            } else {
+            if (indexOfCurrentFrame < 0) {
                 log.error("Frame isn't found on the thread stack.")
+                return Pair(emptyList(), true)
+            }
+            val indexOfGetCoroutineSuspended = hasGetCoroutineSuspended(frames)
+            // @TODO if found - skip this thread stack
+            if (indexOfGetCoroutineSuspended < 0 && frames.size > indexOfCurrentFrame + 1) {
+                return Pair(
+                    frames.asSequence()
+                        .drop(indexOfCurrentFrame + 1)
+                        .dropWhile { it.getSuspendExitMode() != SuspendExitMode.NONE }
+                        .toList(),
+                    isFirstSuspendFrame(indexOfCurrentFrame, frames)
+                )
             }
             return Pair(emptyList(), true)
         }

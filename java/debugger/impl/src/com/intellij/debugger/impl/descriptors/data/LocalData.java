@@ -19,12 +19,14 @@ public class LocalData extends DescriptorData<LocalVariableDescriptorImpl> {
     return new LocalVariableDescriptorImpl(project, myLocalVariable);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof LocalData)) return false;
 
     return ((LocalData)object).myLocalVariable.equals(myLocalVariable);
   }
 
+  @Override
   public int hashCode() {
     return myLocalVariable.hashCode();
   }

@@ -123,7 +123,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
     //noinspection DataFlowIssue
     newSuspendContext.setThread(suspendContext.getEventThread().getThreadReference());
     if (processSuspendAll(newSuspendContext, suspendContext, performOnSuspendAll)) {
-      process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
+      newSuspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           //noinspection DataFlowIssue
@@ -199,7 +199,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
         .warn("Fails attempt to switch from suspend-thread context to suspend-all context. Will be rescheduled.");
       // Reschedule the request after some time to finish the evaluation.
       // noinspection SSBasedInspection
-      new SingleAlarm(() -> myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      new SingleAlarm(() -> suspendContext.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
           enableRequest(myProcess, myParameters);

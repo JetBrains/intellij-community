@@ -1,37 +1,38 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "core",
   module_name = "intellij.platform.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
   deps = [
-    "@community//platform/util",
-    "@community//platform/extensions",
-    "@community//platform/util/progress:util-progress",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/xmlDom:util-xmlDom",
-    "@community//platform/diagnostic",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@community//platform/util/coroutines:util-coroutines",
-    "@libraries//:annotations",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/util/progress",
+    "//platform/util/jdom",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/xmlDom",
+    "//platform/diagnostic",
+    "@lib//:kotlinx-collections-immutable",
+    "//platform/util/coroutines",
+    "@lib//:jetbrains-annotations",
   ],
   exports = [
-    "@community//platform/util",
-    "@community//platform/extensions",
-    "@community//platform/util/progress:util-progress",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/util/progress",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":core_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.core` end

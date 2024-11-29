@@ -57,6 +57,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
@@ -123,9 +125,26 @@ public final class PythonSdkType extends SdkType {
     return Collections.emptyList();
   }
 
+  /**
+   * This function doesn't support remote SDKs.
+   *
+   * @deprecated Use {@link PySdkExtKt#getSdkSeemsValid(Sdk)}
+   */
   @Override
-  public boolean isValidSdkHome(final @NotNull String path) {
-    return PythonSdkFlavor.getFlavor(path) != null;
+  @Deprecated
+  @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
+  public boolean isValidSdkHome(final @NotNull String localPath) {
+    try {
+      return isLocalPathValid(Paths.get(localPath));
+    }
+    catch (InvalidPathException e) {
+      return false;
+    }
+  }
+
+  @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
+  private static boolean isLocalPathValid(@NotNull Path path) {
+    return PythonSdkFlavor.getFlavor(path.toString()) != null;
   }
 
   @Override
@@ -135,7 +154,7 @@ public final class PythonSdkType extends SdkType {
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           VirtualFile file = files[0];
-          if (!isLocatedInWsl(file) && !isValidSdkHome(file.getPath())) {
+          if (!isLocatedInWsl(file) && !isLocalPathValid(file.toNioPath())) {
             throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.selected", file.getName()));
           }
         }
@@ -224,6 +243,7 @@ public final class PythonSdkType extends SdkType {
       return name;
     }
   }
+
   @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public static @Nullable String suggestBaseSdkName(@NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
@@ -537,23 +557,6 @@ public final class PythonSdkType extends SdkType {
   @Deprecated(forRemoval = true)
   public static @NotNull LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     return PySdkUtil.getLanguageLevelForSdk(sdk);
-  }
-
-  public static @Nullable Sdk findPython2Sdk(@Nullable Module module) {
-    final Sdk moduleSDK = PythonSdkUtil.findPythonSdk(module);
-    if (moduleSDK != null && getLanguageLevelForSdk(moduleSDK).isPython2()) {
-      return moduleSDK;
-    }
-    return findPython2Sdk(PythonSdkUtil.getAllSdks());
-  }
-
-  public static @Nullable Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
-    for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
-      if (getLanguageLevelForSdk(sdk).isPython2()) {
-        return sdk;
-      }
-    }
-    return null;
   }
 
   @Override

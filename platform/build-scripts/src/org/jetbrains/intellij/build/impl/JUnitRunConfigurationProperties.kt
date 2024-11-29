@@ -54,7 +54,7 @@ class JUnitRunConfigurationProperties(
       val envVariables = getEnv(configuration)
 
       val scopeSerialized: String = configuration.getChild("TEST_SEARCH_SCOPE")?.getChild("value")?.getAttributeValue("defaultValue")
-                                    ?: TestSearchScope.WHOLE_PROJECT.serialized
+                                    ?: TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized
       val testSearchScope = TestSearchScope.entries.firstOrNull { it.serialized == scopeSerialized } ?: error(
         "TEST_SEARCH_SCOPE value '$scopeSerialized' must be one of ${TestSearchScope.entries.map { it.serialized }}")
 

@@ -7,11 +7,11 @@ import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
-import com.intellij.driver.sdk.ui.RectangleRef
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.JList
 
 /** Locates JList element */
@@ -98,6 +98,8 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     driver.invokeAction("List-selectPreviousRow", component = component)
   }
 
+  fun isSelectedIndex(index: Int) = listComponent.isSelectedIndex(index)
+
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
     fixture.collectItems().indexOfFirst {
       if (fullMatch) it == itemText
@@ -107,7 +109,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
       else it
     }
 
-  private fun getCellBounds(index: Int): RectangleRef =
+  private fun getCellBounds(index: Int): Rectangle =
     driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
 }
 
@@ -123,5 +125,6 @@ interface JListFixtureRef {
 
 @Remote("javax.swing.JList")
 interface JListComponent {
-  fun getCellBounds(index0: Int, index1: Int): RectangleRef
+  fun getCellBounds(index0: Int, index1: Int): Rectangle
+  fun isSelectedIndex(index: Int): Boolean
 }

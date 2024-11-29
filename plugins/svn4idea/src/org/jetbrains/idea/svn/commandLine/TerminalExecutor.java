@@ -57,7 +57,7 @@ public class TerminalExecutor extends CommandExecutor {
   @NotNull
   @Override
   protected SvnProcessHandler createProcessHandler() {
-    return new TerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), false);
+    return new TerminalProcessHandler(myProcess, myCommandLine, needsUtf8Output(), false);
   }
 
   /**

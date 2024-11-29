@@ -218,6 +218,8 @@ a:com.intellij.openapi.options.SchemeManager
 a:com.intellij.openapi.options.SchemeManagerFactory
 - sf:Companion:com.intellij.openapi.options.SchemeManagerFactory$Companion
 - <init>():V
+- <init>(com.intellij.openapi.project.Project):V
+- b:<init>(com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor):com.intellij.openapi.options.SchemeManager
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String):com.intellij.openapi.options.SchemeManager
 - f:create(java.lang.String,com.intellij.openapi.options.SchemeProcessor,java.lang.String,java.nio.file.Path):com.intellij.openapi.options.SchemeManager
@@ -226,6 +228,7 @@ a:com.intellij.openapi.options.SchemeManagerFactory
 - dispose(com.intellij.openapi.options.SchemeManager):V
 - sf:getInstance():com.intellij.openapi.options.SchemeManagerFactory
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.options.SchemeManagerFactory
+- p:getProject():com.intellij.openapi.project.Project
 f:com.intellij.openapi.options.SchemeManagerFactory$Companion
 - f:getInstance():com.intellij.openapi.options.SchemeManagerFactory
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.options.SchemeManagerFactory
@@ -433,3 +436,4 @@ f:com.intellij.workspaceModel.ide.legacyBridge.LibraryBridgesKt
 f:com.intellij.workspaceModel.ide.legacyBridge.ModuleBridges
 - sf:findModule(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.openapi.module.Module
 - sf:findModuleEntity(com.intellij.openapi.module.Module,com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.jps.entities.ModuleEntity
+- sf:findSnapshotModuleEntity(com.intellij.openapi.module.Module):com.intellij.platform.workspace.jps.entities.ModuleEntity

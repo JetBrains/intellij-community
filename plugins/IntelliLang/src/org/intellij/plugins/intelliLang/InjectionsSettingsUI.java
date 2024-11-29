@@ -44,10 +44,7 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -863,6 +860,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }
   }
 
+  @Unmodifiable
   private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {
     return ContainerUtil.concat(infos, cfgInfo -> cfgInfo.injectionInfos);
   }

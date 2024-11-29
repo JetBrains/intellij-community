@@ -141,6 +141,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * For short-lived temporary settings use {@code CodeStyle.doWithTemporarySettings(project,baseSettings,modifier,runnable},
    * for permanently created settings use {@link CodeStyleSettingsManager#cloneSettings(CodeStyleSettings)}
    */
+  @Override
   @Deprecated
   public CodeStyleSettings clone() {
     CodeStyleSettings clone = new CodeStyleSettings(true, true);

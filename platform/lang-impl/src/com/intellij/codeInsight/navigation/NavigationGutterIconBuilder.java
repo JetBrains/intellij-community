@@ -27,10 +27,7 @@ import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -216,6 +213,7 @@ public class NavigationGutterIconBuilder<T> {
       () -> computeGotoTargets());
   }
 
+  @Unmodifiable
   protected @NotNull Collection<GotoRelatedItem> computeGotoTargets() {
     if (myTargets == null || myGotoRelatedItemProvider == null) return Collections.emptyList();
     NotNullFactory<Collection<? extends T>> factory = evaluateAndForget(myTargets);

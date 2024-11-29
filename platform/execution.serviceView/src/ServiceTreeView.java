@@ -49,9 +49,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
+import java.util.*;
 import java.util.List;
 import java.util.Queue;
-import java.util.*;
 import java.util.concurrent.CancellationException;
 
 import static com.intellij.platform.execution.serviceView.ServiceViewDragHelper.getTheOnlyRootContributor;
@@ -259,7 +259,7 @@ final class ServiceTreeView extends ServiceView {
       NavBarVm vm = myNavBarPanel.getModel();
       if (vm != null) {
         myNavBarPanel.updateModel();
-        vm.selectTail();
+        vm.selectTail(false);
       }
     }
   }

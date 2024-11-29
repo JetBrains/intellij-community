@@ -176,7 +176,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     }
   }
 
-  private void initChildren(@Nullable List<DataNode<?>> children) {
+  private void initChildren(@Nullable ArrayList<DataNode<?>> children) {
     this.children = children;
     this.childrenView = null;
   }
@@ -333,7 +333,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     DataNode<T> copy = nodeCopy(dataNode);
     copy.parent = newParent;
     if (dataNode.children != null) {
-      copy.initChildren(ContainerUtil.map(dataNode.children, child -> copy(child, copy)));
+      copy.initChildren(new ArrayList<>(ContainerUtil.map(dataNode.children, child -> copy(child, copy))));
     }
     return copy;
   }

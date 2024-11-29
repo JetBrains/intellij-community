@@ -125,6 +125,7 @@ public final class XSLTRunner implements XSLTMain {
                 }
 
                 Runtime.getRuntime().addShutdownHook(new Thread("XSLT runner") {
+                  @Override
                   public void run() {
                     try {
                       final Writer out = result.getWriter();
@@ -155,6 +156,7 @@ public final class XSLTRunner implements XSLTMain {
         }
     }
 
+    @Override
     public TransformerFactory createTransformerFactory() throws Exception {
         return createTransformerFactoryStatic();
     }
@@ -168,6 +170,7 @@ public final class XSLTRunner implements XSLTMain {
         }
     }
 
+    @Override
     public void start(Transformer transformer, Source source, Result result) throws TransformerException {
         transformer.transform(source, result);
     }
@@ -194,15 +197,18 @@ public final class XSLTRunner implements XSLTMain {
             myTrouble = trouble;
         }
 
+        @Override
         public void warning(TransformerException exception) {
             handleException(exception, "WARNING");
         }
 
+        @Override
         public void error(TransformerException exception) {
             handleException(exception, "ERROR");
             myTrouble[0] = true;
         }
 
+        @Override
         public void fatalError(TransformerException exception) {
             handleException(exception, "FATAL");
             myTrouble[0] = true;
@@ -255,18 +261,22 @@ public final class XSLTRunner implements XSLTMain {
 
                 messages[0] = sae.getMessage();
                 locators[0] = new SourceLocator() {
+                    @Override
                     public int getColumnNumber() {
                         return sae.getColumnNumber();
                     }
 
+                    @Override
                     public int getLineNumber() {
                         return sae.getLineNumber();
                     }
 
+                    @Override
                     public String getPublicId() {
                       return null;
                     }
 
+                    @Override
                     public String getSystemId() {
                         return sae.getSystemId();
                     }
@@ -293,24 +303,28 @@ public final class XSLTRunner implements XSLTMain {
             outs = out;
         }
 
+        @Override
         public void write(byte[] b, int off, int len) throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].write(b, off, len);
           }
         }
 
+        @Override
         public void write(int b) throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].write(b);
           }
         }
 
+        @Override
         public void flush() throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].flush();
           }
         }
 
+        @Override
         public void close() throws IOException {
           for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
             outs[i].close();

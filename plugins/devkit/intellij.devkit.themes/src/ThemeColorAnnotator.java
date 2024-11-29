@@ -85,21 +85,26 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
 
     private final String myColorText;
     private JsonStringLiteral myLiteral;
-
+    private final Icon myIcon;
 
     private MyRenderer(@NotNull String colorText, @NotNull JsonStringLiteral literal) {
       myColorText = colorText;
       myLiteral = literal;
+      myIcon = computeIcon(colorText);
+    }
+
+    private @NotNull EmptyIcon computeIcon(String colorText) {
+      Color color = getColor(colorText);
+      if (color != null) {
+        return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
+      }
+      return JBUIScale.scaleIcon(EmptyIcon.create(ICON_SIZE));
     }
 
     @NotNull
     @Override
     public Icon getIcon() {
-      Color color = getColor(myColorText);
-      if (color != null) {
-        return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
-      }
-      return JBUIScale.scaleIcon(EmptyIcon.create(ICON_SIZE));
+      return myIcon;
     }
 
     @Override

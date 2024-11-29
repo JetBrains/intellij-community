@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -52,6 +53,7 @@ class NewLibraryChooser implements ClasspathElementChooser<Library> {
 
   @Override
   @NotNull
+  @Unmodifiable
   public List<Library> chooseElements() {
     return ContainerUtil.createMaybeSingletonList(createLibrary());
   }

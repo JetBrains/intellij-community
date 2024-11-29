@@ -277,6 +277,10 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                customBrokenPluginVersions = emptyMap(),
                                                productBuildNumber = { PluginManagerCore.buildNumber })
     for (parentDir in parentDirs) {
+      if (!parentDir.exists() || !parentDir.isDirectory()) {
+        logger.info("Parent dir $parentDir doesn't exist or not a directory. Skipping it")
+        continue
+      }
       val configDirectoriesCandidates = parentDir
         .listDirectoryEntries()
         .filter { it.isDirectory() }

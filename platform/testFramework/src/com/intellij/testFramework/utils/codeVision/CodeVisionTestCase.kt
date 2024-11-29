@@ -51,7 +51,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
       settings.setProviderEnabled(it, enabledProviderGroupIds.contains(it))
     }
 
-    val sourceText = InlayDumpUtil.removeHints(expectedText)
+    val sourceText = InlayDumpUtil.removeInlays(expectedText)
     myFixture.configureByText(fileName, sourceText)
 
     val editor = myFixture.editor
@@ -70,12 +70,15 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   }
 
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return InlayDumpUtil.dumpHintsInternal(sourceText, {
-      val rendererSupported = it.renderer is CodeVisionInlayRenderer
-      if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
-      rendererSupported
-    }, { _, inlay ->
-                                             inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
-                                           }, myFixture.file!!, myFixture.editor, myFixture.getDocument(myFixture.file!!))
+    return InlayDumpUtil.dumpInlays(
+      sourceText, myFixture.editor,
+      filter = {
+        val rendererSupported = it.renderer is CodeVisionInlayRenderer
+        if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
+        rendererSupported
+      },
+      renderer = { _, inlay ->
+        inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
+      })
   }
 }

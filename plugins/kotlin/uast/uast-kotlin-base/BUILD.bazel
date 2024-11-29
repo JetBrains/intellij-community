@@ -1,0 +1,23 @@
+### auto-generated section `build kotlin.uast.uast-kotlin-base` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-uast-uast-kotlin-base",
+  module_name = "kotlin.uast.uast-kotlin-base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:asm",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "@lib//:kotlinc_analysis-api",
+    "//uast/uast-common:uast",
+    "//platform/core-api:core",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+  ]
+)
+### auto-generated section `build kotlin.uast.uast-kotlin-base` end

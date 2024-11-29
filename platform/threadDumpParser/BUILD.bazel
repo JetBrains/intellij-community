@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.platform.threadDumpParser` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "threadDumpParser",
+  module_name = "intellij.platform.threadDumpParser",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+  ]
+)
+
+kt_jvm_test(
+  name = "threadDumpParser_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":threadDumpParser"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:junit3",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ]
+)
+### auto-generated section `build intellij.platform.threadDumpParser` end

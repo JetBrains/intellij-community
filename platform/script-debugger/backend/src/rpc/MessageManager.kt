@@ -17,6 +17,7 @@ package org.jetbrains.rpc
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
@@ -30,6 +31,8 @@ interface MessageProcessor {
 
   fun <RESULT> send(message: Request<RESULT>): Promise<RESULT>
 }
+
+private val MESSAGE_MANAGER_LOG = logger<MessageProcessor>()
 
 class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
   private val callbackMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
@@ -69,7 +72,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
         failedToSend(sequence, message.methodName)
       }
       finally {
-        LOG.error("Failed to send", e)
+        MESSAGE_MANAGER_LOG.error("Failed to send", e)
       }
       return
     }
@@ -105,7 +108,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     if (commandResponse == null) {
       if (closed) {
         // just ignore
-        LOG.info("Connection closed, ignore incoming")
+        MESSAGE_MANAGER_LOG.info("Connection closed, ignore incoming")
       }
       else {
         handler.acceptNonSequence(incomingParsed)
@@ -123,7 +126,7 @@ class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUC
     }
     catch (e: Throwable) {
       callback.onError(e)
-      LOG.error("Failed to dispatch response to callback", e)
+      MESSAGE_MANAGER_LOG.error("Failed to dispatch response to callback", e)
     }
   }
 

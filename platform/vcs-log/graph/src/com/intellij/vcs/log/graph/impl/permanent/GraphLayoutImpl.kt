@@ -2,16 +2,14 @@
 package com.intellij.vcs.log.graph.impl.permanent
 
 import com.intellij.vcs.log.graph.api.GraphLayout
-import com.intellij.vcs.log.graph.utils.impl.CompressedIntList
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.math.max
 
 @ApiStatus.Internal
-class GraphLayoutImpl(layoutIndex: IntArray, private val headNodes: IntList) : GraphLayout {
+class GraphLayoutImpl(private val layoutIndex: IntArray, private val headNodes: IntList) : GraphLayout {
   private val layoutIndexForHeadNodes = getLayoutIndexesForHeads(layoutIndex, headNodes)
-  private val layoutIndex = CompressedIntList.newInstance(layoutIndex)
 
   override fun getLayoutIndex(nodeIndex: Int) = layoutIndex[nodeIndex]
 

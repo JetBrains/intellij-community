@@ -23,6 +23,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   private final String myName;
   private final InitializerType myInitializerType;
   private final QualifiedName myInitializer;
+  @Nullable private final PyLiteralKind myAssignedLiteralKind;
   private final boolean myQualified;
   private final String myTypeComment;
   private final String myAnnotation;
@@ -54,16 +56,18 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     myAnnotation = annotation;
     myHasAssignedValue = hasAssignedValue;
     myInitializerType = InitializerType.Custom;
+    myAssignedLiteralKind = null;
     myInitializer = null;
     myQualified = false;
     myCustomStub = customStub;
     myDocString = docString;
   }
-  
+
   public PyTargetExpressionStubImpl(final String name,
                                     @Nullable String docString,
                                     final InitializerType initializerType,
                                     final QualifiedName initializer,
+                                    final @Nullable PyLiteralKind assignedLiteralKind,
                                     final boolean qualified,
                                     @Nullable String typeComment,
                                     @Nullable String annotation,
@@ -78,6 +82,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     assert initializerType != InitializerType.Custom;
     myInitializerType = initializerType;
     myInitializer = initializer;
+    myAssignedLiteralKind = assignedLiteralKind;
     myQualified = qualified;
     myCustomStub = null;
     myDocString = docString;
@@ -96,6 +101,11 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   @Override
   public QualifiedName getInitializer() {
     return myInitializer;
+  }
+
+  @Override
+  public @Nullable PyLiteralKind getAssignedLiteralKind() {
+    return myAssignedLiteralKind;
   }
 
   @Override

@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.vcs.hg` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "vcs-hg_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-hg",
+  module_name = "intellij.vcs.hg",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/vcs-api:vcs",
+    "//platform/platform-api:ide",
+    "//platform/vcs-impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:guava",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/dvcs-api:vcs-dvcs",
+    "//platform/lang-impl",
+    "@lib//:miglayout-swing",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":vcs-hg_resources"]
+)
+
+kt_jvm_test(
+  name = "vcs-hg_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":vcs-hg"],
+  deps = [
+    "//platform/vcs-api:vcs",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/platform-api:ide",
+    "//platform/vcs-impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:guava",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/dvcs-api:vcs-dvcs",
+    "//platform/lang-impl",
+    "//platform/vcs-tests:vcs-testFramework",
+    "@lib//:miglayout-swing",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":vcs-hg_resources"]
+)
+### auto-generated section `build intellij.vcs.hg` end

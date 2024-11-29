@@ -29,8 +29,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.function.BiFunction;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
@@ -242,6 +243,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private InputValidator myInputValidator;
     private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
     private @Nullable Component dialogOwner;
+    private @Nullable BiFunction<? super String, ? super TemplatePresentation, Boolean> myKindSelector;
 
     private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
 
@@ -290,6 +292,9 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
                                             @NotNull FileCreator<T> fileCreator,
                                             Consumer<? super T> elementConsumer) {
       CreateWithTemplatesDialogPanel contentPanel = new CreateWithTemplatesDialogPanel(selectedItem, myTemplatesList);
+      if (myKindSelector != null) {
+        contentPanel.setTemplateSelectorMatcher(myKindSelector);
+      }
       ElementCreator elementCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
@@ -315,6 +320,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         textField.setText(myDefaultText);
         textField.selectAll();
       }
+
       contentPanel.setApplyAction(e -> {
         String newElementName = contentPanel.getEnteredName();
         if (StringUtil.isEmptyOrSpaces(newElementName)) return;
@@ -352,6 +358,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return null;
     }
 
+    @Override
+    public void setKindSelector(BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher) {
+      myKindSelector = templateMatcher;
+    }
+
     private static @Nullable PsiElement createElement(String newElementName, ElementCreator creator) {
       PsiElement[] elements = creator.tryCreate(newElementName);
       return elements.length > 0 ? elements[0] : null;
@@ -385,6 +396,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     @Nullable
     Map<String,String> getCustomProperties();
+
+    default void setKindSelector(BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher) { }
   }
 
   public interface FileCreator<T> {

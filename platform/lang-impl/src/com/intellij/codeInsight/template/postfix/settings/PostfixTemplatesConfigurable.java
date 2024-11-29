@@ -26,10 +26,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -73,6 +70,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     return Collections.singleton(LanguagePostfixTemplate.EP_NAME);
   }
 
+  @Unmodifiable
   private static @NotNull List<PostfixTemplateProvider> getProviders() {
     List<LanguageExtensionPoint> list = LanguagePostfixTemplate.EP_NAME.getExtensionList();
     return ContainerUtil.map(list, el -> (PostfixTemplateProvider)el.getInstance());

@@ -41,6 +41,12 @@ public final class HashMapZipFile implements ZipFile {
     return (HashMapZipFile)ImmutableZipFile.load(file, true);
   }
 
+  public static @Nullable HashMapZipFile loadIfNotEmpty(@NotNull Path file) throws IOException {
+    @SuppressWarnings("resource")
+    ZipFile result = ImmutableZipFile.load(file, true);
+    return result instanceof EmptyZipFile ? null : (HashMapZipFile)result;
+  }
+
   @NotNull
   static HashMapZipFile createHashMapZipFile(@NotNull ByteBuffer buffer,
                                              int fileSize,

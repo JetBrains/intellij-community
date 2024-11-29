@@ -53,8 +53,6 @@ class 'pkg/TestEnhancedForLoops' {
       38      9
       39      9
       3a      8
-      3b      8
-      3c      8
       40      12
    }
 
@@ -74,8 +72,6 @@ class 'pkg/TestEnhancedForLoops' {
       24      16
       25      16
       26      16
-      27      16
-      28      16
       2c      19
    }
 
@@ -103,8 +99,6 @@ class 'pkg/TestEnhancedForLoops' {
       2c      23
       2d      23
       2e      23
-      2f      23
-      30      23
       34      26
    }
 }

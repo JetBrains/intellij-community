@@ -44,6 +44,7 @@ public class Pet {
         this.birthDay = birthDay;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -57,6 +58,7 @@ public class Pet {
         return true;
     }
 
+    @Override
     public int hashCode() {
         int result;
         result = name.hashCode();
@@ -65,6 +67,7 @@ public class Pet {
         return result;
     }
 
+    @Override
     public String toString() {
         return "Pet{" +
                 "name='" + name + '\'' +

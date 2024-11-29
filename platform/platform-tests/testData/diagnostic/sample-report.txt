@@ -80,12 +80,26 @@ Nominated classes:
  --> [3.43K/68.7KB] java.lang.String
  --> [632/61.7KB] java.lang.Object[]
  --> [622/32.3KB] java.util.LinkedHashMap$Entry
+ --> [290/20.1KB] java.lang.String[]
+ --> [24/16.5KB] java.util.HashMap$Node[]
+ --> [358/12.8KB] java.util.HashMap$Node
+ --> [109/11.4KB] java.lang.reflect.Field
+ --> [157/5.65KB] java.util.Hashtable$Entry
+ --> [256/3.07KB] java.lang.Integer
  --> [35/2.83KB] sun.misc.URLClassPath$JarLoader
  --> [39/2.18KB] sun.util.locale.LocaleObjectCache$CacheEntry
  --> [17/1.17KB] sun.nio.cs.UTF_8$Encoder
  --> [19/855B] sun.util.locale.BaseLocale$Key
  --> [19/836B] sun.util.locale.BaseLocale
  --> [6/426B] java.nio.DirectByteBuffer
+ --> [5/330B] sun.util.calendar.ZoneInfo
+ --> [11/308B] sun.reflect.NativeConstructorAccessorImpl
+ --> [14/238B] sun.misc.MetaIndex
+ --> [3/219B] sun.misc.URLClassPath
+ --> [5/180B] sun.util.locale.provider.LocaleProviderAdapter$Type
+ --> [11/176B] sun.reflect.DelegatingConstructorAccessorImpl
+ --> [6/144B] sun.misc.PerfCounter
+ --> [6/120B] sun.security.util.DisabledAlgorithmConstraints$Constraint$Operator
 
 CLASS: char[] (3113 objects)
 Root 1:
@@ -188,6 +202,86 @@ Root 2:
 [   27/  4%/ 1.4KB] 12.7KB         22   []: java.util.LinkedHashMap$Entry
 [    2/  0%/  104B] 1.01KB          2 * before: java.util.LinkedHashMap$Entry
 
+CLASS: java.lang.String[] (290 objects)
+Root 1:
+[  160/ 55%/ 9.6KB]  120KB          1   ROOT: Static field: java.util.ResourceBundle.cacheList
+[  160/ 55%/ 9.6KB]  120KB          1   (root): java.util.concurrent.ConcurrentHashMap
+[  160/ 55%/ 9.6KB]  120KB          1   table: java.util.concurrent.ConcurrentHashMap$Node[]
+[  160/ 55%/ 9.6KB]  119KB          1   []: java.util.concurrent.ConcurrentHashMap$Node
+[  160/ 55%/ 9.6KB]  119KB          1   val: java.util.ResourceBundle$BundleReference
+[  160/ 55%/ 9.6KB]  119KB          1 ! (soft): sun.util.resources.TimeZoneNames
+[  160/ 55%/ 9.6KB]  119KB          1   lookup: java.util.LinkedHashMap
+[  157/ 54%/9.42KB]  118KB          1   table: java.util.HashMap$Node[]
+[  157/ 54%/9.42KB] 68.4KB        138   []: java.util.LinkedHashMap$Entry
+[  123/ 42%/7.38KB] 37.3KB        123 * value: java.lang.String[]
+Root 2:
+[    1/  0%/4.81KB] 41.8KB          1   ROOT: Static field: sun.util.calendar.ZoneInfoFile.regions
+[    1/  0%/4.81KB] 41.8KB          1 * (root): java.lang.String[]
+
+CLASS: java.util.HashMap$Node[] (24 objects)
+Root 1:
+[    1/  4%/ 8.2KB]  120KB          1   ROOT: Static field: java.util.ResourceBundle.cacheList
+[    1/  4%/ 8.2KB]  120KB          1   (root): java.util.concurrent.ConcurrentHashMap
+[    1/  4%/ 8.2KB]  120KB          1   table: java.util.concurrent.ConcurrentHashMap$Node[]
+[    1/  4%/ 8.2KB]  119KB          1   []: java.util.concurrent.ConcurrentHashMap$Node
+[    1/  4%/ 8.2KB]  119KB          1   val: java.util.ResourceBundle$BundleReference
+[    1/  4%/ 8.2KB]  119KB          1 ! (soft): sun.util.resources.TimeZoneNames
+[    1/  4%/ 8.2KB]  119KB          1   lookup: java.util.LinkedHashMap
+[    1/  4%/ 8.2KB]  118KB          1 * table: java.util.HashMap$Node[]
+Root 2:
+[    1/  4%/ 4.1KB] 12.4KB          1   ROOT: Static field: sun.util.calendar.ZoneInfoFile.aliases
+[    1/  4%/ 4.1KB] 12.4KB          1   (root): java.util.HashMap
+[    1/  4%/ 4.1KB] 12.3KB          1 * table: java.util.HashMap$Node[]
+
+CLASS: java.util.HashMap$Node (358 objects)
+Root 1:
+[  230/ 64%/8.28KB] 12.4KB          1   ROOT: Static field: sun.util.calendar.ZoneInfoFile.aliases
+[  230/ 64%/8.28KB] 12.4KB          1   (root): java.util.HashMap
+[  230/ 64%/8.28KB] 12.3KB          1   table: java.util.HashMap$Node[]
+[  230/ 64%/8.28KB] 8.28KB        178   []: java.util.HashMap$Node
+[   52/ 14%/1.87KB] 1.87KB         45   next: java.util.HashMap$Node
+[    7/  1%/  252B]   252B          6   next: java.util.HashMap$Node
+[    1/  0%/   36B]    36B          1 * next: java.util.HashMap$Node
+Root 2:
+[   48/ 13%/1.72KB] 54.2KB          1   ROOT: Static field: java.lang.ClassLoader.scl
+[   48/ 13%/1.72KB] 54.2KB          1   (root): sun.misc.Launcher$AppClassLoader
+[   25/  6%/  900B] 31.4KB          1   ucp: sun.misc.URLClassPath
+[   21/  5%/  756B]  5.9KB          1   lmap: java.util.HashMap
+[   21/  5%/  756B] 5.84KB          1   table: java.util.HashMap$Node[]
+[   21/  5%/  756B] 5.58KB         14   []: java.util.HashMap$Node
+[    7/  1%/  252B] 1.75KB          6   next: java.util.HashMap$Node
+[    1/  0%/   36B]   188B          1 * next: java.util.HashMap$Node
+
+CLASS: java.lang.reflect.Field (0 objects)
+
+CLASS: java.util.Hashtable$Entry (157 objects)
+Root 1:
+[   55/ 35%/1.98KB] 9.96KB          1   ROOT: Static field: sun.misc.VM.savedProps
+[   55/ 35%/1.98KB] 9.96KB          1   (root): java.util.Properties
+[   55/ 35%/1.98KB] 9.89KB          1   table: java.util.Hashtable$Entry[]
+[   55/ 35%/1.98KB] 9.12KB         39   []: java.util.Hashtable$Entry
+[   16/ 10%/  576B] 1.88KB         14   next: java.util.Hashtable$Entry
+[    2/  1%/   72B]   188B          2 * next: java.util.Hashtable$Entry
+Root 2:
+[   55/ 35%/1.98KB] 7.36KB          1   ROOT: Static field: java.lang.System.props
+[   55/ 35%/1.98KB] 7.36KB          1   (root): java.util.Properties
+[   55/ 35%/1.98KB] 7.26KB          1   table: java.util.Hashtable$Entry[]
+[   55/ 35%/1.98KB] 6.49KB         40   []: java.util.Hashtable$Entry
+[   15/  9%/  540B]   540B         13   next: java.util.Hashtable$Entry
+[    2/  1%/   72B]    72B          2 * next: java.util.Hashtable$Entry
+Root 3:
+[   33/ 21%/1.18KB] 12.3KB          1   ROOT: Static field: java.security.Security.props
+[   33/ 21%/1.18KB] 12.3KB          1   (root): java.util.Properties
+[   33/ 21%/1.18KB] 12.2KB          1   table: java.util.Hashtable$Entry[]
+[   33/ 21%/1.18KB] 11.9KB         26   []: java.util.Hashtable$Entry
+[    7/  4%/  252B] 1.35KB          7 * next: java.util.Hashtable$Entry
+
+CLASS: java.lang.Integer (256 objects)
+Root 1:
+[  256/100%/3.07KB] 5.13KB          1   ROOT: Static field: java.lang.Integer$IntegerCache.cache
+[  256/100%/3.07KB] 5.13KB          1   (root): java.lang.Integer[]
+[  256/100%/3.07KB] 3.07KB        256 * []: java.lang.Integer
+
 CLASS: sun.misc.URLClassPath$JarLoader (35 objects)
 Root 1:
 [   30/ 85%/2.43KB] 54.2KB          1   ROOT: Static field: java.lang.ClassLoader.scl
@@ -268,6 +362,69 @@ Root 2:
 [    1/ 16%/   79B]   128B          1   lb: java.nio.DirectLongBufferU
 [    1/ 16%/   79B]    72B          1 * att: java.nio.DirectByteBuffer
 
+CLASS: sun.util.calendar.ZoneInfo (5 objects)
+Root 1:
+[    4/ 80%/  264B]   768B          1   ROOT: Static field: sun.util.calendar.ZoneInfoFile.zones
+[    4/ 80%/  264B]   768B          1   (root): java.util.concurrent.ConcurrentHashMap
+[    4/ 80%/  264B]   676B          1   table: java.util.concurrent.ConcurrentHashMap$Node[]
+[    4/ 80%/  264B]   536B          4   []: java.util.concurrent.ConcurrentHashMap$Node
+[    4/ 80%/  264B]   272B          4 * val: sun.util.calendar.ZoneInfo
+Root 2:
+[    1/ 20%/   66B]  1.7KB          1   ROOT: Static field: java.util.TimeZone.defaultTimeZone
+[    1/ 20%/   66B]  1.7KB          1 * (root): sun.util.calendar.ZoneInfo
+
+CLASS: sun.reflect.NativeConstructorAccessorImpl (0 objects)
+
+CLASS: sun.misc.MetaIndex (14 objects)
+Root 1:
+[   13/ 92%/  221B] 9.97KB          1   ROOT: Static field: sun.misc.MetaIndex.jarMap
+[   13/ 92%/  221B] 9.97KB          1   (root): java.util.HashMap
+[   13/ 92%/  221B] 9.91KB          1   table: java.util.HashMap$Node[]
+[   13/ 92%/  221B] 9.64KB         11   []: java.util.HashMap$Node
+[   11/ 78%/  187B] 1.83KB         11 * value: sun.misc.MetaIndex
+Root 2:
+[    1/  7%/   17B] 9.42KB          1   ROOT: Static field: sun.misc.Launcher$BootClassPathHolder.bcp
+[    1/  7%/   17B] 9.42KB          1   (root): sun.misc.URLClassPath
+[    1/  7%/   17B] 5.03KB          1   loaders: java.util.ArrayList
+[    1/  7%/   17B] 5.01KB          1   elementData: java.lang.Object[]
+[    1/  7%/   17B]  3.2KB          1   []: sun.misc.URLClassPath$JarLoader
+[    1/  7%/   17B] 2.79KB          1 * metaIndex: sun.misc.MetaIndex
+
+CLASS: sun.misc.URLClassPath (3 objects)
+Root 1:
+[    2/ 66%/  146B] 54.2KB          1   ROOT: Static field: java.lang.ClassLoader.scl
+[    2/ 66%/  146B] 54.2KB          1   (root): sun.misc.Launcher$AppClassLoader
+[    1/ 33%/   73B] 31.4KB          1 * ucp: sun.misc.URLClassPath
+Root 2:
+[    1/ 33%/   73B] 9.42KB          1   ROOT: Static field: sun.misc.Launcher$BootClassPathHolder.bcp
+[    1/ 33%/   73B] 9.42KB          1 * (root): sun.misc.URLClassPath
+
+CLASS: sun.util.locale.provider.LocaleProviderAdapter$Type (5 objects)
+Root 1:
+[    1/ 20%/   36B]   236B          1   ROOT: Static field: sun.util.locale.provider.LocaleProviderAdapter$Type.CLDR
+[    1/ 20%/   36B]   236B          1 * (root): sun.util.locale.provider.LocaleProviderAdapter$Type
+Root 2:
+[    1/ 20%/   36B]    76B          1   ROOT: Static field: sun.util.locale.provider.LocaleProviderAdapter$Type.HOST
+[    1/ 20%/   36B]    76B          1 * (root): sun.util.locale.provider.LocaleProviderAdapter$Type
+
+CLASS: sun.reflect.DelegatingConstructorAccessorImpl (0 objects)
+
+CLASS: sun.misc.PerfCounter (6 objects)
+Root 1:
+[    1/ 16%/   24B]   216B          1   ROOT: Static field: sun.misc.PerfCounter$CoreCounters.zfc
+[    1/ 16%/   24B]   216B          1 * (root): sun.misc.PerfCounter
+Root 2:
+[    1/ 16%/   24B]   260B          1   ROOT: Static field: sun.misc.PerfCounter$CoreCounters.rcbt
+[    1/ 16%/   24B]   260B          1 * (root): sun.misc.PerfCounter
+
+CLASS: sun.security.util.DisabledAlgorithmConstraints$Constraint$Operator (6 objects)
+Root 1:
+[    1/ 16%/   20B]    56B          1   ROOT: Static field: sun.security.util.DisabledAlgorithmConstraints$Constraint$Operator.LT
+[    1/ 16%/   20B]    56B          1 * (root): sun.security.util.DisabledAlgorithmConstraints$Constraint$Operator
+Root 2:
+[    1/ 16%/   20B]    56B          1   ROOT: Static field: sun.security.util.DisabledAlgorithmConstraints$Constraint$Operator.NE
+[    1/ 16%/   20B]    56B          1 * (root): sun.security.util.DisabledAlgorithmConstraints$Constraint$Operator
+
 ================== DISPOSER TREE ==================
 ============== DISPOSER TREE SUMMARY ==============
 ================= DISPOSED OBJECTS ================
@@ -276,8 +433,4 @@ Count of disposed-but-strong-referenced objects: 0
 Disposed-but-strong-referenced dominator object count: 0
 Disposed-but-strong-referenced dominator sub-graph size: 0B
 
-============ DOMINATOR TREE FLAME GRAPH ===========
-1
-root
-0 153607 0
 

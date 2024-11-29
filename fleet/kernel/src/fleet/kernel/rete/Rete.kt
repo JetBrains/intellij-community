@@ -157,7 +157,7 @@ suspend fun <T> withRete(failWhenPropagationFailed: Boolean = false, body: suspe
  * runs [body] on [Rete] [fleet.kernel.DbSource]
  * */
 suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> = let { self ->
-  withObservableMatches((observableSubmatches() as Sequence<ObservableMatch<*>>).toHashSet()) { body(self.value) }
+  withObservableMatches((observableSubmatches() as Sequence<ObservableMatch<*>>)) { body(self.value) }
 }
 
 /**
@@ -199,7 +199,7 @@ suspend fun waitForReteToCatchUp(targetDb: Q, cancellable: Boolean = true) {
  * It is populated by [Match.withMatch]
  * */
 data class ContextMatches internal constructor(
-  internal val matches: PersistentSet<ObservableMatch<*>>,
+  internal val matches: PersistentList<ObservableMatch<*>>,
 ) : CoroutineContext.Element {
   companion object : CoroutineContext.Key<ContextMatches>
 

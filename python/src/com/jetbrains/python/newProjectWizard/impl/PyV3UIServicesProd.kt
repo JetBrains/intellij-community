@@ -1,0 +1,28 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.newProjectWizard.impl
+
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.Project
+import com.intellij.util.ui.showingScope
+import com.jetbrains.python.newProjectWizard.PyV3UIServices
+import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.util.ShowingMessageErrorSync
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import javax.swing.JComponent
+
+internal object PyV3UIServicesProd : PyV3UIServices {
+  override fun runWhenComponentDisplayed(component: JComponent, code: suspend CoroutineScope.() -> Unit) {
+    component.showingScope("..") {
+      code()
+    }
+  }
+
+  override val errorSink: ErrorSink = ShowingMessageErrorSync
+
+  override suspend fun expandProjectTreeView(project: Project): Unit = withContext(Dispatchers.EDT) {
+    AbstractProjectViewPane.EP.getExtensions(project).firstNotNullOf { pane -> pane.tree }.expandRow(0)
+  }
+}

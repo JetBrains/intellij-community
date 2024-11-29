@@ -1,17 +1,17 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.util.text.matching` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "util-text-matching",
+jvm_library(
+  name = "text-matching",
   module_name = "intellij.platform.util.text.matching",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:annotations",
-    "@community//platform/util/base:util-base",
-    "@community//platform/util-rt",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base",
+    "//platform/util-rt",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util.text.matching` end

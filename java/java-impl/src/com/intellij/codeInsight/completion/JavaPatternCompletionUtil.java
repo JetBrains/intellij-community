@@ -22,6 +22,7 @@ import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -182,6 +183,7 @@ public final class JavaPatternCompletionUtil {
     }
 
     @NotNull
+    @Unmodifiable
     private static List<PsiType> findTypes(@Nullable PsiDeconstructionPattern pattern, @NotNull PsiClass record) {
       List<PsiType> recordComponentTypes = Arrays.stream(record.getRecordComponents()).map(t -> t.getType()).toList();
       if (pattern == null) {

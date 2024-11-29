@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 // ERROR: Expected condition of type Boolean
 // ERROR: Expected condition of type Boolean
 // SKIP_ERRORS_AFTER

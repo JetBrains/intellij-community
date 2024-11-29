@@ -4,16 +4,14 @@ package com.intellij.ui.tree
 import com.intellij.ide.util.treeView.CachedTreePresentation
 import com.intellij.ide.util.treeView.CachedTreePresentationSupport
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.LoadingNode
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.*
-import com.intellij.util.ui.tree.TreeModelListenerList
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.isPending
@@ -32,14 +30,15 @@ internal class TreeSwingModelFactoryImpl : TreeSwingModelFactory {
 
 private class TreeSwingModelImpl(
   parentScope: CoroutineScope,
-  private val viewModel: TreeViewModel,
+  override val viewModel: TreeViewModel,
 ) : TreeSwingModel, CachedTreePresentationSupport {
   private val treeScope = parentScope.childScope("Root of $this", Dispatchers.EDT)
-  private val listeners = TreeModelListenerList()
+  private val listeners = CopyOnWriteArrayList<TreeModelListener>()
   private var root: Node? = null
   // These things must be thread-safe because of the "cancellation can happen anywhere, anytime" thing.
   private val nodes = ConcurrentHashMap<TreeNodeViewModel, Node>()
   private val nodeLoadedListeners = CopyOnWriteArrayList<NodeLoadedListener>()
+  private var scrollRequest: TreeNodeViewModel? = null
   private var cachedPresentation: CachedTreePresentation? = null
 
   override var showLoadingNode: Boolean = true
@@ -67,6 +66,31 @@ private class TreeSwingModelImpl(
         }
       }
     }
+    treeScope.launch(CoroutineName("Selection updates of $this")) {
+      viewModel.selection.collectLatest { selection ->
+        val event = TreeSwingModelSelectionEvent(this@TreeSwingModelImpl, selection.map { it.path() }.toTypedArray())
+        fireSwingTreeModelEvent {
+          selectionChanged(event)
+        }
+      }
+    }
+    treeScope.launch(CoroutineName("Scroll requests of $this")) {
+      viewModel.scrollEvents.collectLatest { node ->
+        scrollRequest = node
+        tryToScroll()
+      }
+    }
+  }
+
+  private fun tryToScroll() {
+    val nodeViewModel = scrollRequest ?: return
+    val node = nodes[nodeViewModel] ?: return
+    if (node.lifecycle != NodeLifecycle.PUBLISHED) return
+    val event = TreeSwingModelScrollEvent(this@TreeSwingModelImpl, nodeViewModel.path())
+    fireSwingTreeModelEvent {
+      scrollRequested(event)
+    }
+    scrollRequest = null
   }
 
   override fun getRoot(): TreeNodeViewModel? = root?.viewModel
@@ -104,7 +128,9 @@ private class TreeSwingModelImpl(
   }
 
   private fun treeStructureChanged(node: Node?) {
-    listeners.treeStructureChanged(TreeModelEvent(this, node?.path, null, null))
+    fireEvent(parent = node, nodes = null) {
+      treeStructureChanged(it)
+    }
   }
 
   private fun treeNodesRemoved(parent: Node, nodes: Map<Node, Int>) {
@@ -125,12 +151,23 @@ private class TreeSwingModelImpl(
     }
   }
 
-  private inline fun fireEvent(parent: Node, nodes: Map<Node, Int>?, event: TreeModelListenerList.(TreeModelEvent) -> Unit) {
+  private inline fun fireEvent(parent: Node?, nodes: Map<Node, Int>?, fireEvent: TreeModelListener.(TreeModelEvent) -> Unit) {
     // A special case of nodes == null means that the parent itself has changed.
-    if (nodes?.isEmpty() == true || listeners.isEmpty) return
+    if (nodes?.isEmpty() == true || listeners.isEmpty()) return
     val indices = nodes?.values?.toIntArray()
     val values = nodes?.keys?.map { it.viewModel }?.toTypedArray()
-    listeners.event(TreeModelEvent(this, parent.path, indices, values))
+    val event = TreeModelEvent(this, parent?.path, indices, values)
+    for (listener in listeners) {
+      listener.fireEvent(event)
+    }
+  }
+
+  private inline fun fireSwingTreeModelEvent(fireEvent: TreeSwingModelListener.() -> Unit) {
+    for (listener in listeners) {
+      if (listener is TreeSwingModelListener) {
+        listener.fireEvent()
+      }
+    }
   }
 
   private fun addNodeLoadedListener(listener: NodeLoadedListener) {
@@ -151,20 +188,21 @@ private class TreeSwingModelImpl(
    * and this is only possible once the UI (which is a regular listener) is notified.
    */
   private fun markPublished(node: Node) {
-    if (node.state == NodeState.PUBLISHED) return
-    if (node.state != NodeState.LOADED) {
+    if (node.lifecycle == NodeLifecycle.PUBLISHED) return
+    if (node.lifecycle != NodeLifecycle.LOADED) {
       LOG.warn(Throwable("Marking the node as published, but it's not loaded: $node"))
       // proceed anyway, as an inconsistent state is still better than a visitor waiting forever
     }
-    node.state = NodeState.PUBLISHED
+    node.lifecycle = NodeLifecycle.PUBLISHED
     nodeLoadedListeners.forEach { it.nodePublished(node) }
+    tryToScroll() // in case when we were asked to scroll to this node before it was published
   }
 
   override fun accept(visitor: TreeVisitor, allowLoading: Boolean): Promise<TreePath?> {
     val promise = AsyncPromise<TreePath?>()
     val job = treeScope.launch(CoroutineName("Accept $visitor")) {
       try {
-        promise.setResult(viewModel.accept(SwingAwareVisitorDelegate(visitor, allowLoading), allowLoading))
+        promise.setResult(viewModel.accept(SwingAwareVisitorDelegate(visitor, allowLoading), allowLoading)?.path())
       }
       catch (e: Exception) {
         if (e !is CancellationException) promise.setError(e)
@@ -178,23 +216,22 @@ private class TreeSwingModelImpl(
     return promise
   }
 
-  private inner class SwingAwareVisitorDelegate(delegate: TreeVisitor, private val allowLoading: Boolean) : SuspendingTreeVisitor {
+  private inner class SwingAwareVisitorDelegate(delegate: TreeVisitor, private val allowLoading: Boolean) : TreeViewModelVisitor {
     private val viewModelVisitor = TreeDomainModelDelegatingVisitor(viewModel.domainModel, delegate)
 
-    override suspend fun visit(path: TreePath): TreeVisitor.Action {
-      val nodeViewModel = path.lastPathComponent as TreeNodeViewModel
+    override suspend fun visit(nodeViewModel: TreeNodeViewModel): TreeVisitor.Action {
       // Before visiting, we must make sure that the node we're about to visit actually exists in this model.
       // For the root node, it means that it was already collected and fully loaded.
       // For child nodes, it means that its parent's children are loaded.
       // In both cases, it's very important that it isn't just created, but actually reported to the tree and its UI!
       // Otherwise, Swing can be in an inconsistent state: the node exists, but, for example, can't be expanded.
       // So here it's very important to wait until it's fully loaded and reported via the listeners.
-      // The view model invokes this whole thing under the node view mode's scope,
+      // The view model invokes this whole thing under the node view model's scope,
       // so we can be sure we won't wait forever:
       // if the node still exists, it'll make its way here sooner or later,
       // otherwise its scope will be canceled along with our waiting.
       val node = awaitNode(nodeViewModel)
-      val result = viewModelVisitor.visit(path)
+      val result = viewModelVisitor.visit(node.viewModel)
       if (result == TreeVisitor.Action.CONTINUE && allowLoading) {
         // This is needed to ensure that awaitNode() calls for children won't wait forever,
         // because we don't even try to load nodes unless they're requested.
@@ -209,7 +246,7 @@ private class TreeSwingModelImpl(
       // it's guaranteed that it won't suddenly become loaded before we register the listener.
       // The only possibly non-EDT part here is the invokeOnCancellation() call, but it's just last-chance cleanup.
       val existingNode = nodes[viewModel]
-      if (existingNode?.state == NodeState.PUBLISHED) {
+      if (existingNode?.lifecycle == NodeLifecycle.PUBLISHED) {
         continuation.resumeWith(Result.success(existingNode))
         return@suspendCancellableCoroutine
       }
@@ -231,7 +268,7 @@ private class TreeSwingModelImpl(
   }
 
   private fun createCachedNode(treePresentation: CachedTreePresentation, parent: Node?, cachedObject: Any): Node {
-    val cachedViewModel = cachedObject as? CachedViewModel ?: CachedViewModel(treePresentation, cachedObject)
+    val cachedViewModel = cachedObject as? CachedViewModel ?: CachedViewModel(parent?.viewModel, treePresentation, cachedObject)
     val cachedNode = CachedNode(treePresentation, parent, cachedViewModel)
     nodes[cachedNode.viewModel] = cachedNode
     return cachedNode
@@ -250,14 +287,14 @@ private class TreeSwingModelImpl(
 
   private suspend fun findOrLoadNode(parent: RealNode?, viewModel: TreeNodeViewModel): Node? {
     val existingNode = nodes[viewModel]
-    val result = when (existingNode?.state) {
-      NodeState.CACHED -> {
+    val result = when (existingNode?.lifecycle) {
+      NodeLifecycle.CACHED -> {
         LOG.warn(Throwable("Attempt to load a cached $viewModel: $existingNode"))
         null
       }
       // We have to call awaitLoaded() even if it's already loaded, to ensure that the presentation is up to date.
-      NodeState.CREATED, NodeState.LOADED, NodeState.PUBLISHED -> existingNode.awaitLoaded()
-      NodeState.DISPOSED -> {
+      NodeLifecycle.CREATED, NodeLifecycle.LOADED, NodeLifecycle.PUBLISHED -> existingNode.awaitLoaded()
+      NodeLifecycle.DISPOSED -> {
         LOG.warn(Throwable("Attempt to load $viewModel when its node has already been disposed: $existingNode"))
         null
       }
@@ -271,7 +308,7 @@ private class TreeSwingModelImpl(
   }
 
   override fun addTreeModelListener(l: TreeModelListener) {
-    listeners.add(l)
+    listeners.add(0, l) // Swing assumes the reverse order
   }
 
   override fun removeTreeModelListener(l: TreeModelListener) {
@@ -287,11 +324,11 @@ private class TreeSwingModelImpl(
     override val viewModel: TreeNodeViewModel,
   ) : Node {
     // Must be thread-safe because set by cancellation.
-    private val stateReference = AtomicReference(NodeState.CREATED)
+    private val lifecycleReference = AtomicReference(NodeLifecycle.CREATED)
 
-    override var state: NodeState
-      get() = stateReference.get()
-      set(value) = stateReference.set(value)
+    override var lifecycle: NodeLifecycle
+      get() = lifecycleReference.get()
+      set(value) = lifecycleReference.set(value)
 
     override val path: CachingTreePath = parent?.path?.pathByAddingChild(viewModel) as CachingTreePath? ?: CachingTreePath(viewModel)
     val nodeScope: CoroutineScope = (parent?.nodeScope ?: treeScope).childScope(path.toString())
@@ -304,15 +341,16 @@ private class TreeSwingModelImpl(
 
     init {
       nodeScope.coroutineContext.job.invokeOnCompletion {
-        state = NodeState.DISPOSED
+        lifecycle = NodeLifecycle.DISPOSED
         nodes.remove(viewModel)
       }
       nodeScope.launch(CoroutineName("Presentation updates of $this")) {
-        viewModel.presentation.collectLatest { presentation ->
+        viewModel.state.collectLatest { nodeState ->
+          nodeState as TreeNodeStateImpl
           // Only fire value updates after the node has been published to the UI part of the tree.
           // For two reasons: to avoid unnecessary updates (optimization) and to avoid confusing the UI state.
-          if (state == NodeState.PUBLISHED) {
-            isLeaf = presentation.isLeaf
+          if (lifecycle == NodeLifecycle.PUBLISHED) {
+            isLeaf = nodeState.presentation.isLeaf
             treeNodesChanged(this@RealNode, null)
           }
         }
@@ -321,7 +359,7 @@ private class TreeSwingModelImpl(
 
     override suspend fun awaitLoaded(): Node? {
       val job = nodeScope.launch {
-        isLeaf = viewModel.presentation.first().isLeaf
+        isLeaf = (viewModel.state.first() as TreeNodeStateImpl).presentation.isLeaf
       }
       job.join()
       // If the node was canceled, then either this job will be canceled or,
@@ -330,15 +368,15 @@ private class TreeSwingModelImpl(
       // but then we care little about it: some code will notice it later and get rid of it.
       // There shouldn't be much async stuff here anyway, as this thing is mostly-EDT,
       // except maybe the case of an external async cancellation.
-      return if (job.isCancelled || state == NodeState.DISPOSED) {
+      return if (job.isCancelled || lifecycle == NodeLifecycle.DISPOSED) {
         null
       }
       else {
-        // Possible states:
+        // Possible lifecycle stages:
         // CREATED → it's the first load attempt, mark as loaded;
         // LOADED or VISITABLE → already loaded, do nothing;
         // DISPOSED → handled above, unless it just happened, but then we don't care.
-        stateReference.compareAndSet(NodeState.CREATED, NodeState.LOADED)
+        lifecycleReference.compareAndSet(NodeLifecycle.CREATED, NodeLifecycle.LOADED)
         this
       }
     }
@@ -352,7 +390,7 @@ private class TreeSwingModelImpl(
       else if (this@TreeSwingModelImpl.showLoadingNode) {
         // Need this for clients who expect the "loading..." node to appear immediately,
         // e.g. for com.intellij.ide.projectView.impl.ProjectViewDirectoryExpandDurationMeasurer.
-        children = listOf(RealNode(this, LoadingNode()))
+        children = listOf(RealNode(this, LoadingNodeViewModel(viewModel)))
       }
       childrenLoadingJob = nodeScope.launch(CoroutineName("Load children of $this")) {
         viewModel.children.collect { loaded ->
@@ -407,7 +445,7 @@ private class TreeSwingModelImpl(
              "viewModel=$viewModel, " +
              "path=$path, " +
              "isLeaf=$isLeaf, " +
-             "state=$state, " +
+             "lifecycle=$lifecycle, " +
              "${children?.size} children (${if (childrenLoadingJob == null) "not loading" else "loading"})" +
              ")"
     }
@@ -438,20 +476,20 @@ private class TreeSwingModelImpl(
 
     override val children: List<Node>? = viewModel.cachedChildren?.map { child -> createCachedNode(treePresentation, this, child) }
 
-    override var state: NodeState = NodeState.CACHED
+    override var lifecycle: NodeLifecycle = NodeLifecycle.CACHED
 
     override fun ensureChildrenAreLoading() { }
 
     override suspend fun awaitLoaded(): Node? = this
 
     override fun dispose() {
-      state = NodeState.DISPOSED
+      lifecycle = NodeLifecycle.DISPOSED
       nodes.remove(viewModel)
     }
   }
 }
 
-private enum class NodeState {
+private enum class NodeLifecycle {
   CACHED,
   CREATED,
   LOADED,
@@ -464,40 +502,133 @@ private sealed interface Node {
   val viewModel: TreeNodeViewModel
   val isLeaf: Boolean
   val children: List<Node>?
-  var state: NodeState
+  var lifecycle: NodeLifecycle
   fun ensureChildrenAreLoading()
   suspend fun awaitLoaded(): Node?
   fun dispose()
 }
 
+// get rid of this when we migrate to suspending visitors
+private class TreeDomainModelDelegatingVisitor(
+  private val model: TreeDomainModel,
+  private val delegate: TreeVisitor,
+) : TreeViewModelVisitor {
+
+  override suspend fun visit(node: TreeNodeViewModel): TreeVisitor.Action {
+    if (delegate.visitThread() == TreeVisitor.VisitThread.EDT) {
+      return actualVisitEdt(delegate, node) // For EDT visiting, the visitor does all three steps in visit().
+    }
+    else {
+      val preVisitResult = preVisit(node, delegate)
+      if (preVisitResult != null) return preVisitResult
+      val visitResult = actualVisitBgt(delegate, node)
+      val postVisitResult = postVisit(visitResult, node, delegate)
+      return postVisitResult
+    }
+  }
+
+  private suspend fun preVisit(node: TreeNodeViewModel, visitor: TreeVisitor): TreeVisitor.Action? =
+    (visitor as? EdtBgtTreeVisitor)?.let {
+      withContext(Dispatchers.EDT) {
+        visitor.preVisitEDT(node.path())
+      }
+    }
+
+  private suspend fun actualVisitEdt(
+    visitor: TreeVisitor,
+    node: TreeNodeViewModel,
+  ): TreeVisitor.Action =
+    withContext(Dispatchers.EDT) {
+      visitor.visit(node.path())
+    }
+
+  private suspend fun actualVisitBgt(
+    visitor: TreeVisitor,
+    node: TreeNodeViewModel,
+  ): TreeVisitor.Action =
+    readAction {
+      visitor.visit(node.path())
+    }
+
+  private suspend fun postVisit(action: TreeVisitor.Action, node: TreeNodeViewModel, visitor: TreeVisitor): TreeVisitor.Action =
+    (visitor as? EdtBgtTreeVisitor)?.let {
+      withContext(Dispatchers.EDT) {
+        visitor.postVisitEDT(node.path(), action)
+      }
+    } ?: action
+
+  override fun toString(): String =
+    "TreeDomainModelDelegatingVisitor(model=$model, delegate=$delegate)"
+}
+
 private class CachedViewModel(
+  override val parent: TreeNodeViewModel?,
   treePresentation: CachedTreePresentation,
   private val cachedObject: Any,
 ) : TreeNodeViewModel {
-  val cachedPresentation: TreeNodePresentation = buildCachedPresentation(treePresentation, cachedObject)
+  val cachedPresentation: TreeNodePresentationImpl = buildCachedPresentation(treePresentation, cachedObject)
   val cachedChildren: List<CachedViewModel>? = treePresentation.getChildren(cachedObject)?.map {
-    CachedViewModel(treePresentation, it)
+    CachedViewModel(this, treePresentation, it)
   }
 
-  override fun getUserObject(): Any = cachedObject
+  private val stateFlow = MutableStateFlow(TreeNodeStateImpl(
+    presentation = cachedPresentation,
+    isExpanded = treePresentation.isExpanded(cachedObject)
+  ))
 
-  override val presentation: Flow<TreeNodePresentation>
-    get() = flowOf(cachedPresentation)
+  override val state: Flow<TreeNodeState>
+    get() = stateFlow
 
   override val children: Flow<List<TreeNodeViewModel>>
     get() = cachedChildren?.let { flowOf(it) } ?: flowOf(emptyList())
 
-  override fun presentationSnapshot(): TreeNodePresentation = cachedPresentation
+  override fun stateSnapshot(): TreeNodeState = stateFlow.value
+
+  override fun setExpanded(isExpanded: Boolean) {
+    stateFlow.value = stateFlow.value.copy(isExpanded = isExpanded)
+  }
+
+  override fun getUserObject(): Any = cachedObject
 
   override fun toString(): String {
     return "CachedViewModel(cachedObject=$cachedObject)"
   }
 }
 
-private fun buildCachedPresentation(treePresentation: CachedTreePresentation, cachedObject: Any): TreeNodePresentation {
+private fun buildCachedPresentation(treePresentation: CachedTreePresentation, cachedObject: Any): TreeNodePresentationImpl {
   val builder = TreeNodePresentationBuilderImpl(treePresentation.isLeaf(cachedObject))
   buildPresentation(builder, cachedObject)
   return builder.build()
+}
+
+private fun TreeNodeViewModel.path(): TreePath =
+  parent?.path()?.pathByAddingChild(this) ?: CachingTreePath(this)
+
+private class LoadingNodeViewModel(override val parent: TreeNodeViewModel?) : TreeNodeViewModel {
+  private val _userObject = LoadingNode()
+
+  private val _state = TreeNodeStateImpl(
+    presentation = TreeNodePresentationImpl(
+      isLeaf = true,
+      icon = null,
+      mainText = LoadingNode.getText(),
+      fullText = listOf(TreeNodeTextFragment(LoadingNode.getText(), SimpleTextAttributes.GRAY_ATTRIBUTES)),
+      toolTip = null,
+    ),
+    isExpanded = false,
+  )
+
+  override val state: Flow<TreeNodeState>
+    get() = flowOf(_state)
+
+  override val children: Flow<List<TreeNodeViewModel>>
+    get() = flowOf(emptyList())
+
+  override fun stateSnapshot(): TreeNodeState = _state
+
+  override fun setExpanded(isExpanded: Boolean) { }
+
+  override fun getUserObject(): Any = _userObject
 }
 
 private val LOG = logger<TreeSwingModelImpl>()

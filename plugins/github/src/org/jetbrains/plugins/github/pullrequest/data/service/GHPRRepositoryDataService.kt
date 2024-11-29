@@ -3,12 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import git4idea.GitRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
+@ApiStatus.Internal
 interface GHPRRepositoryDataService {
   val remoteCoordinates: GitRemoteUrlCoordinates
   val repositoryCoordinates: GHRepositoryCoordinates

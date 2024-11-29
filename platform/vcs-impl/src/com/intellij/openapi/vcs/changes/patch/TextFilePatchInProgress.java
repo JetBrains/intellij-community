@@ -42,14 +42,13 @@ public final class TextFilePatchInProgress extends AbstractFilePatchInProgress<T
     if (myNewContentRevision == null) {
       myConflicts = null;
       final FilePath newFilePath = getFilePath();
+      PatchedRevisionNumber revisionNumber = new PatchedRevisionNumber(myPatch.getAfterVersionId());
       if (FilePatchStatus.ADDED.equals(myStatus)) {
         final String content = myPatch.getSingleHunkPatchText();
-        myNewContentRevision = new SimpleContentRevision(content, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
-          .message("patch.apply.conflict.patched.version")));
+        myNewContentRevision = new SimpleContentRevision(content, newFilePath, revisionNumber);
       }
       else {
-        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, chooseNotNull(myPatch.getAfterVersionId(), VcsBundle
-          .message("patch.apply.conflict.patched.version")), myPatch);
+        myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, revisionNumber, myPatch);
       }
     }
     return myNewContentRevision;

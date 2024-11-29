@@ -31,12 +31,12 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
   }
 
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(final @NotNull PsiFile file, final @NotNull Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(final @NotNull PsiFile psiFile, final @NotNull Editor editor) {
     LanguageChangeSignatureDetector<ChangeInfo> detector =
-      LanguageChangeSignatureDetectors.INSTANCE.forLanguage(file.getLanguage());
+      LanguageChangeSignatureDetectors.INSTANCE.forLanguage(psiFile.getLanguage());
     if (detector == null) return null;
 
-    return new ChangeSignaturePass(file.getProject(), file, editor);
+    return new ChangeSignaturePass(psiFile.getProject(), psiFile, editor);
   }
 
   private static final class ChangeSignaturePass extends TextEditorHighlightingPass {

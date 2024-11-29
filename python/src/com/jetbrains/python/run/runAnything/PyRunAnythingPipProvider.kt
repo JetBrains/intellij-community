@@ -4,7 +4,6 @@ package com.jetbrains.python.run.runAnything
 import com.intellij.openapi.actionSystem.DataContext
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.pip.PipBasedPackageManager
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
@@ -33,7 +32,7 @@ class PyRunAnythingPipProvider : PyRunAnythingPackageProvider() {
 
   override fun getPackageManager(dataContext: DataContext): PythonPackageManager? {
     val pythonSdk = getSdk(dataContext) ?: return null
-    return (PythonPackageManager.forSdk(dataContext.project, pythonSdk) as? PipBasedPackageManager) ?: return null
+    return PythonPackageManager.forSdk(dataContext.project, pythonSdk)
   }
 
   override fun getPackageRepository(dataContext: DataContext): PyPackageRepository? {

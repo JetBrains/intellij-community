@@ -66,10 +66,7 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -78,9 +75,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
@@ -188,7 +186,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void setArranger(LookupArranger arranger) {
+    Predicate<LookupElement> previousMatcher = null;
+    if (myArranger != null) {
+      previousMatcher = myArranger.getAdditionalMatcher();
+    }
     myArranger = arranger;
+    if (previousMatcher != null) {
+      myArranger.registerAdditionalMatcher(previousMatcher);
+    }
   }
 
   @ApiStatus.Internal
@@ -349,6 +354,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
+  @Unmodifiable
   public List<LookupElement> getItems() {
     synchronized (uiLock) {
       return ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem));
@@ -1270,7 +1276,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void markReused() {
     EDT.assertIsEdt();
-    myArranger = myArranger.createEmptyCopy();
+    LookupArranger copy = myArranger.createEmptyCopy();
+    Predicate<LookupElement> additionalMatcher = myArranger.getAdditionalMatcher();
+    if (additionalMatcher != null) {
+      copy.registerAdditionalMatcher(additionalMatcher);
+    }
+    myArranger = copy;
+
     requestResize();
   }
 

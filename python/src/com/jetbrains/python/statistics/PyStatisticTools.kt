@@ -18,7 +18,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.VirtualEnvReader
@@ -82,7 +81,7 @@ fun registerPythonSpecificEvent(group: EventLogGroup, eventId: String, vararg ex
 }
 
 val PYTHON_VERSION = EventFields.StringValidatedByRegexpReference("python_version", "version")
-val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("PyPy", "Jython", "Python"))
+val PYTHON_IMPLEMENTATION = EventFields.String("python_implementation", listOf("Python"))
 
 
 enum class InterpreterTarget(val value: String) {
@@ -125,6 +124,7 @@ enum class InterpreterType(val value: String) {
   REGULAR("regular"),
   POETRY("poetry"),
   PYENV("pyenv"),
+  UV("uv"),
 }
 
 enum class InterpreterCreationMode(val value: String) {

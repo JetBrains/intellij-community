@@ -9,13 +9,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
 import kotlin.reflect.KType
 
-/**
- * Please don't use it anywhere except fleet.kernel!!!
- * */
-interface ISerialization {
-  val json: Json
-}
-
 val DefaultJson = Json {
   ignoreUnknownKeys = true
   encodeDefaults = true

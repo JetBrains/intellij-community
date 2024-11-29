@@ -137,7 +137,15 @@ fun interface IconsProvider {
  * true - force setting [SpacingConfiguration.verticalComponentGap]
  * false - force setting 0 as a vertical gap
  */
-data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null)
+data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null) {
+  companion object {
+    @JvmField
+    val NONE: VerticalComponentGap = VerticalComponentGap(top = false, bottom = false)
+
+    @JvmField
+    val BOTH: VerticalComponentGap = VerticalComponentGap(top = true, bottom = true)
+  }
+}
 
 fun UINumericRange.asRange(): IntRange = min..max
 

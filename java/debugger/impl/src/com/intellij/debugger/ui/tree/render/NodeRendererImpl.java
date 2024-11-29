@@ -125,6 +125,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
     myProperties.writeExternal(element, myDefaultName);
   }
 
+  @Override
   public String toString() {
     return getName();
   }

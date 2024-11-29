@@ -52,13 +52,13 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
 
   @Override
   public void startNotify() {
-    notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
+    notifyTextAvailable(getCommandLineForLog() + '\n', ProcessOutputTypes.SYSTEM);
 
     addProcessListener(new ProcessAdapter() {
       @Override
       public void startNotified(final @NotNull ProcessEvent event) {
         try {
-          var stdoutReader = new RemoteOutputReader(myProcess.getInputStream(), getCharset(), myProcess, myCommandLine, readerOptions()) {
+          var stdoutReader = new RemoteOutputReader(myProcess.getInputStream(), getCharset(), myProcess, getCommandLineForLog(), readerOptions()) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
@@ -70,7 +70,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
             }
           };
 
-          var stderrReader = new RemoteOutputReader(myProcess.getErrorStream(), getCharset(), myProcess, myCommandLine, readerOptions()) {
+          var stderrReader = new RemoteOutputReader(myProcess.getErrorStream(), getCharset(), myProcess, getCommandLineForLog(), readerOptions()) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDERR);

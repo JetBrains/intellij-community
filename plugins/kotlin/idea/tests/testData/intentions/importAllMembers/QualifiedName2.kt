@@ -1,3 +1,4 @@
+// PRIORITY: HIGH
 // INTENTION_TEXT: "Import members from 'java.util.Objects'"
 // WITH_STDLIB
 

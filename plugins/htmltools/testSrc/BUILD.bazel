@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.html.tools.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "html-tools-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "html-tools-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/htmltools:html-tools",
+    "//xml/impl",
+    "//java/testFramework",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test",
+    "//xml/tests:tests_test",
+    "//platform/core-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ]
+)
+### auto-generated section `build intellij.html.tools.tests` end

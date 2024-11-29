@@ -166,7 +166,7 @@ internal class GitCommitTemplateTracker(
 
   private fun loadTemplateContent(repository: GitRepository, commitTemplateFilePath: String): String? {
     try {
-      val fileContent = FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncoding(project, repository.root))
+      val fileContent = FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncodingCharset(project, repository.root))
       if (fileContent.isBlank()) {
         LOG.warn("Empty or blank commit template detected for repository $repository by path $commitTemplateFilePath")
       }

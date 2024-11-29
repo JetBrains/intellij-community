@@ -58,8 +58,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.*;
 import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
@@ -101,7 +100,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
   @NonNls protected static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
 
-  public static final List<String> DEFAULT_GROUPING_KEYS = List.of(DIRECTORY_GROUPING, MODULE_GROUPING);
+  public static final List<String> DEFAULT_GROUPING_KEYS = List.of(DIRECTORY_GROUPING, MODULE_GROUPING, REPOSITORY_GROUPING);
 
   @NonNls public static final String GROUP_BY_ACTION_GROUP = "ChangesView.GroupBy";
 

@@ -17,7 +17,6 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.CheckNotNullInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
@@ -219,6 +218,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   public abstract static class DfaProblemType {
+    @Override
     public abstract @Nls String toString();
 
     CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
@@ -433,6 +433,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return new CauseItem[0];
     }
 
+    @Override
     public String toString() {
       return JavaAnalysisBundle.message("dfa.find.cause.cast.may.fail");
     }
@@ -448,6 +449,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return new CauseItem[0];
     }
 
+    @Override
     public String toString() {
       return JavaAnalysisBundle.message("dfa.find.cause.may.be.null");
     }
@@ -548,7 +550,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     public CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
       DfaValue topOfStack = history.myTopOfStack;
       DfaValue value = myField.createValue(runner.getFactory(), topOfStack);
-      MemoryStateChange change = MemoryStateChange.create(history, new JvmPushInstruction(value, null), Map.of(), value);
+      MemoryStateChange change = MemoryStateChange.create(history, new PushInstruction(value, null), Map.of(), value);
       return runner.findConstantValueCause(expression, change, 0);
     }
 
@@ -1447,12 +1449,12 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         right = rightVal.makeDfaValue(getFactory(), arguments);
       }
       if (leftPush == null && left != top) {
-        leftPush = MemoryStateChange.create(history.getPrevious(), new JvmPushInstruction(left, null), Collections.emptyMap(), left);
+        leftPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(left, null), Collections.emptyMap(), left);
       }
       PsiExpression rightPlace = rightVal.findPlace(call);
       MemoryStateChange rightPush = history.findSubExpressionPush(rightPlace);
       if (rightPush == null && right != top) {
-        rightPush = MemoryStateChange.create(history.getPrevious(), new JvmPushInstruction(right, null), Collections.emptyMap(), right);
+        rightPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(right, null), Collections.emptyMap(), right);
       }
       if (leftPush != null && rightPush != null) {
         causeItem.addChildren(findRelationCause(type,

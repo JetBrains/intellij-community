@@ -93,6 +93,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
+    open fun testPropertyWithGetter() {
+        doOverrideFileTest()
+    }
+
    open fun testInterfaceGenericImplement() {
         doImplementFileTest()
     }

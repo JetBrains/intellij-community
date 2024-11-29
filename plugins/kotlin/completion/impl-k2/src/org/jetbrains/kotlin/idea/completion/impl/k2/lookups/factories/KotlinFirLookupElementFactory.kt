@@ -29,6 +29,18 @@ import org.jetbrains.kotlin.name.Name
 object KotlinFirLookupElementFactory {
 
     context(KaSession)
+    fun createClassifierLookupElement(
+        symbol: KaClassifierSymbol,
+        importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+    ): LookupElement? = when (symbol) {
+        is KaClassLikeSymbol ->
+            if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy)
+            else null
+
+        is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
+    }
+
+    context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookupElement(
         symbol: KaNamedSymbol,
@@ -86,13 +98,4 @@ object KotlinFirLookupElementFactory {
     context(KaSession)
     fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
         TypeLookupElementFactory.createLookup(classSymbol)
-
-    context(KaSession)
-    fun createLookupElementForClassLikeSymbol(
-        symbol: KaClassLikeSymbol,
-        importingStrategy: ImportStrategy,
-    ): LookupElement? {
-        if (symbol !is KaNamedSymbol) return null
-        return ClassLookupElementFactory.createLookup(symbol, importingStrategy)
-    }
 }

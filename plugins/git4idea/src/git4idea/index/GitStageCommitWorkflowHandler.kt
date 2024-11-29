@@ -47,7 +47,8 @@ class GitStageCommitWorkflowHandler(
     setupCommitChecksResultTracking()
     vcsesChanged()
 
-    commitMessagePolicy.init(this)
+    commitMessagePolicy.init()
+    Disposer.register(this, commitMessagePolicy)
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()

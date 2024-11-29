@@ -14,15 +14,15 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         
         var typeMetadata: StorageTypeMetadata
         
-        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDependenciesSource\$KotlinGradleScriptModuleEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource",
+        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource\$KotlinGradleScriptModuleEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource",
 "com.intellij.platform.workspace.storage.EntitySource"))
         
         addMetadata(typeMetadata)
     }
 
     override fun initializeMetadataHash() {
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 198964717)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDependenciesSource\$KotlinGradleScriptModuleEntitySource", metadataHash = 1949666879)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1560122727)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource\$KotlinGradleScriptModuleEntitySource", metadataHash = 1681787859)
     }
 
 }

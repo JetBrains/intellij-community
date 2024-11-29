@@ -123,7 +123,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       Path logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
-      JulLogger.configureLogFileAndConsole(logFile, false, true, false, null);
+      JulLogger.configureLogFileAndConsole(logFile, false, true, false, null, null, null);
 
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");

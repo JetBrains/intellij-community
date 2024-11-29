@@ -93,6 +93,8 @@ internal abstract class WhatsNewContent {
   abstract fun getVersion(): ContentVersion?
   abstract suspend fun isAvailable(): Boolean
 
+  open fun getVisionActionIds(): Set<String> = emptySet()
+
   protected fun getHandler(dataContext: DataContext?): JsQueryHandler? {
     dataContext ?: return null
 
@@ -100,6 +102,12 @@ internal abstract class WhatsNewContent {
       override suspend fun query(id: Long, request: String): String {
         val contains = getActionWhiteList().contains(request)
         if (!contains) {
+          if(getVisionActionIds().contains(request))
+          {
+            WhatsNewCounterUsageCollector.visionActionPerformed(dataContext.project, request)
+            logger.trace { "EapWhatsNew action $request performed" }
+            return "true"
+          }
           logger.trace { "EapWhatsNew action $request not allowed" }
           WhatsNewCounterUsageCollector.actionNotAllowed(dataContext.project, request)
           return "false"
@@ -239,19 +247,35 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
     private const val LIGHT_THEME = "light"
 
     private const val LANG_KEY = "\$__VISION_PAGE_SETTINGS_LANGUAGE_CODE__\$"
+    private const val ZOOM_KEY = "\$__VISION_PAGE_SETTINGS_ZOOM_IN_ACTION__\$"
+    private const val GIF_KEY = "\$__VISION_PAGE_SETTINGS_GIF_PLAYER_ACTION__\$"
+
+    private const val ZOOM_VALUE = "whatsnew.vision.zoom"
+    private const val GIF_VALUE = "whatsnew.vision.gif"
   }
 
   val content: String
   private val contentHash: String
   private val myActionWhiteList: Set<String>
+  private val visionActionIds = setOf(GIF_VALUE, ZOOM_VALUE)
 
   init {
     var html = page.html
-    if (page.publicVars.singleOrNull { it.value == THEME_KEY } != null) {
-      html = html.replace(THEME_KEY, if (StartupUiUtil.isDarkTheme) { DARK_THEME } else { LIGHT_THEME })
-    }
-    if (page.publicVars.singleOrNull { it.value == LANG_KEY} != null) {
-      html = html.replace(LANG_KEY, getCurrentLanguageTag())
+    val pattern = page.publicVars.distinctBy { it.value }
+      .joinToString("|") { Regex.escape(it.value) }.toRegex()
+    html = html.replace(pattern) {
+      when (it.value) {
+        THEME_KEY -> if (StartupUiUtil.isDarkTheme) {
+          DARK_THEME
+        }
+        else {
+          LIGHT_THEME
+        }
+        LANG_KEY -> getCurrentLanguageTag()
+        ZOOM_KEY -> ZOOM_VALUE
+        GIF_KEY -> GIF_VALUE
+        else -> it.value
+      }
     }
     content = html
     myActionWhiteList = page.actions.map { it.value }.toSet()
@@ -267,6 +291,8 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
   override fun getActionWhiteList(): Set<String> {
     return myActionWhiteList
   }
+
+  override fun getVisionActionIds(): Set<String> = visionActionIds
 
   override fun getVersion(): ContentVersion {
     val buildNumber = ApplicationInfo.getInstance().getBuild()

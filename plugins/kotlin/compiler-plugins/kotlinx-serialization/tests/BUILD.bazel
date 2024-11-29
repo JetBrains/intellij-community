@@ -1,0 +1,35 @@
+### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-compiler-plugins-kotlinx-serialization-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-compiler-plugins-kotlinx-serialization-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:kotlin-compiler-plugins-kotlinx-serialization-common",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
+  ]
+)
+### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.tests` end

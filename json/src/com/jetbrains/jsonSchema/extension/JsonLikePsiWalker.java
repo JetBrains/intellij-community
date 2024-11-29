@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
@@ -40,9 +41,13 @@ public interface JsonLikePsiWalker {
   boolean requiresNameQuotes();
   default boolean requiresValueQuotes() { return true; }
   boolean allowsSingleQuotes();
-  default boolean isValidIdentifier(String string, Project project) { return true; }
+  default boolean isValidIdentifier(@NotNull String string, Project project) { return true; }
 
   default boolean isQuotedString(@NotNull PsiElement element) { return false; }
+
+  default String escapeInvalidIdentifier(@NotNull String identifier) {
+    return StringUtil.wrapWithDoubleQuote(identifier);
+  }
 
   boolean hasMissingCommaAfter(@NotNull PsiElement element);
 

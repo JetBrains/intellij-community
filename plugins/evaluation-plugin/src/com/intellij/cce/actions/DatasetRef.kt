@@ -46,10 +46,6 @@ internal data class ConfigRelativeRef(val relativePath: String) : DatasetRef {
   override fun prepare(datasetContext: DatasetContext) {
     val targetPath = datasetContext.path(this)
 
-    if (targetPath.exists()) {
-      return
-    }
-
     val configPath = checkNotNull(datasetContext.configPath) {
       "Path $relativePath supposed to be relative to config, but there is no config explicitly provided. " +
       "Note that this option is only for test purposes and not supposed to be used in production."
@@ -81,13 +77,18 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
     .replace("/", "_")
 
   override fun prepare(datasetContext: DatasetContext) {
+    val path = datasetContext.path(name)
+
+    if (path.exists()) {
+      return
+    }
+
     val readToken = System.getenv("AIA_EVALUATION_DATASET_READ_TOKEN") ?: ""
     check(readToken.isNotBlank()) {
       "Token for dataset $url should be configured"
     }
 
     val content = httpGet(url, readToken)
-    val path = datasetContext.path(name)
     path.toFile().writeText(content)
   }
 }

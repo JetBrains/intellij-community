@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
-import com.intellij.execution.RunManager
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
@@ -18,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
+import org.jetbrains.kotlin.idea.util.RunConfigurationUtils
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -44,7 +44,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
          */
         private fun KtNamedDeclaration.isIgnoredForGradleConfiguration(includeSlowProviders: Boolean): Boolean {
             val ktNamedFunction = this.safeAs<KtNamedFunction>().takeIf {
-                RunManager.getInstance(getProject()).selectedConfiguration?.type?.id == "GradleRunConfiguration"
+                RunConfigurationUtils.isGradleRunConfiguration(this)
             } ?: return false
             val ktClassOrObject = ktNamedFunction.containingClassOrObject ?: return false
             

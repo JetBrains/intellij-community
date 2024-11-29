@@ -611,6 +611,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             KotlinTestUtils.runTest(this::doIntroduceJavaParameterTest, this, testDataFilePath);
         }
 
+        @TestMetadata("javaConstructor.java")
+        public void testJavaConstructor() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceJavaParameter/javaConstructor.java");
+        }
+
         @TestMetadata("javaMethod.java")
         public void testJavaMethod() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceJavaParameter/javaMethod.java");

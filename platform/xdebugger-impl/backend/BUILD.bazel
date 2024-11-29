@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.platform.debugger.impl.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "debugger-impl-backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "debugger-impl-backend",
+  module_name = "intellij.platform.debugger.impl.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//platform/platform-api:ide",
+    "//platform/kernel/shared:kernel",
+    "//platform/util:util-ui",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/kernel/backend",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:fastutil-min",
+    "//platform/util/concurrency",
+    "//platform/platform-impl:ide-impl",
+    "//platform/project/shared:project",
+    "//platform/xdebugger-api:debugger",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/statistics",
+  ],
+  runtime_deps = [":debugger-impl-backend_resources"]
+)
+### auto-generated section `build intellij.platform.debugger.impl.backend` end

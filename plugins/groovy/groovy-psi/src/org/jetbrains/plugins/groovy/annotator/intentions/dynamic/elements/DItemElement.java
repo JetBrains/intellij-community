@@ -23,6 +23,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
     myType = type;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -36,6 +37,7 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myType != null ? myType.hashCode() : 0);

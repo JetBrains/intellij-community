@@ -119,12 +119,20 @@ public class BaseCompletionService extends CompletionService {
 
       CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), sorter);
       if (matched != null) {
-        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
+        passResult(matched);
+      }
+    }
+
+    @Override
+    public void passResult(@NotNull CompletionResult result) {
+      LookupElement element = result.getLookupElement();
+      if (element != null) {
+        element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
         element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
         element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
         itemCounter += 1;
-        passResult(matched);
       }
+      super.passResult(result);
     }
 
     @Override

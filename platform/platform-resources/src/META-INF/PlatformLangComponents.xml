@@ -21,6 +21,8 @@
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
       headlessImplementation="com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver"
     />
+    <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
+                        serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
     <!-- no preload="await" - requested by DaemonListeners -->
     <projectService
       serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
@@ -103,6 +105,16 @@
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
                     testServiceImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl"
                     headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
+    <registryKey
+      key="auto.hide.all.tool.windows.on.focus.change"
+      description="If enabled, hide all auto-hide tool windows on any focus change, otherwise hide only the one that lost focus"
+      defaultValue="false"
+    />
+    <registryKey
+      key="auto.hide.all.tool.windows.on.any.action"
+      description="If enabled, any action will cause auto-hide tool windows to be hidden"
+      defaultValue="false"
+    />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
                     serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>
@@ -223,9 +235,6 @@
               activeInHeadlessMode="true" activeInTestMode="false"/>
     <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
-
-    <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
 
     <listener class="com.intellij.notification.impl.MacEventReader" topic="com.intellij.notification.Notifications" os="mac"
               activeInHeadlessMode="false"/>

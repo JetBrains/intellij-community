@@ -23,6 +23,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -97,6 +98,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
     return ContainerUtil.concat(myChildren, super.getLoadedChildren());
   }

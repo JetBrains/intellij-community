@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -84,10 +85,11 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
   }
 
   @Override
-  public boolean indexExists(File dir, MavenToken token) throws RemoteException {
+  public boolean indexExists(Path dir, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
-      return IndexReader.indexExists(dir);
+      // TODO: how correct?
+      return IndexReader.indexExists(dir.toString());
     }
     catch (Exception e) {
       MavenServerGlobals.getLogger().warn(e);
@@ -243,21 +245,21 @@ public abstract class Maven3ServerIndexerImpl extends MavenWatchdogAware impleme
   }
 
   @Override
-  public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull ArrayList<File> artifactFiles, MavenToken token) throws MavenServerIndexerException {
+  public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId, @NotNull ArrayList<Path> artifactFiles, MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext index = getIndex(indexId);
       ArrayList<AddArtifactResponse> results = new ArrayList<>();
       synchronized (index) {
-        for (File artifactFile : artifactFiles) {
-          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
+        for (Path artifactFile : artifactFiles) {
+          ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile.toFile());
           IndexedMavenId id = null;
           if (artifactContext != null) {
             addArtifact(myIndexer, index, artifactContext);
             ArtifactInfo a = artifactContext.getArtifactInfo();
             id = new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
           }
-          results.add(new AddArtifactResponse(artifactFile, id));
+          results.add(new AddArtifactResponse(artifactFile.toFile(), id));
         }
       }
       return results;

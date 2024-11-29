@@ -32,6 +32,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -177,6 +178,7 @@ public final class CreateResourceBundleDialogComponent {
   }
 
   @NotNull
+  @Unmodifiable
   private Set<String> getFileNamesToCreate() {
     final String name = getBaseName();
     final String suffix = getPropertiesFileSuffix();

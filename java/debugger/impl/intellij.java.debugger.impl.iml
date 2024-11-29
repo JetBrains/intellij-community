@@ -80,6 +80,7 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
   </component>
   <component name="copyright">
     <Base>

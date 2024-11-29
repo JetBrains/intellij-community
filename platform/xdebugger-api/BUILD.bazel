@@ -1,34 +1,35 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.debugger` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "debugger_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "debugger",
   module_name = "intellij.platform.debugger",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@community//platform/lang-api:lang",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/util/concurrency",
-    "@community//platform/core-ui",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:kotlin-stdlib",
+    "//platform/lang-api:lang",
+    "//platform/util:util-ui",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-stdlib",
   ],
   exports = [
-    "@community//platform/lang-api:lang",
-    "@community//platform/util/concurrency",
+    "//platform/lang-api:lang",
+    "//platform/util/concurrency",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":debugger_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.debugger` end

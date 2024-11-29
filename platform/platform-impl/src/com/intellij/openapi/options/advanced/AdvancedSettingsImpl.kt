@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.jvm.Throws
 
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   companion object {
@@ -211,6 +212,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
 
   private val epCollector = KeyedExtensionCollector<AdvancedSettingBean, String>(AdvancedSettingBean.EP_NAME.name)
   private val internalState = ConcurrentHashMap<String, Any>()
+  private val unknownValues = ConcurrentHashMap<String, String>()
   private val defaultValueCache = ConcurrentHashMap<String, Any>()
   private var modificationCount = 0L
 
@@ -218,11 +220,15 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean> {
       override fun extensionAdded(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
         logger.info("Extension added ${pluginDescriptor.pluginId}: ${extension.id}")
+        val rawValue = unknownValues.remove(extension.id) ?: return
+        internalState[extension.id] = extension.valueFromString(rawValue)
       }
 
       override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
         logger.info("Extension removed ${pluginDescriptor.pluginId}: ${extension.id}")
         defaultValueCache.remove(extension.id)
+        val currentValue = internalState.remove(extension.id) ?: return
+        unknownValues[extension.id] = extension.valueToString(currentValue)
       }
     }, this)
   }
@@ -233,7 +239,9 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     if (logger.isDebugEnabled) {
       logger.debug("Getting advanced settings state: $internalState")
     }
-    return  AdvancedSettingsState().also { it.settings = internalState.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap() }
+    val retval = AdvancedSettingsState()
+    retval.settings = HashMap(unknownValues).apply { putAll(internalState.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap()) }
+    return retval
   }
 
   override fun loadState(state: AdvancedSettingsState) {
@@ -241,7 +249,15 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
       logger.debug("Will load advanced settings state: ${state.settings}. Current state: ${this.internalState}")
     }
     this.internalState.clear()
-    state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.internalState)
+    state.settings.forEach { (k, v) ->
+      val optionOrNull = getOptionOrNull(k)
+      if (optionOrNull != null) {
+        this.internalState.put(k, optionOrNull.valueFromString(v))
+      }
+      else {
+        unknownValues.put(k, v)
+      }
+    }
   }
 
   override fun getStateModificationCount(): Long = modificationCount
@@ -301,10 +317,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   private fun getOptionOrNull(id: String): AdvancedSettingBean? {
     val bean = epCollector.findSingle(id)
     if (bean == null) {
-      if (ApplicationManager.getApplication().isEAP)
-        logger.error("Cannot find advanced setting $id", Throwable())
-      else
-        logger.warn("Cannot find advanced setting $id", Throwable())
+      logger.info("Cannot find advanced setting $id")
     }
     return bean
   }

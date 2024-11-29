@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
@@ -237,6 +238,7 @@ public class CoverageSuitesBundle {
    * Merge include filters from different coverage report into one list.
    * @return merged list or <code>null</code> if some of the reports has empty include filters
    */
+  @Unmodifiable
   private static @Nullable List<Pattern> mergeIncludeFilters(@NotNull List<ProjectData> dataList) {
     boolean hasEmptyFilters = false;
     Set<String> result = new HashSet<>();

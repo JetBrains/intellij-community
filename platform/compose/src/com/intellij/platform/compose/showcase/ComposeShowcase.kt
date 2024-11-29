@@ -33,6 +33,7 @@ import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 import org.jetbrains.jewel.ui.util.isDark
 import java.awt.event.InputEvent
@@ -200,7 +201,7 @@ private fun Tabs() {
     }
   }
 
-  TabStrip(tabs)
+  TabStrip(tabs, JewelTheme.defaultTabStyle)
 }
 
 @Composable

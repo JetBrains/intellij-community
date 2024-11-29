@@ -4,6 +4,7 @@ package com.intellij.internal.inspector.components;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
@@ -103,6 +104,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
 
       @Override
+      public void onAccessibleChanged(Accessible a) {
+        switchAccessibleInfo(a);
+        updateHighlighting();
+      }
+
+      @Override
       public void onClickInfoChanged(java.util.List<? extends PropertyBean> info) {
         switchClickInfo(info);
         updateHighlighting();
@@ -130,7 +137,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     actions.addSeparator();
     actions.add(new MyNavigateAction());
     actions.addSeparator();
-    actions.add(new ShowAccessibilityIssuesAction());
+    ShowAccessibilityIssuesAction showAccessibilityIssuesAction = new ShowAccessibilityIssuesAction();
+    actions.add(showAccessibilityIssuesAction);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
     toolbar.setTargetComponent(getRootPane());
@@ -193,6 +201,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     });
     updateHighlighting();
     getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "CLOSE");
+
+    if (PropertiesComponent.getInstance().getBoolean(ShowAccessibilityIssuesAction.SHOW_ACCESSIBILITY_ISSUES_KEY, false)) {
+      showAccessibilityIssuesAction.updateTreeWithAccessibilityStatus();
+    }
   }
 
   @Override
@@ -255,6 +267,15 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     Disposer.dispose(myInspectorTable);
     myInspectorTable = new InspectorTable(provider, myProject);
+    myWrapperPanel.setContent(myInspectorTable);
+  }
+
+  private void switchAccessibleInfo(@NotNull Accessible accessible) {
+    myComponents.clear();
+    myInfo = null;
+    setTitle(accessible.getClass().getName());
+    Disposer.dispose(myInspectorTable);
+    myInspectorTable = new InspectorTable(accessible, myProject);
     myWrapperPanel.setContent(myInspectorTable);
   }
 
@@ -464,16 +485,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   private final class ShowAccessibilityIssuesAction extends MyTextAction {
     private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", false);
-    private boolean showAccessibilityIssues = false;
+    public static final String SHOW_ACCESSIBILITY_ISSUES_KEY = "ui.inspector.show.accessibility.issues.key";
+    private boolean showAccessibilityIssues;
 
     private ShowAccessibilityIssuesAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
+      showAccessibilityIssues = PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       showAccessibilityIssues = !showAccessibilityIssues;
-
+      PropertiesComponent.getInstance().setValue(SHOW_ACCESSIBILITY_ISSUES_KEY, showAccessibilityIssues);
       updateTreeWithAccessibilityStatus();
     }
 
@@ -488,10 +511,17 @@ public final class InspectorWindow extends JDialog implements Disposable {
         Object node = path.getLastPathComponent();
         if (node instanceof HierarchyTree.ComponentNode componentNode) {
           if (showAccessibilityIssues) {
-            Component c = componentNode.getComponent();
+            Component component = componentNode.getComponent();
+            Accessible accessible = componentNode.getAccessible();
+            AccessibleContext ac = null;
 
-            if (c instanceof Accessible a) {
-              AccessibleContext ac = a.getAccessibleContext();
+            if (component instanceof Accessible a) {
+              ac = a.getAccessibleContext();
+            }
+            else if (component == null && accessible != null) {
+              ac = accessible.getAccessibleContext();
+            }
+            if (ac != null) {
               componentNode.runAccessibilityTests(ac);
             }
           } else {

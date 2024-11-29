@@ -219,6 +219,10 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
     res.border = JBUI.Borders.empty()
     res.add(createSeparator(separator, hideLine), BorderLayout.NORTH)
     res.add(result, BorderLayout.CENTER)
+
+    AccessibleContextUtil.setName(res, result)
+    AccessibleContextUtil.setDescription(res, result)
+
     return res
   }
 }

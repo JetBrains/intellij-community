@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.common
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -17,6 +18,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,10 +36,10 @@ class PackageManagerHolder : Disposable {
    * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
    */
   fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
+    val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
 
     return cache.computeIfAbsent(cacheKey) {
-     PythonPackageManagerProvider.EP_NAME.extensionList
+      PythonPackageManagerProvider.EP_NAME.extensionList
         .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
     }
   }
@@ -83,19 +85,23 @@ suspend fun <T> runPackagingOperationOrShowErrorDialog(
   operation: suspend (() -> Result<T>),
 ): Result<T> {
   try {
-    return operation.invoke()
+    val result = operation.invoke()
+    result.exceptionOrNull()?.let { throw it }
+    return result
   }
   catch (ex: PyExecutionException) {
     val description = PyPackageManagementService.toErrorDescription(listOf(ex), sdk, packageName)
     if (!PythonPackageManagementServiceBridge.runningUnderOldUI) {
       // todo[akniazev] this check is used for legacy package management only, remove when it's not needed anymore
       withContext(Dispatchers.Main) {
-        if (packageName != null) {
-          PyPackagesUsageCollector.failInstallSingleEvent.log()
-          PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
-        }
-        else {
-          PackagesNotificationPanel.showError(title, description!!)
+        writeIntentReadAction {
+          if (packageName != null) {
+            PyPackagesUsageCollector.failInstallSingleEvent.log()
+            PyPackagesNotificationPanel.showPackageInstallationError(title, description!!)
+          }
+          else {
+            PackagesNotificationPanel.showError(title, description!!)
+          }
         }
       }
     }

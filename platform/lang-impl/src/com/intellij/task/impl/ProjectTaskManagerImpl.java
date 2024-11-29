@@ -202,6 +202,17 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
         }
       }
 
+      for (ProjectTaskManagerListenerExtensionPoint listener : ProjectTaskManagerListenerExtensionPoint.EP_NAME.getExtensionList()) {
+        try {
+          listener.beforeRun(myProject, context);
+        }
+        catch (ExecutionException e) {
+          sendAbortedEmptyResult(context, new ResultConsumer(promiseResult));
+          activity.first.finished(() -> activity.second);
+          return;
+        }
+      }
+
       if (toRun.isEmpty()) {
         sendSuccessEmptyResult(context, new ResultConsumer(promiseResult));
         activity.first.finished(() -> activity.second);
@@ -414,6 +425,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
           try {
             for (ProjectTaskManagerListener listener : myListeners) {
               listener.afterRun(result);
+            }
+            for (ProjectTaskManagerListenerExtensionPoint listener : ProjectTaskManagerListenerExtensionPoint.EP_NAME.getExtensionList()) {
+              listener.afterRun(myProject, result);
             }
             notify(result);
           }

@@ -80,6 +80,7 @@ public final class ConfigFileMetaData {
     return versions;
   }
 
+  @Override
   public String toString() {
     return myTitle;
   }

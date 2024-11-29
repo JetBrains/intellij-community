@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -22,5 +23,6 @@ public interface RenamerFactory {
    * The user is presented with the popup if there are multiple choices available.
    * This can happen if there are several targets to rename.
    */
+  @Unmodifiable
   @NotNull Collection<? extends @NotNull Renamer> createRenamers(@NotNull DataContext dataContext);
 }

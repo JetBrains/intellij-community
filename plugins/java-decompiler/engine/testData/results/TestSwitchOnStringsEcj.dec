@@ -159,8 +159,6 @@ class 'pkg/TestSwitchOnStringsEcj' {
       32      24
       33      24
       34      24
-      35      24
-      36      24
       37      25
       3a      27
       3b      27
@@ -193,8 +191,6 @@ class 'pkg/TestSwitchOnStringsEcj' {
       42      37
       43      37
       44      37
-      45      37
-      46      37
       4a      40
       4b      40
       4c      40
@@ -228,16 +224,12 @@ class 'pkg/TestSwitchOnStringsEcj' {
       46      51
       47      51
       48      51
-      49      51
-      4a      51
       4b      52
       4e      54
       4f      54
       50      54
       51      54
       52      54
-      53      54
-      54      54
       55      55
       58      58
       59      58
@@ -270,15 +262,11 @@ class 'pkg/TestSwitchOnStringsEcj' {
       56      68
       57      68
       58      68
-      59      68
-      5a      68
       5e      71
       5f      71
       60      71
       61      71
       62      71
-      63      71
-      64      71
       68      74
       69      74
       6a      74
@@ -312,24 +300,18 @@ class 'pkg/TestSwitchOnStringsEcj' {
       5a      85
       5b      85
       5c      85
-      5d      85
-      5e      85
       5f      86
       62      88
       63      88
       64      88
       65      88
       66      88
-      67      88
-      68      88
       69      89
       6c      91
       6d      91
       6e      91
       6f      91
       70      91
-      71      91
-      72      91
       73      92
       76      95
       77      95

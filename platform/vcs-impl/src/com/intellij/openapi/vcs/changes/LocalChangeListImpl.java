@@ -90,6 +90,7 @@ public final class LocalChangeListImpl extends LocalChangeList {
     return myData;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -97,6 +98,7 @@ public final class LocalChangeListImpl extends LocalChangeList {
     return myName.equals(list.myName);
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode();
   }

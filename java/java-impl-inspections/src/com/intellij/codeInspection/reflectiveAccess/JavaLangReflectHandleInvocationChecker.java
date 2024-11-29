@@ -13,6 +13,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -257,6 +258,7 @@ final class JavaLangReflectHandleInvocationChecker {
   }
 
   @Nullable
+  @Unmodifiable
   private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForGenericMethodType(
     @NotNull PsiMethodCallExpression methodTypeExpression
   ) {
@@ -307,6 +309,7 @@ final class JavaLangReflectHandleInvocationChecker {
   }
 
   @Nullable
+  @Unmodifiable
   private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndArray(@NotNull PsiMethodCallExpression call) {
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
     if (arguments.length == 2) {
@@ -322,6 +325,7 @@ final class JavaLangReflectHandleInvocationChecker {
   }
 
   @Nullable
+  @Unmodifiable
   private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForReturnTypeAndList(@NotNull PsiMethodCallExpression call) {
     final PsiExpression[] arguments = call.getArgumentList().getExpressions();
     if (arguments.length == 2) {
@@ -337,6 +341,7 @@ final class JavaLangReflectHandleInvocationChecker {
   }
 
   @Nullable
+  @Unmodifiable
   private static List<Supplier<ReflectiveType>> getLazyMethodSignatureForTypes(@NotNull PsiMethodCallExpression call) {
     final PsiExpression[] expressions = call.getArgumentList().getExpressions();
     if (expressions.length != 0) {

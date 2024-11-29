@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.events
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerThreadDispatcher
 import com.intellij.debugger.impl.DebuggerTaskImpl
-import com.intellij.debugger.impl.InvokeThread
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
@@ -20,9 +19,18 @@ import kotlin.coroutines.CoroutineContext.Key
 abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW)
   : DebuggerTaskImpl(), CoroutineContext.Element {
   @Volatile
-  protected var myCoroutineScope: CoroutineScope? = null
+  private var myCoroutineScope: CoroutineScope? = null
   private val continuation = AtomicReference<Runnable>(null)
   private var myThread: DebuggerManagerThreadImpl? = null
+  protected val commandManagerThread: DebuggerManagerThreadImpl
+    get() = myThread ?: error("DebuggerManagerThread is not set")
+
+  internal fun setCommandManagerThread(value: DebuggerManagerThreadImpl) {
+    if (myThread != null && myThread !== value) {
+      error("DebuggerManagerThread is already set")
+    }
+    myThread = value
+  }
 
   @Throws(Exception::class)
   protected open fun action() {
@@ -39,6 +47,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
 
   override fun getPriority() = myPriority
 
+  @ApiStatus.Internal
   fun notifyCancelled() {
     try {
       commandCancelled()
@@ -53,9 +62,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
 
   @Throws(Exception::class)
   private suspend fun runSuspend() {
-    val managerThreadImpl = InvokeThread.currentThread() as DebuggerManagerThreadImpl
-    myThread = managerThreadImpl
-    val commands = managerThreadImpl.unfinishedCommands
+    val commands = commandManagerThread.unfinishedCommands
     commands.add(this)
     try {
       actionSuspend()
@@ -66,9 +73,11 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
     }
   }
 
+  @ApiStatus.Internal
   protected open fun onSuspendOrFinish() {
   }
 
+  @ApiStatus.Internal
   protected open fun invokeContinuation() {
     executeContinuation()
   }
@@ -82,6 +91,8 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
   }
 
   internal fun resetContinuation(runnable: Runnable?): Runnable? = continuation.getAndSet(runnable)
+
+  @ApiStatus.Internal
   protected fun executeContinuation() {
     resetContinuation(null)?.run()
   }

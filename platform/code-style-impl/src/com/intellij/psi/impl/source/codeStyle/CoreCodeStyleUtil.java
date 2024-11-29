@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -88,6 +89,7 @@ public final class CoreCodeStyleUtil {
     return result;
   }
 
+  @Unmodifiable
   private static Collection<PostFormatProcessor> getPostProcessors(boolean isWhitespaceOnly) {
     if (isWhitespaceOnly) {
       return ContainerUtil.filter(PostFormatProcessor.EP_NAME.getExtensionList(), processor -> processor.isWhitespaceOnly());

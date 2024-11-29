@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -433,16 +434,28 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
 
             val defaultValue = controlFlow.defaultOutputValue
 
-            controlFlow.outputValues
+            val elements = controlFlow.outputValues
                 .filter { it != defaultValue }
                 .flatMap { wrapCall(it, unboxingExpressions.getValue(it)) }
-                .withIndex()
-                .forEach { (i, wrappedCall) ->
-                    if (i > 0) {
-                        block.addBefore(newLine, anchorInBlock)
+
+            val needParenthesis = anchorParent !is KtBlockExpression && anchorParent !is KtClassBody && anchorParent !is KtFile
+            if (controlFlow.outputValues.size < 2 && elements.size > 1 && needParenthesis) {
+                val wrapperBlock = psiFactory.createExpression(
+                    """{
+                       ${elements.joinToString(separator = "") { it.text }}
+                    }""".trimIndent()
+                )
+                anchor.replace(wrapperBlock)
+            } else {
+                elements
+                    .withIndex()
+                    .forEach { (i, wrappedCall) ->
+                        if (i > 0) {
+                            block.addBefore(newLine, anchorInBlock)
+                        }
+                        block.addBefore(wrappedCall, anchorInBlock)
                     }
-                    block.addBefore(wrappedCall, anchorInBlock)
-                }
+            }
 
             defaultValue?.let {
                 if (!inlinableCall) {

@@ -54,6 +54,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.Generator;
 
 import java.util.*;
@@ -379,6 +380,7 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   @NotNull
+  @Unmodifiable
   static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
     List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
     return ContainerUtil.filter(infos, i -> i.getSeverity() == HighlightSeverity.ERROR);

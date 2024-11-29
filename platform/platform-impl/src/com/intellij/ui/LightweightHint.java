@@ -33,7 +33,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   public static final Key<Boolean> SHOWN_AT_DEBUG = Key.create("shown.at.debug");
   private static final Logger LOG = Logger.getInstance(LightweightHint.class);
 
-  private final JComponent myComponent;
+  private final @NotNull JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
   private MyEscListener myEscListener;
   private JBPopup myPopup;
@@ -433,7 +433,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
   }
 
-  public final JComponent getComponent() {
+  public final @NotNull JComponent getComponent() {
     return myComponent;
   }
 

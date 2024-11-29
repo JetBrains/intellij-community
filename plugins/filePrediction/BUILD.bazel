@@ -1,0 +1,71 @@
+### auto-generated section `build intellij.filePrediction` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "filePrediction_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "filePrediction",
+  module_name = "intellij.filePrediction",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//plugins/git4idea:vcs-git",
+    "//uast/uast-common:uast",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/statistics",
+    "@lib//:file_prediction_file-prediction-model",
+    "//platform/core-ui",
+    "//platform/ml-impl",
+    "@lib//:ngram-slp",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":filePrediction_resources"]
+)
+
+kt_jvm_test(
+  name = "filePrediction_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":filePrediction"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//plugins/git4idea:vcs-git",
+    "//uast/uast-common:uast",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//java/testFramework",
+    "//platform/statistics",
+    "@lib//:file_prediction_file-prediction-model",
+    "//platform/core-ui",
+    "//platform/statistics/uploader",
+    "//platform/ml-impl",
+    "@lib//:ngram-slp",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":filePrediction_resources"]
+)
+### auto-generated section `build intellij.filePrediction` end

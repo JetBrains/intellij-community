@@ -7,10 +7,12 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public final class TemplateContextTypes {
+  @Unmodifiable
   public static @NotNull List<TemplateContextType> getAllContextTypes() {
     return ContainerUtil.map(LiveTemplateContextService.getInstance().getLiveTemplateContexts(), LiveTemplateContext::getTemplateContextType);
   }

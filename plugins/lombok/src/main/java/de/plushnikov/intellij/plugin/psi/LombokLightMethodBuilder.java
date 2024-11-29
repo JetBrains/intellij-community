@@ -315,6 +315,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return null == myPsiMethod ? PsiElement.EMPTY_ARRAY : myPsiMethod.getChildren();
   }
 
+  @Override
   public String toString() {
     return "LombokLightMethodBuilder: " + getName();
   }

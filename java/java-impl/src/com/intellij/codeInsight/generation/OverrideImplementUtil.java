@@ -60,6 +60,7 @@ import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -292,6 +293,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return result;
   }
 
+  @Unmodifiable
   public static @NotNull List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<? extends PsiMethod> methods) {
     return ContainerUtil.map(methods, s -> createGenerationInfo(s));
   }

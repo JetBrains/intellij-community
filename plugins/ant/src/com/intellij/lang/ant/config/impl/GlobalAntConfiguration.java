@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 @State(name = "GlobalAntConfiguration", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
@@ -124,8 +125,8 @@ public final class GlobalAntConfiguration implements PersistentStateComponent<El
   }
 
   public Map<AntReference, AntInstallation> getConfiguredAnts() {
-    Map<AntReference, AntInstallation> map = ContainerUtil.newMapFromValues(ANTS.getIterator(getProperties()),
-                                                                            AntInstallation.REFERENCE_TO_ANT);
+    Map<AntReference, AntInstallation> map = new HashMap<>(ContainerUtil.newMapFromValues(ANTS.getIterator(getProperties()),
+                                                                                          AntInstallation.REFERENCE_TO_ANT));
     map.put(AntReference.BUNDLED_ANT, myBundledAnt);
     return map;
   }

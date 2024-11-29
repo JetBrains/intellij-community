@@ -34,6 +34,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.CommentTracker;
+import kotlin.annotation.AnnotationTarget;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -833,18 +834,24 @@ public final class GenerateMembersUtil {
     }
     if (annotationTarget != null) {
       PsiType fieldType = field.getType();
-      String type = options.copyAllAnnotations() ? fieldType.getCanonicalText(true) : getTypeWithNullableAnnotations(factory, fieldType);
-      if (annotationTarget instanceof PsiParameter psiParameter && psiParameter.getTypeElement() != null) {
-        psiParameter.getTypeElement().replace(factory.createTypeElementFromText(type, psiParameter));
+      String type = options.copyAllAnnotations() ? fieldType.getCanonicalText(true) : getTypeWithNullableAnnotations(factory, field);
+      if (annotationTarget instanceof PsiParameter psiParameter && psiParameter.getTypeElement() != null &&
+          psiParameter.getType().getCanonicalText(false).equals(fieldType.getCanonicalText(false))) {
+        PsiTypeElement typeElementFromText = factory.createTypeElementFromText(type, psiParameter);
+        typeElementFromText = (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(typeElementFromText);
+        psiParameter.getTypeElement().replace(typeElementFromText);
+        NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
       }
       else {
         PsiMethod psiMethod = (PsiMethod)annotationTarget;
         PsiTypeElement returnTypeElement = psiMethod.getReturnTypeElement();
-        if (returnTypeElement != null) {
-          returnTypeElement.replace(factory.createTypeElementFromText(type, psiMethod));
+        if (returnTypeElement != null && returnTypeElement.getType().getCanonicalText(false).equals(fieldType.getCanonicalText(false))) {
+          PsiTypeElement typeElementFromText = factory.createTypeElementFromText(type, psiMethod);
+          typeElementFromText = (PsiTypeElement)CodeStyleManager.getInstance(project).reformat(typeElementFromText);
+          returnTypeElement.replace(typeElementFromText);
+          NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
         }
       }
-      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
     }
 
     PsiMethod method = generatePrototype(field, result);
@@ -859,64 +866,39 @@ public final class GenerateMembersUtil {
   /**
    * Let's keep only nullable annotations, otherwise it can bother users who use frameworks, especially Hibernate
    */
-  private static @NotNull String getTypeWithNullableAnnotations(PsiElementFactory factory, PsiType type) {
-    PsiType copyType = factory.createTypeFromText(type.getCanonicalText(true), null);
-    List<PsiAnnotation> annotationsToDelete = new ArrayList<>();
-    PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
-      @Override
-      public PsiType visitType(@NotNull PsiType type) {
-        for (PsiAnnotation annotation : type.getAnnotations()) {
-          if (!NullableNotNullManager.isNullabilityAnnotation(annotation)) {
-            annotationsToDelete.add(annotation);
-          }
+  private static @NotNull String getTypeWithNullableAnnotations(@NotNull PsiElementFactory factory, @NotNull PsiField field) {
+    PsiTypeElement typeElement = field.getTypeElement();
+    PsiType psiType = field.getType();
+    if(typeElement == null) return psiType.getCanonicalText(false);
+    List<PsiElement> stack = new ArrayList<>();
+    stack.add(typeElement);
+    StringBuilder builder = new StringBuilder();
+    while (!stack.isEmpty()) {
+      PsiElement current = stack.remove(stack.size() - 1);
+      if (current instanceof PsiAnnotation annotation) {
+        if (!NullableNotNullManager.isNullabilityAnnotation(annotation)) {
+          continue;
         }
-        return super.visitType(type);
       }
-
-      @Override
-      public PsiType visitClassType(@NotNull PsiClassType classType) {
-        for (PsiType parameter : classType.getParameters()) {
-          parameter.accept(this);
+      PsiElement[] children = current.getChildren();
+      if(children.length > 0) {
+        for (int i = children.length-1; i >= 0; i--) {
+          stack.add(children[i]);
         }
-        return super.visitClassType(classType);
+        continue;
       }
-
-
-      @Override
-      public PsiType visitArrayType(@NotNull PsiArrayType arrayType) {
-        arrayType.getComponentType().accept(this);
-        return super.visitArrayType(arrayType);
-      }
-
-      @Override
-      public PsiType visitWildcardType(@NotNull PsiWildcardType wildcardType) {
-        if(wildcardType.getBound() != null) {
-          wildcardType.getBound().accept(this);
-        }
-        return super.visitWildcardType(wildcardType) ;
-      }
-
-      @Override
-      public PsiType visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
-        for (PsiType t1 : intersectionType.getConjuncts()) {
-          t1.accept(this);
-        }
-        return null;
-      }
-
-      @Override
-      public PsiType visitDisjunctionType(@NotNull PsiDisjunctionType disjunctionType) {
-        for (PsiType t1 : disjunctionType.getDisjunctions()) {
-          t1.accept(this);
-        }
-        return super.visitDisjunctionType(disjunctionType);
-      }
-    };
-    copyType.accept(visitor);
-    for (PsiAnnotation annotation : annotationsToDelete) {
-      annotation.delete();
+      builder.append(current.getText());
     }
-    return copyType.getCanonicalText(true);
+    PsiAnnotation[] annotations = field.getAnnotations();
+    for (int i = annotations.length - 1; i >= 0; i--) {
+      PsiAnnotation annotation = annotations[i];
+      if (AnnotationTargetUtil.isTypeAnnotation(annotation) &&
+          AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.FIELD) == null &&
+          NullableNotNullManager.isNullabilityAnnotation(annotation)) {
+        builder.insert(0, annotation.getText() + " ");
+      }
+    }
+    return builder.toString();
   }
 
   private static @NotNull PsiMethod generatePrototype(@NotNull PsiField field, @NotNull PsiMethod result) {

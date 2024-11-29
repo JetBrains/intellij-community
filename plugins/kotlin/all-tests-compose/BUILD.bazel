@@ -1,0 +1,12 @@
+### auto-generated section `build kotlin.compose-all-tests.k2` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "compose-all-tests-k2",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//plugins/kotlin/tests-compose",
+    "//plugins/kotlin/jvm-debugger/test/compose:kotlin-jvm-debugger-test-compose-k2",
+  ]
+)
+### auto-generated section `build kotlin.compose-all-tests.k2` end

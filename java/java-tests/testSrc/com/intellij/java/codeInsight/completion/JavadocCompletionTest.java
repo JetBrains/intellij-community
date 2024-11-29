@@ -701,7 +701,6 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   public void test_insert_link_to_field() {
     myFixture.configureByText("a.java", "/** a. #fo<caret> */ interface Foo { int foo; }}");
     myFixture.completeBasic();
-    myFixture.type("\n");
     myFixture.checkResult("/** a. {@link #foo}<caret> */ interface Foo { int foo; }}");
   }
 

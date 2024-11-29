@@ -37,7 +37,7 @@ abstract class AbstractSuspendStackTraceTest : KotlinDescriptorTestCaseWithStepp
     }
 
     private fun SuspendContextImpl.printAsyncStackTrace(frameProxy: StackFrameProxyImpl) {
-        val coroutineInfoData = CoroutineFrameBuilder.lookupContinuation(this, frameProxy)?.coroutineInfoData
+        val coroutineInfoData = CoroutineFrameBuilder.lookupContinuation(this, frameProxy)?.coroutineStacksInfoData
         if (coroutineInfoData != null && coroutineInfoData.continuationStackFrames.isNotEmpty()) {
             print(renderAsyncStackTrace(coroutineInfoData.continuationStackFrames), ProcessOutputTypes.SYSTEM)
         } else {

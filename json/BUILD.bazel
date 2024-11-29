@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.json` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "json_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "json",
+  module_name = "intellij.json",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "@lib//:guava",
+    "//platform/analysis-impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:gson",
+    "//RegExpSupport:regexp",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "@lib//:jackson-dataformat-yaml",
+    "@lib//:caffeine",
+    "@lib//:stream_ex",
+    "@lib//:kotlinx-collections-immutable",
+    "//json/split",
+    "@lib//:jackson-module-kotlin",
+  ],
+  exports = ["//json/split"],
+  runtime_deps = [":json_resources"]
+)
+### auto-generated section `build intellij.json` end

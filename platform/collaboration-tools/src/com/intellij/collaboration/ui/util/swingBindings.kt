@@ -6,7 +6,8 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -181,7 +182,9 @@ fun JComponent.bindTooltipTextIn(scope: CoroutineScope, tooltipTextFlow: Flow<@N
 fun JTextComponent.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
-      text = it
+      if (text != it) {
+        text = it
+      }
     }
   }
 }
@@ -266,20 +269,28 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter:
       setter(text)
     }
   }
-  cs.launchNow(CoroutineName("Text binding for $this")) {
-    textFlow.collectScoped { newText ->
+
+  fun doSetText(newText: String) {
+    WriteIntentReadAction.run {
       if (text != newText) {
-        writeAction {
-          setText(newText.filter { it != '\r' })
+        val noCr = newText.filter { it != '\r' }
+        WriteAction.run<Throwable> {
+          setText(noCr)
         }
       }
-      addDocumentListener(listener)
-      try {
-        awaitCancellation()
-      }
-      finally {
-        removeDocumentListener(listener)
-      }
+    }
+  }
+
+  cs.launchNow(CoroutineName("Text binding for $this")) {
+    addDocumentListener(listener)
+    textFlow.collectScoped { newText ->
+      doSetText(newText)
+    }
+    try {
+      awaitCancellation()
+    }
+    finally {
+      removeDocumentListener(listener)
     }
   }
 }
@@ -318,6 +329,18 @@ fun <D> Wrapper.bindContentIn(
 ) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     bindContentImpl(dataFlow, componentFactory)
+  }
+}
+
+@ApiStatus.Internal
+fun Wrapper.bindContent(
+  debugName: String, contentFlow: Flow<JComponent?>,
+) {
+  showingScope(debugName) {
+    contentFlow.collect {
+      setContent(it)
+      repaint()
+    }
   }
 }
 

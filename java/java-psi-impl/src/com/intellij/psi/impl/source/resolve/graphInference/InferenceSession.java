@@ -1259,10 +1259,9 @@ public class InferenceSession {
   }
 
   private boolean isLowerBoundNotAssignable(InferenceVariable var, PsiType eqBound, boolean allowUncheckedConversion) {
-    return var
-      .getBounds(InferenceBound.LOWER)
-      .stream()
-      .anyMatch(lBound -> isProperType(lBound) && !TypeConversionUtil.isAssignable(eqBound, lBound, allowUncheckedConversion));
+    return ContainerUtil.exists(
+      var.getBounds(InferenceBound.LOWER),
+      lBound -> isProperType(lBound) && !TypeConversionUtil.isAssignable(eqBound, lBound, allowUncheckedConversion));
   }
 
   private static @Nls String getConjunctsConflict(PsiIntersectionType type) {
@@ -1880,8 +1879,9 @@ public class InferenceSession {
     }
 
     if (arg instanceof PsiSwitchExpression) {
-      return PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)arg).stream()
-        .allMatch(resultExpression -> argConstraints(resultExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor));
+      return ContainerUtil.and(
+        PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)arg), 
+        resultExpression -> argConstraints(resultExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor));
     }
     return false;
   }

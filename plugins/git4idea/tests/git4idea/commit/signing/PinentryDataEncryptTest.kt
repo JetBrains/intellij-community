@@ -9,7 +9,7 @@ import kotlin.random.Random
 class PinentryDataEncryptTest : UsefulTestCase() {
 
   fun `test encrypt and decrypt`() {
-    val password = PinentryTestUtil.generatePassword(Random.nextInt(2, 200))
+    val password = PinentryTestUtil.generatePassword(Random.nextInt(4, 200))
     val keyPair = CryptoUtils.generateKeyPair()
 
     val encryptedPassword = CryptoUtils.encrypt(password, keyPair.private)

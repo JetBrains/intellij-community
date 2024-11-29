@@ -6,6 +6,7 @@ package com.intellij.internal.ui.sandbox.dsl.listCellRenderer
 
 import com.intellij.icons.AllIcons
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.items
 import com.intellij.openapi.Disposable
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
@@ -40,6 +41,8 @@ internal class LcrListPanel : UISandboxPanel {
       indent {
         row {
           jbList(listOf("Text", "With Icon", "Italic", "Commented"), listCellRenderer {
+            toolTipText = value
+
             when (index) {
               0 -> text(value)
               1 -> {
@@ -58,9 +61,9 @@ internal class LcrListPanel : UISandboxPanel {
                 }
               }
             }
-          }).label("Mixed", LabelPosition.TOP)
+          }).label("Mixed, tooltips", LabelPosition.TOP)
 
-          jbList((1..99).map { "Item $it" }, textListCellRenderer { it })
+          jbList(items(99), textListCellRenderer { it })
           jbList((1..99).toList(), listCellRenderer {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text("Item $value")
@@ -113,11 +116,15 @@ internal class LcrListPanel : UISandboxPanel {
           @Suppress("UNCHECKED_CAST")
           val list = jbList((1..99).toList(), listCellRenderer {
             text("Item $value") {
+              speedSearch { }
+              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_ITALIC, JBColor.BLUE)
+            }
+            text("Item $value") {
+              speedSearch { }
               align = LcrInitParams.Align.LEFT
             }
             text("Not searchable text") {
               foreground = greyForeground
-              speedSearchHighlighting = false
             }
           }).label("Speed search:", LabelPosition.TOP)
             .applyToComponent {

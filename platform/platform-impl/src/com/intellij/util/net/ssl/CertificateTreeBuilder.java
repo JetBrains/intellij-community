@@ -17,10 +17,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -86,6 +83,7 @@ public final class CertificateTreeBuilder implements Disposable {
     myStructureTreeModel.invalidateAsync();
   }
 
+  @Unmodifiable
   public List<X509Certificate> getCertificates() {
     return ContainerUtil.map(myCertificates.values(), wrapper -> wrapper.getCertificate());
   }
@@ -144,6 +142,7 @@ public final class CertificateTreeBuilder implements Disposable {
 
   }
 
+  @Unmodifiable
   private static List<X509Certificate> extract(Collection<CertificateWrapper> wrappers) {
     return ContainerUtil.map(wrappers, wrapper -> wrapper.getCertificate());
   }

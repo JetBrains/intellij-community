@@ -18,7 +18,7 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Adapted version of XXH3 implementation from https://github.com/Cyan4973/xxHash.
+ * AN adapted version of XXH3 implementation from <a href="https://github.com/Cyan4973/xxHash">xxHash</a>.
  * This implementation provides endian-independent hash values, but it's slower on big-endian platforms.
  */
 @SuppressWarnings({"DuplicatedCode", "CommentedOutCode"})

@@ -1,0 +1,62 @@
+### auto-generated section `build kotlin.code-insight.k1` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "kotlin-code-insight-k1_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-k1",
+  module_name = "kotlin.code-insight.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/core",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "//java/java-psi-api:psi",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":kotlin-code-insight-k1_resources"]
+)
+
+kt_jvm_test(
+  name = "kotlin-code-insight-k1_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":kotlin-code-insight-k1"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/core",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "//java/java-psi-api:psi",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":kotlin-code-insight-k1_resources"]
+)
+### auto-generated section `build kotlin.code-insight.k1` end

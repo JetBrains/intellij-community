@@ -68,7 +68,8 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
 
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        ReportingEvaluationCallback callback = wrapToReportingCallback(baseCallback, myDebugProcess.getProject());
+        XEvaluationOrigin origin = getOrigin(baseCallback);
+        ReportingEvaluationCallback callback = new ReportingEvaluationCallback(myDebugProcess.getProject(), baseCallback, origin);
         WatchItemDescriptor descriptor = null;
         try {
           if (DebuggerUIUtil.isObsolete(callback)) {
@@ -88,6 +89,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
             callback.errorOccurred(JavaDebuggerBundle.message("error.context.not.available"), descriptor);
             return;
           }
+          XEvaluationOrigin.setOrigin(evalContext, origin);
           descriptor.setContext(evalContext);
           EvaluateException exception = descriptor.getEvaluateException();
           if (exception != null && descriptor.getValue() == null) {
@@ -116,7 +118,8 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
 
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        ReportingEvaluationCallback callback = wrapToReportingCallback(baseCallback, myDebugProcess.getProject());
+        XEvaluationOrigin origin = getOrigin(baseCallback);
+        ReportingEvaluationCallback callback = new ReportingEvaluationCallback(myDebugProcess.getProject(), baseCallback, origin);
         if (DebuggerUIUtil.isObsolete(callback)) {
           return;
         }
@@ -135,6 +138,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
           callback.errorOccurred(JavaDebuggerBundle.message("error.context.not.available"), descriptor);
           return;
         }
+        XEvaluationOrigin.setOrigin(evalContext, origin);
 
         try {
           Project project = myDebugProcess.getProject();
@@ -171,12 +175,10 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
     });
   }
 
-  @NotNull
-  private static ReportingEvaluationCallback wrapToReportingCallback(final XEvaluationCallback callback, final Project project) {
-    if (callback instanceof XEvaluationCallbackWithOrigin callbackWithOrigin) {
-      return new ReportingEvaluationCallback(project, callback, callbackWithOrigin.getOrigin());
-    }
-    return new ReportingEvaluationCallback(project, callback, XEvaluationOrigin.UNSPECIFIED);
+
+  private static @NotNull XEvaluationOrigin getOrigin(@NotNull XEvaluationCallback callback) {
+    return callback instanceof XEvaluationCallbackWithOrigin callbackWithOrigin ?
+           callbackWithOrigin.getOrigin() : XEvaluationOrigin.UNSPECIFIED;
   }
 
   @Override

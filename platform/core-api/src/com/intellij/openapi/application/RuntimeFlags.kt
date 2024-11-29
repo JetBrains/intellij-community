@@ -41,3 +41,12 @@ val isLockStoredInContext: Boolean =
  */
 @ApiStatus.Internal
 val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
+
+/**
+ * - `false` means wrong action chains are ignored and not reported.
+ * - `true` means chains of actions like `WriteIntentReadAction -> ReadAction -> WriteAction` will be reported as warnings.
+ *
+ *  Such reporting fails tests as I/O takes too, much time and tests timeouts.
+ */
+@get:ApiStatus.Internal
+val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()

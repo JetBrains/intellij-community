@@ -23,6 +23,7 @@ public class MatchNode {
       return (strValue.charAt(0) == '$' && strValue.charAt(strValue.length() - 1) == '$');
     }
 
+    @Override
     public String toString() {
       return value.toString();
     }

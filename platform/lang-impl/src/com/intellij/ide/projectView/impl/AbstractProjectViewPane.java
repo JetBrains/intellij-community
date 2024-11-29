@@ -471,6 +471,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return unloadedModules(myProject, getSelectedValues(selectedUserObjects));
   }
 
+  @Unmodifiable
   private <T> @NotNull List<@NotNull T> getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects, @NotNull Class<T> aClass) {
     return ContainerUtil.filterIsInstance(getSelectedValues(selectedUserObjects), aClass);
   }
@@ -497,6 +498,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return ContainerUtil.getFirstItem(getElementsFromNode(node));
   }
 
+  @Unmodifiable
   public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
     JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile || value instanceof PsiAwareObject ? JBIterable.of(value) :

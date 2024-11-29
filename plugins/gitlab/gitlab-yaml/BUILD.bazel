@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.vcs.gitlab.yaml` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "vcs-gitlab-yaml_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-gitlab-yaml",
+  module_name = "intellij.vcs.gitlab.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/gitlab/gitlab-core:vcs-gitlab",
+    "//plugins/yaml",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+  ],
+  runtime_deps = [":vcs-gitlab-yaml_resources"]
+)
+
+kt_jvm_test(
+  name = "vcs-gitlab-yaml_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":vcs-gitlab-yaml"],
+  deps = [
+    "//plugins/gitlab/gitlab-core:vcs-gitlab",
+    "//plugins/yaml",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//json/tests:tests_test",
+  ],
+  runtime_deps = [":vcs-gitlab-yaml_resources"]
+)
+### auto-generated section `build intellij.vcs.gitlab.yaml` end

@@ -28,9 +28,10 @@ import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.externalAnnotations.AbstractK2ExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.findUsages.*
 import org.jetbrains.kotlin.idea.fir.folding.AbstractFirFoldingTest
-import org.jetbrains.kotlin.idea.fir.imports.AbstractFirJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2AutoImportTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2FilteringAutoImportTest
+import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.kmp.AbstractK2KmpLightFixtureHighlightingTest
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoDeclarationTest
 import org.jetbrains.kotlin.idea.fir.navigation.AbstractFirGotoRelatedSymbolMultiModuleTest
@@ -52,6 +53,8 @@ import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterPartialTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileFullJDKTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinCopyPasteConversionTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2TextJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -81,7 +84,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2CodeInsightTests()
     generateK2NavigationTests()
     generateK2DebuggerTests()
-    generateK2ComposeDebuggerTests()
+    generateK2DebuggerTestsWithCompilerPlugins()
     generateK2HighlighterTests()
     generateK2GradleBuildScriptHighlighterTests()
     generateK2RefactoringsTests()
@@ -89,6 +92,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2RefIndexTests()
     generateK2AnalysisApiTests()
     generateK2InjectionTests()
+    generateProjectStructureTest()
 
     testGroup("base/fir/analysis-api-platform") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
@@ -196,7 +200,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractFirParameterInfoTest> {
             model(
                 "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|java)$"), isRecursive = true,
-                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib")
+                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib", "withLib4/sharedLib")
             )
         }
 
@@ -214,8 +218,13 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             )
         }
 
-        testClass<AbstractFirJvmOptimizeImportsTest> {
+        testClass<AbstractK2JvmOptimizeImportsTest> {
             model("editor/optimizeImports/jvm", pattern = KT_WITHOUT_DOTS)
+            model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractK2JsOptimizeImportsTest> {
+            model("editor/optimizeImports/js", pattern = KT_WITHOUT_DOTS)
             model("editor/optimizeImports/common", pattern = KT_WITHOUT_DOTS)
         }
 
@@ -516,6 +525,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
 
         testClass<AbstractK2JavaToKotlinConverterMultiFileTest>(commonSuite = false) {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractK2JavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+            model("copyPaste", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2TextJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+            model("copyPastePlainText", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
         }
     }
 }

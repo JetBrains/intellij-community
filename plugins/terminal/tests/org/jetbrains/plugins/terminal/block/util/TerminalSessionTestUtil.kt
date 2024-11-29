@@ -59,7 +59,12 @@ internal object TerminalSessionTestUtil {
     val ttyConnector = runner.createTtyConnector(process)
 
     val session = BlockTerminalSession(runner.settingsProvider, BlockTerminalColorPalette(), configuredOptions.shellIntegration!!)
-    Disposer.register(parentDisposable, session)
+    Disposer.register(parentDisposable) {
+      Disposer.dispose(session)
+      if (!process.waitFor(60, TimeUnit.SECONDS)) {
+        fail("Shell hasn't been terminated within timeout, pid:${process.pid()}")
+      }
+    }
     session.controller.resize(initialTermSize, RequestOrigin.User)
     val model: TerminalModel = session.model
     session.controller.addCustomCommandListener(terminalCustomCommandListener)

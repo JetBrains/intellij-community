@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 public abstract class MarkupSurroundTestBase extends BasePlatformTestCase {
   protected static final String BASE_PATH = "/codeInsight/surroundWith/";
 
+  @Unmodifiable
   private List<InvokeTemplateAction> buildSurroundersForFileTypeWithGivenExtension() {
     return ContainerUtil.map(
       TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(

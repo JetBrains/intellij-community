@@ -13,6 +13,7 @@ internal class CopyOnWriteFilePathSet(private val caseSensitive: Boolean) {
   @Volatile
   private var filesSet: RecursiveFilePathSet = RecursiveFilePathSet(caseSensitive)
 
+  @Volatile
   var initialized: Boolean = false
     private set
 

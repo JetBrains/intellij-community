@@ -99,7 +99,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_17)
         <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
         <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
 
-        <idea-version since-build="232" until-build="242.*"/>
+        <idea-version since-build="241" until-build="243.*"/>
 
         <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
              Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.

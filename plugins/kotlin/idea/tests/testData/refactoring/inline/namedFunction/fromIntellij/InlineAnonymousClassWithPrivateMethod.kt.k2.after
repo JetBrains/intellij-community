@@ -6,8 +6,7 @@ object Foo {
 }
 
 internal object Bar {
-    @JvmStatic
-    fun main(args: Array<String>) {
+    @JvmStatic fun main(args: Array<String>) {
         Foo.bar(object : Runnable {
             override fun run() {
                 doRun()

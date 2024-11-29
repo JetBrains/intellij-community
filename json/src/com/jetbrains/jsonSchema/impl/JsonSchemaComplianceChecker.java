@@ -16,6 +16,7 @@ import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,10 @@ public final class JsonSchemaComplianceChecker {
   }
 
   public void annotate(final @NotNull PsiElement element) {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().recordSchemaFeaturesUsage(myRootSchema, () -> doAnnotate(element));
+  }
+
+  private void doAnnotate(@NotNull PsiElement element) {
     Project project = element.getProject();
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
     if (firstProp != null) {

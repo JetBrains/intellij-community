@@ -230,6 +230,7 @@ public final class Diff {
       //System.err.println(line0+","+line1+","+inserted+","+deleted);
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "change[" + "inserted=" + inserted + ", deleted=" + deleted + ", line0=" + line0 + ", line1=" + line1 + "]";

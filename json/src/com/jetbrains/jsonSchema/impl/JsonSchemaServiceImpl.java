@@ -35,6 +35,7 @@ import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,7 +47,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
 
   private final @NotNull Project myProject;
   private final @NotNull MyState myState;
-  private final @NotNull ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
+  private final @NotNull ClearableLazyValue<@Unmodifiable Set<String>> myBuiltInSchemaIds;
   private final @NotNull Set<String> myRefs = ConcurrentCollectionFactory.createConcurrentSet();
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
 

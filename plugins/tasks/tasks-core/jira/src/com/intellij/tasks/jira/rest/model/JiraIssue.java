@@ -11,6 +11,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public abstract class JiraIssue {
+  @Override
   public String toString() {
     return String.format("JiraIssue(key=%s, summary='%s')", getKey(), getSummary());
   }

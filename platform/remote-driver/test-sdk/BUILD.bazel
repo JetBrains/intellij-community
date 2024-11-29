@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.driver.sdk` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "driver-sdk",
+  module_name = "intellij.driver.sdk",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "//platform/remote-driver/client:driver-client",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/util",
+  ],
+  exports = [
+    "//platform/remote-driver/client:driver-client",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.driver.sdk` end

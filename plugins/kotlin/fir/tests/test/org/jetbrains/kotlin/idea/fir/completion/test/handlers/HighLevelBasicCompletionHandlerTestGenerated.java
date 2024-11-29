@@ -461,6 +461,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderFunction.kt");
             }
 
+            @TestMetadata("HigherOrderFunctionParameterName.kt")
+            public void testHigherOrderFunctionParameterName() throws Exception {
+                runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName.kt");
+            }
+
             @TestMetadata("HigherOrderFunctionWithArg.kt")
             public void testHigherOrderFunctionWithArg() throws Exception {
                 runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithArg.kt");
@@ -479,6 +484,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("HigherOrderFunctionWithArgs3.kt")
             public void testHigherOrderFunctionWithArgs3() throws Exception {
                 runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithArgs3.kt");
+            }
+
+            @TestMetadata("HigherOrderFunctionWithDefaultArgs.kt")
+            public void testHigherOrderFunctionWithDefaultArgs() throws Exception {
+                runTest("../../completion/testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithDefaultArgs.kt");
             }
 
             @TestMetadata("HigherOrderSuspendFunctionWithArgs.kt")

@@ -32,7 +32,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link HashMap#HashMap()}
+   * @deprecated Use {@link java.util.HashMap#HashMap()}
    */
   @Contract(pure = true)
   @Deprecated
@@ -733,7 +733,7 @@ public final class ContainerUtil {
     addAll(collection, appendix.iterator());
   }
 
-  @Contract(mutates = "param1")
+  @Contract(mutates = "param1, param2")
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Iterator<? extends T> iterator) {
     while (iterator.hasNext()) {
       T o = iterator.next();
@@ -752,7 +752,7 @@ public final class ContainerUtil {
   /**
    * Adds all not-null elements from the {@code elements}, ignoring nulls
    */
-  @Contract(mutates = "param1")
+  @Contract(mutates = "param1, param2")
   public static <T> void addAllNotNull(@NotNull Collection<? super T> collection, @NotNull Iterator<? extends T> elements) {
     while (elements.hasNext()) {
       T o = elements.next();
@@ -762,7 +762,7 @@ public final class ContainerUtil {
     }
   }
 
-  @Contract(pure = true)
+  @CheckReturnValue
   public static @NotNull <K, V> Map<K, V> newMapFromKeys(@NotNull Iterator<? extends K> keys, @NotNull Convertor<? super K, ? extends V> valueConvertor) {
     Map<K, V> map = new HashMap<>();
     while (keys.hasNext()) {
@@ -772,14 +772,14 @@ public final class ContainerUtil {
     return map;
   }
 
-  @Contract(pure = true)
+  @CheckReturnValue
   public static @NotNull <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<? extends V> values, @NotNull Convertor<? super V, ? extends K> keyConvertor) {
     Map<K, V> map = new HashMap<>();
     fillMapWithValues(map, values, keyConvertor);
     return map;
   }
 
-  @Contract(mutates = "param1")
+  @Contract(mutates = "param1, param2")
   public static <K, V> void fillMapWithValues(@NotNull Map<? super K, ? super V> map,
                                               @NotNull Iterator<? extends V> values,
                                               @NotNull Convertor<? super V, ? extends K> keyConvertor) {
@@ -789,7 +789,7 @@ public final class ContainerUtil {
     }
   }
 
-  @Contract(pure = true)
+  @CheckReturnValue
   public static @NotNull <K, V> Map<K, Set<V>> classify(@NotNull Iterator<? extends V> iterator, @NotNull Convertor<? super V, ? extends K> keyConvertor) {
     Map<K, Set<V>> hashMap = new LinkedHashMap<>();
     while (iterator.hasNext()) {
@@ -1033,7 +1033,7 @@ public final class ContainerUtil {
         result.add(t);
       }
     }
-    return result;
+    return result.isEmpty() ? emptyList() : result;
   }
 
   /**
@@ -1058,21 +1058,21 @@ public final class ContainerUtil {
 
   @Contract(pure=true)
   public static <T, V extends T> V @NotNull [] findAllAsArray(T @NotNull [] collection, @NotNull Class<V> instanceOf) {
-    List<V> list = findAll(collection, instanceOf);
+    List<? extends V> list = findAll(collection, instanceOf);
     V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
   @Contract(pure=true)
   public static <T, V extends T> V @NotNull [] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
-    List<V> list = findAll(collection, instanceOf);
+    List<? extends V> list = findAll(collection, instanceOf);
     V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
   @Contract(pure=true)
   public static <T> T @NotNull [] findAllAsArray(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
-    List<T> list = findAll(collection, condition);
+    List<? extends T> list = findAll(collection, condition);
     if (list.size() == collection.length) {
       return collection;
     }
@@ -1250,7 +1250,7 @@ public final class ContainerUtil {
     return unmodifiableOrEmptyList(list);
   }
 
-  @Contract(mutates = "param1")
+  @Contract(mutates = "param1, param2")
   public static <T> void addAll(@NotNull Collection<? super T> collection, @NotNull Enumeration<? extends T> enumeration) {
     while (enumeration.hasMoreElements()) {
       T element = enumeration.nextElement();
@@ -1975,7 +1975,7 @@ public final class ContainerUtil {
    * @param mapping a side effect-free function which transforms iterable elements
    * @return read-only list consisting of the elements from the iterator converted by mapping
    */
-  @Contract(pure = true)
+  @CheckReturnValue
   public static @Unmodifiable @NotNull <T, V> List<V> map(@NotNull Iterator<? extends T> iterator, @NotNull Function<? super T, ? extends V> mapping) {
     List<V> result = new ArrayList<>();
     while (iterator.hasNext()) {

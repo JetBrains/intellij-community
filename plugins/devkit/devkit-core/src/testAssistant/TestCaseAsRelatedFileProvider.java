@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 final class TestCaseAsRelatedFileProvider extends GotoRelatedProvider {
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     final Editor editor = context.getData(CommonDataKeys.EDITOR);
     final Project project = context.getData(CommonDataKeys.PROJECT);

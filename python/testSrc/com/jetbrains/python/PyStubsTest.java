@@ -9,6 +9,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -400,7 +401,9 @@ public class PyStubsTest extends PyTestCase {
       //fooPyFile.unloadContent();
       DumbModeTestUtils.runInDumbModeSynchronously(project, () -> {
         assertEquals(1, ((PyFile)fooPyFile).getTopLevelClasses().size());
-        assertFalse(fooPyFile.isContentsLoaded());
+        if (Registry.is("ide.dumb.mode.check.awareness")) {
+          assertFalse(fooPyFile.isContentsLoaded());
+        }
       });
       final Collection<PyClass> committedClasses = PyClassNameIndex.find("Foo123", project, GlobalSearchScope.allScope(project));
       assertEquals(1, committedClasses.size());

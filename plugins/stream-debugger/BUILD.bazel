@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.java.debugger.streams` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "java-debugger-streams_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-debugger-streams",
+  module_name = "intellij.java.debugger.streams",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:stream_ex",
+    "//java/debugger/impl:java-debugger-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/core-api:core",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//java/openapi:java",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ],
+  runtime_deps = [":java-debugger-streams_resources"]
+)
+
+kt_jvm_test(
+  name = "java-debugger-streams_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":java-debugger-streams"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:stream_ex",
+    "//java/debugger/impl:java-debugger-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/core-api:core",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//java/testFramework",
+    "//java/openapi:java",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ],
+  runtime_deps = [":java-debugger-streams_resources"]
+)
+### auto-generated section `build intellij.java.debugger.streams` end

@@ -12,10 +12,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,6 +87,7 @@ public final class DocumentMarkupModel {
    * over all opened projects and calling {@link #forDocument} with {@code create=false}.
    */
   @ApiStatus.Experimental
+  @Unmodifiable
   public static @NotNull List<? extends MarkupModel> getExistingMarkupModels(@NotNull Document document) {
     if (document instanceof DocumentWindow documentWindow) {
       Document delegate = documentWindow.getDelegate();

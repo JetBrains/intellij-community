@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -22,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -37,11 +37,11 @@ import com.intellij.platform.util.progress.ProgressState
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.awaitCancellationAndInvoke
 import fleet.kernel.rete.collect
+import fleet.kernel.tryWithEntities
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
-import java.io.Closeable
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -102,48 +102,47 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     LOG.trace { "Task added to storage: entityId=$entityId, title=$title" }
 
     try {
-      cs.subscribeToTask(taskInfoEntity, context, pipe).use {
-        pipe.collectProgressUpdates(action)
-      }
+      subscribeToTask(taskInfoEntity, context, pipe)
+      pipe.collectProgressUpdates(action)
     }
     finally {
       LOG.trace { "Task finished: entityId=$entityId, title=$title" }
-      cs.launch {
+      withContext(NonCancellable) {
         taskStorage.removeTask(taskInfoEntity)
         LOG.trace { "Task removed from storage: entityId=$entityId, title=$title" }
       }
     }
   }
 
-  private fun CoroutineScope.subscribeToTask(taskInfo: TaskInfoEntity, taskContext: CoroutineContext, pipe: ProgressPipe): Closeable {
-    val jobs = listOf(
-      subscribeToTaskStatus(taskInfo, taskContext),
-      subscribeToTaskUpdates(taskInfo, pipe)
-    )
-
-    return Closeable { jobs.forEach { it.cancel()} }
-  }
-
-  private fun CoroutineScope.subscribeToTaskStatus(taskInfo: TaskInfoEntity, context: CoroutineContext): Job {
-    return launch {
+  private fun CoroutineScope.subscribeToTask(taskInfo: TaskInfoEntity, taskContext: CoroutineContext, pipe: ProgressPipe) {
+    launch {
       withKernel {
-        val title = taskInfo.title
-        val entityId = taskInfo.eid
-        taskInfo.statuses.collect { status ->
-          LOG.trace { "Task status changed to $status, entityId=$entityId, title=$title" }
-          when (status) {
-            TaskStatus.RUNNING -> { /* TODO RDCT-1620 */ }
-            TaskStatus.PAUSED -> { /* TODO RDCT-1620 */ }
-            TaskStatus.CANCELED -> context.cancel()
-          }
+        tryWithEntities(taskInfo) {
+          subscribeToTaskStatus(taskInfo, taskContext)
+          subscribeToTaskUpdates(taskInfo, pipe)
         }
       }
     }
   }
 
-  private fun CoroutineScope.subscribeToTaskUpdates(taskInfo: TaskInfoEntity, pipe: ProgressPipe): Job {
+  private fun CoroutineScope.subscribeToTaskStatus(taskInfo: TaskInfoEntity, context: CoroutineContext) {
+    launch {
+      val title = taskInfo.title
+      val entityId = taskInfo.eid
+      taskInfo.statuses.collect { status ->
+        LOG.trace { "Task status changed to $status, entityId=$entityId, title=$title" }
+        when (status) {
+          TaskStatus.RUNNING -> { /* TODO RDCT-1620 */ }
+          TaskStatus.PAUSED -> { /* TODO RDCT-1620 */ }
+          TaskStatus.CANCELED -> context.cancel()
+        }
+      }
+    }
+  }
+
+  private fun CoroutineScope.subscribeToTaskUpdates(taskInfo: TaskInfoEntity, pipe: ProgressPipe) {
     val taskStorage = TaskStorage.getInstance()
-    return launch {
+    launch {
       pipe.progressUpdates().collect {
         taskStorage.updateTask(taskInfo, it)
       }
@@ -206,6 +205,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }
   }
 
+  @OptIn(IntellijInternalApi::class)
   private fun <T> CoroutineScope.runWithModalProgressBlockingInternal(
     dispatcher: CoroutineDispatcher?,
     descriptor: ModalIndicatorDescriptor,
@@ -216,7 +216,8 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val dispatcherCtx = dispatcher ?: EmptyCoroutineContext
       val modalityContext = newModalityState.asContextElement()
       val pipe = cs.createProgressPipe()
-      val taskJob = async(dispatcherCtx + modalityContext) {
+      val permitCtx = getLockPermitContext(true)
+      val taskJob = async(dispatcherCtx + modalityContext + permitCtx) {
           progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
           // an unhandled exception in `async` can kill the entire computation tree
           // we need to propagate the exception to the caller, since they may have some way to handle it.
@@ -241,8 +242,13 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         exitCondition = modalJob::isCompleted,
         modalComponent = deferredDialog::modalComponent,
       )
-      @OptIn(ExperimentalCoroutinesApi::class)
-      taskJob.getCompleted().getOrThrow()
+      try {
+        @OptIn(ExperimentalCoroutinesApi::class)
+        taskJob.getCompleted().getOrThrow()
+      }
+      finally {
+        closeLockPermitContext(permitCtx)
+      }
     }
   }
 }

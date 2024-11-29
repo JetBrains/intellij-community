@@ -641,7 +641,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     //we use schedule to allow processing other events during processing this one
     //this is especially necessary if a method is breakpoint condition
-    getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         logSuspendContext(suspendContext, "start locatable event processing");

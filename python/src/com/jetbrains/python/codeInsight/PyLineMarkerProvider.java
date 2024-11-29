@@ -197,7 +197,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
   }
 
   private static @Nullable LineMarkerInfo<PsiElement> getMethodMarker(final PsiElement identifier, final PyFunction function) {
-    if (PyUtil.isInitMethod(function)) {
+    if (PyUtil.isConstructorLikeMethod(function)) {
       return null;
     }
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(identifier.getProject(), function.getContainingFile());

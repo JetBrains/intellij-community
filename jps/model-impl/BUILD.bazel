@@ -1,17 +1,50 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.jps.model.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "jps-model-impl",
+jvm_resources(
+  name = "model-impl_resources",
+  files = glob(["src/META-INF/services/com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfigurationService", "src/META-INF/services/org.jetbrains.jps.model.ex.JpsExElementFactory", "src/META-INF/services/org.jetbrains.jps.service.SharedThreadPool", "src/META-INF/services/org.jetbrains.jps.model.java.JdkVersionDetector", "src/META-INF/services/org.jetbrains.jps.model.artifact.JpsArtifactService", "src/META-INF/services/org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService", "src/META-INF/services/org.jetbrains.jps.service.JpsServiceManager", "src/META-INF/services/org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory", "src/META-INF/services/org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory", "src/META-INF/services/org.jetbrains.jps.model.JpsElementFactory", "src/META-INF/services/org.jetbrains.jps.model.java.JpsJavaExtensionService", "src/META-INF/services/org.jetbrains.jps.model.JpsEncodingConfigurationService"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "model-impl",
   module_name = "intellij.platform.jps.model.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@community//platform/util",
-    "@community//jps/model-api:jps-model",
-    "@libraries//:intellij-deps-fastutil",
+    "//platform/util",
+    "//jps/model-api:model",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":model-impl_resources"]
+)
+### auto-generated section `build intellij.platform.jps.model.impl` end
+
+### auto-generated section `build intellij.platform.jps.model.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "model-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "model-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//jps/model-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:assert_j",
+    "//platform/testFramework/extensions:testExtensions",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.jps.model.tests` end

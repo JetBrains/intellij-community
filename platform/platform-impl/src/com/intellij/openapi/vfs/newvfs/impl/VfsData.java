@@ -493,6 +493,7 @@ public final class VfsData {
     }
 
     @NotNull
+    @Unmodifiable
     List<String> getAdoptedNames() {
       Set<CharSequence> adopted = adoptedNames;
       if (adopted == null) return Collections.emptyList();

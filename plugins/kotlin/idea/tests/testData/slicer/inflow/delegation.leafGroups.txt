@@ -1,0 +1,10 @@
+11 return <bold>"impl"</bold> (in Impl.calc())
+16 	<bold>val s</bold> = b.calc() (in main(Delegate))
+16 		val s = <bold>b.calc()</bold> (in main(Delegate))
+10 			override <bold>fun calc(): String</bold> { (in Impl)
+11 				return <bold>"impl"</bold> (in Impl.calc())
+
+4 <bold>fun calc() : String</bold> (in Base)
+16 	<bold>val s</bold> = b.calc() (in main(Delegate))
+16 		val s = <bold>b.calc()</bold> (in main(Delegate))
+4 			<bold>fun calc() : String</bold> (in Base)

@@ -39,6 +39,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -199,8 +200,8 @@ public final class ReincludedRootsUtil {
     private record ModuleRootData<E extends WorkspaceEntity>(@NotNull EntityPointer<E> entityPointer,
                                                              @NotNull ModuleId moduleId,
                                                              @NotNull VirtualFileUrl url) {
-      private @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
-                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
+      private @NotNull Collection<IndexableIteratorBuilder> createBuilders(@Unmodifiable Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
+                                                                           @Unmodifiable Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
         IndexableIteratorPresentation presentation = findPresentation(entityPointer, referenceMap, contributorMap);
         if (presentation == null) {
           return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, IndexingUrlRootHolder.Companion.fromUrl(url));
@@ -235,8 +236,8 @@ public final class ReincludedRootsUtil {
 
     private record CustomKindRootData<E extends WorkspaceEntity>(@NotNull EntityPointer<E> entityPointer,
                                                                  @NotNull VirtualFileUrl fileUrl) {
-      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
-                                                                          Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
+      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(@Unmodifiable Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
+                                                                          @Unmodifiable Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
         IndexableIteratorPresentation customization = findPresentation(entityPointer, referenceMap, contributorMap);
         return IndexableIteratorBuilders.INSTANCE.forCustomKindEntity(entityPointer, IndexingUrlRootHolder.Companion.fromUrl(fileUrl),
                                                                       customization);
@@ -348,8 +349,8 @@ public final class ReincludedRootsUtil {
   }
 
   private static @Nullable <E extends WorkspaceEntity> IndexableIteratorPresentation findPresentation(@NotNull EntityPointer<E> reference,
-                                                                                                      @NotNull Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
-                                                                                                      @NotNull Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
+                                                                                                      @NotNull @Unmodifiable Map<EntityPointer<?>, WorkspaceEntity> referenceMap,
+                                                                                                      @NotNull @Unmodifiable Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
     E entity = (E)referenceMap.get(reference);
     if (entity == null) {
       return null;

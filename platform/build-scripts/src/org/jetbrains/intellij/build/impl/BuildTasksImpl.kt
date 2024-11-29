@@ -12,6 +12,8 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
+import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
@@ -185,8 +187,8 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
   }
 
   throw RuntimeException(
-    "Cannot find \'$normalizedRelativePath\' " +
-    "neither in sources of \'${context.productProperties.applicationInfoModule}\' " +
+    "Cannot find '$normalizedRelativePath' " +
+    "neither in sources of '${context.productProperties.applicationInfoModule}' " +
     "nor in ${context.productProperties.brandingResourcePaths}"
   )
 }
@@ -318,7 +320,7 @@ private fun copyDependenciesFile(context: BuildContext): Path {
 private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: BuildContext) {
   val unknownLibraries = names.filter { context.project.libraryCollection.findLibrary(it) == null }
   check(unknownLibraries.isEmpty()) {
-    "The following libraries from $fieldName aren\'t found in the project: $unknownLibraries"
+    "The following libraries from $fieldName aren't found in the project: $unknownLibraries"
   }
 }
 
@@ -498,7 +500,6 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
     val builtArtifacts = mutableSetOf<MavenArtifactData>()
-    @Suppress("UsePropertyAccessSyntax")
     if (!platformModules.isEmpty()) {
       mavenArtifactsBuilder.generateMavenArtifacts(
         moduleNamesToPublish = platformModules,
@@ -630,7 +631,7 @@ private fun checkProductLayout(context: BuildContext) {
   checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules", context)
   checkModules(layout.moduleExcludes.keys, "productProperties.productLayout.moduleExcludes", context)
   for (plugin in pluginLayouts) {
-    checkBaseLayout(plugin, "\'${plugin.mainModule}\' plugin", context)
+    checkBaseLayout(plugin, "'${plugin.mainModule}' plugin", context)
   }
   checkPlatformSpecificPluginResources(pluginLayouts = pluginLayouts, pluginModulesToPublish = layout.pluginModulesToPublish)
 }
@@ -646,7 +647,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
     checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
     check(context.findRequiredModule(moduleName).libraryCollection.libraries.any { getLibraryFileName(it) == libraryName }) {
-      "Cannot find library \'$libraryName\' in \'$moduleName\' (used in $description)"
+      "Cannot find library '$libraryName' in '$moduleName' (used in $description)"
     }
   }
 
@@ -656,8 +657,8 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
       val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
       for (libraryName in value) {
         check(libraries.any { getLibraryFileName(it) == libraryName }) {
-          val where = key?.let { "module \'$it\'" } ?: "project"
-          "Cannot find library \'$libraryName\' in $where (used in \'excludedModuleLibraries\' in $description)"
+          val where = key?.let { "module '$it'" } ?: "project"
+          "Cannot find library '$libraryName' in $where (used in 'excludedModuleLibraries' in $description)"
         }
       }
     }
@@ -694,7 +695,7 @@ private fun checkModules(modules: Collection<String?>?, fieldName: String, conte
   if (modules != null) {
     val unknownModules = modules.filter { it != null && context.findModule(it) == null }
     check(unknownModules.isEmpty()) {
-      "The following modules from $fieldName aren\'t found in the project: $unknownModules"
+      "The following modules from $fieldName aren't found in the project: $unknownModules, ensure you use module name instead of plugin id"
     }
   }
 }
@@ -708,7 +709,7 @@ private fun checkModule(moduleName: String?, fieldName: String, context: Compila
 private fun checkArtifacts(names: Collection<String>, fieldName: String, context: CompilationContext) {
   val unknownArtifacts = names - JpsArtifactService.getInstance().getArtifacts(context.project).map { it.name }.toSet()
   check(unknownArtifacts.isEmpty()) {
-    "The following artifacts from $fieldName aren\'t found in the project: $unknownArtifacts"
+    "The following artifacts from $fieldName aren't found in the project: $unknownArtifacts"
   }
 }
 
@@ -721,7 +722,7 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
 
   val unknownBundledPluginModules = pluginModules.filter { context.findModule(it)?.let { findFileInModuleSources(it, "META-INF/plugin.xml") } == null }
   check(unknownBundledPluginModules.isEmpty()) {
-    "The following modules from $fieldName don\'t contain META-INF/plugin.xml file and aren\'t specified as optional plugin modules" +
+    "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules" +
     "in productProperties.productLayout.pluginLayouts: ${unknownBundledPluginModules.joinToString()}."
   }
 }
@@ -742,7 +743,7 @@ private fun checkPaths2(paths: Collection<Path>, propertyName: String) {
 
 private fun checkMandatoryField(value: String?, fieldName: String) {
   checkNotNull(value) {
-    "Mandatory property \'$fieldName\' is not specified"
+    "Mandatory property '$fieldName' is not specified"
   }
 }
 

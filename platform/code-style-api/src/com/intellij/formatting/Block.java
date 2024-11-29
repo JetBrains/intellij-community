@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -45,6 +46,7 @@ public interface Block {
    * @see #isLeaf()
    */
   @NotNull
+  @Unmodifiable
   List<Block> getSubBlocks();
 
   /**

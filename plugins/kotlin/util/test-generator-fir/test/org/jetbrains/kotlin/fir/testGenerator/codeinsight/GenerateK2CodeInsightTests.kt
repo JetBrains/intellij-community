@@ -3,8 +3,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinBinariesCheckerTest
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinSourceCheckerTest
-import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
-import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
+import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
 import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
@@ -16,14 +15,14 @@ import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateTestSupportMetho
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
-import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
-import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
-import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
-import org.jetbrains.kotlin.idea.k2.hints.AbstractKtRangesHintsProviderTest
-import org.jetbrains.kotlin.idea.k2.hints.AbstractKtReferenceTypeHintsProviderTest
+import org.jetbrains.kotlin.idea.k2.hints.*
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractKotlinFirMoveStatementTest
 import org.jetbrains.kotlin.idea.k2.quickDoc.AbstractFirRenderingKDocTest
+import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerLeafGroupingTest
+import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerMultiplatformTest
+import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerNullnessGroupingTest
+import org.jetbrains.kotlin.idea.k2.slicer.AbstractFirSlicerTreeTest
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
@@ -31,7 +30,7 @@ import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationMult
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationMultifileTest
 import org.jetbrains.kotlin.idea.navigation.AbstractKotlinGotoImplementationTest
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
@@ -102,6 +101,22 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter", testMethodName = "doTestFunctionParameterUnwrapper")
         }
 
+        testClass<AbstractFirSlicerTreeTest> {
+            model("../../../idea/tests/testData/slicer", excludedDirectories = listOf("mpp"))
+        }
+
+        testClass<AbstractFirSlicerLeafGroupingTest> {
+            model("../../../idea/tests/testData/slicer/inflow", flatten = true)
+        }
+
+        testClass<AbstractFirSlicerNullnessGroupingTest> {
+            model("../../../idea/tests/testData/slicer/inflow", flatten = true)
+        }
+
+        testClass<AbstractFirSlicerMultiplatformTest> {
+            model("../../../idea/tests/testData/slicer/mpp", isRecursive = false, pattern = DIRECTORY)
+        }
+
         testClass<AbstractK2ExpressionTypeTest> {
             model("../../../idea/tests/testData/codeInsight/expressionType", pattern = KT or TEST)
         }
@@ -134,6 +149,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         }
         testClass<AbstractKtCallChainHintsProviderTest> {
             model("../../../idea/tests/testData/codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
+        }
+
+        testClass<AbstractKotlinCodeVisionProviderTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.codeInsight.codeVision.KotlinCodeVisionProviderTestGenerated") {
+            model("../../../idea/tests/testData/codeInsight/codeVision")
         }
 
         testClass<AbstractFirRenderingKDocTest> {

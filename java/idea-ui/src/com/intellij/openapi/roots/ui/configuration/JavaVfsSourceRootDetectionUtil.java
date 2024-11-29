@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ public final class JavaVfsSourceRootDetectionUtil {
    * @return a list of found source roots within directory. If no source roots are found, a empty list is returned.
    */
   @NotNull
+  @Unmodifiable
   public static List<VirtualFile> suggestRoots(@NotNull VirtualFile dir, @NotNull final ProgressIndicator progressIndicator) {
     if (!dir.isDirectory()) {
       return ContainerUtil.emptyList();

@@ -5,6 +5,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.ui.RedesignedRunConfigurationSelector
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.UiComponentsUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
@@ -28,7 +29,7 @@ open class RunWidgetStep : NewUiOnboardingStep {
     get() = RunWidgetStep::class.java.classLoader
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
-    val actionButton = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButtonWithText ->
+    val actionButton = UiComponentsUtil.findUiComponent(project) { button: ActionButtonWithText ->
       button.action is RedesignedRunConfigurationSelector
     } ?: return null
 

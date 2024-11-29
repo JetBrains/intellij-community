@@ -27,7 +27,6 @@ object NotebookDataContext {
       return selectionModel.selectedCells
     }
 
-
   val DataContext.selectedCellInterval: NotebookCellLines.Interval?
     get() {
       val editor = notebookEditor ?: return null

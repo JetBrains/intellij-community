@@ -13,9 +13,13 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.jdi.GeneratedLocation;
+import com.intellij.debugger.jdi.GeneratedReferenceType;
+import com.intellij.debugger.jdi.JvmtiError;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.ui.CollectionHistoryView;
 import com.intellij.debugger.requests.Requestor;
+import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
@@ -174,9 +178,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static ClassFilter create(Element element) throws InvalidDataException {
-    ClassFilter filter = new ClassFilter();
-    DefaultJDOMExternalizer.readExternal(filter, element);
-    return filter;
+    return DebuggerSettingsUtils.create(element);
   }
 
   private static boolean isFiltered(ClassFilter classFilter, String qName) {
@@ -210,43 +212,30 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return (int)Arrays.stream(classFilters).filter(ClassFilter::isEnabled).count();
   }
 
+  /**
+   * @deprecated Use {@link DebuggerSettingsUtils#readFilters} directly
+   */
+  @Deprecated
   public static ClassFilter[] readFilters(List<? extends Element> children) {
-    if (ContainerUtil.isEmpty(children)) {
-      return ClassFilter.EMPTY_ARRAY;
-    }
-
-    //do not leave null elements in the resulting array in case of read errors
-    List<ClassFilter> filters = new ArrayList<>(children.size());
-    for (Element child : children) {
-      try {
-        filters.add(create(child));
-      }
-      catch (InvalidDataException e) {
-        LOG.error(e);
-      }
-    }
-    return filters.toArray(ClassFilter.EMPTY_ARRAY);
+    return DebuggerSettingsUtils.readFilters(children);
   }
 
+  /**
+   * @deprecated Use {@link DebuggerSettingsUtils#writeFilters} directly
+   */
+  @Deprecated
   public static void writeFilters(@NotNull Element parentNode,
                                   @NonNls String tagName,
                                   ClassFilter[] filters) throws WriteExternalException {
-    for (ClassFilter filter : filters) {
-      Element element = new Element(tagName);
-      parentNode.addContent(element);
-      DefaultJDOMExternalizer.writeExternal(filter, element);
-    }
+    DebuggerSettingsUtils.writeFilters(parentNode, tagName, filters);
   }
 
+  /**
+   * @deprecated Use {@link DebuggerSettingsUtils#filterEquals} directly
+   */
+  @Deprecated
   public static boolean filterEquals(ClassFilter[] filters1, ClassFilter[] filters2) {
-    if (filters1.length != filters2.length) {
-      return false;
-    }
-    final Set<ClassFilter> f1 = new HashSet<>(Math.max((int)(filters1.length / .75f) + 1, 16));
-    final Set<ClassFilter> f2 = new HashSet<>(Math.max((int)(filters2.length / .75f) + 1, 16));
-    Collections.addAll(f1, filters1);
-    Collections.addAll(f2, filters2);
-    return f2.equals(f1);
+    return DebuggerSettingsUtils.filterEquals(filters1, filters2);
   }
 
   private static boolean elementListsEqual(List<? extends Element> l1, List<? extends Element> l2) {
@@ -1194,16 +1183,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine, StackTraceElement stackTraceElement) {
-    return findOrCreateLocation(virtualMachine, virtualMachine::classesByName, stackTraceElement);
-  }
-
-  @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine,
-                                              @NotNull ClassesByNameProvider classesByName,
-                                              StackTraceElement stackTraceElement) {
+  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine, @NotNull StackTraceElement stackTraceElement) {
     return findOrCreateLocation(virtualMachine,
-                                classesByName,
                                 stackTraceElement.getClassName(),
                                 stackTraceElement.getMethodName(),
                                 stackTraceElement.getLineNumber());
@@ -1214,16 +1195,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                               @NotNull String className,
                                               @NotNull String methodName,
                                               int line) {
-    return findOrCreateLocation(virtualMachine, virtualMachine::classesByName, className, methodName, line);
-  }
-
-  @NotNull
-  public static Location findOrCreateLocation(@NotNull VirtualMachine virtualMachine,
-                                              @NotNull ClassesByNameProvider classesByName,
-                                              @NotNull String className,
-                                              @NotNull String methodName,
-                                              int line) {
-    ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
+    ReferenceType classType = ContainerUtil.getFirstItem(virtualMachine.classesByName(className));
     if (classType == null) {
       classType = new GeneratedReferenceType(virtualMachine, className);
     }

@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.xml.dom.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "dom-impl_resources",
+  files = glob(["src/META-INF/DomPlugin.xml"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "dom-impl",
+  module_name = "intellij.xml.dom.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//xml/dom-openapi:dom",
+    "//xml/impl",
+    "//platform/util",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//xml/openapi:xml",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/libraries/cglib",
+  ],
+  exports = ["//xml/dom-openapi:dom"],
+  runtime_deps = [":dom-impl_resources"]
+)
+### auto-generated section `build intellij.xml.dom.impl` end

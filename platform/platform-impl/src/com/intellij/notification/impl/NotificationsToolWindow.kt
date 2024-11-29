@@ -162,7 +162,9 @@ internal class NotificationContent(val project: Project,
     val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
-    splitterWrapper = NonOpaquePanel(splitter)
+    splitterWrapper = object : NonOpaquePanel(splitter) {
+      override fun isVisible() = super.isVisible() && splitter.isVisible
+    }
     myMainPanel.add(splitterWrapper)
 
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)
@@ -702,7 +704,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     for (i in 0 until count) {
       val component = myList.getComponent(i) as NotificationComponent
       if (component.myNotificationWrapper.notification === notification) {
-        if (notification.isSuggestionType) {
+        if (notification.isSuggestionType || notification.isRemoveWhenExpired) {
           component.removeFromParent()
           myList.remove(i)
         }
@@ -1668,7 +1670,11 @@ internal class ApplicationNotificationModel {
   fun getNotifications(project: Project?): List<Notification> {
     synchronized(myLock) {
       if (project == null) {
-        return ArrayList(myNotifications)
+        val result = ArrayList(myNotifications)
+        for ((_, eachModel) in myProjectToModel.entries) {
+          result.addAll(eachModel.getNotifications(emptyList()))
+        }
+        return result
       }
       val model = myProjectToModel[project]
       if (model == null) {

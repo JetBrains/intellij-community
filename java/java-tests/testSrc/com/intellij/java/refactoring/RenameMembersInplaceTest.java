@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -52,6 +53,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
 
   public void testSuperMethod() {
     doTestInplaceRename("xxx");
+  }
+
+  public void testUnresolvedMethod() {
+    doTestInplaceRename("second");
   }
   
   public void testSuperMethodAnonymousInheritor() {
@@ -202,7 +207,11 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   private void doTestInplaceRename(final String newName) {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
+    if (element == null) {
+      final PsiReference reference = TargetElementUtil.findReference(getEditor());
+      if (reference != null) element = reference.getElement();
+    }
     assertNotNull(element);
 
     CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);

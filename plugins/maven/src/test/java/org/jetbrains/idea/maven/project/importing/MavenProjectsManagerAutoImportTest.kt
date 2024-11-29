@@ -35,7 +35,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
       updateSettingsXml("<localRepository>\${env.$envVar}/tmpRepo</localRepository>")
     }
     val repo = File("$temp/tmpRepo").getCanonicalFile()
-    assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)
+    assertEquals(repo.path, mavenGeneralSettings.getEffectiveRepositoryPath().toString())
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -220,7 +220,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo1.path}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo1, mavenGeneralSettings.getEffectiveLocalRepository())
+    assertEquals(repo1, mavenGeneralSettings.getEffectiveRepositoryPath().toFile())
     val repo2 = File(dir, "localRepo2")
     waitForImportWithinTimeout {
       updateSettingsXml("""
@@ -228,7 +228,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo2.path}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo2, mavenGeneralSettings.getEffectiveLocalRepository())
+    assertEquals(repo2, mavenGeneralSettings.getEffectiveRepositoryPath().toFile())
   }
 
   @Test

@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenGeneralSettings

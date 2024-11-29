@@ -444,7 +444,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       return Collections.emptyIterator();
     });
-    myPanel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    myPanel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
 
     myHeaderPanel = new MyHeaderPanel();
     myGutterComponent = new EditorGutterComponentImpl(this);

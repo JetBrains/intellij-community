@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelExecApi.Arguments.executeProcessBuilder
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -134,11 +133,12 @@ fun runProcessBlocking(
   }
 
   val scope = @OptIn(DelicateCoroutinesApi::class) (wslIjentManager.processAdapterScope)
-  when (val processResult = ijentApi.exec.execute(executeProcessBuilder(exePath)
-    .args(args)
-    .env(explicitEnvironmentVariables)
-    .pty(pty)
-    .workingDirectory(workingDirectory)
+  when (val processResult = ijentApi.exec.execute(EelExecApi.ExecuteProcessOptions.Builder(exePath)
+                                                    .args(args)
+                                                    .env(explicitEnvironmentVariables)
+                                                    .pty(pty)
+                                                    .workingDirectory(workingDirectory)
+                                                    .build()
   )) {
     is EelResult.Ok ->
       (processResult.value as IjentChildProcess).toProcess(

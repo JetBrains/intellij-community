@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
@@ -21,23 +22,25 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionInsertionHelper
 import org.jetbrains.kotlin.idea.completion.reference
+import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
@@ -48,12 +51,14 @@ import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.types.Variance
 
 internal open class FirCallableCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
     priority: Int = 0,
     private val withTrailingLambda: Boolean = false, // TODO find a better solution
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     protected open fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
@@ -110,14 +115,16 @@ internal open class FirCallableCompletionContributor(
     // todo replace with a sealed hierarchy; too many arguments
     protected data class CallableWithMetadataForCompletion(
         private val _signature: KaCallableSignature<*>,
-        private val _explicitReceiverTypeHint: KaType? = null,
         val options: CallableInsertionOptions,
         val symbolOrigin: CompletionSymbolOrigin,
-        val lookupString: @NlsSafe String? = null, // todo extract; only used for objects/enums
+        val itemText: @NlsSafe String? = null, // todo extract; only used for objects/enums
+        private val _explicitReceiverTypeHint: KaType? = null, // todo extract; only used for smart casts
     ) : KaLifetimeOwner {
         override val token: KaLifetimeToken
             get() = _signature.token
+
         val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
+
         val explicitReceiverTypeHint: KaType? get() = withValidityAssertion { _explicitReceiverTypeHint }
     }
 
@@ -125,10 +132,8 @@ internal open class FirCallableCompletionContributor(
     override fun complete(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
-    ): Unit = with(positionContext) {
-        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
-        val scopesContext = originalKtFile.scopeContext(nameExpression)
+    ) {
+        val scopesContext = originalKtFile.scopeContext(positionContext.nameExpression)
 
         val extensionChecker = if (positionContext is KotlinSimpleNameReferencePositionContext) {
             CachingKtCompletionExtensionCandidateChecker(
@@ -140,53 +145,72 @@ internal open class FirCallableCompletionContributor(
             )
         } else null
 
-        val receiver = explicitReceiver
+        val receiver = positionContext.explicitReceiver
+        val expectedType = weighingContext.expectedType
+        when (receiver) {
+            null -> completeWithoutReceiver(positionContext, scopesContext, expectedType, extensionChecker)
 
-        val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when {
-            receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker, sessionParameters)
-            else -> completeWithoutReceiver(scopesContext, extensionChecker, visibilityChecker, sessionParameters)
-        }
-            .filterIfInsideAnnotationEntryArgument(positionContext.position, weighingContext.expectedType)
-            .filterOutShadowedCallables(weighingContext.expectedType)
+            else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
+        }.filterIfInsideAnnotationEntryArgument(positionContext.position, expectedType)
+            .filterOutShadowedCallables(expectedType)
             .filterNot(isUninitializedCallable(positionContext.position))
+            .flatMap { callableWithMetadata ->
+                createCallableLookupElements(
+                    context = weighingContext,
+                    signature = callableWithMetadata.signature,
+                    options = callableWithMetadata.options,
+                    symbolOrigin = callableWithMetadata.symbolOrigin,
+                    withTrailingLambda = withTrailingLambda,
+                ).map { builder ->
+                    val itemText = callableWithMetadata.itemText
+                        ?: return@map builder
 
-        for (callableWithMetadata in callablesWithMetadata) {
-            addCallableSymbolToCompletion(
-                context = weighingContext,
-                signature = callableWithMetadata.signature,
-                options = callableWithMetadata.options,
-                symbolOrigin = callableWithMetadata.symbolOrigin,
-                lookupString = callableWithMetadata.lookupString,
-                priority = null,
-                explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint,
-                withTrailingLambda = withTrailingLambda,
-            )
-        }
+                    builder.withPresentableText(itemText)
+                }.map { builder ->
+                    receiver ?: return@map builder
+
+                    if (builder.callableWeight?.kind != CallableMetadataProvider.CallableKind.RECEIVER_CAST_REQUIRED)
+                        return@map builder
+
+                    val explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint
+                        ?: return@map builder
+
+                    builder.adaptToExplicitReceiver(
+                        receiver = receiver,
+                        typeText = @OptIn(KaExperimentalApi::class) explicitReceiverTypeHint.render(position = Variance.INVARIANT),
+                    )
+                }
+            }.forEach(sink::addElement)
+
+        logger<FirCallableCompletionContributor>().debug("Suspicious calculations took ${sink.duration}")
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun completeWithoutReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
+        expectedType: KaType?,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
-        val implicitReceivers = scopeContext.implicitReceivers
-        val implicitReceiversTypes = implicitReceivers.map { it.type }
-
         val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
-            scopeContext,
-            visibilityChecker,
-            scopeNameFilter,
-            sessionParameters,
+            parameters = parameters,
+            positionContext = positionContext,
+            scopeContext = scopeContext,
+            visibilityChecker = visibilityChecker,
+            scopeNameFilter = scopeNameFilter,
         ) { filter(it) }
-        val extensionsWhichCanBeCalled = collectSuitableExtensions(scopeContext, extensionChecker, visibilityChecker, sessionParameters)
+        val extensionsWhichCanBeCalled = collectSuitableExtensions(
+            positionContext = positionContext,
+            scopeContext = scopeContext,
+            extensionChecker = extensionChecker,
+        )
         val availableStaticAndTopLevelNonExtensions = collectStaticAndTopLevelNonExtensionsFromScopeContext(
-            scopeContext,
-            visibilityChecker,
-            scopeNameFilter,
-            sessionParameters,
+            parameters = parameters,
+            positionContext = positionContext,
+            scopeContext = scopeContext,
+            visibilityChecker = visibilityChecker,
+            scopeNameFilter = scopeNameFilter,
         ) { filter(it) }
 
         // TODO: consider relying on tower resolver when populating callable entries. For example
@@ -213,78 +237,121 @@ internal open class FirCallableCompletionContributor(
         }
         availableStaticAndTopLevelNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
-        if (prefixMatcher.prefix.isNotEmpty()) {
-            val members = if (parameters.invocationCount > 1)
-                symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) { declaration ->
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(declaration)
-                } + symbolFromIndexProvider.getKotlinEnumEntriesByNameFilter(scopeNameFilter) {
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
-                } + symbolFromIndexProvider.getJavaFieldsByNameFilter(scopeNameFilter) {
+        val members = sequence<KaCallableSymbol> {
+            val prefix = prefixMatcher.prefix
+            val invocationCount = parameters.invocationCount
+
+            val expectedType = expectedType?.takeUnless { it is KaErrorType }
+                ?.withNullability(KaTypeNullability.NON_NULLABLE)
+                ?.takeIf { it.isEnum() }
+
+            yieldAll(sequence {
+                val psiFilter: (KtEnumEntry) -> Boolean = if (invocationCount > 2) { _ -> true }
+                else if (invocationCount > 1 && prefix.isNotEmpty()) visibilityChecker::canBeVisible
+                else if (expectedType != null) { enumEntry ->
+                    visibilityChecker.canBeVisible(enumEntry)
+                            && runCatchingNSEE { enumEntry.returnType }
+                        ?.withNullability(KaTypeNullability.NON_NULLABLE)
+                        ?.semanticallyEquals(expectedType) == true
+                }
+                else return@sequence
+
+                val enumEntries = symbolFromIndexProvider.getKotlinEnumEntriesByNameFilter(
+                    nameFilter = scopeNameFilter,
+                    psiFilter = psiFilter,
+                )
+                yieldAll(enumEntries)
+            })
+
+            yieldAll(sequence {
+                // todo KtCodeFragments
+                if (invocationCount <= 2
+                    && (invocationCount <= 1 || prefix.isEmpty())
+                    && expectedType == null
+                ) return@sequence
+
+                val enumConstants = symbolFromIndexProvider.getJavaFieldsByNameFilter(scopeNameFilter) {
                     it is PsiEnumConstant
-                }
-            else
-                symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
-                }
-
-            members.filter { filter(it) }
-                .filter { visibilityChecker.isVisible(it) }
-                .map { it.asSignature() }
-                .map { signature ->
-                    val lookupString = signature.callableId?.let { id ->
-                        id.className?.let { className ->
-                            className.asString() + "." + id.callableName.asString()
-                        }
+                }.filterIsInstance<KaEnumEntrySymbol>()
+                    .filter { enumEntrySymbol ->
+                        expectedType == null || runCatchingNSEE { enumEntrySymbol.returnType }
+                            ?.withNullability(KaTypeNullability.NON_NULLABLE)
+                            ?.semanticallyEquals(expectedType) == true
                     }
+                yieldAll(enumConstants)
+            })
 
-                    CallableWithMetadataForCompletion(
-                        _signature = signature,
-                        options = getOptions(signature),
-                        symbolOrigin = CompletionSymbolOrigin.Index,
-                        lookupString = lookupString,
-                    )
-                }.forEach { yield(it) }
+            if (prefix.isEmpty()) return@sequence
+
+            val callables = if (invocationCount > 1) {
+                symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
+                    visibilityChecker.canBeVisible(it)
+                }
+            } else {
+                symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
+                    visibilityChecker.canBeVisible(it)
+                }
+            }
+            yieldAll(callables)
         }
 
-        collectExtensionsFromIndexAndResolveExtensionScope(
-            implicitReceiversTypes,
-            extensionChecker,
-            visibilityChecker,
-            sessionParameters,
-        )
-            .forEach { applicableExtension ->
-                val signature = applicableExtension.signature
-                yield(createCallableWithMetadata(signature, CompletionSymbolOrigin.Index, applicableExtension.insertionOptions))
+        val memberDescriptors = members.filter { filter(it) }
+            .filter { runCatchingNSEE { visibilityChecker.isVisible(it, positionContext) } == true }
+            .map { it.asSignature() }
+            .map { signature ->
+                val itemText = signature.callableId?.let { id ->
+                    id.className?.let { className ->
+                        className.asString() + "." + id.callableName.asString()
+                    }
+                }
+
+                CallableWithMetadataForCompletion(
+                    _signature = signature,
+                    options = getOptions(signature),
+                    symbolOrigin = CompletionSymbolOrigin.Index,
+                    itemText = itemText, // todo should be only for enums
+                )
             }
+        yieldAll(memberDescriptors)
+
+        val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
+            positionContext = positionContext,
+            receiverTypes = scopeContext.implicitReceivers.map { it.type },
+            extensionChecker = extensionChecker,
+        )
+        yieldAll(extensionDescriptors)
     }
 
     context(KaSession)
     protected open fun collectDotCompletion(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         explicitReceiver as KtExpression
 
-        val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()
-        return when {
-            symbol is KaPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker, sessionParameters)
+        return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
+            is KaPackageSymbol -> collectDotCompletionForPackageReceiver(positionContext, symbol)
 
             else -> sequence {
                 if (symbol is KaNamedClassSymbol && symbol.hasImportantStaticMemberScope) {
-                    yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
+                    yieldAll(
+                        collectDotCompletionFromStaticScope(
+                            positionContext = positionContext,
+                            symbol = symbol,
+                            withCompanionScope = false,
+                        )
+                    )
                 }
 
                 if (symbol !is KaNamedClassSymbol || symbol.canBeUsedAsReceiver) {
                     yieldAll(
                         collectDotCompletionForCallableReceiver(
-                            scopeContext,
-                            explicitReceiver,
-                            extensionChecker,
-                            visibilityChecker,
-                            sessionParameters,
+                            positionContext = positionContext,
+                            scopeContext = scopeContext,
+                            explicitReceiver = explicitReceiver,
+                            extensionChecker = extensionChecker,
                         )
                     )
                 }
@@ -302,9 +369,8 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun collectDotCompletionForPackageReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         packageSymbol: KaPackageSymbol,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val packageScope = packageSymbol.packageScope
         val packageScopeKind = KaScopeKinds.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
@@ -312,7 +378,7 @@ internal open class FirCallableCompletionContributor(
         return packageScope
             .callables(scopeNameFilter)
             .filterNot { it.isExtension }
-            .filter { visibilityChecker.isVisible(it) }
+            .filter { visibilityChecker.isVisible(it, positionContext) }
             .filter { filter(it) }
             .map { callable ->
                 val callableSignature = callable.asSignature()
@@ -324,61 +390,64 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     protected fun collectDotCompletionForCallableReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtExpression,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
-        val receiverType = explicitReceiver.expressionType.takeUnless { it is KaErrorType } ?: return@sequence
+        val receiverType = explicitReceiver.expressionType ?: return@sequence
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
-            listOf(receiverType),
-            visibilityChecker,
-            scopeContext,
-            extensionChecker,
-            sessionParameters,
+            positionContext = positionContext,
+            typesOfPossibleReceiver = listOf(receiverType),
+            scopeContext = scopeContext,
+            extensionChecker = extensionChecker,
         )
         yieldAll(callablesWithMetadata)
 
         val smartCastInfo = explicitReceiver.smartCastInfo
-        if (smartCastInfo?.isStable == false) {
-            // Collect members available from unstable smartcast as well.
-            val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
-                listOf(smartCastInfo.smartCastType),
-                visibilityChecker,
-                scopeContext,
-                extensionChecker,
-                sessionParameters,
+            ?: return@sequence
+        if (smartCastInfo.isStable) return@sequence
+        val smartCastType = smartCastInfo.smartCastType
+        val explicitReceiverTypeHint = smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
+
+        // Collect members available from unstable smartcast as well.
+        val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
+            positionContext = positionContext,
+            typesOfPossibleReceiver = listOf(smartCastType),
+            scopeContext = scopeContext,
+            extensionChecker = extensionChecker,
+        ).map {
+            if (explicitReceiverTypeHint != null) {
                 // Only offer the hint if the type is denotable.
-                smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
-            )
-            yieldAll(callablesWithMetadataFromUnstableSmartCast)
+                it.copy(_explicitReceiverTypeHint = explicitReceiverTypeHint)
+            } else {
+                it
+            }
         }
+        yieldAll(callablesWithMetadataFromUnstableSmartCast)
     }
 
     context(KaSession)
     protected fun collectDotCompletionForCallableReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         typesOfPossibleReceiver: List<KaType>,
-        visibilityChecker: CompletionVisibilityChecker,
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        sessionParameters: FirCompletionSessionParameters,
-        explicitReceiverTypeHint: KaType? = null
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val nonExtensionMembers = typesOfPossibleReceiver.flatMap { typeOfPossibleReceiver ->
             collectNonExtensionsForType(
-                typeOfPossibleReceiver,
-                visibilityChecker,
-                scopeNameFilter,
-                sessionParameters,
+                parameters = parameters,
+                positionContext = positionContext,
+                receiverType = typeOfPossibleReceiver,
+                visibilityChecker = visibilityChecker,
+                scopeNameFilter = scopeNameFilter,
             ) { filter(it) }
         }
         val extensionNonMembers = collectSuitableExtensions(
-            scopeContext,
-            extensionChecker,
-            visibilityChecker,
-            sessionParameters,
-            typesOfPossibleReceiver,
+            positionContext = positionContext,
+            scopeContext = scopeContext,
+            extensionChecker = extensionChecker,
+            explicitReceiverTypes = typesOfPossibleReceiver,
         )
 
         nonExtensionMembers.forEach { signatureWithScopeKind ->
@@ -386,7 +455,6 @@ internal open class FirCallableCompletionContributor(
                 signatureWithScopeKind.signature,
                 signatureWithScopeKind.scopeKind,
                 isImportDefinitelyNotRequired = true,
-                explicitReceiverTypeHint = explicitReceiverTypeHint
             )
             yield(callableWithMetadata)
         }
@@ -396,48 +464,37 @@ internal open class FirCallableCompletionContributor(
             val scopeKind = signatureWithScopeKind.scopeKind
             yield(
                 createCallableWithMetadata(
-                    signature,
-                    scopeKind,
+                    signature = signature,
+                    scopeKind = scopeKind,
                     isImportDefinitelyNotRequired = false,
-                    insertionOptions,
-                    explicitReceiverTypeHint
+                    options = insertionOptions,
                 )
             )
         }
 
-        collectExtensionsFromIndexAndResolveExtensionScope(
-            typesOfPossibleReceiver,
-            extensionChecker,
-            visibilityChecker,
-            sessionParameters
-        )
-            .filter { filter(it.signature.symbol) }
-            .forEach { applicableExtension ->
-                val callableWithMetadata = createCallableWithMetadata(
-                    applicableExtension.signature,
-                    CompletionSymbolOrigin.Index,
-                    applicableExtension.insertionOptions,
-                    explicitReceiverTypeHint = explicitReceiverTypeHint
-                )
-                yield(callableWithMetadata)
-            }
+        val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
+            positionContext = positionContext,
+            receiverTypes = typesOfPossibleReceiver,
+            extensionChecker = extensionChecker,
+        ).filter { filter(it.signature.symbol) }
+        yieldAll(extensionDescriptors)
     }
 
     context(KaSession)
     protected fun collectDotCompletionFromStaticScope(
+        positionContext: KotlinNameReferencePositionContext,
         symbol: KaNamedClassSymbol,
         withCompanionScope: Boolean,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         val staticScope = symbol.staticScope(withCompanionScope)
         val staticScopeKind = KaScopeKinds.StaticMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         val nonExtensions = collectNonExtensionsFromScope(
-            staticScope,
-            visibilityChecker,
-            scopeNameFilter,
-            sessionParameters,
+            parameters = parameters,
+            positionContext = positionContext,
+            scope = staticScope,
+            visibilityChecker = visibilityChecker,
+            scopeNameFilter = scopeNameFilter,
         ) { filter(it) }
 
         return nonExtensions.map { member ->
@@ -448,55 +505,68 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     private fun collectExtensionsFromIndexAndResolveExtensionScope(
+        positionContext: KotlinNameReferencePositionContext,
         receiverTypes: List<KaType>,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
-    ): Collection<ApplicableExtension> {
+    ): Collection<CallableWithMetadataForCompletion> {
         if (receiverTypes.isEmpty()) return emptyList()
 
         val extensionsFromIndex = symbolFromIndexProvider.getExtensionCallableSymbolsByNameFilter(
             scopeNameFilter,
             receiverTypes,
-        ) { !visibilityChecker.isDefinitelyInvisibleByPsi(it) && it.canBeAnalysed() }
+        ) { visibilityChecker.canBeVisible(it) && it.canBeAnalysed() }
 
         return extensionsFromIndex
             .filter { filter(it) }
-            .filter { visibilityChecker.isVisible(it) }
+            .filter { visibilityChecker.isVisible(it, positionContext) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker) }
-            .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
+            .let {
+                ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes)
+            }.map { applicableExtension ->
+                CallableWithMetadataForCompletion(
+                    _signature = applicableExtension.signature,
+                    options = applicableExtension.insertionOptions,
+                    symbolOrigin = CompletionSymbolOrigin.Index,
+                )
+            }
     }
 
     context(KaSession)
     private fun collectSuitableExtensions(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypes: List<KaType>? = null,
     ): Sequence<Pair<KtCallableSignatureWithContainingScopeKind, CallableInsertionOptions>> {
-        val receiversTypes = explicitReceiverTypes ?: scopeContext.implicitReceivers.map { it.type }
+        val receiverTypes = (explicitReceiverTypes
+            ?: scopeContext.implicitReceivers.map { it.type })
+            .filterNot { it is KaErrorType }
+        if (receiverTypes.isEmpty()) return emptySequence()
 
         return scopeContext.scopes.asSequence().flatMap { scopeWithKind ->
-            collectSuitableExtensions(scopeWithKind.scope, receiversTypes, extensionChecker, visibilityChecker, sessionParameters)
-                .map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
+            val suitableExtensions = collectSuitableExtensions(
+                positionContext = positionContext,
+                scope = scopeWithKind.scope,
+                hasSuitableExtensionReceiver = extensionChecker,
+            )
+            ShadowedCallablesFilter.sortExtensions(
+                extensions = suitableExtensions.toList(),
+                receiversFromContext = receiverTypes,
+            ).map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
         }
     }
 
     context(KaSession)
     private fun collectSuitableExtensions(
+        positionContext: KotlinNameReferencePositionContext,
         scope: KaScope,
-        receiverTypes: List<KaType>,
         hasSuitableExtensionReceiver: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
-    ): Collection<ApplicableExtension> =
+    ): Sequence<ApplicableExtension> =
         scope.callables(scopeNameFilter)
             .filter { it.canBeUsedAsExtension() }
-            .filter { visibilityChecker.isVisible(it) }
+            .filter { visibilityChecker.isVisible(it, positionContext) }
             .filter { filter(it) }
             .mapNotNull { callable -> checkApplicabilityAndSubstitute(callable, hasSuitableExtensionReceiver) }
-            .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
 
     /**
      * If [callableSymbol] is applicable returns substituted signature and insertion options, otherwise, null.
@@ -531,19 +601,11 @@ internal open class FirCallableCompletionContributor(
         scopeKind: KaScopeKind,
         isImportDefinitelyNotRequired: Boolean = false,
         options: CallableInsertionOptions = getOptions(signature, isImportDefinitelyNotRequired),
-        explicitReceiverTypeHint: KaType? = null,
-    ): CallableWithMetadataForCompletion {
-        val symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind)
-        return CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
-    }
-
-    context(KaSession)
-    private fun createCallableWithMetadata(
-        signature: KaCallableSignature<*>,
-        symbolOrigin: CompletionSymbolOrigin,
-        options: CallableInsertionOptions = getOptions(signature),
-        explicitReceiverTypeHint: KaType? = null,
-    ) = CallableWithMetadataForCompletion(signature, explicitReceiverTypeHint, options, symbolOrigin)
+    ): CallableWithMetadataForCompletion = CallableWithMetadataForCompletion(
+        _signature = signature,
+        options = options,
+        symbolOrigin = CompletionSymbolOrigin.Scope(scopeKind),
+    )
 
     private fun isUninitializedCallable(
         position: PsiElement,
@@ -561,7 +623,7 @@ internal open class FirCallableCompletionContributor(
                             // `a` and `b` should not show up in completion.
                             val originalOrSelf = getOriginalDeclarationOrSelf(
                                 declaration = grandParent,
-                                originalKtFile = basicContext.originalKtFile,
+                                originalKtFile = originalKtFile,
                             )
                             generateSequence(originalOrSelf) { it.nextSiblingOfSameType() }
                                 .forEach(::add)
@@ -572,7 +634,7 @@ internal open class FirCallableCompletionContributor(
                         if (grandParent.initializer == parent) {
                             val declaration = getOriginalDeclarationOrSelf(
                                 declaration = grandParent,
-                                originalKtFile = basicContext.originalKtFile,
+                                originalKtFile = originalKtFile,
                             )
                             add(declaration)
                         }
@@ -660,9 +722,11 @@ internal open class FirCallableCompletionContributor(
 }
 
 internal class FirCallableReferenceCompletionContributor(
-    basicContext: FirBasicCompletionContext,
-    priority: Int
-) : FirCallableCompletionContributor(basicContext, priority) {
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
+    priority: Int,
+) : FirCallableCompletionContributor(parameters, sink, priority) {
+
     context(KaSession)
     override fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy {
         if (isImportDefinitelyNotRequired) return ImportStrategy.DoNothing
@@ -702,11 +766,10 @@ internal class FirCallableReferenceCompletionContributor(
 
     context(KaSession)
     override fun collectDotCompletion(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
         explicitReceiver as KtExpression
 
@@ -714,37 +777,40 @@ internal class FirCallableReferenceCompletionContributor(
             is KaPackageSymbol -> emptySequence()
             is KaNamedClassSymbol -> sequence {
                 if (symbol.hasImportantStaticMemberScope) {
-                    yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
+                    yieldAll(
+                        collectDotCompletionFromStaticScope(
+                            positionContext = positionContext,
+                            symbol = symbol,
+                            withCompanionScope = false,
+                        )
+                    )
                 }
                 val types = collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
                 yieldAll(
                     collectDotCompletionForCallableReceiver(
-                        types,
-                        visibilityChecker,
-                        scopeContext,
-                        extensionChecker,
-                        sessionParameters
+                        positionContext = positionContext,
+                        typesOfPossibleReceiver = types,
+                        scopeContext = scopeContext,
+                        extensionChecker = extensionChecker,
                     )
                 )
             }
 
-            else -> {
-                collectDotCompletionForCallableReceiver(
-                    scopeContext,
-                    explicitReceiver,
-                    extensionChecker,
-                    visibilityChecker,
-                    sessionParameters,
-                )
-            }
+            else -> collectDotCompletionForCallableReceiver(
+                positionContext = positionContext,
+                scopeContext = scopeContext,
+                explicitReceiver = explicitReceiver,
+                extensionChecker = extensionChecker,
+            )
         }
     }
 }
 
 internal class FirInfixCallableCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCallableCompletionContributor(basicContext, priority) {
+) : FirCallableCompletionContributor(parameters, sink, priority) {
 
     context(KaSession)
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
@@ -779,9 +845,10 @@ internal class FirInfixCallableCompletionContributor(
 }
 
 internal class FirKDocCallableCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCallableCompletionContributor(basicContext, priority) {
+) : FirCallableCompletionContributor(parameters, sink, priority) {
 
     context(KaSession)
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
@@ -797,11 +864,10 @@ internal class FirKDocCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectDotCompletion(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         if (explicitReceiver !is KDocName) return@sequence
 
@@ -869,4 +935,14 @@ private class CachingKtCompletionExtensionCandidateChecker(
             delegate.computeApplicability(candidate)
         }
     }
+}
+
+context(KaSession)
+private fun <T> runCatchingNSEE(
+    action: () -> T,
+): T? = try {
+    action()
+} catch (e: NoSuchElementException) {
+    logger<FirCallableCompletionContributor>().debug("Temporal wrapping for KT-72988", e)
+    null
 }

@@ -13,6 +13,8 @@ interface EvaluationChunk {
   val name: String
   val presentationText: String
 
+  val sessionsExist: Boolean get() = true
+
   fun evaluate(
     handler: InterpretationHandler,
     filter: InterpretFilter,

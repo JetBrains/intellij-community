@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.base.utils.fqname.fqName
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Util.asKtClass
 import org.jetbrains.kotlin.idea.quickfix.OptInGeneralUtilsBase.CandidateData
@@ -67,7 +66,7 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
         val candidates =
             if (element.containingFile.isScript()) element.collectScriptCandidates() else OptInGeneralUtils.collectCandidates(element)
 
-        fun collectPropagateOptInAnnotationFix(targetElement: KtElement, kind: AddAnnotationFix.Kind): KotlinQuickFixAction<KtElement>? {
+        fun collectPropagateOptInAnnotationFix(targetElement: KtElement, kind: AddAnnotationFix.Kind): IntentionAction? {
             if (targetElement !is KtDeclaration) return null
             val elementDescriptor = targetElement.toDescriptor() as? ClassDescriptor
             val actualTargetList = AnnotationChecker.getDeclarationSiteActualTargetList(targetElement, elementDescriptor, context)
@@ -78,12 +77,20 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
                 actualTargetList,
                 annotationClassId,
                 isOverrideError
-            )
+            )?.asIntention()
         }
 
         candidates.forEach { (targetElement, kind) ->
             result.addIfNotNull(collectPropagateOptInAnnotationFix(targetElement, kind))
-            result.add(OptInGeneralUtils.collectUseOptInAnnotationFix(targetElement, kind, optInClassId, annotationFqName, isOverrideError))
+            result.add(
+                OptInGeneralUtils.collectUseOptInAnnotationFix(
+                    targetElement,
+                    kind,
+                    optInClassId,
+                    annotationFqName,
+                    isOverrideError
+                ).asIntention()
+            )
         }
 
         return result

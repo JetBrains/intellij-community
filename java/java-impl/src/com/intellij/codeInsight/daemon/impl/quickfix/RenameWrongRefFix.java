@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -67,7 +68,7 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;
     PsiExpression qualifier = myRefExpr.getQualifierExpression();
-    if (qualifier != null && qualifier.getType() instanceof PsiPrimitiveType) {
+    if (qualifier != null && TypeConversionUtil.isPrimitiveAndNotNull(qualifier.getType())) {
       PsiExpression expression = (myRefExpr.getParent() instanceof PsiMethodCallExpression call) ? call : myRefExpr;
       if (ExpressionUtils.isVoidContext(expression)) {
         return false;
@@ -148,12 +149,15 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
     return LookupElementBuilder.create(variant, toPresentableElement.apply(variant));
   }
 
+  /**
+   * Note that this method also called from rename handler {@link com.intellij.refactoring.rename.RenameWrongRefHandler}
+   */
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiExpression qualifier = myRefExpr.getQualifierExpression();
 
     PsiExpression expression = (myRefExpr.getParent() instanceof PsiMethodCallExpression call) ? call : myRefExpr;
-    if (qualifier != null && qualifier.getType() instanceof PsiPrimitiveType && !ExpressionUtils.isVoidContext(expression)) {
+    if (qualifier != null && TypeConversionUtil.isPrimitiveAndNotNull(qualifier.getType()) && !ExpressionUtils.isVoidContext(expression)) {
       new CommentTracker().replaceAndRestoreComments(expression, qualifier);
       return;
     }

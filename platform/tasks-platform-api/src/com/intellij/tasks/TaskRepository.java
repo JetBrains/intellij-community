@@ -28,6 +28,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -171,6 +172,7 @@ public abstract class TaskRepository {
    * @param task task to update
    */
   @NotNull
+  @Unmodifiable
   public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     //noinspection unchecked
     return ContainerUtil.map2Set(getRepositoryType().getPossibleTaskStates(),

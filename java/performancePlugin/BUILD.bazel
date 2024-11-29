@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.java.performancePlugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "performancePlugin_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "performancePlugin",
+  module_name = "intellij.java.performancePlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/compiler/openapi:java-compiler",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//java/idea-ui:ui",
+    "//platform/diagnostic/telemetry",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/performanceTesting/vcs",
+  ],
+  runtime_deps = [":performancePlugin_resources"]
+)
+### auto-generated section `build intellij.java.performancePlugin` end

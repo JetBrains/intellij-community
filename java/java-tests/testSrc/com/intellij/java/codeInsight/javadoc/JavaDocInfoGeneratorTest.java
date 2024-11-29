@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
@@ -27,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -291,7 +293,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     Sdk sdk = PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
     WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(myModule, sdk);
-
+    IndexingTestUtil.Companion.waitUntilIndexesAreReady(getProject());
     PsiClass mapClass = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP);
     PsiMethod mapPut = mapClass.findMethodsByName("put", false)[0];
 
@@ -325,6 +327,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   public void testDumbMode() {
+    if (!Registry.is("ide.dumb.mode.check.awareness")) return;
     DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
       doTestAtCaret();
     });

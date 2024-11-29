@@ -1,0 +1,96 @@
+### auto-generated section `build intellij.performanceTesting` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "performanceTesting_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "performanceTesting",
+  module_name = "intellij.performanceTesting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "@lib//:cli-parser.provided",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "//platform/analysis-impl",
+    "@lib//:jackson-databind",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/statistics",
+    "//platform/execution-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "@lib//:performance_testing_github_oshi_core",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic/telemetry",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:fastutil-min",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "@lib//:caffeine",
+    "//platform/remote-driver/core:driver-impl",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "//platform/diagnostic/startUpPerformanceReporter",
+    "//platform/service-container:serviceContainer",
+    "//platform/remote-driver/client:driver-client",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+  ],
+  runtime_deps = [":performanceTesting_resources"]
+)
+
+kt_jvm_test(
+  name = "performanceTesting_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":performanceTesting"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "//platform/analysis-impl",
+    "@lib//:jackson-databind",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/statistics",
+    "//platform/execution-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "@lib//:performance_testing_github_oshi_core",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic/telemetry",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:fastutil-min",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "@lib//:caffeine",
+    "//platform/remote-driver/core:driver-impl",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "//platform/diagnostic/startUpPerformanceReporter",
+    "//platform/service-container:serviceContainer",
+    "//platform/remote-driver/client:driver-client",
+    "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
+  ],
+  runtime_deps = [":performanceTesting_resources"]
+)
+### auto-generated section `build intellij.performanceTesting` end

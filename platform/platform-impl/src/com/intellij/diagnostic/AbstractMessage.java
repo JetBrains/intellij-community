@@ -4,14 +4,18 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+/** Internal API. See a note in {@link MessagePool}. */
+@ApiStatus.Internal
 public abstract class AbstractMessage {
   private final Date myDate = Calendar.getInstance().getTime();
   private boolean myIsRead;
@@ -33,6 +37,7 @@ public abstract class AbstractMessage {
   }
 
   /** Returns a list of attachments marked by a user to be included in the error report. */
+  @Unmodifiable
   public @NotNull List<Attachment> getIncludedAttachments() {
     return ContainerUtil.filter(getAllAttachments(), Attachment::isIncluded);
   }

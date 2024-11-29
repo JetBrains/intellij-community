@@ -5,6 +5,7 @@ import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collection;
@@ -32,12 +33,14 @@ class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
+  @Unmodifiable
   protected List<LibraryDescriptor> getEntries() {
     final List<LibraryDescriptor> libs = getInsight().getSuggestedLibraries();
     return libs != null? libs : Collections.emptyList();
   }
 
   @Override
+  @Unmodifiable
   protected Collection<? extends Dependency> getDependencies(final LibraryDescriptor entry) {
     return ContainerUtil.map(entry.getJars(), FileDescriptor::new);
   }

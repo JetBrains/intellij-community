@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -13,6 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
@@ -48,9 +51,10 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     myProject = project;
   }
 
+  @Override
   public void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull List<? extends HighlightInfo> infos) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessNotAllowed(); // have to be able to wait over the write action to finish, must not hold RA for that
+    ThreadingAssertions.assertNoOwnReadAccess(); // have to be able to wait over the write action to finish, must not hold RA for that
     for (HighlightInfo info : infos) {
       PsiReference reference = info.unresolvedReference;
       if (reference == null) continue;
@@ -84,6 +88,7 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     }
   }
 
+  @Override
   public void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo.Builder info) {
     ((HighlightInfoB)info).setUnresolvedReference(ref);
   }
@@ -120,6 +125,16 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
       }
       return true;
     });
+    if (!ClientId.isLocal(ClientEditorManager.getClientId(editor))) {
+      // for non-local editor its visible area is unreliable, so ignore all optimizations there
+      // (see IJPL-163871 Intentions sometimes don't appear in Remote Dev and Code With Me)
+      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(), info -> {
+        if (info.isUnresolvedReference()) {
+          unresolvedInfos.add(info);
+        }
+        return true;
+      });
+    }
     for (HighlightInfo info : unresolvedInfos) {
       startUnresolvedRefsJob(info, editor, file, visibleRange);
     }
@@ -137,7 +152,7 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     PsiElement refElement = reference.getElement();
     synchronized (info) {
       Future<?> job = refElement.getUserData(JOB);
-      if (job != null) {
+      if (job != null && !job.isDone()) {
         return;
       }
       if (!info.isUnresolvedReferenceQuickFixesComputed()) {

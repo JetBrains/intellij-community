@@ -3,8 +3,9 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
-import com.intellij.notebooks.ui.visualization.*
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCodeCellBackgroundLineMarkerRenderer
 import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
 import com.intellij.notebooks.visualization.context.NotebookDataContext
@@ -63,7 +64,7 @@ class EditorCellView(
 
   val input: EditorCellInput = createEditorCellInput()
 
-  var outputs: EditorCellOutputs? = null
+  var outputs: EditorCellOutputsView? = null
     private set
 
   var selected = false
@@ -76,8 +77,8 @@ class EditorCellView(
 
   private var mouseOver = false
 
-  // We are storing last offsets for highlighters to prevent highlighters unnecessary recreation on same values.
-  private var lastHighLightersOffsets: IntRange? = null
+  // We are storing last lines range for highlighters to prevent highlighters unnecessary recreation on same lines.
+  private var lastHighLightersLines: IntRange? = null
 
   var disableActions: Boolean = false
     set(value) {
@@ -143,22 +144,25 @@ class EditorCellView(
         DataManager.removeDataProvider(component)
         DataManager.registerDataProvider(component, NotebookCellDataProvider(editor, component) { interval })
       }
+      controller.createGutterRendererLineMarker(editor, interval, cellView = this)
     }
-    updateCellHighlight()
   }
 
-  private fun recreateControllers() {
-    val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
-      .filter { it !is InputFactory }
-    val controllersToDispose = _controllers.toMutableSet()
-    _controllers = if (!editor.isDisposed) {
-      otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
+  private fun recreateControllers() = editor.updateManager.update { updateContext ->
+    updateContext.addInlayOperation {
+      val otherFactories = NotebookCellInlayController.Factory.EP_NAME.extensionList
+        .filter { it !is InputFactory }
+      val controllersToDispose = _controllers.toMutableSet()
+      _controllers = if (!editor.isDisposed) {
+        otherFactories.mapNotNull { factory -> failSafeCompute(factory, editor, _controllers, intervals.intervals.listIterator(interval.ordinal)) }
+      }
+      else {
+        emptyList()
+      }
+      controllersToDispose.removeAll(_controllers.toSet())
+      controllersToDispose.forEach { disposeController(it) }
+      updateControllers()
     }
-    else {
-      emptyList()
-    }
-    controllersToDispose.removeAll(_controllers.toSet())
-    controllersToDispose.forEach { disposeController(it) }
   }
 
   private fun updateInput() = runInEdt {
@@ -175,8 +179,8 @@ class EditorCellView(
 
   private fun isInlaysBroken(): Boolean {
     val inlaysOffsets = buildSet {
-        add(editor.document.getLineStartOffset(interval.lines.first))
-        add(editor.document.getLineEndOffset(interval.lines.last))
+      add(editor.document.getLineStartOffset(interval.lines.first))
+      add(editor.document.getLineEndOffset(interval.lines.last))
     }
     for (inlay in getInlays()) {
       if (!inlay.isValid || inlay.offset !in inlaysOffsets) {
@@ -189,7 +193,7 @@ class EditorCellView(
   private fun updateOutputs() = runInEdt {
     if (hasOutputs()) {
       if (outputs == null) {
-        outputs = EditorCellOutputs(editor, cell).also {
+        outputs = EditorCellOutputsView(editor, cell).also {
           add(it)
         }
         updateCellHighlight()
@@ -279,11 +283,10 @@ class EditorCellView(
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
 
-    val range = IntRange(startOffset, endOffset)
-    if (interval.lines == lastHighLightersOffsets) {
+    if (interval.lines == lastHighLightersLines) {
       return
     }
-    lastHighLightersOffsets = range
+    lastHighLightersLines = IntRange(interval.lines.first, interval.lines.last)
 
     removeCellHighlight()
 
@@ -309,13 +312,7 @@ class EditorCellView(
     if (interval.type == NotebookCellLines.CellType.CODE) {
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o)
-        }
-      }
-    } else if (editor.editorKind != EditorKind.DIFF) {
-      addCellHighlighter {
-        editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-          o.lineMarkerRenderer = NotebookTextCellBackgroundLineMarkerRenderer(o)
+          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, { input.component.calculateBounds().let { it.y to it.height } })
         }
       }
     }
@@ -323,7 +320,7 @@ class EditorCellView(
     if (uiSettings.presentationMode || DistractionFreeModeController.isDistractionFreeModeEnabled()) {  // See PY-74597
       addCellHighlighter {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false) { o: RangeHighlighterEx ->
-          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, presentationModeMasking = true)
+          o.lineMarkerRenderer = NotebookCodeCellBackgroundLineMarkerRenderer(o, { input.component.calculateBounds().let { it.y to it.height } }, presentationModeMasking = true)
         }
       }
     }
@@ -366,6 +363,12 @@ class EditorCellView(
       ?.updateExecutionStatus(executionCount, progressStatus, startTime, endTime)
     input.runCellButton?.updateGutterAction(progressStatus)
   }
+
+  fun highlightAbovePanel() =
+    _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.addHighlight()
+
+  fun removeHighlightAbovePanel() =
+    _controllers.filterIsInstance<HighlightableCellPanel>().firstOrNull()?.removeHighlight()
 
   internal data class NotebookCellDataProvider(
     val editor: Editor,

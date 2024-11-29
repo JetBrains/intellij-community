@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="jgoodies-forms" level="project" />
   </component>
   <component name="copyright">
     <Base>

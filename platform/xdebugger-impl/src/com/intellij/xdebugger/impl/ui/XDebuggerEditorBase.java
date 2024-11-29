@@ -63,8 +63,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class XDebuggerEditorBase implements Expandable {
   private final Project myProject;
@@ -352,9 +352,24 @@ public abstract class XDebuggerEditorBase implements Expandable {
     CharSequence text = editor.getDocument().getCharsSequence();
     foldingModel.runBatchFoldingOperation(() -> {
       foldingModel.clearFoldRegions();
-      for (int i = 0; i < text.length(); i++) {
+
+      // Fold the whitespaces at the beginning of a string
+      int start = 0;
+      while (start < text.length() && Character.isWhitespace(text.charAt(start))) {
+        start++;
+      }
+      if (start > 0) {
+        foldingModel.createFoldRegion(0, start, "", null, true);
+      }
+
+      for (int i = start; i < text.length(); i++) {
         if (text.charAt(i) == '\n') {
-          foldingModel.createFoldRegion(i, i + 1, "\u23ce", null, true);
+          // Fold the whitespaces after a newline character
+          int j = i + 1;
+          while (j < text.length() && Character.isWhitespace(text.charAt(j))) {
+            j++;
+          }
+          foldingModel.createFoldRegion(i, j, "\u23ce", null, true);
         }
       }
     });

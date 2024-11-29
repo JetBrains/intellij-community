@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
-  val GROUP = EventLogGroup("run.configuration.ui.interactions", 16)
+  val GROUP = EventLogGroup("run.configuration.ui.interactions", 17)
 
   val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks",
                                                         "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables",
@@ -48,7 +48,7 @@ object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
                                                         "Default_arguments", "Optional_arguments", "browser.option.after.launch",
                                                         "browser.option.with.javascript.debugger", "browser.option.target.browser",
                                                         "Use_Hot_Reload", "Roslyn_Target_Project", "Extra_mlaunch_Parameters",
-                                                        "Project_Configuration", "Launch_profile_group", // Rider
+                                                        "Project_Configuration", "Launch_profile_group", "Platform_Type", // Rider
                                                         "external.system.vm.parameters.fragment", "Runtime"
   ))  // maven
   private val projectSettingsAvailableField = EventFields.Boolean("projectSettingsAvailable")

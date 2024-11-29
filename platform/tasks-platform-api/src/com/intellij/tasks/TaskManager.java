@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -51,6 +52,7 @@ public abstract class TaskManager {
    * @param forceRequest whether to download issues anew or use already cached ones.
    * @return tasks collected from all active repositories
    */
+  @Unmodifiable
   public abstract List<Task> getIssues(@Nullable String query,
                               int offset,
                               int limit,
@@ -65,10 +67,12 @@ public abstract class TaskManager {
    */
   public abstract List<Task> getCachedIssues();
 
+  @Unmodifiable
   public abstract List<Task> getCachedIssues(final boolean withClosed);
 
   public abstract List<LocalTask> getLocalTasks();
 
+  @Unmodifiable
   public abstract List<LocalTask> getLocalTasks(final boolean withClosed);
 
   public abstract LocalTask addTask(Task issue);

@@ -21,6 +21,8 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -312,15 +314,35 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     }
 
     var itemTitleText = XBreakpointUtil.getShortText(myBreakpoint);
-    if (description.equals(itemTitleText) || itemTitleText.contains(description)) {
-      return itemTitleText;
-    }
+
+    // By default, historically, XLineBreakpointType implements above methods as "path/name:line" and "name:line"
+    // (XLineBreakpointType.getDisplayText & XLineBreakpointType.getShortText).
+    // We don't want to output both of these texts to prevent duplication.
+    // 1. In the trivial case, we just can check if one string is substring of another:
     if (description.contains(itemTitleText)) {
       return description;
     }
+    if (itemTitleText.contains(description)) {
+      return itemTitleText;
+    }
+    // 2. However, in case of a long path or name, these strings can be shortened and won't be substring of each other (see IJPL-172094).
+    // So we explicitly check if the description is equal to the default one and disregard the short text (it's likely to be useless).
+    if (isDefaultDescriptionOfXLineBreakpoint(description)) {
+      return description;
+    }
 
-    // Try to take both of them for a better result.
+    // Otherwise, we take both of them for a better result.
+    // E.g., in case of Java it might be: "Hello.java:42, Line breakpoint".
     return XDebuggerBundle.message("xbreakpoints.dialog.double.breakpoint.title", itemTitleText, description);
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private boolean isDefaultDescriptionOfXLineBreakpoint(String description) {
+    if (myBreakpoint instanceof XLineBreakpoint<?> lineBreakpoint) {
+      var type = (XLineBreakpointType)lineBreakpoint.getType();
+      return description.equals(type.getDisplayTextDefaultWithPathAndLine(lineBreakpoint));
+    }
+    return false;
   }
 
   public JPanel getMainPanel() {

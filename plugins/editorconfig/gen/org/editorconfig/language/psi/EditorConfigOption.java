@@ -1,11 +1,12 @@
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
-import com.intellij.psi.PsiElement;
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public interface EditorConfigOption extends EditorConfigDescribableElement {
 
@@ -30,6 +31,7 @@ public interface EditorConfigOption extends EditorConfigDescribableElement {
   @Nullable
   EditorConfigDescribableElement getAnyValue();
 
+  @Override
   @Nullable
   EditorConfigOptionDescriptor getDescriptor(boolean smart);
 

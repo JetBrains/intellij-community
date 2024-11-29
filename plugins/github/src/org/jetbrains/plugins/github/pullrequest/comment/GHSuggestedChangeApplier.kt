@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus
+import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
@@ -28,7 +29,7 @@ internal object GHSuggestedChangeApplier {
                                    repository: GitRepository,
                                    suggestedChangePatch: TextFilePatch): ApplyPatchStatus =
     withContext(Dispatchers.Default) {
-      val patchApplier = PatchApplier(project, repository.root, listOf(suggestedChangePatch), null, null)
+      val patchApplier = PatchApplier(project, repository.root, mutableListOf<FilePatch>(suggestedChangePatch), null, null)
       patchApplier.execute(true, false)
     }
 
@@ -46,7 +47,7 @@ internal object GHSuggestedChangeApplier {
                                                suggestedChangePatch: TextFilePatch,
                                                commitMessage: String): ApplyPatchStatus {
     // Apply patch
-    val patchApplier = PatchApplier(project, repository.root, listOf(suggestedChangePatch), null, null)
+    val patchApplier = PatchApplier(project, repository.root, mutableListOf<FilePatch>(suggestedChangePatch), null, null)
     val patchStatus = patchApplier.execute(false, false)
     if (patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
       return patchStatus

@@ -304,7 +304,7 @@ public final class PythonSdkUpdater {
         }, PyBundle.message("sdk.gen.updating.interpreter"), false, project);
       }
       else {
-        LOG.assertTrue(!application.isReadAccessAllowed(), "Synchronous SDK update should not be run under read action");
+        LOG.assertTrue(!application.holdsReadLock(), "Synchronous SDK update should not be run under read action");
         updateLocalSdkVersionAndPaths(sdk, project);
       }
     }

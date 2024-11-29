@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import com.intellij.openapi.externalSystem.util.ListenerAssertion
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer

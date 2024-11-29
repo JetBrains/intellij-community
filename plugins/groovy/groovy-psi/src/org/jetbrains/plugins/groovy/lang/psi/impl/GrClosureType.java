@@ -104,6 +104,7 @@ public final class GrClosureType extends GrLiteralClassType {
     return ContainerUtil.all(mySignatures, GrSignature::isValid);
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof GrClosureType) {
       return Comparing.equal(mySignatures, ((GrClosureType)obj).mySignatures);

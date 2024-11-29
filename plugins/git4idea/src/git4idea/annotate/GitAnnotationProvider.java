@@ -21,11 +21,13 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.annotate.AnnotationWarning;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.vcs.AnnotationProviderEx;
@@ -129,6 +131,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
       return annotate(path, revision, file);
     });
+  }
+
+  @Override
+  public @Nullable AnnotationWarning getAnnotationWarnings(@NotNull FileAnnotation fileAnnotation) {
+    GitFileAnnotation gitFileAnnotation = ObjectUtils.tryCast(fileAnnotation, GitFileAnnotation.class);
+    return gitFileAnnotation == null ? null : GitAnnotationWarnings.getInstance(myProject).getAnnotationWarnings(gitFileAnnotation);
   }
 
   private @NotNull GitFileAnnotation annotate(@NotNull FilePath filePath,

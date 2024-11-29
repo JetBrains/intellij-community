@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -278,6 +279,7 @@ final class RefreshWorker {
     return !isDirectoryChanged(dir, vfsChildren, vfsNames);
   }
 
+  @Unmodifiable
   private static List<String> getNames(VirtualFile[] children) {
     return ContainerUtil.map(children, VirtualFile::getName);
   }

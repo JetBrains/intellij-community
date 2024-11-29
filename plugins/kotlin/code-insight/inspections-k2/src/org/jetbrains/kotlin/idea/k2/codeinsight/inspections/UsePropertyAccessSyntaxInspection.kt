@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethod
@@ -165,6 +164,10 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             return
         }
 
+        if (callExpression.getQualifiedExpressionForSelector()?.receiverExpression is KtSuperExpression) {
+                return // Shouldn't suggest property accessors on "super"
+        }
+
         if (propertyAccessorKind is PropertyAccessorKind.Setter) {
             if (expressionParent is KtDotQualifiedExpression) {
                 if (expressionParent.parent is KtDotQualifiedExpression) {
@@ -194,7 +197,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
             val returnType = successfulFunctionCallSymbol.returnType.lowerBoundIfFlexible()
 
-            // For extension functions, receiver type taken such way is is null
+            // For extension functions, receiver type taken such way is null
             val receiverType = resolvedFunctionCall.partiallyAppliedSymbol.dispatchReceiver?.type?.lowerBoundIfFlexible() ?: return
 
             val syntheticProperty = getSyntheticProperty(propertyNames, receiverType) ?: return
@@ -404,8 +407,8 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         propertyName: String
     ): Boolean {
         val allOverriddenSymbols = symbol.allOverriddenSymbolsWithSelf.toList()
+        if (!functionOriginateFromJava(allOverriddenSymbols)) return false
         if (functionOrItsAncestorIsInNotPropertiesList(allOverriddenSymbols, callExpression)) return false
-        if (functionOriginateNotFromJava(allOverriddenSymbols)) return false
 
         // Check that the receiver or its ancestors don't have public fields with the same name as the probable synthetic property
         if (receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType, propertyName)) return false
@@ -427,9 +430,10 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KaType, propertyName: String): Boolean {
-        val fieldWithSameName = receiverType.scope?.declarationScope?.callables
-            ?.filter { it is KaJavaFieldSymbol && it.name.toString() == propertyName && it.visibility != KaSymbolVisibility.PRIVATE }
+        val fieldWithSameName = receiverType.scope?.declarationScope?.callables(Name.identifier(propertyName))
+            ?.filter { it is KaJavaFieldSymbol && it.visibility != KaSymbolVisibility.PRIVATE }
             ?.singleOrNull()
+
         return fieldWithSameName != null
     }
 
@@ -571,19 +575,17 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     }
 
     context(KaSession)
-    private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
-        for (overriddenSymbol in allOverriddenSymbols) {
-            if (overriddenSymbol.origin.isJavaSourceOrLibrary()) {
-                val symbolAnnotations = overriddenSymbol.annotations
-                if (symbolAnnotations.any { it.classId?.asFqNameString()?.equals(JAVA_LANG_OVERRIDE) == true }) {
-                    // This is Java's @Override, continue searching for Java method but not overridden
-                    continue
-                } else {
-                    return false
-                }
+    private fun functionOriginateFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
+        // Calling `.reversed()` – small optimization because the last Java symbol in the list more probable doesn't have overrides
+        val javaSymbols = allOverriddenSymbols.filter { it.origin.isJavaSourceOrLibrary() }.reversed()
+        if (javaSymbols.isEmpty()) return false
+        for (javaSymbol in javaSymbols) {
+            if (javaSymbol.directlyOverriddenSymbols.none()) {
+                // Nothing overrides it, true Java origin
+                return true
             }
         }
-        return true
+        return false
     }
 
     /**

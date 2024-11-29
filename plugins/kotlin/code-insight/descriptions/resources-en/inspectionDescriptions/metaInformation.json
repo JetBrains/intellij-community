@@ -935,6 +935,86 @@
     {
       "id": "UselessCallOnNotNull",
       "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "AmbiguousExpressionInWhenBranchMigration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "KotlinSealedInheritorsInJava",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NullChecksToSafeCall",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantLambdaOrAnonymousFunction",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FromClosedRangeMigration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnsafeCastFromDynamic",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PublicApiImplicitType",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "NonNullableBooleanPropertyInExternalInterface",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AddConversionCallMigration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DelegationToVarProperty",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "KotlinInternalInJava",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SimplifyNegatedBinaryExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CanSealedSubClassBeObject",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantGetter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantIf",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SimplifyBooleanWithConstants",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OverrideDeprecatedMigration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ControlFlowWithEmptyBody",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConvertTryFinallyToUseCall",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantNullableReturnType",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

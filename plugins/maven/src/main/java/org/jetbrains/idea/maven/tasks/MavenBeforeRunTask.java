@@ -64,6 +64,7 @@ public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
     myGoal = element.getAttributeValue("goal");
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -77,6 +78,7 @@ public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + (myProjectPath != null ? myProjectPath.hashCode() : 0);

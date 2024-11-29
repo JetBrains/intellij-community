@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -16,12 +19,7 @@ import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationList
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
-import org.jetbrains.kotlin.resolve.lazy.declarations.AbstractDeclarationProviderFactory
-import org.jetbrains.kotlin.resolve.lazy.declarations.ClassMemberDeclarationProvider
-import org.jetbrains.kotlin.resolve.lazy.declarations.CombinedPackageMemberDeclarationProvider
-import org.jetbrains.kotlin.resolve.lazy.declarations.FileBasedDeclarationProviderFactory
-import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
-import org.jetbrains.kotlin.resolve.lazy.declarations.PsiBasedClassMemberDeclarationProvider
+import org.jetbrains.kotlin.resolve.lazy.declarations.*
 import org.jetbrains.kotlin.storage.StorageManager
 
 class PluginDeclarationProviderFactory(
@@ -80,6 +78,10 @@ class PluginDeclarationProviderFactory(
     }
 
     override fun diagnoseMissingPackageFragment(fqName: FqName, file: KtFile?) {
+        if (file != null && DumbService.isDumb(file.project) &&
+            FileBasedIndex.getInstance().currentDumbModeAccessType != null) {
+            throw IndexNotReadyException.create()
+        }
         val moduleSourceInfo = moduleInfo as? ModuleSourceInfo
         val packageExists = KotlinPackageIndexUtils.packageExists(fqName, indexedFilesScope)
         val spiPackageExists = KotlinPackageIndexUtils.packageExists(fqName, project)

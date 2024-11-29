@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
-import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
@@ -44,10 +43,9 @@ import java.util.function.Supplier;
 public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
   @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
   @NotNull private final String myProjectPath;
-  @Nullable private final GradleExecutionSettings mySettings;
+  @NotNull private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   @NotNull private final GradleProjectResolverIndicator myProjectResolverIndicator;
-  private ProjectConnection myConnection;
   @Nullable private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
@@ -66,7 +64,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   public DefaultProjectResolverContext(
     @NotNull ExternalSystemTaskId externalSystemTaskId,
     @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
+    @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable GradlePartialResolverPolicy resolverPolicy,
     @NotNull GradleProjectResolverIndicator projectResolverIndicator,
@@ -75,7 +73,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
     mySettings = settings;
-    myConnection = null;
     myListener = listener;
     myPolicy = resolverPolicy;
     myProjectResolverIndicator = projectResolverIndicator;
@@ -85,7 +82,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   public DefaultProjectResolverContext(
     @NotNull DefaultProjectResolverContext resolverContext,
     @NotNull String projectPath,
-    @Nullable GradleExecutionSettings settings,
+    @NotNull GradleExecutionSettings settings,
     boolean isBuildSrcProject
   ) {
     this(
@@ -109,7 +106,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Nullable
   @Override
   public String getIdeProjectPath() {
-    return mySettings != null ? mySettings.getIdeProjectPath() : null;
+    return mySettings.getIdeProjectPath();
   }
 
   @NotNull
@@ -118,20 +115,9 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myProjectPath;
   }
 
-  @Nullable
   @Override
-  public GradleExecutionSettings getSettings() {
+  public @NotNull GradleExecutionSettings getSettings() {
     return mySettings;
-  }
-
-  @NotNull
-  @Override
-  public ProjectConnection getConnection() {
-    return myConnection;
-  }
-
-  public void setConnection(@NotNull ProjectConnection connection) {
-    myConnection = connection;
   }
 
   public @NotNull ProgressIndicator getProgressIndicator() {
@@ -239,22 +225,22 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public boolean isResolveModulePerSourceSet() {
-    return mySettings == null || mySettings.isResolveModulePerSourceSet();
+    return mySettings.isResolveModulePerSourceSet();
   }
 
   @Override
   public boolean isUseQualifiedModuleNames() {
-    return mySettings != null && mySettings.isUseQualifiedModuleNames();
+    return mySettings.isUseQualifiedModuleNames();
   }
 
   @Override
   public boolean isDelegatedBuild() {
-    return mySettings == null || mySettings.isDelegatedBuild();
+    return mySettings.isDelegatedBuild();
   }
 
   public File getGradleUserHome() {
     if (myGradleUserHome == null) {
-      String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();
+      String serviceDirectory = mySettings.getServiceDirectory();
       myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : GradleUserHomeUtil.gradleUserHomeDir();
     }
     return myGradleUserHome;
@@ -349,7 +335,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myListener.onStatusChange(new ExternalSystemBuildEvent(myExternalSystemTaskId, buildIssueEvent));
   }
 
-  void setBuildEnvironment(@NotNull BuildEnvironment buildEnvironment) {
+  void setBuildEnvironment(@Nullable BuildEnvironment buildEnvironment) {
     myBuildEnvironment = buildEnvironment;
   }
 

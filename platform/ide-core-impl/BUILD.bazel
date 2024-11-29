@@ -1,40 +1,42 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ide.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "ide-core-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "ide-core-impl",
   module_name = "intellij.platform.ide.core.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//platform/ide-core",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util/concurrency",
-    "@community//platform/core-impl",
-    "@community//platform/analysis-impl",
-    "@libraries//:icu4j",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/core-ui",
-    "@community//jps/model-impl:jps-model-impl",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/workspace/jps:workspace-jps",
-    "@community//platform/backend/workspace:backend-workspace",
-    "@community//platform/diagnostic",
-    "@libraries//:hash4j",
-    "@community//platform/backend/observation:backend-observation",
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util:util-ui",
+    "//platform/util/jdom",
+    "//platform/util/concurrency",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "@lib//:icu4j",
+    "@lib//:fastutil-min",
+    "//platform/editor-ui-api:editor",
+    "//platform/core-ui",
+    "//jps/model-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+    "@lib//:hash4j",
+    "//platform/backend/observation",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":ide-core-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ide.core.impl` end

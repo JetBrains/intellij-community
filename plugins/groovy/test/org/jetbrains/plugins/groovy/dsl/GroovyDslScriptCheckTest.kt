@@ -2,14 +2,16 @@
 package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 
-class GroovyDslScriptCheckTest: LightJavaCodeInsightFixtureTestCase() {
-  fun testScriptCheckDoesNotThrowExceptionWhenNoReadAction() = runBlocking {
+class GroovyDslScriptCheckTest : LightJavaCodeInsightFixtureTestCase() {
+  fun testScriptCheckDoesNotThrowExceptionWhenCalledFromBackgroundThread() = runBlocking {
     val gdslFile = myFixture.configureByText("script.gdsl",
-    """
+                                             """
                                 def ctx = context(ctype: "java.lang.String")
                                 
                                 contributor ([ctx], {
@@ -22,11 +24,13 @@ class GroovyDslScriptCheckTest: LightJavaCodeInsightFixtureTestCase() {
 
     val gdslFileImpl = gdslFile as GroovyFileImpl
 
-    assertNotNull(gdslFileImpl.isScript)
+    assertTrue(gdslFileImpl.isScript)
 
     val result = readAction { gdslFileImpl.isScript }
     assertTrue(result)
   }
 
   override fun runInDispatchThread(): Boolean = false
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST
 }

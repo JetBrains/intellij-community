@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.gradle.gradle-java.tests.k2` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-gradle-gradle-java-tests-k2",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-gradle-gradle-java-tests-k2_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:kotlinc_kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:junit4",
+    "@lib//:kotlin-test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/test:kotlin-base-test",
+    "//plugins/kotlin/test-framework",
+    "//plugins/gradle/java",
+    "//plugins/gradle/java:java-tests_test",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
+    "@lib//:fastutil-min",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test",
+    "//plugins/gradle:gradle-tests_test",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+  ]
+)
+### auto-generated section `build kotlin.gradle.gradle-java.tests.k2` end

@@ -15,7 +15,6 @@ import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -106,12 +105,16 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     myProjectLoadedAction = myModels == null && myUseProjectsLoadedPhase;
 
     if (myProjectLoadedAction || !myUseProjectsLoadedPhase) {
-      myModels = initAction(controller, converterExecutor, telemetry);
+      myModels = telemetry.callWithSpan("InitAction", __ ->
+        initAction(controller, converterExecutor, telemetry)
+      );
     }
 
     assert myModels != null;
 
-    executeAction(controller, converterExecutor, telemetry, myModels);
+    telemetry.runWithSpan("ExecuteAction", __ ->
+      executeAction(controller, converterExecutor, telemetry, myModels)
+    );
 
     if (myProjectLoadedAction) {
       telemetry.runWithSpan("TurnOffDefaultTasks", __ ->
@@ -233,33 +236,11 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     @NotNull Collection<? extends GradleBuild> gradleBuilds,
     @NotNull Collection<ProjectImportModelProvider> modelProviders
   ) {
-    telemetry.runWithSpan("PopulateModels", __ -> {
-      for (GradleBuild gradleBuild : gradleBuilds) {
-        for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
-          for (ProjectImportModelProvider modelProvider : modelProviders) {
-            telemetry.runWithSpan(modelProvider.getName(), span -> {
-              span.setAttribute("project-name", gradleProject.getName());
-              span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
-              span.setAttribute("model-type", "ProjectModel");
-              modelProvider.populateProjectModels(controller, gradleProject, modelConsumer);
-            });
-          }
-        }
-        for (ProjectImportModelProvider modelProvider : modelProviders) {
-          telemetry.runWithSpan(modelProvider.getName(), span -> {
-            span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
-            span.setAttribute("model-type", "BuildModel");
-            modelProvider.populateBuildModels(controller, gradleBuild, modelConsumer);
-          });
-        }
-      }
-      for (ProjectImportModelProvider modelProvider : modelProviders) {
-        telemetry.runWithSpan(modelProvider.getName(), span -> {
-          span.setAttribute("model-type", "GradleModel");
-          modelProvider.populateModels(controller, gradleBuilds, modelConsumer);
-        });
-      }
-    });
+    for (ProjectImportModelProvider modelProvider : modelProviders) {
+      telemetry.runWithSpan(modelProvider.getName(), __ -> {
+        modelProvider.populateModels(controller, gradleBuilds, modelConsumer);
+      });
+    }
   }
 
   private void sendPendingState(
@@ -306,14 +287,12 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     @NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action
   ) {
     GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
-    GradleModelHolderState state;
     try {
-      state = action.apply(telemetry);
+      return action.apply(telemetry);
     }
     catch (Throwable exception) {
       telemetry.shutdown();
       throw exception;
     }
-    return state.current();
   }
 }

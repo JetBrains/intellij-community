@@ -48,11 +48,13 @@ public class XmlFileHeader {
     return mySystemId;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "XmlFileHeader: name=" + myRootTagLocalName + "; namespace=" + myRootTagNamespace + "; publicId=" + myPublicId + "; systemId=" + mySystemId;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof XmlFileHeader header)) return false;
@@ -67,6 +69,7 @@ public class XmlFileHeader {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myRootTagLocalName != null ? myRootTagLocalName.hashCode() : 0);

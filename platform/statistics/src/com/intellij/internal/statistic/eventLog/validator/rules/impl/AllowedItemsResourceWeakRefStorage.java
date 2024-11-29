@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,6 +41,7 @@ public class AllowedItemsResourceWeakRefStorage {
   }
 
   @NotNull
+  @Unmodifiable
   protected Set<String> readItems() {
     try {
       InputStream resourceStream = resourceHolder.getResourceAsStream(relativePath);
@@ -60,9 +62,11 @@ public class AllowedItemsResourceWeakRefStorage {
   }
 
   @NotNull
+  @Unmodifiable
   public synchronized Set<String> getItems() {
     Set<String> items = itemsRef.get();
     if (items == null) {
+      //noinspection RedundantUnmodifiable
       items = Collections.unmodifiableSet(readItems());
       itemsRef = new WeakReference<>(items);
     }

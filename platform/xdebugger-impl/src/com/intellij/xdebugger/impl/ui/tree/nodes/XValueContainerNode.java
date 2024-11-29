@@ -16,6 +16,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -313,6 +314,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   @Override
   @NotNull
+  @Unmodifiable
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> empty = Collections.<XValueGroupNodeImpl>emptyList();
     return ContainerUtil.concat(ObjectUtils.notNull(myTopNodes, empty),

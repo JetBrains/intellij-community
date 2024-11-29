@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(a: Any) {
+    when (a) {
+        is String if a.isNotEmpty() -> Unit
+        is Int if a > 0 -> Unit
+        else -> Unit
+    }
+}

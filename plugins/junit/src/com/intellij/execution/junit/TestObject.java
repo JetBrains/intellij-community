@@ -60,14 +60,12 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
@@ -128,7 +126,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (elements.isEmpty() && perModule != null) {
         for (Module module : collectPackageModules(packageName)) {
-          perModule.put(module, composeDirectoryFilter(module));
+          perModule.put(module, new ArrayList<>(composeDirectoryFilter(module)));
         }
       }
 
@@ -266,6 +264,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
    * When 2 modules have e.g. the same package, one depends on another, and tests have to run in single module only,
    * by configuration settings or to avoid repetition in fork by module mode, additional filters per output directories are required.
    */
+  @Unmodifiable
   protected static List<String> composeDirectoryFilter(@NotNull Module module) {
     return ContainerUtil.map(OrderEnumerator.orderEntries(module)
                                .withoutSdk()
@@ -276,7 +275,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
-    javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
+    if (javaParameters.getMainClass() == null) { // for custom main class, e.g. overridden by JUnitDevKitUnitTestingSettings.Companion#apply
+      javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
+    }
     javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
 
     final StringBuilder buf = new StringBuilder();
@@ -454,8 +455,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     Collection<OrderRoot> roots;
     try {
       Application application = ApplicationManager.getApplication();
-      application.assertReadAccessNotAllowed();
       application.assertIsNonDispatchThread();
+      ThreadingAssertions.assertNoOwnReadAccess();
       TargetProgressIndicator targetProgressIndicator = getTargetProgressIndicator();
       if (targetProgressIndicator != null) {
         String title = JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1);

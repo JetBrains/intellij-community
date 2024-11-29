@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ public final class JavaMoveClassToInnerHandler implements MoveClassToInnerHandle
     return importStatements;
   }
 
+  @Contract(mutates = "param1, param2")
   private static void filterUsagesInImportStatements(final List<UsageInfo> usages, final List<? super PsiElement> importStatements) {
     for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext(); ) {
       UsageInfo usage = iterator.next();

@@ -2,12 +2,18 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix.Kind
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.renderer.render
 
 
 class OptInFixes {
@@ -15,85 +21,78 @@ class OptInFixes {
      * A specialized subclass of [AddAnnotationFix] that adds @OptIn(...) annotations to declarations,
      * containing classes, or constructors.
      *
-     * This class reuses the parent's [invoke] method but overrides the [getText] method to provide
+     * This class reuses the parent's [invoke] method but overrides the [getPresentation] method to provide
      * more descriptive opt-in-specific messages.
      *
      * @param element a declaration to annotate
      * @param optInClassId fully qualified opt-in class id
      * @param kind the annotation kind (desired scope)
      * @param argumentClassFqName the fully qualified name of the annotation to opt-in
-     * @param existingAnnotationEntry the already existing annotation entry (if any)
+     * @param priority wanted priority of the action
      *
      */
-    open class UseOptInAnnotationFix(
+    class UseOptInAnnotationFix(
         element: KtElement,
-        optInClassId: ClassId,
+        private val optInClassId: ClassId,
         private val kind: Kind,
         private val argumentClassFqName: FqName,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationWithClassLiteralArgumentFix(element, optInClassId, kind, existingAnnotationEntry, argumentClassFqName) {
+        private val priority: PriorityAction.Priority,
+    ) : AddAnnotationFix(element, optInClassId, Kind.Self, argumentClassFqName.asClassLiteral()) {
 
-        override fun getText(): String {
-            val argumentText = argumentClassFqName.shortName().asString()
-            return when {
-                kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.statement", argumentText)
-                kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
-                kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, kind.name ?: "?")
-                kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name != null -> KotlinBundle.message(
-                    "fix.opt_in.text.use.containing.object",
-                    argumentText,
-                    kind.name
-                )
-
-                kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name == null -> KotlinBundle.message(
-                    "fix.opt_in.text.use.containing.anonymous.object",
-                    argumentText
-                )
-
-                kind is Kind.ContainingClass -> KotlinBundle.message("fix.opt_in.text.use.containing.class", argumentText, kind.name ?: "?")
-                else -> error("Unexpected kind type")
-            }
-        }
+        public override fun getPresentation(context: ActionContext, element: KtElement): Presentation =
+            getOptInAnnotationFixPresentation(element, kind, argumentClassFqName).withPriority(priority)
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
     }
 
-    class HighPriorityUseOptInAnnotationFix(
-        element: KtElement,
-        optInClassId: ClassId,
-        kind: Kind,
-        argumentClassFqName: FqName,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : UseOptInAnnotationFix(element, optInClassId, kind, argumentClassFqName, existingAnnotationEntry), HighPriorityAction
+    class ModifyOptInAnnotationFix(
+        element: KtAnnotationEntry,
+        private val kind: Kind,
+        private val argumentClassFqName: FqName,
+        private val priority: PriorityAction.Priority
+    ) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
 
+        public override fun getPresentation(context: ActionContext, element: KtAnnotationEntry): Presentation =
+            getOptInAnnotationFixPresentation(element, kind, argumentClassFqName).withPriority(priority)
+
+        override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
+
+        override fun invoke(context: ActionContext, element: KtAnnotationEntry, updater: ModPsiUpdater) {
+            val annotationInnerText = argumentClassFqName.asClassLiteral()
+            val psiFactory = KtPsiFactory(element.project)
+            element.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
+                ?: element.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), element.lastChild)
+            ShortenReferencesFacility.getInstance().shorten(element)
+        }
+    }
 
     /**
      * A specialized subclass of [AddAnnotationFix] that adds propagating opted-in annotations
      * to declarations, containing classes, or constructors.
      *
-     * This class reuses the parent's [invoke] method but overrides the [getText] method to provide
+     * This class reuses the parent's [invoke] method but overrides the [getPresentation] method to provide
      * more descriptive opt-in-specific messages.
      *
      * @param element a declaration to annotate
      * @param annotationClassId fully qualified annotation class id
      * @param kind the annotation kind (desired scope)
      * @param argumentClassFqName the qualified class name to be added to the annotation entry in the format '::class'
-     * @param existingAnnotationEntry the already existing annotation entry (if any)
+     * @param priority wanted priority of the action
      *
      */
-    open class PropagateOptInAnnotationFix(
+    class PropagateOptInAnnotationFix(
         element: KtDeclaration,
         private val annotationClassId: ClassId,
         private val kind: Kind,
         private val argumentClassFqName: FqName? = null,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationWithClassLiteralArgumentFix(element, annotationClassId, Kind.Self, existingAnnotationEntry, argumentClassFqName) {
+        private val priority: PriorityAction.Priority = PriorityAction.Priority.NORMAL,
+    ) : AddAnnotationFix(element, annotationClassId, Kind.Self, argumentClassFqName?.asClassLiteral()) {
 
-        override fun getText(): String {
+        override fun getPresentation(context: ActionContext, element: KtElement): Presentation {
             val annotationName = annotationClassId.shortClassName.asString()
             val annotationEntry = if (argumentClassFqName != null) "(${argumentClassFqName.shortName().asString()}::class)" else ""
             val argumentText = annotationName + annotationEntry
-            return when {
+            val actionName = when {
                 kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
                 kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
                 kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
@@ -107,23 +106,43 @@ class OptInFixes {
 
                 else -> error("Unexpected kind type")
             }
+            return Presentation.of(actionName).withPriority(priority)
         }
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
     }
+}
 
-    /**
-     * A high-priority version of [PropagateOptInAnnotationFix] (for overridden constructor case)
-     *
-     * @param element a declaration to annotate
-     * @param annotationClassId fully qualified annotation class id
-     * @param kind the annotation kind (desired scope)
-     * @param existingAnnotationEntry the already existing annotation entry (if any)
-     */
-    class HighPriorityPropagateOptInAnnotationFix(
-        element: KtDeclaration,
-        annotationClassId: ClassId,
-        kind: Kind,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : PropagateOptInAnnotationFix(element, annotationClassId, kind, null, existingAnnotationEntry), HighPriorityAction
+private fun FqName.asClassLiteral(): String = "${render()}::class"
+
+private fun getOptInAnnotationFixPresentation(
+    element: KtElement,
+    kind: Kind,
+    argumentClassFqName: FqName
+): Presentation {
+    val argumentText = argumentClassFqName.shortName().asString()
+    val actionName = when {
+        kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.statement", argumentText)
+        kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
+        kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, kind.name ?: "?")
+        kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name != null -> KotlinBundle.message(
+            "fix.opt_in.text.use.containing.object",
+            argumentText,
+            kind.name
+        )
+
+        kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name == null -> KotlinBundle.message(
+            "fix.opt_in.text.use.containing.anonymous.object",
+            argumentText
+        )
+
+        kind is Kind.ContainingClass -> KotlinBundle.message(
+            "fix.opt_in.text.use.containing.class",
+            argumentText,
+            kind.name ?: "?"
+        )
+
+        else -> error("Unexpected kind type")
+    }
+    return Presentation.of(actionName)
 }

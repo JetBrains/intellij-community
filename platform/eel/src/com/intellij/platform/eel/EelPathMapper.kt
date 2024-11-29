@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryOptions
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
@@ -10,10 +9,11 @@ import java.nio.file.Path
 fun EelPath.Absolute.toNioPath(eelApi: EelApi): Path = eelApi.mapper.toNioPath(this)
 
 suspend fun EelPathMapper.maybeUploadPath(path: Path, scope: CoroutineScope): EelPath.Absolute {
-  val options = EelFileSystemApi.createTemporaryDirectoryOptions()
+  val options = CreateTemporaryDirectoryOptions.Builder()
     .prefix(path.fileName.toString())
     .suffix("eel")
     .deleteOnExit(true)
+    .build()
 
   return maybeUploadPath(path, scope, options)
 }
@@ -23,6 +23,10 @@ interface EelPathMapper {
 
   /**
    * Transfers file system entry which is pointed to by [path] to the machine which owns this [EelPathMapper].
+   *
+   * Example:
+   * If `path` points to `C:\Users\Me\archive.zip`, and this Eel is running on WSL,
+   * then the file gets uploaded to WSL distribution and the returned path could point to `/tmp/archive.zip`.
    *
    * The entry is transferred completely, i.e., if it is a directory, then it is copied recursively with contents.
    * Symbolic links are **not** followed.

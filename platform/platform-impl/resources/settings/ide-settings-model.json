@@ -170,70 +170,6 @@
       ]
     },
     {
-      "name": "DlvSettings",
-      "scope": "app",
-      "pluginId": "org.jetbrains.plugins.go",
-      "classFqn": "com.goide.dlv.DlvSettings",
-      "storage": "dlv.xml",
-      "properties": [
-        {
-          "name": "rebuildTransitivePackages",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "stacktraceDepth",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "integerFormat",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "goroutinesLimit",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "showTypes",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "showPointerAddresses",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "useCustomDelveSettings",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "maxStructFields",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "maxStringLen",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "maxStringLenInCall",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "maxArrayValues",
-          "type": "Integer",
-          "javaType": "int"
-        }
-      ]
-    },
-    {
       "name": "GoFoldingSettings",
       "scope": "app",
       "pluginId": "org.jetbrains.plugins.go",
@@ -777,11 +713,6 @@
       "storage": "editor.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -1008,11 +939,6 @@
       "storage": "parameter.hints.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -1050,11 +976,6 @@
       "classFqn": "com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings",
       "storage": "intentionSettings.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -1133,11 +1054,6 @@
       "storage": "postfixTemplates.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -1161,11 +1077,6 @@
       "classFqn": "com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings",
       "storage": "postfixTemplates.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -1211,11 +1122,6 @@
       "classFqn": "com.intellij.completion.ml.personalization.impl.ApplicationUserFactorStorage",
       "storage": "completion.factors.user.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -1318,6 +1224,11 @@
       "storage": "dataSources.local.xml",
       "properties": [
         {
+          "name": "attributes",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        },
+        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -1347,20 +1258,6 @@
       "pluginId": "com.intellij.database",
       "classFqn": "com.intellij.database.dataSource.DatabaseDriverManagerImpl",
       "storage": "databaseDrivers.xml"
-    },
-    {
-      "name": "ScriptedLoadersAssociations",
-      "scope": "app",
-      "pluginId": "intellij.grid.impl",
-      "classFqn": "com.intellij.database.loaders.DataLoaderManager$Associations",
-      "storage": "csvSettings.xml",
-      "properties": [
-        {
-          "name": "extensions",
-          "type": "StringSet",
-          "javaType": "java.util.Set"
-        }
-      ]
     },
     {
       "name": "NameBasedRelationSettings",
@@ -1544,6 +1441,29 @@
           "name": "disable-grid-floating-toolbar",
           "type": "Boolean",
           "javaType": "boolean"
+        },
+        {
+          "name": "paging-display-mode",
+          "type": "Enum",
+          "javaType": "com.intellij.database.settings.DataGridSettings$PagingDisplayMode",
+          "variants": [
+            {
+              "value": "data_editor_toolbar",
+              "mapTo": "DATA_EDITOR_TOOLBAR"
+            },
+            {
+              "value": "grid_center_floating",
+              "mapTo": "GRID_CENTER_FLOATING"
+            },
+            {
+              "value": "grid_left_floating",
+              "mapTo": "GRID_LEFT_FLOATING"
+            },
+            {
+              "value": "grid_right_floating",
+              "mapTo": "GRID_RIGHT_FLOATING"
+            }
+          ]
         },
         {
           "name": "enable-immediate-completion-in-grid-cells",
@@ -1955,11 +1875,6 @@
       "storage": "debugger.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -1983,11 +1898,6 @@
       "classFqn": "com.intellij.debugger.settings.NodeRendererSettings",
       "storage": "debugger.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -2623,11 +2533,6 @@
           "name": "dockerPath",
           "type": "String",
           "javaType": "java.lang.String"
-        },
-        {
-          "name": "useComposeV2",
-          "type": "Boolean",
-          "javaType": "boolean"
         }
       ]
     },
@@ -2814,11 +2719,6 @@
       "storage": "duplocatorSettings.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -2886,11 +2786,6 @@
       "storage": "runner.layout.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -2937,6 +2832,13 @@
           "javaType": "java.util.List"
         }
       ]
+    },
+    {
+      "name": "FindUsagesSettings",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.find.impl.FindUsagesSettingsImpl",
+      "storage": "findUsages.xml"
     },
     {
       "name": "FindSettings",
@@ -3015,6 +2917,20 @@
               "mapTo": "2"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "ScriptedLoadersAssociations",
+      "scope": "app",
+      "pluginId": "intellij.grid.impl",
+      "classFqn": "com.intellij.grid.scripting.impl.DataLoaderManager$Associations",
+      "storage": "csvSettings.xml",
+      "properties": [
+        {
+          "name": "extensions",
+          "type": "StringSet",
+          "javaType": "java.util.Set"
         }
       ]
     },
@@ -3191,11 +3107,6 @@
       "storage": "macros.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -3219,11 +3130,6 @@
       "classFqn": "com.intellij.ide.browsers.WebBrowserManager",
       "storage": "web-browsers.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -3262,11 +3168,6 @@
       "classFqn": "com.intellij.ide.fileTemplates.impl.ExportableFileTemplateSettings",
       "storage": "file.template.settings.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -3512,11 +3413,6 @@
       "classFqn": "com.intellij.ide.todo.TodoConfiguration",
       "storage": "editor.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -4231,11 +4127,6 @@
       "storage": "customization.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -4271,6 +4162,13 @@
       "scope": "app",
       "pluginId": "com.intellij",
       "classFqn": "com.intellij.ide.util.AppPropertyService",
+      "storage": "other.xml"
+    },
+    {
+      "name": "ShownTips",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.ide.util.TipsUsageManager",
       "storage": "other.xml"
     },
     {
@@ -4403,11 +4301,6 @@
       "storage": "$CACHE_FILE$",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -4445,11 +4338,6 @@
       "classFqn": "com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent",
       "storage": "usage.statistics.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -4489,11 +4377,6 @@
       "storage": "jboss.extensions.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -4517,11 +4400,6 @@
       "classFqn": "com.intellij.javascript.nodejs.interpreter.local.NodeJsLocalInterpreterManager",
       "storage": "nodejs.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -4589,11 +4467,6 @@
       "storage": "web-types-npm-loader.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -4643,7 +4516,7 @@
     {
       "name": "JsonEditorOptions",
       "scope": "app",
-      "pluginId": "com.intellij",
+      "pluginId": "com.intellij.modules.json",
       "classFqn": "com.intellij.json.editor.JsonEditorOptions",
       "storage": "editor.xml",
       "properties": [
@@ -4698,6 +4571,113 @@
       ]
     },
     {
+      "name": "JupyterDSSettings",
+      "scope": "app",
+      "pluginId": "intellij.jupyter",
+      "classFqn": "com.intellij.jupyter.core.editor.settings.JupyterDSSettings",
+      "storage": "jupyter-ds-settings.xml",
+      "properties": [
+        {
+          "name": "autoRunMarkdownCellOnFocusLeave",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "cellNotificationTimeSec",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "executionTimeShowMode",
+          "type": "Enum",
+          "javaType": "com.intellij.jupyter.core.editor.settings.JupyterShowExecutionTimeMode",
+          "variants": [
+            {
+              "value": "detailed",
+              "mapTo": "Detailed"
+            },
+            {
+              "value": "compact_recommended",
+              "mapTo": "Compact (recommended)"
+            },
+            {
+              "value": "hidden",
+              "mapTo": "Hidden"
+            }
+          ]
+        },
+        {
+          "name": "invertImageOutputsUnderDarkTheme",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "markdownScalePercentage",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "notifyCellExecution",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "showAddCellPopUp",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "showInlineValues",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "showInlineValuesMode",
+          "type": "Enum",
+          "javaType": "com.intellij.jupyter.core.editor.settings.JupyterShowInlineValuesSettingMode",
+          "variants": [
+            {
+              "value": "in_current_line",
+              "mapTo": "In current line"
+            },
+            {
+              "value": "in_entire_notebook",
+              "mapTo": "In entire notebook"
+            }
+          ]
+        },
+        {
+          "name": "showPythonCellsInStructure",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "uploadLibsToRemoteServer",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "JupyterPersistentConnectionParameters",
+      "scope": "app",
+      "pluginId": "intellij.jupyter",
+      "classFqn": "com.intellij.jupyter.core.jupyter.connections.LegacyJupyterConnectionsParametersStateService",
+      "storage": "jupyter-settings.xml",
+      "properties": [
+        {
+          "name": "knownRemoteServers",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        },
+        {
+          "name": "moduleParameters",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        }
+      ]
+    },
+    {
       "name": "JupyterIntegratedToolsSettingsState",
       "scope": "app",
       "pluginId": "Pythonid",
@@ -4744,9 +4724,29 @@
           "javaType": "java.lang.String"
         },
         {
+          "name": "logEditorUpdateDebounce",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "maxCacheLogSize",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
+          "name": "maxPresentableInEditorLogSize",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
           "name": "namespaces",
           "type": "StringList",
           "javaType": "java.util.List"
+        },
+        {
+          "name": "proxyCustomParameters",
+          "type": "StringMap",
+          "javaType": "java.util.Map"
         },
         {
           "name": "refreshResourcesAfterAction",
@@ -4803,6 +4803,25 @@
           "name": "specSources",
           "type": "Unsupported",
           "javaType": "java.util.List"
+        }
+      ]
+    },
+    {
+      "name": "DebugInKubernetesSurveyStore",
+      "scope": "app",
+      "pluginId": "com.intellij.kubernetes",
+      "classFqn": "com.intellij.kubernetes.debug.survey.DebugInKubernetesSurveyStore",
+      "storage": "debugInKubernetesSurveyStore.xml",
+      "properties": [
+        {
+          "name": "canShowSurvey",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "telepresenceUsageMonitorTimerStarted",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },
@@ -4919,6 +4938,12 @@
           "mapTo": "INLINE_THIS",
           "type": "Boolean",
           "javaType": "boolean"
+        },
+        {
+          "name": "rename_search_for_component_usages",
+          "mapTo": "RENAME_SEARCH_FOR_COMPONENT_USAGES",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },
@@ -4929,11 +4954,6 @@
       "classFqn": "com.intellij.lang.properties.LastSelectedPropertiesFileStore",
       "storage": "$CACHE_FILE$",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -4995,6 +5015,37 @@
       ]
     },
     {
+      "name": "AipLicense",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.llm",
+      "classFqn": "com.intellij.ml.llm.aiaState.data.AipLicensePreferencesRepositoryImpl",
+      "storage": "other.xml"
+    },
+    {
+      "name": "AINaturalLanguagePromotionState",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.llm",
+      "classFqn": "com.intellij.ml.llm.core.chat.naturalLang.AINaturalLanguagePromotionState",
+      "storage": "AINaturalLanguagePromotionState.xml",
+      "properties": [
+        {
+          "name": "changedLanguageNotificationShown",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "naturalLanguageFeatureNotificationShown",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "wasChatNaturalLanguageAutomaticallyChanged",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
       "name": "AILicenseTypeStorage",
       "scope": "app",
       "pluginId": "com.intellij.ml.llm",
@@ -5028,6 +5079,20 @@
       ]
     },
     {
+      "name": "LLMThirdPartyAIProvidersSettings",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.llm",
+      "classFqn": "com.intellij.ml.llm.core.providers.ThirdPartyAIProvidersSettingsManager",
+      "storage": "llm.third.party.ai.providers.xml",
+      "properties": [
+        {
+          "name": "enabledThirdPartyAIProviders",
+          "type": "StringSet",
+          "javaType": "java.util.Set"
+        }
+      ]
+    },
+    {
       "name": "LLMSettings",
       "scope": "app",
       "pluginId": "com.intellij.ml.llm",
@@ -5045,7 +5110,7 @@
           "javaType": "boolean"
         },
         {
-          "name": "inline_completion_extension_filter",
+          "name": "chat_preferred_llm",
           "type": "String",
           "javaType": "java.lang.String"
         },
@@ -5060,7 +5125,7 @@
           "javaType": "boolean"
         },
         {
-          "name": "data_sharing_initialized",
+          "name": "data_sharing_v2_initialized",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -5080,12 +5145,12 @@
           "javaType": "boolean"
         },
         {
-          "name": "inline_completion",
-          "type": "Boolean",
-          "javaType": "boolean"
+          "name": "inline_completion_extension_filter",
+          "type": "String",
+          "javaType": "java.lang.String"
         },
         {
-          "name": "inline_completion_multiline",
+          "name": "inline_completion",
           "type": "Boolean",
           "javaType": "boolean"
         },
@@ -5110,6 +5175,11 @@
           "javaType": "boolean"
         },
         {
+          "name": "shelve_title_generation",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
           "name": "smart_chat",
           "type": "Boolean",
           "javaType": "boolean"
@@ -5127,6 +5197,83 @@
       ]
     },
     {
+      "name": "SemanticSearchSettings",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.llm",
+      "classFqn": "com.intellij.ml.llm.embeddings.searchEverywhere.settings.SearchEverywhereSemanticSettingsImpl",
+      "storage": "semantic-search-settings.xml",
+      "properties": [
+        {
+          "name": "actions_tab_manually_set",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "classes_tab_manually_set",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "files_tab_manually_set",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "manual_enabled_in_actions_tab",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "manual_enabled_in_classes_tab",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "manual_enabled_in_files_tab",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "manual_enabled_in_symbols_tab",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "symbols_tab_manually_set",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "AICodeGenerationPromoState",
+      "scope": "app",
+      "pluginId": "com.intellij.ml.llm",
+      "classFqn": "com.intellij.ml.llm.inlinePromptDetector.promo.AICodeGenerationPromoState",
+      "storage": "llm.code.generation.xml",
+      "properties": [
+        {
+          "name": "generationStartedCnt",
+          "type": "Integer",
+          "javaType": "int"
+        }
+      ]
+    },
+    {
+      "name": "NotebookSettings",
+      "scope": "app",
+      "pluginId": "com.intellij.notebooks.core",
+      "classFqn": "com.intellij.notebooks.visualization.settings.NotebookSettings",
+      "storage": "notebook-settings.xml",
+      "properties": [
+        {
+          "name": "outputMaxHeightInEditorLines",
+          "type": "Integer",
+          "javaType": "int"
+        }
+      ]
+    },
+    {
       "name": "NotificationConfiguration",
       "scope": "app",
       "pluginId": "com.intellij",
@@ -5140,11 +5287,6 @@
       "classFqn": "com.intellij.notification.impl.RemindLaterManager",
       "storage": "notification.remind.later.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -5470,12 +5612,6 @@
           "javaType": "boolean"
         },
         {
-          "name": "are_line_numbers_after_icons",
-          "mapTo": "ARE_LINE_NUMBERS_AFTER_ICONS",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
           "name": "line_numeration",
           "mapTo": "LINE_NUMERATION",
           "type": "Enum",
@@ -5787,11 +5923,6 @@
       "storage": "overrideFileTypes.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -5894,6 +6025,20 @@
           "name": "processes",
           "type": "Unsupported",
           "javaType": "java.util.Map"
+        }
+      ]
+    },
+    {
+      "name": "JdkInstallerHistory",
+      "scope": "app",
+      "pluginId": "com.intellij",
+      "classFqn": "com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore",
+      "storage": "other.xml",
+      "properties": [
+        {
+          "name": "installedItems",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
         }
       ]
     },
@@ -6316,6 +6461,11 @@
       "storage": "watcherDefaultTasks.xml",
       "properties": [
         {
+          "name": "attributes",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        },
+        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -6422,11 +6572,6 @@
       "storage": "profilerRunConfigurations.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -6451,11 +6596,6 @@
       "storage": "javaRuleManager.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -6479,11 +6619,6 @@
       "classFqn": "com.intellij.psi.codeStyle.AppCodeStyleSettingsManager",
       "storage": "code.style.schemes",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -6516,11 +6651,6 @@
       "storage": "templateLanguages.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -6541,7 +6671,7 @@
       "name": "PyWelcomeSettings",
       "scope": "app",
       "pluginId": "com.jetbrains.pycharm.pro.customization",
-      "classFqn": "com.intellij.pycharm.community.ide.impl.newProject.welcome.PyWelcomeSettings",
+      "classFqn": "com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings",
       "storage": "pyWelcome.xml",
       "properties": [
         {
@@ -6931,6 +7061,12 @@
           "mapTo": "EXTRACT_STATIC_METHOD_AND_PASS_FIELDS",
           "type": "Boolean",
           "javaType": "boolean"
+        },
+        {
+          "name": "generate_all_annotations",
+          "mapTo": "GENERATE_ALL_ANNOTATIONS",
+          "type": "Boolean",
+          "javaType": "boolean"
         }
       ]
     },
@@ -7045,6 +7181,16 @@
       "storage": "ds-tables-settings-state.xml",
       "properties": [
         {
+          "name": "limitRenderedColumnsCount",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "maxNumberColumnToRender",
+          "type": "Integer",
+          "javaType": "int"
+        },
+        {
           "name": "numpyTorchTensorflowDisplayAsTable",
           "type": "Boolean",
           "javaType": "boolean"
@@ -7067,55 +7213,6 @@
               "mapTo": "DETAILED"
             }
           ]
-        }
-      ]
-    },
-    {
-      "name": "SemanticSearchSettings",
-      "scope": "app",
-      "pluginId": "com.intellij.searcheverywhere.ml",
-      "classFqn": "com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettingsImpl",
-      "storage": "semantic-search-settings.xml",
-      "properties": [
-        {
-          "name": "actions_tab_manually_set",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "classes_tab_manually_set",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "files_tab_manually_set",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manual_enabled_in_actions_tab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manual_enabled_in_classes_tab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manual_enabled_in_files_tab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "manual_enabled_in_symbols_tab",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "symbols_tab_manually_set",
-          "type": "Boolean",
-          "javaType": "boolean"
         }
       ]
     },
@@ -7557,11 +7654,6 @@
       "classFqn": "com.intellij.structuralsearch.plugin.ui.ConfigurationManager$ConfigurationManagerState",
       "storage": "structuralSearch.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -8194,11 +8286,6 @@
       "classFqn": "com.jetbrains.nodejs.remote.NodeRemoteInterpreters",
       "storage": "nodejs.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -9230,11 +9317,6 @@
       "storage": "user-variables-view-settings.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -9266,10 +9348,6 @@
             {
               "value": "plain",
               "mapTo": "PLAIN"
-            },
-            {
-              "value": "epytext",
-              "mapTo": "EPYTEXT"
             },
             {
               "value": "rest",
@@ -9413,6 +9491,25 @@
       ]
     },
     {
+      "name": "PyPackageRepositories",
+      "scope": "app",
+      "pluginId": "PythonCore",
+      "classFqn": "com.jetbrains.python.packaging.repository.PyPackageRepositories",
+      "storage": "python-repositories.xml",
+      "properties": [
+        {
+          "name": "repositories",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        },
+        {
+          "name": "invalidRepositories",
+          "type": "Unsupported",
+          "javaType": "java.util.Set"
+        }
+      ]
+    },
+    {
       "name": "PySdkSettings",
       "scope": "app",
       "pluginId": "PythonCore",
@@ -9440,6 +9537,20 @@
         {
           "name": "preferred_virtualenv_base_sdk",
           "mapTo": "PREFERRED_VIRTUALENV_BASE_SDK",
+          "type": "String",
+          "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "PythonJobSurveyService",
+      "scope": "app",
+      "pluginId": "PythonCore",
+      "classFqn": "com.jetbrains.python.statistics.feedback.PythonJobSurveyService",
+      "storage": "pycharm-job-survey-service.xml",
+      "properties": [
+        {
+          "name": "firstLaunch",
           "type": "String",
           "javaType": "java.lang.String"
         }
@@ -9910,6 +10021,30 @@
       ]
     },
     {
+      "name": "ExplicitFeedbackState",
+      "scope": "app",
+      "pluginId": "org.jetbrains.completion.full.line",
+      "classFqn": "org.jetbrains.completion.full.line.feedback.ExplicitFeedbackStateComponent",
+      "storage": "full.line.feedback.xml",
+      "properties": [
+        {
+          "name": "languageToSessions",
+          "type": "Unsupported",
+          "javaType": "java.util.Map"
+        },
+        {
+          "name": "isNotificationShown",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "acceptedCompletionsCnt",
+          "type": "Integer",
+          "javaType": "int"
+        }
+      ]
+    },
+    {
       "name": "DownloadModelConsentState",
       "scope": "app",
       "pluginId": "org.jetbrains.completion.full.line",
@@ -9949,11 +10084,6 @@
       "classFqn": "org.jetbrains.completion.full.line.settings.FullLineSettings",
       "storage": "full.line.xml",
       "properties": [
-        {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
         {
           "name": "name",
           "type": "String",
@@ -10065,11 +10195,6 @@
       "storage": "tomee.extensions.xml",
       "properties": [
         {
-          "name": "attributes",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
           "name": "name",
           "type": "String",
           "javaType": "java.lang.String"
@@ -10083,6 +10208,39 @@
           "name": "text",
           "type": "String",
           "javaType": "java.lang.String"
+        }
+      ]
+    },
+    {
+      "name": "IdeaDecompilerSettings",
+      "scope": "app",
+      "pluginId": "org.jetbrains.java.decompiler",
+      "classFqn": "org.jetbrains.java.decompiler.IdeaDecompilerSettings",
+      "storage": "other.xml",
+      "properties": [
+        {
+          "name": "options",
+          "type": "StringMap",
+          "javaType": "java.util.Map"
+        },
+        {
+          "name": "preset",
+          "type": "Enum",
+          "javaType": "org.jetbrains.java.decompiler.DecompilerPreset",
+          "variants": [
+            {
+              "value": "high",
+              "mapTo": "HIGH"
+            },
+            {
+              "value": "medium",
+              "mapTo": "MEDIUM"
+            },
+            {
+              "value": "low",
+              "mapTo": "LOW"
+            }
+          ]
         }
       ]
     },
@@ -10678,6 +10836,35 @@
       ]
     },
     {
+      "name": "KotlinLibrariesCompatibilityStore",
+      "scope": "app",
+      "pluginId": "org.jetbrains.kotlin",
+      "classFqn": "org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore",
+      "storage": "kotlin-wizard-data.xml",
+      "properties": [
+        {
+          "name": "default",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "ideVersion",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "lastUpdateTime",
+          "type": "Unsupported",
+          "javaType": "long"
+        },
+        {
+          "name": "libraries",
+          "type": "Unsupported",
+          "javaType": "java.util.List"
+        }
+      ]
+    },
+    {
       "name": "KotlinWizardVersionStore",
       "scope": "app",
       "pluginId": "org.jetbrains.kotlin",
@@ -10748,45 +10935,6 @@
           "name": "surefireVersion",
           "type": "String",
           "javaType": "java.lang.String"
-        }
-      ]
-    },
-    {
-      "name": "CoroutinesLibraryCompatibilityStore",
-      "scope": "app",
-      "pluginId": "org.jetbrains.kotlin",
-      "classFqn": "org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.CoroutinesLibraryCompatibilityStore",
-      "storage": "kotlin-wizard-data.xml",
-      "properties": [
-        {
-          "name": "artifactId",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "default",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "groupId",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "ideVersion",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "lastUpdateTime",
-          "type": "Unsupported",
-          "javaType": "long"
-        },
-        {
-          "name": "versions",
-          "type": "StringMap",
-          "javaType": "java.util.Map"
         }
       ]
     },
@@ -11089,89 +11237,6 @@
       ]
     },
     {
-      "name": "JupyterDSSettings",
-      "scope": "app",
-      "pluginId": "intellij.jupyter",
-      "classFqn": "org.jetbrains.plugins.notebooks.editor.settings.JupyterDSSettings",
-      "storage": "jupyter-ds-settings.xml",
-      "properties": [
-        {
-          "name": "autoRunMarkdownCellOnFocusLeave",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "cellNotificationTimeSec",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "invertImageOutputsUnderDarkTheme",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "markdownScalePercentage",
-          "type": "Integer",
-          "javaType": "int"
-        },
-        {
-          "name": "notifyCellExecution",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "showAddCellPopUp",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "showInlineValues",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "showInlineValuesMode",
-          "type": "Enum",
-          "javaType": "org.jetbrains.plugins.notebooks.editor.settings.JupyterShowInlineValuesSettingMode",
-          "variants": [
-            {
-              "value": "in_current_line",
-              "mapTo": "In current line"
-            },
-            {
-              "value": "in_entire_notebook",
-              "mapTo": "In entire notebook"
-            }
-          ]
-        },
-        {
-          "name": "uploadLibsToRemoteServer",
-          "type": "Boolean",
-          "javaType": "boolean"
-        }
-      ]
-    },
-    {
-      "name": "JupyterPersistentConnectionParameters",
-      "scope": "app",
-      "pluginId": "intellij.jupyter",
-      "classFqn": "org.jetbrains.plugins.notebooks.jupyter.connections.LegacyJupyterConnectionsParametersStateService",
-      "storage": "jupyter-settings.xml",
-      "properties": [
-        {
-          "name": "knownRemoteServers",
-          "type": "Unsupported",
-          "javaType": "java.util.List"
-        },
-        {
-          "name": "moduleParameters",
-          "type": "Unsupported",
-          "javaType": "java.util.Map"
-        }
-      ]
-    },
-    {
       "name": "RubyDuplocatorSettings",
       "scope": "app",
       "pluginId": "org.jetbrains.plugins.ruby",
@@ -11321,6 +11386,11 @@
       "storage": "editor.xml",
       "properties": [
         {
+          "name": "deleteEmptyCommentsOnEnter",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
           "name": "highlightRDocInComments",
           "type": "Boolean",
           "javaType": "boolean"
@@ -11350,7 +11420,17 @@
           "javaType": "boolean"
         },
         {
+          "name": "preselectFirstConsoleCompletionElement",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
           "name": "myPreselectFirstCompletionElement",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "myPreselectFirstConsoleCompletionElement",
           "type": "Boolean",
           "javaType": "boolean"
         }
@@ -11474,6 +11554,34 @@
           "name": "myHistoryFileInfoList",
           "type": "Unsupported",
           "javaType": "java.util.List"
+        }
+      ]
+    },
+    {
+      "name": "BlockTerminalOptions",
+      "scope": "app",
+      "pluginId": "org.jetbrains.plugins.terminal",
+      "classFqn": "org.jetbrains.plugins.terminal.block.BlockTerminalOptions",
+      "storage": "terminal.xml",
+      "properties": [
+        {
+          "name": "promptStyle",
+          "type": "Enum",
+          "javaType": "org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle",
+          "variants": [
+            {
+              "value": "single_line",
+              "mapTo": "SINGLE_LINE"
+            },
+            {
+              "value": "double_line",
+              "mapTo": "DOUBLE_LINE"
+            },
+            {
+              "value": "shell",
+              "mapTo": "SHELL"
+            }
+          ]
         }
       ]
     },

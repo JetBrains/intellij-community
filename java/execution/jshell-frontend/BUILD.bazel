@@ -1,0 +1,13 @@
+### auto-generated section `build intellij.java.jshell.frontend` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-jshell-frontend",
+  module_name = "intellij.java.jshell.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  deps = ["//java/execution/jshell-protocol:java-jshell-protocol"]
+)
+### auto-generated section `build intellij.java.jshell.frontend` end

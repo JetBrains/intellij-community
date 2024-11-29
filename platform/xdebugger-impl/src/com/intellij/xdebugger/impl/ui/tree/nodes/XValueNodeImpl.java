@@ -92,13 +92,17 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     boolean alreadyHasInline = myValuePresentation != null;
     myValuePresentation = valuePresentation;
     myRawValue = XValuePresentationUtil.computeValueText(valuePresentation);
-    if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline() && !alreadyHasInline) {
+    if (shouldUpdateInlineDebuggerData() && !alreadyHasInline) {
       updateInlineDebuggerData();
     }
     updateText();
     setLeaf(!hasChildren);
     fireNodeChanged();
     myTree.nodeLoaded(this, myName);
+  }
+
+  protected boolean shouldUpdateInlineDebuggerData() {
+    return XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
   }
 
   private void updateInlineDebuggerData() {
@@ -191,7 +195,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
       SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
-      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_NAME_LENGTH, null);
+      XValuePresentationUtil.renderName(myName, MAX_NAME_LENGTH, s -> myText.append(s, attributes));
     }
   }
 

@@ -29,6 +29,7 @@ import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringOperation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -305,6 +306,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return doPrepareReplaceString(startOffset, endOffset, s);
   }
 
+  @Unmodifiable
   private @NotNull Collection<@NotNull StringOperation> doPrepareReplaceString(int startOffset, int endOffset, CharSequence s) {
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;

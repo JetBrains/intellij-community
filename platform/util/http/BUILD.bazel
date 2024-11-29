@@ -1,19 +1,19 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.util.http` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "util-http",
+jvm_library(
+  name = "http",
   module_name = "intellij.platform.util.http",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:annotations",
-    "@libraries//:ktor-client-core-jvm",
-    "@libraries//:ktor-client-java-jvm",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:ktor-client-core",
+    "@lib//:ktor-client-java",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util.http` end

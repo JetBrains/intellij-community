@@ -325,6 +325,11 @@ public enum SpecialField implements DerivedVariableDescriptor {
     return myFinal;
   }
 
+  @Override
+  public boolean isImplicitReadPossible() {
+    return true;
+  }
+
   public abstract boolean isMyQualifierType(DfType type);
 
   /**

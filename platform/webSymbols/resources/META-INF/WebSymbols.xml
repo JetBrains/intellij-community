@@ -3,7 +3,7 @@
     <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
                     serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>
 
-    <highlightingPassFactory implementation="com.intellij.webSymbols.inspections.WebSymbolsPassFactory$Registrar"/>
+    <highlightingPassFactory implementation="com.intellij.webSymbols.inspections.WebSymbolsPassFactory"/>
 
     <webSymbols.webTypes.filter
       name="match-prefix"

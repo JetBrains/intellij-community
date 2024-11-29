@@ -65,7 +65,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   @NotNull
   private Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
     var res = new AsyncPromise<List<SmartStepTarget>>();
-    session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
+    DebuggerContextImpl context = session.getContextManager().getContext();
+    Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Promises.compute(res, () ->
@@ -601,6 +602,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
-    return immediateMethodCalls(targets).filter(t -> t.getMethod().equals(psiMethod));
+    return immediateMethodCalls(targets)
+      .filter(t -> psiMethod.getManager().areElementsEquivalent(psiMethod, t.getMethod()));
   }
 }

@@ -2274,7 +2274,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             with(facetSettings("myModule3")) {
                 Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, languageLevel)
-                Assert.assertEquals(LanguageVersion.KOTLIN_1_1, apiLevel)
+                Assert.assertEquals(KotlinPluginLayout.standaloneCompilerVersion.languageVersion, apiLevel)
                 Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
                 Assert.assertEquals(
                     listOf("-kotlin-home", "temp2"),

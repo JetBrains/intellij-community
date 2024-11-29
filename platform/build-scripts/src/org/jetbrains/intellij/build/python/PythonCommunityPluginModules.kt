@@ -35,7 +35,7 @@ object PythonCommunityPluginModules {
   /**
    * List of modules used in both Python plugin and Python Frontend plugin
    */
-  @JvmStatic
+  @JvmField
   val PYTHON_COMMON_MODULES: PersistentList<String> = persistentListOf(
     "intellij.python.parser",
     "intellij.python.ast",
@@ -57,7 +57,7 @@ object PythonCommunityPluginModules {
   }
 
   fun pythonPlugin(mainModuleName: String, name: String, modules: List<String>, body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
-    return PluginLayout.plugin(mainModuleName, auto = true) { spec ->
+    return PluginLayout.pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = name
       spec.mainJarName = "$name.jar"
       spec.withModules(modules)

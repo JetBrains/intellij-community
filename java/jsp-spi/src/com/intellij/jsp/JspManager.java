@@ -13,6 +13,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -51,6 +52,7 @@ public abstract class JspManager implements IBaseJspManager {
   public abstract String[] getPossibleTldUris(@NotNull Module module);
 
   @NotNull
+  @Unmodifiable
   public abstract Collection<XmlFile> getPossibleTldFiles(@NotNull Module module);
 
   @Nullable

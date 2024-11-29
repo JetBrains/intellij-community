@@ -47,6 +47,14 @@ final class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
     return file;
   }
 
+  boolean matches(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends PsiElement> matcher) {
+    return matches(node, matcher.getValue());
+  }
+
+  boolean contains(@NotNull AbstractTreeNode<?> node, @NotNull NodeVisitorMatcher<? extends PsiElement> matcher) {
+    return contains(node, matcher.getValue());
+  }
+
   @Override
   protected boolean contains(@NotNull AbstractTreeNode node, @NotNull PsiElement element) {
     if (!node.mayContain(element)) return false;

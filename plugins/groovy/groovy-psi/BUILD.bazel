@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.groovy.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "psi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi",
+  module_name = "intellij.groovy.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:org_codehaus_groovy_groovy",
+    "//java/openapi:java",
+    "//java/java-indexing-api:indexing",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-impl:impl",
+    "//platform/core-impl",
+    "//platform/extensions",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/java-structure-view:structureView",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-api:psi",
+    "//platform/core-ui",
+    "@lib//:kotlin-reflect",
+    "@lib//:fastutil-min",
+    "@lib//:asm",
+    "//platform/util/jdom",
+  ],
+  exports = ["@lib//:org_codehaus_groovy_groovy"],
+  runtime_deps = [":psi_resources"]
+)
+### auto-generated section `build intellij.groovy.psi` end

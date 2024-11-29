@@ -16,8 +16,8 @@
             <arrayArg name="pluginClasspaths">
               <args>
                 <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.0.21-RC-0.1/rhizomedb-compiler-plugin-2.0.21-RC-0.1.jar</arg>
-                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.0.21-RC-0.1/rpc-compiler-plugin-2.0.21-RC-0.1.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.0-RC2-0.3/rhizomedb-compiler-plugin-2.1.0-RC2-0.3.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/com/jetbrains/fleet/rpc-compiler-plugin/2.1.0-RC2-0.3/rpc-compiler-plugin-2.1.0-RC2-0.3.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginOptions" />
@@ -36,13 +36,14 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="fleet.rhizomedb" exported="" />
-    <orderEntry type="library" exported="" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" exported="" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="rhizomedb-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="fleet.util.core" exported="" />
     <orderEntry type="module" module-name="fleet.rpc" exported="" />
-    <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="fleet.preferences" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

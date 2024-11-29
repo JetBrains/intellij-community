@@ -1,13 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates
 
-import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.template.Expression
-import com.intellij.codeInsight.template.ExpressionContext
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TextResult
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
@@ -27,94 +21,49 @@ private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.
 }
 
 context(KaSession)
-@OptIn(KaExperimentalApi::class)
-fun Template.build(
-    parametersCount: Int,
+fun createLookupElements(
     trailingFunctionType: KaFunctionType,
     suggestedParameterNames: List<Name?> = emptyList(),
-): Template = apply {
-    isToShortenLongNames = true
-    // isToReformat = true //TODO
-
-    for (index in 0 until parametersCount) {
-        if (index == 0) {
-            addTextSegment("(")
-        }
-
-        addVariable(
-            /* expression = */ EmptyExpression(),
-            /* isAlwaysStopAt = */ true,
-        )
-
-        addTextSegment(if (index == parametersCount - 1) ")" else ", ")
-    }
-
+): Sequence<LookupElementBuilder> {
     val typeNames = mutableMapOf<KaType, MutableSet<String>>()
     val kotlinNameSuggester = KotlinNameSuggester()
 
-    addTextSegment(" { ")
-
     val namedParameterTypes = trailingFunctionType.parameterTypes
         .zip(suggestedParameterNames)
-    namedParameterTypes.forEachIndexed { index, (parameterType, suggestedName) ->
-        //TODO: check for names in scope
-        val validator = typeNames.getOrPut(parameterType) {
-            mutableSetOf()
-        }::add
+    //val showDefault = namedParameterTypes.size != 1 // todo
 
-        val suggestedNames = suggestedName?.let { sequenceOf(it.asString()) }
-            ?: kotlinNameSuggester.suggestTypeNames(parameterType)
+    return namedParameterTypes.asSequence()
+        .flatMapIndexed { index, (parameterType, suggestedName) ->
+            //TODO: check for names in scope
+            val validator = typeNames.getOrPut(parameterType) {
+                mutableSetOf()
+            }::add
 
-        val parameterTypeText = parameterType.render(
-            renderer = NoAnnotationsTypeRenderer,
-            position = Variance.INVARIANT,
-        )
+            val suggestedNames = suggestedName?.let { sequenceOf(it.asString()) }
+                ?: kotlinNameSuggester.suggestTypeNames(parameterType)
 
-        val showDefault = namedParameterTypes.size != 1
-        val lookupElements = suggestedNames.map {
-            KotlinNameSuggester.suggestNameByName(it, validator)
-        }.map { name ->
-            if (showDefault) {
-                LookupElementBuilder.create(name)
-            } else {
-                val tailText = " -> "
-                LookupElementBuilder.create(name + tailText)
-                    .withPresentableText(name)
-                    .withTailText(tailText, true)
+            val parameterTypeText = parameterType.text
+
+            suggestedNames.map {
+                KotlinNameSuggester.suggestNameByName(it, validator) to parameterTypeText
             }
-        }.map { it.withTypeText(parameterTypeText) }
-
-        addVariable(
-            /* expression = */
-            LambdaParameterExpression(
-                lookupElements = lookupElements.toList(),
-                showDefault = showDefault,
-            ),
-            /* isAlwaysStopAt = */ true,
-        )
-
-        if (index != namedParameterTypes.lastIndex) {
-            addTextSegment(", ")
-        } else if (index != 0) {
-            addTextSegment(" -> ")
+        }.map { (name, typeText) ->
+            val tailText = " -> "
+            LookupElementBuilder.create(name)
+                .withTailText(tailText, true)
+                .withTypeText(typeText)
+                .withInsertHandler { context, item ->
+                    context.document.insertString(context.tailOffset, tailText)
+                    context.commitDocument()
+                    context.editor.caretModel.moveToOffset(context.tailOffset)
+                }
         }
-    }
-
-    addEndVariable()
-    addTextSegment(" }")
 }
 
-private class LambdaParameterExpression(
-    private val lookupElements: Collection<LookupElement>,
-    private val showDefault: Boolean = true,
-) : Expression() {
-
-    override fun calculateResult(context: ExpressionContext): TextResult? =
-        lookupElements.takeIf { showDefault }
-            ?.firstOrNull()
-            ?.lookupString
-            ?.let { TextResult(it) }
-
-    override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement> =
-        lookupElements.toTypedArray()
-}
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+private val KaType.text: String
+    get() = render(
+        renderer = NoAnnotationsTypeRenderer,
+        position = Variance.INVARIANT,
+    )

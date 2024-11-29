@@ -186,7 +186,7 @@ public abstract class PyEnvTestCase {
     PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-    EnvTestTagsRequired methodAnnotation = null;
+    EnvTestTagsRequired methodAnnotation;
     try {
       String methodName = myTestName.getMethodName();
       if (methodName.contains("[")) {
@@ -228,7 +228,7 @@ public abstract class PyEnvTestCase {
   }
 
   public static List<String> getDefaultPythonRoots() {
-    return ContainerUtil.map(SETTINGS.getPythons$intellij_python_community_tests(), File::getAbsolutePath);
+    return ContainerUtil.map(SETTINGS.getPythons(), File::getAbsolutePath);
   }
 
   /**

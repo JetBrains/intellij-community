@@ -1,0 +1,13 @@
+### auto-generated section `build intellij.devkit.plugin` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "plugin",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//plugins/devkit/intellij.devkit.plugin/noKotlin:devkit-plugin-noKotlin",
+    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+  ]
+)
+### auto-generated section `build intellij.devkit.plugin` end

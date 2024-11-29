@@ -1,0 +1,24 @@
+inputs:
+  os:
+    description: 'linux, windows or mac'
+    required: true
+  extension:
+    description: 'tar.gz, exe or sit'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Checkout JetBrains/android
+      uses: actions/checkout@v4.2.2
+      with:
+        repository: JetBrains/android
+        path: android
+        ref: ${{github.ref}}
+    - name: Build environment
+      shell: bash
+      # language=bash
+      run: docker build . --target build_env --tag build_env
+    - name: Build .${{inputs.extension}}
+      shell: bash
+      # language=bash
+      run: docker run --rm --user "$(id -u)" --volume ${PWD}:/community build_env -Dintellij.build.target.os=${{inputs.os}}

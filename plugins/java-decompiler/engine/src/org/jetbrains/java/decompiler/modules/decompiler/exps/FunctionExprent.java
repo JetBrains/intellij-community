@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -218,6 +219,7 @@ public class FunctionExprent extends Exprent {
     lstOperands.add(operand);
   }
 
+  @NotNull
   @Override
   public VarType getExprType() {
     if(inferredType != null) {
@@ -279,6 +281,9 @@ public class FunctionExprent extends Exprent {
       exprType = TYPES[funcType - FUNCTION_I2L];
     }
 
+    if (exprType == null) {
+      return VarType.VARTYPE_UNKNOWN;
+    }
     return exprType;
   }
 
@@ -290,7 +295,7 @@ public class FunctionExprent extends Exprent {
       VarType right = lstOperands.get(0).getExprType();
       VarType cast = lstOperands.get(1).getExprType();
 
-      if (upperBound != null && right != null && (upperBound.isGeneric() || right.isGeneric())) {
+      if (upperBound != null && (upperBound.isGeneric() || right.isGeneric())) {
         Map<VarType, List<VarType>> names = this.getNamedGenerics();
         int arrayDim = 0;
 
@@ -325,7 +330,7 @@ public class FunctionExprent extends Exprent {
         }
       }
       else { //TODO: Capture generics to make cast better?
-        this.needsCast = right != null && (right.getType() == CodeConstants.TYPE_NULL ||
+        this.needsCast = (right.getType() == CodeConstants.TYPE_NULL ||
                          !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue()));
       }
     }

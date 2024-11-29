@@ -153,7 +153,7 @@ abstract class ToolWindowHeader internal constructor(
 
     toolbar.targetComponent = toolbar.component
     toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-    toolbar.setReservePlaceAutoPopupIcon(false)
+    toolbar.isReservePlaceAutoPopupIcon = false
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
     if (toolWindow.toolWindowManager.isNewUi) {
@@ -202,7 +202,7 @@ abstract class ToolWindowHeader internal constructor(
           }
           else {
             toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
-            // Move focus the context component.
+            // Move focus to the context component.
             val decorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
             decorator?.requestContentFocus()
           }
@@ -271,7 +271,7 @@ abstract class ToolWindowHeader internal constructor(
     if (actions.isNotEmpty() && !ExperimentalUI.isNewUI()) {
       actionGroup.addSeparator()
     }
-    toolbar.updateActionsImmediately()
+    toolbar.updateActionsAsync()
   }
 
   override fun paintComponent(g: Graphics) {
@@ -297,12 +297,13 @@ abstract class ToolWindowHeader internal constructor(
     UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, drawBottomLine)
   }
 
+  @Suppress("UseJBColor")
   override fun paintChildren(g: Graphics) {
     val graphics = g.create() as Graphics2D
     setupAntialiasing(graphics)
     super.paintChildren(graphics)
     val r = bounds
-    if (!isActive && !StartupUiUtil.isUnderDarcula) {
+    if (!isActive && !StartupUiUtil.isDarkTheme) {
       graphics.color = Color(255, 255, 255, 30)
       graphics.fill(r)
     }
@@ -324,7 +325,7 @@ abstract class ToolWindowHeader internal constructor(
   inner class ShowOptionsAction : DumbAwareAction(), FusAwareAction {
     private val myPopupState = PopupState.forPopupMenu()
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = true
@@ -396,7 +397,12 @@ private class WestPanel {
     vg.addComponent(first, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
     if (second != null) {
       hg.addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
-      vg.addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
+      vg.addGroup(
+        layout.createSequentialGroup()
+          .addGap(JBUI.scale(1))
+          .addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
+          .addGap(JBUI.scale(1))
+      )
     }
   }
 

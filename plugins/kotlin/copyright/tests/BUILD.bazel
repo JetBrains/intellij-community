@@ -1,0 +1,28 @@
+### auto-generated section `build kotlin.copyright.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-copyright-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-copyright-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/copyright",
+    "//plugins/kotlin/tests-common",
+    "//plugins/kotlin/test-framework",
+    "//plugins/copyright",
+  ]
+)
+### auto-generated section `build kotlin.copyright.tests` end

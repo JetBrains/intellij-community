@@ -41,6 +41,7 @@ val isFleetShortCircuitMode: Boolean by lazy {
     isFleetInternalDefaultValue -> false
     else -> true
   })
+  true
 }
 
 val shipAutoUpdateEnabled: Boolean by lazy {

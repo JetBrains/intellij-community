@@ -1,9 +1,7 @@
 // MODE: inheritors
 
-/*<# block [ 1 Implementation] #>*/
-interface SomeInterface {
-/*<# block [     1 Override] #>*/
-    fun interfaceMethodA() = 10
+interface SomeInterface {/*<# [1 Implementation] #>*/
+fun interfaceMethodA() = 10/*<# [1 Override] #>*/
 }
 
 class SomeClass : SomeInterface {

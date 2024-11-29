@@ -10,6 +10,8 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -27,6 +29,22 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
+  final static class ForSymbolNavigationContributor extends DefaultClassNavigationContributor {
+    ForSymbolNavigationContributor() {
+      super(true);
+    }
+  }
+
+  private final boolean allowNonPhysicalClasses;
+
+  public DefaultClassNavigationContributor() {
+    allowNonPhysicalClasses = false;
+  }
+
+  DefaultClassNavigationContributor(boolean allowNonPhysicalClasses) {
+    this.allowNonPhysicalClasses = allowNonPhysicalClasses;
+  }
+
   @Override
   public String getQualifiedName(final @NotNull NavigationItem item) {
     if (item instanceof PsiClass) {
@@ -41,6 +59,11 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
     final String containerText = SymbolPresentationUtil.getSymbolContainerText(psiClass);
     return containerText + "." + psiClass.getName();
+  }
+
+  public static boolean isOpenable(PsiMember member) {
+    final PsiFile file = member.getContainingFile();
+    return file != null && file.getVirtualFile() != null;
   }
 
   @Override
@@ -61,13 +84,13 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
                                       final @NotNull Processor<? super NavigationItem> processor,
                                       final @NotNull FindSymbolParameters parameters) {
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      DefaultClassProcessor defaultClassProcessor = new DefaultClassProcessor(processor, parameters, false);
+      DefaultClassProcessor defaultClassProcessor = new DefaultClassProcessor(processor, parameters, allowNonPhysicalClasses);
       getPsiShortNamesCache(parameters.getProject())
         .processClassesWithName(name, defaultClassProcessor, parameters.getSearchScope(), parameters.getIdFilter());
     });
   }
 
-  private static PsiShortNamesCache getPsiShortNamesCache(@NotNull Project project) {
+  static PsiShortNamesCache getPsiShortNamesCache(@NotNull Project project) {
     Set<Language> withoutLanguages = IgnoreLanguageInDefaultProvider.getIgnoredLanguages();
     return PsiShortNamesCache.getInstance(project).withoutLanguages(withoutLanguages);
   }
@@ -88,7 +111,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
     @Override
     public boolean process(PsiClass aClass) {
-      if (!DefaultSymbolNavigationContributor.isOpenable(aClass) || (!allowNonPhysicalClasses && !aClass.isPhysical())) {
+      if (!isOpenable(aClass) || (!allowNonPhysicalClasses && !aClass.isPhysical())) {
         return true;
       }
       if (isAnnotation && !aClass.isAnnotationType()) return true;

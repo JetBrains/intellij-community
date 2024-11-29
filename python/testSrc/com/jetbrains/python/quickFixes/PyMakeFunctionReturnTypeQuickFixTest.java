@@ -55,7 +55,7 @@ public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
 
   // PY-27128
   public void testAncestorAndInheritorReturn() {
-    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X]"));
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X | Y]"));
   }
 
   // PY-27128 PY-48466

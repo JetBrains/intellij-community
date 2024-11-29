@@ -20,6 +20,7 @@ import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -37,6 +38,7 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
   }
 
   @Override
+  @Unmodifiable
   public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements) {
     Set<PsiJavaFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), PsiJavaFile.class));
     return ContainerUtil.union(movedFiles, prepareOperation(usages));

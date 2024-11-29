@@ -1,40 +1,41 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.kernel` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "kernel_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "kernel",
   module_name = "intellij.platform.kernel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/kernel/rpc",
-    "@libraries//:rhizomedb-compiler-plugin.provided",
-    "@community//fleet/kernel:fleet-kernel",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-api:core",
-    "@community//platform/ide-core",
-    "@community//platform/util/coroutines:util-coroutines",
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/rpc",
+    "@lib//:rhizomedb-compiler-plugin.provided",
+    "//fleet/kernel",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:fastutil-min",
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "//platform/util/coroutines",
   ],
   exports = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/kernel/rpc",
-    "@community//fleet/kernel:fleet-kernel",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-serialization-core-jvm",
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/rpc",
+    "//fleet/kernel",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":kernel_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.kernel` end

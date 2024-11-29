@@ -32,9 +32,11 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
+import kotlin.Throws
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -203,6 +205,9 @@ class MavenProject(val file: VirtualFile) {
   val profilesXmlFile: VirtualFile?
     get() = MavenUtil.findProfilesXmlFile(file)
 
+  val profilesXmlNioFile: Path?
+    get() = MavenUtil.getProfilesXmlNioFile(file)
+
   fun hasUnrecoverableReadingProblems(): Boolean {
     return myState.readingProblems.any { !it.isRecoverable }
   }
@@ -319,6 +324,7 @@ class MavenProject(val file: VirtualFile) {
       return ProcMode.BOTH
     }
 
+
   val annotationProcessorOptions: Map<String, String>
     get() {
       val compilerConfig: Element? = compilerConfig
@@ -335,49 +341,47 @@ class MavenProject(val file: VirtualFile) {
       return emptyMap()
     }
 
-  val declaredAnnotationProcessors: List<String>?
+  val declaredAnnotationProcessors: List<String>
     get() {
-      val compilerConfig: Element? = compilerConfig
-      if (compilerConfig == null) {
-        return null
-      }
+      return compilerConfigs.flatMap { getDeclaredAnnotationProcessors(it) }
+    }
 
-      val result: MutableList<String> = ArrayList()
-      if (procMode != ProcMode.NONE) {
-        val processors: Element? = compilerConfig.getChild("annotationProcessors")
-        if (processors != null) {
-          for (element: Element in processors.getChildren("annotationProcessor")) {
-            val processorClassName: String = element.textTrim
-            if (!processorClassName.isEmpty()) {
-              result.add(processorClassName)
-            }
+  private fun getDeclaredAnnotationProcessors(compilerConfig: Element): MutableList<String> {
+    val result: MutableList<String> = ArrayList()
+    if (procMode != ProcMode.NONE) {
+      val processors: Element? = compilerConfig.getChild("annotationProcessors")
+      if (processors != null) {
+        for (element: Element in processors.getChildren("annotationProcessor")) {
+          val processorClassName: String = element.textTrim
+          if (!processorClassName.isEmpty()) {
+            result.add(processorClassName)
           }
         }
       }
-      else {
-        val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-        if (bscMavenPlugin != null) {
-          var bscCfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
-          if (bscCfg == null) {
-            bscCfg = bscMavenPlugin.configurationElement
-          }
+    }
+    else {
+      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
+      if (bscMavenPlugin != null) {
+        var bscCfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
+        if (bscCfg == null) {
+          bscCfg = bscMavenPlugin.configurationElement
+        }
 
-          if (bscCfg != null) {
-            val bscProcessors: Element? = bscCfg.getChild("processors")
-            if (bscProcessors != null) {
-              for (element: Element in bscProcessors.getChildren("processor")) {
-                val processorClassName: String = element.textTrim
-                if (!processorClassName.isEmpty()) {
-                  result.add(processorClassName)
-                }
+        if (bscCfg != null) {
+          val bscProcessors: Element? = bscCfg.getChild("processors")
+          if (bscProcessors != null) {
+            for (element: Element in bscProcessors.getChildren("processor")) {
+              val processorClassName: String = element.textTrim
+              if (!processorClassName.isEmpty()) {
+                result.add(processorClassName)
               }
             }
           }
         }
       }
-
-      return result
     }
+    return result
+  }
 
   val outputDirectory: @NlsSafe String
     get() = myState.outputDirectory!!
@@ -482,7 +486,7 @@ class MavenProject(val file: VirtualFile) {
           // Collect only extensions that were attempted to be resolved.
           // It is because embedder does not even try to resolve extensions that
           // are not necessary.
-          if (myState.unresolvedArtifactIds.contains(each.mavenId) && !pomFileExists(localRepository, each)) {
+          if (myState.unresolvedArtifactIds.contains(each.mavenId) && !pomFileExists(localRepositoryPath, each)) {
             result.add(each)
           }
         }
@@ -492,7 +496,7 @@ class MavenProject(val file: VirtualFile) {
       return myUnresolvedExtensionsCache
     }
 
-  private fun pomFileExists(localRepository: File, artifact: MavenArtifact): Boolean {
+  private fun pomFileExists(localRepository: Path, artifact: MavenArtifact): Boolean {
     return hasArtifactFile(localRepository, artifact.mavenId, "pom")
   }
 
@@ -913,9 +917,15 @@ class MavenProject(val file: VirtualFile) {
       return getPropertiesFromConfig(ConfigFileKind.JVM_CONFIG)
     }
 
+  @Deprecated("Use localRepositoryPath")
   val localRepository: File
     get() {
-      return myState.localRepository!!
+      return localRepositoryPath.toFile()
+    }
+
+  val localRepositoryPath: Path
+    get() {
+      return myState.localRepository!!.toPath()
     }
 
   val remoteRepositories: List<MavenRemoteRepository>
@@ -1178,7 +1188,7 @@ class MavenProject(val file: VirtualFile) {
       return state.copy(
         lastReadStamp = lastReadStamp,
         readingProblems = readingProblems,
-        localRepository = settings.effectiveLocalRepository,
+        localRepository = settings.effectiveRepositoryPath.toFile(),
         activatedProfilesIds = activatedProfiles,
         mavenId = model.mavenId,
         parentId = model.parent?.mavenId,

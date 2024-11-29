@@ -16,8 +16,8 @@ fun Finder.table(@Language("xpath") xpath: String? = null) =
 fun Finder.table(init: QueryBuilder.() -> String) = x(JTableUiComponent::class.java, init)
 
 open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy { driver.new(JTableFixtureRef::class, robot, component) }
-  private val tableComponent by lazy { driver.cast(component, JTableComponent::class) }
+  protected val fixture by lazy { driver.new(JTableFixtureRef::class, robot, component) }
+  protected val tableComponent by lazy { driver.cast(component, JTableComponent::class) }
 
   // content()[ROW][COLUMN]
   fun content(): Map<Int, Map<Int, String>> = fixture.collectItems()

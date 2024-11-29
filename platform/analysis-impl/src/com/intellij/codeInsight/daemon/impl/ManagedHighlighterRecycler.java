@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +39,7 @@ final class ManagedHighlighterRecycler {
   synchronized void recycleHighlighter(@NotNull PsiElement psiElement, @NotNull HighlightInfo info) {
     assert info.isFromHighlightVisitor() || info.isFromAnnotator() || info.isFromInspection() || info.isInjectionRelated(): info;
     assert info.getHighlighter() != null;
+    assert info.getGroup() == HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP: info;
     RangeHighlighterEx highlighter = info.getHighlighter();
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
       UpdateHighlightersUtil.LOG.debug("recycleHighlighter " + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
@@ -71,6 +73,7 @@ final class ManagedHighlighterRecycler {
   }
   //
   @NotNull
+  @Unmodifiable
   synchronized Collection<? extends InvalidPsi> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }

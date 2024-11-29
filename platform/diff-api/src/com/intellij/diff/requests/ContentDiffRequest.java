@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -44,6 +45,7 @@ public abstract class ContentDiffRequest extends DiffRequest {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<VirtualFile> getFilesToRefresh() {
     List<VirtualFile> files = ContainerUtil.mapNotNull(getContents(), content -> {
       return content instanceof FileContent ? ((FileContent)content).getFile() : null;

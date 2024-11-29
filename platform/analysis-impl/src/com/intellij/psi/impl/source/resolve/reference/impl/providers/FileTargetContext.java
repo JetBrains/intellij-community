@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +48,7 @@ public class FileTargetContext {
     return myPathToCreate;
   }
 
+  @Unmodifiable
   public static Collection<FileTargetContext> toTargetContexts(Collection<? extends PsiFileSystemItem> items) {
     return ContainerUtil.map(items, FileTargetContext::new);
   }

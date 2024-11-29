@@ -60,6 +60,7 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
     return myValue;
   }
 
+  @Override
   public String toString() {
     return getElement().toString();
   }
@@ -84,6 +85,7 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
     return canNavigate();
   }
 
+  @Override
   @Contract(value = "null -> false", pure = true)
   public boolean equals(@Nullable Object o) {
     if (this == o) return true;
@@ -94,6 +96,7 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
     return getValue().equals(that.getValue());
   }
 
+  @Override
   public int hashCode() {
     return getValue().hashCode();
   }

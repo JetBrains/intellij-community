@@ -3,4 +3,8 @@ query($login: String!) {
     __typename
     ...userInfo
   }
+
+  rateLimit {
+    ...rates
+  }
 }

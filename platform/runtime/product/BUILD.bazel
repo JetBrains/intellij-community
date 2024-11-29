@@ -1,26 +1,26 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+### auto-generated section `build intellij.platform.runtime.product` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "11",
-  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
-kt_jvm_library(
-  name = "runtime-product",
+jvm_library(
+  name = "product",
   module_name = "intellij.platform.runtime.product",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
   kotlinc_opts = ":custom",
   deps = [
-    "@libraries//:annotations",
-    "@community//platform/runtime/repository:runtime-repository",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util/base:util-base",
+    "@lib//:jetbrains-annotations",
+    "//platform/runtime/repository",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
   ],
-  exports = ["@community//platform/runtime/repository:runtime-repository"]
+  exports = ["//platform/runtime/repository"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.runtime.product` end

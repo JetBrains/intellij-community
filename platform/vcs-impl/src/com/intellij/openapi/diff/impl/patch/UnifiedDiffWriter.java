@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.patch.GitPatchWriter;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,30 +103,35 @@ public final class UnifiedDiffWriter {
                                                             : StringUtil.notNullize(patch.getLineSeparator(), headerLineSeparator);
 
       writeFileHeading(writer, basePath, patch, headerLineSeparator, additionalMap);
-      for (PatchHunk hunk : patch.getHunks()) {
-        writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
-                       headerLineSeparator);
-        for (PatchLine line : hunk.getLines()) {
-          char prefixChar = switch (line.getType()) {
-            case ADD -> '+';
-            case REMOVE -> '-';
-            case CONTEXT -> ' ';
-          };
-          String text = line.getText();
-          text = StringUtil.trimEnd(text, "\n");
-          writeLine(writer, text, prefixChar);
-          if (line.isSuppressNewLine()) {
-            // do not use fileContentLineSeparator here, as this line has no own separator
-            writer.write(headerLineSeparator + NO_NEWLINE_SIGNATURE + headerLineSeparator);
-          }
-          else {
-            writer.write(fileContentLineSeparator);
-          }
-        }
-      }
+      writeHunk(writer, patch, headerLineSeparator, fileContentLineSeparator);
     }
     for (FilePatch patch : noContentPatches) {
       GitPatchWriter.writeGitHeader(writer, basePath, patch, headerLineSeparator);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void writeHunk(@NotNull Writer writer, TextFilePatch patch, String headerLineSeparator, String fileContentLineSeparator) throws IOException {
+    for (PatchHunk hunk : patch.getHunks()) {
+      writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
+                     headerLineSeparator);
+      for (PatchLine line : hunk.getLines()) {
+        char prefixChar = switch (line.getType()) {
+          case ADD -> '+';
+          case REMOVE -> '-';
+          case CONTEXT -> ' ';
+        };
+        String text = line.getText();
+        text = StringUtil.trimEnd(text, "\n");
+        writeLine(writer, text, prefixChar);
+        if (line.isSuppressNewLine()) {
+          // do not use fileContentLineSeparator here, as this line has no own separator
+          writer.write(headerLineSeparator + NO_NEWLINE_SIGNATURE + headerLineSeparator);
+        }
+        else {
+          writer.write(fileContentLineSeparator);
+        }
+      }
     }
   }
 
@@ -147,10 +153,22 @@ public final class UnifiedDiffWriter {
     writeAdditionalInfo(writer, lineSeparator, additionalMap);
     writer.write(HEADER_SEPARATOR + lineSeparator);
     GitPatchWriter.writeGitHeader(writer, basePath, patch, lineSeparator);
-    writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true),
-                         patch.getBeforeVersionId(), lineSeparator);
-    writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false),
-                         patch.getAfterVersionId(), lineSeparator);
+    writeBeforePath(writer, patch, lineSeparator, true);
+    writeAfterPath(writer, patch, lineSeparator, true);
+  }
+
+  @ApiStatus.Internal
+  public static void writeAfterPath(@NotNull Writer writer, @NotNull FilePatch patch, @NotNull String lineSeparator, boolean writeVersion)
+    throws IOException {
+    String versionId = writeVersion ? patch.getAfterVersionId() : "";
+    writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false), versionId, lineSeparator);
+  }
+
+  @ApiStatus.Internal
+  public static void writeBeforePath(@NotNull Writer writer, @NotNull FilePatch patch, @NotNull String lineSeparator, boolean writeVersion)
+    throws IOException {
+    String versionId = writeVersion ? patch.getBeforeVersionId() : "";
+    writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true), versionId, lineSeparator);
   }
 
   private static void writeAdditionalInfo(@NotNull Writer writer,
@@ -189,8 +207,8 @@ public final class UnifiedDiffWriter {
     throws IOException {
     writer.write(prefix + " ");
     writer.write(revisionPath);
-    writer.write("\t");
     if (!StringUtil.isEmptyOrSpaces(revisionName)) {
+      writer.write("\t");
       writer.write(revisionName);
     }
     writer.write(lineSeparator);

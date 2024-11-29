@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.Constants;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
+import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -80,7 +81,7 @@ public final class TerminalShellCommandHandlerHelper {
         scheduleCommandHighlighting();
       }
     };
-    TerminalUtil.addModelListener(widget.getTerminalTextBuffer(), myWidget, listener);
+    TerminalUtilKt.addModelListener(widget.getTerminalTextBuffer(), myWidget, listener);
   }
 
   public void processKeyPressed(KeyEvent e) {

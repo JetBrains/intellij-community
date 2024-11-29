@@ -70,6 +70,7 @@ e:com.intellij.vcs.log.impl.VcsLogTabLocation
 - *sf:Companion:com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel$Companion
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.application.ModalityState):V
 - f:commitsSelected(java.util.List):V
+- f:getChangesBrowser():com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - pa:loadChanges(java.util.List):java.util.List
 *f:com.intellij.vcs.log.ui.details.FullCommitDetailsListPanel$Companion
 *a:com.intellij.vcs.log.ui.details.MultipleCommitInfoDialog

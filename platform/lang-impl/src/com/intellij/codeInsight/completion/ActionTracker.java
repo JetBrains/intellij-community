@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -48,6 +49,7 @@ final class ActionTracker {
     myCaretOffsets = caretOffsets();
   }
 
+  @Unmodifiable
   private List<Integer> caretOffsets() {
     return ContainerUtil.map(myEditor.getCaretModel().getAllCarets(), Caret::getOffset);
   }

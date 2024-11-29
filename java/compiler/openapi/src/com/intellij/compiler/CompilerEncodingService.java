@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -34,5 +35,6 @@ public abstract class CompilerEncodingService {
   public abstract Charset getPreferredModuleEncoding(@NotNull Module module);
 
   @NotNull
+  @Unmodifiable
   public abstract Collection<Charset> getAllModuleEncodings(@NotNull Module module);
 }

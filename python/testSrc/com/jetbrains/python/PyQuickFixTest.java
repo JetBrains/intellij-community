@@ -555,19 +555,19 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-3394
   public void testDocstringParams() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+    runWithDocStringFormat(DocStringFormat.REST,
                            () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.parameter", "b"), true, true));
   }
 
   public void testDocstringParams1() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+    runWithDocStringFormat(DocStringFormat.REST,
                            () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "c"), true, true));
   }
 
   // PY-4964
   public void testDocstringParams2() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+    runWithDocStringFormat(DocStringFormat.REST,
                            () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.parameter", "ham"), true, true));
   }
 

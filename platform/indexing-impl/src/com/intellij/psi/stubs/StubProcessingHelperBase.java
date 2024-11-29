@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -76,6 +77,7 @@ public abstract class StubProcessingHelperBase {
     return true;
   }
 
+  @Unmodifiable
   private static @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {
     if (!(psiFile instanceof PsiFileImpl) && psiFile instanceof PsiFileWithStubSupport) {
       return Collections.singletonList(((PsiFileWithStubSupport)psiFile).getStubbedSpine());

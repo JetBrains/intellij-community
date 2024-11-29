@@ -14,26 +14,31 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class SimpleDiffBreadcrumbsPanel extends DiffBreadcrumbsPanel {
-  private final VirtualFile myFile;
+  private final @Nullable VirtualFile myFile;
+
+  // effectively nullable: The 'com.intellij.xml.breadcrumbs.BreadcrumbsPanel.<init>' may synchronously execute update in tests
+  private final @Nullable DiffBreadcrumbCollectorHolder myCollectorHolder;
 
   public SimpleDiffBreadcrumbsPanel(@NotNull Editor editor, @NotNull Disposable disposable) {
     super(editor, disposable);
 
     myFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    myCollectorHolder = new DiffBreadcrumbCollectorHolder();
   }
 
   @Override
   protected boolean updateCollectors(boolean enabled) {
-    return enabled && findCollector(myFile) != null;
+    return myCollectorHolder != null && myCollectorHolder.update(myFile, enabled);
   }
 
   @Nullable
   @Override
   protected Iterable<? extends Crumb> computeCrumbs(int offset) {
-    FileBreadcrumbsCollector collector = findCollector(myFile);
-    if (collector == null) return null;
+    VirtualFile file = myFile;
+    FileBreadcrumbsCollector collector = myCollectorHolder != null ? myCollectorHolder.getBreadcrumbsCollector() : null;
+    if (file == null || collector == null) return null;
 
     Document document = myEditor.getDocument();
-    return collector.computeCrumbs(myFile, document, offset, null);
+    return collector.computeCrumbs(file, document, offset, null);
   }
 }

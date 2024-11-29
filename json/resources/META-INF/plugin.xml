@@ -16,6 +16,7 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
+  <!--todo employ embedded/required content module feature when IJPL-164312 is fixed-->
   <xi:include href="/intellij.json.split.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions resource-bundle="messages.JsonBundle">
@@ -133,6 +134,8 @@
     <lang.floatingToolbar language="JSON" minimal="true"/>
 
     <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonFeatureUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.jetbrains.jsonSchema.fus.JsonSchemaIdValidationRule"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">

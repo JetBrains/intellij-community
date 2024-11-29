@@ -32,7 +32,7 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProject
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.ui.UiInterceptors
 import com.intellij.ui.UiInterceptors.UiInterceptor
 import com.intellij.util.SystemProperties

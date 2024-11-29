@@ -1,6 +1,5 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind

@@ -55,6 +55,10 @@
     {
       "id": "Junit4RunWithInspection",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "Junit4Converter",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

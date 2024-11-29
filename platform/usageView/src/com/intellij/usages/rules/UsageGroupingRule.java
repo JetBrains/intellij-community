@@ -8,6 +8,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public interface UsageGroupingRule extends PossiblyDumbAware {
    * {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead.</p>
    */
   @NotNull
+  @Unmodifiable
   default List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     return ContainerUtil.createMaybeSingletonList(groupUsage(usage));
   }

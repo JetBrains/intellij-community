@@ -46,7 +46,7 @@ final class AdaptExpressionTypeFixUtil {
                                                    @NotNull PsiType expectedTypeByParent,
                                                    @NotNull PsiType actualType) {
     JavaResolveResult result = call.resolveMethodGenerics();
-    if (!(result instanceof MethodCandidateInfo)) return;
+    if (!(result instanceof MethodCandidateInfo candidateInfo)) return;
     PsiType methodType = method.getReturnType();
     Substitution.TypeParameterSubstitution substitution =
       tryCast(findDesiredSubstitution(expectedTypeByParent, actualType, methodType, 0), Substitution.TypeParameterSubstitution.class);
@@ -63,7 +63,7 @@ final class AdaptExpressionTypeFixUtil {
 
     PsiParameter parameter =
       StreamEx.of(parameters).collect(MoreCollectors.onlyOne(p -> PsiTypesUtil.mentionsTypeParameters(p.getType(), set))).orElse(null);
-    PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutor(false);
+    PsiSubstitutor substitutor = candidateInfo.getSubstitutor(false);
     PsiSubstitutor desiredSubstitutor = substitutor.put(typeParameter, expectedTypeValue);
     if (parameter == null) {
       parameter = findWrongParameter(call, method, desiredSubstitutor, typeParameter);
@@ -72,13 +72,13 @@ final class AdaptExpressionTypeFixUtil {
     PsiExpression arg = PsiUtil.skipParenthesizedExprDown(MethodCallUtils.getArgumentForParameter(call, parameter));
     if (arg == null) return;
     PsiType parameterType = parameter.getType();
-    if (parameterType instanceof PsiEllipsisType && MethodCallUtils.isVarArgCall(call)) {
+    if (parameterType instanceof PsiEllipsisType ellipsisType && MethodCallUtils.isVarArgCall(call)) {
       // Replace vararg only if there's single value
       if (call.getArgumentList().getExpressionCount() != parameters.length) return;
-      parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+      parameterType = ellipsisType.getComponentType();
     }
-    if (parameterType instanceof PsiClassType &&
-        ((PsiClassType)parameterType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
+    if (parameterType instanceof PsiClassType psiClassType &&
+        psiClassType.rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
         typeParameter == getSoleTypeParameter(parameterType)) {
       if (expectedTypeValue instanceof PsiClassType classType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
         ReplaceExpressionAction fix = new ReplaceExpressionAction(
@@ -240,10 +240,10 @@ final class AdaptExpressionTypeFixUtil {
         info.registerFix(action, null, null, null, null);
       }
     }
-    if (expectedType instanceof PsiArrayType) {
+    if (expectedType instanceof PsiArrayType arrayType) {
       PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
       if (erasedValueType != null &&
-          TypeConversionUtil.isAssignable(((PsiArrayType)expectedType).getComponentType(), erasedValueType)) {
+          TypeConversionUtil.isAssignable(arrayType.getComponentType(), erasedValueType)) {
         IntentionAction action = QuickFixFactory.getInstance().createSurroundWithArrayFix(null, expression);
         info.registerFix(action, null, null, null, null);
       }
@@ -274,10 +274,10 @@ final class AdaptExpressionTypeFixUtil {
   @Nls
   private static String getRole(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiExpressionList) {
-      int count = ((PsiExpressionList)parent).getExpressionCount();
+    if (parent instanceof PsiExpressionList list) {
+      int count = list.getExpressionCount();
       if (count > 1) {
-        long index = StreamEx.of(((PsiExpressionList)parent).getExpressions())
+        long index = StreamEx.of(list.getExpressions())
           .map(PsiUtil::skipParenthesizedExprDown).indexOf(expression).orElse(-1);
         if (index != -1) {
           return QuickFixBundle.message("fix.expression.role.nth.argument", index + 1);
@@ -342,29 +342,30 @@ final class AdaptExpressionTypeFixUtil {
                                                                @Nullable PsiType methodType,
                                                                int level) {
     if (expected == null || actual == null || methodType == null) return Substitution.BOTTOM;
-    if (expected instanceof PsiArrayType && actual instanceof PsiArrayType && methodType instanceof PsiArrayType) {
-      return findDesiredSubstitution(((PsiArrayType)expected).getComponentType(),
-                                     ((PsiArrayType)actual).getComponentType(),
-                                     ((PsiArrayType)methodType).getComponentType(),
+    if (expected instanceof PsiArrayType expectedArrayType && actual instanceof PsiArrayType actualArrayType &&
+        methodType instanceof PsiArrayType methodArrayType) {
+      return findDesiredSubstitution(expectedArrayType.getComponentType(),
+                                     actualArrayType.getComponentType(),
+                                     methodArrayType.getComponentType(),
                                      level);
     }
     if (expected.equals(actual)) return Substitution.TOP;
-    if (!(methodType instanceof PsiClassType)) return Substitution.BOTTOM;
-    PsiClass methodClass = ((PsiClassType)methodType).resolve();
+    if (!(methodType instanceof PsiClassType classType)) return Substitution.BOTTOM;
+    PsiClass methodClass = classType.resolve();
     if (methodClass == null) return Substitution.BOTTOM;
-    if (methodClass instanceof PsiTypeParameter) {
+    if (methodClass instanceof PsiTypeParameter parameter) {
       if (!(expected instanceof PsiPrimitiveType)) {
         for (PsiClassType superType : methodClass.getSuperTypes()) {
-          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put((PsiTypeParameter)methodClass, expected);
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(parameter, expected);
           if (!substitutor.substitute(superType).isAssignableFrom(expected)) return Substitution.BOTTOM;
         }
-        return new Substitution.TypeParameterSubstitution((PsiTypeParameter)methodClass, actual, expected);
+        return new Substitution.TypeParameterSubstitution(parameter, actual, expected);
       }
       return Substitution.BOTTOM;
     }
-    if (!(expected instanceof PsiClassType) || !(actual instanceof PsiClassType)) return Substitution.BOTTOM;
-    PsiClass expectedClass = ((PsiClassType)expected).resolve();
-    PsiClass actualClass = ((PsiClassType)actual).resolve();
+    if (!(expected instanceof PsiClassType expectedClassType) || !(actual instanceof PsiClassType actualClassType)) return Substitution.BOTTOM;
+    PsiClass expectedClass = expectedClassType.resolve();
+    PsiClass actualClass = actualClassType.resolve();
     if (expectedClass == null || actualClass == null || !actualClass.isEquivalentTo(methodClass)) return Substitution.BOTTOM;
     if (!expectedClass.isEquivalentTo(actualClass)) {
       if (level > 0) return Substitution.BOTTOM;
@@ -373,7 +374,7 @@ final class AdaptExpressionTypeFixUtil {
       if (methodType == null || actual == null) return Substitution.BOTTOM;
     }
     PsiType[] methodTypeParameters = ((PsiClassType)methodType).getParameters();
-    PsiType[] expectedTypeParameters = ((PsiClassType)expected).getParameters();
+    PsiType[] expectedTypeParameters = expectedClassType.getParameters();
     PsiType[] actualTypeParameters = ((PsiClassType)actual).getParameters();
     if (methodTypeParameters.length != expectedTypeParameters.length || methodTypeParameters.length != actualTypeParameters.length) {
       return Substitution.BOTTOM;
@@ -392,8 +393,8 @@ final class AdaptExpressionTypeFixUtil {
   }
 
   private static @Nullable PsiType trySubstitute(@NotNull PsiType type, @NotNull PsiClass superClass) {
-    if (!(type instanceof PsiClassType)) return null;
-    PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+    if (!(type instanceof PsiClassType classType)) return null;
+    PsiClassType.ClassResolveResult result = classType.resolveGenerics();
     PsiClass psiClass = result.getElement();
     if (psiClass == null) return null;
     if (!psiClass.isInheritor(superClass, true)) return null;
@@ -402,15 +403,15 @@ final class AdaptExpressionTypeFixUtil {
   }
 
   private static @Nullable PsiTypeParameter getSoleTypeParameter(@Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) return null;
-    PsiType[] parameters = ((PsiClassType)type).getParameters();
+    if (!(type instanceof PsiClassType classType)) return null;
+    PsiType[] parameters = classType.getParameters();
     if (parameters.length != 1) return null;
     PsiType parameter = parameters[0];
-    if (parameter instanceof PsiWildcardType) {
-      parameter = ((PsiWildcardType)parameter).getExtendsBound();
+    if (parameter instanceof PsiWildcardType wildcardType) {
+      parameter = wildcardType.getExtendsBound();
     }
-    if (!(parameter instanceof PsiClassType)) return null;
-    return tryCast(((PsiClassType)parameter).resolve(), PsiTypeParameter.class);
+    if (!(parameter instanceof PsiClassType paramClassType)) return null;
+    return tryCast(paramClassType.resolve(), PsiTypeParameter.class);
   }
 
   static @Nullable PsiType suggestCastTo(@NotNull PsiExpression expression,

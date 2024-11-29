@@ -2,6 +2,7 @@
 package git4idea.commit.signing
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -119,7 +120,7 @@ internal class PinentryService(private val cs: CoroutineScope) {
           if (request.getOrNull(0) == "GETPIN") {
             val description = request.getOrNull(2)?.replace("%0A", "\n")?.replace("%22", "\"")
             val passphrase = withContext(Dispatchers.EDT) {
-              passwordUiRequester.requestPassword(description)
+              writeIntentReadAction { passwordUiRequester.requestPassword(description) }
             }
             val privateKey = keyPair?.private
             if (passphrase != null && privateKey != null) {

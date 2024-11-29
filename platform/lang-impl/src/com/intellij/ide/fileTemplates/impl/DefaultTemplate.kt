@@ -72,6 +72,6 @@ class DefaultTemplate constructor(
     return text
   }
 
-  override fun toString(): String = textLoader.toString()
+  override fun toString(): String = "$name: $extension ($templatePath)"
 }
 

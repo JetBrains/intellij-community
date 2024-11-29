@@ -20,6 +20,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
@@ -118,10 +119,12 @@ public final class DomApplicationComponent {
     return allMetas().filter(m -> m.lazyInstance == description).findFirst().orElse(null);
   }
 
+  @Unmodifiable
   public synchronized Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
     return ContainerUtil.map2Set(myRootTagName2FileDescription.get(rootTagName), DomFileMetaData::getDescription);
   }
 
+  @Unmodifiable
   public synchronized Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
     return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
   }

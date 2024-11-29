@@ -12,7 +12,6 @@ import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModel
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -55,7 +53,6 @@ import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
-import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -805,49 +802,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     );
   }
 
-  @Override
-  public @NotNull Map<String, String> enhanceTaskProcessing(
-    @Nullable Project project,
-    @NotNull List<String> taskNames,
-    @NotNull Consumer<String> initScriptConsumer,
-    @NotNull Map<String, String> parameters
-  ) {
-    initScriptConsumer.consume(GradleInitScriptUtil.loadCommonTasksUtilsScript());
-    initScriptConsumer.consume(GradleInitScriptUtil.loadCommonDebuggerUtilsScript());
-
-    String dispatchPort = parameters.get(DEBUG_DISPATCH_PORT_KEY);
-    Map<String, String> environment = new HashMap<>();
-    if (dispatchPort != null) {
-      environment.put(DEBUGGER_ENABLED, "true");
-    }
-
-    LinkedList<String> lines = new LinkedList<>();
-    String debugOptions = Objects.requireNonNullElse(parameters.get(DEBUG_OPTIONS_KEY), "");
-    DebuggerBackendExtension.EP_NAME.forEachExtensionSafe(extension -> {
-      if (extension.isAlwaysAttached()) {
-        List<String> initScript = extension.initializationCode(project, dispatchPort, debugOptions);
-        lines.addAll(initScript);
-        Map<String, String> env = extension.executionEnvironmentVariables(project, dispatchPort, debugOptions);
-        environment.putAll(env);
-      }
-      else if (dispatchPort != null) {
-        List<String> initScript = extension.initializationCode(project, dispatchPort, debugOptions);
-        lines.addAll(initScript);
-      }
-    });
-
-    if (!lines.isEmpty()) {
-      String classPathInitScript = GradleInitScriptUtil.loadToolingExtensionProvidingInitScript(
-        Collections.singleton(ExternalSystemSourceType.class)
-      );
-      lines.addFirst(classPathInitScript);
-    }
-
-    final String script = join(lines, System.lineSeparator());
-    initScriptConsumer.consume(script);
-    return environment;
-  }
-
   /**
    * Stores information about given directories at the corresponding to content root
    *
@@ -920,15 +874,13 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
     final GradleExecutionSettings gradleExecutionSettings = resolverContext.getSettings();
     final String projectGradleVersion = resolverContext.getProjectGradleVersion();
-    if (gradleExecutionSettings != null && projectGradleVersion != null) {
-      if (GradleVersionUtil.isGradleOlderThan(projectGradleVersion, "4.0")) {
-        final IdeaModule dependencyModule = getDependencyModuleByReflection(dependency);
-        if (dependencyModule != null) {
-          final ModuleData moduleData =
-            gradleExecutionSettings.getExecutionWorkspace().findModuleDataByModule(resolverContext, dependencyModule);
-          if (moduleData != null) {
-            return new ModuleDependencyData(ownerModule.getData(), moduleData);
-          }
+    if (projectGradleVersion != null && GradleVersionUtil.isGradleOlderThan(projectGradleVersion, "4.0")) {
+      final IdeaModule dependencyModule = getDependencyModuleByReflection(dependency);
+      if (dependencyModule != null) {
+        final ModuleData moduleData =
+          gradleExecutionSettings.getExecutionWorkspace().findModuleDataByModule(resolverContext, dependencyModule);
+        if (moduleData != null) {
+          return new ModuleDependencyData(ownerModule.getData(), moduleData);
         }
       }
     }
@@ -936,11 +888,9 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
     final String moduleName = dependency.getTargetModuleName();
 
-    if (gradleExecutionSettings != null) {
-      ModuleData moduleData = gradleExecutionSettings.getExecutionWorkspace().findModuleDataByGradleModuleName(moduleName);
-      if (moduleData != null) {
-        return new ModuleDependencyData(ownerModule.getData(), moduleData);
-      }
+    ModuleData moduleData = gradleExecutionSettings.getExecutionWorkspace().findModuleDataByGradleModuleName(moduleName);
+    if (moduleData != null) {
+      return new ModuleDependencyData(ownerModule.getData(), moduleData);
     }
 
     ModuleData registeredModuleData = registeredModulesIndex.get(moduleName);
@@ -1061,7 +1011,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       library.addPath(LibraryPathType.BINARY, binaryPath.getPath());
     }
     else {
-      boolean isOfflineWork = resolverCtx.getSettings() != null && resolverCtx.getSettings().isOfflineWork();
+      boolean isOfflineWork = resolverCtx.getSettings().isOfflineWork();
       String message = String.format("Could not resolve %s.", libraryName);
       BuildIssue buildIssue = new UnresolvedDependencySyncIssue(
         libraryName, message, resolverCtx.getProjectPath(), isOfflineWork, ownerModule.getData().getId());

@@ -40,33 +40,28 @@ internal object CompletionShortNamesRenderer {
     context(KaSession)
     fun renderFunctionParameters(
         parameters: List<KaVariableSignature<KaValueParameterSymbol>>,
-        trailingFunctionType: KaFunctionType? = null,
-    ): @NonNls String = StringBuffer().apply {
-        val newParameters = if (trailingFunctionType != null)
-            parameters.dropLast(1).takeUnless { it.isEmpty() }
-        else
-            parameters
-
-        newParameters?.joinTo(
-            buffer = this,
-            prefix = "(",
-            postfix = ")",
-        ) { renderFunctionParameter(it) }
-
-        if (trailingFunctionType != null) {
-            append(" { ")
-            appendParameter(
-                parameterName = parameters.last().name,
-                parameterType = trailingFunctionType
-            )
-            append(" }")
-        }
-    }.toString()
+    ): @NonNls String = parameters.joinToString(
+        prefix = "(",
+        postfix = ")",
+    ) { renderFunctionParameter(it) }
 
     context(KaSession)
-    private fun <A : Appendable> A.renderFunctionParameter(
+    fun renderTrailingFunction(
+        trailingFunctionSignature: KaVariableSignature<KaValueParameterSymbol>,
+        trailingFunctionType: KaFunctionType,
+    ): @NonNls String = buildString {
+        append(" { ")
+        appendParameter(
+            parameterName = trailingFunctionSignature.name,
+            parameterType = trailingFunctionType,
+        )
+        append(" }")
+    }
+
+    context(KaSession)
+    private fun renderFunctionParameter(
         parameter: KaVariableSignature<KaValueParameterSymbol>,
-    ): @NonNls String = StringBuffer().apply {
+    ): @NonNls String = buildString {
         val symbol = parameter.symbol
 
         if (symbol.isVararg) {
@@ -80,7 +75,7 @@ internal object CompletionShortNamesRenderer {
         if (symbol.hasDefaultValue) {
             append(" = ...")
         }
-    }.toString()
+    }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)

@@ -56,6 +56,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -267,6 +268,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
+  @Unmodifiable
   private List<RunContentDescriptor> filterByContent(List<? extends RunContentDescriptor> descriptors) {
     return ContainerUtil.filter(descriptors, descriptor -> {
       Content content = descriptor.getAttachedContent();

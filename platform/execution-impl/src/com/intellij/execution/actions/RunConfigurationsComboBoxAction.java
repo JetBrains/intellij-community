@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -17,7 +16,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -555,14 +553,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       myProject = project;
       myConfiguration = configuration;
       getTemplatePresentation().putClientProperty(RunToolbarPopupKt.RUN_CONFIGURATION_ID, myConfiguration.getUniqueID());
-      // TODO remove when BackendAsyncActionHost.isNewActionUpdateEnabled is inlined
-      if (ClientId.getCurrentOrNull() != null && !Registry.is("rdct.new.async.actions", true)) {
-        Presentation p = getTemplatePresentation().clone();
-        AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, p, DataContext.EMPTY_CONTEXT);
-        Utils.initUpdateSession(event);
-        update(event);
-        getTemplatePresentation().copyFrom(p, null, true);
-      }
     }
 
     public @NotNull RunnerAndConfigurationSettings getConfiguration() {

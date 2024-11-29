@@ -2,8 +2,10 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,21 +23,29 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.eel.provider.EelApiKey;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelKey;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsActions.ActionText;
+import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiKey;
 
 /**
  * @author anna
@@ -44,6 +54,7 @@ public class ProjectSdksModel implements SdkModel {
   private static final Logger LOG = Logger.getInstance(ProjectSdksModel.class);
 
   private final HashMap<Sdk, Sdk> myProjectSdks = new HashMap<>();
+  private final List<Sdk> myRemovedSdks = new ArrayList<>();
   private final EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(Listener.class);
 
   private boolean myModified;
@@ -80,9 +91,19 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void syncSdks() {
+    syncSdks(LocalEelKey.INSTANCE);
+  }
+
+  /**
+   * @param eel can be null only if the corresponding feature flag is disabled.
+   */
+  @ApiStatus.Internal
+  public void syncSdks(@Nullable EelApiKey eelApiKey) {
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       if (myProjectSdks.containsKey(sdk) || myProjectSdks.containsValue(sdk)) continue;
+
+      if (eelApiKey != null && !sdkMatchesEel(eelApiKey, sdk)) continue;
 
       Sdk editableCopy;
       try {
@@ -99,12 +120,47 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
+  @ApiStatus.Internal
+  public static boolean sdkMatchesEel(@NotNull EelApiKey eelApiKey, Sdk sdk) {
+    String sdkHomePath = sdk.getHomePath();
+    return sdkMatchesEel(eelApiKey, sdkHomePath);
+  }
+
+  @ApiStatus.Internal
+  public static boolean sdkMatchesEel(@NotNull EelApiKey eelApiKey, String sdkHomePath) {
+    if (sdkHomePath != null) {
+      try {
+        Path path = Path.of(sdkHomePath);
+        if (EelProviderUtil.getEelApiKey(path).equals(eelApiKey)) {
+          return true;
+        }
+      }
+      catch (InvalidPathException ignored) {
+        // Ignored.
+      }
+    }
+    return false;
+  }
+
   public void reset(@Nullable Project project) {
+    EelApiKey eelApiKey;
+    if (!Registry.is("java.home.finder.use.eel")) {
+      eelApiKey = null;
+    }
+    else if (project != null) {
+      eelApiKey = getEelApiKey(project);
+    }
+    else {
+      eelApiKey = LocalEelKey.INSTANCE;
+    }
+
     myProjectSdks.clear();
     ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
     jdkTable.preconfigure();
     final Sdk[] projectSdks = jdkTable.getAllJdks();
     for (Sdk sdk : projectSdks) {
+      if (eelApiKey != null && !sdkMatchesEel(eelApiKey, sdk)) continue;
+
       try {
         Sdk editable = sdk.clone();
         myProjectSdks.put(sdk, editable);
@@ -165,7 +221,7 @@ public class ProjectSdksModel implements SdkModel {
         if (myProjectSdks.containsKey(tableItem)) {
           itemsInTable.add(tableItem);
         }
-        else {
+        if (myRemovedSdks.contains(tableItem)) {
           jdkTable.removeJdk(tableItem);
         }
       }
@@ -254,6 +310,7 @@ public class ProjectSdksModel implements SdkModel {
       myProjectSdks.remove(projectJdk);
       SdkDownloadTracker.getInstance().onSdkRemoved(projectJdk);
       mySdkEventsDispatcher.getMulticaster().beforeSdkRemove(projectJdk);
+      myRemovedSdks.add(projectJdk);
       myModified = true;
     }
   }
@@ -370,7 +427,8 @@ public class ProjectSdksModel implements SdkModel {
         public void actionPerformed(@Nullable Sdk selectedSdk,
                                     @NotNull JComponent parent,
                                     @NotNull java.util.function.Consumer<? super Sdk> callback) {
-          doDownload(downloadExtension, parent, selectedSdk, type, callback);
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parent));
+          doDownload(project, downloadExtension, parent, selectedSdk, type, callback);
         }
       };
 
@@ -421,7 +479,8 @@ public class ProjectSdksModel implements SdkModel {
     doAdd(parent, null, type, callback);
   }
 
-  public void doDownload(@NotNull SdkDownload downloadExtension,
+  private void doDownload(@Nullable Project project,
+                         @NotNull SdkDownload downloadExtension,
                          @NotNull JComponent parent,
                          @Nullable Sdk selectedSdk,
                          @NotNull SdkType type,
@@ -429,7 +488,7 @@ public class ProjectSdksModel implements SdkModel {
     LOG.assertTrue(downloadExtension.supportsDownload(type));
     myModified = true;
 
-    downloadExtension.showDownloadUI(type, this, parent, null, selectedSdk, null, sdk -> setupInstallableSdk(type, sdk, callback));
+    downloadExtension.showDownloadUI(type, this, parent, project, selectedSdk, null, sdk -> setupInstallableSdk(type, sdk, callback));
   }
 
   public void doAdd(@NotNull JComponent parent, final @Nullable Sdk selectedSdk, final @NotNull SdkType type, final @NotNull Consumer<? super Sdk> callback) {

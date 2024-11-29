@@ -15,6 +15,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.java.compiler.CompilerOptions
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings
+import kotlin.io.path.exists
 
 /**
  *
@@ -60,7 +61,7 @@ class MavenCompilerGrEclipseExtension : MavenCompilerExtension {
 
     val repositoryFile = MavenUtil.getRepositoryFile(project, eclipseBatchId, "jar", null)
     if (null != repositoryFile && repositoryFile.exists()) {
-      return repositoryFile.absolutePath
+      return repositoryFile.toAbsolutePath().toString()
     }
     return null
   }

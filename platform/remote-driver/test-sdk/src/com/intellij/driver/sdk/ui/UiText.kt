@@ -11,9 +11,9 @@ class UiText(private val component: UiComponent, private val textData: TextData)
     fun List<UiText>.allText(separator: String = "") = joinToString(separator) { it.text }
   }
 
-  val text = textData.text
-  val point = textData.point
-  val bundleKey = textData.bundleKey
+  val text get() = textData.text
+  val point get() = textData.point
+  val bundleKey get() = textData.bundleKey
 
   override fun toString(): String {
     return "UiText[$text]"

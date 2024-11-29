@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.ide.IdeBundle
@@ -231,7 +231,7 @@ fun KaScope.findCallableMemberBySignature(
         return this.semanticallyEquals(anotherType)
     }
 
-    return callables.firstOrNull { callable ->
+    return callables(callableSignature.symbol.name ?: return null).firstOrNull { callable ->
         fun parametersMatch(): Boolean {
             if (callableSignature is KaFunctionSignature && callable is KaFunctionSymbol) {
                 if (callable.valueParameters.size != callableSignature.valueParameters.size) return false
@@ -242,9 +242,9 @@ fun KaScope.findCallableMemberBySignature(
                 return callableSignature !is KaFunctionSignature && callable !is KaFunctionSymbol
             }
         }
-        callable.name == callableSignature.symbol.name &&
-                callable.returnType.semanticallyEquals(callableSignature.returnType) &&
-                callable.receiverType.eq(callableSignature.receiverType) &&
-                parametersMatch()
+
+        callable.receiverType.eq(callableSignature.receiverType) &&
+                parametersMatch() &&
+                callable.returnType.semanticallyEquals(callableSignature.returnType)
     }
 }

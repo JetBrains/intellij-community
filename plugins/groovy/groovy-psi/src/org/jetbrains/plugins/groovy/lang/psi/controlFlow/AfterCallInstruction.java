@@ -16,6 +16,7 @@ public class AfterCallInstruction extends InstructionImpl {
     this.myCall = call;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return super.toString() + "AFTER CALL " + myCall.num();

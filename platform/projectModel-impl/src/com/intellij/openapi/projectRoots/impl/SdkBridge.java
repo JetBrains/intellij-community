@@ -21,5 +21,6 @@ public interface SdkBridge extends Sdk {
   void readExternal(@NotNull Element element);
   void readExternal(@NotNull Element element, @NotNull Function<String, SdkTypeId> sdkTypeByNameFunction) throws InvalidDataException;
   void writeExternal(@NotNull Element element);
+  @Override
   @NotNull SdkBridge clone();
 }

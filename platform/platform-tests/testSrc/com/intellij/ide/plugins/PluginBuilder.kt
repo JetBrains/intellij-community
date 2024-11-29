@@ -216,6 +216,7 @@ class PluginBuilder {
           val loadingAttribute = when (moduleItem.loadingRule) {
             ModuleLoadingRule.OPTIONAL -> ""
             ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
+            ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
             ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
           }
           """<module name="${moduleItem.name}" $loadingAttribute/>""" 

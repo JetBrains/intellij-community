@@ -74,8 +74,7 @@ object StartupUiUtil {
       return if (isUnderDarcula) 140 else 230
     }
 
-    @Suppress("SpellCheckingInspection")
-    val lcdContrastValue = (Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints") as? Map<*, *>)
+    val lcdContrastValue = (Toolkit.getDefaultToolkit().getDesktopProperty(GraphicsUtil.DESKTOP_HINTS) as? Map<*, *>)
                              ?.get(RenderingHints.KEY_TEXT_LCD_CONTRAST) as Int? ?: return 140
     return normalizeLcdContrastValue(lcdContrastValue)
   }

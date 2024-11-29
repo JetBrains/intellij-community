@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.DynamicBundle.LanguageBundleEP
+import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -43,6 +44,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -78,8 +80,11 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
+import com.intellij.util.messages.impl.DynamicPluginUnloaderCompatibilityLayer
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
+import com.intellij.util.xmlb.clearPropertyCollectorCache
+import org.jetbrains.annotations.Nls
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
@@ -95,6 +100,8 @@ private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
 
 object DynamicPlugins {
+  private val VETOER_EP_NAME: ExtensionPointName<DynamicPluginVetoer> = ExtensionPointName.create("com.intellij.ide.dynamicPluginVetoer");
+
   private var myProcessRun = 0
   private val myProcessCallbacks = mutableListOf<Runnable>()
   private val myLock = Any()
@@ -267,12 +274,10 @@ object DynamicPlugins {
         return null
       }
 
-      try {
-        app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(module)
+      val vetoMessage = VETOER_EP_NAME.computeSafeIfAny {
+        it.vetoPluginUnload(module)
       }
-      catch (e: CannotUnloadPluginException) {
-        return e.cause?.localizedMessage ?: "checkUnloadPlugin listener blocked plugin unload"
-      }
+      if (vetoMessage != null) return vetoMessage
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
@@ -541,8 +546,6 @@ object DynamicPlugins {
           unloadDependencyDescriptors(pluginDescriptor, pluginSet, classLoaders)
           unloadModuleDescriptorNotRecursively(pluginDescriptor)
 
-          clearPluginClassLoaderParentListCache(pluginSet)
-
           app.extensionArea.clearUserCache()
           for (project in ProjectUtil.getOpenProjects()) {
             (project.extensionArea as ExtensionsAreaImpl).clearUserCache()
@@ -550,6 +553,8 @@ object DynamicPlugins {
           clearCachedValues()
 
           jdomSerializer.clearSerializationCaches()
+          clearPropertyCollectorCache()
+          InspectionVisitorOptimizer.clearCache()
           TypeFactory.defaultInstance().clearCache()
           TopHitCache.getInstance().clear()
           ActionToolbarImpl.resetAllToolbars()
@@ -574,12 +579,17 @@ object DynamicPlugins {
           @Suppress("TestOnlyProblems")
           (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
 
+          // clear parents as much late as possible because allParents are a lazy list and calculated on demand
+          // it may happen that too early invalidation may lead to unloaded loaders appear in allParents again (IJPL-171566)
+          clearPluginClassLoaderParentListCache(pluginSet)
           val newPluginSet = pluginSet.withoutModule(
             module = pluginDescriptor,
             disable = options.disable,
           ).createPluginSetWithEnabledModulesMap()
 
           PluginManagerCore.setPluginSet(newPluginSet)
+          // clear parents cache for newPluginSet just for a case
+          clearPluginClassLoaderParentListCache(newPluginSet)
         }
         finally {
           try {
@@ -1409,8 +1419,9 @@ private fun setClassLoaderState(pluginDescriptor: IdeaPluginDescriptorImpl, stat
 }
 
 private fun clearPluginClassLoaderParentListCache(pluginSet: PluginSet) {
-  // yes, clear not only enabled plugins, but all, just to be sure; it's a cheap operation
-  for (descriptor in pluginSet.allPlugins) {
+  // yes, clear not only enabled plugins, but (all + enabledModules) because enabledModules is a superset of enabledPlugins
+  // it's a cheap operation and even if some modules may repeat due to concatenation, it should be not a problem (making a set is probably even slower)
+  for (descriptor in pluginSet.allPlugins + pluginSet.getEnabledModules()) {
     (descriptor.pluginClassLoader as? PluginClassLoader)?.clearParentListCache()
   }
 }
@@ -1431,4 +1442,17 @@ private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
     }
   }
   return null
+}
+
+internal class FallbackPluginVetoer : DynamicPluginVetoer {
+  override fun vetoPluginUnload(pluginDescriptor: IdeaPluginDescriptor): @Nls String? {
+    val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, ApplicationManager.getApplication().messageBus)
+    if (vetoMessage != null) return vetoMessage
+
+    for (project in ProjectManager.getInstance().openProjects) {
+      val vetoMessage = DynamicPluginUnloaderCompatibilityLayer.queryPluginUnloadVetoers(pluginDescriptor, project.messageBus)
+      if (vetoMessage != null) return vetoMessage
+    }
+    return null
+  }
 }

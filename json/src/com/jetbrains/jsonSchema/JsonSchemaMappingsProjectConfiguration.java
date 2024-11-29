@@ -117,7 +117,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     myState = new MyState(state);
   }
 
-  static final class MyState {
+  public static final class MyState {
     @Tag("state")
     @XCollection
     public Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();

@@ -4,7 +4,7 @@ class Test {
   }
   
   void test2(<error descr="Cannot resolve symbol 'XXX'">XXX</error> bar) {
-    System.out.println(bar.<error descr="Cannot resolve method 'hashCode()'">hashCode</error>());
+    System.out.println(bar.hashCode());
     if (<error descr="Inconvertible types; cannot cast 'XXX' to 'java.lang.CharSequence'">bar instanceof CharSequence</error>) {}
   }
 

@@ -52,6 +52,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
             model("$idea/quickfix/typeMismatch/convertKClassToJavaClass", pattern = pattern)
             model("$idea/quickfix/typeMismatch/incompatibleTypes", pattern = pattern)
+            model("$idea/quickfix/typeMismatch/letImplementInterface", pattern = pattern)
             model("$idea/quickfix/typeMismatch/numberConversion", pattern = pattern)
             model("$idea/quickfix/typeMismatch/parameterTypeMismatch", pattern = pattern)
             model("$idea/quickfix/typeMismatch/roundNumber", pattern = pattern)
@@ -98,7 +99,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addVarianceModifier", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/assignToProperty", pattern = pattern)
             model("$idea/quickfix/callFromPublicInline", pattern = pattern)
-            model("$idea/quickfix/canBeParameter", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/canBeParameter", pattern = pattern)
             model("$idea/quickfix/canBePrimaryConstructorProperty", pattern = pattern)
             model("$idea/quickfix/castDueToProgressionResolveChange", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/changeObjectToClass", pattern = pattern)
@@ -119,7 +120,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/declaringJavaClass", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/decreaseVisibility", pattern = pattern)
             model("$idea/quickfix/deprecatedJavaAnnotation", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false, excludedDirectories = listOf("wholeProject"))
+            model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false)
             model("$idea/quickfix/equalityNotApplicable", pattern = pattern)
             model("$idea/quickfix/final", pattern = pattern)
             model("$idea/quickfix/foldTryCatch", pattern = pattern)
@@ -164,10 +165,10 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/redundantLateinit", pattern = pattern)
             model("$idea/quickfix/redundantModalityModifier", pattern = pattern)
             model("$idea/quickfix/redundantSuspend", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/redundantVisibilityModifier", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/redundantVisibilityModifier", pattern = pattern)
             model("$idea/quickfix/removeAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeArgument", pattern = pattern)
-            model("$idea/quickfix/removeAtFromAnnotationArgument", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/removeAtFromAnnotationArgument", pattern = pattern)
             model("$idea/quickfix/removeDefaultParameterValue", pattern = pattern)
             model("$idea/quickfix/removeFinalUpperBound", pattern = pattern)
             model("$idea/quickfix/removeNoConstructor", pattern = pattern)
@@ -212,6 +213,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/wrapWhenExpressionInParentheses", pattern = pattern)
             model("$idea/quickfix/wrongLongSuffix", pattern = pattern)
             model("$idea/quickfix/yieldUnsupported", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/changeSuperTypeListEntryTypeArgument", pattern = pattern, isRecursive = false)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
@@ -239,6 +241,16 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             )
             model(
                 "$idea/quickfix/migration/javaAnnotationPositionedArguments",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/deprecatedSymbolUsage/imports",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/deprecatedSymbolUsage/classUsages/wholeProject",
                 pattern = pattern,
                 testMethodName = testMethodName,
             )

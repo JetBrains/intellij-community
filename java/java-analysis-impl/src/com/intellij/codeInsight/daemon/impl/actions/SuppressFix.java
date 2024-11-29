@@ -158,4 +158,9 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCo
 
     return null;
   }
+
+  @Override
+  public int getPriority() {
+    return 40;
+  }
 }

@@ -1,21 +1,21 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.settings` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "settings",
   module_name = "intellij.platform.settings",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:annotations",
-    "@community//platform/extensions",
-    "@community//platform/core-api:core",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.settings` end

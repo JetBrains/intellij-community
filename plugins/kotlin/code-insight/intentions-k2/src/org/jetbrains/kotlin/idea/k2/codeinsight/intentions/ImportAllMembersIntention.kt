@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -32,8 +32,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ImportAllMembersIntention :
-    KotlinApplicableModCommandAction<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class),
-    HighPriorityAction {
+    KotlinApplicableModCommandAction<KtExpression, ImportAllMembersIntention.Context>(KtExpression::class) {
 
     data class Context(
         val fqName: FqName,
@@ -50,6 +49,7 @@ internal class ImportAllMembersIntention :
         val (fqName) = getElementContext(context, element)
             ?: return null
         return Presentation.of(KotlinBundle.message("import.members.from.0", fqName.asString()))
+            .withPriority(PriorityAction.Priority.HIGH)
     }
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =

@@ -53,6 +53,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -156,11 +157,13 @@ public class EditorTestFixture {
   }
 
   @NotNull
+  @Unmodifiable
   public List<HighlightInfo> doHighlighting() {
     return doHighlighting(false, false);
   }
 
   @NotNull
+  @Unmodifiable
   public List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
@@ -220,6 +223,7 @@ public class EditorTestFixture {
     }
   }
 
+  @Unmodifiable
   public List<String> getLookupElementStrings() {
     final LookupElement[] elements = getLookupElements();
     if (elements == null) return null;
@@ -334,6 +338,7 @@ public class EditorTestFixture {
   }
 
   @NotNull
+  @Unmodifiable
   public List<Crumb> getBreadcrumbsAtCaret() {
     FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myVirtualFile);
     return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myVirtualFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));

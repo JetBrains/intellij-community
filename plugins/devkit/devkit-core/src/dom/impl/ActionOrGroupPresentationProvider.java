@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.icons.AllIcons;
@@ -36,7 +36,9 @@ public class ActionOrGroupPresentationProvider extends PresentationProvider<Acti
     @Nullable
     @Override
     public Icon getIcon(Reference reference) {
+      //noinspection deprecation
       if (DomUtil.hasXml(reference.getId())) {
+        //noinspection deprecation
         return getIconForActionOrGroup(reference.getId().getValue());
       }
 

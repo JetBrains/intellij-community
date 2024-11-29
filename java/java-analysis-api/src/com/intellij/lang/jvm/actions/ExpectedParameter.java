@@ -2,6 +2,7 @@
 package com.intellij.lang.jvm.actions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +24,7 @@ public interface ExpectedParameter {
   }
 
   @NotNull
+  @Unmodifiable
   default Collection<AnnotationRequest> getExpectedAnnotations() {
     return Collections.emptyList();
   }

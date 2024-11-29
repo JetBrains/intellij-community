@@ -74,8 +74,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
@@ -101,6 +101,7 @@ import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.accessibility.Accessible;
@@ -115,8 +116,8 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -251,6 +252,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     Disposer.register(editor.getDisposable(), myAlphaContext.getDisposable());
   }
 
+  @Override
   public @NotNull EditorImpl getEditor() {
     return myEditor;
   }
@@ -393,6 +395,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       }
 
       AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
+      if (old != null) {
+        clip = g.getClipBounds();
+      }
 
       EditorUIUtil.setupAntialiasing(g);
       g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
@@ -443,12 +448,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         if (focusModeRange != null) {
           int startY = Math.max(myEditor.visualLineToY(startVisualLine), clip.y);
           int endY = Math.min(myEditor.visualLineToY(endVisualLine), clip.y + clip.height);
+          //noinspection GraphicsSetClipInspection
           g.setClip(clip.x, startY, clip.width, endY - startY);
         }
 
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
 
-        g.setClip(clip);
+        if (focusModeRange != null) {
+          //noinspection GraphicsSetClipInspection
+          g.setClip(clip);
+        }
 
         paintFoldingLines(g, clip);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
@@ -555,10 +564,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
     int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
 
-    AffineTransform old = setMirrorTransformIfNeeded(g, x, w);
+    Graphics2D g2 = (Graphics2D)g.create();
+    g2.clipRect(x, 0, w, getHeight()); // avoid annotations painting out of their area
+    setMirrorTransformIfNeeded(g2, x, w);
+
     try {
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
-      g.setColor(color != null ? color : JBColor.blue);
+      g2.setColor(color != null ? color : JBColor.blue);
 
       for (TextAnnotationGutterProviderInfo info : myTextAnnotationGutterProviders) {
         TextAnnotationGutterProvider gutterProvider = info.provider();
@@ -595,11 +607,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
               bg = gutterProvider.getBgColor(logicalLine, myEditor);
             }
             if (bg != null) {
-              g.setColor(bg);
-              g.fillRect(x, y, annotationSize, bgLineHeight);
+              g2.setColor(bg);
+              g2.fillRect(x, y, annotationSize, bgLineHeight);
             }
             if (paintText) {
-              paintAnnotationLine(g, gutterProvider, logicalLine, x, y);
+              paintAnnotationLine(g2, gutterProvider, logicalLine, x, y);
             }
           }
           visLinesIterator.advance();
@@ -609,7 +621,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       }
     }
     finally {
-      if (old != null) g.setTransform(old);
+      g2.dispose();
     }
   }
 
@@ -1517,6 +1529,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<TextAnnotationGutterProvider> getTextAnnotations() {
     return ContainerUtil.map(myTextAnnotationGutterProviders, i->i.provider());
   }
@@ -2076,18 +2089,19 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private GutterIconRenderer myCalculatingInBackground;
-  private ProgressIndicator myBackgroundIndicator = new EmptyProgressIndicator();
+  private volatile ProgressIndicator myBackgroundIndicator = new EmptyProgressIndicator();
 
   private void computeTooltipInBackground(@NotNull PointInfo pointInfo) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     GutterIconRenderer renderer = pointInfo.renderer;
     if (myCalculatingInBackground == renderer && !myBackgroundIndicator.isCanceled()) return; // not yet calculated
     myCalculatingInBackground = renderer;
     myBackgroundIndicator.cancel();
-    myBackgroundIndicator = new ProgressIndicatorBase();
+    ProgressIndicatorBase newIndicator = new ProgressIndicatorBase();
+    myBackgroundIndicator = newIndicator;
     myBackgroundIndicator.setModalityProgress(null);
     Point point = pointInfo.iconCenterPosition;
-    Balloon.Position relativePosition = pointInfo.renderersInLine > 1 && pointInfo.rendererPosition == 0 ? Balloon.Position.below
-                                                                                                         : Balloon.Position.atRight;
+    Balloon.Position relativePosition = pointInfo.renderersInLine > 1 && pointInfo.rendererPosition == 0 ? Balloon.Position.below : Balloon.Position.atRight;
     AtomicReference<@NlsContexts.Tooltip String> tooltip = new AtomicReference<>();
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(
       new Task.Backgroundable(myEditor.getProject(), IdeBundle.message("progress.title.constructing.tooltip")) {
@@ -2101,7 +2115,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         public void onSuccess() {
           showToolTip(tooltip.get(), point, relativePosition);
         }
-      }, myBackgroundIndicator);
+      }, newIndicator);
   }
 
   void showToolTip(@Nullable @NlsContexts.Tooltip String toolTip, @NotNull Point location, @NotNull Balloon.Position relativePosition) {

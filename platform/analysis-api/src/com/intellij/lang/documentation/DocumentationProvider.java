@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -82,6 +83,7 @@ public interface DocumentationProvider {
    * For {@link ExternalDocumentationProvider}, first URL, yielding non-empty result in
    * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List, boolean)} will be used.
    */
+  @Unmodifiable
   default @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }

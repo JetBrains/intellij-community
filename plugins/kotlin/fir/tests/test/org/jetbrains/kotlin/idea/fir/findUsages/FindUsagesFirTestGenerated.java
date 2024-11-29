@@ -1213,6 +1213,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/constructorCall.0.kt");
             }
 
+            @TestMetadata("enumConstants.0.kt")
+            public void testEnumConstants() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/enumConstants.0.kt");
+            }
+
             @TestMetadata("jvmOverloaded.0.kt")
             public void testJvmOverloaded() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/jvmOverloaded.0.kt");
@@ -1998,6 +2003,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
             @TestMetadata("JKFieldUsages.0.java")
             public void testJKFieldUsages() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsages.0.java");
+            }
+
+            @TestMetadata("JKFieldUsagesReadWriteAccess.0.java")
+            public void testJKFieldUsagesReadWriteAccess() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsagesReadWriteAccess.0.java");
             }
         }
 

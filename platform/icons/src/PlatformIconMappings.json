@@ -481,6 +481,7 @@
       "siblingInheritedMethod.svg": "gutter/siblingInheritedMethod.svg",
       "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
+      "web.svg": "gutter/web.svg",
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
     "hierarchy": {
@@ -538,6 +539,10 @@
       "inlineAdd.svg": [
         "general/inlineAdd.svg",
         "general/inlineAddHover.svg"
+      ],
+      "inlineClose.svg": [
+        "general/inlineClose.svg",
+        "general/inlineCloseHover.svg"
       ],
       "inlineEdit.svg": [
         "general/inline_edit.svg",
@@ -663,6 +668,7 @@
         "nodes/newParameter.svg",
         "nodes/parameter.svg"
       ],
+      "pluginJB.svg": "nodes/pluginJB.svg",
       "plugin.svg": [
         "nodes/plugin.svg",
         "nodes/pluginobsolete.svg"

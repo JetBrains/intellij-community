@@ -22,8 +22,5 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Internal
 public interface TimestampGetter {
-
-  int size();
-
   long getTimestamp(int index);
 }

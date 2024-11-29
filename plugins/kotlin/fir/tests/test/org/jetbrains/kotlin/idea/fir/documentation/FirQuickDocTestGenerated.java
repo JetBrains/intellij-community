@@ -280,6 +280,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/OnEnumDeclaration.kt");
     }
 
+    @TestMetadata("OnEnumEntries.kt")
+    public void testOnEnumEntries() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumEntries.kt");
+    }
+
     @TestMetadata("OnEnumEntry.kt")
     public void testOnEnumEntry() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/OnEnumEntry.kt");

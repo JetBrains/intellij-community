@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.options.newEditor.settings.SettingsEditorAdvancedSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
@@ -25,8 +26,9 @@ final class Banner extends SimpleBanner {
       return Font.BOLD;
     }
   };
+  private final JLabel savedLabel;
 
-  Banner(Action action) {
+  Banner(Action action, String savedText) {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
@@ -35,7 +37,17 @@ final class Banner extends SimpleBanner {
     myLeftPanel.add(myBreadcrumbs);
     myLeftPanel.add(myProjectIcon);
     myLeftPanel.add(myProgress);
-    add(new ActionLink(action), BorderLayout.EAST);
+    savedLabel = new JLabel(savedText);
+    savedLabel.setVisible(false);
+    if (SettingsEditorAdvancedSettings.INSTANCE.getInstantSettingsApply()) {
+      add(savedLabel, BorderLayout.EAST);
+    } else {
+      add(new ActionLink(action), BorderLayout.EAST);
+    }
+  }
+
+  void setSavedTextVisible(boolean visible) {
+    savedLabel.setVisible(visible);
   }
 
   void setText(@NotNull Collection<@NlsContexts.ConfigurableName String> names) {

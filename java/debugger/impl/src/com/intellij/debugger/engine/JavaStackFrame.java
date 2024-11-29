@@ -115,7 +115,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   private void scheduleComputeChildrenTask(@NotNull XCompositeNode node, DebuggerContextImpl context, ThreadReferenceProxyImpl thread) {
-    myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(context, thread) {
+    Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context, thread) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;

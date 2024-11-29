@@ -12,6 +12,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -51,7 +52,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   }
 
   public static void navigate(@NotNull RelativePoint point,
-                              @NotNull List<TestDataFile> testDataFiles,
+                              @Unmodifiable @NotNull List<TestDataFile> testDataFiles,
                               Project project) {
     if (testDataFiles.isEmpty()) return;
     if (testDataFiles.size() == 1) {
@@ -83,8 +84,8 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
    * @param filePaths paths of testdata files with "/" path separator. This List can be changed.
    * @param point point where the popup will be shown.
    */
-  private static void showNavigationPopup(Project project, List<TestDataFile> filePaths, RelativePoint point) {
-    filePaths.sort(Comparator.comparing(TestDataFile::getName, String.CASE_INSENSITIVE_ORDER));
+  private static void showNavigationPopup(Project project, @Unmodifiable List<TestDataFile> filePaths, RelativePoint point) {
+    filePaths = ContainerUtil.sorted(filePaths, Comparator.comparing(TestDataFile::getName, String.CASE_INSENSITIVE_ORDER));
 
     List<TestDataNavigationElement> elementsToDisplay = new ArrayList<>();
     List<TestDataNavigationElement> nonExistingElementsToDisplay = new ArrayList<>();

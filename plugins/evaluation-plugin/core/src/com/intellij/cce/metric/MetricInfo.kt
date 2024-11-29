@@ -10,6 +10,6 @@ class MetricInfo(
   val valueType: MetricValueType,
   val showByDefault: Boolean) {
 
-  val name = name.filter { it.isLetterOrDigit() }
-  val evaluationType = evaluationType.filter { it.isLetterOrDigit() }
+  val name = name.filter { it.isLetterOrDigit() || it == '_' }
+  val evaluationType = evaluationType.filter { it.isLetterOrDigit() || it == '_' }
 }

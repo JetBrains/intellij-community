@@ -41,12 +41,10 @@ public final class HighlightNamesUtil {
     highlight(containingFile, holder, visitor -> psiElement.accept(visitor));
   }
 
-  public static void highlight(@NotNull PsiFile file, @NotNull HighlightInfoHolder holder, @NotNull Consumer<@NotNull JavaElementVisitor> consumer) {
+  public static void highlight(@NotNull PsiFile file, @NotNull HighlightInfoHolder holder, @NotNull Consumer<? super @NotNull JavaElementVisitor> consumer) {
     JavaNamesHighlightVisitor visitor = new JavaNamesHighlightVisitor();
     if (!visitor.suitableForFile(file)) return;
-    visitor.analyze(file, false, holder, () -> {
-      consumer.accept(visitor);
-    });
+    visitor.analyze(file, false, holder, () -> consumer.accept(visitor));
   }
 
   @Nullable
@@ -73,8 +71,8 @@ public final class HighlightNamesUtil {
     }
 
     LOG.assertTrue(methodOrClass instanceof PsiMethod || !isDeclaration);
-    HighlightInfoType type = methodOrClass instanceof PsiMethod ? getMethodNameHighlightType((PsiMethod)methodOrClass, isDeclaration, isInherited, isStaticallyImported)
-                                                                : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
+    HighlightInfoType type = methodOrClass instanceof PsiMethod psiMethod ? getMethodNameHighlightType(psiMethod, isDeclaration, isInherited, isStaticallyImported)
+                                                                       : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
     if (type != null) {
       TextAttributes attributes = mergeWithScopeAttributes(methodOrClass, type, colorsScheme);
       if (!isDeclaration) {
@@ -217,7 +215,7 @@ public final class HighlightNamesUtil {
   @Nullable
   private static HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, @NotNull PsiElement elementToHighlight) {
     if (var instanceof PsiLocalVariable
-        || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
+        || var instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiForeachStatement) {
       return JavaHighlightInfoTypes.LOCAL_VARIABLE;
     }
     if (var instanceof PsiField) {
@@ -234,9 +232,9 @@ public final class HighlightNamesUtil {
         return var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD : JavaHighlightInfoTypes.INSTANCE_FIELD;
       }
     }
-    if (var instanceof PsiParameter) {
-      return ((PsiParameter)var).getDeclarationScope() instanceof PsiLambdaExpression ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
-                                                                                      : JavaHighlightInfoTypes.PARAMETER;
+    if (var instanceof PsiParameter parameter) {
+      return parameter.getDeclarationScope() instanceof PsiLambdaExpression ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
+                                                                            : JavaHighlightInfoTypes.PARAMETER;
     }
     return null;
   }
@@ -301,16 +299,16 @@ public final class HighlightNamesUtil {
 
   @NotNull
   public static TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
-    if (aClass instanceof PsiEnumConstantInitializer) {
-      return ((PsiEnumConstantInitializer)aClass).getEnumConstant().getNameIdentifier().getTextRange();
+    if (aClass instanceof PsiEnumConstantInitializer initializer) {
+      return initializer.getEnumConstant().getNameIdentifier().getTextRange();
     }
-    PsiElement psiElement = aClass instanceof PsiAnonymousClass
-                                  ? ((PsiAnonymousClass)aClass).getBaseClassReference()
+    PsiElement psiElement = aClass instanceof PsiAnonymousClass anonymousClass
+                                  ? anonymousClass.getBaseClassReference()
                                   : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
     if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());
     int start = stripAnnotationsFromModifierList(psiElement);
-    PsiElement endElement = aClass instanceof PsiAnonymousClass ?
-                            ((PsiAnonymousClass)aClass).getBaseClassReference() :
+    PsiElement endElement = aClass instanceof PsiAnonymousClass anonymousClass ?
+                            anonymousClass.getBaseClassReference() :
                             aClass.getImplementsList();
     if (endElement == null) endElement = aClass.getNameIdentifier();
     TextRange endTextRange = endElement == null ? null : endElement.getTextRange();

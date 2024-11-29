@@ -37,13 +37,6 @@ public interface SyntaxNodeDescriptor {
 
   TextMateCapture @Nullable [] getCaptureRules(@NotNull Constants.CaptureKey key);
 
-  /**
-   * @deprecated use {@link #getCaptureRules(Constants.CaptureKey)}
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
-
   boolean hasBackReference(@NotNull Constants.CaptureKey key, int group);
 
   @NotNull

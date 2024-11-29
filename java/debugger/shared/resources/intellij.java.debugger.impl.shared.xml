@@ -1,0 +1,9 @@
+<!--suppress PluginXmlValidity -->
+<idea-plugin package="com.intellij.java.debugger.impl.shared.fake">
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
+    <applicationSettings service="com.intellij.debugger.settings.DebuggerSettings"/>
+    <xdebugger.hotSwapUiExtension implementation="com.intellij.debugger.impl.hotswap.JvmHotSwapUiExtension"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.debugger.settings.JavaDebuggerSettingsProvider"/>
+  </extensions>
+</idea-plugin>

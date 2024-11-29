@@ -30,8 +30,6 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.DontShowAgainValueCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector"/>
     <statistics.counterUsagesCollector
-      implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector"/>
-    <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackSendActionCountCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector"/>
@@ -57,8 +55,6 @@
       <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.platform.feedback.localization.ShowLocalizationFeedbackDialog"
               internal="true"/>
-      <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
-              class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
 

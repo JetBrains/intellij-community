@@ -48,7 +48,7 @@ public class JrtHandler extends ArchiveHandler {
   protected synchronized FileSystem getFileSystem() throws IOException {
     var fs = dereference(myFileSystem);
     if (fs == null) {
-      var path = getFile().getPath();
+      var path = getPath().toString();
       try {
         fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
         myFileSystem = new SoftReference<>(fs);
@@ -107,7 +107,7 @@ public class JrtHandler extends ArchiveHandler {
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
     var entry = getEntryInfo(relativePath);
-    if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
+    if (entry == null) throw new FileNotFoundException(getPath() + " : " + relativePath);
     try {
       var path = getFileSystem().getPath("/modules/" + relativePath);
       return Files.readAllBytes(path);

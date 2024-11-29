@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
   </component>
 </module>

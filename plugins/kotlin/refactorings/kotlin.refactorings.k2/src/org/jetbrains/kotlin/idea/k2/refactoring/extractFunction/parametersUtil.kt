@@ -420,7 +420,7 @@ private fun createOriginalType(
     val functionSymbol = (originalDeclaration as KtNamedFunction).symbol as KaNamedFunctionSymbol
     val typeString =
         buildString { //todo rewrite as soon as functional type can be created by api call: https://youtrack.jetbrains.com/issue/KT-66566
-            functionSymbol.receiverParameter?.type?.render(position = Variance.INVARIANT)?.let {
+            functionSymbol.receiverParameter?.returnType?.render(position = Variance.INVARIANT)?.let {
                 append(it)
                 append(".")
             }

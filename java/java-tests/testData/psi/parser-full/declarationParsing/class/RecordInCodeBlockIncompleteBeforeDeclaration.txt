@@ -1,0 +1,61 @@
+PsiJavaFile:RecordInCodeBlockIncompleteBeforeDeclaration.java
+  PsiImportList
+    <empty list>
+  PsiClass:A
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:A('A')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiMethod:test
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:void
+        PsiKeyword:void('void')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:test('test')
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace('\n    ')
+        PsiDeclarationStatement
+          PsiModifierList:
+            <empty list>
+          PsiKeyword:record('record')
+          PsiWhiteSpace('\n    ')
+          PsiIdentifier:String('String')
+          PsiErrorElement:'<' or '(' expected
+            <empty list>
+        PsiWhiteSpace(' ')
+        PsiExpressionStatement
+          PsiAssignmentExpression:string = "hello"
+            PsiReferenceExpression:string
+              PsiReferenceParameterList
+                <empty list>
+              PsiIdentifier:string('string')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:EQ('=')
+            PsiWhiteSpace(' ')
+            PsiLiteralExpression:"hello"
+              PsiJavaToken:STRING_LITERAL('"hello"')
+          PsiJavaToken:SEMICOLON(';')
+        PsiWhiteSpace('\n  ')
+        PsiJavaToken:RBRACE('}')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')

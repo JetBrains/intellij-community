@@ -14,7 +14,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter

@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.evaluationPlugin.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "evaluationPlugin-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "evaluationPlugin-core",
+  module_name = "intellij.evaluationPlugin.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:gson",
+    "@lib//:commons-compress",
+    "@lib//:kotlinx-html-jvm",
+    "@lib//:commons-lang3",
+    "@lib//:commons-text",
+    "//platform/core-api:core",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+    "@lib//:jackson-databind",
+    "//platform/statistics",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/statistics/uploader",
+    "//platform/util-ex",
+  ],
+  runtime_deps = [":evaluationPlugin-core_resources"]
+)
+### auto-generated section `build intellij.evaluationPlugin.core` end

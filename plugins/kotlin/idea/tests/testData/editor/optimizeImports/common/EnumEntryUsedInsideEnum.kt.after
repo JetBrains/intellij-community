@@ -1,9 +1,0 @@
-package test
-
-enum class MyEnum {
-    ENTRY;
-
-    companion object {
-        val firstEntry = ENTRY
-    }
-}

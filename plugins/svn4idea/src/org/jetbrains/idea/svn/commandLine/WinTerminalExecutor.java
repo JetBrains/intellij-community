@@ -38,7 +38,7 @@ public class WinTerminalExecutor extends TerminalExecutor {
   @NotNull
   @Override
   protected SvnProcessHandler createProcessHandler() {
-    return new WinTerminalProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
+    return new WinTerminalProcessHandler(myProcess, myCommandLine, needsUtf8Output(), needsBinaryOutput());
   }
 
   @Override

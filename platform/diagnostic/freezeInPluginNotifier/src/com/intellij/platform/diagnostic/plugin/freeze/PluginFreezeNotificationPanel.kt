@@ -100,6 +100,8 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
       override fun updateOnSubmit() {
         super.updateOnSubmit()
 
+        PluginsFreezesService.getInstance().mutePlugin(pluginDescriptor.pluginId)
+
         LifecycleUsageTriggerCollector.pluginFreezeReported(pluginDescriptor.pluginId)
         closePanel(project)
       }

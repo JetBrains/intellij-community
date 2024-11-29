@@ -152,10 +152,12 @@ class UastLocalUsageDependencyGraph private constructor(
         get() = first.size + second.size + connection.size
 
       override val values: Collection<Set<T>>
-        get() = ArrayList<Set<T>>().apply {
-          addAll(first.values)
-          addAll(second.values)
-          addAll(connection.values)
+        get() {
+          val result = ArrayList<Set<T>>()
+          result.addAll(first.values)
+          result.addAll(second.values)
+          result.addAll(connection.values)
+          return result
         }
 
       override fun containsKey(key: UElement): Boolean = key in connection || key in first || key in second

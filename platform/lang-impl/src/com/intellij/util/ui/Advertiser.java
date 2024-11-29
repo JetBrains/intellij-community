@@ -9,6 +9,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -120,6 +121,7 @@ public class Advertiser {
     return myComponent;
   }
 
+  @Unmodifiable
   public List<String> getAdvertisements() {
     return ContainerUtil.map(myTexts, item -> item.text);
   }

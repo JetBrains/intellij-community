@@ -254,7 +254,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     };
 
     progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
-    evaluationContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
+    evaluationContext.getManagerThread().startProgress(askSetAction, progressWindow);
   }
 
   @Override

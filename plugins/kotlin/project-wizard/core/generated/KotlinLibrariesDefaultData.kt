@@ -13,6 +13,7 @@ internal val DEFAULT_KOTLIN_LIBRARIES_DATA = KotlinLibrariesCompatibilityState(
             artifactId = "kotlinx-coroutines-core",
             versions = mapOf(
                     "2.0" to "1.8.1",
+                    "2.1" to "1.8.1",
                     "1.5" to "1.5.2",
                     "1.7" to "1.6.4",
                     "1.9" to "1.8.1",

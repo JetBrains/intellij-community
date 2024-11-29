@@ -21,16 +21,16 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenc
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptLibraryDependencies
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.base.util.SeqScope
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
+import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 @OptIn(K1ModeProjectStructureApi::class)
 internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtension {
-    override fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(
+    override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByElement(
         element: PsiElement,
         file: PsiFile,
         virtualFile: VirtualFile
@@ -46,7 +46,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         }
     }
 
-    override fun SeqScope<Result<IdeaModuleInfo>>.collectByFile(
+    override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByFile(
         project: Project,
         virtualFile: VirtualFile,
         isLibrarySource: Boolean,
@@ -57,7 +57,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         if (isBinary) {
             if (KotlinPluginModeProvider.isK2Mode()) {
                 val scriptFile = (config.contextualModuleInfo as? ScriptModuleInfo)?.scriptFile
-                scriptFile?.scriptLibraryDependencies(project)?.filter { virtualFile in it.contentScope }?.forEach(::register)
+                scriptFile?.scriptLibraryDependencies(project)?.filter { virtualFile in it.contentScope }?.forEach { register(it) }
             } else if (ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope().contains(virtualFile)) {
                 if (isLibrarySource) {
                     register(ScriptDependenciesSourceInfo.ForProject(project))
@@ -92,15 +92,11 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         }
     }
 
-    override fun SeqScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {
-        yield {
-            if (ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType) {
-                ScriptRelatedModuleNameFile[project, virtualFile]?.let { scratchModuleName ->
-                    val moduleManager = ModuleManager.getInstance(project)
-                    moduleManager.findModuleByName(scratchModuleName)
-                }
-            } else {
-                null
+    override suspend fun SequenceScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {
+        if (ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType) {
+            ScriptRelatedModuleNameFile[project, virtualFile]?.let { scratchModuleName ->
+                val moduleManager = ModuleManager.getInstance(project)
+                yieldIfNotNull(moduleManager.findModuleByName(scratchModuleName))
             }
         }
     }

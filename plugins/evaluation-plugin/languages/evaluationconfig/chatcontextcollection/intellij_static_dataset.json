@@ -1,0 +1,30 @@
+{
+  "language": "Java",
+  "projectPath": "./",
+  "projectName": "intellij",
+  "outputDir": "ml-eval-chat-context-collection-intellij",
+  "strategy": {
+    "delayInSeconds": 3
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ],
+    "sourceFile": "intellij_dataset.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 15,
+    "filesLimit": 2,
+    "order": "LINEAR",
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

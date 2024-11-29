@@ -12,6 +12,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -44,6 +45,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * The returned set must contain {@link #getLookupString()}.
    * @see #isCaseSensitive()
    */
+  @Unmodifiable
   public Set<String> getAllLookupStrings() {
     return Collections.singleton(getLookupString());
   }

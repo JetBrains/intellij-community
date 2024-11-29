@@ -1,0 +1,87 @@
+### auto-generated section `build intellij.editorconfig` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "editorconfig_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "editorconfig_resources_1",
+  files = glob(["compatibilityResources/**/*"]),
+  strip_prefix = "compatibilityResources"
+)
+
+jvm_library(
+  name = "editorconfig",
+  module_name = "intellij.editorconfig",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:kotlin-reflect",
+    "@lib//:gson",
+    "//spellchecker",
+    "@lib//:automaton",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:ec4j-core",
+    "//platform/settings",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [
+    ":editorconfig_resources",
+    ":editorconfig_resources_1",
+  ]
+)
+
+kt_jvm_test(
+  name = "editorconfig_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":editorconfig"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:kotlin-reflect",
+    "@lib//:gson",
+    "//spellchecker",
+    "@lib//:automaton",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:ec4j-core",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/settings",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [
+    ":editorconfig_resources",
+    ":editorconfig_resources_1",
+  ]
+)
+### auto-generated section `build intellij.editorconfig` end

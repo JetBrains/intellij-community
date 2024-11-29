@@ -10,7 +10,6 @@ import com.intellij.find.FindModelExtension;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.ngrams.TrigramTextSearchService;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,6 +52,7 @@ import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -124,7 +124,7 @@ final class FindInProjectTask {
 
   void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<? super UsageInfo> usageProcessor) {
     if (!EDT.isCurrentThreadEdt()) {
-      ApplicationManager.getApplication().assertReadAccessNotAllowed();
+      ThreadingAssertions.assertNoOwnReadAccess();
     }
     CoreProgressManager.assertUnderProgress(myProgress);
     if (LOG.isDebugEnabled()) {

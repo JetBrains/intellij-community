@@ -91,6 +91,7 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return getAnnotation(0, annotationClass);
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -104,10 +105,12 @@ public class FixedChildDescriptionImpl extends DomChildDescriptionImpl implement
     return true;
   }
 
+  @Override
   public String toString() {
     return getXmlElementName() + " " + getGetterMethod(0) + " " + getType();
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 29 * result + myCount;

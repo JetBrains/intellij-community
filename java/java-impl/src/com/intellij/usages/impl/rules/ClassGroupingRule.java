@@ -137,10 +137,12 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       return psiClass != null && psiClass.isValid();
     }
 
+    @Override
     public int hashCode() {
       return myQName.hashCode();
     }
 
+    @Override
     public boolean equals(Object object) {
       return object instanceof ClassUsageGroup && myQName.equals(((ClassUsageGroup)object).myQName);
     }

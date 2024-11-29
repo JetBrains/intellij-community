@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.launch
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.LegacyExtensionImporter.CountAndTime
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -25,7 +26,7 @@ import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -85,10 +86,10 @@ object MavenProjectImporterUtil {
     // it doesn't finish in time.
     // I couldn't manage to write a test for this since behaviour of VirtualFileManager
     // and FileWatcher differs from real-life execution.
-    val files = HashSet<File>()
+    val files = HashSet<Path>()
     for (project in projectsToRefresh) {
       for (dependency in project.dependencies) {
-        files.add(dependency.file)
+        files.add(dependency.file.toPath())
       }
     }
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
@@ -99,7 +100,7 @@ object MavenProjectImporterUtil {
     }
   }
 
-  private class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
+  private class RefreshingFilesTask(private val myFiles: Set<Path>) : MavenProjectsProcessorTask {
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
                          indicator: ProgressIndicator) {
@@ -119,8 +120,8 @@ object MavenProjectImporterUtil {
     javacOptions.ADDITIONAL_OPTIONS_STRING = options
   }
 
-  private fun doRefreshFiles(files: Set<File>) {
-    LocalFileSystem.getInstance().refreshIoFiles(files)
+  private fun doRefreshFiles(files: Set<Path>) {
+    LocalFileSystem.getInstance().refreshNioFiles(files)
   }
 
   @JvmStatic
@@ -149,7 +150,7 @@ object MavenProjectImporterUtil {
       artifact.isOptional,
       artifact.extension,
       null,
-      project.localRepository,
+      project.localRepositoryPath.toFile(),
       false, false
     )
   }
@@ -282,5 +283,21 @@ object MavenProjectImporterUtil {
         }
       }
     }
+  }
+
+  private const val COMPILER_PLUGIN_GROUP_ID = "org.apache.maven.plugins"
+
+  private const val COMPILER_PLUGIN_ARTIFACT_ID = "maven-compiler-plugin"
+
+  fun MavenProject.getAllCompilerConfigs(): List<Element> {
+    val result = ArrayList<Element>(1)
+    this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
+
+    this.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+      ?.executions?.filter { it.goals.contains("compile") }
+      ?.filter { it.phase != "none" }
+      ?.mapNotNull { it.configurationElement }
+      ?.forEach(result::add)
+    return result
   }
 }

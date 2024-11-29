@@ -197,7 +197,7 @@ public class HtmlLexer extends BaseHtmlLexer {
         embeddedLexer = embedment.createHighlightingLexer();
       }
       finally {
-        if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(null);
+        if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.remove();
       }
       if (embeddedLexer != null) {
         skipEmbedment(embedment);

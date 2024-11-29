@@ -5,7 +5,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -57,19 +57,11 @@ public abstract class Instruction {
   }
 
   /**
-   * @return list of variables that are known to be always written by this instruction
+   * @return list of variable descriptors that must stay reachable at this instruction. 
+   * The variables that are not required to be reachable by any instructions 
+   * until the end of the interpretation could be flushed automatically.
    */
-  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
-    return Collections.emptyList();
-  }
-
-  /**
-   * @return list of variables that must stay reachable at this instruction. 
-   * Variables that are not required to be reachable by any instructions 
-   * until the next write or the interpretation end, 
-   * could be flushed automatically.
-   */
-  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
     return Collections.emptyList();
   }
   

@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
-import com.intellij.platform.eel.provider.EelProcessResultImpl
+import com.intellij.platform.eel.impl.fs.EelProcessResultImpl
 import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
@@ -419,8 +419,12 @@ class WSLDistributionTest {
     fun `workingDirectory is preserved`() {
       val options = WSLCommandLineOptions()
 
+      val uncPrefix = WSLUtil.getUncPrefix()
+
+      val workDir = """${uncPrefix}$WSL_ID\foo\bar"""
+
       val sourceCmd = GeneralCommandLine("true")
-        .withWorkDirectory("""\\wsl.localhost\$WSL_ID\foo\bar""")
+        .withWorkDirectory(workDir)
 
       val cmd = WslTestStrategy.Ijent.patch(sourceCmd, options)
 
@@ -534,7 +538,7 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
 
 
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
     adapter.exePath = builder.exe
     if (rootUser) {
       adapter.putUserData(TEST_ROOT_USER_SET, true)

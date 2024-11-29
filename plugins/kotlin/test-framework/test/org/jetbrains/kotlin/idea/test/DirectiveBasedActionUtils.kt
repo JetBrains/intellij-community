@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.test
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertEqualsToFile
+import junit.framework.TestCase
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -26,6 +28,7 @@ object DirectiveBasedActionUtils {
     const val DISABLE_ERRORS_DIRECTIVE: String = "// DISABLE-ERRORS"
     const val DISABLE_WARNINGS_DIRECTIVE: String = "// DISABLE-WARNINGS"
     const val ENABLE_WARNINGS_DIRECTIVE: String = "// ENABLE-WARNINGS"
+    const val PRIORITY_DIRECTIVE = "PRIORITY"
 
     /**
      * If present in the test data file, checks that
@@ -173,6 +176,18 @@ object DirectiveBasedActionUtils {
                 "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive\n",
                 actualActionsDirectives,
                 expectedDirectives
+            )
+        }
+    }
+
+    fun checkPriority(contents: String, action: Any) {
+        val priorityName = InTextDirectivesUtils.findStringWithPrefixes(contents, "// $PRIORITY_DIRECTIVE: ")
+        if (priorityName != null) {
+            val expectedPriority = enumValueOf<PriorityAction.Priority>(priorityName)
+            val actualPriority = (action as? PriorityAction)?.priority
+            TestCase.assertTrue(
+                "Expected action priority: $expectedPriority\nActual priority: $actualPriority",
+                expectedPriority == actualPriority
             )
         }
     }

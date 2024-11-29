@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class ForceEarlyReturnAction extends DebuggerAction {
   @Override
@@ -52,7 +53,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     final StackFrameProxyImpl proxy = stackFrame.getStackFrameProxy();
     final ThreadReferenceProxyImpl thread = proxy.threadProxy();
 
-    debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
+    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Method method;

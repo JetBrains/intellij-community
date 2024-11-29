@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -29,6 +30,7 @@ public class PluginDescriptorTreeElement extends PsiTreeElementBase<XmlTag> impl
 
   @NotNull
   @Override
+  @Unmodifiable
   public Collection<StructureViewTreeElement> getChildrenBase() {
     XmlTag tag = getElement();
     if (tag == null || !tag.isValid()) {

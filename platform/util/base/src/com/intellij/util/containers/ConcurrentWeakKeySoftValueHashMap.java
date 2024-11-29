@@ -134,6 +134,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
       ((SoftValue<K, V>)valueReference).myKeyReference = keyReference;
     }
     ObjectUtilsRt.reachabilityFence(k);
+    ObjectUtilsRt.reachabilityFence(v); // to avoid queueing in myValueQueue before setting its myKeyReference to not-null value
     return keyReference;
   }
 

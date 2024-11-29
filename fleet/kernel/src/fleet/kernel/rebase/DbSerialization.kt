@@ -4,7 +4,6 @@ package fleet.kernel.rebase
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.attributeSerializer
 import fleet.kernel.*
-import fleet.util.serialization.ISerialization
 import fleet.util.UID
 import kotlinx.serialization.json.JsonElement
 
@@ -18,7 +17,6 @@ fun DbContext<Q>.sharedId(eid: EID, uidAttribute: Attribute<UID>): UID? =
   }
 
 internal fun DbContext<Q>.encodeDbValue(uidAttribute: Attribute<UID>,
-                                        json: ISerialization,
                                         a: Attribute<*>,
                                         v: Any): DurableDbValue =
   when {
@@ -34,17 +32,16 @@ internal fun DbContext<Q>.encodeDbValue(uidAttribute: Attribute<UID>,
       }
     }
     else -> {
-      serializeScalar(json, a, v)
+      serializeScalar(a, v)
     }
   }
 
 internal fun DbContext<Q>.deserialize(
   a: Attribute<*>,
   v: JsonElement,
-  serialization: ISerialization
 ): Any =
   attributeSerializer(a)?.let { serializer ->
-    requireNotNull(serialization.json.decodeFromJsonElement(serializer, v)) {
+    requireNotNull(DbJson.decodeFromJsonElement(serializer, v)) {
       "got null after deserializing value $v of attribute ${displayAttribute(a)}"
     }
   } ?: v
@@ -53,7 +50,6 @@ internal fun DbContext<Q>.deserialize(
 * returns null if and only if v is a reference which can't be resolved
 */
 internal fun DbContext<Q>.serialize1(
-  json: ISerialization,
   eidToUid: DbContext<Q>.(EID) -> UID?,
   a: Attribute<*>,
   v: Any
@@ -64,11 +60,10 @@ internal fun DbContext<Q>.serialize1(
         null -> eidToUid(v)?.let { uid -> DurableDbValue.EntityRef(uid) }
         else -> DurableDbValue.EntityTypeRef(typeIdent)
       }
-    else -> serializeScalar(json, a, v)
+    else -> serializeScalar(a, v)
   }
 
 private fun DbContext<Q>.serializeScalar(
-  serialization: ISerialization,
   attribute: Attribute<*>,
   value: Any
 ): DurableDbValue.Scalar =
@@ -78,7 +73,7 @@ private fun DbContext<Q>.serializeScalar(
       val serializer = requireNotNull(attributeSerializer(attribute)) {
         "serializer not found for ${displayAttribute(attribute)}"
       }
-      DurableDbValue.Scalar(lazy { serialization.json.encodeToJsonElement(serializer, value) })
+      DurableDbValue.Scalar(lazy { DbJson.encodeToJsonElement(serializer, value) })
     }
   }
 

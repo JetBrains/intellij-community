@@ -1,4 +1,5 @@
 // "Make 'PrivateInnerClass' public" "true"
+// PRIORITY: HIGH
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Import members from 'PrivateInFileClass'

@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Driver
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.*
 
 fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreenUI {
@@ -10,13 +11,14 @@ fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreen
 
 fun Driver.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}) = this.ui.welcomeScreen(action)
 
-class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
-  val createNewProjectButton = x("//div[(@accessiblename='New Project' and @class='JButton') or (@visible_text='New Project' and @class!='JBLabel')]")
-  val openProjectButton = x("//div[(@accessiblename='Open' and @class='JButton')  or (@visible_text='Open' and @class!='JBLabel')]")
+open class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
+  open val createNewProjectButton = x("//div[(@accessiblename='New Project' and @class='JButton') or (@visible_text='New Project' and @class!='JBLabel')]")
+  open val openProjectButton = x("//div[(@accessiblename='Open' and @class='JButton')  or (@visible_text='Open' and @class!='JBLabel')]")
   val fromVcsButton = x("//div[@accessiblename='Clone Repository' and @class='JButton']")
 
-  private val leftItems = tree("//div[@class='Tree']")
+  val leftItems = tree("//div[@class='Tree']")
 
+  fun openSettingsDialog() = driver.invokeAction("ShowSettings", now = false)
   fun clickProjects() = leftItems.clickPath("Projects")
   fun clickRemoteDev() = leftItems.clickPath("Remote Development")
   fun clickRemoteDevSsh() = leftItems.clickPath("Remote Development", "SSH")

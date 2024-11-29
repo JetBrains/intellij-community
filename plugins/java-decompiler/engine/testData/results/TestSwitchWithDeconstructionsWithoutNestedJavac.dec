@@ -7,7 +7,7 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
    public static void testStringString(Object o) {
       switch (o) {// 13
          case R1(String s1, String s2):
-            if (s2.isEmpty()) {// 15
+            if (s2.isEmpty()) {// 14 15
                System.out.println("2");// 16
             }
             break;
@@ -17,11 +17,11 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
       }
 
       System.out.println("1");// 21
-   }// 14
+   }
 
    public static void testStringObjectWhen(Object o) {
       switch (o) {// 25
-         case R1(String s1, Object var11) when s1.hashCode() == 3:
+         case R1(String s1, Object var11) when s1.hashCode() == 3:// 26
             if (s1.hashCode() == 1) {// 27
                System.out.println("2");// 28
                System.out.println("2");// 29
@@ -34,12 +34,12 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
       }
 
       System.out.println("1");// 35
-   }// 26
+   }
 
    public static void testStringObject(Object o) {
       label34:
       switch (o) {// 39
-         case R1(String s1, Object var11) when s1.isEmpty():// 41
+         case R1(String s1, Object var11) when s1.isEmpty():// 40 41
             System.out.println("1");// 42
          default:
             System.out.println("3");// 45
@@ -47,12 +47,12 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
       }
 
       System.out.println("1");// 47
-   }// 40
+   }
 
    public static void testObjectString(Object o) {
       switch (o) {// 51
          case R1(Object s1, String s2):
-            if (s1.hashCode() == 1) {// 53
+            if (s1.hashCode() == 1) {// 52 53
                System.out.println("1");// 54
             }
             break;
@@ -62,12 +62,12 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
       }
 
       System.out.println("1");// 59
-   }// 52
+   }
 
    public static void testObjectObject(Object o) {
       switch (o) {// 63
          case R1(Object s1, Object var11):
-            if (s1.hashCode() == 1) {// 65
+            if (s1.hashCode() == 1) {// 64 65
                System.out.println("1");// 66
             }
             break;
@@ -76,7 +76,7 @@ public class TestSwitchWithDeconstructionsWithoutNestedJavac {
       }
 
       System.out.println("1");// 71
-   }// 64
+   }
 
    static record R1(Object o, Object o2) {
       R1(Object o, Object o2) {
@@ -113,24 +113,18 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       5b      9
       5c      9
       5d      9
-      5e      9
-      5f      9
       63      10
       64      10
       65      10
       66      10
       67      10
       68      10
-      69      10
-      6a      10
       6e      14
       6f      14
       70      14
       71      14
       72      14
       73      14
-      74      14
-      75      14
       76      15
       79      18
       7a      18
@@ -141,22 +135,6 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       7f      18
       80      18
       81      19
-      82      19
-      83      19
-      84      19
-      85      19
-      86      19
-      87      19
-      88      19
-      89      19
-      8a      19
-      8b      19
-      8c      19
-      8d      19
-      8e      19
-      8f      19
-      90      19
-      91      19
    }
 
    method 'testStringObjectWhen (Ljava/lang/Object;)V' {
@@ -198,16 +176,12 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       72      27
       73      27
       74      27
-      75      27
-      76      27
       7a      31
       7b      31
       7c      31
       7d      31
       7e      31
       7f      31
-      80      31
-      81      31
       82      32
       85      35
       86      35
@@ -218,22 +192,6 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       8b      35
       8c      35
       8d      36
-      8e      36
-      8f      36
-      90      36
-      91      36
-      92      36
-      93      36
-      94      36
-      95      36
-      96      36
-      97      36
-      98      36
-      99      36
-      9a      36
-      9b      36
-      9c      36
-      9d      36
    }
 
    method 'testStringObject (Ljava/lang/Object;)V' {
@@ -255,16 +213,12 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       5b      42
       5c      42
       5d      42
-      5e      42
-      5f      42
       63      44
       64      44
       65      44
       66      44
       67      44
       68      44
-      69      44
-      6a      44
       6b      45
       6e      48
       6f      48
@@ -275,22 +229,6 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       74      48
       75      48
       76      49
-      77      49
-      78      49
-      79      49
-      7a      49
-      7b      49
-      7c      49
-      7d      49
-      7e      49
-      7f      49
-      80      49
-      81      49
-      82      49
-      83      49
-      84      49
-      85      49
-      86      49
    }
 
    method 'testObjectString (Ljava/lang/Object;)V' {
@@ -316,16 +254,12 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       5c      55
       5d      55
       5e      55
-      5f      55
-      60      55
       64      59
       65      59
       66      59
       67      59
       68      59
       69      59
-      6a      59
-      6b      59
       6c      60
       6f      63
       70      63
@@ -336,22 +270,6 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       75      63
       76      63
       77      64
-      78      64
-      79      64
-      7a      64
-      7b      64
-      7c      64
-      7d      64
-      7e      64
-      7f      64
-      80      64
-      81      64
-      82      64
-      83      64
-      84      64
-      85      64
-      86      64
-      87      64
    }
 
    method 'testObjectObject (Ljava/lang/Object;)V' {
@@ -370,8 +288,6 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       49      70
       4a      70
       4b      70
-      4c      70
-      4d      70
       51      74
       52      74
       53      74
@@ -387,22 +303,6 @@ class 'pkg/TestSwitchWithDeconstructionsWithoutNestedJavac' {
       5f      77
       60      77
       61      78
-      62      78
-      63      78
-      64      78
-      65      78
-      66      78
-      67      78
-      68      78
-      69      78
-      6a      78
-      6b      78
-      6c      78
-      6d      78
-      6e      78
-      6f      78
-      70      78
-      71      78
    }
 }
 
@@ -442,13 +342,13 @@ Lines mapping:
 6 <-> 5
 8 <-> 92
 13 <-> 8
-14 <-> 20
+14 <-> 10
 15 <-> 10
 16 <-> 11
 19 <-> 15
 21 <-> 19
 25 <-> 23
-26 <-> 37
+26 <-> 24
 27 <-> 25
 28 <-> 26
 29 <-> 27
@@ -456,19 +356,19 @@ Lines mapping:
 33 <-> 32
 35 <-> 36
 39 <-> 41
-40 <-> 50
+40 <-> 42
 41 <-> 42
 42 <-> 43
 45 <-> 45
 47 <-> 49
 51 <-> 53
-52 <-> 65
+52 <-> 55
 53 <-> 55
 54 <-> 56
 57 <-> 60
 59 <-> 64
 63 <-> 68
-64 <-> 79
+64 <-> 70
 65 <-> 70
 66 <-> 71
 69 <-> 75

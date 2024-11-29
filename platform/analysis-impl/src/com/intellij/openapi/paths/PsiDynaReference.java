@@ -6,7 +6,6 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
@@ -16,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -37,6 +37,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<PsiReference> getReferences() {
     return ContainerUtil.concat(myReferences,
                                 it -> it instanceof PsiReferencesWrapper ?
@@ -165,6 +166,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
+  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "PsiDynaReference containing " + myReferences;

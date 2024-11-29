@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -Xopt-in=com.intellij.openapi.util.IntellijInternalApi  -Xcontext-receivers" />
+          <option name="additionalArguments" value="-Xjvm-default=all -Xopt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi -Xcontext-receivers" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
   </component>
 </module>

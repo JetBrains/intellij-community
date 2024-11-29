@@ -2,7 +2,6 @@
 package fleet.rpc.server
 
 import fleet.rpc.core.FleetTransportFactory
-import fleet.rpc.core.Serialization
 import fleet.rpc.core.connectionLoop
 import fleet.util.UID
 import fleet.util.async.use
@@ -23,7 +22,6 @@ class FleetService private constructor(val serviceId: UID,
   companion object {
     suspend fun service(providerId: UID,
                         transportFactory: FleetTransportFactory,
-                        json: () -> Serialization,
                         services: RpcServiceLocator,
                         rpcInterceptor: RpcExecutorMiddleware = RpcExecutorMiddleware,
                         rpcCallDispatcher: CoroutineDispatcher? = null,
@@ -36,7 +34,6 @@ class FleetService private constructor(val serviceId: UID,
               status.value = true
               try {
                 RpcExecutor.serve(services = services,
-                                  json = json,
                                   sendChannel = transport.outgoing,
                                   receiveChannel = transport.incoming,
                                   rpcInterceptor = rpcInterceptor,

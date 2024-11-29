@@ -1,10 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.eel.EelApi;
+import com.intellij.platform.eel.EelPlatform;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.path.EelPathKt;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,11 +21,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.projectRoots.impl.JavaHomeFinderEel.javaHomeFinderEel;
+import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getLocalEel;
 
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
@@ -54,7 +65,11 @@ public abstract class JavaHomeFinder {
    * Tries to find existing Java SDKs on this computer.
    * If no JDK found, returns possible directories to start file chooser.
    * @return suggested sdk home paths (sorted)
+   *
+   * @deprecated Please use {@link JavaHomeFinder#suggestHomePaths(Project)}. The project can be located on a remote machine,
+   * and the SDK should be local to the project, not to the IDE.
    */
+  @Deprecated
   public static @NotNull List<String> suggestHomePaths() {
     return suggestHomePaths(false);
   }
@@ -65,7 +80,22 @@ public abstract class JavaHomeFinder {
    * or that need the embedded JetBrains Runtime.
    */
   public static @NotNull List<String> suggestHomePaths(boolean forceEmbeddedJava) {
-    JavaHomeFinderBasic javaFinder = getFinder(forceEmbeddedJava);
+    return suggestHomePaths(getLocalEel(), forceEmbeddedJava);
+  }
+
+  /**
+   * Tries to find Java SDKs on the machine where {@code project} is located.
+   * If no JDK found, returns possible directories to start file chooser.
+   *
+   * @return suggested sdk home paths (sorted)
+   */
+  public static @NotNull List<@NotNull String> suggestHomePaths(@Nullable Project project) {
+    return suggestHomePaths(getEelApiBlocking(project), false);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull List<String> suggestHomePaths(@NotNull EelApi eel, boolean forceEmbeddedJava) {
+    JavaHomeFinderBasic javaFinder = getFinder(eel, forceEmbeddedJava);
     if (javaFinder == null) return Collections.emptyList();
 
     ArrayList<String> paths = new ArrayList<>(javaFinder.findExistingJdks());
@@ -77,13 +107,21 @@ public abstract class JavaHomeFinder {
     return forceEmbeddedJava || Registry.is("java.detector.enabled", true);
   }
 
-  private static JavaHomeFinderBasic getFinder(boolean forceEmbeddedJava) {
+  private static JavaHomeFinderBasic getFinder(@NotNull EelApi eel, boolean forceEmbeddedJava) {
     if (!isDetectorEnabled(forceEmbeddedJava)) return null;
 
-    return getFinder().checkEmbeddedJava(forceEmbeddedJava);
+    return getFinder(eel).checkEmbeddedJava(forceEmbeddedJava);
   }
 
-  public static @NotNull JavaHomeFinderBasic getFinder() {
+  public static @NotNull JavaHomeFinderBasic getFinder(@Nullable Project project) {
+    return getFinder(getEelApiBlocking(project));
+  }
+
+  private static @NotNull JavaHomeFinderBasic getFinder(@NotNull EelApi eel) {
+    if (Registry.is("java.home.finder.use.eel")) {
+      return javaHomeFinderEel(eel);
+    }
+
     SystemInfoProvider systemInfoProvider = new SystemInfoProvider();
 
     if (SystemInfo.isWindows) {
@@ -102,7 +140,16 @@ public abstract class JavaHomeFinder {
     return new JavaHomeFinderBasic(systemInfoProvider);
   }
 
-  public static @Nullable String defaultJavaLocation() {
+  public static @Nullable String defaultJavaLocation(@Nullable Path path) {
+    if (path != null && Registry.is("java.home.finder.use.eel")) {
+      Path location = defaultJavaLocationUsingEel(path);
+      if (location == null) {
+        return null;
+      }
+      else {
+        return location.toString();
+      }
+    }
     if (SystemInfo.isWindows) {
       return JavaHomeFinderWindows.defaultJavaLocation;
     }
@@ -114,6 +161,34 @@ public abstract class JavaHomeFinder {
     }
     if (SystemInfo.isSolaris) {
       return "/usr/jdk";
+    }
+    return null;
+  }
+
+  private static @Nullable Path defaultJavaLocationUsingEel(Path path) {
+    EelApi eel = EelProviderUtil.getEelApiBlocking(path);
+    EelPlatform platform = eel.getPlatform();
+    String eelPath = null;
+    if (platform instanceof EelPlatform.Windows) {
+      eelPath = JavaHomeFinderWindows.defaultJavaLocation;
+    }
+    if (platform instanceof EelPlatform.Darwin) {
+      eelPath = JavaHomeFinderMac.defaultJavaLocation;
+    }
+    if (platform instanceof EelPlatform.Linux) {
+      String defaultLinuxPathRepresentation = "/opt/java";
+      Path defaultLinuxPath =
+        eel.getMapper().toNioPath(EelPath.Absolute.parse(defaultLinuxPathRepresentation, EelPathKt.getPathOs(platform)));
+      if (Files.exists(defaultLinuxPath)) {
+        eelPath = defaultLinuxPathRepresentation;
+      }
+      else {
+        eelPath = eel.getUserInfo().getHome().toString();
+      }
+    }
+    if (eelPath != null) {
+      EelPath.Absolute absoluteLocation = EelPath.Absolute.parse(eelPath, EelPathKt.getPathOs(platform));
+      return eel.getMapper().toNioPath(absoluteLocation);
     }
     return null;
   }

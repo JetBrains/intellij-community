@@ -185,6 +185,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinVarargsParametersInjection.kt");
         }
 
+        @TestMetadata("LibraryVarargParameterWithFunctionalType.kt")
+        public void testLibraryVarargParameterWithFunctionalType() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/LibraryVarargParameterWithFunctionalType.kt");
+        }
+
         @TestMetadata("NonExistingKotlinMethodFromJava.kt")
         public void testNonExistingKotlinMethodFromJava() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/NonExistingKotlinMethodFromJava.kt");

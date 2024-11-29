@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.modifyPsiWithOptimizedImports
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.j2k.resolve
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -23,8 +24,8 @@ class ClassUsageReplacementStrategy(
 
     private val factory = KtPsiFactory(project)
 
-    private val typeReplacement = typeReplacement?.takeIf { it.referenceExpression != null }
-    private val typeReplacementQualifierAsExpression = typeReplacement?.qualifier?.let { factory.createExpression(it.text) }
+    private val typeReplacement: KtUserType? = typeReplacement?.takeIf { it.referenceExpression != null }
+    private val typeReplacementQualifierAsExpression: KtExpression? = typeReplacement?.qualifier?.let { factory.createExpression(it.text) }
 
     private val constructorReplacementStrategy = constructorReplacement?.let {
       CallableUsageReplacementStrategy(it, inlineSetter = false)
@@ -62,8 +63,7 @@ class ClassUsageReplacementStrategy(
 
             else -> {
                 if (typeReplacement != null) {
-                    val fqNameStr = typeReplacement.text
-                    val fqName = FqName(fqNameStr)
+                    val fqName = typeReplacement.referenceExpression?.resolve()?.kotlinFqName ?: FqName(typeReplacement.text)
 
                     return {
                         modifyPsiWithOptimizedImports(usage.containingKtFile) {
@@ -80,16 +80,14 @@ class ClassUsageReplacementStrategy(
 
     private fun replaceConstructorCallWithOtherTypeConstruction(callExpression: KtCallElement): KtElement? {
         val referenceExpression = typeReplacement?.referenceExpression ?: error("Couldn't find referenceExpression")
-        val classFromReplacement = KotlinClassShortNameIndex
-            .get(referenceExpression.text, callExpression.project, callExpression.resolveScope)
-            .firstOrNull()
+        val classFromReplacement = referenceExpression.resolve() as? KtClassOrObject
 
         val replacementTypeArgumentList = typeReplacement.typeArgumentList
         val replacementTypeArgumentCount = classFromReplacement?.typeParameters?.size
             ?: replacementTypeArgumentList?.arguments?.size
 
         val typeArgumentList = callExpression.typeArgumentList
-        val constructor = callExpression.mainReference?.resolve()
+        val constructor = callExpression.calleeExpression?.mainReference?.resolve()
         val typeArgumentCount = (constructor as? KtConstructor<*>)?.typeParameters?.size ?: typeArgumentList?.arguments?.size
 
         if (typeArgumentCount != replacementTypeArgumentCount) {

@@ -7,6 +7,7 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -42,28 +43,35 @@ public final class TextPatchBuilder {
   @NotNull private final Path myBasePath;
   private final boolean myIsReversePath;
   private final int myContextLineCount = Registry.get("patch.context.line.count").asInteger();
-  @Nullable private final Runnable myCancelChecker;
 
   private TextPatchBuilder(@NotNull Path basePath,
-                           boolean isReversePath,
-                           @Nullable Runnable cancelChecker) {
+                           boolean isReversePath) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
-    myCancelChecker = cancelChecker;
   }
 
   public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
                                                     @NotNull Path basePath,
+                                                    boolean reversePatch) throws VcsException {
+    return new TextPatchBuilder(basePath, reversePatch).build(changes);
+  }
+
+  /**
+   * @deprecated Use {@link #buildPatch(Collection, Path, boolean)}
+   */
+  @Deprecated
+  public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
+                                                    @NotNull Path basePath,
                                                     boolean reversePatch,
-                                                    @Nullable Runnable cancelChecker) throws VcsException {
-    return new TextPatchBuilder(basePath, reversePatch, cancelChecker).build(changes);
+                                                    @Nullable Runnable ignoredParameter) throws VcsException {
+    return buildPatch(changes, basePath, reversePatch);
   }
 
   @NotNull
   private List<FilePatch> build(@NotNull Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
     List<FilePatch> result = new ArrayList<>();
     for (BeforeAfter<AirContentRevision> c : changes) {
-      if (myCancelChecker != null) myCancelChecker.run();
+      ProgressManager.checkCanceled();
 
       AirContentRevision beforeRevision = myIsReversePath ? c.getAfter() : c.getBefore();
       AirContentRevision afterRevision = myIsReversePath ? c.getBefore() : c.getAfter();

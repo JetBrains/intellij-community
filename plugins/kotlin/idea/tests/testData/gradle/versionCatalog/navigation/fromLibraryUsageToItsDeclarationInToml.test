@@ -13,5 +13,3 @@ dependencies {
 # EXPECTED
 [libraries]
 some_test-library = { module = "org.junit.jupiter:junit-jupiter"}
-
-// FILE: settings.gradle.kts

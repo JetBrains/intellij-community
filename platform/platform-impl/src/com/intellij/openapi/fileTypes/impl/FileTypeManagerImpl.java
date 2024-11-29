@@ -218,6 +218,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private FileTypeOverrider[] fileTypeOverriderCache;
 
+  @Override
   public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
     fireBeforeFileTypesChanged();
     initializeMatchers(pluginDescriptor, fileTypeBean);
@@ -1426,8 +1427,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     List<String> readOnlyHashBangs = initialAssociations.getHashBangPatterns(type);
     List<String> hashBangPatterns = patternsTable.getHashBangPatterns(ftd);
-    hashBangPatterns.sort(Comparator.naturalOrder());
-    for (String hashBangPattern : hashBangPatterns) {
+    for (String hashBangPattern : ContainerUtil.sorted(hashBangPatterns)) {
       if (!readOnlyHashBangs.contains(hashBangPattern)) {
         writeHashBang(extensionMap, hashBangPattern, type.getName());
       }

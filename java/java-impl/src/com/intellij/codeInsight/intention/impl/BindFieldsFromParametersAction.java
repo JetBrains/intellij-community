@@ -68,6 +68,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction {
     return null;
   }
 
+  @Unmodifiable
   private static @NotNull List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
     return ContainerUtil.filter(method.getParameterList().getParameters(), BindFieldsFromParametersAction::isAvailable);
   }

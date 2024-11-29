@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.benchmarks` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "benchmarks",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "benchmarks_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "@lib//:jmh-core",
+    "@lib//:jmh-generator-annprocess",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:fastutil-min",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test",
+    "//platform/util/storages:io-storages",
+    "//platform/util/testSrc:tests_test",
+  ]
+)
+### auto-generated section `build intellij.platform.benchmarks` end

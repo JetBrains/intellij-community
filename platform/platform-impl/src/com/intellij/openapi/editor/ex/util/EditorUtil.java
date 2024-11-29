@@ -972,7 +972,6 @@ public final class EditorUtil {
   }
 
   public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
-    ThreadingAssertions.assertEventDispatchThread();
     ReadAction.run(() -> {
       if (editor.isDisposed()) {
         Disposer.dispose(disposable);

@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.devkit.core" exported="" />
+    <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="library" exported="" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />

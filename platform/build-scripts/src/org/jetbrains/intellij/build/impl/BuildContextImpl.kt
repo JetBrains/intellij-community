@@ -13,6 +13,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
@@ -93,6 +94,10 @@ class BuildContextImpl internal constructor(
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }
+
+  override val nonBundledPlugins: Path by lazy { paths.artifactDir.resolve("${applicationInfo.productCode}-plugins") }
+
+  override val nonBundledPluginsToBePublished: Path by lazy { nonBundledPlugins.resolve("auto-uploading") }
 
   init {
     @Suppress("DEPRECATION")
@@ -303,25 +308,15 @@ class BuildContextImpl internal constructor(
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
 
-    val cacheMacroName = when (os) {
-      OsFamily.WINDOWS -> "%IDE_CACHE_DIR%"
-      OsFamily.MACOS -> "\$IDE_CACHE_DIR"
-      OsFamily.LINUX -> "\$IDE_CACHE_DIR"
+    if (productProperties.enableCds) {
+      val cacheDir = if (os == OsFamily.WINDOWS) "%IDE_CACHE_DIR%\\" else "\$IDE_CACHE_DIR/"
+      jvmArgs.add("-XX:SharedArchiveFile=${cacheDir}${productProperties.baseFileName}${buildNumber}.jsa")
+      jvmArgs.add("-XX:+AutoCreateSharedArchive")
     }
-
-    if (!productProperties.enableCds) {
+    else {
       productProperties.classLoader?.let {
         jvmArgs.add("-Djava.system.class.loader=${it}")
       }
-    }
-    else {
-      if (os == OsFamily.WINDOWS) {
-        jvmArgs.add("-XX:SharedArchiveFile=$cacheMacroName\\${productProperties.baseFileName}$buildNumber.jsa")
-      }
-      else {
-        jvmArgs.add("-XX:SharedArchiveFile=$cacheMacroName/${productProperties.baseFileName}$buildNumber.jsa")
-      }
-      jvmArgs.add("-XX:+AutoCreateSharedArchive")
     }
 
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
@@ -430,6 +425,10 @@ class BuildContextImpl internal constructor(
       stdErrConsumer = messages::warning,
       attachStdOutToException = attachStdOutToException,
     )
+  }
+
+  override val pluginAutoPublishList: PluginAutoPublishList by lazy {
+    PluginAutoPublishList(this)
   }
 }
 

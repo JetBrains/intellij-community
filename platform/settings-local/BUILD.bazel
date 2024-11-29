@@ -1,51 +1,97 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
-
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
-)
+### auto-generated section `build intellij.platform.settings.local` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "17",
-  x_optin = ["com.intellij.util.xmlb.SettingsInternalApi"]
+  opt_in = ["com.intellij.util.xmlb.SettingsInternalApi"]
 )
 
-kt_jvm_library(
+jvm_resources(
+  name = "settings-local_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
   name = "settings-local",
   module_name = "intellij.platform.settings.local",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
   kotlinc_opts = ":custom",
-  plugins = ["@libraries//:serialization_plugin"],
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:annotations",
-    "@community//platform/extensions",
-    "@community//platform/core-api:core",
-    "@community//platform/settings",
-    "@community//platform/projectModel-api:projectModel",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@community//platform/projectModel-impl",
-    "@community//platform/ide-core",
-    "@libraries//:kotlinx-serialization-protobuf-jvm",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@libraries//:h2-mvstore",
-    "@libraries//:kotlinx-serialization-cbor-jvm",
-    "@libraries//:jackson-core",
-    "@libraries//:jackson-dataformat-cbor",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util/xmlDom:util-xmlDom",
-    "@community//platform/object-serializer:objectSerializer",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:aalto-xml",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/settings",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/projectModel-impl",
+    "//platform/ide-core",
+    "@lib//:kotlinx-serialization-protobuf",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:mvstore",
+    "@lib//:platform_settings_local_kotlinx-serialization-cbor",
+    "@lib//:jackson",
+    "@lib//:platform_settings_local_jackson-dataformat-cbor",
+    "//platform/util/jdom",
+    "//platform/util/xmlDom",
+    "//platform/object-serializer:objectSerializer",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:aalto-xml",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":settings-local_resources"]
 )
-### auto-generated section `build` end
+
+kt_jvm_test(
+  name = "settings-local_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  associates = [":settings-local"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/settings",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/projectModel-impl",
+    "//platform/ide-core",
+    "@lib//:kotlinx-serialization-protobuf",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:mvstore",
+    "@lib//:platform_settings_local_kotlinx-serialization-cbor",
+    "@lib//:jackson",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//platform/core-impl",
+    "@lib//:platform_settings_local_jackson-dataformat-cbor",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-dataformat-yaml",
+    "//platform/util/jdom",
+    "//platform/util/xmlDom",
+    "//platform/object-serializer:objectSerializer",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:aalto-xml",
+    "//community-resources:customization",
+    "//platform/testFramework/core",
+  ],
+  runtime_deps = [":settings-local_resources"]
+)
+### auto-generated section `build intellij.platform.settings.local` end

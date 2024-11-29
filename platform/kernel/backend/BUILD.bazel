@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.platform.kernel.backend` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  opt_in = [
+    "kotlinx.coroutines.ExperimentalCoroutinesApi",
+    "kotlin.ExperimentalStdlibApi",
+  ]
+)
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.kernel.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "//platform/extensions",
+    "//platform/util",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/coroutines",
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/rpc.backend:rpc-backend",
+    "//platform/core-api:core",
+  ],
+  exports = [
+    "//platform/kernel/shared:kernel",
+    "//platform/kernel/rpc.backend:rpc-backend",
+  ],
+  runtime_deps = [":backend_resources"]
+)
+### auto-generated section `build intellij.platform.kernel.backend` end

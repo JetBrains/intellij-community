@@ -195,8 +195,6 @@ public final class FileSystemUtil {
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
     JnaUnixMediatorImpl() {
-      assert JnaLoader.isSupportsDirectMapping() : "Direct mapping not available on " + Platform.RESOURCE_PREFIX;
-
       if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("darwin-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = DARWIN_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + Platform.RESOURCE_PREFIX);

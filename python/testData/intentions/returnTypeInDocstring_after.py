@@ -1,7 +1,7 @@
 def f(x):
     """
 
-    :rtype: object
+    :rtype: None
     """
     pass
 

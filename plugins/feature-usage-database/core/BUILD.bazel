@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.ae.database.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "ae-database-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ae-database-core",
+  module_name = "intellij.ae.database.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/core-api:core",
+    "//platform/sqlite",
+  ],
+  runtime_deps = [":ae-database-core_resources"]
+)
+
+kt_jvm_test(
+  name = "ae-database-core_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":ae-database-core"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "//platform/projectModel-api:projectModel",
+    "//platform/statistics",
+    "//platform/core-api:core",
+    "//platform/sqlite",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:assert_j",
+  ],
+  runtime_deps = [":ae-database-core_resources"]
+)
+### auto-generated section `build intellij.ae.database.core` end

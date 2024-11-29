@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -111,6 +112,7 @@ import java.util.Objects;
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     if (myPresentation == null) return List.of();
     return ContainerUtil.map(myPresentation.rangesToHighlight(), range -> new RangeToHighlight(file, range.range(), range.highlightKey()));

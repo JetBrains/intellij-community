@@ -1,0 +1,9 @@
+{
+    "modules": [
+        { "name": "A", "dependencies": [{"name": "B", "exported": true}]},
+        { "name": "B", "dependencies": [{"name": "C", "exported": true}] },
+        { "name": "C", "dependencies": [{"name": "D", "exported": true}] },
+        { "name": "D", "dependencies": [{"name": "E", "exported": true}] },
+        { "name": "E", "dependencies": [{"name": "A", "exported": true}] }
+    ]
+}

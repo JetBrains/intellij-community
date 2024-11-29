@@ -143,6 +143,7 @@ public final class ShelvedBinaryFile {
     return result;
   }
 
+  @Override
   public String toString() {
     return FileUtil.toSystemDependentName(BEFORE_PATH == null ? AFTER_PATH : BEFORE_PATH);
   }

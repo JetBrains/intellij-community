@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.util.lang.Ikv
 import com.intellij.util.lang.Xxh3
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +20,7 @@ private fun generateDb(file: Path, count: Int, random: Random): List<Pair<Long, 
   sizeAwareIkvWriter(file).use { writer ->
     (0 until count).forEach { i ->
       val data = random.nextBytes(random.nextInt(64, 512))
-      val key = Xxh3.hash(data)
+      val key = Hashing.xxh3_64().hashBytesToLong(data)
       writer.write(writer.entry(key, data.size), data)
       list.add(Pair(key, data))
     }

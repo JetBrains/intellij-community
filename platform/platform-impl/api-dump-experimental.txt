@@ -336,6 +336,10 @@ f:com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 - *s:setOfflineByDefault(com.intellij.openapi.vfs.VirtualFile,Z):V
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+- com.intellij.ui.content.ContentUI
+- *sf:NOT_SELECTED_TAB_ICON_TRANSPARENT:com.intellij.openapi.util.Key
 c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 - javax.swing.JComponent
 - com.intellij.openapi.actionSystem.UiDataProvider

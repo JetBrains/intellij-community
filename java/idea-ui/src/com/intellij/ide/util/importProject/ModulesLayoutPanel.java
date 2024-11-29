@@ -5,6 +5,7 @@ import com.intellij.ide.JavaUiBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -34,6 +35,7 @@ class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
+  @Unmodifiable
   protected List<ModuleDescriptor> getEntries() {
     final List<ModuleDescriptor> modules = getInsight().getSuggestedModules();
     return modules != null? modules : Collections.emptyList();

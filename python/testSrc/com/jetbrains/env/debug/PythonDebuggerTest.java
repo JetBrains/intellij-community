@@ -151,11 +151,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("command was GO!");
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //can't run on jython
-      }
     });
   }
 
@@ -277,11 +272,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython");
-      }
+
     });
   }
 
@@ -302,11 +293,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython");
-      }
     });
   }
 
@@ -354,11 +340,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-jython", "-iron");
-      }
     });
   }
 
@@ -381,11 +362,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-jython", "-iron");
-      }
+
     });
   }
 
@@ -407,12 +384,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("z").hasValue("102");
         resume();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-pypy"); //TODO: fix that for PyPy
       }
     });
   }
@@ -440,11 +411,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
-      }
     });
   }
 
@@ -479,11 +445,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
-      }
     });
   }
 
@@ -506,11 +467,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
-      }
     });
   }
 
@@ -1327,11 +1283,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput(BYTES_ARGS_WARNING);
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython");
-      }
     }
 
     Arrays.asList("test_call_exec_with_bytes_args.py", "test_call_spawn_with_bytes_args.py")

@@ -2,4 +2,5 @@ $schema: https://json.schemastore.org/idea-inspection-profile-1.0.json
 
 inspections:
   - inspection: TodoComment
+    enabled: false
     severity: INFO

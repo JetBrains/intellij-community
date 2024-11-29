@@ -1,19 +1,27 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 
+/** Internal API. See a note in {@link MessagePool}. */
+@ApiStatus.Internal
 public final class IdeaReportingEvent extends IdeaLoggingEvent {
   private final TextBasedThrowable myThrowable;
   private final IdeaPluginDescriptor myPlugin;
 
-  public IdeaReportingEvent(@NotNull AbstractMessage messageObject, String message, @NotNull String stacktrace, IdeaPluginDescriptor plugin) {
+  public IdeaReportingEvent(
+    @NotNull AbstractMessage messageObject,
+    String message,
+    @NotNull String stacktrace,
+    @Nullable IdeaPluginDescriptor plugin
+  ) {
     super(message, null, messageObject);
     myThrowable = new TextBasedThrowable(stacktrace);
     myPlugin = plugin;
@@ -37,7 +45,7 @@ public final class IdeaReportingEvent extends IdeaLoggingEvent {
   }
 
   @Override
-  public String getThrowableText() {
+  public @NotNull String getThrowableText() {
     return myThrowable.myStacktrace;
   }
 
@@ -47,10 +55,10 @@ public final class IdeaReportingEvent extends IdeaLoggingEvent {
     return (AbstractMessage)super.getData();
   }
 
-  static final class TextBasedThrowable extends Throwable {
+  private static final class TextBasedThrowable extends Throwable {
     private final String myStacktrace;
 
-    TextBasedThrowable(String stacktrace) {
+    private TextBasedThrowable(String stacktrace) {
       myStacktrace = stacktrace;
     }
 

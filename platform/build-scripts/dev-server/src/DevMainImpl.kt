@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.SystemProperties
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.getAdditionalPluginMainModules
@@ -42,6 +43,7 @@ fun buildDevMain(): Collection<Path> {
           }
         },
         generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false),
+        buildOptionsTemplate = BuildOptions(),
       )
     )
   }

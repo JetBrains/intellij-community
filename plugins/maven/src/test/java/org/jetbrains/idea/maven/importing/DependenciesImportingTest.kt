@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.InstantImportCompatible
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -26,7 +25,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testLibraryDependency() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -122,7 +120,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
 
   @Test
-  @InstantImportCompatible
   fun testPreservingDependenciesOrder() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -147,7 +144,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testPreservingDependenciesOrderWithTestDependencies() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -220,7 +216,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testInterModuleDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -340,7 +335,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testInterModuleDependenciesWithoutModuleVersions() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -421,7 +415,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testInterModuleDependenciesWithoutModuleGroup() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -684,7 +677,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDependencyOnSelf() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -862,7 +854,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDependenciesAreNotExported() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1213,7 +1204,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testPropertyInTheModuleDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1532,7 +1522,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDoNotCreateSameLibraryTwice() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1674,7 +1663,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDoNotPopulateSameRootEntriesOnEveryImport() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1877,7 +1865,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDoNoRemoveUnusedLibraryIfItWasChanged() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1946,7 +1933,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
   fun testDoNoRemoveUnusedUserProjectLibraries() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -2630,5 +2616,59 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     assertModuleLibDeps("m1", "Maven: ATTACHED-JAR: test:m2:1")
     assertModuleLibDep("m1", "Maven: ATTACHED-JAR: test:m2:1", "jar://" + FileUtil.toSystemIndependentName(jarPath) + "!/")
     assertModuleLibDeps("m2")
+  }
+
+  @Test
+  fun testTwoLinkedProjectsFromDifferentBasedirsShouldBeResolvedInDifferentEmbedders() = runBlocking {
+    val project1 = createModulePom("project1",
+                                   """
+                    <groupId>org.example</groupId>
+                    <artifactId>project1</artifactId>
+                    <version>1.0</version>
+                
+                    <properties>
+                        <maven.compiler.source>17</maven.compiler.source>
+                        <maven.compiler.target>17</maven.compiler.target>
+                        <pom.myversion>${'$'}{myversion}</pom.myversion>
+                    </properties>
+                
+                    <dependencies>
+                        <dependency>
+                            <groupId>test</groupId>
+                            <artifactId>test</artifactId>
+                            <version>${'$'}{pom.myversion}</version>
+                        </dependency>
+                    </dependencies>
+""")
+
+    createProjectSubFile("project1/.mvn/jvm.config", "-Dmyversion=1")
+
+    val project2 = createModulePom("project2",
+                                   """
+                    <groupId>org.example</groupId>
+                    <artifactId>project2</artifactId>
+                    <version>1.0</version>
+                
+                    <properties>
+                        <maven.compiler.source>17</maven.compiler.source>
+                        <maven.compiler.target>17</maven.compiler.target>
+                        <pom.myversion>${'$'}{myversion}</pom.myversion>
+                    </properties>
+                
+                    <dependencies>
+                        <dependency>
+                            <groupId>test</groupId>
+                            <artifactId>test</artifactId>
+                            <version>${'$'}{pom.myversion}</version>
+                        </dependency>
+                    </dependencies>
+""")
+
+    createProjectSubFile("project2/.mvn/jvm.config", "-Dmyversion=2")
+
+    importProjectsAsync(project1, project2)
+    assertModules("project1", "project2")
+    assertModuleLibDeps("project1", "Maven: test:test:1")
+    assertModuleLibDeps("project2", "Maven: test:test:2")
   }
 }

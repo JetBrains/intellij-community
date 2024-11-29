@@ -30,6 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -68,6 +69,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return ContainerUtil.findAll(actions, o -> o != this);
   }

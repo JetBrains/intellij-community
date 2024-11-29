@@ -13,13 +13,11 @@ import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.util.PsiUtilCore
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PyTokenTypes.FSTRING_TEXT
-import com.jetbrains.python.documentation.docstrings.EpydocString
 import com.jetbrains.python.documentation.docstrings.SphinxDocString
 import com.jetbrains.python.psi.PyFormattedStringElement
 import java.util.regex.Pattern
 
-private val KNOWN_DOCSTRING_TAGS_PATTERN = (SphinxDocString.ALL_TAGS + EpydocString.ALL_TAGS)
-  .joinToString("|", transform = Pattern::quote, prefix = "(", postfix = ")")
+private val KNOWN_DOCSTRING_TAGS_PATTERN = SphinxDocString.ALL_TAGS.joinToString("|", transform = Pattern::quote, prefix = "(", postfix = ")")
 private val DOCSTRING_DIRECTIVE_PATTERN = "^$KNOWN_DOCSTRING_TAGS_PATTERN[^\n:]*: *".toPattern(Pattern.MULTILINE)
 
 internal class PythonTextExtractor : TextExtractor() {

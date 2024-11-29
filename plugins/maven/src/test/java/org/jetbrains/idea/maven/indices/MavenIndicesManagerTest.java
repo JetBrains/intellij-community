@@ -104,7 +104,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
       });
 
     var indexingScheduled =
-      MavenIndicesManager.getInstance(getProject()).scheduleArtifactIndexing(null, artifactFile, localRepo.getAbsolutePath());
+      MavenIndicesManager.getInstance(getProject()).scheduleArtifactIndexing(null, artifactFile.toPath(), localRepo.getAbsolutePath());
     assertTrue("Failed to schedule indexing", indexingScheduled);
 
     latch.await(1, TimeUnit.MINUTES);

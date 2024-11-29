@@ -304,8 +304,8 @@ public class ImportModuleCompletionTest extends LightJava9ModulesCodeInsightFixt
 
   private void addDependency(ModuleDescriptor from, ModuleDescriptor to) {
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
-    Module fromModule = moduleManager.findModuleByName(from.getModuleName$intellij_java_tests());
-    Module toModule = moduleManager.findModuleByName(to.getModuleName$intellij_java_tests());
+    Module fromModule = moduleManager.findModuleByName(from.moduleName);
+    Module toModule = moduleManager.findModuleByName(to.moduleName);
     ModuleRootModificationUtil.addDependency(fromModule, toModule);
   }
 

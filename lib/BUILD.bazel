@@ -1,17 +1,21 @@
+### auto-generated section `local-libs` start
 load("@rules_java//java:defs.bzl", "java_import")
 
 java_import(
-  name = "eclipse",
-  jars = [
-    "ecj-4.25.jar"
-  ],
+  name = "commons-httpclient-3_1-patched",
+  jars = ["commons-httpclient-3.1-patched.jar"],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "mac",
-  jars = [
-    "eawtstub.jar"
-  ],
+  name = "eawtstub",
+  jars = ["eawtstub.jar"],
   visibility = ["//visibility:public"]
 )
+
+java_import(
+  name = "ecj-4_25",
+  jars = ["ecj-4.25.jar"],
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `local-libs` end

@@ -1,0 +1,84 @@
+### auto-generated section `build intellij.platform.builtInServer.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "builtInServer-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "builtInServer-impl",
+  module_name = "intellij.platform.builtInServer.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "@lib//:guava",
+    "@lib//:gson",
+    "@lib//:commons-imaging",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/diff-api:diff",
+    "@lib//:kotlin-stdlib",
+    "@lib//:netty-codec-http",
+    "@lib//:fastutil-min",
+    "@lib//:jackson",
+    "@lib//:netty-buffer",
+    "@lib//:caffeine",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:netty-codec-compression",
+  ],
+  exports = ["//platform/built-in-server-api:builtInServer"],
+  runtime_deps = [":builtInServer-impl_resources"]
+)
+### auto-generated section `build intellij.platform.builtInServer.impl` end
+
+### auto-generated section `build intellij.platform.builtInServer.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "builtInServer-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "builtInServer-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "@lib//:guava",
+    "@lib//:gson",
+    "@lib//:commons-imaging",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/vcs-api:vcs",
+    "@lib//:kotlin-stdlib",
+    "@lib//:assert_j",
+    "//platform/built-in-server:builtInServer-impl",
+    "@lib//:netty-codec-http",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:netty-buffer",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+  ]
+)
+### auto-generated section `build intellij.platform.builtInServer.tests` end

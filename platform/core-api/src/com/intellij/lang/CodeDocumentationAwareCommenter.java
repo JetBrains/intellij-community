@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
   @Nullable
   IElementType getLineCommentTokenType();
 
+  @Unmodifiable
   default @NotNull List<IElementType> getLineCommentTokenTypes() {
     return ContainerUtil.createMaybeSingletonList(getLineCommentTokenType());
   }

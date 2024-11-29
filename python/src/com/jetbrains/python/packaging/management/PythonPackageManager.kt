@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -8,25 +9,70 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
-import com.jetbrains.python.packaging.common.PackageManagerHolder
-import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
-  abstract val installedPackages: List<PythonPackage>
+  abstract var installedPackages: List<PythonPackage>
 
   abstract val repositoryManager: PythonRepositoryManager
 
-  abstract suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>>
 
-  abstract suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>>
-  abstract suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>>
+  /**
+   * Install all specified packages, stop on the first error
+   */
+  suspend fun installPackagesWithDialogOnError(packages: List<PythonPackageSpecification>, options: List<String>): Result<List<PythonPackage>> {
+    packages.forEach { specification ->
+      runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
+        installPackageCommand(specification, options)
+      }.onFailure {
+        return Result.failure(it)
+      }
+    }
+    refreshPaths()
+    return reloadPackages()
+  }
 
-  abstract suspend fun reloadPackages(): Result<List<PythonPackage>>
+  suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
+    installPackageCommand(specification, options).onFailure { return Result.failure(it) }
+    refreshPaths()
+    return reloadPackages()
+  }
+
+  suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+    updatePackageCommand(specification).onFailure { return Result.failure(it) }
+    refreshPaths()
+    return reloadPackages()
+  }
+
+  suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
+    uninstallPackageCommand(pkg).onFailure { return Result.failure(it) }
+    refreshPaths()
+    return reloadPackages()
+  }
+
+  open suspend fun reloadPackages(): Result<List<PythonPackage>> {
+    val packages = reloadPackagesCommand().getOrElse {
+      return Result.failure(it)
+    }
+
+    installedPackages = packages
+    ApplicationManager.getApplication().messageBus.apply {
+      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+      syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
+    }
+
+    return Result.success(packages)
+  }
+
+  protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String>
+  protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String>
+  protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String>
+  protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
 
   internal suspend fun refreshPaths() {
     writeAction {
@@ -34,7 +80,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
   }
-
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {

@@ -1,0 +1,36 @@
+### auto-generated section `build kotlin.navigation.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-navigation-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-navigation-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/navigation",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_analysis-api-k2",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test",
+  ]
+)
+### auto-generated section `build kotlin.navigation.tests` end

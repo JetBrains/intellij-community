@@ -63,6 +63,7 @@ public class PropertiesPrefixGroup implements Group {
     return myProperties;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -74,6 +75,7 @@ public class PropertiesPrefixGroup implements Group {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myPrefix.hashCode();
   }

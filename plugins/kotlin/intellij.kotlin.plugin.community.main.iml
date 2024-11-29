@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" exported="" />
-    <orderEntry type="module" module-name="kotlin.base.fir.analysis" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" exported="" />
@@ -102,7 +101,9 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" exported="" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-toml" exported="" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" exported="" />
@@ -166,7 +167,7 @@
     <orderEntry type="module" module-name="kotlin.highlighting.shared" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.postfix-templates.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.features-trainer" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
@@ -207,7 +208,7 @@
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
     <orderEntry type="module" module-name="kotlin.onboarding" exported="" />
-    <orderEntry type="module" module-name="kotlin.onboarding.gradle" />
+    <orderEntry type="module" module-name="kotlin.onboarding.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" exported="" />

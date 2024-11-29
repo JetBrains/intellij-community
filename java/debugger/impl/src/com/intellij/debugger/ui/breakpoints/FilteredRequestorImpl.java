@@ -7,8 +7,8 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -125,10 +125,10 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
       setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
     }
 
-    myClassFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));
-    myClassExclusionFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(EXCLUSION_FILTER_OPTION_NAME));
+    myClassFilters = DebuggerSettingsUtils.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));
+    myClassExclusionFilters = DebuggerSettingsUtils.readFilters(parentNode.getChildren(EXCLUSION_FILTER_OPTION_NAME));
 
-    final ClassFilter[] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
+    final ClassFilter[] instanceFilters = DebuggerSettingsUtils.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
     final List<InstanceFilter> iFilters = new ArrayList<>(instanceFilters.length);
 
     for (ClassFilter instanceFilter : instanceFilters) {
@@ -145,9 +145,9 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
     JDOMExternalizerUtil.writeField(parentNode, CONDITION_OPTION_NAME, getCondition().toExternalForm());
-    DebuggerUtilsEx.writeFilters(parentNode, FILTER_OPTION_NAME, myClassFilters);
-    DebuggerUtilsEx.writeFilters(parentNode, EXCLUSION_FILTER_OPTION_NAME, myClassExclusionFilters);
-    DebuggerUtilsEx.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
+    DebuggerSettingsUtils.writeFilters(parentNode, FILTER_OPTION_NAME, myClassFilters);
+    DebuggerSettingsUtils.writeFilters(parentNode, EXCLUSION_FILTER_OPTION_NAME, myClassExclusionFilters);
+    DebuggerSettingsUtils.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
   }
 
   public TextWithImports getCondition() {

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -62,6 +63,8 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
     override fun actionPerformed(e: AnActionEvent) {
       executorEventDispatcher.multicaster.executorCalled(null)
     }
+  }.apply {
+    registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), this@CommitChunkPanel, this@CommitChunkPanel)
   }
 
   private val amendCommitToggle = object : ToggleAction(VcsBundle.message("checkbox.amend") , null, PlatformVcsImplIcons.AmendInline) {
@@ -100,7 +103,11 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
       .addToBottom(BorderLayoutPanel().addToRight(bottomWrapper).andTransparent())
 
     // ui adjustment
-    centerPanel.andTransparent().withBackground(Spec.INPUT_BACKGROUND)
+    centerPanel
+      .andTransparent()
+      .withBackground(Spec.INPUT_BACKGROUND)
+
+    withBorder(JBUI.Borders.emptyLeft(Spec.PANEL_LEFT_GAP))
     resetPreferredHeight()
     andTransparent()
 
@@ -208,6 +215,7 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
 
 private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(project) {
   lateinit var state: ChangeListCommitState
+  lateinit var range: LocalRange
 
   init {
     val vcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss.toSet()
@@ -221,7 +229,18 @@ private class CommitChunkWorkflow(project: Project) : NonModalCommitWorkflow(pro
     val committer = LocalChangesCommitter(project, state, commitContext)
     addCommonResultHandlers(sessionInfo, committer)
     committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
+    logCommit()
     committer.runCommit(VcsBundle.message("commit.changes"), false)
+  }
+
+  private fun logCommit() {
+    val message = state.commitMessage
+    val messageLines = message.lines().filter { it.isNotBlank() }
+    val subjectLength = messageLines.getOrNull(0)?.length ?: 0
+
+    val lines = range.line2 - range.line1
+
+    CommitChunkCollector.logCommit(commitContext.isAmendCommitMode, lines, messageLines.size, subjectLength)
   }
 }
 
@@ -256,6 +275,7 @@ private class CommitChunkWorkFlowHandler(
 
   override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.state = getCommitState()
+    workflow.range = rangeProvider()
     return true
   }
 
@@ -278,8 +298,6 @@ private class CommitChunkWorkFlowHandler(
   }
 
   fun setPopup(popupDisposable: Disposable) {
-    ui.resetSize()
-
     workflow.addListener(object : CommitWorkflowListener {
       override fun executionStarted() {
         Disposer.dispose(popupDisposable)
@@ -291,6 +309,9 @@ private class CommitChunkWorkFlowHandler(
     })
 
     commitMessagePolicy.init()
+    if (ui.commitMessageUi.text.isBlank()) {
+      ui.resetSize()
+    }
   }
 }
 
@@ -316,9 +337,12 @@ private fun adjustEditorSettings(editor: EditorEx) {
   editor.scrollPane.border = JBUI.Borders.empty()
   editor.backgroundColor = Spec.INPUT_BACKGROUND
   editor.settings.isShowIntentionBulb = false
+  editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
 }
 
 private object Spec {
+  const val PANEL_LEFT_GAP: Int = 12
+
   val DEFAULT_WIDTH: Int
     get() = JBUI.scale(255)
 
@@ -337,32 +361,26 @@ private object Spec {
   val MINIMUM_BUTTON_SIZE: Dimension = Dimension(22, 22)
 
   object Animation {
-    const val FRAMES = 30
-    const val DURATION = 200
+    const val FRAMES = 20
+    const val DURATION = 150
   }
 }
 
 private class ChunkCommitMessagePolicy(
   project: Project,
-  private val commitMessageUi: CommitMessageUi,
-) : AbstractCommitMessagePolicy(project) {
+  commitMessageUi: CommitMessageUi,
+) : AbstractCommitMessagePolicy(project, commitMessageUi) {
+  override val clearMessageAfterCommit = true
 
-  fun init() {
-    commitMessageUi.text = getCommitMessage()
-  }
+  override val delayedMessagesProvidersSupport = null
 
-  fun onBeforeCommit() {
-    val commitMessage = commitMessageUi.text
-    vcsConfiguration.saveCommitMessage(commitMessage)
-  }
+  override fun getNewCommitMessage() = CommitMessage(vcsConfiguration.tempChunkCommitMessage)
 
-  fun onAfterCommit() {
+  override fun cleanupStoredMessage() {
     saveTempChunkCommitMessage("")
-    commitMessageUi.text = getCommitMessage()
   }
 
-  private fun getCommitMessage(): String {
-    return vcsConfiguration.tempChunkCommitMessage
+  override fun dispose() {
   }
 
   fun saveTempChunkCommitMessage(commitMessage: String) {

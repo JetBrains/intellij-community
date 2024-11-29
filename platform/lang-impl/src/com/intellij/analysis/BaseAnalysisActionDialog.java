@@ -4,7 +4,7 @@ package com.intellij.analysis;
 import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.analysis.dialog.ModelScopeItemPresenter;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -122,7 +123,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       int type = myOptions.SCOPE_TYPE;
       List<ModelScopeItemView> preselectedScopes = ContainerUtil.filter(myViewItems, x -> x.scopeId == type);
 
-      if (preselectedScopes.size() >= 1) {
+      if (!preselectedScopes.isEmpty()) {
         LOG.assertTrue(preselectedScopes.size() == 1, "preselectedScopes.size() == 1");
         preselectedScopes.get(0).button.setSelected(true);
         return;
@@ -165,6 +166,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @Deprecated
   public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions, @NotNull AnalysisScope defaultScope, @NotNull Project project, Module module) {
     return getScope(defaultScope);
+  }
+
+  protected @NotNull AnalysisUIOptions getOptions() {
+    return myOptions;
   }
 
   public boolean isProjectScopeSelected() {
@@ -217,7 +222,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       scope.setAnalyzeInjectedCode(analyzeInjectedCode);
     }
 
-    FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
+    FindUsagesSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;
   }
 
@@ -225,6 +230,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return CodeInsightBundle.message("action.analyze.verb");
   }
 
+  @Unmodifiable
   public static @NotNull List<ModelScopeItem> standardItems(@NotNull Project project,
                                                             @NotNull AnalysisScope scope,
                                                             @Nullable Module module,

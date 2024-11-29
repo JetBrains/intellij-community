@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -136,6 +137,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
     myExcludedConfigurable.reset();
   }
 
+  @Unmodifiable
   private List<Validator> getMarkedValidators(@NotNull List<Validator> validators) {
     return ContainerUtil.mapNotNull(validators, (NullableFunction<Validator, Validator>)validator -> myConfiguration.isSelected(validator) ? validator : null);
   }

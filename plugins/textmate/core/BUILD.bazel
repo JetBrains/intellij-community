@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.textmate.core` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.textmate.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:joni",
+    "@lib//:jetbrains-annotations",
+    "@lib//:fastutil-min",
+    "@lib//:caffeine",
+    "//platform/util/base",
+    "//platform/util-rt",
+    "//platform/util/xmlDom",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  exports = [
+    "@lib//:joni",
+    "@lib//:caffeine",
+  ]
+)
+
+kt_jvm_test(
+  name = "core_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":core"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:junit4",
+    "@lib//:joni",
+    "@lib//:jetbrains-annotations",
+    "@lib//:fastutil-min",
+    "@lib//:caffeine",
+    "//platform/util/base",
+    "//platform/util-rt",
+    "//platform/util/xmlDom",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-coroutines-core",
+  ]
+)
+### auto-generated section `build intellij.textmate.core` end

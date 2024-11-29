@@ -679,12 +679,10 @@ public final class GradleProjectResolverUtil {
 
     Collection<ProjectDependencyInfo> projectDependencyInfos = new ArrayList<>();
     List<File> artifactsToKeepAsLibraries = new ArrayList<>();
-    if (resolverCtx.getSettings() != null) {
-      GradleExecutionWorkspace executionWorkspace = resolverCtx.getSettings().getExecutionWorkspace();
-      ModuleData moduleData = executionWorkspace.findModuleDataByArtifacts(projectDependency.getProjectDependencyArtifacts());
-      if (moduleData != null) {
-        projectDependencyInfos.add(new ProjectDependencyInfo(moduleData, null, projectDependency.getProjectDependencyArtifacts()));
-      }
+    GradleExecutionWorkspace executionWorkspace = resolverCtx.getSettings().getExecutionWorkspace();
+    ModuleData moduleData = executionWorkspace.findModuleDataByArtifacts(projectDependency.getProjectDependencyArtifacts());
+    if (moduleData != null) {
+      projectDependencyInfos.add(new ProjectDependencyInfo(moduleData, null, projectDependency.getProjectDependencyArtifacts()));
     }
     if (projectDependencyInfos.isEmpty()) {
 
@@ -909,7 +907,7 @@ public final class GradleProjectResolverUtil {
                                                       String ownerModuleId) {
     final String libraryName =  unresolvedDep.getId().getPresentableName();
     final String failureMessage = unresolvedDep.getFailureMessage();
-    boolean isOfflineWork = resolverCtx.getSettings() != null && resolverCtx.getSettings().isOfflineWork();
+    boolean isOfflineWork = resolverCtx.getSettings().isOfflineWork();
     BuildIssue buildIssue = new UnresolvedDependencySyncIssue(
       libraryName, failureMessage, resolverCtx.getProjectPath(), isOfflineWork, ownerModuleId);
     resolverCtx.report(MessageEvent.Kind.ERROR, buildIssue);

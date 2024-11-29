@@ -202,6 +202,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return element != null ? element.getContainingFile() : null;
   }
 
+  @Override
   public String toString() {
     return getText();
   }

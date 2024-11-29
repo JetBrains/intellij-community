@@ -10,6 +10,8 @@
                     dynamic="true"/>
     <extensionPoint name="projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
                     dynamic="true"/>
+    <extensionPoint name="pathMacroSubstitutorProvider" interface="com.intellij.openapi.components.impl.PathMacroSubstitutorProvider"
+                    dynamic="true"/>
     <extensionPoint name="workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.fileIndexContributor"
@@ -29,6 +31,8 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge"
+                        serviceImplementation="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridgeImpl"/>
     <!-- Global Workspace Model -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>

@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.gradle.tooling.CancellationToken;
-import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
@@ -34,11 +33,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   String getProjectPath();
 
-  @Nullable
-  GradleExecutionSettings getSettings();
-
   @NotNull
-  ProjectConnection getConnection();
+  GradleExecutionSettings getSettings();
 
   @NotNull
   CancellationToken getCancellationToken();

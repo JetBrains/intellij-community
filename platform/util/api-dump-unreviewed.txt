@@ -101,6 +101,7 @@ a:com.intellij.execution.process.BaseProcessHandler
 - p:doDestroyProcess():V
 - getCharset():java.nio.charset.Charset
 - getCommandLine():java.lang.String
+- getCommandLineForLog():java.lang.String
 - f:getProcess():java.lang.Process
 - getProcessInput():java.io.OutputStream
 - p:onOSProcessTerminated(I):V
@@ -214,7 +215,6 @@ f:com.intellij.execution.process.WinProcessManager
 f:com.intellij.jna.JnaLoader
 - <init>():V
 - s:isLoaded():Z
-- s:isSupportsDirectMapping():Z
 - s:load(com.intellij.openapi.diagnostic.Logger):V
 f:com.intellij.openapi.CompositeDisposable
 - com.intellij.openapi.Disposable
@@ -965,8 +965,8 @@ f:com.intellij.openapi.util.SystemInfo
 - sf:isMac:Z
 - sf:isMacOSBigSur:Z
 - sf:isMacOSCatalina:Z
-- sf:isMacOSLeopard:Z
 - sf:isMacOSMonterey:Z
+- sf:isMacOSSequoia:Z
 - sf:isMacOSSonoma:Z
 - sf:isMacOSVentura:Z
 - sf:isMacSystemMenu:Z
@@ -994,7 +994,6 @@ f:com.intellij.openapi.util.SystemInfo
 - s:getWinBuildNumber():java.lang.Long
 - s:hasXdgMime():Z
 - s:hasXdgOpen():Z
-- s:isJavaVersionAtLeast(I,I,I):Z
 - s:isJavaVersionAtLeast(java.lang.String):Z
 - s:isOsVersionAtLeast(java.lang.String):Z
 com.intellij.openapi.util.Throwable2Computable
@@ -1666,8 +1665,6 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:escapeXmlEntities(java.lang.String):java.lang.String
 - s:escaper(Z,java.lang.String):com.intellij.util.NotNullFunction
 - s:filterEmptyStrings(java.lang.String[]):java.lang.String[]
-- s:findAllIndexesOfSymbol(java.lang.CharSequence,C):java.util.List
-- s:findAllIndexesOfSymbol(java.lang.CharSequence,C,I,Z):java.util.List
 - s:findFirst(java.lang.CharSequence,com.intellij.openapi.util.text.CharFilter):I
 - s:findIgnoreCase(java.lang.String,java.lang.String[]):Z
 - s:findMatches(java.lang.String,java.util.regex.Pattern):java.util.List
@@ -1949,6 +1946,28 @@ f:com.intellij.ui.NewUiValue
 - s:initialize(java.util.function.Supplier):V
 - s:isEnabled():Z
 - s:overrideNewUiForOneRemDevSession(Z):V
+c:com.intellij.ui.classFilter.ClassFilter
+- com.intellij.openapi.util.JDOMExternalizable
+- java.lang.Cloneable
+- sf:EMPTY_ARRAY:com.intellij.ui.classFilter.ClassFilter[]
+- ENABLED:Z
+- INCLUDE:Z
+- PATTERN:java.lang.String
+- <init>():V
+- <init>(java.lang.String):V
+- clone():com.intellij.ui.classFilter.ClassFilter
+- s:deepCopyOf(com.intellij.ui.classFilter.ClassFilter[]):com.intellij.ui.classFilter.ClassFilter[]
+- equals(java.lang.Object):Z
+- getPattern():java.lang.String
+- hashCode():I
+- isEnabled():Z
+- isInclude():Z
+- matches(java.lang.String):Z
+- readExternal(org.jdom.Element):V
+- setEnabled(Z):V
+- setInclude(Z):V
+- setPattern(java.lang.String):V
+- writeExternal(org.jdom.Element):V
 com.intellij.ui.icons.CompositeIcon
 - com.intellij.ui.icons.ReplaceableIcon
 - javax.swing.Icon
@@ -2125,6 +2144,9 @@ com.intellij.util.Consumer
 - java.util.function.Consumer
 - accept(java.lang.Object):V
 - a:consume(java.lang.Object):V
+f:com.intellij.util.CoroutineScopeKt
+- sf:asDisposable(kotlinx.coroutines.CoroutineScope):com.intellij.openapi.Disposable
+- sf:attachAsChildTo(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 f:com.intellij.util.DefaultBundleService
 - <init>():V
 - compute(java.util.function.Supplier):java.lang.Object
@@ -4715,7 +4737,6 @@ a:com.intellij.util.io.FileAccessorCache
 - remove(java.lang.Object):Z
 f:com.intellij.util.io.FileAccessorCache$Handle
 - com.intellij.util.io.ResourceHandle
-- <init>(java.lang.Object,com.intellij.util.io.FileAccessorCache):V
 - allocate():V
 - close():V
 - get():java.lang.Object
@@ -4757,7 +4778,7 @@ f:com.intellij.util.io.IOUtil
 - s:toHexString(B[]):java.lang.String
 - s:toHexString(B[],I):java.lang.String
 - s:toString(java.nio.ByteBuffer):java.lang.String
-- s:wrapSafely(java.lang.AutoCloseable,com.intellij.openapi.util.ThrowableNotNullFunction):java.lang.AutoCloseable
+- s:wrapSafely(java.lang.AutoCloseable,com.intellij.openapi.util.ThrowableNotNullFunction):java.lang.Object
 - s:writeCharSequence(java.lang.CharSequence,java.io.DataOutput):V
 - s:writeString(java.lang.String,java.io.DataOutput):V
 - s:writeStringList(java.io.DataOutput,java.util.Collection):V
@@ -5263,7 +5284,6 @@ f:com.intellij.util.io.zip.DosTime
 - s:dosToJavaTime(J):J
 - s:javaToDosTime(J):J
 c:com.intellij.util.io.zip.JBZipEntry
-- java.lang.Cloneable
 - p:<init>(com.intellij.util.io.zip.JBZipFile):V
 - p:<init>(java.lang.String,com.intellij.util.io.zip.JBZipFile):V
 - addExtra(com.intellij.util.io.zip.JBZipExtraField):V
@@ -5447,6 +5467,7 @@ e:com.intellij.util.system.OS
 - sf:Other:com.intellij.util.system.OS
 - sf:Windows:com.intellij.util.system.OS
 - sf:macOS:com.intellij.util.system.OS
+- f:version:java.lang.String
 - s:fromString(java.lang.String):com.intellij.util.system.OS
 - getPlatform():com.intellij.execution.Platform
 - s:valueOf(java.lang.String):com.intellij.util.system.OS

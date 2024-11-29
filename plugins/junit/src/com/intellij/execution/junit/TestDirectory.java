@@ -117,7 +117,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, Set<Location<?>> classes) throws CantRunException {
+  protected void searchTests5(Module module, Set<? super Location<?>> classes) throws CantRunException {
     if (module != null) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
       PsiPackage aPackage = AbstractJavaTestConfigurationProducer.checkPackage(directory);
@@ -137,7 +137,7 @@ class TestDirectory extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
+  protected String getFilters(Set<? extends Location<?>> foundClasses, String packageName) {
     return foundClasses.isEmpty()
            ? super.getFilters(foundClasses, packageName)
            : StringUtil.join(foundClasses, CLASS_NAME_FUNCTION, "||");
@@ -146,14 +146,14 @@ class TestDirectory extends TestPackage {
   @Override
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
-                                           Set<Location<?>> classes) throws CantRunException {
+                                           Set<? super Location<?>> classes) throws CantRunException {
     collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
   }
 
 
   private static void collectClassesRecursively(PsiDirectory directory,
                                                 Condition<? super PsiClass> acceptAsTest,
-                                                Set<Location<?>> classes) {
+                                                Set<? super Location<?>> classes) {
     PsiDirectory[] subDirectories = ReadAction.compute(() -> directory.getSubdirectories());
     for (PsiDirectory subDirectory : subDirectories) {
       collectClassesRecursively(subDirectory, acceptAsTest, classes);
@@ -168,7 +168,7 @@ class TestDirectory extends TestPackage {
     }
   }
 
-  private static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<Location<?>> classes) {
+  private static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<? super Location<?>> classes) {
     if (Registry.is("junit4.accept.inner.classes", true)) {
       classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses)
         .withRoot(aClass).filter(acceptAsTest).map(psiClass -> PsiLocation.fromPsiElement(psiClass))

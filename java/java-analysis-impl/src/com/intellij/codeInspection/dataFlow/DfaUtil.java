@@ -30,6 +30,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -306,6 +307,7 @@ public final class DfaUtil {
     return value;
   }
 
+  @Unmodifiable
   public static @NotNull List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
                                                                           @NotNull List<? extends MethodContract> contracts) {
     if (method == null) return contracts;

@@ -40,6 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="Guava" level="project" />

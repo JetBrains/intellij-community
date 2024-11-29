@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -78,6 +79,7 @@ public final class JavaSuppressionUtil {
   }
 
   @NotNull
+  @Unmodifiable
   private static Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiAnnotation annotation) {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     if (attributes.length == 0) {

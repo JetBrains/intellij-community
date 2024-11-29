@@ -5,13 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
-import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.ide.trustedProjects.impl.TrustedProjectUtil.findAllIndexesOfSymbol
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -24,7 +23,6 @@ import com.intellij.ui.util.width
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.NonNls
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
@@ -38,17 +36,19 @@ import kotlin.io.path.pathString
 import kotlin.math.ceil
 
 internal class TrustedProjectStartupDialog(
-  private val project: Project?, @NonNls private val projectPath: Path, val isWinDefenderEnabled: Boolean = true, val idePaths: List<Path>,
-  @NlsContexts.DialogTitle private val myTitle: String = IdeBundle.message("untrusted.project.general.dialog.title"),
-  @NlsContexts.DialogMessage private val message: String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
-  @NlsContexts.Button private val trustButtonText: String = IdeBundle.message("untrusted.project.dialog.trust.button"),
-  @NlsContexts.Button private val distrustButtonText: String = IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-  @NlsContexts.Button private val cancelButtonText: String = IdeBundle.message("untrusted.project.open.dialog.cancel.button"),
+  project: Project?,
+  private val projectPath: Path,
+  private val pathsToExclude: List<Path>,
+  private val myTitle: @NlsContexts.DialogTitle String,
+  private val message: @NlsContexts.DialogMessage String,
+  private val trustButtonText: @NlsContexts.Button String,
+  private val distrustButtonText: @NlsContexts.Button String,
+  private val cancelButtonText: @NlsContexts.Button String,
 ) : DialogWrapper(project) {
   private val myDefaultOptionIndex = 0
   private val myFocusedOptionIndex = 1
   private val propGraph = PropertyGraph("Trust project dialog")
-  private val windowsDefender = propGraph.property(true)
+  private val windowsDefender = propGraph.property(pathsToExclude.isNotEmpty())
   private val trustAll = propGraph.property(false)
   private var windowsDefenderCheckBox: Cell<JBCheckBox>? = null
   private var userChoice: OpenUntrustedProjectChoice = OpenUntrustedProjectChoice.CANCEL
@@ -66,7 +66,9 @@ internal class TrustedProjectStartupDialog(
         Point(location.x + (rootPane.width - window.width) / 2, (location.y + rootPane.height * 0.25).toInt())
       }
     }
+
     init()
+
     if (myIsTitleComponent) {
       setUndecorated(true)
       rootPane.windowDecorationStyle = JRootPane.NONE
@@ -75,17 +77,17 @@ internal class TrustedProjectStartupDialog(
       object : MouseDragHelper<JComponent>(myDisposable, contentPane as JComponent) {
         var myLocation: Point? = null
 
-        override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
-          val target = dragComponent.findComponentAt(dragComponentPoint)
-          return target == null || target == dragComponent || target is JPanel
-        }
+        override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean =
+          dragComponent.findComponentAt(dragComponentPoint).let { target -> target == null || target == dragComponent || target is JPanel }
 
         override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
           if (myLocation == null) {
             myLocation = window.location
           }
-          window.location = Point(myLocation!!.x + dragToScreenPoint.x - startScreenPoint.x,
-                                  myLocation!!.y + dragToScreenPoint.y - startScreenPoint.y)
+          window.location = Point(
+            myLocation!!.x + dragToScreenPoint.x - startScreenPoint.x,
+            myLocation!!.y + dragToScreenPoint.y - startScreenPoint.y
+          )
         }
 
         override fun processDragCancel() {
@@ -125,6 +127,7 @@ internal class TrustedProjectStartupDialog(
         icon(AllIcons.General.WarningDialog).align(AlignY.TOP)
         panel {
           row {
+            @Suppress("DialogTitleCapitalization")
             text(myTitle).apply {
               component.font = JBFont.h4()
             }
@@ -132,40 +135,46 @@ internal class TrustedProjectStartupDialog(
           row {
             text(message)
           }
-          row {
-            val trimmedFolderName =  StringUtil.shortenTextWithEllipsis(projectPath.parent.name, 40, 0, true)
-            checkBox(IdeBundle.message("untrusted.project.warning.trust.location.checkbox", trimmedFolderName))
-              .bindSelected(trustAll)
-              .apply {
-                component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter { listOf(getParentFolder().pathString) })
-              }
-              .onChanged {
-                if (it.isSelected) {
-                  windowsDefender.set(false)
+          if (getParentFolder() != null) {
+            row {
+              val trimmedFolderName = StringUtil.shortenTextWithEllipsis(getParentFolder()!!.name, 40, 0, true)
+              checkBox(IdeBundle.message("untrusted.project.warning.trust.location.checkbox", trimmedFolderName))
+                .bindSelected(trustAll)
+                .apply {
+                  component.toolTipText = null
+                  component.addMouseMotionListener(TooltipMouseAdapter { listOf(getParentFolder()!!.pathString) })
                 }
+                .onChanged {
+                  if (it.isSelected) {
+                    windowsDefender.set(false)
+                  }
 
-                if (trustAction != null) {
-                  val trustButton = getButton(trustAction!!)
-                  val text = if (it.isSelected) {
-                    val truncatedParentFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
-                    IdeBundle.message("untrusted.project.dialog.trust.folder.button", truncatedParentFolderName)
-                  } else trustButtonText
-                  trustButton?.text = text
+                  if (trustAction != null) {
+                    val trustButton = getButton(trustAction!!)
+                    val text = if (it.isSelected) {
+                      val truncatedParentFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
+                      IdeBundle.message("untrusted.project.dialog.trust.folder.button", truncatedParentFolderName)
+                    }
+                    else trustButtonText
+                    trustButton?.text = text
+                  }
+                  val trimmedFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
+                  windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName)
                 }
-                val trimmedFolderName = StringUtil.shortenTextWithEllipsis(getTrustFolder(it.isSelected).name, 18, 0, true)
-                windowsDefenderCheckBox?.component?.text = IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName)
-              }
+            }
           }
           row {
-            val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name, 18, 0, true)
+            val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }
+
+                                                                       , 18, 0, true)
+            val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
             windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
               .bindSelected(windowsDefender)
               .apply {
                 component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths.joinToString(separator = "<br>"), getTrustFolder(trustAll.get()).pathString) })
+                component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
                 comment(IdeBundle.message("untrusted.project.location.comment"))
-                visible(isWinDefenderEnabled)
+                visible(pathsToExclude.isNotEmpty())
               }
           }
         }.align(AlignX.FILL + AlignY.FILL)
@@ -190,7 +199,7 @@ internal class TrustedProjectStartupDialog(
         checkBox.toolTipText = null
         return
       }
-      val quotePositions = StringUtil.findAllIndexesOfSymbol(textWithMarkedElements, '\'')
+      val quotePositions = findAllIndexesOfSymbol(textWithMarkedElements, '\'')
       // Estimate the character position based on mouse x-coordinate relative to bounds
       val positionX = ceil(mousePosition / (bounds.width / text.length)).toInt().coerceIn(0, text.length - 1)
 
@@ -208,10 +217,9 @@ internal class TrustedProjectStartupDialog(
     }
   }
 
-  @NlsSafe
-  private fun getTrustFolder(isTrustAll: Boolean): Path = if (isTrustAll) getParentFolder() else projectPath
+  private fun getTrustFolder(isTrustAll: Boolean): Path = if (isTrustAll) getParentFolder() ?: projectPath else projectPath
 
-  private fun getParentFolder(): Path = projectPath.parent
+  private fun getParentFolder(): Path? = projectPath.parent
 
   override fun createActions(): Array<out Action?> {
     val actions: MutableList<Action> = mutableListOf()
@@ -222,15 +230,9 @@ internal class TrustedProjectStartupDialog(
       val action: Action = object : AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         override fun actionPerformed(e: ActionEvent) {
           userChoice = when (option) {
-            trustButtonText -> {
-              OpenUntrustedProjectChoice.TRUST_AND_OPEN
-            }
-            distrustButtonText -> {
-              OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
-            }
-            cancelButtonText -> {
-              OpenUntrustedProjectChoice.CANCEL
-            }
+            trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
+            distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
+            cancelButtonText -> OpenUntrustedProjectChoice.CANCEL
             else -> {
               logger<TrustedProjects>().error("Illegal choice $option")
               close(i, false)
@@ -260,18 +262,11 @@ internal class TrustedProjectStartupDialog(
     actions.reverse()
   }
 
-  override fun getHelpId(): @NonNls String? {
-    return TRUSTED_PROJECTS_HELP_TOPIC
-  }
-
-  fun getWidowsDefenderPathsToExclude(): List<Path> {
-    return if (windowsDefender.get()) {
-      listOf(*idePaths.toTypedArray(), getTrustFolder(trustAll.get()))
-    }
-    else emptyList()
-  }
+  override fun getHelpId(): String? = TRUSTED_PROJECTS_HELP_TOPIC
 
   fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
 
   fun isTrustAll(): Boolean = trustAll.get()
+
+  fun getDefenderTrustFolder(): Path? = if (windowsDefender.get()) getTrustFolder(isTrustAll()) else null
 }

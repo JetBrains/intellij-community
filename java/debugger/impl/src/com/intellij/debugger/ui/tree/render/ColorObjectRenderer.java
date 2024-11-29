@@ -55,7 +55,7 @@ final class ColorObjectRenderer extends CompoundRendererProvider {
               else {
                 EvaluationContextImpl evalContext = ((EvaluationContextImpl)evaluationContext);
                 DebugProcessImpl debugProcess = evalContext.getDebugProcess();
-                debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+                evalContext.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
                   @Override
                   public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                     try {

@@ -142,17 +142,17 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
         targetFile.addImport(nameToImport, allUnder = true)
     }
 
-    val shorteningResults = mutableListOf<KtElement>()
+    val shorteningResults = mutableListOf<SmartPsiElementPointer<KtElement>>()
     //todo
     //        PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
     for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
         if (shortenedRef == null) {
             type.deleteQualifier()
-            shorteningResults.add(type)
+            shorteningResults.add(type.createSmartPointer())
         } else {
             val shorteningResult = type.replace(psiFactory.createExpression(shortenedRef)) as? KtElement ?: continue
-            shorteningResults.add(shorteningResult)
+            shorteningResults.add(shorteningResult.createSmartPointer())
         }
     }
 
@@ -165,22 +165,22 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
             }
             callee?.replace(psiFactory.createExpression(shortenedRef))
         }
-        call.deleteQualifier()?.let { shorteningResults.add(it) }
+        call.deleteQualifier()?.let { shorteningResults.add(it.createSmartPointer()) }
     }
 
     for (labelInfo in thisLabelsToShorten) {
         val thisWithLabel = labelInfo.labelToShorten.element ?: continue
         thisWithLabel.labelQualifier?.delete()
-        shorteningResults.add(thisWithLabel)
+        shorteningResults.add(thisWithLabel.createSmartPointer())
     }
 
     for (kDocNamePointer in kDocQualifiersToShorten) {
         val kDocName = kDocNamePointer.element ?: continue
         kDocName.deleteQualifier()
-        shorteningResults.add(kDocName)
+        shorteningResults.add(kDocName.createSmartPointer())
     }
     //        }
-    return shorteningResults
+    return shorteningResults.mapNotNull { it.element }
 }
 
 private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {

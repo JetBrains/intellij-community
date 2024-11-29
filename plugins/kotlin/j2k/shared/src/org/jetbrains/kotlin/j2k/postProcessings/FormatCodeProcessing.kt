@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -27,7 +26,6 @@ class FormatCodeProcessing : FileBasedPostProcessing() {
         }
     }
 
-    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,

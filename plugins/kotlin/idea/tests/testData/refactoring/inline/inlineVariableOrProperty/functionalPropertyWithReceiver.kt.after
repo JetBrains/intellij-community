@@ -3,5 +3,4 @@ object Main {
 
 fun main() {
     print(42)
-    Main
 }

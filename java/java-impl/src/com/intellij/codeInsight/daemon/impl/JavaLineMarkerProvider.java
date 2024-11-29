@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -250,6 +251,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
     }
   }
 
+  @Unmodifiable
   private @NotNull List<LineMarkerInfo<PsiElement>> collectSiblingInheritedMethods(@NotNull Collection<? extends PsiMethod> methods) {
     if (!shouldSearchImplementedMethods() && !shouldSearchOverriddenMethods()) {
       return Collections.emptyList();

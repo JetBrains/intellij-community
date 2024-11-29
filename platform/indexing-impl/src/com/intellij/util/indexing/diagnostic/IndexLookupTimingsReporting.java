@@ -412,6 +412,7 @@ public final class IndexLookupTimingsReporting {
         return typeSafeThis();
       }
 
+      @Override
       public String toString() {
         return getClass().getSimpleName() +
                "{indexId=" + indexId +

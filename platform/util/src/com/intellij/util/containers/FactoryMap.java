@@ -7,6 +7,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -130,11 +131,13 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<V> values() {
     return ContainerUtil.map(getMap().values(), FactoryMap::nullize);
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Set<Entry<K, V>> entrySet() {
     return ContainerUtil.map2Set(getMap().entrySet(),
                                  entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));

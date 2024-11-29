@@ -12,7 +12,8 @@ object FreezeAnalyzer {
    * If analysis fails, it returns `null`.
    */
   fun analyzeFreeze(threadDump: String, testName: String? = null): FreezeAnalysisResult? {
-    val threadDumpParsed = ThreadDumpParser.parse(threadDump)
+    val threadDumpWithoutCoroutine = threadDump.split("---------- Coroutine dump ----------")[0]
+    val threadDumpParsed = ThreadDumpParser.parse(threadDumpWithoutCoroutine)
     val edtThread = threadDumpParsed.firstOrNull { it.isEDT }
     return edtThread?.let { analyzeEDThread(it, threadDumpParsed, testName) }
   }

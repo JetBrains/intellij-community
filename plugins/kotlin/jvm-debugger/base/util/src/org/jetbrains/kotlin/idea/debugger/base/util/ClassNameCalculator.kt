@@ -39,6 +39,10 @@ interface ClassNameCalculator {
         override fun getClassNames(file: KtFile): Map<KtElement, String> {
             return getInstance().getClassNames(file)
         }
+
+        override fun getTopLevelNames(file: KtFile): List<String> {
+            return getInstance().getTopLevelNames(file)
+        }
     }
 
     @RequiresReadLock(generateAssertion = false)
@@ -46,6 +50,12 @@ interface ClassNameCalculator {
 
     @RequiresReadLock(generateAssertion = false)
     fun getClassName(element: KtElement): String? = null
+
+    /**
+     * The returned list should include all top-level FQNs declared in the file, including classes, scripts and file FQNs.
+     * The list may also include inner classes, but it is not guarantied.
+     */
+    fun getTopLevelNames(file: KtFile): List<String> = getClassNames(file).values.distinct()
 }
 
 /**
@@ -66,6 +76,10 @@ private class CompositeClassNameCalculator(
         /* Note: Later instances win over earlier one's: We're therefore asking the implementations from back to front */
         return instances.reversed().firstNotNullOfOrNull { classNameCalculator -> classNameCalculator.getClassName(element) }
     }
+
+    override fun getTopLevelNames(file: KtFile): List<String> {
+        return instances.flatMap { it.getTopLevelNames(file) }
+    }
 }
 
 private object DefaultClassNameCalculator : ClassNameCalculator {
@@ -85,6 +99,17 @@ private object DefaultClassNameCalculator : ClassNameCalculator {
 
         return getClassNames(element.containingKtFile)[target]
     }
+
+    override fun getTopLevelNames(file: KtFile): List<String> {
+        return CachedValuesManager.getCachedValue(file) {
+            val declarations = file.declarations
+            val fileName = getFileFQN(file)
+            val classNames = declarations.filterIsInstance<KtClassLikeDeclaration>().mapNotNull { it.getClassId()?.asString() }
+            val scriptNames = declarations.filterIsInstance<KtScript>().map { it.fqName.asString() }
+            val allNames = classNames + scriptNames + listOf(fileName)
+            CachedValueProvider.Result(allNames, file)
+        }
+    }
 }
 
 private class ClassNameCalculatorVisitor() : KtTreeVisitorVoid() {
@@ -96,7 +121,7 @@ private class ClassNameCalculatorVisitor() : KtTreeVisitorVoid() {
         get() = collectedNames
 
     override fun visitKtFile(file: KtFile) {
-        saveName(file, JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName.asString())
+        saveName(file, getFileFQN(file))
         super.visitKtFile(file)
     }
 
@@ -198,3 +223,5 @@ private class ClassNameCalculatorVisitor() : KtTreeVisitorVoid() {
         return index.toString()
     }
 }
+
+private fun getFileFQN(file: KtFile): String = JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName.asString()

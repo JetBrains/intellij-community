@@ -126,6 +126,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return myConstantValue;
   }
 
+  @Override
   public String toString() {
     return "LombokLightFieldBuilder: " + getName();
   }

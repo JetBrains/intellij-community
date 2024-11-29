@@ -243,6 +243,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @NotNull
+  @Unmodifiable
   public List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
     return ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
                                 Comparator.comparingInt(Configuration::getOrder));

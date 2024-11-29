@@ -107,6 +107,7 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
     return new SvnRevisionNumber(myRevision);
   }
 
+  @Override
   @NonNls
   public String toString() {
     return myFile.getPath();

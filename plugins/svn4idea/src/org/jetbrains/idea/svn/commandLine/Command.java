@@ -7,7 +7,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
@@ -20,15 +22,16 @@ import java.util.List;
 public class Command {
 
   @NotNull private final List<String> myParameters = new ArrayList<>();
-  @NotNull private final List<String> myOriginalParameters = new ArrayList<>();
   @NotNull private final SvnCommandName myName;
+  @Nullable private PasswordAuthenticationData myAuthParameters = null;
 
   private File workingDirectory;
   @Nullable private File myConfigDir;
   @Nullable private LineCommandListener myResultBuilder;
   @Nullable private volatile Url myRepositoryUrl;
   @NotNull private Target myTarget;
-  @Nullable private Collection<File> myTargets;
+  @Unmodifiable
+  private Collection<? extends File> myTargets;
   @Nullable private PropertyValue myPropertyValue;
 
   @Nullable private ProgressTracker myCanceller;
@@ -69,6 +72,10 @@ public class Command {
     if (!myParameters.contains(parameter)) {
       myParameters.add(parameter);
     }
+  }
+
+  public void putAuth(@Nullable PasswordAuthenticationData authData) {
+    myAuthParameters = authData;
   }
 
   @Nullable
@@ -147,7 +154,7 @@ public class Command {
     myTarget = target;
   }
 
-  public void setTargets(@Nullable Collection<File> targets) {
+  public void setTargets(@Nullable @Unmodifiable Collection<? extends File> targets) {
     myTargets = targets;
   }
 
@@ -155,16 +162,14 @@ public class Command {
     myPropertyValue = propertyValue;
   }
 
-  // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored
-  // TODO: - so we could determine if parameter should be logged by the parameter itself.
-  public void saveOriginalParameters() {
-    myOriginalParameters.clear();
-    myOriginalParameters.addAll(myParameters);
-  }
-
   @NotNull
   public List<String> getParameters() {
     return new ArrayList<>(myParameters);
+  }
+
+  @Nullable
+  public PasswordAuthenticationData getAuthParameters() {
+    return myAuthParameters;
   }
 
   public @NlsSafe @NotNull String getText() {
@@ -175,7 +180,7 @@ public class Command {
       data.add(myConfigDir.getPath());
     }
     data.add(myName.getName());
-    data.addAll(myOriginalParameters);
+    data.addAll(myParameters);
 
     List<String> targetsPaths = getTargetsPaths();
     if (!ContainerUtil.isEmpty(targetsPaths)) {

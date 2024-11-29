@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.TableView
 import com.intellij.util.FontUtil
@@ -41,7 +42,6 @@ import java.io.File
 import javax.swing.*
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
-import kotlin.Throws
 
 class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), Disposable {
   private val POSTPONE_MAPPINGS_LOADING_PANEL = ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
@@ -492,7 +492,7 @@ class VcsDirectoryConfigurationPanel(private val project: Project) : JPanel(), D
 
     private fun buildVcsesComboBox(project: Project, allVcses: List<AbstractVcs>): ComboBox<AbstractVcs?> {
       val comboBox = ComboBox((allVcses + null).sortedWith(SuggestedVcsComparator.create(project)).toTypedArray())
-      comboBox.renderer = SimpleListCellRenderer.create(VcsBundle.message("none.vcs.presentation")) { obj: AbstractVcs? -> obj?.displayName }
+      comboBox.renderer = textListCellRenderer(VcsBundle.message("none.vcs.presentation")) { obj: AbstractVcs -> obj.displayName }
       return comboBox
     }
   }

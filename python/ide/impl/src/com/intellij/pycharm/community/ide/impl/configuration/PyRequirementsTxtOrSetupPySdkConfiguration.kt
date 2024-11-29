@@ -29,7 +29,7 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
-import com.jetbrains.extensions.failure
+import com.jetbrains.python.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager

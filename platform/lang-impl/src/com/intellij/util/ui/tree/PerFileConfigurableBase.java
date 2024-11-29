@@ -49,6 +49,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -110,6 +111,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   protected abstract @Nullable <S> Object getParameter(@NotNull Key<S> key);
 
+  @Unmodifiable
   protected @NotNull List<Mapping<T>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
@@ -702,6 +704,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return param(NULL_TEXT);
   }
 
+  @Unmodifiable
   protected @NotNull Collection<T> getValueVariants(@Nullable Object target) {
     if (myMappings instanceof PerFileMappingsBase) return ((PerFileMappingsBase<T>)myMappings).getAvailableValues();
     throw new UnsupportedOperationException();

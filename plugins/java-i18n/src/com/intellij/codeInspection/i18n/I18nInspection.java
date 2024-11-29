@@ -49,10 +49,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
@@ -350,6 +347,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @Nullable
+  @Unmodifiable
   private static List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
     PsiElement psiVar = uVar.getSourcePsi();
     PsiElement psi = passThrough.getSourcePsi();

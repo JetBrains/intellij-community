@@ -63,8 +63,8 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -98,8 +98,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -122,10 +122,12 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvider, QuickSearchComponent {
 
   public static final Topic<SearchListener> SEARCH_EVENTS = Topic.create("Search events", SearchListener.class);
+  @ApiStatus.Internal
+  public static final Topic<PreviewListener> PREVIEW_EVENTS = Topic.create("Search everywhere preview events", PreviewListener.class);
 
   public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
 
-  static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
+  @ApiStatus.Internal public static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
 
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
@@ -151,6 +153,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   private JComponent myExtendedInfoPanel;
   private @Nullable ExtendedInfoComponent myExtendedInfoComponent;
   private final SearchListener topicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(SEARCH_EVENTS);
+  private final PreviewListener myPreviewTopicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(PREVIEW_EVENTS);
   private @Nullable SearchEverywherePreviewGenerator myPreviewGenerator;
 
   private UsagePreviewPanel myUsagePreviewPanel;
@@ -204,9 +207,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
 
     init();
-    myHeader.setResultsNotifyCallback(myListModel::addNotificationElement); // should be performed after myListModel creation in init()
-
     myHintHelper = new HintHelper(mySearchField);
+
+    myHeader.setResultsNotifyCallback(label -> {
+      // hack to don't modify semantic search plugin
+      String trimmedLabel = StringUtil.trimTrailing(label, ':');
+      myHintHelper.setHint(trimmedLabel);
+    }); // should be performed after myListModel creation in init()
 
     List<SEResultsEqualityProvider> equalityProviders = SEResultsEqualityProvider.getProviders();
     SearchListener wrapperListener = createListenerWrapper();
@@ -252,9 +259,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     mySearchField.addKeyListener(mySearchTypingListener);
 
     if (project != null) {
-      myPreviewGenerator = new SearchEverywherePreviewGenerator(project, (List<UsageInfo> usageInfos) -> {
-        myUsagePreviewPanel.updateLayout(project, usageInfos);
-      }, () -> myResultsList.getSelectedValue());
+      myPreviewGenerator = new SearchEverywherePreviewGenerator(
+        project,
+        usageInfos -> myUsagePreviewPanel.updateLayout(project, usageInfos),
+        (selectedItem, duration) -> myPreviewTopicPublisher.onPreviewDataReady(project, selectedItem, duration)
+      );
     }
 
     mySearchPerformanceTracker = new SearchPerformanceTracker(startMoment, () -> myHeader.getSelectedTab().getID());
@@ -671,6 +680,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
             onFocusLost(e);
           }
         });
+
+        myPreviewTopicPublisher.onPreviewEditorCreated(SearchEverywhereUI.this, editor);
       }
     };
     Disposer.register(this, myUsagePreviewPanel);
@@ -718,6 +729,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (myUsagePreviewPanel != null) {
       myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders && !myResultsList.isEmpty());
     }
+    schedulePreviewIfNeeded(myResultsList.getSelectedValue(), null);
+  }
+
+  private boolean schedulePreviewIfNeeded(@Nullable Object newValue, @Nullable Object currentValue) {
+    if (isPreviewEnabled() && isPreviewActive() && myPreviewGenerator != null && newValue != null && newValue != currentValue && myUsagePreviewPanel != null) {
+      myPreviewGenerator.schedulePreview(newValue);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -984,9 +1004,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
           prevSelectedIndex = selectedIndex;
         }
         Object newValue = myResultsList.getSelectedValue();
-        if (isPreviewEnabled() && isPreviewActive() && myPreviewGenerator != null && newValue != null && newValue != currentValue && myUsagePreviewPanel != null) {
+        if (schedulePreviewIfNeeded(newValue, currentValue)) {
           currentValue = newValue;
-          myPreviewGenerator.schedulePreview(newValue);
         }
       }
     });

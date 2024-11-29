@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.tasks.compatibility` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "compatibility",
+  module_name = "intellij.tasks.compatibility",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-api:ide",
+    "//plugins/tasks/tasks-api:tasks",
+    "//lib:commons-httpclient-3_1-patched",
+  ]
+)
+### auto-generated section `build intellij.tasks.compatibility` end

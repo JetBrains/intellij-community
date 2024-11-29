@@ -12,7 +12,10 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XDropFrameHandler;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,7 +38,7 @@ import javax.swing.event.HyperlinkListener;
  * Otherwise, use method {@link XDebuggerManager#startSessionAndShowTab} to start a new debugging session.
  */
 public abstract class XDebugProcess {
-  private final XDebugSession mySession;
+  private final @NotNull XDebugSession mySession;
   private ProcessHandler myProcessHandler;
 
   /**
@@ -45,7 +48,7 @@ public abstract class XDebugProcess {
     mySession = session;
   }
 
-  public final XDebugSession getSession() {
+  public final @NotNull XDebugSession getSession() {
     return mySession;
   }
 

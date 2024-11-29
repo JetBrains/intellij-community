@@ -19,9 +19,8 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,14 +42,12 @@ import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -113,14 +110,24 @@ public class GradleInstallationManager implements Disposable {
     return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, getDefaultProjectKey(project)), p -> {
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
         if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
-        BuildLayoutParameters buildLayoutParameters = projectPath == null
-                                                      ? gradleExecutionAware.getDefaultBuildLayoutParameters(project)
-                                                      : gradleExecutionAware.getBuildLayoutParameters(project, projectPath);
+        BuildLayoutParameters buildLayoutParameters;
+        if (projectPath == null) {
+          buildLayoutParameters = gradleExecutionAware.getDefaultBuildLayoutParameters(project);
+        }
+        else {
+          Path nioProjectPath = NioPathUtil.toNioPathOrNull(projectPath);
+          if (nioProjectPath == null) {
+            buildLayoutParameters = gradleExecutionAware.getDefaultBuildLayoutParameters(project);
+          }
+          else {
+            buildLayoutParameters = gradleExecutionAware.getBuildLayoutParameters(project, nioProjectPath);
+          }
+        }
         if (buildLayoutParameters != null) {
           return buildLayoutParameters;
         }
       }
-      return new LocalGradleExecutionAware().getBuildLayoutParameters(project, projectPath);
+      return new LocalGradleExecutionAware().getBuildLayoutParameters(project, NioPathUtil.toNioPathOrNull(projectPath));
     });
   }
 
@@ -165,8 +172,8 @@ public class GradleInstallationManager implements Disposable {
   public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
     if (project == null) return null;
     BuildLayoutParameters buildLayoutParameters = guessBuildLayoutParameters(project, linkedProjectPath);
-    String gradleHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleHome());
-    return gradleHome != null ? new File(gradleHome) : null;
+    Path gradleHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleHome());
+    return gradleHome != null ? gradleHome.toFile() : null;
   }
 
   public @Nullable String getGradleJvmPath(@NotNull Project project, @NotNull String linkedProjectPath) {
@@ -242,10 +249,6 @@ public class GradleInstallationManager implements Disposable {
     catch (Exception ignored) {
     }
     return null;
-  }
-
-  public String suggestBetterGradleHomePath(@NotNull String homePath) {
-    return suggestBetterGradleHomePath(null, homePath);
   }
 
   /**
@@ -330,10 +333,6 @@ public class GradleInstallationManager implements Disposable {
     return isGradleSdkHome(project, new File(file.getPath()));
   }
 
-  public boolean isGradleSdkHome(@Nullable File file) {
-    return isGradleSdkHome(null, file);
-  }
-
   /**
    * Allows to answer if given virtual file points to the gradle installation root.
    *
@@ -353,7 +352,7 @@ public class GradleInstallationManager implements Disposable {
     }
     for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
       if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
-      if (gradleExecutionAware.isGradleInstallationHomeDir(project, file.getPath())) {
+      if (gradleExecutionAware.isGradleInstallationHomeDir(project, file.toPath())) {
         return true;
       }
     }
@@ -420,26 +419,6 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  /**
-   * Allows to ask for the classpath roots of the classes that are additionally provided by the gradle integration (e.g. gradle class
-   * files, bundled groovy-all jar etc).
-   *
-   * @param project target project to use for gradle home retrieval
-   * @return classpath roots of the classes that are additionally provided by the gradle integration (if any);
-   * {@code null} otherwise
-   */
-  @Nullable
-  public List<VirtualFile> getClassRoots(@Nullable Project project) {
-    List<File> files = getClassRoots(project, null);
-    if (files == null) return null;
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-    return ContainerUtil.mapNotNull(files, file -> {
-      final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
-      return virtualFile != null ? jarFileSystem.getJarRootForLocalFile(virtualFile) : null;
-    });
-  }
-
   @Nullable
   public List<File> getClassRoots(@Nullable Project project, @Nullable String rootProjectPath) {
     if (project == null) return null;
@@ -459,23 +438,47 @@ public class GradleInstallationManager implements Disposable {
   }
 
   @Nullable
-  public static String getGradleVersion(@Nullable String gradleHome) {
-    if (gradleHome == null) return null;
-    File libs = new File(gradleHome, "lib");
-    if (!libs.isDirectory()) return null;
-
-    File[] files = libs.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        final Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
-        if (matcher.matches()) {
-          return matcher.group(2);
-        }
-      }
+  public static String getGradleVersion(@Nullable Path gradleHome) {
+    if (gradleHome == null) {
+      return null;
     }
-    return null;
+    Path libs = gradleHome.resolve("lib");
+    if (!Files.isDirectory(libs)) {
+      return null;
+    }
+    try {
+      return Files.list(libs)
+        .map(path -> {
+          Path fileName = path.getFileName();
+          if (fileName != null) {
+            Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(fileName.toString());
+            if (matcher.matches()) {
+              return matcher.group(2);
+            }
+          }
+          return null;
+        })
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
+  /**
+   * @deprecated Use {@link GradleInstallationManager#getGradleVersion(Path)} instead.
+   */
+  @Nullable
+  @Deprecated
+  public static String getGradleVersion(@Nullable String gradleHome) {
+    if (gradleHome == null) {
+      return null;
+    }
+    Path nioGradleHome = NioPathUtil.toNioPathOrNull(gradleHome);
+    return getGradleVersion(nioGradleHome);
+  }
 
   private List<File> findGradleSdkClasspath(Project project, String rootProjectPath) {
     List<File> result = new ArrayList<>();
@@ -541,7 +544,8 @@ public class GradleInstallationManager implements Disposable {
     Project project = findProject(settings);
     if (project == null)  {
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-      buildLayoutParameters = new LocalBuildLayoutParameters(defaultProject, settings.getExternalProjectPath()) {
+      buildLayoutParameters =
+        new LocalBuildLayoutParameters(defaultProject, NioPathUtil.toNioPathOrNull(settings.getExternalProjectPath())) {
         @Override
         public GradleProjectSettings getGradleProjectSettings() {
           return settings;
@@ -591,8 +595,25 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  private static final class BuildLayoutParametersCacheCleanupListener
-    implements ExternalSystemTaskNotificationListener, ProjectManagerListener, DynamicPluginListener {
+  @ApiStatus.Internal
+  static final class ProjectManagerLayoutParametersCacheCleanupListener implements ProjectManagerListener {
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
+  }
+
+  @ApiStatus.Internal
+  static final class DynamicPluginLayoutParametersCacheCleanupListener implements DynamicPluginListener {
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
+  }
+
+  @ApiStatus.Internal
+  static final class TaskNotificationLayoutParametersCacheCleanupListener implements ExternalSystemTaskNotificationListener {
+
     @Override
     public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
       getInstance().myBuildLayoutParametersCache.remove(projectPath);
@@ -617,16 +638,6 @@ public class GradleInstallationManager implements Disposable {
         String path = linkedSettings.getExternalProjectPath();
         installationManager.myBuildLayoutParametersCache.remove(path);
       }
-    }
-
-    @Override
-    public void projectClosed(@NotNull Project project) {
-      getInstance().myBuildLayoutParametersCache.clear();
-    }
-
-    @Override
-    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-      getInstance().myBuildLayoutParametersCache.clear();
     }
   }
 }

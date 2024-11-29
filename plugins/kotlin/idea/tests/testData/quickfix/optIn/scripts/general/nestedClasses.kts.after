@@ -1,4 +1,5 @@
 // "Opt in for 'MyExperimentalAPI' on 'bar'" "true"
+// PRIORITY: HIGH
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'nestedClasses.kts'
 // ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
@@ -29,4 +30,4 @@ class Outer {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

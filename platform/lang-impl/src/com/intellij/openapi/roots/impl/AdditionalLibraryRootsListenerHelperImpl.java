@@ -66,7 +66,7 @@ public final class AdditionalLibraryRootsListenerHelperImpl implements Additiona
     List<IndexableFilesIterator> indexableFilesIterators =
       Collections.singletonList(new AdditionalLibraryIndexableAddedFilesIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
-    new UnindexedFilesScanner(project, indexableFilesIterators, null, "On updated roots of library '" + presentableLibraryName + "'").
+    new UnindexedFilesScanner(project, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'").
       queue();
   }
 }

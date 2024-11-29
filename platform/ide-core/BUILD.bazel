@@ -1,40 +1,41 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ide.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "ide-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "ide-core",
   module_name = "intellij.platform.ide.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
-    "@community//platform/core-ui",
-    "@community//platform/util/concurrency",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/analysis-api:analysis",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@community//platform/util-ex",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/diagnostic",
-    "@community//platform/settings",
-    "@community//platform/util/coroutines:util-coroutines",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic",
+    "//platform/settings",
+    "//platform/util/coroutines",
   ],
-  exports = ["@community//platform/core-api:core"],
-  runtime_deps = [":resources"]
+  exports = ["//platform/core-api:core"],
+  runtime_deps = [":ide-core_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ide.core` end

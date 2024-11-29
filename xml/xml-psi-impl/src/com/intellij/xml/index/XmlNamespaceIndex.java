@@ -28,6 +28,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.*;
 import java.util.*;
@@ -95,6 +96,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return ContainerUtil.getFirstItem(data.values());
   }
 
+  @Unmodifiable
   public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(final @Nullable Module module,
                                                                                            @NotNull Project project) {
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> xmlResources = IndexedRelevantResource.getAllResources(NAME, module, project, null);
@@ -102,6 +104,7 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return ContainerUtil.concat(xmlResources, dtdResources);
   }
 
+  @Unmodifiable
   private static @NotNull List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getDtdResources(@Nullable String namespace,
                                                                                                      @Nullable Module module,
                                                                                                      @NotNull Project project) {

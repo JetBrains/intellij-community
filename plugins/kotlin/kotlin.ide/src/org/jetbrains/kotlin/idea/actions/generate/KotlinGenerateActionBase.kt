@@ -8,7 +8,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -41,7 +44,8 @@ abstract class KotlinGenerateActionBase : CodeInsightAction(), CodeInsightAction
     }
 
     protected open fun getTargetClass(editor: Editor, file: PsiFile): KtClassOrObject? {
-        return file.findElementAt(editor.caretModel.offset)?.getNonStrictParentOfType<KtClassOrObject>()
+        val offset = editor.caretModel.offset
+        return (file.findElementAt(offset)?.takeUnless { it is PsiWhiteSpace } ?: if (offset > 0) file.findElementAt(offset - 1) else null)?.getNonStrictParentOfType<KtClassOrObject>()
     }
 
     protected abstract fun isValidForClass(targetClass: KtClassOrObject): Boolean

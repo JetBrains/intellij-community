@@ -10,6 +10,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -31,13 +32,12 @@ internal class K2DiagnosticBasedPostProcessingGroup(
         error("Not supported in K2 J2K")
     }
 
-    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
         converterContext: NewJ2kConverterContext
-    ): PostProcessingApplier {
+    ): PostProcessingApplier = analyze(file) {
         // TODO: for copy-paste conversion, try to restrict the analysis range, like in K1 J2K
         //  (see org.jetbrains.kotlin.idea.j2k.post.processing.DiagnosticBasedPostProcessingGroup.analyzeFileRange)
         val diagnostics = file.collectDiagnostics(filter = ONLY_COMMON_CHECKERS)
@@ -50,7 +50,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
             }
         }
 
-        return Applier(processingDataList, file.project)
+        Applier(processingDataList, file.project)
     }
 
     context(KaSession)

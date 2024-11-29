@@ -1,25 +1,26 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.vcs.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "vcs-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "vcs-core",
   module_name = "intellij.platform.vcs.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/diff-api:diff",
-    "@libraries//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor",
+    "//platform/diff-api:diff",
+    "@lib//:kotlin-stdlib",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":vcs-core_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.vcs.core` end

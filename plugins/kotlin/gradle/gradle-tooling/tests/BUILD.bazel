@@ -1,0 +1,30 @@
+### auto-generated section `build kotlin.gradle.gradle-tooling.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-gradle-gradle-tooling-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-gradle-gradle-tooling-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin_project_model",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
+    "//plugins/kotlin/tests-common",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:gradle",
+    "@lib//:kotlin-tooling-core",
+  ]
+)
+### auto-generated section `build kotlin.gradle.gradle-tooling.tests` end

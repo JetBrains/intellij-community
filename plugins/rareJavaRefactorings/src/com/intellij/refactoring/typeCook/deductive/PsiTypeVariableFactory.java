@@ -161,11 +161,13 @@ public class PsiTypeVariableFactory {
         return EMPTY_ARRAY;
       }
 
+      @Override
       public boolean equals(Object o) {
         if (this == o) return true;
         return o instanceof PsiTypeVariable psiTypeVariable && myIndex == psiTypeVariable.getIndex();
       }
 
+      @Override
       public int hashCode() {
         return myIndex;
       }

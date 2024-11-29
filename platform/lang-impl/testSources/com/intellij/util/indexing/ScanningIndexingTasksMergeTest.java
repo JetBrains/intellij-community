@@ -13,6 +13,8 @@ import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.events.FileIndexingRequest;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import kotlinx.coroutines.CompletableDeferredKt;
+import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -62,8 +64,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     UnindexedFilesScanner t1 = createScanningTask(iter1, "reason 1", ScanningType.PARTIAL);
     UnindexedFilesScanner t2 = createScanningTask(iter2, "reason 2", ScanningType.PARTIAL);
 
-    assertSameElements(t1.tryMergeWith(t2).getPredefinedIndexableFilesIterators(), Arrays.asList(iter1, iter2));
-    assertSameElements(t2.tryMergeWith(t1).getPredefinedIndexableFilesIterators(), Arrays.asList(iter1, iter2));
+    assertSameElements(t1.tryMergeWith(t2, GlobalScope.INSTANCE).getPredefinedIndexableFileIteratorsBlocking(), Arrays.asList(iter1, iter2));
+    assertSameElements(t2.tryMergeWith(t1, GlobalScope.INSTANCE).getPredefinedIndexableFileIteratorsBlocking(), Arrays.asList(iter1, iter2));
   }
 
   public void testMergeScanningTasksWithFullScan() {
@@ -71,13 +73,13 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     UnindexedFilesScanner full = createScanningTask(null, "full", ScanningType.FULL);
 
     List<UnindexedFilesScanner> mergedVariants = Arrays.asList(
-      t1.tryMergeWith(full),
-      full.tryMergeWith(t1)
+      t1.tryMergeWith(full, GlobalScope.INSTANCE),
+      full.tryMergeWith(t1, GlobalScope.INSTANCE)
     );
 
     for (UnindexedFilesScanner merged : mergedVariants) {
-      assertNull(merged.getPredefinedIndexableFilesIterators());
-      assertEquals(ScanningType.FULL, merged.getScanningType());
+      assertNull(merged.getPredefinedIndexableFileIteratorsBlocking());
+      assertEquals(ScanningType.FULL, merged.getScanningTypeBlocking());
     }
   }
 
@@ -114,7 +116,16 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
   @NotNull
   private UnindexedFilesScanner createScanningTask(IndexableFilesIterator iter, String reason, ScanningType type) {
     List<IndexableFilesIterator> iterators = iter == null ? null : Collections.singletonList(iter);
-    return new UnindexedFilesScanner(getProject(), false, false, iterators, null, reason, type, null);
+    var parameters = CompletableDeferredKt.CompletableDeferred(new ScanningIterators(reason, iterators, null, type));
+    return new UnindexedFilesScanner(
+      getProject(),
+      false,
+      false,
+      null,
+      null,
+      null,
+      false,
+      parameters);
   }
 
   private void assertMergedStateInvariants(UnindexedFilesIndexer mergedTask) {

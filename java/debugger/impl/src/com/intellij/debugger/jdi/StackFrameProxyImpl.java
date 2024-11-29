@@ -268,6 +268,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     return myThreadProxy;
   }
 
+  @Override
   public @NonNls String toString() {
     try {
       return "StackFrameProxyImpl: " + getStackFrame().toString();
@@ -513,11 +514,13 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxyEx {
     throw new EvaluateException(error.getMessage(), error);
   }
 
+  @Override
   public int hashCode() {
     return 31 * myThreadProxy.hashCode() + myFrameFromBottomIndex;
   }
 
 
+  @Override
   public boolean equals(final Object obj) {
     if (!(obj instanceof StackFrameProxyImpl frameProxy)) {
       return false;

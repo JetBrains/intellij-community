@@ -75,8 +75,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -1465,6 +1465,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     try (Reader reader = new InputStreamReader(Files.newInputStream(patchPath), StandardCharsets.UTF_8)) {
       text = FileUtilRt.loadText(reader, (int)Files.size(patchPath));
     }
+    if (text.length == 0) return Collections.emptyList(); // shelves generate an empty patch file for shelves that have only binary files
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text), loadContent);
     List<TextFilePatch> textFilePatches = reader.readTextPatches();
     ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, reader.getAdditionalInfo(null), commitContext);

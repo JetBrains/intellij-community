@@ -1209,3 +1209,29 @@ fun <T : CommandChain> T.startNewSpan(spanName: String): T = apply {
 fun <T : CommandChain> T.stopSpan(spanName: String): T = apply {
   addCommand("${CMD_PREFIX}handleSpan $spanName")
 }
+
+/** @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.massCreateFiles(extension: String, numberOfFiles: Int): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate CREATE $extension $numberOfFiles")
+}
+
+/**
+ * @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand
+ * Only works if massCreateFiles() was called before it
+ */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.massDeleteFiles(): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate DELETE")
+}
+
+enum class MassVfsRefreshSpan(val spanName: String) {
+  CREATE("vfsRefreshAfterMassCreate"),
+  DELETE("vfsRefreshAfterMassDelete")
+}
+
+/** @see com.jetbrains.performancePlugin.commands.MeasureVfsMassUpdateCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.refreshVfsAfterMassChange(span: MassVfsRefreshSpan): T = apply {
+  addCommand("${CMD_PREFIX}measureVfsMassUpdate REFRESH ${span.spanName}")
+}

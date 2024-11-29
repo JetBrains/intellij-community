@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.remoteServers.targetsIntegrationTests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "remoteServers-targetsIntegrationTests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "remoteServers-targetsIntegrationTests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:assert_j",
+    "@lib//:junit4",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:testcontainers",
+    "//java/execution/impl:java-execution-impl",
+    "//java/testFramework",
+    "//platform/core-ui",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test",
+    "//plugins/junit",
+    "//java/java-tests:tests_test",
+    "//platform/util/jdom",
+  ]
+)
+### auto-generated section `build intellij.platform.remoteServers.targetsIntegrationTests` end

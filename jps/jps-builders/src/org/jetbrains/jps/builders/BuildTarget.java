@@ -3,6 +3,7 @@ package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -93,6 +94,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param context the compilation context.
    * @return the collection of output roots.
    */
+  @Unmodifiable
   public abstract @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context);
 
   @Override

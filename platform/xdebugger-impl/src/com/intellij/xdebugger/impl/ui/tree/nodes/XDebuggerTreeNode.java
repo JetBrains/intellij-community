@@ -22,6 +22,7 @@ import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -175,6 +176,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   @NotNull
+  @Unmodifiable
   public abstract List<? extends XDebuggerTreeNode> getLoadedChildren();
 
   public abstract void clearChildren();

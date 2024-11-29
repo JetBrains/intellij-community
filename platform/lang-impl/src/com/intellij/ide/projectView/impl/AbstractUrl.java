@@ -45,6 +45,7 @@ public abstract class AbstractUrl {
   public abstract AbstractUrl createUrlByElement(Object element);
 
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -55,6 +56,7 @@ public abstract class AbstractUrl {
     return myType.equals(that.myType) && url.equals(that.url);
   }
 
+  @Override
   public int hashCode() {
     int result = url.hashCode();
     result = 29 * result + (moduleName != null ? moduleName.hashCode() : 0);

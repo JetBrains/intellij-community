@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -119,6 +120,7 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
     return ContainerUtil.map(branches, VcsRef::getName);
   }
 
+  @Unmodifiable
   private static @NotNull List<List<String>> processRecentBranchFilters(@NotNull Set<String> availableBranches,
                                                                         @NotNull List<List<String>> recentBranchFilters) {
     if (availableBranches.isEmpty()) {

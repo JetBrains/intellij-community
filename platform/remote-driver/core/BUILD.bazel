@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.driver.impl` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "driver-impl",
+  module_name = "intellij.driver.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/remote-driver/model:driver-model",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:commons-lang3",
+  ],
+  exports = ["//platform/remote-driver/model:driver-model"]
+)
+### auto-generated section `build intellij.driver.impl` end

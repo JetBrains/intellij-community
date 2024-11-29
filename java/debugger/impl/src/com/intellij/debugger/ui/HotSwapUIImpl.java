@@ -13,6 +13,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,6 +36,7 @@ import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -319,7 +321,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       ProjectTaskManager.getInstance(project).compile(files);
     } else {
       ProjectTaskManagerImpl taskManager = (ProjectTaskManagerImpl)ProjectTaskManager.getInstance(project);
-      ProjectTask task = taskManager.createModulesFilesTask(files);
+      ProjectTask task = ReadAction.compute(() -> taskManager.createModulesFilesTask(files));
       taskManager.run(createContext(callback), task);
     }
     // The control flow continues at MyCompilationStatusListener.finished.
@@ -478,6 +480,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<DebuggerSession> getHotSwappableDebugSessions(Project project) {
     return ContainerUtil.filter(DebuggerManagerEx.getInstanceEx(project).getSessions(), HotSwapUIImpl::canHotSwap);
   }

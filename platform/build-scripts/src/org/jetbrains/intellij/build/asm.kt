@@ -13,8 +13,8 @@ import java.nio.file.Path
 //}
 
 // see https://stackoverflow.com/a/49454118
-internal fun injectAppInfo(inFile: Path, newFieldValue: String): ByteArray {
-  val classReader = ClassReader(Files.readAllBytes(inFile))
+internal fun injectAppInfo(inFileBytes: ByteArray, newFieldValue: String): ByteArray {
+  val classReader = ClassReader(inFileBytes)
   val classWriter = ClassWriter(classReader, 0)
   classReader.accept(object : ClassVisitor(Opcodes.API_VERSION, classWriter) {
     override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<String?>?): MethodVisitor? {

@@ -13,6 +13,7 @@ c:com.intellij.ide.macro.ClipboardContentMacro
 f:com.intellij.ide.macro.ColumnNumberMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V
+- getDescription():java.lang.String
 f:com.intellij.ide.macro.CompilerContextMakeMacro
 - com.intellij.ide.macro.Macro
 - sf:COMPILER_CONTEXT_MAKE_KEY:com.intellij.openapi.actionSystem.DataKey
@@ -29,12 +30,11 @@ c:com.intellij.ide.macro.ContentRootMacro
 - getName():java.lang.String
 a:com.intellij.ide.macro.EditorMacro
 - com.intellij.ide.macro.Macro
-- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String):V
 - f:expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - pa:expand(com.intellij.openapi.editor.Editor):java.lang.String
 - ps:getColumnNumber(com.intellij.openapi.editor.Editor,I):java.lang.String
 - ps:getColumnNumber(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.LogicalPosition):java.lang.String
-- getDescription():java.lang.String
 - ps:getLineNumber(com.intellij.openapi.editor.Editor,I):I
 - getName():java.lang.String
 f:com.intellij.ide.macro.FileDirMacro
@@ -193,6 +193,7 @@ f:com.intellij.ide.macro.JdkPathMacro
 f:com.intellij.ide.macro.LineNumberMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V
+- getDescription():java.lang.String
 a:com.intellij.ide.macro.Macro
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -321,22 +322,27 @@ c:com.intellij.ide.macro.SelectedTextMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V
 - p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+- getDescription():java.lang.String
 c:com.intellij.ide.macro.SelectionEndColumnMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V
 - p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+- getDescription():java.lang.String
 c:com.intellij.ide.macro.SelectionEndLineMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V
 - p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+- getDescription():java.lang.String
 c:com.intellij.ide.macro.SelectionStartColumnMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V
 - p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+- getDescription():java.lang.String
 c:com.intellij.ide.macro.SelectionStartLineMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V
 - p:expand(com.intellij.openapi.editor.Editor):java.lang.String
+- getDescription():java.lang.String
 f:com.intellij.ide.macro.SourcepathEntryMacro
 - com.intellij.ide.macro.Macro
 - com.intellij.ide.macro.PathMacro

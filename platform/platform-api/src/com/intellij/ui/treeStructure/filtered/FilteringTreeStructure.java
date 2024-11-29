@@ -10,6 +10,7 @@ import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -91,6 +92,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
   }
 
+  @Unmodifiable
   public List<FilteringNode> getVisibleLeaves() {
     return ContainerUtil.filter(myLeaves, node -> node.state == State.VISIBLE);
   }

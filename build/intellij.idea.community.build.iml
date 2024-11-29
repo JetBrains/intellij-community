@@ -11,6 +11,12 @@
       <excludeFolder url="file://$MODULE_DIR$/protobuf/bin" />
       <excludeFolder url="file://$MODULE_DIR$/download" />
       <excludeFolder url="file://$MODULE_DIR$/jps-bootstrap-work" />
+      <excludeFolder url="file://$MODULE_DIR$/jvm-rules/.bazelbsp" />
+      <excludeFolder url="file://$MODULE_DIR$/jvm-rules/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-bin" />
+      <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-jvm-rules" />
+      <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-out" />
+      <excludeFolder url="file://$MODULE_DIR$/jvm-rules/bazel-testlogs" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -26,5 +32,6 @@
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
   </component>
 </module>

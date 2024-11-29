@@ -26,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -248,6 +249,7 @@ public abstract class FileBasedIndex {
   }
 
   @NotNull
+  @Unmodifiable
   public abstract <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project);
 
   public abstract <V> @Nullable V getSingleEntryIndexData(@NotNull ID<Integer, V> id,

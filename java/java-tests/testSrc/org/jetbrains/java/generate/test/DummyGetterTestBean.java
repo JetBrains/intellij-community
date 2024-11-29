@@ -29,6 +29,7 @@ public class DummyGetterTestBean {
     /**
      * Hello Claus this is DummyGetterTestBean
      */
+    @Override
     public String toString() {
         return "DummyGetterTestBean{" +
                 "model=" + model +

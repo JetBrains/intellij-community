@@ -4,6 +4,8 @@ package com.intellij.execution.testframework.ui
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.NamedColorUtil
 
 class TestStatusLineTest : LightPlatformTestCase() {
   private fun testStatus(
@@ -91,9 +93,45 @@ class TestStatusLineTest : LightPlatformTestCase() {
     testStatus(9, 4, 2, 1, 1L, 1L, "Stopped. 2 tests failed, 1 passed, 1 ignored", "4 / 9 tests, $durationText")
   }
 
+  fun testUnknownTestCount() {
+    testStatus(-1, 2, 0, 0, null, 0L, "2 tests passed", "")
+
+    val duration = 1L
+    val durationText = NlsMessages.formatDurationApproximateNarrow(duration)
+
+    testStatus(-1, 3, 1, 0, duration, duration, "Stopped. 1 test failed, 2 passed", "3 tests total, $durationText")
+  }
+
   fun testOutdatedTestCount() {
     testStatus(9, 1, 2, 0, null, 0L, "2 tests failed", "2 / 9 tests")
     testStatus(9, 1, 0, 2, null, 0L, "2 tests ignored", "2 / 9 tests")
     testStatus(9, 1, 1, 1, null, 0L, "1 test failed, 1 ignored", "2 / 9 tests")
+  }
+
+  fun testColors() {
+    val testStatusLine = TestStatusLine()
+    ApplicationManager.getApplication().invokeAndWait {
+      testStatusLine.formatTestMessage(3, 3, 1, 1, 1L, 1L)
+    }
+
+    val iterator = testStatusLine.myState.iterator()
+
+    iterator.next()
+    assertEquals(iterator.fragment, "1 test failed")
+    assertEquals(iterator.textAttributes.fgColor, JBUI.CurrentTheme.Label.errorForeground())
+
+    iterator.next()
+    assertEquals(iterator.fragment, ", 1 passed, ")
+    assertEquals(iterator.textAttributes.fgColor, null)
+
+    iterator.next()
+    assertEquals(iterator.fragment, "1 ignored")
+    assertEquals(iterator.textAttributes.fgColor, JBUI.CurrentTheme.Label.warningForeground())
+
+    val detailIterator = testStatusLine.stateDescription.iterator()
+
+    detailIterator.next()
+    assertEquals(detailIterator.fragment, "3 tests total, ${NlsMessages.formatDurationApproximateNarrow(1L)}")
+    assertEquals(detailIterator.textAttributes.fgColor, NamedColorUtil.getInactiveTextColor())
   }
 }

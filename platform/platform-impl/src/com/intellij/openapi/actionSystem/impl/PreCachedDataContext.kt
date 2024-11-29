@@ -6,6 +6,7 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeView
 import com.intellij.ide.ProhibitAWTEvents
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.ide.impl.DataValidators
@@ -489,6 +490,9 @@ private class MySink : DataSink {
     if (validated == null) return
     val map = map ?: ProviderData().also { map = it }
     if (cachedDataForRules != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
+      if (map.uiSnapshot[key.name] != null) {
+        return
+      }
       for (map in cachedDataForRules) {
         if (map.uiSnapshot[key.name] != null) {
           return
@@ -573,6 +577,11 @@ private class MyLazy<T>(val key: DataKey<T>, val supplier: () -> T?) : DataProvi
 private fun hideEditor(component: Component?): Boolean {
   return component is JComponent &&
          component.getClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY) != null
+}
+
+internal fun wrapUnsafeData(data: Any?): Any? = when {
+  data is IdeView -> safeIdeView(data)
+  else -> data
 }
 
 private class ProviderData : DataProvider, DataValidators.SourceWrapper {

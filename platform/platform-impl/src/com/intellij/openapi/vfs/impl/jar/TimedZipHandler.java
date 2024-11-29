@@ -86,15 +86,9 @@ public final class TimedZipHandler extends ZipHandlerBase {
           myInvalidationRequest = null;
         }
         if (myFile == null) {
-          var file = getFile();
-          myFileStamp = Files.getLastModifiedTime(file.toPath()).toMillis();
-          // see com.intellij.openapi.vfs.impl.ZipHandler
-          if (ZipHandler.isFileLikelyLocal(file)) {
-            myFile = new JavaZipFileWrapper(file);
-          }
-          else {
-            myFile = new JBZipFileWrapper(file);
-          }
+          var file = getPath();
+          myFileStamp = Files.getLastModifiedTime(file).toMillis();
+          myFile = getZipFileWrapper(file);
         }
       }
       catch (Throwable t) {

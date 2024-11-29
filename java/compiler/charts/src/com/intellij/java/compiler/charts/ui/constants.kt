@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.ui.ColorUtil
+import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil.FontSize
@@ -15,6 +15,9 @@ object Colors {
 
     fun getRowColor(row: Int): JBColor = if (row % 2 == 0) EVEN else ODD
   }
+
+  const val NO_ALPHA = 1.0
+  const val FILTERED_ALPHA = 0.25
 
   @Suppress("PropertyName")
   interface Block {
@@ -62,10 +65,6 @@ object Colors {
   private fun exact(propertyName: String): JBColor {
     return JBColor.namedColor(propertyName)
   }
-
-  private fun JBColor.alpha(alpha: Double): JBColor {
-    return ColorUtil.withAlpha(this, alpha) as JBColor
-  }
 }
 
 object Settings {
@@ -73,6 +72,7 @@ object Settings {
     const val PADDING: Double = 1.0
     const val BORDER: Double = 2.0
     val HEIGHT = JBTable().rowHeight * 1.5
+    const val MIN_SIZE = 7
   }
 
   object Axis {
@@ -117,5 +117,10 @@ object Settings {
 
   object Toolbar {
     const val ID = "CompilationChartsToolbar"
+  }
+
+  object Popup {
+    val MODULE_IMAGE = AllIcons.Actions.ModuleDirectory
+    val EDIT_IMAGE = AllIcons.Actions.EditSource
   }
 }

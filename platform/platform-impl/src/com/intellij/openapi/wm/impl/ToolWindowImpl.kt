@@ -761,17 +761,17 @@ internal class ToolWindowImpl(
 
     override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
       val group = DefaultActionGroup()
-      group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {
         if (additionalGearActions.isPopup && !additionalGearActions.templatePresentation.text.isNullOrEmpty()) {
           group.add(additionalGearActions)
         }
         else {
-          addSorted(group, additionalGearActions)
+          addSorted(e, group, additionalGearActions)
         }
         group.addSeparator()
       }
+      group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
       group.addSeparator()
       contentManager.valueIfInitialized?.let {
@@ -890,8 +890,8 @@ internal class ToolWindowImpl(
   }
 }
 
-private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
-  val children = group.getChildren(null)
+private fun addSorted(e: AnActionEvent?, main: DefaultActionGroup, group: ActionGroup) {
+  val children = ActionWrapperUtil.getChildren(e, main, group)
   var hadSecondary = false
   for (action in children) {
     if (group.isPrimary(action)) {

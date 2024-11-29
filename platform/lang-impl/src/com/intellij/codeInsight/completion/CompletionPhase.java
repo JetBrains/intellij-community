@@ -274,7 +274,6 @@ public abstract class CompletionPhase implements Disposable {
             // When ScreenReader is active the lookup gets focus on show and we should not close it.
             if (ScreenReader.isActive() &&
                 event.getOppositeComponent() != null &&
-                indicator.getLookup().getComponent() != null &&
                 // Check the opposite is in the lookup ancestor
                 SwingUtilities.getWindowAncestor(event.getOppositeComponent()) ==
                 SwingUtilities.getWindowAncestor(indicator.getLookup().getComponent())) {

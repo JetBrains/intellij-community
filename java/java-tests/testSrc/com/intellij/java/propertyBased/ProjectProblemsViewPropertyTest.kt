@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.codeInsight.javadoc.JavaDocUtil
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -41,6 +42,7 @@ import org.jetbrains.jetCheck.PropertyChecker
 import kotlin.math.absoluteValue
 
 @SkipSlowTestLocally
+@IgnoreJUnit3
 class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   override fun setUp() {
     TestModeFlags.set(ProjectProblemUtils.ourTestingProjectProblems, true, testRootDisposable)

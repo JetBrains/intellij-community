@@ -8,7 +8,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -43,10 +42,10 @@ public final class SuspiciousNameCombinationInspection extends AbstractBaseJavaL
     .add("java.sql.ResultSet", "update.*")
     .add("java.sql.SQLOutput", "write.*")
     // parameters for compare methods are x and y which is also unrelated to coordinates
-    .add("java.lang.Integer", "compare.*")
+    .add("java.lang.Integer", "compare.*|toUnsignedLong")
     .add("java.lang.Long", "compare.*")
-    .add("java.lang.Short", "compare")
-    .add("java.lang.Byte", "compare")
+    .add("java.lang.Short", "compare|toUnsigned.*")
+    .add("java.lang.Byte", "compare|toUnsigned.*")
     .add("java.lang.Character", "compare")
     .add("java.lang.Boolean", "compare")
     // parameter names for addExact, multiplyFull, floorDiv, hypot etc. are x and y,

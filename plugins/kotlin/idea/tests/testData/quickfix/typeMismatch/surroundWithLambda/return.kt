@@ -1,4 +1,5 @@
 // "Surround with lambda" "true"
+// PRIORITY: HIGH
 fun foo(): () -> String? {
     return <caret>"foo"
 }

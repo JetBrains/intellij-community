@@ -68,10 +68,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
@@ -507,6 +504,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   }
 
   @Override
+  @Unmodifiable
   protected @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
     List<@NotNull Fragment> ranges = upd.updatedRanges();
     if (!ranges.isEmpty()) return ranges;

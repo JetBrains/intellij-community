@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -27,5 +27,24 @@ public class OptionalIsPresentInspectionTest extends LightJavaInspectionTestCase
     return JAVA_11_ANNOTATED;
   }
 
-  public void testOptionalIsPresent() { doTest(); }
+
+  public void testAssignment() { doTest(); }
+
+  public void testConsumer() { doTest(); }
+
+  public void testConsumerIndirect() { doTest(); }
+
+  public void testConsumerIndirectAmbiguousOverload() { doTest(); }
+
+  public void testConsumerIndirectComment() { doTest(); }
+
+  public void testConsumerIndirectFieldInaccessible() { doTest(); }
+
+  public void testConsumerIndirectTooComplex_1() { doTest(); }
+
+  public void testConsumerIndirectTooComplex_2() { doTest(); }
+
+  public void testConsumerIndirectTypeMismatch() { doTest(); }
+
+  public void testOptional() { doTest(); }
 }

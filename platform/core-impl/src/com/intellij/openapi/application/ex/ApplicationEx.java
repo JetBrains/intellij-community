@@ -29,12 +29,6 @@ public interface ApplicationEx extends Application {
   int ELEVATE = 0x08;
 
   /**
-   * @return true if this thread is inside read action.
-   * @see #runReadAction(Runnable)
-   */
-  boolean holdsReadLock();
-
-  /**
    * @return true if the EDT is performing write action right now.
    * @see #runWriteAction(Runnable)
    */
@@ -45,23 +39,6 @@ public interface ApplicationEx extends Application {
    * @see #runWriteAction(Runnable)
    */
   boolean isWriteActionPending();
-
-  /**
-   * Acquires IW lock if it's not acquired by the current thread.
-   *
-   * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
-   * @return {@code true} if this call acquired lock, {@code false} if lock was taken already.
-   */
-  @ApiStatus.Internal
-  default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
-    return false;
-  }
-
-  /**
-   * Releases IW lock.
-   */
-  @ApiStatus.Internal
-  default void releaseWriteIntentLock() {}
 
   void setSaveAllowed(boolean value);
 

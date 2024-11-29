@@ -262,6 +262,10 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT",
+                                JavaBundle.message("annotations.new.line.record.component"),
+                                recordComponentsGroup);
 
       // Try statement
       consumer.showCustomOption(JavaCodeStyleSettings.class,
@@ -320,6 +324,11 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 getInstance().BLANK_LINES,
                                 OptionAnchor.AFTER,
                                 "BLANK_LINES_AROUND_FIELD");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_BETWEEN_RECORD_COMPONENTS",
+                                JavaBundle.message("editbox.blank.lines.record.components"),
+                                getInstance().BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showStandardOptions(
@@ -602,6 +611,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           private Boolean secondPrivateAnnotatedField = true;
       }
       
+      public record SampleRecord(@NotNull Double s, @Nullable String t, @NotNull Double w) {}
+      
       interface TestInterface {
           int MAX = 10;
           int MIN = 1;
@@ -662,7 +673,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
           }
       }
       interface Abba {}
-      record Rec(String s, int i) {}
+      public record Rec(String s, int i) {}
       
       class SimpleClass {
         class EmptyClass{}
@@ -747,6 +758,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       enum Breed {
           Dalmatian(), Labrador(), Dachshund()
       }
+      
+      public record SampleRecord(@Annotation1 @Annotation2 String s, @Annotation1 @Annotation3(param1="value1", param2="value2") Integer t, @Annotation3(param1="value1", param2="value2") @Annotation1 Double u, @Annotation3(param1="value1", param2="value2") @Annotation4(param1="value1", param2="value2") Float w) {}
 
       @Annotation1 @Annotation2 @Annotation3(param1="value1", param2="value2") @Annotation4 class Foo {
           @Annotation1 @Annotation3(param1="value1", param2="value2") public static void foo(){

@@ -87,6 +87,7 @@ public abstract class PathMacroMap {
     return substitute(text, caseSensitive);
   }
 
+  @Override
   @ApiStatus.Internal
   public abstract int hashCode();
 }

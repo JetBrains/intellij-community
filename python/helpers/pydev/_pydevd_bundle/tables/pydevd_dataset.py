@@ -5,6 +5,8 @@ TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH_PYTHON_2 = 100000
 BATCH_SIZE = 10000
 
+CSV_FORMAT_SEPARATOR = '~'
+
 
 def get_type(table):
     # type: (str) -> str
@@ -36,40 +38,40 @@ def get_column_types(table):
 def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> str
 
-    def convert_data_to_csv(data):
-        return repr(data.to_csv(na_rep = "NaN", float_format=format))
+    def convert_data_to_csv(data, format):
+        return repr(data.to_csv(na_rep = "NaN", float_format=format, sep=CSV_FORMAT_SEPARATOR))
 
-    def convert_data_to_html(data):
+    def convert_data_to_html(data, format):
         return repr(data.to_html(notebook=True))
 
     if use_csv_serialization:
-        computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
+        computed_data = __compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
     else:
-        computed_data = _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
+        computed_data = __compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
     return computed_data
-
-
-# used by DSTableCommands
-# noinspection PyUnresolvedReferences
-def display_data_csv(table, start_index, end_index):
-     # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data):
-        try:
-            data = data.to_csv(na_rep = "NaN")
-        except AttributeError:
-            pass
-        print(data)
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
 def display_data_html(table, start_index, end_index):
     # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data):
+    def ipython_display(data, format):
         from IPython.display import display
         display(data)
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
+    __compute_sliced_data(table, ipython_display, start_index, end_index)
+
+
+# used by DSTableCommands
+# noinspection PyUnresolvedReferences
+def display_data_csv(table, start_index, end_index):
+     # type: (datasets.arrow_dataset.Dataset, int, int) -> None
+    def ipython_display(data, format):
+        try:
+            data = data.to_csv(na_rep = "NaN", sep=CSV_FORMAT_SEPARATOR, float_format=format)
+        except AttributeError:
+            pass
+        print(data)
+    __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
 def __get_data_slice(table, start, end):
@@ -77,7 +79,7 @@ def __get_data_slice(table, start, end):
     return __convert_to_df(table).iloc[start:end]
 
 
-def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
+def __compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
     # type: (datasets.arrow_dataset.Dataset, function, int, int) -> str
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
 
@@ -91,7 +93,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     pd.set_option('display.max_rows', max_rows)
     pd.set_option('display.max_colwidth', max_colwidth)
 
-    format_function = _define_format_function(format)
+    format_function = __define_format_function(format)
     if format_function is not None:
         pd.set_option('display.float_format', format_function)
 
@@ -100,7 +102,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     else:
         table = __convert_to_df(table)
 
-    data = fun(table)
+    data = fun(table, pd.get_option('display.float_format'))
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
@@ -111,7 +113,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     return data
 
 
-def _define_format_function(format):
+def __define_format_function(format):
     # type: (Union[None, str]) -> Union[Callable, None]
     if format is None or format == 'null':
         return None

@@ -2,10 +2,11 @@ package com.intellij.notebooks.visualization.outputs.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.notebooks.visualization.SwingClientProperty
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory
 import java.awt.Component
+import java.awt.Container
 import java.awt.Dimension
+import java.awt.LayoutManager2
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
@@ -14,100 +15,142 @@ import kotlin.math.min
 class InnerComponent : JPanel() {
   data class Constraint(val widthStretching: NotebookOutputComponentFactory.WidthStretching, val limitedHeight: Boolean)
 
-  var maxHeight: Int = Int.MAX_VALUE
+  var maxHeight: Int
+    get() = (layout as InnerComponentLayoutManager).maxHeight
+    set(value) {
+      (layout as InnerComponentLayoutManager).maxHeight = value
+    }
+
+  var scrollingEnabled: Boolean
+    get() = (layout as InnerComponentLayoutManager).scrollingEnabled
+    set(value) {
+      (layout as InnerComponentLayoutManager).scrollingEnabled = value
+    }
 
   init {
     isOpaque = false
+    layout = InnerComponentLayoutManager()
   }
 
   override fun add(comp: Component, constraints: Any, index: Int) {
     require(comp is CollapsingComponent)
     require(constraints is Constraint)
-    comp.layoutConstraints = constraints
     super.add(comp, constraints, index)
     if (GraphicsUtil.isRemoteEnvironment()) {
       (parent as SurroundingComponent).fireResize()
     }
   }
 
-  override fun remove(index: Int) {
-    (getComponent(index) as JComponent).layoutConstraints = null
-    super.remove(index)
-  }
-
   val mainComponents: List<JComponent>
-    get() = ArrayList<JComponent>(componentCount).also {
+    get() = buildList<JComponent> {
       repeat(componentCount) { i ->
-        it += (getComponent(i) as CollapsingComponent).mainComponent
+        add((getComponent(i) as CollapsingComponent).mainComponent)
       }
     }
 
-  override fun getPreferredSize(): Dimension =
-    foldSize { preferredSize }
+  class InnerComponentLayoutManager : LayoutManager2 {
 
-  override fun getMinimumSize(): Dimension =
-    foldSize { minimumSize }
+    var maxHeight: Int = Int.MAX_VALUE
 
-  override fun getMaximumSize(): Dimension =
-    foldSize { maximumSize }
+    var scrollingEnabled: Boolean = true
 
-  override fun doLayout() {
-    var totalY = insets.top
-    forEveryComponent(Component::getPreferredSize) { component, newWidth, newHeight ->
-      component.setBounds(
-        insets.left,
-        totalY,
-        newWidth,
-        newHeight,
-      )
-      totalY += newHeight
-    }
+    private val componentToConstraints = mutableMapOf<Component, Constraint>()
 
-    if (GraphicsUtil.isRemoteEnvironment()) {
-      (parent as SurroundingComponent).fireResize()
-    }
-  }
-
-  private inline fun foldSize(crossinline handler: Component.() -> Dimension): Dimension {
-    val acc = Dimension(0, insets.run { top + bottom })
-
-    forEveryComponent(handler) { _, newWidth, newHeight ->
-      acc.width = max(acc.width, newWidth)
-      acc.height += newHeight
-    }
-
-    return acc
-  }
-
-  private inline fun forEveryComponent(
-    crossinline sizeProposer: Component.() -> Dimension,
-    crossinline handleComponent: (component: Component, newWidth: Int, newHeight: Int) -> Unit,
-  ) {
-    repeat(componentCount) { index ->
-      val component = getComponent(index)
-      check(component is CollapsingComponent) { "$component is not CollapsingComponent" }
-      val proposedSize = component.sizeProposer()
-      val newWidth = getComponentWidthByConstraint(component, proposedSize.width)
-      val newHeight =
-        if (!component.hasBeenManuallyResized && component.layoutConstraints?.limitedHeight == true) min(maxHeight, proposedSize.height)
-        else proposedSize.height
-      handleComponent(component, newWidth, newHeight)
-    }
-  }
-
-  private fun getComponentWidthByConstraint(component: JComponent, componentDesiredWidth: Int): Int =
-    (width - insets.left - insets.right).let {
-      when (component.layoutConstraints?.widthStretching) {
-        NotebookOutputComponentFactory.WidthStretching.STRETCH_AND_SQUEEZE -> it
-        NotebookOutputComponentFactory.WidthStretching.STRETCH -> max(it, componentDesiredWidth)
-        NotebookOutputComponentFactory.WidthStretching.SQUEEZE -> min(it, componentDesiredWidth)
-        NotebookOutputComponentFactory.WidthStretching.NOTHING -> componentDesiredWidth
-        null -> {
-          thisLogger().error("The component $component has no constraints")
-          componentDesiredWidth
+    override fun addLayoutComponent(comp: Component?, constraints: Any?) {
+      if (comp != null) {
+        if (constraints is Constraint) {
+          componentToConstraints[comp] = constraints
+        }
+        else {
+          componentToConstraints.remove(comp)
         }
       }
     }
 
-  private var JComponent.layoutConstraints: Constraint? by SwingClientProperty("layoutConstraints")
+    override fun maximumLayoutSize(target: Container): Dimension? {
+      return foldSize(target) { minimumSize }
+    }
+
+    override fun getLayoutAlignmentX(target: Container?): Float = 0.5f
+
+    override fun getLayoutAlignmentY(target: Container?): Float = 0.5f
+
+    override fun invalidateLayout(target: Container?) = Unit
+
+    override fun addLayoutComponent(name: String?, comp: Component?) = Unit
+
+    override fun removeLayoutComponent(comp: Component?) {
+      componentToConstraints.remove(comp)
+    }
+
+    override fun preferredLayoutSize(parent: Container): Dimension? {
+      return foldSize(parent) { preferredSize }
+    }
+
+    override fun minimumLayoutSize(parent: Container): Dimension {
+      return foldSize(parent) { minimumSize }
+    }
+
+    override fun layoutContainer(parent: Container) {
+      val insets = parent.insets
+      var totalY = insets.top
+      forEveryComponent(parent, Component::getPreferredSize) { component, newWidth, newHeight ->
+        component.setBounds(
+          insets.left,
+          totalY,
+          newWidth,
+          newHeight,
+        )
+        totalY += newHeight
+      }
+
+      if (GraphicsUtil.isRemoteEnvironment()) {
+        (parent as SurroundingComponent).fireResize()
+      }
+    }
+
+    private inline fun foldSize(parent: Container, crossinline handler: Component.() -> Dimension): Dimension {
+      val acc = Dimension(0, parent.insets.run { top + bottom })
+
+      forEveryComponent(parent, handler) { _, newWidth, newHeight ->
+        acc.width = max(acc.width, newWidth)
+        acc.height += newHeight
+      }
+
+      return acc
+    }
+
+    private inline fun forEveryComponent(
+      parent: Container,
+      crossinline sizeProposer: Component.() -> Dimension,
+      crossinline handleComponent: (component: Component, newWidth: Int, newHeight: Int) -> Unit,
+    ) {
+      repeat(parent.componentCount) { index ->
+        val component = parent.getComponent(index)
+        check(component is CollapsingComponent) { "$component is not CollapsingComponent" }
+        val proposedSize = component.sizeProposer()
+        val constraints = componentToConstraints[component]
+        val newWidth = getComponentWidthByConstraint(parent, component, constraints, proposedSize.width)
+        val limitHeight = scrollingEnabled && constraints?.limitedHeight == true
+        val newHeight =
+          if (!component.hasBeenManuallyResized && limitHeight) min(maxHeight, proposedSize.height)
+          else proposedSize.height
+        handleComponent(component, newWidth, newHeight)
+      }
+    }
+
+    private fun getComponentWidthByConstraint(parent: Container, component: JComponent, constraint: Constraint?, componentDesiredWidth: Int): Int =
+      (parent.width - parent.insets.left - parent.insets.right).let {
+        when (constraint?.widthStretching) {
+          NotebookOutputComponentFactory.WidthStretching.STRETCH_AND_SQUEEZE -> it
+          NotebookOutputComponentFactory.WidthStretching.STRETCH -> max(it, componentDesiredWidth)
+          NotebookOutputComponentFactory.WidthStretching.SQUEEZE -> min(it, componentDesiredWidth)
+          NotebookOutputComponentFactory.WidthStretching.NOTHING -> componentDesiredWidth
+          null -> {
+            thisLogger().error("The component $component has no constraints")
+            componentDesiredWidth
+          }
+        }
+      }
+  }
 }

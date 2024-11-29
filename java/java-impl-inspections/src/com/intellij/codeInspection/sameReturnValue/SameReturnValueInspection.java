@@ -101,6 +101,7 @@ public final class SameReturnValueInspection extends GlobalJavaBatchInspectionTo
     return new LocalSameReturnValueInspection(this);
   }
 
+  @SuppressWarnings("InspectionDescriptionNotFoundInspection") // TODO IJPL-166089
   private static final class LocalSameReturnValueInspection extends AbstractBaseUastLocalInspectionTool {
     private final SameReturnValueInspection myGlobal;
 

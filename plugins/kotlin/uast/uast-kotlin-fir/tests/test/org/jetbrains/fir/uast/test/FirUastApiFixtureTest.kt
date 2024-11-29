@@ -138,6 +138,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkInvokedLambdaBody(myFixture)
     }
 
+    fun testImplicitReceiver() {
+        checkImplicitReceiver(myFixture)
+    }
+
     fun testLambdaImplicitParameters() {
         checkLambdaImplicitParameters(myFixture)
     }
@@ -192,5 +196,9 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testEnumAsAnnotationAttributeValueEvaluation() {
         checkEnumAsAnnotationAttributeValueEvaluation(myFixture)
+    }
+
+    fun testJavaConstantEvaluation() {
+        checkJavaConstantEvaluation(myFixture)
     }
 }

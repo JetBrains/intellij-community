@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return myType;
   }
 
+  @Override
   @NonNls
   public String toString() {
     final ObjectReference objectReference = getObjectReference();
@@ -95,6 +97,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   /**
    * @return a list of waiting ThreadReferenceProxies
    */
+  @Unmodifiable
   public List<ThreadReferenceProxyImpl> waitingThreads() throws IncompatibleThreadStateException {
     return ContainerUtil.map(getObjectReference().waitingThreads(), getVirtualMachineProxy()::getThreadReferenceProxy);
   }
@@ -107,6 +110,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return getObjectReference().entryCount();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof ObjectReferenceProxyImpl)) {
       return false;
@@ -117,6 +121,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
 
+  @Override
   public int hashCode() {
     return myObjectReference.hashCode();
   }

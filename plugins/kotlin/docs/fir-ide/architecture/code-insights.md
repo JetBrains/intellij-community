@@ -9,33 +9,45 @@ Intentions can be considered as small refactoring actions.
 - `kotlin.code-insight.intentions.k2`
 - `kotlin.code-insight.intentions.shared`
 
-Preferably, an intention should extend `KotlinPsiUpdateModCommandIntention` or `KotlinPsiUpdateModCommandIntentionWithContext`.
-It works over the ModCommand API (see `ModCommand`) that allows to perform analysis on a background thread.
+Preferably, an intention should extend `KotlinApplicableModCommandAction`.
+It works over the ModCommand API that allows performing analysis on a background thread.\
+To learn more about the ModCommand API,
+read [the short API description and migration guide](https://docs.google.com/document/d/1-2_cNjq-Mc28j0eCX1TEuMM-k6UXKvfPTutvIBafIJA/).
 
-### `KotlinPsiUpdateModCommandIntention`
+### `KotlinApplicableModCommandAction`
 The most important methods you need to implement:
-- `getApplicabilityRange()`
+- `getApplicableRanges(element)`
     - Determines whether the tool is available in a range; see `ApplicabilityRanges`.
 - `isApplicableByPsi(element)`
     - Checks whether it is applicable to an element by PSI only.
     - Should not use the Analysis API due to performance concerns.
-- `isApplicableByAnalyze(element)`
-    - Checks whether it is applicable to an element by performing some resolution with the Analysis API.
-- `invoke(context, element, updater)`
-    - Performs changes over a non-physical PSI.
-    - No Analysis API context is expected. Use `KotlinPsiUpdateModCommandIntentionWithContext` when you need some Analysis API context.
-    - `context` is a ModCommand API action context.
-    - Use `updater` (see `ModPsiUpdater`) to perform editor-like actions like moving caret or highlighting an element.
-
-### `KotlinPsiUpdateModCommandIntentionWithContext`
-Very similar to `KotlinPsiUpdateModCommandIntention` plus Analysis API context:
 - `prepareContext(element)`
-    - Provides some context for `apply`.
-    - If it is not applicable by analysis, functions should return `null`.
+    - Prepares an Analysis API context on a physical PSI that is provided for `invoke`.
+    - Must return `null` if it is not applicable by analysis.
+    - In cases where the inspection neither uses the Analysis API nor needs any context,
+      the `prepareContext` return type must be non-nullable `Unit`, and the `prepareContext` body must be empty.
     - Guaranteed to be executed from a read action.
-- `invoke(actionContext, element, preparedContext, updater)`
-    - Performs changes over a non-physical PSI.
-    - `context` contains both an Analysis API context and a ModCommand API action context.
+- `invoke(actionContext, element, elementContext, updater)`
+    - `actionContext` is a ModCommand API action context.  
+    - `element` is a non-physical PSI.
+    - `elementContext` is an Analysis API context.
+    - Use `updater` (see `ModPsiUpdater`) to perform editor-like actions like moving caret or highlighting an element.
+- `getPresentation(context, element)`
+    - Provides the whole presentation, including an action text, icon, priority, and highlighting in the editor.
+    - The default implementation of `getPresentation` is `Presentation.of(familyName)`.
+    - To customize `ModCommandAction` priority, use `Presentation#withPriority` and  
+      do NOT use the `HighPriorityAction` and `LowPriorityAction` marker interfaces for `ModCommandActions`,  
+      as they have no effect on them.
+
+### `SelfTargetingIntention` and `SelfTargetingRangeIntention`
+- `startInWriteAction()`
+    - Indicates whether the action must be invoked inside a write action.
+- `isApplicableTo(element, caretOffset)`
+    - Checks whether it is applicable to an element at caret offset.
+- `applyTo(element, editor)`
+    - Performs changes over a physical PSI.
+- You will want to use `SelfTargetingIntention` and `SelfTargetingRangeIntention`
+  when the action must not be invoked inside a write action.
 
 ## Inspections
 
@@ -46,25 +58,29 @@ They inspect code and report some kind of warnings and can recommend how to chan
 - `kotlin.code-insight.inspections.k2`
 - `kotlin.code-insight.inspections.shared`
 
-There are two base classes for inspections: `AbstractKotlinApplicableInspection` and `AbstractKotlinApplicableInspectionWithContext`
+There are several classes for inspections: `KotlinApplicableInspectionBase.Simple`, `KotlinDiagnosticBasedInspectionBase`,
+and `AbstractKotlinInspection`.
 
-### `AbstractKotlinApplicableInspection`
-- `isApplicableByPsi(element)`, `getApplicabilityRange()`, `isApplicableByAnalyze(element)`
-    - Are the same as for `AbstractKotlinApplicableModCommandIntention`.
-- `shouldApplyInWriteAction()`
-    - Whether `apply` should be performed in a write action.
-- `apply(element, project, updater)`
-    - Applies a fix to an element.
-    - ModCommand API based.
-    - Executed on a background thread.
+### `KotlinApplicableInspectionBase.Simple`
+- `isApplicableByPsi(element)`, `getApplicableRanges(element)`, and `prepareContext(element)`.
+    - Are the same as for `KotlinApplicableModCommandAction`.
+- `createQuickFix(element, context)`
+    - Returns a `KotlinModCommandQuickFix`.
+    - Note: The `HighPriorityAction` and `LowPriorityAction` marker interfaces apply to `KotlinModCommandQuickFix`.
 
-### `AbstractKotlinApplicableInspectionWithContext`
-Similar to `AbstractKotlinApplicableInspection` plus an Analysis API context:
-- `prepareContext(element)`
-    - Prepares an Analysis API context on a physical PSI.
-- `apply(element, context, project, updater)`
-    - `element` is a non-physical PSI.
-    - if `context` keeps some physical PSI, you need to convert it with `ModPsiUpdater#getWritable` before a non-physical file is changed.
+### `KotlinDiagnosticBasedInspectionBase`
+A subclass of `KotlinApplicableInspectionBase.Simple` that is intended
+to create inspections from [extra compiler checks](https://kotlinlang.org/docs/whatsnew-eap.html#extra-compiler-checks)
+(`KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS`), whose warnings are not highlighted by default, unlike warnings
+from regular checks (`KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS`).\
+Extending `KotlinDiagnosticBasedInspectionBase` also allows running extra compiler checks and possibly applying fixes in batch.
+- `prepareContextByDiagnostic(element, diagnostic)`
+    - Prepares the context that is provided for `getProblemDescription` and `createQuickFix`.
+    - `element` is a physical PSI.
+    - `diagnostic` is a specific diagnostic associated with the element.
+
+### `AbstractKotlinInspection`
+- Use `AbstractKotlinInspection` if the quick fix cannot be `KotlinModCommandQuickFix`
 
 ## Quick Fixes
 
@@ -72,20 +88,31 @@ Quick fixes are actions on errors and warnings provided by the compiler - they a
 
 ### Location
 - `kotlin.code-insight.fixes.k2`
+- `kotlin.fir.frontend-independent`
 
-There are several ways how to create `QuickFixFactory`:
-- `quickFixesPsiBasedFactory`
-    - to perform a pure PSI-based quick fix without any Analysis API calls.
-- `diagnosticModCommandFixFactory`
-    - Preferable.
-    - Produces a list of `KotlinApplicatorBasedModCommand` that requires `KotlinModCommandApplicator`.
-    - `modCommandApplicator` is a DSL helper to build `KotlinModCommandApplicator`
-        - `getActionName: ((PSI, INPUT) -> String)`
-        - `getFamilyName: (() -> String)`
-        - `isApplicableByPsi: ((PSI) -> Boolean)`
-        - `applyTo: ((PSI, INPUT, context, updater) -> Unit)`
-- `diagnosticFixFactories`
-    - Produces a list of `QuickFixActionBase`.
+There are two ways to register a quick-fix factory:
+
+1. `registerFactory(factory)`
+    - `factory` can be:
+        - `KotlinQuickFixFactory.ModCommandBased`, which is preferable as the one that produces a list of `ModCommandActions`:
+            - Use `PsiUpdateModCommandAction` if no element context is required.
+            - Use `KotlinPsiUpdateModCommandAction.ElementBased` if an element context is required.
+        - `KotlinQuickFixFactory.IntentionBased`, which produces a list of `IntentionAction`.
+
+2. `registerPsiQuickFixes(diagnosticClass, factories)`
+    - `factories` are pure PSI-based quick-fix factories that do not make Analysis API calls.
+       They can be created using `quickFixesPsiBasedFactory`.
+    - You should use this way only in cases of reusing quick fixes for K2 that have already been implemented for K1.
+
+### Testing actions
+
+* If the action's priority differs from NORMAL, it is good practice to use the `// PRIORITY` directive in test data files.
+  For example:
+```kotlin
+// PRIORITY: HIGH
+```
+If you call `updater.moveCaretTo()` or `editor.moveCaret()` inside the `invoke` or `applyTo` method,
+including `<caret>` in the after-test data file is recommended.
 
 ## Completion
 

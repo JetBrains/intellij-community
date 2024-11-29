@@ -1,34 +1,35 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.projectModel` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "projectModel_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "projectModel",
   module_name = "intellij.platform.projectModel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//jps/model-api:jps-model",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util/concurrency",
-    "@community//platform/workspace/storage:workspace-storage",
-    "@community//platform/workspace/jps:workspace-jps",
-    "@community//platform/backend/workspace:backend-workspace",
-    "@community//platform/util/xmlDom:util-xmlDom",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/jdom",
+    "//platform/util/concurrency",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/util/xmlDom",
   ],
   exports = [
-    "@community//platform/core-api:core",
-    "@community//jps/model-api:jps-model",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":projectModel_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.projectModel` end

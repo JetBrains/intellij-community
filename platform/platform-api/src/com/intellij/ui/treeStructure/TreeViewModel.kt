@@ -3,13 +3,12 @@ package com.intellij.ui.treeStructure
 
 import com.intellij.openapi.components.service
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.tree.SuspendingTreeVisitor
 import com.intellij.ui.tree.TreeVisitor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
-import javax.swing.tree.TreePath
 
 @ApiStatus.Experimental
 fun TreeViewModel(coroutineScope: CoroutineScope, domainModel: TreeDomainModel): TreeViewModel =
@@ -19,18 +18,36 @@ fun TreeViewModel(coroutineScope: CoroutineScope, domainModel: TreeDomainModel):
 interface TreeViewModel {
   val domainModel: TreeDomainModel
   val root: Flow<TreeNodeViewModel?>
-  suspend fun invalidate(path: TreePath?, recursive: Boolean)
-  var comparator: Comparator<in TreeNodeViewModel>?
-  suspend fun accept(visitor: TreeVisitor, allowLoading: Boolean): TreePath?
-  suspend fun accept(visitor: SuspendingTreeVisitor, allowLoading: Boolean): TreePath?
+  val selection: StateFlow<Set<TreeNodeViewModel>>
+  val scrollEvents: Flow<TreeNodeViewModel>
+  fun invalidate(node: TreeNodeViewModel?, recursive: Boolean)
+  fun setSelection(nodes: Collection<TreeNodeViewModel>)
+  fun scrollTo(node: TreeNodeViewModel)
+  suspend fun accept(visitor: TreeViewModelVisitor, allowLoading: Boolean): TreeNodeViewModel?
+  @ApiStatus.Internal
+  suspend fun awaitUpdates()
+}
+
+@ApiStatus.Experimental
+interface TreeViewModelVisitor {
+  suspend fun visit(node: TreeNodeViewModel): TreeVisitor.Action
 }
 
 @ApiStatus.Experimental
 interface TreeNodeViewModel {
-  fun getUserObject(): Any
-  val presentation: Flow<TreeNodePresentation>
+  val parent: TreeNodeViewModel?
+  val state: Flow<TreeNodeState>
   val children: Flow<List<TreeNodeViewModel>>
-  fun presentationSnapshot(): TreeNodePresentation
+  fun stateSnapshot(): TreeNodeState
+  fun setExpanded(isExpanded: Boolean)
+  @ApiStatus.Internal
+  fun getUserObject(): Any
+}
+
+@ApiStatus.Experimental
+interface TreeNodeState {
+  val presentation: TreeNodePresentation
+  val isExpanded: Boolean
 }
 
 @ApiStatus.Internal
@@ -39,16 +56,22 @@ interface TreeViewModelFactory {
 }
 
 @ApiStatus.Internal
+data class TreeNodeStateImpl(
+  override val presentation: TreeNodePresentationImpl,
+  override val isExpanded: Boolean,
+): TreeNodeState
+
+@ApiStatus.Internal
 data class TreeNodePresentationImpl(
-  override val isLeaf: Boolean,
-  override val icon: Icon?,
-  override val mainText: String,
-  override val fullText: List<TreeNodeTextFragment>,
-  override val toolTip: String?,
+  val isLeaf: Boolean,
+  val icon: Icon?,
+  val mainText: String,
+  val fullText: List<TreeNodeTextFragment>,
+  val toolTip: String?,
 ) : TreeNodePresentation
 
 @ApiStatus.Internal
-data class TreeNodeTextFragmentImpl(
-  override val text: String,
-  override val attributes: SimpleTextAttributes,
-) : TreeNodeTextFragment
+data class TreeNodeTextFragment(
+  val text: String,
+  val attributes: SimpleTextAttributes,
+)

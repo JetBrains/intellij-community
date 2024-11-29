@@ -12,7 +12,7 @@ interface EelPathError {
   val reason: String
 }
 
-class EelPathException(override val raw: String, override val reason: String) : Exception("`$raw`: $reason"), EelPathError
+class EelPathException(override val raw: String, override val reason: String) : RuntimeException("`$raw`: $reason"), EelPathError
 
 /**
  * This interface deliberately mimics API of [java.nio.file.Path].
@@ -255,6 +255,12 @@ sealed interface EelPath {
 }
 
 operator fun EelPath.div(part: String): EelPath = resolve(EelPath.Relative.parse(part))
+
+val OS.pathSeparator: String
+  get() = when (this) {
+    OS.UNIX -> ":"
+    OS.WINDOWS -> ";"
+  }
 
 val EelPlatform.pathOs: OS
   get() = when (this) {

@@ -12,7 +12,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking

@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext

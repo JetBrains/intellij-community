@@ -55,6 +55,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -252,6 +253,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     return result;
   }
 
+  @Unmodifiable
   private static @Nullable List<PyRequirement> getListedRequirements(@NotNull PyPackageManager packageManager, @NotNull Module module) {
     final List<PyRequirement> requirements = packageManager.getRequirements(module);
     final List<PyRequirement> extrasRequirements = getExtrasRequirements(module);
@@ -417,7 +419,9 @@ public final class PyPackageRequirementsInspection extends PyInspection {
       }
       final List<PyRequirement> chosen;
       if (myUnsatisfied.size() > 1) {
-        final PyChooseRequirementsDialog dialog = new PyChooseRequirementsDialog(project, myUnsatisfied);
+        final PyChooseRequirementsDialog<PyRequirement> dialog = new PyChooseRequirementsDialog<>(project,
+                                                                                                  myUnsatisfied,
+                                                                                                  PyRequirement::getPresentableText);
         if (dialog.showAndGet()) {
           chosen = dialog.getMarkedElements();
         }

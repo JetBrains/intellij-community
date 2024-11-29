@@ -1,19 +1,46 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.instanceContainer` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "instanceContainer",
   module_name = "intellij.platform.instanceContainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@community//platform/util",
-    "@community//platform/util/coroutines:util-coroutines",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-collections-immutable",
+    "//platform/util",
+    "//platform/util/coroutines",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.instanceContainer` end
+
+### auto-generated section `build intellij.platform.instanceContainer.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "instanceContainer-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "instanceContainer-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-test",
+    "@lib//:junit5",
+    "//platform/instanceContainer",
+    "//platform/testFramework/common",
+    "//platform/testFramework/core",
+  ]
+)
+### auto-generated section `build intellij.platform.instanceContainer.tests` end

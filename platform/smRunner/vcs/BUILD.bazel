@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.smRunner.vcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "vcs_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs",
+  module_name = "intellij.platform.smRunner.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/execution-impl",
+    "//platform/smRunner",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/vcs-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":vcs_resources"]
+)
+### auto-generated section `build intellij.platform.smRunner.vcs` end

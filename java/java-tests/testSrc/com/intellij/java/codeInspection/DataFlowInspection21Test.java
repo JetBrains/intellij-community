@@ -135,6 +135,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testInstanceOfPatternAffectNullity() { doTest(); }
 
   public void testNullabilityInEnumSwitch() { doTest(); }
+  
+  public void testSwitchBooleanWhen() { doTest(); }
 
   public void testJetBrainsNotNullByDefault() {
     addJetBrainsNotNullByDefault(myFixture);
@@ -145,4 +147,5 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testGetterVsDirectAccess() { doTest(); }
+  public void testSetterAndGetter() { doTest(); }
 }

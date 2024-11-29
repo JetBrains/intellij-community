@@ -23,6 +23,7 @@ public final class ComboBoxUtil {
       return value;
     }
 
+    @Override
     public String toString() {
       return label;
     }

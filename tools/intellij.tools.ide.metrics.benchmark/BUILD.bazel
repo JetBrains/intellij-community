@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.tools.ide.metrics.benchmark` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "ide-metrics-benchmark_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-metrics-benchmark",
+  module_name = "intellij.tools.ide.metrics.benchmark",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "//platform/diagnostic/telemetry",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//platform/testFramework",
+    "@lib//:opentelemetry",
+    "//platform/boot",
+  ],
+  runtime_deps = [":ide-metrics-benchmark_resources"]
+)
+
+kt_jvm_test(
+  name = "ide-metrics-benchmark_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":ide-metrics-benchmark"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "//platform/diagnostic/telemetry",
+    "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//platform/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "@lib//:opentelemetry",
+    "//platform/boot",
+  ],
+  runtime_deps = [":ide-metrics-benchmark_resources"]
+)
+### auto-generated section `build intellij.tools.ide.metrics.benchmark` end

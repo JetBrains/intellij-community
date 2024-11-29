@@ -336,7 +336,7 @@ public final class UrlClassLoader extends ClassLoader {
         }
       }
       finally {
-        ourSkipFindingResource.set(null);
+        ourSkipFindingResource.remove();
       }
     }
     try {

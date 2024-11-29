@@ -8,19 +8,17 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 
+@Deprecated("The class doesn't provide real value. Consider implementing [org.jetbrains.ide.HttpRequestHandler] instead.", level = DeprecationLevel.ERROR)
 abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAdapter<FullHttpRequest>() {
   override fun messageReceived(context: ChannelHandlerContext, message: FullHttpRequest) {
-    logger<BuiltInServer>().debug { "\n\nIN HTTP: $message\n\n" }//NON-NLS
+    logger<BuiltInServer>().debug { "\n\nIN HTTP: $message\n\n" }
 
     if (!process(context, message, QueryStringDecoder(message.uri()))) {
       createStatusResponse(HttpResponseStatus.NOT_FOUND, message).send(context.channel(), message)
     }
   }
 
-  protected abstract fun process(context: ChannelHandlerContext,
-                                 request: FullHttpRequest,
-                                 urlDecoder: QueryStringDecoder
-  ): Boolean
+  protected abstract fun process(context: ChannelHandlerContext, request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean
 
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     NettyUtil.logAndClose(cause, logger<BuiltInServer>(), context.channel())

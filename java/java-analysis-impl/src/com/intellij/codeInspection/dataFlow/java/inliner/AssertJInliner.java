@@ -43,6 +43,7 @@ public class AssertJInliner implements CallInliner {
   private static final CallMatcher ASSERT_THAT = CallMatcher.anyOf(
     CallMatcher.staticCall("org.assertj.core.api.BDDAssertions", "then").parameterCount(1),
     CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThat").parameterCount(1),
+    CallMatcher.instanceCall("org.assertj.core.api.WithAssertions", "assertThat").parameterCount(1),
     CallMatcher.staticCall("com.google.common.truth.Truth", "assertThat").parameterCount(1),
     CallMatcher.staticCall("com.google.common.truth.StandardSubjectBuilder", "that").parameterCount(1)
   );

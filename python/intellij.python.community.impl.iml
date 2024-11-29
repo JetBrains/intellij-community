@@ -153,7 +153,10 @@
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.feedback" />
+    <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
   </component>
 </module>

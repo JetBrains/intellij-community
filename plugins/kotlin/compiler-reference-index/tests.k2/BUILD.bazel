@@ -1,0 +1,33 @@
+### auto-generated section `build kotlin.compiler-reference-index.tests.k2` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-compiler-reference-index-tests-k2",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-compiler-reference-index-tests-k2_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/compiler-reference-index",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "//plugins/kotlin/compiler-reference-index/tests:kotlin-compiler-reference-index-tests_test",
+    "//java/java-tests:tests_test",
+    "//java/testFramework",
+    "@lib//:junit4",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/code-insight/line-markers:kotlin-code-insight-line-markers-k2",
+    "//plugins/kotlin/code-insight/line-markers:kotlin-code-insight-line-markers-k2_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+  ]
+)
+### auto-generated section `build kotlin.compiler-reference-index.tests.k2` end

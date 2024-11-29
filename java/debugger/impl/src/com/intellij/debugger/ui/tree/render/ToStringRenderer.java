@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -173,7 +174,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
 
     ON_DEMAND = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ON_DEMAND"));
     USE_CLASS_FILTERS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
-    myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
+    myClassFilters = DebuggerSettingsUtils.readFilters(element.getChildren("filter"));
   }
 
   @Override
@@ -186,7 +187,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (USE_CLASS_FILTERS) {
       JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
     }
-    DebuggerUtilsEx.writeFilters(element, "filter", myClassFilters);
+    DebuggerSettingsUtils.writeFilters(element, "filter", myClassFilters);
   }
 
   public ClassFilter[] getClassFilters() {

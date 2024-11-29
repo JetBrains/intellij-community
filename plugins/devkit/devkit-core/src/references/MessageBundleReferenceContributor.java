@@ -32,6 +32,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -198,6 +199,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
                                        .withIcon(ElementPresentationManager.getIcon(plugin)));
     }
 
+    @Unmodifiable
     private Collection<IdeaPlugin> getRelevantPlugins() {
       return ContainerUtil.filter(DescriptorUtil.getPlugins(getElement().getProject(), getElement().getResolveScope()),
                                   plugin -> plugin.hasRealPluginId() && Boolean.TRUE != plugin.getImplementationDetail().getValue());

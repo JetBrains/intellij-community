@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -370,6 +371,7 @@ public final class ExceptionUtil {
     return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(PsiClassType.EMPTY_ARRAY));
   }
 
+  @Unmodifiable
   private static List<Pair<PsiMethod, PsiSubstitutor>> getMethodCallTargets(@NotNull PsiMethodCallExpression call,
                                                                             @NotNull PsiMethod method) {
     PsiFile containingFile = call.getContainingFile();

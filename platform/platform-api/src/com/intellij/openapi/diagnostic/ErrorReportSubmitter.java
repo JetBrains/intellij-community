@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +23,9 @@ import java.awt.*;
  * }</pre>
  */
 public abstract class ErrorReportSubmitter implements PluginAware {
+  @ApiStatus.Internal
+  public static final ExtensionPointName<ErrorReportSubmitter> EP_NAME = ExtensionPointName.create("com.intellij.errorHandler");
+
   private PluginDescriptor myPlugin;
 
   /**
@@ -80,7 +85,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @return {@code true} if reporting was started (must invoke {@code consumer} callback with a result), {@code false} if a report can't be sent at the moment.
    */
   public boolean submit(
-    IdeaLoggingEvent @NotNull [] events,
+    @NotNull IdeaLoggingEvent @NotNull [] events,
     @Nullable String additionalInfo,
     @NotNull Component parentComponent,
     @NotNull Consumer<? super SubmittedReportInfo> consumer

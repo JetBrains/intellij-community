@@ -22,7 +22,7 @@ public class LombokNonNullManagerTest extends LightJavaCodeInsightFixtureTestCas
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
   }
 
   public void testTypeAnnotationNullabilityOnStubs() {

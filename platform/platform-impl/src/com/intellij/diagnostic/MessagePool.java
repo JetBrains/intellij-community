@@ -2,16 +2,23 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+/**
+ * Internal API, please don't use.
+ * <p>
+ * For reporting errors, see {@link com.intellij.openapi.diagnostic.Logger#error} methods.
+ * <p>
+ * For receiving reports, register own {@link com.intellij.openapi.diagnostic.ErrorReportSubmitter}.
+ */
+@ApiStatus.Internal
 public final class MessagePool {
   public enum State { NoErrors, ReadErrors, UnreadErrors }
 
@@ -33,12 +40,10 @@ public final class MessagePool {
   public void addIdeFatalMessage(@NotNull IdeaLoggingEvent event) {
     AbstractMessage message;
     if (myErrors.size() < MAX_POOL_SIZE) {
-      Object data = event.getData();
-      message = data instanceof AbstractMessage ? (AbstractMessage)data :
-                new LogMessage(event.getThrowable(), event.getMessage(), Collections.emptyList());
+      message = event.getData() instanceof AbstractMessage am ? am : new LogMessage(event.getThrowable(), event.getMessage(), List.of());
     }
     else if (myErrors.size() == MAX_POOL_SIZE) {
-      message = new LogMessage(new TooManyErrorsException(), null, Collections.emptyList());
+      message = new LogMessage(new TooManyErrorsException(), null, List.of());
     }
     else {
       return;
@@ -48,15 +53,15 @@ public final class MessagePool {
 
   public @NotNull State getState() {
     if (myErrors.isEmpty()) return State.NoErrors;
-    for (AbstractMessage message: myErrors) {
+    for (var message: myErrors) {
       if (!message.isRead()) return State.UnreadErrors;
     }
     return State.ReadErrors;
   }
 
   public List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
-    List<AbstractMessage> result = new ArrayList<>();
-    for (AbstractMessage message : myErrors) {
+    var result = new ArrayList<AbstractMessage>();
+    for (var message : myErrors) {
       if (!includeReadMessages && message.isRead()) continue;
       if (!includeSubmittedMessages && (message.isSubmitted() || message.getThrowable() instanceof TooManyErrorsException)) continue;
       result.add(message);
@@ -65,7 +70,7 @@ public final class MessagePool {
   }
 
   public void clearErrors() {
-    for (AbstractMessage message : myErrors) {
+    for (var message : myErrors) {
       message.setRead(true); // expire notifications
     }
     myErrors.clear();
@@ -100,9 +105,7 @@ public final class MessagePool {
     }
 
     if (ApplicationManager.getApplication().isInternal()) {
-      for (Attachment attachment : message.getAllAttachments()) {
-        attachment.setIncluded(true);
-      }
+      message.getAllAttachments().forEach(attachment -> attachment.setIncluded(true));
     }
 
     if (shallAddSilently(message)) {

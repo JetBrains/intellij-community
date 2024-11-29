@@ -526,6 +526,7 @@ public final class PushController implements Disposable {
   }
 
   @NotNull
+  @Unmodifiable
   private <R extends Repository, S extends PushSource, T extends PushTarget> Map<R, PushSpec<S, T>> collectPushSpecsForVcs(@NotNull PushSupport<R, S, T> pushSupport) {
     Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> allSpecs = getSelectedPushSpecs();
     Collection<PushInfo> pushInfos = allSpecs.get(pushSupport);
@@ -539,6 +540,7 @@ public final class PushController implements Disposable {
            Collections.emptyMap();
   }
 
+  @Unmodifiable
   private Collection<MyRepoModel<Repository, PushSource, PushTarget>> getSelectedRepoNode() {
     //return all selected despite a loading state;
     return ContainerUtil.filter(myView2Model.values(), model -> {
@@ -603,6 +605,7 @@ public final class PushController implements Disposable {
   }
 
   @ApiStatus.Experimental
+  @Unmodifiable
   public Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
     return ContainerUtil.map2MapNotNull(CustomPushOptionsPanelFactory.EP_NAME.getExtensionList(), panelProvider -> {
       try {

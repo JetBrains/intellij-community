@@ -5,6 +5,7 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -41,11 +42,12 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public final class FormsInstrumenter extends FormsBuilder {
+public final class FormsInstrumenter extends ModuleLevelBuilder {
   public static final @NlsSafe String BUILDER_NAME = "forms";
+  private static final Logger LOG = Logger.getInstance(FormsInstrumenter.class);
 
   public FormsInstrumenter() {
-    super(BuilderCategory.CLASS_INSTRUMENTER, BUILDER_NAME);
+    super(BuilderCategory.CLASS_INSTRUMENTER);
   }
 
   @Override
@@ -56,8 +58,7 @@ public final class FormsInstrumenter extends FormsBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    final Map<File, Collection<File>> srcToForms = FORMS_TO_COMPILE.get(context);
-    FORMS_TO_COMPILE.set(context, null);
+    final Map<File, Collection<File>> srcToForms = FormBindings.getAndClearFormsToCompile(context);
 
     if (srcToForms == null || srcToForms.isEmpty()) {
       return ExitCode.NOTHING_DONE;
@@ -181,7 +182,7 @@ public final class FormsInstrumenter extends FormsBuilder {
 
       class2form.put(classToBind, formFile);
       for (File file : compiled.getSourceFiles()) {
-        addBinding(file, formFile, instrumented);
+        FormBindings.addBinding(file, formFile, instrumented);
       }
 
 
@@ -229,6 +230,11 @@ public final class FormsInstrumenter extends FormsBuilder {
     return instrumented;
   }
 
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return BUILDER_NAME;
+  }
 
   private static CompiledClass findClassFile(OutputConsumer outputConsumer, String classToBind) {
     final Map<String, CompiledClass> compiled = outputConsumer.getCompiledClasses();

@@ -21,7 +21,6 @@ internal class IgnoredSettingsPanel(private val project: Project) :
 
   private var selectedManageIgnoreOption = getIgnoredOption()
   private val settings = VcsApplicationSettings.getInstance()
-  private val projectSettings = VcsConfiguration.getInstance(project)
 
   override fun apply() {
     val modified = isModified
@@ -48,10 +47,6 @@ internal class IgnoredSettingsPanel(private val project: Project) :
         row {
           checkBox(message("ignored.file.excluded.to.ignored.label"))
             .bindSelected(settings::MARK_EXCLUDED_AS_IGNORED)
-        }
-        row {
-          checkBox(message("ignored.file.ignored.to.excluded.label"))
-            .bindSelected(projectSettings::MARK_IGNORED_AS_EXCLUDED)
         }
       }
     }

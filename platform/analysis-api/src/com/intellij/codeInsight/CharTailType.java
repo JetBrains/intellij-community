@@ -33,6 +33,7 @@ public class CharTailType extends TailType {
     return insertChar(editor, tailOffset, myChar, myOverwrite);
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof CharTailType that)) return false;
@@ -42,10 +43,12 @@ public class CharTailType extends TailType {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myChar;
   }
 
+  @Override
   public @NonNls String toString() {
     return "CharTailType:'" + myChar + "'";
   }

@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
+import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.application.ReadAction
+import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -92,9 +94,13 @@ fun StackTraceElement.isCreationSeparatorFrame() =
     className.startsWith(CREATION_STACK_TRACE_SEPARATOR) ||
     className == CREATION_CLASS_NAME
 
-fun Location.findPosition(debugProcess: DebugProcessImpl) = ReadAction.nonBlocking(Callable {
-    DebuggerUtilsEx.toXSourcePosition(debugProcess.positionManager.getSourcePosition(this))
-}).executeSynchronously()
+fun Location.findPosition(debugProcess: DebugProcessImpl): XSourcePosition? = ReadAction.nonBlocking<SourcePosition> {
+    debugProcess.positionManager.getSourcePosition(this)
+}.executeSynchronously()?.toXSourcePosition()
+
+fun SourcePosition?.toXSourcePosition(): XSourcePosition? = ReadAction.nonBlocking<XSourcePosition> {
+    DebuggerUtilsEx.toXSourcePosition(this@toXSourcePosition)
+}.executeSynchronously()
 
 fun SuspendContextImpl.executionContext() = invokeInManagerThread { DefaultExecutionContext(this, this.frameProxy) }
 

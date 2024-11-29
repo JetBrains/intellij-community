@@ -29,6 +29,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -66,6 +67,7 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     return false;
   }
 
+  @Unmodifiable
   private List<PsiAnnotation> filterAnnotations(PsiFile file, List<PsiAnnotation> annotations) {
     if (annotations.isEmpty() || !needToAddDependency(file, annotations)) return annotations;
     if (InferNullityAnnotationsAction.maySuggestAnnotationDependency(file.getProject())) {

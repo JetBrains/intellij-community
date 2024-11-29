@@ -172,8 +172,7 @@ sealed interface Result permits Effects, FieldAccess, Pending, Value {
 }
 
 /**
- * A result for the {@link Direction#Access} direction:
- * for setter/constructor parameter: unconditional field set;
+ * A result for setter/constructor parameter: unconditional field set;
  * for method: unconditional field return
  * @param name name of the field
  */

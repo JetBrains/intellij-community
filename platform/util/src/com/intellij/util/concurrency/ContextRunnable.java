@@ -3,7 +3,6 @@ package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,13 +25,6 @@ final class ContextRunnable implements Runnable {
   public void run() {
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       myContext.runInChildContext(myRunnable);
-    } catch (Throwable throwable) {
-      if (throwable instanceof ControlFlowException) {
-        // ignore
-      }
-      else {
-        throw throwable;
-      }
     }
   }
 

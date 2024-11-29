@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,7 +23,7 @@ public class MavenUtilTest extends MavenTestCase {
           </extension>
       </extensions>
       """);
-    assertTrue(MavenUtil.containsDeclaredExtension(new File(file.getPath()), new MavenId("group-id:artifact-id:1.0.42")));
+    assertTrue(MavenUtil.containsDeclaredExtension(file.toNioPath(), new MavenId("group-id:artifact-id:1.0.42")));
   }
 
   public void testFindLocalRepoSchema12() throws IOException {
@@ -34,7 +33,7 @@ public class MavenUtilTest extends MavenTestCase {
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
         <localRepository>mytestpath</localRepository></settings>""");
-    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
   }
 
   public void testFindLocalRepoSchema10() throws IOException {
@@ -44,7 +43,7 @@ public class MavenUtilTest extends MavenTestCase {
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
         <localRepository>mytestpath</localRepository></settings>""");
-    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
   }
 
   public void testFindLocalRepoSchema11() throws IOException {
@@ -53,7 +52,7 @@ public class MavenUtilTest extends MavenTestCase {
       <settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
                 xmlns="http://maven.apache.org/SETTINGS/1.1.0"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">  <localRepository>mytestpath</localRepository></settings>""");
-    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
   }
 
   public void testFindLocalRepoWithoutXmls() throws IOException {
@@ -63,7 +62,7 @@ public class MavenUtilTest extends MavenTestCase {
         <localRepository>mytestpath</localRepository>
       </settings>
       """);
-    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
   }
 
   public void testFindLocalRepoWithNonTrimmed() throws IOException {
@@ -72,7 +71,7 @@ public class MavenUtilTest extends MavenTestCase {
       <settings>  <localRepository>
       \t     \tmytestpath
          \t</localRepository></settings>""");
-    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
   }
 
   public void testSystemProperties() throws IOException {
@@ -85,7 +84,7 @@ public class MavenUtilTest extends MavenTestCase {
           <localRepository>${testSystemPropertiesRepoPath}/testpath</localRepository>
         </settings>
         """);
-      assertEquals("test/testpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+      assertEquals("test/testpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
     } finally {
       MavenServerUtil.removeProperty("testSystemPropertiesRepoPath");
     }
@@ -98,6 +97,6 @@ public class MavenUtilTest extends MavenTestCase {
         <localRepository>mytestpath</localRepository>
       </settings>""";
     Files.writeString(file.toNioPath(), str, StandardCharsets.ISO_8859_1);
-    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(new File(file.getPath())));
+    assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
   }
 }

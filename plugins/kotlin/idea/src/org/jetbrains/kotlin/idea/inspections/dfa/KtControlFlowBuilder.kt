@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveMainReference
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
@@ -72,7 +71,6 @@ import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
-import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.concurrent.ConcurrentHashMap
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
@@ -276,7 +274,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             } else {
                 KtThisDescriptor(descriptor, dfType)
             }
-            addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
+            addInstruction(PushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
             addImplicitConversion(thisType, exprType)
         } else {
             addInstruction(PushValueInstruction(dfType, KotlinExpressionAnchor(expr)))
@@ -339,7 +337,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val offset = DeferredOffset()
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
             val anchor = KotlinExpressionAnchor(expr)
-            addInstruction(JvmPushInstruction(tempVariable, anchor))
+            addInstruction(PushInstruction(tempVariable, anchor))
             val endOffset = DeferredOffset()
             addInstruction(GotoInstruction(endOffset))
             setOffset(offset)
@@ -351,7 +349,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (typeReference != null) {
                 val castType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
                 if (castType.toDfType() is DfPrimitiveType) {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                    addInstruction(
+                        GetQualifiedValueInstruction(SpecialField.UNBOX)
+                    )
                 }
             }
         }
@@ -390,7 +390,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             if (curType != null && KotlinBuiltIns.isArrayOrPrimitiveArray(curType)) {
                 if (indexType.canBeNull()) {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                    addInstruction(
+                        GetQualifiedValueInstruction(SpecialField.UNBOX)
+                    )
                 }
                 val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                 val elementType = expr.builtIns.getArrayElementType(curType)
@@ -407,7 +409,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 when {
                     KotlinBuiltIns.isString(kotlinType) -> {
                         if (indexType.canBeNull()) {
-                            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                            addInstruction(
+                                GetQualifiedValueInstruction(
+                                SpecialField.UNBOX)
+                            )
                         }
                         val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                         addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
@@ -419,7 +424,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     }
                     isList(kotlinType) -> {
                         if (indexType.canBeNull()) {
-                            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                            addInstruction(
+                                GetQualifiedValueInstruction(
+                                SpecialField.UNBOX)
+                            )
                         }
                         val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                         addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
@@ -513,23 +521,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun processEscapes(expr: KtExpression) {
-        val vars = mutableSetOf<DfaVariableValue>()
-        val existingVars = factory.values.asSequence()
-            .filterIsInstance<DfaVariableValue>()
-            .filter { v -> v.qualifier == null }
-            .map { v -> v.descriptor }
-            .filterIsInstance<KtVariableDescriptor>()
-            .map { v -> v.variable }
-            .toSet()
+        val vars = mutableSetOf<VariableDescriptor>()
         PsiTreeUtil.processElements(expr, KtSimpleNameExpression::class.java) { ref ->
-            val target = ref.resolveMainReference()
-            if (target != null && existingVars.contains(target)) {
-                vars.addIfNotNull(KtVariableDescriptor.createFromSimpleName(factory, ref))
+            val value = KtVariableDescriptor.createFromSimpleName(factory, ref)
+            if (value != null) {
+                vars.add(value.descriptor)
             }
             return@processElements true
         }
         if (vars.isNotEmpty()) {
-            addInstruction(EscapeInstruction(vars))
+            addInstruction(EscapeInstruction(vars.toList()))
         }
     }
 
@@ -639,7 +640,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 val containingPackage = if (containingDeclaration is PackageFragmentDescriptor) containingDeclaration.fqName
                 else (containingDeclaration as? ClassDescriptor)?.containingPackage()
                 if (containingPackage?.asString() == "kotlin.collections") {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.COLLECTION_SIZE))
+                    addInstruction(
+                        GetQualifiedValueInstruction(
+                        SpecialField.COLLECTION_SIZE)
+                    )
                     addInstruction(PushValueInstruction(DfTypes.intValue(0)))
                     addInstruction(
                         BooleanBinaryInstruction(
@@ -689,7 +693,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                             addInstruction(JvmAssignmentInstruction(null, result))
                             addInstruction(PopInstruction())
                         }
-                        addInstruction(JvmPushInstruction(result, null))
+                        addInstruction(PushInstruction(result, null))
                         addImplicitConversion(lambdaResultType, expr.getKotlinType())
                     }
                     "also", "apply" -> {
@@ -709,7 +713,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                             addInstruction(JvmAssignmentInstruction(null, result))
                             addInstruction(PopInstruction())
                         }
-                        addInstruction(JvmPushInstruction(result, null))
+                        addInstruction(PushInstruction(result, null))
                         val offset = DeferredOffset()
                         addInstruction(ConditionalGotoInstruction(offset, DfTypes.booleanValue(name == "takeIf")))
                         addInstruction(PopInstruction())
@@ -794,7 +798,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private inline fun inlinedBlock(element: KtElement, fn : () -> Unit) {
         // Transfer value is pushed to avoid emptying stack beyond this point
         trapTracker.pushTrap(InsideInlinedBlockTrap(element))
-        addInstruction(JvmPushInstruction(factory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null))
+        addInstruction(PushInstruction(factory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null))
 
         fn()
 
@@ -823,7 +827,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (!pushJavaClassField(receiver, selector, expr)) {
             val specialField = findSpecialField(expr)
             if (specialField != null) {
-                addInstruction(UnwrapDerivedVariableInstruction(specialField))
+                addInstruction(GetQualifiedValueInstruction(specialField))
                 if (expr is KtSafeQualifiedExpression) {
                     addInstruction(WrapDerivedVariableInstruction(expr.getKotlinType().toDfType(), SpecialField.UNBOX))
                 }
@@ -1091,7 +1095,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     addInstruction(JvmAssignmentInstruction(null, collectionVar))
                     addInstruction(PopInstruction())
                     return {
-                        addInstruction(JvmPushInstruction(lengthField.createValue(factory, collectionVar), null))
+                        addInstruction(PushInstruction(lengthField.createValue(factory, collectionVar), null))
                         addInstruction(PushValueInstruction(DfTypes.intValue(0)))
                         addInstruction(BooleanBinaryInstruction(RelationType.GT, false, null))
                         pushUnknown()
@@ -1115,13 +1119,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         rightRelation: RelationType
     ): () -> Unit = {
         val forAnchor = KotlinForVisitedAnchor(expr)
-        addInstruction(JvmPushInstruction(parameterVar, null))
-        addInstruction(JvmPushInstruction(leftVar, null))
+        addInstruction(PushInstruction(parameterVar, null))
+        addInstruction(PushInstruction(leftVar, null))
         addInstruction(BooleanBinaryInstruction(leftRelation, false, null))
         val offset = DeferredOffset()
         addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
-        addInstruction(JvmPushInstruction(parameterVar, null))
-        addInstruction(JvmPushInstruction(rightVar, null))
+        addInstruction(PushInstruction(parameterVar, null))
+        addInstruction(PushInstruction(rightVar, null))
         addInstruction(BooleanBinaryInstruction(rightRelation, false, forAnchor))
         val finalOffset = DeferredOffset()
         addInstruction(GotoInstruction(finalOffset))
@@ -1259,7 +1263,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (qualifierOnStack) {
                 addInstruction(PopInstruction())
             }
-            addInstruction(JvmPushInstruction(dfVar, KotlinExpressionAnchor(expr)))
+            addInstruction(PushInstruction(dfVar, KotlinExpressionAnchor(expr)))
             var realExpr: KtExpression = expr
             while (true) {
                 val parent = realExpr.parent
@@ -1530,7 +1534,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(PushValueInstruction(actualDfType))
         }
         if (actualDfType !is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
-            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+            addInstruction(GetQualifiedValueInstruction(SpecialField.UNBOX))
         }
         else if (expectedDfType !is DfPrimitiveType && actualDfType is DfPrimitiveType) {
             val dfType = actualType.makeNullable().toDfType().meet(DfTypes.NOT_NULL_OBJECT)
@@ -1569,9 +1573,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val leftConstraint = TypeConstraint.fromDfType(leftDfType)
             val rightConstraint = TypeConstraint.fromDfType(rightDfType)
             if (leftConstraint.isEnum && rightConstraint.isEnum && leftConstraint.meet(rightConstraint) != TypeConstraints.BOTTOM) {
-                addInstruction(UnwrapDerivedVariableInstruction(SpecialField.ENUM_ORDINAL))
+                addInstruction(
+                    GetQualifiedValueInstruction(SpecialField.ENUM_ORDINAL)
+                )
                 processExpression(right)
-                addInstruction(UnwrapDerivedVariableInstruction(SpecialField.ENUM_ORDINAL))
+                addInstruction(
+                    GetQualifiedValueInstruction(SpecialField.ENUM_ORDINAL)
+                )
                 addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
             } else if (leftConstraint.isExact(CommonClassNames.JAVA_LANG_STRING) &&
                 rightConstraint.isExact(CommonClassNames.JAVA_LANG_STRING)) {
@@ -1688,11 +1696,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 if (dfVar != null) {
                     val balancedType = balanceType(exprType, dfVarType, true)
                     addImplicitConversion(exprType, balancedType)
-                    addInstruction(JvmPushInstruction(dfVar, null))
+                    addInstruction(PushInstruction(dfVar, null))
                     addImplicitConversion(dfVarType, balancedType)
                     addInstruction(BooleanBinaryInstruction(RelationType.EQ, true, KotlinWhenConditionAnchor(condition)))
                 } else if (exprType?.canBeNull() == true) {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                    addInstruction(
+                        GetQualifiedValueInstruction(SpecialField.UNBOX)
+                    )
                 }
             }
             is KtWhenConditionIsPattern -> {
@@ -1700,7 +1710,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 if (dfVar == null || type == DfType.TOP) {
                     pushUnknown()
                 } else {
-                    addInstruction(JvmPushInstruction(dfVar, null))
+                    addInstruction(PushInstruction(dfVar, null))
                     addInstruction(PushValueInstruction(type))
                     if (condition.isNegated) {
                         addInstruction(InstanceofInstruction(null, false))
@@ -1712,7 +1722,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             is KtWhenConditionInRange -> {
                 if (dfVar != null) {
-                    addInstruction(JvmPushInstruction(dfVar, null))
+                    addInstruction(PushInstruction(dfVar, null))
                 } else {
                     pushUnknown()
                 }
@@ -1743,7 +1753,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val condition = ifExpression.condition
         processExpression(condition)
         if (condition?.getKotlinType()?.canBeNull() == true) {
-            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+            addInstruction(GetQualifiedValueInstruction(SpecialField.UNBOX))
         }
         val skipThenOffset = DeferredOffset()
         val thenStatement = ifExpression.then

@@ -28,6 +28,9 @@ import java.awt.event.MouseEvent
 
 /**
  * Similar to [ReferencesCodeVisionProvider] but not daemon based.
+ *
+ * This [CodeVisionProvider] skips PSI elements concerned by [SuggestedRenameData]
+ * (stored in the file user data, see [REFACTORING_DATA_KEY]).
  */
 abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Nothing?> {
 

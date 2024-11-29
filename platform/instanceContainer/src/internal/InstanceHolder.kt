@@ -32,7 +32,7 @@ sealed interface InstanceHolder {
    *
    * @return the initialized instance
    * @throws Throwable any error occurred during initialization
-   * @throws CancellationException if the calling coroutine was cancelled while suspended
+   * @throws CancellationException if the calling coroutine was canceled while suspended
    */
   suspend fun getInstance(keyClass: Class<*>?): Any
 

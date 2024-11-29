@@ -8,7 +8,7 @@ import javax.swing.border.LineBorder
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-class RoundedLineBorderWithBackground(
+internal class RoundedLineBorderWithBackground(
   color: Color,
   private val bgColor: Color,
   private val arcSize: Int = JBUI.scale(10),

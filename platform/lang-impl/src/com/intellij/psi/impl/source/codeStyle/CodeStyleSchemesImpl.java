@@ -16,6 +16,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -97,6 +98,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     return mySchemeManager.getAllSchemes();
   }
 
+  @Unmodifiable
   private List<CodeStyleSettings> getAllSettings() {
     return ContainerUtil.map(mySchemeManager.getAllSchemes(), scheme -> scheme.getCodeStyleSettings());
   }

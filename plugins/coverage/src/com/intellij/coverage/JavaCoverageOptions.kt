@@ -7,11 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.psi.PsiClass
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.ArrayUtil
 import javax.swing.JComponent
@@ -25,9 +25,8 @@ class JavaCoverageOptions(private val project: Project) : CoverageOptions() {
     panel = panel {
       group(JavaCoverageBundle.message("settings.coverage.java.java.coverage")) {
         lateinit var runner: ComboBox<CoverageRunner>
-        row {
-          text(JavaCoverageBundle.message("run.configuration.choose.coverage.runner"))
-          val runnerCell = comboBox(collectJavaRunners(), SimpleListCellRenderer.create("", CoverageRunner::getPresentableName))
+        row(JavaCoverageBundle.message("run.configuration.choose.coverage.runner")) {
+          val runnerCell = comboBox(collectJavaRunners(), textListCellRenderer("", CoverageRunner::getPresentableName))
             .bindItem(coverageOptionsProvider::coverageRunner)
           runner = runnerCell.component
         }

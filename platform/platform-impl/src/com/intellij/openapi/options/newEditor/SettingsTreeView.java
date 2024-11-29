@@ -68,8 +68,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -459,7 +459,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return promise;
   }
 
-  private @NotNull Promise<? super Object> fireSelected(Configurable configurable) {
+  private @NotNull Promise<?> fireSelected(Configurable configurable) {
     return myFilter.context.fireSelected(configurable, this);
   }
 

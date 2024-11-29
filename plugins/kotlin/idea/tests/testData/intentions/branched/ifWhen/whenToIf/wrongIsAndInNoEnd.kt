@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 fun test(n: Int): String {
     return <caret>when (n) {
         is -> "String"

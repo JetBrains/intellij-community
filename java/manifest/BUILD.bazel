@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.java.manifest` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "manifest_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "manifest",
+  module_name = "intellij.java.manifest",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//spellchecker",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":manifest_resources"]
+)
+
+kt_jvm_test(
+  name = "manifest_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":manifest"],
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//java/testFramework",
+    "//spellchecker",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":manifest_resources"]
+)
+### auto-generated section `build intellij.java.manifest` end

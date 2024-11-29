@@ -16,7 +16,7 @@ interface ExternalizableScheme : Scheme {
   fun setName(value: String)
 }
 
-abstract class SchemeManagerFactory {
+abstract class SchemeManagerFactory(protected open val project: Project? = null) {
   companion object {
     @JvmStatic fun getInstance(): SchemeManagerFactory = service<SchemeManagerFactory>()
     @JvmStatic fun getInstance(project: Project): SchemeManagerFactory = project.service<SchemeManagerFactory>()

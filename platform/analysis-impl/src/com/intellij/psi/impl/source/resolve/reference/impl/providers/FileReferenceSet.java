@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -176,6 +177,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     reparse();
   }
 
+  @Override
   public @NotNull PsiElement getElement() {
     return myElement;
   }
@@ -415,6 +417,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return filterLocalFsContexts(targetContexts);
   }
 
+  @Unmodifiable
   private static Collection<FileTargetContext> filterLocalFsContexts(Collection<? extends FileTargetContext> contexts) {
     return ContainerUtil.filter(contexts, c -> {
       VirtualFile file = c.getFileSystemItem().getVirtualFile();
@@ -590,6 +593,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return toFileSystemItems(Arrays.asList(files));
   }
 
+  @Unmodifiable
   protected @NotNull Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
     return ContainerUtil.mapNotNull(files, file -> file != null && file.isValid() ? manager.findDirectory(file) : null);

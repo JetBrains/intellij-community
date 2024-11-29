@@ -9,7 +9,7 @@ import java.nio.file.attribute.UserPrincipalLookupService
  */
 class IjentWslNioFileSystem(
   private val provider: IjentWslNioFileSystemProvider,
-  private val wslId: String,
+  internal val wslId: String,
   private val ijentFs: FileSystem,
   private val originalFs: FileSystem,
 ) : FileSystem() {
@@ -28,11 +28,18 @@ class IjentWslNioFileSystem(
 
   override fun getSeparator(): String = originalFs.separator
 
-  override fun getRootDirectories(): Iterable<Path> =
-    LinkedHashSet<Path>().apply {
-      addAll(originalFs.rootDirectories)
-      addAll(ijentFs.rootDirectories)
-    }
+  override fun getRootDirectories(): Iterable<Path> {
+    // It is known that `originalFs.rootDirectories` always returns all WSL drives.
+    // Also, it is known that `ijentFs.rootDirectories` returns a single WSL drive,
+    // which is already mentioned in `originalFs.rootDirectories`.
+    //
+    // `ijentFs` is usually represented by `IjentFailSafeFileSystemPosixApi`,
+    // which launches IJent and the corresponding WSL containers lazily.
+    //
+    // This function avoids fetching root directories directly from IJent.
+    // This way, various UI file trees don't start all WSL containers during loading the file system root.
+    return originalFs.rootDirectories
+  }
 
   override fun getFileStores(): Iterable<FileStore> =
     originalFs.fileStores + ijentFs.fileStores

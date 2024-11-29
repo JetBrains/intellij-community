@@ -16,6 +16,8 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.containers.ArrayListSet
 import com.intellij.util.containers.ContainerUtil
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectsTreeUpdater.UpdateSpec
+import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.*
 import java.io.*
 import java.nio.file.Files
@@ -357,11 +360,14 @@ class MavenProjectsTree(val project: Project) {
     val explicitProfiles = explicitProfiles
 
     val projectReader = MavenProjectReader(project)
-    val updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, progressReporter)
+    val updated = tracer.spanBuilder("updateProjectTree").useWithScope {
+      update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, progressReporter)
+    }
 
-    val obsoleteFiles = ContainerUtil.subtract(
-      rootProjectsFiles, managedFiles)
-    val deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, progressReporter)
+    val obsoleteFiles = ContainerUtil.subtract(rootProjectsFiles, managedFiles)
+    val deleted = tracer.spanBuilder("cleanupProjectTree").useWithScope {
+      delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, progressReporter)
+    }
 
     val updateResult = updated.plus(deleted)
     MavenLog.LOG.debug("Maven tree update result: updated ${updateResult.updated}, deleted ${updateResult.deleted}")
@@ -399,7 +405,7 @@ class MavenProjectsTree(val project: Project) {
       if (null == findProject(file)) {
         filesToAddModules.add(file)
       }
-      updater.updateProjects(listOf(UpdateSpec(file, forceRead)))
+      tracer.spanBuilder("updateProjectFile").useWithScope { updater.updateProjects(listOf(UpdateSpec(file, forceRead)))  }
     }
 
     for (aggregator in projects) {
@@ -408,8 +414,10 @@ class MavenProjectsTree(val project: Project) {
           filesToAddModules.remove(moduleFile)
           val mavenProject = findProject(moduleFile)
           if (null != mavenProject) {
-            if (reconnect(aggregator, mavenProject)) {
-              updateContext.updated(mavenProject, MavenProjectChanges.NONE)
+            tracer.spanBuilder("reconnect").use {
+              if (reconnect(aggregator, mavenProject)) {
+                updateContext.updated(mavenProject, MavenProjectChanges.NONE)
+              }
             }
           }
         }
@@ -423,7 +431,9 @@ class MavenProjectsTree(val project: Project) {
       }
     }
 
-    updateExplicitProfiles()
+    tracer.spanBuilder("updateProfiles").use {
+      updateExplicitProfiles()
+    }
     updateContext.fireUpdatedIfNecessary()
 
     return updateContext.toUpdateResult()
@@ -1075,7 +1085,7 @@ class MavenProjectsTree(val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(MavenProjectsTree::class.java)
 
-    private const val STORAGE_VERSION_NUMBER = 11
+    private const val STORAGE_VERSION_NUMBER = 12
     val STORAGE_VERSION = MavenProjectsTree::class.java.simpleName + "." + STORAGE_VERSION_NUMBER
 
     private fun String.getStorageVersionNumber(): Int {

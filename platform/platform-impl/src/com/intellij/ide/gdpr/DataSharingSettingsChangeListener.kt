@@ -9,10 +9,7 @@ import java.util.*
 interface DataSharingSettingsChangeListener : EventListener {
   companion object {
     @Topic.AppLevel
-    @JvmField
     val TOPIC: Topic<DataSharingSettingsChangeListener> = Topic(DataSharingSettingsChangeListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
   fun consentWritten()
-
-  fun consentsUpdated() {}
 }

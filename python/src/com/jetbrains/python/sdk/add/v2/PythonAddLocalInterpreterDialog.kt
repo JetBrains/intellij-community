@@ -53,7 +53,7 @@ class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLoca
         // The whole idea of context passing is doubtful
                                                                       Dispatchers.EDT + ModalityState.any().asContextElement(), ProjectPathFlows.create(basePath)))
       model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
-      mainPanel = PythonAddCustomInterpreter(model, errorSink = errorSink)
+      mainPanel = PythonAddCustomInterpreter(model, moduleOrProject = dialogPresenter.moduleOrProject, errorSink = errorSink)
       mainPanel.buildPanel(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
 
     }.apply {

@@ -448,9 +448,8 @@ public final class ActionsTreeUtil {
   private static Group createMacrosGroup(Condition<? super AnAction> filtered) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX);
-    ids.sort(null);
     Group group = new Group(KeyMapBundle.message("macros.group.title"), null, (Supplier<? extends Icon>)null);
-    for (String id : ids) {
+    for (String id : ContainerUtil.sorted(ids)) {
       if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);
       }
@@ -461,9 +460,8 @@ public final class ActionsTreeUtil {
   private static Group createIntentionsGroup(Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(WRAPPER_PREFIX);
-    ids.sort(null);
     Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
-    for (String id : ids) {
+    for (String id : ContainerUtil.sorted(ids)) {
       if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);
       }

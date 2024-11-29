@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTes
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiplatformAnalysisTest
 import org.jetbrains.kotlin.idea.codeInsight.*
-import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
@@ -173,7 +172,7 @@ fun generateK1Tests(isUpToDateCheck: Boolean = false) {
 private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
 
-    testGroup("gradle/gradle-java/tests.k1", category = GRADLE, testDataPath = "../../../idea/tests/testData") {
+    testGroup("gradle/gradle-java/k1", category = GRADLE, testDataPath = "../../../idea/tests/testData") {
         testClass<AbstractGradleBuildFileHighlightingTest> {
             model(
                 "gradle/highlighting/gradle8",
@@ -260,6 +259,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             testClass(it) {
                 model("highlighting", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
             }
+        }
+
+        testClass<AbstractK1IdeK2CodeKotlinSteppingPacketsNumberTest> {
+            model("stepping/packets", isRecursive = false, pattern = KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
         }
 
         testClass<AbstractSmartStepIntoTest> {
@@ -490,7 +493,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractGotoTestOrCodeActionTest> {
-            model("navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+\$"))
+            model("navigation/gotoTestOrCode", pattern = Patterns.forRegex("^(.+)\\.main\\..+$"))
         }
 
         testClass<AbstractKotlinGotoImplementationMultiModuleTest> {
@@ -569,6 +572,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 "intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"),
                 excludedDirectories = listOf(
                     "convertToMultiDollarString", // K2-only
+                    "branched/ifWhen/ifToWhen/whenGuards", // K2-only
                 )
             )
         }
@@ -591,6 +595,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 excludedDirectories = listOf(
                     "unusedVariable", // In FE1.0, this is a quickfix rather than a local inspection
                     "canSimplifyDollarLiteral", // K2-only
+                    "canConvertToMultiDollarString", // K2-only
+                    "branched/introduceWhenSubject/whenGuards", // K2-only
                 )
             )
         }
@@ -1072,10 +1078,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKotlinCodeVisionProviderTest> {
-            model("codeInsight/codeVision")
-        }
-
         testClass<AbstractKotlinNavBarTest> {
             model("navigationToolbar", pattern = KT_OR_KTS, isRecursive = false)
         }
@@ -1224,7 +1226,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
     }
 
-    testGroup("gradle/gradle-java/tests.k1", testDataPath = "../../../idea/tests/testData", category = GRADLE) {
+    testGroup("gradle/gradle-java/k1", testDataPath = "../../../idea/tests/testData", category = GRADLE) {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
             model("configuration/gradle", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
             model("configuration/gsk", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
@@ -1389,27 +1391,27 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("j2k/k1.new/tests", testDataPath = "../../shared/tests/testData", category = J2K) {
-        testClass<AbstractNewJavaToKotlinConverterSingleFileTest> {
+        testClass<AbstractK1JavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterSingleFileFullJDKTest> {
+        testClass<AbstractK1JavaToKotlinConverterSingleFileFullJDKTest> {
             model("fullJDK", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterPartialTest> {
+        testClass<AbstractK1JavaToKotlinConverterPartialTest> {
             model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+        testClass<AbstractK1JavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPaste", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractTextNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
+        testClass<AbstractK1TextJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
             model("copyPastePlainText", pattern = Patterns.forRegex("""^([^.]+)\.txt$"""))
         }
 
-        testClass<AbstractNewJavaToKotlinConverterMultiFileTest>(commonSuite = false) {
+        testClass<AbstractK1JavaToKotlinConverterMultiFileTest>(commonSuite = false) {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
         }
     }

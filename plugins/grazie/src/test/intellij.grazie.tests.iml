@@ -12,11 +12,11 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core" type="repository">
-        <properties maven-id="org.languagetool:languagetool-core:6.4">
+      <library name="org.jetbrains.intellij.deps.languagetool:languagetool-core" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.5.0.12">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar">
-              <sha256sum>d294773b397ab740f39add9cf4028f15399599cb762af359448586e777a5e3d3</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.5.0.12/languagetool-core-6.5.0.12.jar">
+              <sha256sum>e10d39ffb791e396af55a91c469103f1dd0b8c8345cae5a33597ac7d11cc3698</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
               <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
@@ -27,6 +27,7 @@
             <dependency maven-id="com.fasterxml.jackson.core:jackson-databind" />
             <dependency maven-id="com.gitlab.dumonts:hunspell" />
             <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.google.protobuf:protobuf-java" />
             <dependency maven-id="com.hankcs:aho-corasick-double-array-trie" />
             <dependency maven-id="com.optimaize.languagedetector:language-detector" />
             <dependency maven-id="commons-logging:commons-logging" />
@@ -65,40 +66,40 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.5.0.12/languagetool-core-6.5.0.12.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.5.0.12/languagetool-core-6.5.0.12-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-ru" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:6.4">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-ru" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-ru:6.5.0.12">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.4/language-ru-6.4.jar">
-              <sha256sum>1aca970f0f9a297bb12dde5ee70e2ba413a0f312c464fb3e155db696f867e4fe</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.5.0.12/language-ru-6.5.0.12.jar">
+              <sha256sum>41ae74c748ee15fdc90ea9536575490850b8d044b39d92f85e2d30072ca0cb8c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.4/language-ru-6.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.5.0.12/language-ru-6.5.0.12.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.4/language-ru-6.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-ru/6.5.0.12/language-ru-6.5.0.12-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-de" type="repository">
-        <properties maven-id="org.languagetool:language-de:6.4">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-de" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-de:6.5.0.12">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.4/language-de-6.4.jar">
-              <sha256sum>f9f6d61c460c86e30e28397c3326a998f93953b2a2a02c2af91003c7838470ee</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.5.0.12/language-de-6.5.0.12.jar">
+              <sha256sum>75cb2c34c15ef013a3b910bd072e006dec9128f5f39060202addcb7f85961714</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar">
               <sha256sum>56f0b00adb704cbc1e86776b45f6890efe90685ab370a34b5b299593cdcaae22</sha256sum>
@@ -106,44 +107,40 @@
             <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar">
               <sha256sum>0435e604abe8b4a0b27f568db9349fbe0546df286bbe62f667c9fd9663df71b2</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
-              <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
-            </artifact>
           </verification>
           <exclude>
-            <dependency maven-id="org.languagetool:languagetool-core" />
+            <dependency maven-id="edu.washington.cs.knowitall:openregex" />
             <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.4/language-de-6.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.5.0.12/language-de-6.5.0.12.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.4/language-de-6.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-de/6.5.0.12/language-de-6.5.0.12-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
-      <library name="org.languagetool:language-it" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:6.4">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-it" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-it:6.5.0.12">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.4/language-it-6.4.jar">
-              <sha256sum>7b90dfc47041ff31a7fd06c1803f30de88072278ad768d65c588205b68fceb25</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.5.0.12/language-it-6.5.0.12.jar">
+              <sha256sum>a9507ccc947090df269fe7f75eb416f1ac69941920c8075497606d8f8f275f8c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.4/language-it-6.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.5.0.12/language-it-6.5.0.12.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.4/language-it-6.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-it/6.5.0.12/language-it-6.5.0.12-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -1,0 +1,18 @@
+### auto-generated section `build kotlin.tests-compose` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tests-compose",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tests-compose_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = ["@lib//:kotlin-stdlib"]
+)
+### auto-generated section `build kotlin.tests-compose` end

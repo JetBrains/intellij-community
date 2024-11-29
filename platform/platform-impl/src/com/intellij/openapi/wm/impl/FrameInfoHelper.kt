@@ -89,9 +89,13 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
   val isInFullScreen = isFullScreenSupportedInCurrentOs() && frameHelper.isInFullScreen
   val isMaximized = FrameInfoHelper.isMaximized(extendedState) || isInFullScreen
 
+  checkForNonsenseBounds("updateFrameInfo.lastNormalFrameBounds", lastNormalFrameBounds)
   val oldBounds = oldFrameInfo?.bounds
+  checkForNonsenseBounds("updateFrameInfo.oldBounds", oldBounds)
+  val frameBounds = frame.bounds
+  checkForNonsenseBounds("updateFrameInfo.frameBounds", frameBounds)
   val newBounds = convertToDeviceSpace(frame.graphicsConfiguration,
-                                       if (isMaximized && lastNormalFrameBounds != null) lastNormalFrameBounds else frame.bounds)
+                                       if (isMaximized && lastNormalFrameBounds != null) lastNormalFrameBounds else frameBounds)
 
   val usePreviousBounds = lastNormalFrameBounds == null && isMaximized &&
                           oldBounds != null &&
@@ -100,7 +104,7 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
   if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
     IDE_FRAME_EVENT_LOG.debug(
       "Updating frame bounds: lastNormalFrameBounds = $lastNormalFrameBounds, " +
-      "frame.bounds = ${frame.bounds}, " +
+      "frame.bounds = $frameBounds, " +
       "frame screen = ${frame.graphicsConfiguration.bounds}, scale = ${JBUIScale.sysScale(frame.graphicsConfiguration)}, " +
       "isMaximized = $isMaximized, " +
       "isInFullScreen = $isInFullScreen, " +
@@ -124,4 +128,11 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
     frameInfo.fullScreen = isInFullScreen
   }
   return frameInfo
+}
+
+internal fun checkForNonsenseBounds(name: String, bounds: Rectangle?) {
+  if (bounds == null) return
+  if (bounds.height < 100 || bounds.width < 100) {
+    IDE_FRAME_EVENT_LOG.warn(Throwable("The frame bounds '$name' are suspiciously small: $bounds"))
+  }
 }

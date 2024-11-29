@@ -177,7 +177,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 when (anchor) {
                     is KotlinExpressionAnchor -> {
                         val expr = anchor.expression
-                        if (!analyze(expr) { shouldSuppress(cv, expr) }) {
+                        if (!analyze(expr) { shouldSuppress(cv, expr, false) }) {
                             val key = when (cv) {
                                 ConstantValue.TRUE ->
                                     if (shouldReportAsValue(cv, expr))
@@ -530,19 +530,30 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
 
+        /**
+         * Returns true if the warning about [expression] always equal to [value] should not be displayed to the user
+         * (e.g., because it's too evident, or a well-accepted programming style).
+         * 
+         * Note that this method still returns false if the warning is legitimate but the [expression] cannot be replaced
+         * with [value] without breaking a subsequent smart-cast.
+         * 
+         * @param value value of the expression known from the analysis
+         * @param expression expression that was analyzed
+         * @return true if we should not warn about expression being equal to a specified value
+         */
         fun shouldSuppress(value: DfType, expression: KtExpression): Boolean {
             val constant = when(value) {
                 DfTypes.NULL -> ConstantValue.NULL
                 DfTypes.TRUE -> ConstantValue.TRUE
                 DfTypes.FALSE -> ConstantValue.FALSE
                 DfTypes.intValue(0), DfTypes.longValue(0) -> ConstantValue.ZERO
-                else -> ConstantValue.UNKNOWN
+                else -> return false
             }
             return analyze(expression) { shouldSuppress(constant, expression, true) }
         }
 
         context(KaSession)
-        private fun shouldSuppress(value: ConstantValue, expression: KtExpression, ignoreSmartCasts: Boolean = false): Boolean {
+        private fun shouldSuppress(value: ConstantValue, expression: KtExpression, ignoreSmartCasts: Boolean): Boolean {
             var parent = expression.parent
             if (parent is KtDotQualifiedExpression && parent.selectorExpression == expression) {
                 // Will be reported for parent qualified expression

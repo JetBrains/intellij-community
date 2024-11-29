@@ -63,6 +63,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.serialization.SerializationConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -131,7 +132,7 @@ class ExternalSystemStorageTest {
 
           val propertyManager = ExternalSystemModulePropertyManager.getInstance(module)
 
-          val systemId = ProjectSystemId("GRADLE")
+          val systemId = GradleConstants.SYSTEM_ID
           val moduleData = ModuleData("test", systemId, "", "", "", projectDir.invariantSeparatorsPathString).also {
             it.group = "group"
             it.version = "42.0"
@@ -186,7 +187,7 @@ class ExternalSystemStorageTest {
 
   private fun setExternalSystemOptions(module: Module, projectDir: Path) {
     val propertyManager = ExternalSystemModulePropertyManager.getInstance(module)
-    val systemId = ProjectSystemId("GRADLE")
+    val systemId = GradleConstants.SYSTEM_ID
     val moduleData = ModuleData("test", systemId, "", "", "", projectDir.invariantSeparatorsPathString).also {
       it.group = "group"
       it.version = "42.0"

@@ -3,8 +3,6 @@ package org.jetbrains.kotlin.idea.fir.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK2CodeFragmentFactory
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -35,13 +33,13 @@ abstract class AbstractK2MultiplatformCodeFragmentCompletionTest : AbstractK2Cod
 
     override fun tearDown() {
         runAll(
-            { KotlinMultiPlatformProjectDescriptor.cleanupSourceRoots() },
+            { projectDescriptor.cleanupSourceRoots() },
             { KotlinSdkType.removeKotlinSdkInTests() },
             { super.tearDown() },
         )
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinMultiPlatformProjectDescriptor
+    override fun getProjectDescriptor(): KotlinMultiPlatformProjectDescriptor {
+        return KotlinMultiPlatformProjectDescriptor.ALL_PLATFORMS
     }
 }

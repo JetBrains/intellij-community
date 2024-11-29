@@ -41,22 +41,15 @@ class IdleFeedbackResolver(private val cs: CoroutineScope) {
     }
 
     cs.launch {
-      val suitableFeedbackTypes = IdleFeedbackTypes.entries.filter { it.isSuitable() }
       val suitableIdleFeedbackSurveys = getJbIdleFeedbackSurveyExtensionList().filter { it.isSuitableToShow(project) }
 
-      if (suitableFeedbackTypes.isEmpty() && suitableIdleFeedbackSurveys.isEmpty()) {
+      if (suitableIdleFeedbackSurveys.isEmpty()) {
         return@launch
       }
 
-      val feedbackIndex = Random.Default.nextInt(suitableFeedbackTypes.size + suitableIdleFeedbackSurveys.size)
-
+      val feedbackIndex = Random.Default.nextInt(suitableIdleFeedbackSurveys.size)
       withContext(Dispatchers.EDT) {
-        if (feedbackIndex < suitableFeedbackTypes.size) {
-          suitableFeedbackTypes[feedbackIndex].showNotification(project)
-        }
-        else {
-          suitableIdleFeedbackSurveys[feedbackIndex].showNotification(project)
-        }
+        suitableIdleFeedbackSurveys[feedbackIndex].showNotification(project)
       }
     }
   }

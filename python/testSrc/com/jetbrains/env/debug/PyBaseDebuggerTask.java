@@ -480,7 +480,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     int matches;
 
     while ((matches = StringUtil.getOccurrenceCount(output(), string)) != times) {
-      if (System.currentTimeMillis() - started > myTimeout) {
+      if (System.currentTimeMillis() - started > NORMAL_TIMEOUT) {
         Assert.fail("The substring '" + string + "' appeared in the output " + matches + " times, must be " + times + " times.\n" +
                     output());
       }
@@ -492,7 +492,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     long started = System.currentTimeMillis();
 
     while (!containsOneOf(output(), string)) {
-      if (System.currentTimeMillis() - started > myTimeout) {
+      if (System.currentTimeMillis() - started > NORMAL_TIMEOUT) {
         Assert.fail("None of '" + StringUtil.join(string, ", ") + "'" + " is not present in output.\n" + output());
       }
       Thread.sleep(2000);

@@ -5,7 +5,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import java.io.IOException
 
-internal interface OneToManyPathMapping {
+@ApiStatus.Internal
+interface OneToManyPathMapping {
   @Throws(IOException::class)
   fun getOutputs(path: String): Collection<String>?
 

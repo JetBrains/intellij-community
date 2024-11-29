@@ -184,9 +184,9 @@ public final class JavaDfaValueFactory {
     return qualifierValue;
   }
 
-  private static boolean maybeUninitializedConstant(DfaValue constValue,
-                                                    @NotNull PsiReferenceExpression refExpr,
-                                                    PsiModifierListOwner var) {
+  static boolean maybeUninitializedConstant(DfaValue constValue,
+                                            @NotNull PsiReferenceExpression refExpr,
+                                            PsiModifierListOwner var) {
     // If static final field is referred from the same or inner/nested class,
     // we consider that it might be uninitialized yet as some class initializers may call its methods or
     // even instantiate objects of this class and call their methods
@@ -252,7 +252,7 @@ public final class JavaDfaValueFactory {
    * @return a value that represents a constant created from variable; null if variable cannot be represented as a constant
    */
   @Nullable
-  private static DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
+  static DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
     if (!variable.hasModifierProperty(PsiModifier.FINAL) || ignoreInitializer(variable)) return null;
     Object value = variable.computeConstantValue();
     PsiType type = variable.getType();

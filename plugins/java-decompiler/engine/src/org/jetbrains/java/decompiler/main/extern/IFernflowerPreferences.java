@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.extern;
 
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -63,10 +63,10 @@ public interface IFernflowerPreferences {
 
   String SKIP_EXTRA_FILES = "sef";
 
-  Map<String, Object> DEFAULTS = getDefaults();
+  Map<String, String> DEFAULTS = getDefaults();
 
-  static Map<String, Object> getDefaults() {
-    Map<String, Object> defaults = new HashMap<>();
+  static Map<String, String> getDefaults() {
+    Map<String, String> defaults = new HashMap<>();
 
     defaults.put(REMOVE_BRIDGE, "1");
     defaults.put(REMOVE_SYNTHETIC, "0");

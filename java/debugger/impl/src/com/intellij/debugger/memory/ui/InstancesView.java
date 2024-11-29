@@ -59,6 +59,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -497,6 +498,7 @@ class InstancesView extends InstancesViewBase {
     }
   }
 
+  @Unmodifiable
   private @NotNull List<JavaReferenceInfo> getInstances(int limit) {
     return ContainerUtil.map(
       getInstancesProvider().getInstances(limit),

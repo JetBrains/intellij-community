@@ -9,6 +9,8 @@ import com.jetbrains.jsonSchema.extension.JsonSchemaValidation;
 import com.jetbrains.jsonSchema.extension.JsonValidationHost;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
+import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
@@ -28,6 +30,7 @@ public class ArrayValidation implements JsonSchemaValidation {
                           @Nullable JsonSchemaType schemaType,
                           @NotNull JsonValidationHost consumer,
                           @NotNull JsonComplianceCheckerOptions options) {
+    JsonSchemaHighlightingSessionStatisticsCollector.getInstance().reportSchemaUsageFeature(JsonSchemaFusCountedFeature.ArrayValidation);
     return checkArray(propValue, schema, consumer, options);
   }
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -25,6 +26,7 @@ public final class AlternativeSdkRootsProvider extends AdditionalLibraryRootsPro
   private static final Key<Collection<SyntheticLibrary>> ALTERNATIVE_SDK_LIBS_KEY = Key.create("ALTERNATIVE_SDK_LIBS_KEY");
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
     return ContainerUtil.map(getAdditionalProjectJdksToIndex(project), AlternativeSdkRootsProvider::createSdkLibrary);
   }

@@ -43,6 +43,8 @@
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
+    <ide.dynamicPluginVetoer implementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl$XDebuggerPluginVetoer"/>
+
     <projectService serviceImplementation="com.intellij.xdebugger.impl.inline.DebuggerInlayListener"/>
     <projectService serviceImplementation="com.intellij.xdebugger.impl.XDebuggerLineChangeIconProvider"/>
 
@@ -139,12 +141,10 @@
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JwtTextVisualizer"/>
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
 
-    <editorFloatingToolbarProvider implementation="com.intellij.xdebugger.impl.hotswap.HotSwapFloatingToolbarProvider"/>
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
                  description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
     <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
-    <platform.entityTypes implementation="com.intellij.xdebugger.impl.XDebuggerActiveSessionEntityTypesProvider"/>
 
     <intentionAction>
       <language>UAST</language>
@@ -211,10 +211,6 @@
 
     <group id="XDebugger.RunToCursorInlayExtraActions">
     </group>
-
-    <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.xdebugger.impl.hotswap.HotSwapModifiedFilesAction">
-      <add-to-group group-id="DebugReloadGroup" anchor="first"/>
-    </action>
   </actions>
 
   <projectListeners>

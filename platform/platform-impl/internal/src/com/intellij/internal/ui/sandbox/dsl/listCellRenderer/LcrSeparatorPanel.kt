@@ -36,17 +36,18 @@ internal class LcrSeparatorPanel : UISandboxPanel {
           group("New API") {
             row {
               jbList(items, newApiRenderer())
+                .comment("See also tooltips")
             }
             row {
               comboBox(items, newApiRenderer())
-                .comment("isSwingPopup = true")
+                .comment("isSwingPopup = true,<br>tooltips")
                 .applyToComponent {
                   isSwingPopup = true
                 }
             }
             row {
               comboBox(items, newApiRenderer())
-                .comment("isSwingPopup = false,<br>speed search enabled")
+                .comment("isSwingPopup = false,<br>speed search enabled,<br>tooltips")
                 .applyToComponent {
                   isSwingPopup = false
                 }
@@ -79,13 +80,14 @@ internal class LcrSeparatorPanel : UISandboxPanel {
   }
 
   private fun newApiRenderer(): ListCellRenderer<String?> {
-    return listCellRenderer {
+    return listCellRenderer("") {
+      toolTipText = value
       separators[value]?.let {
         separator {
           text = it
         }
       }
-      text(value ?: "")
+      text(value)
     }
   }
 

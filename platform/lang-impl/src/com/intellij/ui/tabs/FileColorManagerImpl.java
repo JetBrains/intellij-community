@@ -105,6 +105,7 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
+  @Unmodifiable
   public Collection<@NonNls String> getColorIDs() {
     return ContainerUtil.sorted(ourDefaultColors.keySet());
   }

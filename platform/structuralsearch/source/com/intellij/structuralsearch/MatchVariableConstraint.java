@@ -409,6 +409,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return (additionalConstraints == null) ? Collections.emptyMap() : Collections.unmodifiableMap(additionalConstraints);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MatchVariableConstraint other)) return false;
@@ -447,6 +448,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 29 * result + regExp.hashCode();

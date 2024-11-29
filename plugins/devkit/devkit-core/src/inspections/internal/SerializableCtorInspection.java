@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
@@ -61,6 +62,7 @@ final class SerializableCtorInspection extends DevKitUastInspectionBase {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<UMethod> getConstructors(@NotNull UClass aClass) {
     return ContainerUtil.filter(aClass.getMethods(), method -> method.isConstructor());
   }

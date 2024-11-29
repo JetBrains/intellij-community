@@ -237,6 +237,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.externalProcessAuthHelper.rt"
   ), productLayout = productLayout, layout = layout)
   addModule("stats.jar", sequenceOf(
+    "intellij.platform.experiment",
     "intellij.platform.statistics",
     "intellij.platform.statistics.uploader",
     "intellij.platform.statistics.config",
@@ -253,7 +254,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.externalSystem.rt",
     "intellij.platform.objectSerializer.annotations"
   ), productLayout = productLayout, layout = layout)
-  addModule("cds/classesLogAgent.jar", sequenceOf("intellij.platform.cdsAgent"), productLayout = productLayout, layout = layout)
   val explicit = mutableListOf<ModuleItem>()
   for (moduleName in productLayout.productImplementationModules) {
     if (productLayout.excludedModuleNames.contains(moduleName)) {
@@ -528,10 +528,15 @@ private val excludedPaths = java.util.Set.of(
   "/META-INF/codeWithMeFrontend.xml",
 )
 
+private val COMMUNITY_IMPL_EXTENSIONS = setOf(
+  "/META-INF/community-extensions.xml"
+)
+
 fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
   return object : XIncludePathResolver {
     override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path? {
-      if (isOptional || isDynamic || excludedPaths.contains(relativePath)) {
+      if ((isOptional || isDynamic || excludedPaths.contains(relativePath))
+           && !COMMUNITY_IMPL_EXTENSIONS.contains(relativePath)) {
         // It isn't safe to resolve includes at build time if they're optional.
         // This could lead to issues when running another product using this distribution.
         // E.g., if the corresponding module is somehow being excluded on runtime.

@@ -1,30 +1,56 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.regexp` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "regexp_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "regexp",
   module_name = "intellij.regexp",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/lang-api:lang",
-    "@community//platform/analysis-impl",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/lang-impl",
-    "@community//xml/xml-psi-api:xml-psi",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui",
-    "@community//platform/util/jdom:util-jdom",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//xml/xml-psi-api:psi",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/util/jdom",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":regexp_resources"]
 )
-### auto-generated section `build` end
+
+kt_jvm_test(
+  name = "regexp_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":regexp"],
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:junit4",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//xml/xml-psi-api:psi",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":regexp_resources"]
+)
+### auto-generated section `build intellij.regexp` end

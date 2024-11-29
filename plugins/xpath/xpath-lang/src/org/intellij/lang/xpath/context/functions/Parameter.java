@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.context.functions;
 
 import org.intellij.lang.xpath.psi.XPathType;
-
 import org.jetbrains.annotations.NotNull;
 
 public class Parameter {
@@ -31,6 +30,7 @@ public class Parameter {
         this.kind = kind;
     }
 
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(type.getName());
         if (kind == Parameter.Kind.OPTIONAL) sb.append("?");
@@ -38,6 +38,7 @@ public class Parameter {
         return sb.toString();
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -48,6 +49,7 @@ public class Parameter {
         return type.equals(parameter.type);
     }
 
+    @Override
     public int hashCode() {
         int result = type.hashCode();
         result = 31 * result + kind.hashCode();

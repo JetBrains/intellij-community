@@ -1,0 +1,13 @@
+### auto-generated section `build intellij.maven.artifactResolver.common` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "maven-artifactResolver-common",
+  module_name = "intellij.maven.artifactResolver.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  deps = ["@lib//:maven_artifact_resolver_common_org_apache_maven_maven-artifact_3_0_5.provided"]
+)
+### auto-generated section `build intellij.maven.artifactResolver.common` end

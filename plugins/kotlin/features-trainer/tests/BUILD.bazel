@@ -1,0 +1,32 @@
+### auto-generated section `build kotlin.features-trainer.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-features-trainer-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-features-trainer-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//java/java-features-trainer:featuresTrainer",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/formatter",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//plugins/kotlin/features-trainer",
+  ]
+)
+### auto-generated section `build kotlin.features-trainer.tests` end

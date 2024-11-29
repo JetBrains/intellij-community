@@ -1,4 +1,5 @@
 f:com.intellij.openapi.rd.LifetimeDisposableExKt
+- sf:attachAsChildTo(com.intellij.openapi.Disposable,com.jetbrains.rd.util.lifetime.Lifetime):V
 - sf:createLifetime(com.intellij.openapi.Disposable):com.jetbrains.rd.util.lifetime.Lifetime
 - sf:createNestedDisposable(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String):com.intellij.openapi.Disposable
 - bs:createNestedDisposable$default(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,I,java.lang.Object):com.intellij.openapi.Disposable

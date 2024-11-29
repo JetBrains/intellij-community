@@ -89,6 +89,7 @@ public final class WeighingComparable<T,Loc> implements Comparable<WeighingCompa
     return result;
   }
 
+  @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder("[");
     for (int i = 0; i < myComputedWeighs.length; i++) {

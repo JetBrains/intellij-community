@@ -19,5 +19,5 @@ interface Metric {
   val showByDefault: Boolean
 
   val shouldComputeIntervals: Boolean
-    get() = false
+    get() = System.getenv("cce_compute_confidence_intervals")?.toBooleanStrictOrNull() == true
 }

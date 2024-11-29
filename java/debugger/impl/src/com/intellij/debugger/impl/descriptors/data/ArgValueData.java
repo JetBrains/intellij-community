@@ -21,12 +21,14 @@ public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl> {
     return new ArgumentValueDescriptorImpl(project, myVariable, myValue);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof ArgValueData)) return false;
 
     return myVariable.slot() == ((ArgValueData)object).myVariable.slot();
   }
 
+  @Override
   public int hashCode() {
     return myVariable.slot();
   }

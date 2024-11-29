@@ -113,8 +113,6 @@ com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 - *:getOrder():com.intellij.openapi.editor.markup.CustomHighlighterOrder
 com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 - *:acceptStickyElement(com.intellij.psi.PsiElement):Z
-*:com.intellij.ui.tree.SuspendingTreeVisitor
-- a:visit(javax.swing.tree.TreePath,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.ui.tree.TreeVisitor
 - *:visitThread():com.intellij.ui.tree.TreeVisitor$VisitThread
 *e:com.intellij.ui.tree.TreeVisitor$VisitThread

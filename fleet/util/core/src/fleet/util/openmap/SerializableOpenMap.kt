@@ -9,14 +9,17 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 
-data class SerializableKey<V : Any, D>(val key: String,
-                                       val serializer: KSerializer<V>) : Key<V, D>
+data class SerializableKey<V : Any, D>(
+  val key: String,
+  val serializer: KSerializer<V>,
+) : Key<V, D>
 
 @Serializable(with = SerializableOpenMapSerializer::class)
-data class SerializableOpenMap<D>(val m: PersistentMap<String, SerializedValue> = persistentHashMapOf()) : OpenMapView<D> {
+data class SerializableOpenMap<D>(internal val m: PersistentMap<String, SerializedValue> = persistentHashMapOf()) : OpenMapView<D> {
   interface Mut<D> {
     fun <T : Any> set(key: SerializableKey<T, D>, v: T)
     fun remove(key: SerializableKey<*, D>)
+    fun build(): SerializableOpenMap<D>
   }
 
   fun <T : Any> assoc(key: SerializableKey<T, D>, v: T): SerializableOpenMap<D> {
@@ -27,9 +30,9 @@ data class SerializableOpenMap<D>(val m: PersistentMap<String, SerializedValue> 
     return SerializableOpenMap(m.remove(key.key))
   }
 
-  inline fun update(f: Mut<D>.() -> Unit): SerializableOpenMap<D> {
-    val transient = m.builder()
+  fun mut(): Mut<D> =
     object : Mut<D> {
+      val transient = rawMap.builder()
       override fun <T : Any> set(key: SerializableKey<T, D>, v: T) {
         transient[key.key] = SerializedValue.fromDeserializedValue(v, key.serializer)
       }
@@ -37,14 +40,24 @@ data class SerializableOpenMap<D>(val m: PersistentMap<String, SerializedValue> 
       override fun remove(key: SerializableKey<*, D>) {
         transient.remove(key.key)
       }
-    }.f()
-    return SerializableOpenMap(transient.build())
-  }
+
+      override fun build(): SerializableOpenMap<D> =
+        SerializableOpenMap(transient.build())
+    }
+
+  inline fun update(f: Mut<D>.() -> Unit): SerializableOpenMap<D> =
+    mut().apply(f).build()
 
   override fun <T : Any> get(k: Key<T, in D>): T? {
     val key = k as? SerializableKey<T, D> ?: return null
     return m.get(key.key)?.get(key.serializer)
   }
+
+  val rawMap: PersistentMap<String, SerializedValue>
+    get() = m
+
+  fun merge(other: SerializableOpenMap<D>): SerializableOpenMap<D> =
+    SerializableOpenMap(m.putAll(other.m))
 
   fun isEmpty() = m.size == 0
 

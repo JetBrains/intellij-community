@@ -22,6 +22,7 @@ public final class DateChangeListGroupingStrategy implements ChangeListGroupingS
   private final WeekDayFormatCache myWeekDayFormatCache;
   private final MonthsCache myMonthsCache;
 
+  @Override
   public String toString() {
     return VcsBundle.message("date.group.title");
   }

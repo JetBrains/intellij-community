@@ -13,8 +13,8 @@ import kotlin.reflect.KClass
 
 typealias BifurcanVector<T> = fleet.util.bifurcan.List<T>
 typealias IBifurcanVector<T> = fleet.util.bifurcan.List<T>
-typealias BifurcanSet<T> = io.lacuna.bifurcan.Set<T>
-typealias IBifurcanSet<T> = io.lacuna.bifurcan.Set<T>
+typealias BifurcanSet<T> = SortedSet<T>
+typealias IBifurcanSet<T> = SortedSet<T>
 
 fun <K, V : Any> PersistentMap<K, V>.update(k: K, f: (V?) -> V?): PersistentMap<K, V> {
   val vPrime = f(this[k])
@@ -63,14 +63,6 @@ suspend fun <T> SendChannel<T>.trySendSuspending(t: T): Boolean {
 
 fun <V> List<V>.toBifurcan(): BifurcanVector<V> {
   return BifurcanVector.from(this)
-}
-
-fun <V> Set<V>.toBifurcan(): BifurcanSet<V> {
-  return BifurcanSet.from(this)
-}
-
-private fun <V> bifurcanSetOf(vararg values: V): BifurcanSet<V> {
-  return BifurcanSet.from(values.iterator())
 }
 
 private fun <T, K> Sequence<T>.chunkBy(keyFn: (T) -> K): Sequence<List<T>> {

@@ -20,7 +20,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration;
+import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration;
+import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvider;
+import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver;
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +40,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.jul.JDK14LoggerFactory;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -153,7 +161,7 @@ public class MavenServerCMDState extends CommandLineState {
     checkExtension(extension);
     setupMainClass(params, extension);
     assert extension != null; //checked in the method above, need to make static analyzer happy
-    params.getClassPath().addAllFiles(extension.collectClassPathAndLibsFolder(myDistribution));
+    params.getClassPath().addAllFiles(ContainerUtil.map(extension.collectClassPathAndLibsFolder(myDistribution), it -> it.toFile()));
 
     params.getVMParametersList().addAll(extension.getAdditionalVmParameters());
 
@@ -189,6 +197,10 @@ public class MavenServerCMDState extends CommandLineState {
     //workaround for JDK-4716483
     params.getVMParametersList().addProperty("sun.rmi.server.exceptionTrace", "true");
 
+    if (Registry.is("maven.server.opentelemetry.agent.enabled", false)) {
+      attachTelemetryAgent(params);
+    }
+
     setupMainExt(params);
     return params;
   }
@@ -218,6 +230,27 @@ public class MavenServerCMDState extends CommandLineState {
     }
   }
 
+  private static void attachTelemetryAgent(@NotNull SimpleJavaParameters params) {
+    URI traceEndpoint = OtlpConfiguration.getTraceEndpointURI();
+    if (traceEndpoint == null) {
+      return;
+    }
+    Path agentLocation = TelemetryAgentResolver.getAgentLocation();
+    if (agentLocation == null) {
+      return;
+    }
+    AgentConfiguration configuration = AgentConfiguration.forService(
+      "MavenServer",
+      TelemetryContext.current(),
+      traceEndpoint,
+      agentLocation,
+      AgentConfiguration.Settings.withoutMetrics()
+    );
+    List<String> args = TelemetryAgentProvider.getJvmArgs(configuration);
+    ParametersList parametersList = params.getVMParametersList();
+    parametersList.addAll(args);
+  }
+
   protected Map<String, String> getMavenOpts() {
     return MavenUtil.getPropertiesFromMavenOpts();
   }
@@ -242,7 +275,6 @@ public class MavenServerCMDState extends CommandLineState {
 
   private void setupMainClass(SimpleJavaParameters params, MavenVersionAwareSupportExtension extension) {
     if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
-      setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
     }
     else {
@@ -268,14 +300,16 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   @TestOnly
-  public static void setThrowExceptionOnNextServerStart() {
+  public static void withThrowExceptionOnServerStart(Runnable runnable) {
     setupThrowMainClass = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      setupThrowMainClass = false;
+    }
   }
 
-  @TestOnly
-  public static void resetThrowExceptionOnNextServerStart() {
-    setupThrowMainClass = false;
-  }
 
   @Nullable
   static String getMaxXmxStringValue(@Nullable String memoryValueA, @Nullable String memoryValueB) {

@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.dsl.listCellRenderer.LcrRow;
 import com.intellij.ui.popup.WizardPopup;
@@ -130,8 +131,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   protected @NotNull JComponent createPopupComponent(JComponent content) {
     final var component = super.createPopupComponent(content);
     final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
-    if (component instanceof JScrollPane scrollPane && isRendererWithInsets(renderer)) {
-      scrollPane.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
+    if (component instanceof JBScrollPane scrollPane && isRendererWithInsets(renderer)) {
+      scrollPane.setOverlappingScrollBar(true);
     }
     return component;
   }
@@ -151,8 +152,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   }
 
   public static boolean isRendererWithInsets(ListCellRenderer<?> comboRenderer) {
-    return comboRenderer instanceof ExperimentalUI.NewUIComboBoxRenderer
-           || comboRenderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof ExperimentalUI.NewUIComboBoxRenderer;
+    ListCellRenderer<?> unwrappedRenderer = unwrap(comboRenderer);
+    return ExperimentalUI.isNewUI() && unwrappedRenderer instanceof ExperimentalUI.NewUIComboBoxRenderer;
   }
 
   private void configurePopup() {

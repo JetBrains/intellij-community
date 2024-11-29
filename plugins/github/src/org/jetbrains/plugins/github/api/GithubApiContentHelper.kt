@@ -46,6 +46,9 @@ object GithubApiContentHelper {
   @Throws(GithubJsonException::class)
   inline fun <reified T> fromJson(string: String): T = fromJson(string, T::class.java)
 
+  @Throws(GithubJsonException::class)
+  internal inline fun <reified T> fromJson(string: String, gqlNaming: Boolean = false): T = fromJson(string, T::class.java, gqlNaming)
+
   @JvmStatic
   @Throws(GithubJsonException::class)
   fun <T> fromJson(string: String, clazz: Class<T>, gqlNaming: Boolean = false): T {

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -26,6 +27,7 @@ final class TaskManagementConfigurationCollector extends ProjectUsagesCollector 
   }
 
   @Override
+  @Unmodifiable
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     return ContainerUtil.map2Set(
       TaskManager.getManager(project).getAllRepositories(),

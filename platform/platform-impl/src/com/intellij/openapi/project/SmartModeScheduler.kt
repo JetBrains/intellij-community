@@ -132,7 +132,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   fun getCurrentMode(): Int =
-    (if (filesScannerExecutor.hasQueuedTasks || filesScannerExecutor.isRunning.value) SCANNING else 0) +
+    (if (filesScannerExecutor.isRunning.value) SCANNING else 0) +
     (if (projectDumbState.value.isDumb) DUMB else 0)
 
   fun clear() {

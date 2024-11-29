@@ -35,28 +35,20 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
 
-      val allApplicableDefinitions = ScriptDefinitionsManager.getInstance(project)
-        .allDefinitions
-        .filter {
-          it.isScript(KtFileScriptSource(ktFile)) &&
-          KotlinScriptingSettings.getInstance(project).isScriptDefinitionEnabled(it)
-        }
-        .toList()
-        if (allApplicableDefinitions.size < 2 || areDefinitionsForGradleKts(allApplicableDefinitions)) return null
+        val applicableDefinitions = ScriptDefinitionsManager.getInstance(project).allDefinitions.filter {
+                !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettings.getInstance(project)
+                    .isScriptDefinitionEnabled(it)
+            }.toList()
+        if (applicableDefinitions.size < 2 || applicableDefinitions.all { it.isGradleDefinition() }) return null
 
         return Function { fileEditor: FileEditor ->
-            createNotification(fileEditor, project, allApplicableDefinitions)
+            createNotification(fileEditor, project, applicableDefinitions)
         }
     }
 
-    private fun areDefinitionsForGradleKts(allApplicableDefinitions: List<ScriptDefinition>): Boolean {
-        return allApplicableDefinitions.all { definition ->
-            definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
-                val pattern = it.scriptFilePattern.pattern
-                return@all pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$")
-            }
-            definition.fileExtension.endsWith("gradle.kts")
-        }
+    private fun ScriptDefinition.isGradleDefinition(): Boolean {
+        val pattern = safeAs<ScriptDefinition.FromConfigurationsBase>()?.fileNamePattern ?: return false
+        return pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$") || fileExtension.endsWith("gradle.kts")
     }
 
     private fun createNotification(fileEditor: FileEditor, project: Project, defs: List<ScriptDefinition>): EditorNotificationPanel =

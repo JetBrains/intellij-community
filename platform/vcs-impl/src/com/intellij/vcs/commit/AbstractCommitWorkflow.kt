@@ -300,7 +300,9 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])
       }?.let { return it }
 
-      FileDocumentManager.getInstance().saveAllDocuments()
+      writeIntentReadAction {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
 
       reporter.nextStep(PROGRESS_FRACTION_LATE) {
         runModalCommitChecks(commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])

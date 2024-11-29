@@ -1,0 +1,53 @@
+### auto-generated section `build intellij.properties.resource.bundle.editor` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "resource-bundle-editor_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "resource-bundle-editor",
+  module_name = "intellij.properties.resource.bundle.editor",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/util",
+    "//platform/lang-impl",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties",
+    "//xml/xml-psi-api:psi",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":resource-bundle-editor_resources"]
+)
+
+kt_jvm_test(
+  name = "resource-bundle-editor_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":resource-bundle-editor"],
+  deps = [
+    "//platform/util",
+    "//platform/lang-impl",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties",
+    "//xml/xml-psi-api:psi",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":resource-bundle-editor_resources"]
+)
+### auto-generated section `build intellij.properties.resource.bundle.editor` end

@@ -218,7 +218,7 @@ public class ResourceConfigGenerator {
 
     properties.putAll(mavenProject.getProperties());
 
-    properties.setProperty("settings.localRepository", mavenProject.getLocalRepository().getAbsolutePath());
+    properties.setProperty("settings.localRepository", mavenProject.getLocalRepositoryPath().toAbsolutePath().toString());
 
     String jreDir = MavenUtil.getModuleJreHome(mavenProjectsManager, mavenProject);
     if (jreDir != null) {

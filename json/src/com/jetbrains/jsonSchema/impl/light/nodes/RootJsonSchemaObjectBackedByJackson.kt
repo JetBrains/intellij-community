@@ -17,6 +17,7 @@ private val IDS_MAP_KEY = Key<Map<String, String>>("ids")
 private val DYNAMIC_ANCHORS_MAP_KEY = Key<Map<String, String>>("dynamicAnchors")
 private val INJECTIONS_MAP_KEY = Key<Boolean>("injections")
 private val DEPRECATIONS_MAP_KEY = Key<Boolean>("deprecations")
+private val FILE_URL_MAP_KEY = Key<String>("fileUrl")
 
 @ApiStatus.Internal
 class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: VirtualFile?)
@@ -57,7 +58,9 @@ class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: Vi
   }
 
   override fun getFileUrl(): String? {
-    return schemaFile?.url
+    return getOrComputeValue(FILE_URL_MAP_KEY) {
+      schemaFile?.url.orEmpty()
+    }.takeIf { it.isNotEmpty() }
   }
 
   override fun getRawFile(): VirtualFile? {

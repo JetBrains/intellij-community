@@ -1,41 +1,42 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "core-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "core-impl",
   module_name = "intellij.platform.core.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
   deps = [
-    "@community//platform/core-api:core",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@libraries//:aalto-xml",
-    "@community//platform/util/xmlDom:util-xmlDom",
-    "@libraries//:automaton",
-    "@libraries//:guava",
-    "@community//platform/util/diff:util-diff",
-    "@community//platform/diagnostic",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@community//platform/util/coroutines:util-coroutines",
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/jdom",
+    "@lib//:fastutil-min",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:aalto-xml",
+    "//platform/util/xmlDom",
+    "@lib//:automaton",
+    "@lib//:guava",
+    "//platform/util/diff",
+    "//platform/diagnostic",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/util/coroutines",
   ],
   exports = [
-    "@community//platform/core-api:core",
-    "@libraries//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":core-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.core.impl` end

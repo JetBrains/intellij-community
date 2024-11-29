@@ -139,7 +139,6 @@ final class AnnotatorRunner {
           for (int i = sizeBefore; i < sizeAfter; i++) {
             Annotation annotation = annotationHolder.get(i);
             HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode);
-            info.setGroup(-1); // prevent DefaultHighlightProcessor from removing this info, we want to control it ourselves via `psiElementVisited` below
             if (myPsiFile.getViewProvider() instanceof InjectedFileViewProvider) {
               info.markFromInjection();
             }
@@ -184,7 +183,7 @@ final class AnnotatorRunner {
       HighlightInfo patched = new HighlightInfo(injectedInfo.forcedTextAttributes, injectedInfo.forcedTextAttributesKey, injectedInfo.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), injectedInfo.getGroup(), injectedInfo.unresolvedReference);
+                          false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP, injectedInfo.unresolvedReference);
       patched.setHint(injectedInfo.hasHint());
 
       List<HighlightInfo.IntentionActionDescriptor> quickFixes = new ArrayList<>();

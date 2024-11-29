@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +42,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
 
 
   @Override
+  @Unmodifiable
   public @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
     try {

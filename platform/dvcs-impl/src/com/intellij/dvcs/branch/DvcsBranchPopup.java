@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -99,6 +100,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
                                                           @NotNull AbstractRepositoryManager<Repo> repositoryManager);
 
   @NotNull
+  @Unmodifiable
   protected List<Repo> filterRepositoriesNotOnThisBranch(@NotNull final String branch,
                                                          @NotNull List<? extends Repo> allRepositories) {
     return ContainerUtil.filter(allRepositories, repository -> !branch.equals(repository.getCurrentBranchName()));

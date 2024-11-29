@@ -16,8 +16,8 @@ final class IndentsPassFactory implements TextEditorHighlightingPassFactory, Tex
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     if (!IndentsPassFilterUtils.shouldRunIndentsPass(editor)) return null;
-    return new IndentsPass(file.getProject(), editor, file);
+    return new IndentsPass(psiFile.getProject(), editor, psiFile);
   }
 }

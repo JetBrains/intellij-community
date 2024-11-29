@@ -2085,6 +2085,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");
                 }
 
+                @TestMetadata("singleOutputValueBracesRequired.kt")
+                public void testSingleOutputValueBracesRequired() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueBracesRequired.kt");
+                }
+
                 @TestMetadata("singleOutputValueWithIf.kt")
                 public void testSingleOutputValueWithIf() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIf.kt");
@@ -4681,6 +4686,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceJavaParameterTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaConstructor.java")
+        public void testJavaConstructor() throws Exception {
+            runTest("testData/refactoring/introduceJavaParameter/javaConstructor.java");
         }
 
         @TestMetadata("javaMethod.java")

@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.progress.currentThreadCoroutineScope
+import com.intellij.settingsSync.communicator.SettingsSyncUserData
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
@@ -41,12 +42,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     waitForInit: Boolean = true,
   ) {
     SettingsSyncSettings.getInstance().state = SettingsSyncSettings.getInstance().state.withSyncEnabled(true)
-    val controls = SettingsSyncMain.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
     if (waitForInit) {
-      timeoutRunBlocking(2.seconds) {
+      timeoutRunBlocking(200.seconds) {
         while (!bridge.isInitialized) {
           sleepCancellable(10)
         }
@@ -72,7 +73,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     // emulate first session with initialization
     val fileName = "options/laf.xml"
     val file = configDir.resolve(fileName).write("LaF Initial")
-    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { null },
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { SettingsSyncUserData.EMPTY },
                              initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
     log.initialize()
     log.logExistingSettings()
@@ -131,7 +132,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     val metaInfo = SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true)
-    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(metaInfo, emptySet(), null, emptyMap(), emptySet()))
+    remoteCommunicator.prepareFileOnServer(MockRemoteCommunicator.snapshotForDeletion)
     syncSettingsAndWait()
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled")
   }

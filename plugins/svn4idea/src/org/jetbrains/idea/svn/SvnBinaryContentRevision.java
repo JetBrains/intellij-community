@@ -21,6 +21,7 @@ class SvnBinaryContentRevision extends SvnContentRevision implements BinaryConte
     return getContentAsBytes();
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "SvnBinaryContentRevision:" + myFile;

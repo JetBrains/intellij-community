@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -63,8 +64,7 @@ internal object SuperClassNotInitializedFactories {
     private class AddParenthesisFix(
         element: KtSuperTypeEntry,
         elementContext: ElementContext,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtSuperTypeEntry, ElementContext>(element, elementContext),
-        HighPriorityAction {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtSuperTypeEntry, ElementContext>(element, elementContext) {
 
         constructor(
             element: KtSuperTypeEntry,
@@ -89,5 +89,7 @@ internal object SuperClassNotInitializedFactories {
         }
 
         override fun getFamilyName(): String = KotlinBundle.message("change.to.constructor.invocation")
+        override fun getPresentation(context: ActionContext, element: KtSuperTypeEntry): Presentation =
+            Presentation.of(familyName).withPriority(PriorityAction.Priority.HIGH)
     }
 }

@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.junit` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "junit_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit",
+  module_name = "intellij.junit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+    "//java/execution/impl:java-execution-impl",
+    "//java/java-runtime:rt",
+    "//platform/testRunner",
+    "@lib//:junit4",
+    "//plugins/junit_rt:junit-rt",
+    "//java/compiler/openapi:java-compiler",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//platform/smRunner",
+    "//java/debugger/impl:java-debugger-impl",
+    "//java/idea-ui:ui",
+    "//platform/external-system-api:externalSystem",
+    "//jvm/jvm-analysis-api:analysis",
+    "//jvm/jvm-analysis-quickFix:analysis-quickFix",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io:ide-util-io",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//platform/core-ui",
+  ],
+  exports = [
+    "//platform/smRunner",
+    "//jvm/jvm-analysis-api:analysis",
+  ],
+  runtime_deps = [":junit_resources"]
+)
+### auto-generated section `build intellij.junit` end

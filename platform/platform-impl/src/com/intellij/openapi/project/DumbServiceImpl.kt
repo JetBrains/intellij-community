@@ -538,7 +538,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
   fun waitForSmartMode(milliseconds: Long?): Boolean {
     if (ALWAYS_SMART) return true
     val application = ApplicationManager.getApplication()
-    if (application.isReadAccessAllowed) {
+    if (application.holdsReadLock()) {
       throw AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode")
     }
     if (waitIntolerantThread === Thread.currentThread()) {

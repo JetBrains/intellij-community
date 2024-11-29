@@ -517,7 +517,7 @@ public final class DebugUtil {
       ourPsiModificationDepth.set(depth);
     }
     if (depth == 0) {
-      ourPsiModificationTrace.set(null);
+      ourPsiModificationTrace.remove();
     }
   }
 

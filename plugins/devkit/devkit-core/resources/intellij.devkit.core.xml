@@ -84,6 +84,10 @@
     <lang.documentationProvider language="XML"
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
+    <platform.backend.documentation.psiTargetProvider implementation="org.jetbrains.idea.devkit.documentation.PluginDescriptorDocumentationTargetProvider"/>
+    <platform.backend.documentation.psiTargetProvider implementation="org.jetbrains.idea.devkit.documentation.ProductModulesDescriptorDocumentationTargetProvider"/>
+    <platform.backend.documentation.linkHandler implementation="org.jetbrains.idea.devkit.documentation.XmlDescriptorDocumentationLinkHandler"/>
+
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
                             language="XML"/>
 
@@ -151,6 +155,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"
                      key="inspection.inspection.description.not.found.inspection.display.name"/>
+    <localInspection language="JVM" shortName="checkReturnValue"
+                     key="inspections.check.return.value"
+                     groupKey="inspections.group.code"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.CheckReturnValueInspection"/>
     <localInspection language="UAST" shortName="InspectionUsingGrayColors"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -574,6 +584,7 @@
       implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
       implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+    <postStartupActivity implementation="org.jetbrains.idea.devkit.documentation.InitDescriptorDocumentationsDownloadActivity"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.KotlinTestGeneratedSourcesFilter"/>
@@ -591,6 +602,9 @@
     <console.folding order="first" implementation="org.jetbrains.idea.devkit.run.FailedTestDebugLogConsoleFolding"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
+
+    <projectService serviceImplementation="org.jetbrains.idea.devkit.run.JUnitDevKitUnitTestingSettings"
+                    configurationSchemaKey="unitTesting"/>
 
     <notificationGroup id="Plugin DevKit Deployment" displayType="BALLOON" bundle="messages.DevKitBundle"
                        key="notification.group.devkit.deployment"/>
@@ -665,6 +679,7 @@
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.inspections.metaInformation.MetaInformationJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.documentation.DescriptorDocumentationYamlSchemaProviderFactory"/>
   </extensions>
 
 

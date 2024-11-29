@@ -38,6 +38,14 @@ public interface ShowUsagesActionHandler {
 
   @Nullable ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope);
 
+  default @Nullable ShowUsagesActionHandler withMaximalScope() {
+    return withScope(getMaximalScope());
+  }
+
+  default boolean isSaveScope() {
+    return true;
+  }
+
   @Nullable ShowUsagesParameters moreUsages(@NotNull ShowUsagesParameters parameters);
 
   @NotNull SearchScope getSelectedScope();

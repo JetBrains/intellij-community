@@ -1,0 +1,71 @@
+### auto-generated section `build kotlin.performance-tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "performance-tests_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "performance-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "performance-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "@lib//:kotlinc_kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/preferences",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
+    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
+    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
+    "//plugins/kotlin/native",
+    "//plugins/kotlin/formatter",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/compiler-reference-index",
+    "//platform/analysis-impl",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/performance-tests/performance-test-utils:kotlin-performance-tests-performance-test-utils_test",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:okhttp",
+  ],
+  runtime_deps = [":performance-tests_resources"]
+)
+### auto-generated section `build kotlin.performance-tests` end

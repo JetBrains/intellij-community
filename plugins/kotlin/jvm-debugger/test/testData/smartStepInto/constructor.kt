@@ -41,4 +41,13 @@ class L {
     }
 }
 
-// EXISTS: constructor B(), constructor C(Int), constructor D(), constructor E(Int), constructor F(), constructor G(Int), constructor J(), constructor K(Int), constructor L()
+// EXISTS: constructor A()
+// EXISTS: constructor B()
+// EXISTS: constructor C(Int)
+// EXISTS: constructor D()
+// EXISTS: constructor E(Int)
+// EXISTS: constructor F()
+// EXISTS: constructor G(Int)
+// EXISTS: constructor J()
+// EXISTS: constructor K(Int)
+// EXISTS: constructor L()

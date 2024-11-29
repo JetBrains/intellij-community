@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer;
+import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   private static final SyntaxHighlighter PLAIN_SYNTAX_HIGHLIGHTER = new TextMateHighlighter(null);
@@ -29,6 +30,7 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       if (languageDescriptor != null) {
         LOG.debug("Textmate highlighting: " + virtualFile.getPath());
         return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor,
+                                                                     new JoniRegexFactory(),
                                                                      Registry.get("textmate.line.highlighting.limit").asInteger()));
       }
     }

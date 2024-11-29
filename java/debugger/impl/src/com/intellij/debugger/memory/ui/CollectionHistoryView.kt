@@ -167,7 +167,7 @@ class CollectionHistoryView(private val myClsName: String,
 
   private fun createChildren(values: List<Value>, renderer: NodeRenderer?): XValueChildrenList {
     val children = XValueChildrenList()
-    myDebugProcess.managerThread.invokeAndWait(object : DebuggerCommandImpl() {
+    mySuspendContext.managerThread.invokeAndWait(object : DebuggerCommandImpl() {
       override fun action() {
         for (ins in values) {
           val evalContext = EvaluationContextImpl(mySuspendContext, mySuspendContext.frameProxy)
@@ -184,7 +184,7 @@ class CollectionHistoryView(private val myClsName: String,
   }
 
   private fun invokeInDebuggerThread(runnable: () -> Unit) {
-    myDebugProcess.managerThread.schedule(object : DebuggerCommandImpl() {
+    mySuspendContext.managerThread.schedule(object : DebuggerCommandImpl() {
       override fun action() {
         runnable()
       }

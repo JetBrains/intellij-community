@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -16,6 +17,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public final class InspectionsAggregationUtil {
+  @Unmodifiable
   public static List<HighlightDisplayKey> getInspectionsKeys(@NotNull InspectionConfigTreeNode node) {
     return ContainerUtil.map(getInspectionsNodes(node), node1 -> node1.getKey());
   }

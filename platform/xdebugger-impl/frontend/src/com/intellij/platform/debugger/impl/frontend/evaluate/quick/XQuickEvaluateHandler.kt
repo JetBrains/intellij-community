@@ -12,7 +12,6 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.Remote
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -52,10 +51,8 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
     val projectId = project.projectId()
     val editorId = editor.editorId()
     val expressionInfoDeferred = documentCoroutineScope.async(Dispatchers.IO) {
-      withKernel {
-        val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
-        remoteApi.getExpressionInfo(projectId, editorId, offset, type)
-      }
+      val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
+      remoteApi.getExpressionInfo(projectId, editorId, offset, type)
     }
     val hintDeferred: Deferred<AbstractValueHint?> = documentCoroutineScope.async(Dispatchers.IO) {
       val expressionInfo = expressionInfoDeferred.await()

@@ -209,7 +209,7 @@ public class RemoteConnectionBuilder {
                                                                        f -> f.getName().startsWith("debugger-agent"));
           if (agentPath != null) {
             try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
-              parametersList.add(prefix + agentPath + generateAgentSettings(project));
+              parametersList.prepend(prefix + agentPath + generateAgentSettings(project));
             }
             if (Registry.is("debugger.async.stacks.coroutines", false)) {
               parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");

@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.platform.testFramework.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "ui_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui",
+  module_name = "intellij.platform.testFramework.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "@lib//:platform_test_framework_ui_intellij_remoterobot_remote_fixtures",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "@lib//:platform_test_framework_ui_intellij_remoterobot_robot_server_core",
+    "@lib//:gson",
+  ],
+  exports = [
+    "@lib//:platform_test_framework_ui_intellij_remoterobot_remote_fixtures",
+    "@lib//:platform_test_framework_ui_intellij_remoterobot_robot_server_core",
+  ],
+  runtime_deps = [
+    ":ui_resources",
+    "@lib//:okhttp",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.ui` end

@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -398,6 +399,7 @@ public abstract class MetaAnnotationUtil {
     return Stream.concat(directAnnotations, indirectAnnotations);
   }
 
+  @Unmodifiable
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {

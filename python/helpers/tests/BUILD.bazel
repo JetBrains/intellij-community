@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.python.helpers.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "python-helpers-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "python-helpers-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["**/*.kt", "**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//python:python-helpers",
+    "//lib/ant/lib:ant-antlr",
+  ]
+)
+### auto-generated section `build intellij.python.helpers.tests` end

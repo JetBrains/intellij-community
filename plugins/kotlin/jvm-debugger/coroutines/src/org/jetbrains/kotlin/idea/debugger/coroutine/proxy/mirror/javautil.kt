@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JavaLangObjectToString(context: DefaultExecutionContext) : BaseMirror<ObjectReference, String>("java.lang.Object", context) {
     private val toString by MethodDelegate<StringReference>("toString", "()Ljava/lang/String;")
@@ -43,10 +44,19 @@ class StackTraceElement(context: DefaultExecutionContext) :
     private val lineNumberField by FieldDelegate<IntegerValue>("lineNumber")
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfStackTraceElement? {
-        val declaringClass = declaringClassField.value(value)?.value() ?: return null
-        val methodName = methodNameField.value(value)?.value() ?: return null
-        val fileName = fileNameField.value(value)?.value()
-        val lineNumber = lineNumberField.value(value)?.value()
+        // fetch all values at once
+        val fieldValues = value.getValues(
+            listOf(
+                declaringClassField.field,
+                methodNameField.field,
+                fileNameField.field,
+                lineNumberField.field
+            )
+        )
+        val declaringClass = fieldValues[declaringClassField.field].safeAs<StringReference>()?.value() ?: return null
+        val methodName = fieldValues[methodNameField.field].safeAs<StringReference>()?.value() ?: return null
+        val fileName = fieldValues[fileNameField.field].safeAs<StringReference>()?.value()
+        val lineNumber = fieldValues[lineNumberField.field].safeAs<IntegerValue>()?.value()
         return MirrorOfStackTraceElement(
             declaringClass,
             methodName,

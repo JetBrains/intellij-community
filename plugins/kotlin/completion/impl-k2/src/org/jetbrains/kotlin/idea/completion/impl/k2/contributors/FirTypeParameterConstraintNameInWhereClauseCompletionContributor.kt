@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeConstraintNameInWhereClausePositionContext
@@ -19,15 +19,15 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(
         positionContext: KotlinTypeConstraintNameInWhereClausePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         val ownerSymbol = positionContext.typeParametersOwner.symbol
 

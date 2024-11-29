@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.event.HyperlinkListener;
 import java.util.Collection;
@@ -18,6 +19,7 @@ public abstract class WritingAccessProvider {
    * @param files files to be checked
    * @return set of files that cannot be accessed
    */
+  @Unmodifiable
   public @NotNull Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     return requestWriting(files.toArray(VirtualFile.EMPTY_ARRAY));
   }

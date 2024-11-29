@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @Suppress("PublicApiImplicitType")
@@ -31,6 +32,7 @@ object HotSwapStatistics : CounterUsagesCollector() {
   @JvmStatic
   fun logClassesReloaded(project: Project, count: Int) = hotSwapClassesNumber.log(project, count)
 
+  @Serializable
   enum class HotSwapSource {
     RELOAD_FILE,
     RELOAD_ALL,

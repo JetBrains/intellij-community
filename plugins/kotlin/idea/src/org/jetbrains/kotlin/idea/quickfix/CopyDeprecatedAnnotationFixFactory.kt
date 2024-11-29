@@ -39,7 +39,7 @@ internal object CopyDeprecatedAnnotationFixFactory : KotlinIntentionActionsFacto
                 StandardClassIds.Annotations.Deprecated,
                 AddAnnotationFix.Kind.Copy(sourceName, destinationName),
                 argumentsData,
-            )
+            ).asIntention()
         }
     }
 

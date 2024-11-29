@@ -1,0 +1,73 @@
+### auto-generated section `build intellij.platform.ml.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "ml-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ml-impl",
+  module_name = "intellij.platform.ml.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:ngram-slp",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/util/text-matching",
+    "//platform/lang-impl",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/ml-api:ml",
+    "//platform/statistics",
+    "@lib//:kotlin-reflect",
+    "@lib//:jetbrains_mlapi_usage",
+  ],
+  exports = ["@lib//:jetbrains_mlapi_usage"],
+  runtime_deps = [":ml-impl_resources"]
+)
+
+kt_jvm_test(
+  name = "ml-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":ml-impl"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:ngram-slp",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:assert_j",
+    "//platform/util/text-matching",
+    "//platform/lang-impl",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/ml-api:ml",
+    "//platform/statistics",
+    "@lib//:kotlin-reflect",
+    "@lib//:jetbrains_mlapi_usage",
+  ],
+  runtime_deps = [":ml-impl_resources"]
+)
+### auto-generated section `build intellij.platform.ml.impl` end

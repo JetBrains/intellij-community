@@ -1,22 +1,38 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.diagnostic.telemetry` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
-  name = "diagnostic-telemetry",
+jvm_library(
+  name = "telemetry",
   module_name = "intellij.platform.diagnostic.telemetry",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
   deps = [
-    "@libraries//:kotlin-stdlib.provided",
-    "@libraries//:kotlinx-coroutines-core-jvm.provided",
-    "@libraries//:opentelemetry-sdk.provided",
-    "@libraries//:opentelemetry-semconv.provided",
-    "@libraries//:opentelemetry-extension-kotlin.provided",
-    "@community//platform/util",
-    "@community//platform/diagnostic",
+    "@lib//:kotlin-stdlib.provided",
+    "@lib//:kotlinx-coroutines-core.provided",
+    "@lib//:opentelemetry.provided",
+    "@lib//:opentelemetry-semconv.provided",
+    "@lib//:opentelemetry-extension-kotlin.provided",
+    "//platform/util",
+    "//platform/diagnostic",
   ],
-  exports = ["@community//platform/diagnostic"]
+  exports = ["//platform/diagnostic"]
 )
-### auto-generated section `build` end
+
+kt_jvm_test(
+  name = "telemetry_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  associates = [":telemetry"],
+  deps = [
+    "//platform/util",
+    "//platform/diagnostic",
+    "@lib//:junit5",
+    "@lib//:kotlin-test-assertions-core-jvm",
+  ]
+)
+### auto-generated section `build intellij.platform.diagnostic.telemetry` end

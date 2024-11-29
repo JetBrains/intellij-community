@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
@@ -53,7 +52,6 @@ class OptimizeImportsProcessing : FileBasedPostProcessing() {
         }
     }
 
-    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,

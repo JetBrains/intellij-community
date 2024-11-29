@@ -90,14 +90,14 @@ class CommitDialogConfigurable(private val project: Project)
 
       if (postCommitChecks.isNotEmpty()) {
         group(CommitOptionsPanel.postCommitChecksGroupTitle(actionName)) {
+          postCommitChecks.forEach { appendDslConfigurable(it) }
+          separator()
           row {
             checkBox(VcsBundle.message("settings.commit.postpone.slow.checks"))
               .comment(VcsBundle.message("settings.commit.postpone.slow.checks.description"))
               .enabledIf(nonModalCommitCheckBox.selected)
               .bindSelected({ settings.NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS }, { setRunSlowCommitChecksAfterCommit(project, it) })
           }
-          separator()
-          postCommitChecks.forEach { appendDslConfigurable(it) }
         }
       }
     }

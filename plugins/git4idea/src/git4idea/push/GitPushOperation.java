@@ -44,6 +44,7 @@ import git4idea.update.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -74,6 +75,7 @@ public class GitPushOperation {
 
   private final Project myProject;
   private final @NotNull GitPushSupport myPushSupport;
+  @Unmodifiable
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
   private final @Nullable GitPushTagMode myTagMode;
   private final ForceMode myForceMode;
@@ -100,7 +102,7 @@ public class GitPushOperation {
 
   public GitPushOperation(@NotNull Project project,
                           @NotNull GitPushSupport pushSupport,
-                          @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                          @NotNull @Unmodifiable Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                           @Nullable GitPushTagMode tagMode,
                           @NotNull ForceMode forceMode,
                           boolean skipHook) {
@@ -168,6 +170,7 @@ public class GitPushOperation {
           Collection<GitRepository> rootsToUpdate = myRepositoryManager.getRepositories();
           LOG.debug("roots to update: " + rootsToUpdate);
           GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod(), rebaseOverMergeProblemDetected == null);
+          LOG.debug("update result: " + updateResult);
           for (GitRepository repository : rootsToUpdate) {
             updatedRoots.put(repository, updateResult); // TODO update result in GitUpdateProcess is a single for several roots
           }

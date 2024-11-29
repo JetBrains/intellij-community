@@ -14,11 +14,11 @@ public final class JavaTextBlockIndentPassFactory implements TextEditorHighlight
 
   @Nullable
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    PsiJavaFile javaFile = ObjectUtils.tryCast(file, PsiJavaFile.class);
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    PsiJavaFile javaFile = ObjectUtils.tryCast(psiFile, PsiJavaFile.class);
     if (javaFile == null) return null;
     if (!StringContentIndentUtil.isDocumentUpdated(editor)) return null;
-    return new JavaTextBlockIndentPass(file.getProject(), editor, javaFile);
+    return new JavaTextBlockIndentPass(psiFile.getProject(), editor, javaFile);
   }
 
   @Override

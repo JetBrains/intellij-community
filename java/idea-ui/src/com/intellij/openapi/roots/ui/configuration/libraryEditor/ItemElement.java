@@ -89,6 +89,7 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
     return myRootType;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ItemElement itemElement)) return false;
@@ -100,6 +101,7 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
     return myUrl;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = getParent().hashCode();

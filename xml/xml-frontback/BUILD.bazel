@@ -1,13 +1,13 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.xml.frontback` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "xml-frontback",
+jvm_library(
+  name = "frontback",
   module_name = "intellij.xml.frontback",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  deps = ["@community//platform/core-api:core"]
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = ["//platform/core-api:core"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml.frontback` end

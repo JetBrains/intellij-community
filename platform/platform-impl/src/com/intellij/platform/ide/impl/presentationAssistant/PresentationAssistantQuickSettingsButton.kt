@@ -7,6 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.util.addMouseListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -17,6 +19,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.IconUtil
+import kotlinx.coroutines.CoroutineScope
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -28,8 +31,13 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
                                                         private val shownStateRequestCountChanged: (Int) -> Unit):
   JBLabel(IconUtil.colorize(AllIcons.Actions.PresentationAssistantSettings, appearance.theme.keymapLabel)), Disposable {
 
+  @Service(Service.Level.PROJECT)
+  private class AlarmFactory (private val coroutineScope: CoroutineScope) {
+    fun createAlarm() = Alarm(coroutineScope)
+  }
+
   private var popup: JBPopup? = null
-  private var hideAlarm = Alarm()
+  private var hideAlarm = project.service<AlarmFactory>().createAlarm()
   private var shownStateRequestCount = 0
     set(value) {
       val oldValue = field

@@ -6,8 +6,8 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptReloadActionAvailability"
-            interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptReloadActionAvailability"
+            qualifiedName="org.jetbrains.kotlin.kotlinScriptLazyResolveProhibitionCondition"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptLazyResolveProhibitionCondition"
             area="IDEA_PROJECT"
             dynamic="true"/>
 
@@ -124,7 +124,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewCustomScriptHook"/>
+    <newFileHook implementation="org.jetbrains.kotlin.idea.script.k2.NewKotlinScriptHook"/>
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
     <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
@@ -132,8 +132,9 @@
     <idea.base.projectStructure.moduleInfoProviderExtension
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDefinitionSource"/>
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.CommonScriptConfigurationsSource"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDefinitionSource"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.DependentScriptConfigurationsSource"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 

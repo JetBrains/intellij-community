@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -26,7 +26,7 @@ import java.util.zip.ZipException;
  * access to the internal and external file attributes.
  */
 @SuppressWarnings("OctalInteger")
-public class JBZipEntry implements Cloneable {
+public class JBZipEntry {
   private static final int PLATFORM_UNIX = 3;
   private static final int PLATFORM_FAT = 0;
   private static final int SHORT_MASK = 0xFFFF;
@@ -324,6 +324,7 @@ public class JBZipEntry implements Cloneable {
    *
    * @return a hashcode.
    */
+  @Override
   public int hashCode() {
     // this method has severe consequences on performance. We cannot rely
     // on the super.hashCode() method since super.getName() always return
@@ -351,7 +352,7 @@ public class JBZipEntry implements Cloneable {
         return bis;
       case ZipEntry.DEFLATED:
         bis.addDummy();
-        int bufferSize = Math.min((int)this.size, 8192);
+        int bufferSize = this.size <= 0 ? 8192 : Math.min((int)this.size, 8192);
         return new InflaterInputStream(bis, new Inflater(true), bufferSize);
       default:
         throw new ZipException("Found unsupported compression method " + getMethod());
@@ -512,6 +513,7 @@ public class JBZipEntry implements Cloneable {
     myFile.getOutputStream().putNextEntryContent(this, stream);
   }
 
+  @SuppressWarnings("IOStreamConstructor")
   void doSetDataFromFile(File file) throws IOException {
     try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
       myFile.getOutputStream().putNextEntryContent(this, input);

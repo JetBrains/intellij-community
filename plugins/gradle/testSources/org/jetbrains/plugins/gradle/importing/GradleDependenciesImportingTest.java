@@ -2380,19 +2380,18 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     ExternalSystemTaskId taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myProject);
     String projectPath = getProjectPath();
     GradleExecutionSettings settings = new GradleManager().getExecutionSettingsProvider().fun(new Pair<>(myProject, projectPath));
-    new GradleTaskManager().executeTasks(
-      taskId, Collections.singletonList(task), projectPath, settings, null,
-      new ExternalSystemTaskNotificationListener() {
-        @Override
-        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-          if (stdOut) {
-            System.out.print(text);
-          }
-          else {
-            System.err.print(text);
-          }
+    settings.setTasks(Arrays.asList(task));
+    new GradleTaskManager().executeTasks(projectPath, taskId, settings, new ExternalSystemTaskNotificationListener() {
+      @Override
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        if (stdOut) {
+          System.out.print(text);
         }
-      });
+        else {
+          System.err.print(text);
+        }
+      }
+    });
   }
 
   private static void checkIfSourcesOrJavadocsCanBeAttached(String binaryPath,

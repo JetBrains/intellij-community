@@ -10,9 +10,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaConstructorSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaNamedFunctionSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KaNamedClassSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -32,6 +40,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import java.util.Locale.getDefault
 
 object DeprecationFixFactory {
     val deprecatedWarning = IntentionBased { diagnostics: KaFirDiagnostic.Deprecation ->
@@ -71,6 +80,7 @@ object DeprecationFixFactory {
             }
             is KtConstructorCalleeExpression -> psiElement.constructorReferenceExpression
             is KtBinaryExpression -> psiElement.operationReference
+            is KtDotQualifiedExpression -> psiElement.selectorExpression as? KtSimpleNameExpression
             else -> null
         } ?: return emptyList()
         val expression = (referenceExpression.parent as? KtCallExpression)?.takeIf {
@@ -79,7 +89,24 @@ object DeprecationFixFactory {
 
         val replaceWithData = fetchReplaceWithPattern(deprecatedSymbol) ?: return emptyList()
 
-        return listOf(DeprecatedSymbolUsageFix(expression, replaceWithData))
+        val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            modifiersRenderer = modifiersRenderer.with {
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
+            }
+            namedClassRenderer = KaNamedClassSymbolRenderer.AS_SOURCE_WITHOUT_PRIMARY_CONSTRUCTOR
+            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.NO_DEFAULT_VALUE
+            constructorRenderer = KaConstructorSymbolRenderer.AS_RAW_SIGNATURE
+            namedFunctionRenderer = KaNamedFunctionSymbolRenderer.AS_RAW_SIGNATURE
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KaRendererAnnotationsFilter.NONE
+            }
+            keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
+        }
+        val text = KotlinBundle.message("replace.usages.of.0.in.whole.project", deprecatedSymbol.render(renderer))
+        return listOf(
+            DeprecatedSymbolUsageFix(expression, replaceWithData),
+            DeprecatedSymbolUsageInWholeProjectFix(expression, replaceWithData, text)
+        )
     }
 }
 
@@ -108,13 +135,15 @@ abstract class DeprecatedSymbolUsageFixBase(
 ) : KotlinPsiOnlyQuickFixAction<KtReferenceExpression>(element) {
 
     internal val isAvailable: Boolean
+    private val isUnitTypeReplacement: Boolean?
 
     init {
         assert(!isDispatchThread()) {
             "${javaClass.name} should not be created on EDT"
         }
+        isUnitTypeReplacement = createReplacementExpression(element.project, replaceWith, element)?.let { analyze(element) { it.expressionType?.isUnitType } }
         isAvailable = buildUsageReplacementStrategy(
-            element, replaceWith
+            element, replaceWith, isUnitTypeReplacement
         )?.let { it.createReplacer(element) != null } == true
     }
 
@@ -122,7 +151,7 @@ abstract class DeprecatedSymbolUsageFixBase(
 
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val strategy = buildUsageReplacementStrategy(expression, replaceWith) ?: return
+        val strategy = buildUsageReplacementStrategy(expression, replaceWith, isUnitTypeReplacement) ?: return
         invoke(strategy, project, editor)
     }
 
@@ -133,28 +162,40 @@ abstract class DeprecatedSymbolUsageFixBase(
         private fun buildUsageReplacementStrategy(
             element: KtReferenceExpression,
             replaceWith: ReplaceWithData,
+            isUnitType: Boolean?,
         ): UsageReplacementStrategy? {
 
-            val target = element.mainReference.resolve()
+            val target = element.mainReference.resolve()?.let { it.navigationElement ?: it }
             when (target) {
                 is KtPrimaryConstructor, is KtClassLikeDeclaration -> {
-                    val psiFactory = KtPsiFactory(element.project)
+                    val project = element.project
+                    val psiFactory = KtPsiFactory(project)
                     val typeReference = try {
-                        psiFactory.createType(replaceWith.pattern)
+                        psiFactory.createType(replaceWith.pattern) // check if valid type
+
+                        val codeFragment = KtExpressionCodeFragment(
+                            project,
+                            "fragment.kt",
+                            "_ is ${replaceWith.pattern}",
+                            replaceWith.imports.joinToString().takeIf { it.isNotEmpty() },
+                            retrieveContext(target)
+                        )
+
+                        (codeFragment.getContentElement() as? KtIsExpression)?.typeReference
                     } catch (e: Exception) {
                         if (e is ControlFlowException) throw e
-                        val replacement = createReplacement(target as KtDeclaration, element, replaceWith) ?: return null
+                        val replacement = createReplacement(target as KtDeclaration, element, replaceWith, isUnitType) ?: return null
 
                         return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
                     }
 
-                    val typeElement = typeReference.typeElement as? KtUserType ?: return null
+                    val typeElement = typeReference?.typeElement as? KtUserType ?: return null
 
-                    return ClassUsageReplacementStrategy(typeElement, null, element.project)
+                    return ClassUsageReplacementStrategy(typeElement, null, project)
                 }
 
                 is KtCallableDeclaration -> {
-                    val replacement = createReplacement(target, element, replaceWith) ?: return null
+                    val replacement = createReplacement(target, element, replaceWith, isUnitType) ?: return null
 
                     return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
                 }
@@ -166,19 +207,36 @@ abstract class DeprecatedSymbolUsageFixBase(
         private fun createReplacement(
             target: KtDeclaration,
             element: KtReferenceExpression,
-            replaceWith: ReplaceWithData
+            replaceWith: ReplaceWithData,
+            isUnitType: Boolean?
         ): CodeToInline? {
-            val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression
-            ?: target.valueParameterList?.parameters?.lastOrNull()) else null)
-                ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
-                ?: target
-            val psiFactory = KtPsiFactory(element.project)
-            val expression =
-                psiFactory.createExpressionCodeFragment(replaceWith.pattern, context).getContentElement() ?: return null
+            val context = retrieveContext(target)
+            val project = element.project
 
-            return buildCodeToInline(target, expression, false, null, object : CodeToInlineBuilder(original = target) {
+            val expression = createReplacementExpression(project, replaceWith, context) ?: return null
+
+            return buildCodeToInline(target, expression, isUnitType != false, null, object : CodeToInlineBuilder(original = target) {
                 override fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {}
             })
+        }
+
+        private fun createReplacementExpression(
+            project: Project,
+            replaceWith: ReplaceWithData,
+            context: PsiElement
+        ): KtExpression? = KtExpressionCodeFragment(
+            project,
+            "fragment.kt",
+            replaceWith.pattern,
+            replaceWith.imports.joinToString().takeIf { it.isNotEmpty() },
+            context
+        ).getContentElement()
+
+        private fun retrieveContext(target: KtDeclaration): PsiElement {
+            val context = (if (target is KtFunction) target.valueParameterList?.parameters?.lastOrNull() else null)
+                        ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
+                        ?: target
+            return context
         }
     }
 }
@@ -194,7 +252,7 @@ fun fetchReplaceWithPattern(
         ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value
             ?: return null
     val imports =
-        (replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaAnnotationValue.ArrayValue)?.values?.mapNotNull { ((it as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value }
+        (replaceWithValue.arguments.find { it.name.asString() == "imports" }?.expression as? KaAnnotationValue.ArrayValue)?.values?.mapNotNull { ((it as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value }
             ?: emptyList()
 
     return ReplaceWithData(pattern, imports, true)

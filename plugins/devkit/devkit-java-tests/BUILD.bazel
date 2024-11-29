@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.devkit.java.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "java-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "java-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//xml/xml-psi-impl:psi-impl",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test",
+    "//xml/xml-analysis-impl:analysis-impl",
+    "//plugins/devkit/devkit-tests:testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//plugins/properties",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/devkit/intellij.devkit.themes:themes",
+    "//plugins/devkit/intellij.devkit.themes:themes_test",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util:util-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//java/compiler/impl:java-compiler-impl",
+    "//plugins/devkit/runtimeModuleRepository/jps:devkit-runtimeModuleRepository-jps",
+    "//plugins/devkit/runtimeModuleRepository/jps:devkit-runtimeModuleRepository-jps_test",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+  ]
+)
+### auto-generated section `build intellij.devkit.java.tests` end

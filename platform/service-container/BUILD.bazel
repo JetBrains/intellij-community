@@ -1,31 +1,57 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.serviceContainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "serviceContainer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "serviceContainer",
   module_name = "intellij.platform.serviceContainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
-    "@community//platform/core-impl",
-    "@community//platform/util-ex",
-    "@community//platform/projectModel-impl",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/instanceContainer",
-    "@community//platform/diagnostic",
-    "@community//platform/util/coroutines:util-coroutines",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/instanceContainer",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":serviceContainer_resources"]
 )
-### auto-generated section `build` end
+
+kt_jvm_test(
+  name = "serviceContainer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":serviceContainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/instanceContainer",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":serviceContainer_resources"]
+)
+### auto-generated section `build intellij.platform.serviceContainer` end

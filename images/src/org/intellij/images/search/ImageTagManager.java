@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -47,6 +48,7 @@ public class ImageTagManager implements PersistentStateComponent<ImageTagManager
     }
   }
 
+  @Unmodifiable
   public List<String> getTags(VirtualFile file) {
     return ContainerUtil.filter(myState.myTags.keySet(), tag -> hasTag(tag, file));
   }

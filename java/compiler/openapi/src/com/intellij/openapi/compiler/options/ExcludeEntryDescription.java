@@ -70,6 +70,7 @@ public class ExcludeEntryDescription implements Disposable {
     return myFilePointer.isValid();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if(!(obj instanceof ExcludeEntryDescription entryDescription)) {
       return false;
@@ -83,6 +84,7 @@ public class ExcludeEntryDescription implements Disposable {
     return Objects.equals(entryDescription.getUrl(), getUrl());
   }
 
+  @Override
   public int hashCode() {
     int result = (myIsFile ? 1 : 0);
     result = 31 * result + (myIncludeSubdirectories ? 1 : 0);

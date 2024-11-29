@@ -9,7 +9,7 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import com.jetbrains.python.sdk.pipenv.PipenvFilesUtilsKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -92,7 +92,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     final VirtualFile pipFileLock = myFixture.findFileInTempDir("Pipfile.lock");
     assertNotNull(pipFileLock);
     final PyPackageManager packageManager = PyPackageManager.getInstance(getProjectDescriptor().getSdk());
-    final List<PyRequirement> requirements = PipenvKt.getPipFileLockRequirements(pipFileLock, packageManager);
+    final List<PyRequirement> requirements = PipenvFilesUtilsKt.getPipFileLockRequirementsSync(pipFileLock, packageManager);
     final List<String> names = ContainerUtil.map(requirements, PyRequirement::getName);
     assertNotEmpty(names);
     assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pluggy", "py", "pytest", "six");

@@ -47,6 +47,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TestTimeOut;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -55,6 +56,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -83,7 +85,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
     PlatformTestUtil.assumeEnoughParallelism();
   }
 
@@ -106,6 +107,11 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -359,6 +365,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     assertEmpty(fixes);
   }
 
+  @Unmodifiable
   private @NotNull List<IntentionAction> findStupidFixes() {
     return ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()), f -> f.getFamilyName()
       .equals(new FindElseBranchInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()));

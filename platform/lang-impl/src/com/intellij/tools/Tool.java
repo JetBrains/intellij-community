@@ -230,6 +230,7 @@ public class Tool implements SchemeElement {
     myOutputFilters = new ArrayList<>(Arrays.asList(source.getOutputFilters()));
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof Tool source)) {
       return false;

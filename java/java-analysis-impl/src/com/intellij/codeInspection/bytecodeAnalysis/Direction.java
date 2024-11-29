@@ -10,11 +10,10 @@ public abstract class Direction {
   public static final Direction Out = explicitDirection("Out");
   public static final Direction NullableOut = explicitDirection("NullableOut");
   public static final Direction Pure = explicitDirection("Pure");
-  public static final Direction Access = explicitDirection("Access");
   public static final Direction Throw = explicitDirection("Throw");
   public static final Direction Volatile = explicitDirection("Volatile");
 
-  private static final List<Direction> ourConcreteDirections = Arrays.asList(Out, NullableOut, Pure, Access, Throw, Volatile);
+  private static final List<Direction> ourConcreteDirections = Arrays.asList(Out, NullableOut, Pure, Throw, Volatile);
   private static final int CONCRETE_DIRECTIONS_OFFSET = ourConcreteDirections.size();
   private static final int IN_OUT_OFFSET = 2; // nullity mask is 0/1
   private static final int IN_THROW_OFFSET = 2 + Value.values().length;

@@ -124,6 +124,7 @@ public final class PackageNamingConventionInspection extends PackageGlobalInspec
     return new LocalPackageNamingConventionInspection(this);
   }
 
+  @SuppressWarnings("InspectionDescriptionNotFoundInspection") // TODO IJPL-166089
   private static class LocalPackageNamingConventionInspection extends BaseSharedLocalInspection<PackageNamingConventionInspection> {
 
     LocalPackageNamingConventionInspection(PackageNamingConventionInspection inspection) {

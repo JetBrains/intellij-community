@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
@@ -87,10 +88,13 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
       }
     }
 
-    RefElement parentRef = findParentRef(sourcePsi, method, myManager);
+    WritableRefEntity parentRef = (WritableRefEntity)findParentRef(sourcePsi, method, myManager);
     if (parentRef == null) return;
-    setOwner((WritableRefEntity)parentRef);
-    if (!myManager.isDeclarationsFound()) return;
+    if (!myManager.isDeclarationsFound()) {
+      parentRef.add(this);
+      return;
+    }
+    setOwner(parentRef);
 
     PsiMethod javaPsi = method.getJavaPsi();
     if (!method.isConstructor()) {
@@ -181,9 +185,14 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   @NotNull
+  @Unmodifiable
   public synchronized Collection<RefMethod> getDerivedMethods() {
     if (myDerivedReferences == null) return Collections.emptyList();
     return ContainerUtil.filterIsInstance(myDerivedReferences, RefMethod.class);
+  }
+  private synchronized void removeDerivedMethod(@NotNull RefMethod toRemove) {
+    if (myDerivedReferences == null) return;
+    myDerivedReferences.remove(toRemove);
   }
 
   @Override
@@ -459,11 +468,11 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     super.referenceRemoved();
 
     for (RefMethod superMethod : getSuperMethods()) {
-      superMethod.getDerivedMethods().remove(this);
+      ((RefMethodImpl)superMethod).removeDerivedMethod(this);
     }
 
     for (RefMethod subMethod : getDerivedMethods()) {
-      subMethod.getDerivedReferences().remove(this);
+      ((RefMethodImpl)subMethod).removeDerivedMethod(this);
     }
   }
 

@@ -1,4 +1,5 @@
 // "Remove '.java'" "true"
+// PRIORITY: HIGH
 // WITH_STDLIB
 fun foo() {
     val clazz: kotlin.reflect.KClass<Foo>

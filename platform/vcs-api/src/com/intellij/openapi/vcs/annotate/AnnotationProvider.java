@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @see com.intellij.vcs.AnnotationProviderEx
@@ -17,6 +18,11 @@ public interface AnnotationProvider {
 
   @NotNull
   FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException;
+
+  @Nullable
+  default AnnotationWarning getAnnotationWarnings(@NotNull FileAnnotation fileAnnotation) {
+    return null;
+  }
 
   default @Nls(capitalization = Nls.Capitalization.Title) String getActionName() {
     return ActionsBundle.message("action.Annotate.text");

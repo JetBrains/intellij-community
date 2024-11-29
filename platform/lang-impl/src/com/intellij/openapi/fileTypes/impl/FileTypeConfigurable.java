@@ -36,6 +36,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -705,7 +706,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(@NotNull List<String> patterns) {
+    private void refill(@NotNull @Unmodifiable List<String> patterns) {
       clearList();
       DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
       for (@NlsSafe String pattern : ContainerUtil.sorted(patterns)) {

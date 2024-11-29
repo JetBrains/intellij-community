@@ -217,7 +217,11 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private suspend fun executeOnIdle() {
     withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
-      (serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl).saveAllDocuments(false)
+      (serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl).run {
+        writeIntentReadAction {
+          saveAllDocuments(false)
+        }
+      }
     }
   }
 

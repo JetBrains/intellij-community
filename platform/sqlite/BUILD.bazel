@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.sqlite` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "sqlite",
+  module_name = "intellij.platform.sqlite",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+  ],
+  runtime_deps = ["@lib//:sqlite-native"]
+)
+
+kt_jvm_test(
+  name = "sqlite_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":sqlite"],
+  deps = [
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "@lib//:kotlinx-coroutines-core",
+  ]
+)
+### auto-generated section `build intellij.platform.sqlite` end

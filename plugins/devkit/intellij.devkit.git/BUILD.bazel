@@ -1,0 +1,54 @@
+### auto-generated section `build intellij.devkit.git` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "git_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "git",
+  module_name = "intellij.devkit.git",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/ide-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/devkit/devkit-core:core",
+  ],
+  runtime_deps = [":git_resources"]
+)
+
+kt_jvm_test(
+  name = "git_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":git"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/ide-core",
+    "//plugins/devkit/devkit-core:core",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ],
+  runtime_deps = [":git_resources"]
+)
+### auto-generated section `build intellij.devkit.git` end

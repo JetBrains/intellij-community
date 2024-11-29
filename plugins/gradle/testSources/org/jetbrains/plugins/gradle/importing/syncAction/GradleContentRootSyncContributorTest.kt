@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import com.intellij.openapi.externalSystem.util.ListenerAssertion
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.testFramework.utils.module.assertContentRoots
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
@@ -393,7 +394,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
           contentRootContributorAssertion.trace {
             assertModules(storage, "project", "project.main", "project.test")
             assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src"))
+            assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
             assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
           }
         }
@@ -405,7 +406,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
       createBuildFile {
         withJavaPlugin()
         addPostfix("""
-          |sourceSets.main.java.srcDirs += "${externalProjectRoot.resolve("src")}"
+          |sourceSets.main.java.srcDirs += "${externalProjectRoot.resolve("src/main/java")}"
         """.trimMargin())
       }
 
@@ -413,7 +414,7 @@ class GradleContentRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
       assertModules(project, "project", "project.main", "project.test")
       assertContentRoots(project, "project", projectRoot)
-      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src"))
+      assertContentRoots(project, "project.main", projectRoot.resolve("src/main"), externalProjectRoot.resolve("src/main"))
       assertContentRoots(project, "project.test", projectRoot.resolve("src/test"))
 
       contentRootContributorAssertion.assertListenerFailures()

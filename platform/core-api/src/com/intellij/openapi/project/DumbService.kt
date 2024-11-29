@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
@@ -223,10 +224,11 @@ abstract class DumbService {
    */
   @Contract(pure = true)
   fun <T> filterByDumbAwareness(collection: Collection<T>): @Unmodifiable List<T> {
-    if (isDumb && Registry.`is`("ide.dumb.mode.check.awareness")) {
+    if (isDumb && (project is LightEditCompatible || Registry.`is`("ide.dumb.mode.check.awareness"))) {
+      val force = project is LightEditCompatible
       val result = ArrayList<T>(collection.size)
       for (element in collection) {
-        if (isDumbAware(element)) {
+        if (isDumbAware(element, force)) {
           result.add(element)
         }
       }
@@ -458,7 +460,7 @@ abstract class DumbService {
    * return true if [thing] can be used in current dumb context, i.e., either the [thing] is [isDumbAware] or the current context is smart; return false otherwise
    */
   fun isUsableInCurrentContext(thing: Any) : Boolean {
-    return !isDumb || isDumbAware(thing)
+    return !isDumb || isDumbAware(thing, project is LightEditCompatible)
   }
 
   companion object {
@@ -507,11 +509,17 @@ abstract class DumbService {
     @JvmStatic
     fun getInstance(project: Project): DumbService = project.service()
 
-    @Suppress("SSBasedInspection")
     @JvmStatic
     @Contract("null -> false", pure = true)
     fun isDumbAware(o: Any?): Boolean {
-      if (!Registry.`is`("ide.dumb.mode.check.awareness")) return true
+      return isDumbAware(o, false)
+    }
+
+    @Suppress("SSBasedInspection")
+    @JvmStatic
+    @Contract("null -> false", pure = true)
+    private fun isDumbAware(o: Any?, force: Boolean): Boolean {
+      if (!force && !Registry.`is`("ide.dumb.mode.check.awareness")) return true
       return if (o is PossiblyDumbAware) o.isDumbAware else o is DumbAware
     }
 

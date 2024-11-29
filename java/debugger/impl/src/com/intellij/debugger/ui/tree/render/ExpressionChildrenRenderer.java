@@ -58,7 +58,7 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
   @Override
   public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
     EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
-    evaluationContextImpl.getDebugProcess().getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+    evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         try {
@@ -153,8 +153,7 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext context, NodeDescriptor parentDescriptor) {
     CompletableFuture<Boolean> res = new CompletableFuture<>();
     EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)context;
-    DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+    evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         EvaluationContext evaluationContext = context.createEvaluationContext(value);

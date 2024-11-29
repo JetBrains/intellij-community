@@ -31,6 +31,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.SoftReference;
 import java.util.*;
@@ -53,7 +54,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope) {
+  @Unmodifiable
+  protected Collection<PsiDirectory> getAllDirectories(@NotNull GlobalSearchScope scope) {
     if (scope.isForceSearchingInLibrarySources()) {
       if (myDirectoriesWithLibSources == null) {
         myDirectoriesWithLibSources = createCachedDirectories(true);
@@ -78,7 +80,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected PsiPackageImpl findPackage(String qName) {
+  protected PsiPackageImpl findPackage(@NotNull String qName) {
     return (PsiPackageImpl)getFacade().findPackage(qName);
   }
 
@@ -188,7 +190,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes;
   }
 
-  private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, GlobalSearchScope scope) {
+  private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, @NotNull GlobalSearchScope scope) {
     String qName = getQualifiedName();
     String classQName = !qName.isEmpty() ? qName + "." + shortName : shortName;
     return getFacade().findClasses(classQName, scope);
@@ -257,7 +259,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  public PsiClass @NotNull [] findClassByShortName(@NotNull String name, final @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     PsiClass[] allClasses = getCachedClassesByName(name, scope);
     if (allClasses.length == 0) return allClasses;
     if (allClasses.length == 1) {

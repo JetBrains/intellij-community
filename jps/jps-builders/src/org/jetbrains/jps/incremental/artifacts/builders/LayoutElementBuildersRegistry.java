@@ -104,14 +104,14 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private void generateInstructions(final List<JpsPackagingElement> elements, ArtifactCompilerInstructionCreator instructionCreator,
+  private void generateInstructions(final List<? extends JpsPackagingElement> elements, ArtifactCompilerInstructionCreator instructionCreator,
                                     ArtifactInstructionsBuilderContext builderContext) {
     for (JpsPackagingElement child : elements) {
       generateInstructions(child, instructionCreator, builderContext);
     }
   }
 
-  private static void generateModuleSourceInstructions(@NotNull List<JpsModuleSourceRoot> roots,
+  private static void generateModuleSourceInstructions(@NotNull List<? extends JpsModuleSourceRoot> roots,
                                                        @NotNull ArtifactCompilerInstructionCreator creator,
                                                        @NotNull JpsPackagingElement contextElement) {
     for (JpsModuleSourceRoot root : roots) {
@@ -278,7 +278,8 @@ public final class LayoutElementBuildersRegistry {
                                      ArtifactInstructionsBuilderContext builderContext) {
       JpsModule module = element.getModuleReference().resolve();
       if (module != null) {
-        List<JpsModuleSourceRoot> productionSources = ContainerUtil.filter(module.getSourceRoots(), root -> JavaModuleSourceRootTypes.PRODUCTION.contains(root.getRootType()));
+        List<? extends JpsModuleSourceRoot>
+          productionSources = ContainerUtil.filter(module.getSourceRoots(), root -> JavaModuleSourceRootTypes.PRODUCTION.contains(root.getRootType()));
         generateModuleSourceInstructions(productionSources, instructionCreator, element);
       }
     }

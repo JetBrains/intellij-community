@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringCodeVisionSupport
 import com.intellij.ui.JBColor
+import com.intellij.ui.LightColors
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -181,7 +182,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
       if (data.intentionText != null && isSuggestedRefactoringEditorHintEnabled()) {
         hint = EditorLineStripeHintComponent(editor, {
           listOf(listOf(EditorLineStripeTextRenderer(data.intentionText), EditorLineStripeButtonRenderer("Enter")))
-        }, JBColor.GREEN)
+        }, LightColors.SLIGHTLY_GREEN)
         hint.redraw()
       }
     }

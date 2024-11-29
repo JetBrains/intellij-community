@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,6 +38,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class ShowIntentionsPass extends TextEditorHighlightingPass implements DumbAware {
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  private static final ExtensionPointName<CollectedCachedIntentionHandler> EP_NAME = ExtensionPointName.create("com.intellij.show.intention.cached.intentions.handler");
+
   private final Editor myEditor;
 
   private final PsiFile myFile;
@@ -93,7 +100,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     }
   }
 
-  private static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
+  @ApiStatus.Internal
+  public static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
                                                  @NotNull Editor editor,
                                                  @NotNull PsiFile file,
                                                  @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
@@ -251,6 +259,12 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     getActionsToShow(myEditor, myFile, intentionsInfo, -1, myQueryIntentionActions);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
+    for (@NotNull CollectedCachedIntentionHandler handler : EP_NAME.getExtensionList()) {
+      CachedIntentions intentions =
+        new CachedIntentions(myCachedIntentions.getProject(), myCachedIntentions.getFile(), myCachedIntentions.getEditor());
+      intentions.wrapAndUpdateActions(intentionsInfo, false);
+      handler.processCollectedCachedIntentions(myEditor, myFile, intentions);
+    }
     UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
   }
 
@@ -298,7 +312,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     intentions.setOffset(offset);
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
-    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true);
+    DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true, true);
     List<HighlightInfo> infos = new ArrayList<>();
     List<HighlightInfo> additionalInfos = new ArrayList<>();
     Document document = hostEditor.getDocument();

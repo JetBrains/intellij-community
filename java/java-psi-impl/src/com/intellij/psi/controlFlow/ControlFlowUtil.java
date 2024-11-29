@@ -32,6 +32,7 @@ public final class ControlFlowUtil {
       myInstructionIdx = instructionIdx;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof SSAInstructionState)) return false;
@@ -42,6 +43,7 @@ public final class ControlFlowUtil {
       return Math.min(2, myWriteCount) == Math.min(2, ssaInstructionState.myWriteCount);
     }
 
+    @Override
     public int hashCode() {
       int result = Math.min(2, myWriteCount);
       result = 29 * result + myInstructionIdx;
@@ -1874,10 +1876,12 @@ public final class ControlFlowUtil {
       this.expression = expression;
     }
 
+    @Override
     public boolean equals(Object o) {
       return this == o || o instanceof VariableInfo && variable.equals(((VariableInfo)o).variable);
     }
 
+    @Override
     public int hashCode() {
       return variable.hashCode();
     }

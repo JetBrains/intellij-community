@@ -196,6 +196,16 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
             runTest("testData/highlighter/AutoCreatedItParameter.kt");
         }
 
+        @TestMetadata("DataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("testData/highlighter/DataClass.kt");
+        }
+
+        @TestMetadata("DataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("testData/highlighter/DataObject.kt");
+        }
+
         @TestMetadata("DefinitelyNonNullableType.kt")
         public void testDefinitelyNonNullableType() throws Exception {
             runTest("testData/highlighter/DefinitelyNonNullableType.kt");

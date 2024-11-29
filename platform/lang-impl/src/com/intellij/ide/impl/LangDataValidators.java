@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public final class LangDataValidators extends DataValidators {
   @Override
-  public void collectValidators(@NotNull Registry registry) {
+  protected void collectValidators(@NotNull ValidatorRegistry registry) {
     Validator<PsiElement> psiValidator = (data, dataId, source) -> data.isValid();
     registry.register(CommonDataKeys.PSI_FILE, psiValidator);
     registry.register(CommonDataKeys.PSI_ELEMENT, psiValidator);

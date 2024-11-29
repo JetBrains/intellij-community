@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRend
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -88,7 +90,8 @@ data class KaClassOrObjectSymbolChooserObject(
 ) :
     MemberChooserObjectBase(symbolText, symbolIcon)
 
-internal fun createKtClassMember(
+@IntellijInternalApi
+fun createKtClassMember(
     memberInfo: KtClassMemberInfo,
     bodyType: BodyType,
     preferConstructorParameter: Boolean
@@ -106,6 +109,7 @@ fun generateMember(
     mode: MemberGenerateMode = MemberGenerateMode.OVERRIDE
 ): KtCallableDeclaration = with(ktClassMember) {
     val bodyType = when {
+        mode == MemberGenerateMode.EXPECT -> BodyType.NoBody
         this == null -> BodyType.FromTemplate
         targetClass?.hasExpectModifier() == true -> BodyType.NoBody
         symbol.isExtension && mode == MemberGenerateMode.OVERRIDE -> BodyType.FromTemplate
@@ -132,6 +136,8 @@ fun generateMember(
             }
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
+
+            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
 
             val containingSymbol = targetClass?.symbol as? KaClassSymbol
             otherModifiersProvider = object : KaRendererOtherModifiersProvider {
@@ -201,7 +207,7 @@ fun generateMember(
 
 
     val newMember: KtCallableDeclaration = when (symbol) {
-        is KaNamedFunctionSymbol -> generateFunction(project, symbol, renderer, bodyType)
+        is KaNamedFunctionSymbol, is KaConstructorSymbol -> generateFunction(project, symbol, renderer, bodyType)
         is KaPropertySymbol -> generateProperty(project, symbol, renderer, bodyType)
         else -> error("Unknown member to override: $symbol")
     }
@@ -268,7 +274,7 @@ context(KaSession)
 @KaExperimentalApi
 private fun generateFunction(
     project: Project,
-    symbol: KaNamedFunctionSymbol,
+    symbol: KaFunctionSymbol,
     renderer: KaDeclarationRenderer,
     bodyType: BodyType,
 ): KtCallableDeclaration {
@@ -276,6 +282,7 @@ private fun generateFunction(
     val returnsUnit = returnType.isUnitType
 
     val body = if (bodyType != BodyType.NoBody) {
+        symbol as? KaNamedFunctionSymbol ?: error("Body is not expected for $symbol")
         val delegation = generateUnsupportedOrSuperCall(project, symbol, bodyType, returnsUnit)
         val returnPrefix = if (!returnsUnit && bodyType.requiresReturn) "return " else ""
         "{$returnPrefix$delegation\n}"
@@ -284,6 +291,9 @@ private fun generateFunction(
     val factory = KtPsiFactory(project)
     val functionText = symbol.render(renderer) + body
 
+    if (symbol is KaConstructorSymbol) {
+        return factory.createPrimaryConstructor(functionText)
+    }
     return factory.createFunction(functionText)
 }
 

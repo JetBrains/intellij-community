@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
@@ -72,6 +73,7 @@ public final class EclipseCompilerTool extends JavaCompilingTool {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<File> getAdditionalClasspath() {
     File element = findEcjJarFile();
     return ContainerUtil.createMaybeSingletonList(element);

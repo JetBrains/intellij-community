@@ -30,6 +30,7 @@
     <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg" language="SVG"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
+    <ApplicationLoadListener implementation="org.intellij.images.util.imageio.ImageReaderSpiRegistrar"/>
 
     <filePasteProvider implementation="org.intellij.images.ide.ImagePasteProvider" order="last"/>
 
@@ -143,66 +144,66 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <group id="Images.EditorToolbar">
-      <reference id="Images.ToggleTransparencyChessboard"/>
-      <reference id="Images.Editor.ToggleGrid"/>
+      <reference ref="Images.ToggleTransparencyChessboard"/>
+      <reference ref="Images.Editor.ToggleGrid"/>
       <separator/>
-      <reference id="Images.Editor.ZoomIn"/>
-      <reference id="Images.Editor.ZoomOut"/>
-      <reference id="Images.Editor.ActualSize"/>
-      <reference id="Images.Editor.FitZoomToWindow"/>
-      <reference id="ShowColorPicker"/>
-      <reference id="Images.ChangeBackground"/>
+      <reference ref="Images.Editor.ZoomIn"/>
+      <reference ref="Images.Editor.ZoomOut"/>
+      <reference ref="Images.Editor.ActualSize"/>
+      <reference ref="Images.Editor.FitZoomToWindow"/>
+      <reference ref="ShowColorPicker"/>
+      <reference ref="Images.ChangeBackground"/>
       <separator/>
-      <reference id="TextEditorWithPreview.SplitGroup"/>
+      <reference ref="TextEditorWithPreview.SplitGroup"/>
     </group>
     <group id="Images.EditorPopupMenu">
-      <reference id="CutCopyPasteGroup"/>
+      <reference ref="CutCopyPasteGroup"/>
       <separator/>
-      <reference id="FindUsages"/>
-      <reference id="RefactoringMenu"/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
       <separator/>
-      <reference id="Images.EditorToolbar"/>
-      <reference id="Images.ShowBorder"/>
+      <reference ref="Images.EditorToolbar"/>
+      <reference ref="Images.ShowBorder"/>
       <separator/>
-      <reference id="Images.SetBackgroundImage"/>
+      <reference ref="Images.SetBackgroundImage"/>
       <separator/>
-      <reference id="VersionControlsGroup"/>
+      <reference ref="VersionControlsGroup"/>
       <separator/>
-      <reference id="Images.EditExternally"/>
-      <reference id="Images.EditExternalEditorPath"/>
-      <reference id="ExternalToolsGroup"/>
+      <reference ref="Images.EditExternally"/>
+      <reference ref="Images.EditExternalEditorPath"/>
+      <reference ref="ExternalToolsGroup"/>
     </group>
     <group id="Images.ThumbnailsToolbar">
-      <reference id="Images.Thumbnails.UpFolder"/>
-      <reference id="Images.Thumbnails.ToggleRecursive"/>
+      <reference ref="Images.Thumbnails.UpFolder"/>
+      <reference ref="Images.Thumbnails.ToggleRecursive"/>
       <separator/>
-      <reference id="Images.ToggleTransparencyChessboard"/>
-      <reference id="Images.Thumbnails.ToggleFileSize"/>
-      <reference id="Images.Thumbnails.ToggleFileName"/>
+      <reference ref="Images.ToggleTransparencyChessboard"/>
+      <reference ref="Images.Thumbnails.ToggleFileSize"/>
+      <reference ref="Images.Thumbnails.ToggleFileName"/>
       <separator/>
 
-      <reference id="Images.Thumbnails.FilterByTheme"/>
-      <reference id="Images.Thumbnails.FilterByTag"/>
-      <reference id="Images.Thumbnails.ToggleTagsPanelName"/>
-      <reference id="Images.Thumbnails.Hide"/>
+      <reference ref="Images.Thumbnails.FilterByTheme"/>
+      <reference ref="Images.Thumbnails.FilterByTag"/>
+      <reference ref="Images.Thumbnails.ToggleTagsPanelName"/>
+      <reference ref="Images.Thumbnails.Hide"/>
     </group>
     <group id="Images.ThumbnailsPopupMenu">
-      <reference id="CutCopyPasteGroup"/>
-      <reference id="EditSource"/>
-      <reference id="Images.Thumbnails.EnterAction"/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <reference ref="Images.Thumbnails.EnterAction"/>
       <separator/>
-      <reference id="Images.ThumbnailsToolbar"/>
+      <reference ref="Images.ThumbnailsToolbar"/>
       <separator/>
-      <reference id="FindUsages"/>
-      <reference id="RefactoringMenu"/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
       <separator/>
-      <reference id="$Delete"/>
+      <reference ref="$Delete"/>
       <separator/>
-      <reference id="VersionControlsGroup"/>
-      <reference id="CompareTwoFiles"/>
+      <reference ref="VersionControlsGroup"/>
+      <reference ref="CompareTwoFiles"/>
       <separator/>
-      <reference id="Images.EditExternally"/>
-      <reference id="ExternalToolsGroup"/>
+      <reference ref="Images.EditExternally"/>
+      <reference ref="ExternalToolsGroup"/>
     </group>
   </actions>
 </idea-plugin>

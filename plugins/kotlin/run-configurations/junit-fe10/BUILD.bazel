@@ -1,0 +1,31 @@
+### auto-generated section `build kotlin.run-configurations.junit-fe10` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "kotlin-run-configurations-junit-fe10_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-run-configurations-junit-fe10",
+  module_name = "kotlin.run-configurations.junit-fe10",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/execution/openapi:java-execution",
+  ],
+  runtime_deps = [":kotlin-run-configurations-junit-fe10_resources"]
+)
+### auto-generated section `build kotlin.run-configurations.junit-fe10` end

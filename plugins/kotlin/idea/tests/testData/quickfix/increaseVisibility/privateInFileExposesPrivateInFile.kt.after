@@ -1,4 +1,5 @@
 // "Make 'Private' public" "true"
+// PRIORITY: HIGH
 
 private interface I2 {
     class Private

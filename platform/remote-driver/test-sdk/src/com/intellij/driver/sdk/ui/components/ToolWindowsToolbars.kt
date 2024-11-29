@@ -17,6 +17,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : UiComponent(data) {
   val servicesButton = stripeButton { byAccessibleName("Services") }
   val terminalButton = stripeButton { byAccessibleName("Terminal") }
   val problemsButton = stripeButton { byAccessibleName("Problems") }
+  val jupyterButton = stripeButton { byAccessibleName("Jupyter") }
   val moreButton = stripeButton { byAccessibleName("More") }
   val debugButton = stripeButton { byAccessibleName("Debug") }
   val findButton = stripeButton { byAccessibleName("Find") }
@@ -81,4 +82,4 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
 }
 
 private fun Finder.stripeButton(locator: String) = x(locator, StripeButtonUi::class.java)
-private fun Finder.stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java) { locator() }
+fun Finder.stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java) { locator() }

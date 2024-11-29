@@ -49,19 +49,19 @@
     <orderEntry type="library" name="mvstore" level="project" />
     <orderEntry type="module-library">
       <library name="kotlinx-serialization-cbor" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.6.2">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.7.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.6.2/kotlinx-serialization-cbor-jvm-1.6.2.jar">
-              <sha256sum>5e405251ecdca6badb483c94ce22709489fe8a97a4d4ddca5cd43af8449e439f</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3.jar">
+              <sha256sum>ec45d74e2293eacbc1f804f3ec55d4908f9905ac5053316b565f1b66326f1f70</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.6.2/kotlinx-serialization-cbor-jvm-1.6.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.6.2/kotlinx-serialization-cbor-jvm-1.6.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

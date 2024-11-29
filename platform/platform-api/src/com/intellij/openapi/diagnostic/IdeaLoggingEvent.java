@@ -1,22 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author kir
- */
 public class IdeaLoggingEvent {
   private final String myMessage;
   private final Throwable myThrowable;
-  private final Object myData;
+  private final @Nullable Object myData;
 
   public IdeaLoggingEvent(String message, Throwable throwable) {
     this(message, throwable, null);
   }
 
-  public IdeaLoggingEvent(String message, Throwable throwable, Object data) {
+  public IdeaLoggingEvent(String message, Throwable throwable, @Nullable Object data) {
     myMessage = message;
     myThrowable = throwable;
     myData = data;
@@ -30,7 +28,7 @@ public class IdeaLoggingEvent {
     return myThrowable;
   }
 
-  public String getThrowableText() {
+  public @NotNull String getThrowableText() {
     return myThrowable != null ? StringUtil.getThrowableText(myThrowable) : "";
   }
 

@@ -1,0 +1,11 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava.k1">
+
+  <dependencies>
+    <module name="kotlin.gradle.gradle-java"/>
+    <plugin id="kotlin.plugin.k1"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor"/>
+  </extensions>
+</idea-plugin>

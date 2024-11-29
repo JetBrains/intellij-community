@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtWhenExpression
 
 abstract class AbstractKotlinInlinePropertyHandler(protected val withPrompt: Boolean = true) : KotlinInlineActionHandler() {
     override val helpId: String get() = HelpID.INLINE_VARIABLE
@@ -78,10 +79,37 @@ abstract class AbstractKotlinInlinePropertyHandler(protected val withPrompt: Boo
         }
     }
 
-    protected abstract fun createInlinePropertyDialog(
-      declaration: KtProperty,
-      reference: PsiReference?,
-      assignmentToDelete: KtBinaryExpression?,
-      editor: Editor?
-    ): AbstractKotlinInlinePropertyDialog
+    private fun createInlinePropertyDialog(
+        declaration: KtProperty,
+        reference: PsiReference?,
+        assignmentToDelete: KtBinaryExpression?,
+        editor: Editor?
+    ): AbstractKotlinInlinePropertyDialog = object : AbstractKotlinInlinePropertyDialog(
+        property = declaration,
+        reference = reference,
+        withPreview = withPrompt,
+        editor = editor
+    ) {
+        override fun createProcessor(): AbstractKotlinInlinePropertyProcessor = createProcessor(
+            declaration = declaration,
+            reference = reference,
+            inlineThisOnly = isInlineThisOnly,
+            deleteAfter = !isInlineThisOnly && !isKeepTheDeclaration,
+            isWhenSubjectVariable = (declaration.parent as? KtWhenExpression)?.subjectVariable == declaration,
+            editor = editor,
+            statementToDelete = assignmentToDelete,
+            project = project,
+        )
+    }
+
+    abstract fun createProcessor(
+        declaration: KtProperty,
+        reference: PsiReference?,
+        inlineThisOnly: Boolean,
+        deleteAfter: Boolean,
+        isWhenSubjectVariable: Boolean,
+        editor: Editor?,
+        statementToDelete: KtBinaryExpression?,
+        project: Project
+    ): AbstractKotlinInlinePropertyProcessor
 }

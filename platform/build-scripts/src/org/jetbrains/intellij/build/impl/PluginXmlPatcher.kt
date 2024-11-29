@@ -141,11 +141,11 @@ fun doPatchPluginXml(
   if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB") {
     Span.current().addEvent("patch $pluginModuleName for WebStorm")
     val pluginName = rootElement.getChild("name")
-    check(pluginName.text == "Database Tools and SQL") { "Plugin name for \'$pluginModuleName\' should be \'Database Tools and SQL\'" }
+    check(pluginName.text == "Database Tools and SQL") { "Plugin name for '$pluginModuleName' should be 'Database Tools and SQL'" }
     pluginName.text = "Database Tools and SQL for WebStorm"
     val description = rootElement.getChild("description")
     val replaced1 = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm")
-    check(replaced1) { "Could not find \'IntelliJ-based IDEs\' in plugin description of $pluginModuleName" }
+    check(replaced1) { "Could not find 'IntelliJ-based IDEs' in plugin description of $pluginModuleName" }
 
     val oldText = "The plugin provides all the same features as <a href=\"https://www.jetbrains.com/datagrip/\">DataGrip</a>, the standalone JetBrains IDE for databases."
     val replaced2 = replaceInElementText(
@@ -157,7 +157,7 @@ fun doPatchPluginXml(
         The plugin is also included in <a href="https://www.jetbrains.com/all/">All Products Pack</a> and <a href="https://www.jetbrains.com/community/education/">Student Pack</a>.
       """.trimIndent()
     )
-    check(replaced2) { "Could not find \'$oldText\' in plugin description of $pluginModuleName" }
+    check(replaced2) { "Could not find '$oldText' in plugin description of $pluginModuleName" }
   }
   return rootElement
 }
@@ -176,7 +176,7 @@ fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<S
     val anchorIndex = rootElement.indexOf(anchor)
     // should not happen
     check(anchorIndex >= 0) {
-      "anchor < 0 when getting child index of \'${anchor.name}\' in root element of ${JDOMUtil.write(rootElement)}"
+      "anchor < 0 when getting child index of '${anchor.name}' in root element of ${JDOMUtil.write(rootElement)}"
     }
     rootElement.addContent(anchorIndex + 1, newElement)
   }

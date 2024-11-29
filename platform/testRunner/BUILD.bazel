@@ -1,21 +1,59 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.testRunner` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
-  name = "intellij.platform.testRunner",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  deps = [
-    "@community//platform/platform-api:intellij.platform.ide",
-    "@community//platform/lang-impl:intellij.platform.lang.impl",
-    "@community//platform/execution-impl:intellij.platform.execution.impl",
-    "@community//platform/platform-impl:intellij.platform.ide.impl",
-    "@community//platform/xdebugger-api:intellij.platform.debugger",
-    "@community//platform/diff-impl:intellij.platform.diff.impl",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@community//platform/util/jdom:intellij.platform.util.jdom"
-  ]
+jvm_resources(
+  name = "testRunner_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
+
+jvm_library(
+  name = "testRunner",
+  module_name = "intellij.platform.testRunner",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/diff-impl",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+  ],
+  runtime_deps = [":testRunner_resources"]
+)
+
+kt_jvm_test(
+  name = "testRunner_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":testRunner"],
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/diff-impl",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ],
+  runtime_deps = [":testRunner_resources"]
+)
+### auto-generated section `build intellij.platform.testRunner` end

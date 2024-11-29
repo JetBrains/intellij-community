@@ -7,10 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.EventListener;
 import java.util.List;
@@ -30,6 +27,7 @@ public abstract class ProjectJdkTable {
 
   public abstract Sdk @NotNull [] getAllJdks();
 
+  @Unmodifiable
   public abstract @NotNull List<Sdk> getSdksOfType(@NotNull SdkTypeId type);
 
   public @Nullable Sdk findMostRecentSdkOfType(@NotNull SdkTypeId type) {

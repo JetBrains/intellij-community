@@ -60,6 +60,7 @@ public enum StatusType {
     return myCode;
   }
 
+  @Override
   public String toString() {
     return myName;
   }

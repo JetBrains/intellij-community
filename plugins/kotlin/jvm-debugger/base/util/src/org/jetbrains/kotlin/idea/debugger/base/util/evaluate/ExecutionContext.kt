@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.jdi.ClassesByNameProvider
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.project.Project
@@ -46,10 +45,6 @@ class DefaultExecutionContext(evaluationContext: EvaluationContextImpl) : BaseEx
         }
         return ref
     }
-
-    val classesCache: ClassesByNameProvider by lazy {
-        ClassesByNameProvider.createCache(vm.allClasses())
-    }
 }
 
 sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) {
@@ -74,12 +69,18 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     @Throws(EvaluateException::class)
-    fun invokeMethod(obj: ObjectReference, method: Method, args: List<Value?>, invocationOptions: Int = 0): Value? {
-        return debugProcess.invokeInstanceMethod(evaluationContext, obj, method, args, invocationOptions)
+    fun invokeMethod(
+        obj: ObjectReference,
+        method: Method,
+        args: List<Value?>,
+        invocationOptions: Int = 0,
+        internalEvaluate: Boolean = false
+    ): Value? {
+        return debugProcess.invokeInstanceMethod(evaluationContext, obj, method, args, invocationOptions, internalEvaluate)
     }
 
-    fun invokeMethod(type: ClassType, method: Method, args: List<Value?>): Value? {
-        return debugProcess.invokeMethod(evaluationContext, type, method, args)
+    fun invokeMethod(type: ClassType, method: Method, args: List<Value?>, internalEvaluate: Boolean = false): Value? {
+        return debugProcess.invokeMethod(evaluationContext, type, method, args, internalEvaluate)
     }
 
     fun invokeMethod(type: InterfaceType, method: Method, args: List<Value?>): Value? {

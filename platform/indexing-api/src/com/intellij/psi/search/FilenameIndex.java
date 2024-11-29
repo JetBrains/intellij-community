@@ -217,12 +217,13 @@ public final class FilenameIndex {
     int len = ext.length() + 1;
 
     Set<String> names = new HashSet<>();
-    for (String name : getAllFilenames(project)) {
+    processAllFileNames(name ->{
       int length = name.length();
-      if (length > len && name.substring(length - len).equalsIgnoreCase(dotExt)) {
+      if (length > len && name.regionMatches(true, length - len, dotExt, 0, len)) {
         names.add(name);
       }
-    }
+      return true;
+    }, GlobalSearchScope.allScope(project), null);
     return getVirtualFilesByNames(names, searchScope, null);
   }
 

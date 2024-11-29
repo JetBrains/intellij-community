@@ -4,6 +4,8 @@ package com.intellij.java.psi;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -18,12 +20,17 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.DecompilerPreset;
+import org.jetbrains.java.decompiler.IdeaDecompilerSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -281,13 +288,75 @@ public class ClsPsiTest extends LightIdeaTestCase {
     checkNames.run();
   }
 
-  public void testModifiers() {
-    PsiClass aClass = getFile().getClasses()[0];
-    assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
-    assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
-    assertEquals("public", aClass.getMethods()[0].getModifierList().getText());
-    assertEquals("private", aClass.getMethods()[1].getModifierList().getText());
-    assertEquals("private synchronized", aClass.getMethods()[2].getModifierList().getText());
+  public void testNoMirrorNotSetWarnings() {
+    List<String> warnings = new ArrayList<>();
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
+        warnings.add(message);
+        return super.processWarn(category, message, t);
+      }
+    }, () -> {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      PsiMethod constructor = aClass.getMethods()[0];
+      ClsModifierListImpl modifierList = (ClsModifierListImpl)constructor.getModifierList();
+      ClsReferenceListImpl throwsList = (ClsReferenceListImpl)constructor.getThrowsList();
+
+      // We are actually most interested in the side effect of calls to getText() (we want to ensure no warnings are being logged)
+
+      assertNull(modifierList.getMirror());
+      assertEquals("public", modifierList.getText());
+      assertNull(modifierList.getMirror()); // assert that calling getText() does not set a mirror
+
+      assertNull(throwsList.getMirror());
+      assertEquals("", throwsList.getText());
+      assertNull(throwsList.getMirror()); // assert that calling getText() does not set a mirror
+    });
+
+    assertEmpty(warnings);
+  }
+
+  public void testModifiers_high() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
+  }
+
+  public void testModifiers_medium() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.MEDIUM);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod constructor = aClass.getMethods()[0];
+      assertEquals("public", constructor.getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
   }
 
   public void testEnum() {
@@ -485,7 +554,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     WriteAction.run(() -> copyVFile.delete(this));
     assertFalse(clsFile.isValid());
     assertFalse(mirror.isValid());
-    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror))
-      .contains(PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
+    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror)).contains(
+      PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
   }
 }

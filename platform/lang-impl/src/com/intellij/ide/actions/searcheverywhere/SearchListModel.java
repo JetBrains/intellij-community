@@ -3,10 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -110,6 +107,7 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
   }
 
+  @Unmodifiable
   public @NotNull List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
     return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT
                                                       && !(info.element instanceof ResultsNotificationElement));

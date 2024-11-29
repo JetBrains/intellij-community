@@ -4,6 +4,7 @@ package com.intellij.platform.kernel.backend
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.kernel.KernelService
 import com.intellij.platform.kernel.util.*
@@ -17,6 +18,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+private val LOG = fileLogger()
+
 @Service
 private class RemoteKernelScopeHolder {
 
@@ -28,7 +31,6 @@ private class RemoteKernelScopeHolder {
       kernelCoroutineContext.transactor,
       kernelScope.childScope("RemoteKernelScope", kernelCoroutineContext),
       CommonInstructionSet.decoder(),
-      KernelRpcSerialization,
     )
   }
 }
@@ -48,13 +50,15 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
   override val kernelCoroutineScope: CompletableDeferred<CoroutineScope> = CompletableDeferred()
 
   init {
+    LOG.info("Backend started Kernel")
     coroutineScope.launch {
-      withKernel(middleware = LeaderTransactorMiddleware(KernelRpcSerialization, CommonInstructionSet.encoder())) {
+      withKernel(middleware = LeaderTransactorMiddleware(CommonInstructionSet.encoder())) {
         change {
           initWorkspaceClock()
         }
         handleEntityTypes(transactor(), this)
-        kernelCoroutineScope.complete(this)
+        // Create a supervisor child scope to avoid kernel coroutine getting canceled by exceptions coming under `withKernel`
+        kernelCoroutineScope.complete(this.childScope(name = "KernelCoroutineScope", supervisor = true))
         updateDbInTheEventDispatchThread()
       }
     }

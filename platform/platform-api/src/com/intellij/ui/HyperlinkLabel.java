@@ -231,6 +231,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     myListeners.remove(listener);
   }
 
+  @Override
   public @NotNull @LinkLabel String getText() {
     return myHighlightedText.getText();
   }

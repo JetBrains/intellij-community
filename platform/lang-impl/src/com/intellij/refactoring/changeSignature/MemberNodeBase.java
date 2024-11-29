@@ -28,6 +28,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreeNode;
 import java.util.*;
@@ -41,6 +42,7 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
 
   protected abstract MemberNodeBase<M> createNode(M caller, HashSet<M> called);
 
+  @Unmodifiable
   protected abstract List<M> computeCallers();
 
   protected abstract void customizeRendererText(ColoredTreeCellRenderer renderer);

@@ -17,7 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProject
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData

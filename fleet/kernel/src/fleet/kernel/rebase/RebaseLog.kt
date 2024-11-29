@@ -4,7 +4,6 @@ package fleet.kernel.rebase
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.rpc.core.AssumptionsViolatedException
-import fleet.util.serialization.ISerialization
 import fleet.util.IBifurcanVector
 import fleet.util.BifurcanVector
 import fleet.util.UID
@@ -121,12 +120,10 @@ internal fun RebaseLog.append(entry: RebaseLogEntry): RebaseLog {
 }
 
 internal fun RebaseLog.consumeTx(tx: Transaction,
-                                 json: ISerialization,
                                  instructionDecoder: InstructionDecoder): Pair<RebaseLog, EffectsAndNovelty> {
   try {
     val (committedDB, effectsAndNovelty) = playTransactionFromRemote(db = speculation.base,
                                                                      transaction = tx,
-                                                                     json = json,
                                                                      instructionDecoder = instructionDecoder)
     return reset(committedDB) to effectsAndNovelty
   }
@@ -183,7 +180,6 @@ internal fun RebaseLog.ack(txId: UID, failed: Boolean): Triple<RebaseLog, Effect
 internal fun playTransactionFromRemote(
   db: DB,
   transaction: Transaction,
-  json: ISerialization,
   instructionDecoder: InstructionDecoder
 ): Pair<DB, EffectsAndNovelty> = run {
   val effects = ArrayList<InstructionEffect>()
@@ -191,8 +187,7 @@ internal fun playTransactionFromRemote(
     context.alter(context.impl
                     .expandingWithReadTracking()
                     .delayingEffects(effects::add)) {
-      val deserContext = InstructionDecodingContext(serialization = json,
-                                                    uidAttribute = uidAttribute(),
+      val deserContext = InstructionDecodingContext(uidAttribute = uidAttribute(),
                                                     decoder = instructionDecoder)
       for (i in transaction.instructions) {
         val instructions = with(instructionDecoder) {
@@ -221,12 +216,11 @@ internal fun RebaseLog.speculativeIdMappings(): List<Map<EID, UID>> {
   return speculation.entries.map { entry -> entry.idMapping }
 }
 
-internal fun RebaseLog.continueRebase(serialization: ISerialization, encoder: InstructionEncoder): Pair<RebaseLog, Transaction?> {
+internal fun RebaseLog.continueRebase(encoder: InstructionEncoder): Pair<RebaseLog, Transaction?> {
   val nearestFuture = rebasing.entries.first()
 
   val (rebasingPrime, rebasedEntry) = rebasing.advance { base, rebaseLogEntry ->
     rebaseLogEntry.replay(base) ?: rebaseLogEntry.reconsider(base = base,
-                                                             serialization = serialization,
                                                              encoder = encoder,
                                                              speculativeIdMappings = speculativeIdMappings())
   }
@@ -344,7 +338,6 @@ internal fun RebaseLogEntry.replay(base: DB): RebaseLogEntry? = let { logEntry -
 }
 
 internal fun RebaseLogEntry.reconsider(base: DB,
-                                       serialization: ISerialization,
                                        encoder: InstructionEncoder,
                                        speculativeIdMappings: List<Map<EID, UID>>): RebaseLogEntry {
   return try {
@@ -373,7 +366,6 @@ internal fun RebaseLogEntry.reconsider(base: DB,
                   mutableNovelty = ::updateIdMapping,
                   f = block.reconsider,
                   instructionEncoder = encoder,
-                  json = serialization,
                   idMappings = idMappings
                 ).second
             )

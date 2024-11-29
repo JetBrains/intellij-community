@@ -8,8 +8,11 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
+import java.awt.AWTEvent
 import java.awt.BorderLayout
+import java.awt.Component
 import java.awt.Graphics
+import java.awt.event.AWTEventListener
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -26,11 +29,43 @@ internal class ButtonPanel(@JvmField val button: JButton) : JPanel(BorderLayout(
 }
 
 internal fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon? = null, onClick: (JButton) -> Unit): JButton {
-  val btn = object : JButton() {
+  class MyButton : JButton() {
+    var isPressed = false
+    val eventListener: AWTEventListener = createAWTEventListener()
+
+    private fun createAWTEventListener(): AWTEventListener {
+      return object : AWTEventListener {
+        override fun eventDispatched(event: AWTEvent?) {
+          if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED) {
+            val source = event.source
+            if (source is Component) {
+              val bounds = this@MyButton.bounds
+              val location = SwingUtilities.convertPoint(source, event.point, this@MyButton.parent)
+              if (!bounds.contains(location)) {
+                isPressed = false
+              }
+            }
+          }
+        }
+      }
+    }
+
+    override fun addNotify() {
+      super.addNotify()
+      toolkit.addAWTEventListener(eventListener, AWTEvent.MOUSE_EVENT_MASK)
+    }
+
+    override fun removeNotify() {
+      super.removeNotify()
+      toolkit.removeAWTEventListener(eventListener)
+    }
+
     override fun getComponentGraphics(g: Graphics?): Graphics {
       return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
     }
+
   }
+  val btn = MyButton()
   btn.putClientProperty("ActionToolbar.smallVariant", true)
   btn.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, isDefault)
   btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_BORDER_GRAPHICS, true)
@@ -49,7 +84,10 @@ internal fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon? = n
   btn.addMouseListener(listener)
   btn.action = object : AbstractAction(text, null) {
     override fun actionPerformed(e: ActionEvent) {
-      onClick.invoke(btn)
+      btn.isPressed = !btn.isPressed
+      if (btn.isPressed) {
+        onClick.invoke(btn)
+      }
     }
   }
   btn.icon = icon

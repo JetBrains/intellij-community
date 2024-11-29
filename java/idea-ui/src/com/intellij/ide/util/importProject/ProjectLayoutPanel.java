@@ -26,6 +26,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -160,8 +161,7 @@ abstract class ProjectLayoutPanel<T extends Dependency> extends JPanel {
   public void rebuild() {
     myEntriesChooser.clear();
     List<T> entries = getEntries();
-    entries.sort(COMPARATOR);
-    for (final T entry : entries) {
+    for (final T entry : ContainerUtil.sorted(entries, COMPARATOR)) {
       myEntriesChooser.addElement(entry, true, new EntryProperties(entry));
     }
     if (myEntriesChooser.getElementCount() > 0) {
@@ -238,8 +238,10 @@ abstract class ProjectLayoutPanel<T extends Dependency> extends JPanel {
     return element.getName() + " (" + parentFile.getPath() + ")";
   }
 
+  @Unmodifiable
   protected abstract List<T> getEntries();
 
+  @Unmodifiable
   protected abstract Collection<? extends Dependency> getDependencies(T entry);
 
   @Nullable

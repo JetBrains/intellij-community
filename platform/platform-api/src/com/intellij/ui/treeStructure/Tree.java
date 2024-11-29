@@ -32,8 +32,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Timer;
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.event.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.text.Position;
@@ -41,8 +41,9 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Collections.emptyList;
@@ -82,9 +83,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private final Timer autoScrollUnblockTimer = TimerUtil.createNamedTimer("TreeAutoscrollUnblock", 500, e -> unblockAutoScrollFromSource());
 
-  private final @Nullable Tree.ExpandImpl expandImpl;
+  private final @NotNull Tree.ExpandImpl expandImpl;
   private final @NotNull AtomicInteger suspendedExpandAccessibilityAnnouncements = new AtomicInteger();
   private final @NotNull AtomicInteger bulkOperationsInProgress = new AtomicInteger();
+  private final @NotNull AtomicBoolean applyingViewModelChanges = new AtomicBoolean();
   private transient boolean settingUI;
   private transient TreeExpansionListener uiTreeExpansionListener;
 
@@ -92,9 +94,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private final @NotNull MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
 
+  private boolean initialized = false;
+
   @ApiStatus.Internal
   public static boolean isBulkExpandCollapseSupported() {
-    return Registry.is("ide.tree.bulk.expand.api", true);
+    return true;
   }
 
   @ApiStatus.Internal
@@ -112,12 +116,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public Tree(TreeModel treemodel) {
     super(treemodel);
-    if (isBulkExpandCollapseSupported()) {
-      expandImpl = new ExpandImpl();
-    }
-    else {
-      expandImpl = null;
-    }
+    expandImpl = new ExpandImpl();
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
@@ -126,6 +125,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     };
 
     myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+
+    initialized = true; // A flag to avoid NPE when accessing fields from methods called from the super() constructor.
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
@@ -512,12 +513,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
-    if (expandImpl == null) {
-      paths.forEach(super::expandPath);
-    }
-    else {
-      expandImpl.expandPaths(paths);
-    }
+    expandImpl.expandPaths(paths);
   }
 
   @Override
@@ -539,12 +535,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public void collapsePaths(@NotNull Iterable<@NotNull TreePath> paths) {
-    if (expandImpl == null) {
-      paths.forEach(super::collapsePath);
-    }
-    else {
-      expandImpl.collapsePaths(paths);
-    }
+    expandImpl.collapsePaths(paths);
   }
 
   private boolean isAlwaysExpanded(TreePath path) {
@@ -625,13 +616,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (oldValue instanceof CachedTreePresentationSupport cps) {
         cps.setCachedPresentation(null);
       }
-      if (expandImpl != null && model != null) {
+      // This whole thing can be called from the super() constructor.
+      // In this case we migrate this "root expanded" state later, in the ExpandImpl constructor.
+      if (initialized && model != null) {
         Object treeRoot = model.getRoot();
         if (treeRoot != null && !model.isLeaf(treeRoot)) {
+          super.clearToggledPaths(); // to clear JTree.expandedState populated by JTree.setModel(), to avoid leaks
           expandImpl.markPathExpanded(new CachingTreePath(treeRoot));
         }
       }
-      if (newValue instanceof CachedTreePresentationSupport cps && expandImpl != null) {
+      // And this thing shouldn't do anything if called from the super() constructor,
+      // because at that point the cached presentation can't possibly be set yet.
+      if (initialized && newValue instanceof CachedTreePresentationSupport cps) {
         cps.setCachedPresentation(expandImpl.getCachedPresentation());
       }
     }
@@ -794,26 +790,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public @NotNull Set<TreePath> getExpandedPaths() {
-    if (expandImpl != null) {
-      return expandImpl.getExpandedPaths();
-    }
-    else {
-      // This is more or less dead code by design, just in case somebody decides to disable
-      // the bulk operations through the registry and call this method explicitly.
-      // The bulk operations themselves don't call this if they're disabled (obviously),
-      // and if they're enabled, the branch above will be executed instead.
-      var result = new HashSet<TreePath>();
-      var rootPath = getRootPath();
-      if (!isRootVisible() || isExpanded(rootPath)) {
-        result.add(rootPath);
-      }
-      var children = getExpandedDescendants(rootPath);
-      while (children.hasMoreElements()) {
-        var child = children.nextElement();
-        result.add(child);
-      }
-      return result;
-    }
+    return expandImpl.getExpandedPaths();
   }
 
   private @Nullable TreePath getRootPath() {
@@ -830,114 +807,63 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
-    if (expandImpl != null) {
-      return expandImpl.getExpandedDescendants(parent);
-    }
-    else {
+    if (!initialized) { // When called from the super() constructor, the root may already be expanded.
       return super.getExpandedDescendants(parent);
     }
+    return expandImpl.getExpandedDescendants(parent);
   }
 
   @Override
   public boolean hasBeenExpanded(TreePath path) {
-    if (expandImpl != null) {
-      return expandImpl.hasBeenExpanded(path);
-    }
-    else {
-      return super.hasBeenExpanded(path);
-    }
+    return expandImpl.hasBeenExpanded(path);
   }
 
   @Override
   public boolean isExpanded(TreePath path) {
-    if (expandImpl != null) {
-      return expandImpl.isExpanded(path);
-    }
-    else {
+    if (!initialized) { // Called from the super() constructor.
       return super.isExpanded(path);
     }
+    return expandImpl.isExpanded(path);
   }
 
   @Override
   public boolean isExpanded(int row) {
-    if (expandImpl != null) {
-      return expandImpl.isExpanded(row);
-    }
-    else {
-      return super.isExpanded(row);
-    }
+    return expandImpl.isExpanded(row);
   }
 
   @Override
   protected void setExpandedState(TreePath path, boolean state) {
-    if (expandImpl != null) {
-      expandImpl.setExpandedState(path, state);
-    }
-    else {
-      super.setExpandedState(path, state);
-    }
+    expandImpl.setExpandedState(path, state);
   }
 
   @Override
   protected Enumeration<TreePath> getDescendantToggledPaths(TreePath parent) {
-    if (expandImpl != null) {
-      return expandImpl.getDescendantToggledPaths(parent);
-    }
-    else {
-      return super.getDescendantToggledPaths(parent);
-    }
+    return expandImpl.getDescendantToggledPaths(parent);
   }
 
   @Override
   protected void removeDescendantToggledPaths(Enumeration<TreePath> toRemove)
   {
-    if (expandImpl != null) {
-      expandImpl.removeDescendantToggledPaths(toRemove);
-    }
-    else {
-      super.removeDescendantToggledPaths(toRemove);
-    }
+    expandImpl.removeDescendantToggledPaths(toRemove);
   }
 
   @Override
   protected void clearToggledPaths() {
-    if (expandImpl != null) {
+    if (initialized) { // If called from the super() constructor, do nothing here because there's no state to clear yet.
       expandImpl.clearToggledPaths();
     }
-    else {
-      super.clearToggledPaths();
-    }
+    // Technically, we only need this if expandImpl == null,
+    // but in theory it might happen that some code in JTree that
+    // we forgot to override might add something to expandImpl,
+    // and that may cause leaks like IJPL-165735, so better make sure it's cleared anyway.
+    super.clearToggledPaths();
   }
 
   @Override
   protected TreeModelListener createTreeModelListener() {
     // Can't just create a listener here because this function
     // is called from a base class constructor, so our class isn't initialized yet.
-    return new TreeModelListener() {
-
-      private @NotNull LazyInitializer.LazyValue<@NotNull TreeModelListener> delegate = LazyInitializer.create(() -> {
-        if (expandImpl != null) {
-          return expandImpl.createTreeModelListener();
-        }
-        else {
-          return Tree.super.createTreeModelListener();
-        }
-      });
-
-      private @NotNull TreeModelListener delegate() { return delegate.get();  }
-
-      @Override
-      public void treeNodesChanged(TreeModelEvent e) { delegate().treeNodesChanged(e); }
-
-      @Override
-      public void treeNodesInserted(TreeModelEvent e) { delegate().treeNodesInserted(e); }
-
-      @Override
-      public void treeNodesRemoved(TreeModelEvent e) { delegate().treeNodesRemoved(e); }
-
-      @Override
-      public void treeStructureChanged(TreeModelEvent e) { delegate().treeStructureChanged(e); }
-    };
+    return new MyTreeModelListener();
   }
 
   private void blockAutoScrollFromSource() {
@@ -950,7 +876,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     ClientProperty.remove(this, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 
-  private static class MySelectionModel extends DefaultTreeSelectionModel {
+  private class MySelectionModel extends DefaultTreeSelectionModel {
 
     private TreePath[] myHeldSelection;
 
@@ -959,6 +885,15 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       if (myHeldSelection == null) {
         ActivityTracker.getInstance().inc();
         super.fireValueChanged(e);
+        if (!applyingViewModelChanges.get() && treeModel instanceof TreeSwingModel swingModel) {
+          var newSelection = new ArrayList<TreeNodeViewModel>();
+          for (TreePath path : getSelectionPaths()) {
+            if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+              newSelection.add(viewModel);
+            }
+          }
+          swingModel.getViewModel().setSelection(newSelection);
+        }
       }
     }
 
@@ -1333,16 +1268,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
-  private @Nullable CachedTreePresentation getCachedPresentation() {
-    return expandImpl != null ? expandImpl.getCachedPresentation() : null;
-  }
-
   @ApiStatus.Internal
   @Override
   public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
-    if (expandImpl != null) {
-      expandImpl.setCachedPresentation(presentation);
-    }
+    expandImpl.setCachedPresentation(presentation);
   }
 
   private class CachedPresentationImpl {
@@ -1373,6 +1302,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     private @Nullable CachedPresentationImpl cachedPresentation;
 
+    private ExpandImpl() {
+      // Mimic what setModel() does when called from the super() constructor:
+      // if there's a model, it's not empty and the root is not a leaf, expand it.
+      var model = getModel();
+      var rootPath = getRootPath();
+      if (model != null && rootPath != null && !model.isLeaf(rootPath.getLastPathComponent())) {
+        expandedState.put(rootPath, true);
+      }
+      // Clean up whatever mess the super() constructor left in the superclass expandedState which we don't use.
+      Tree.super.clearToggledPaths();
+    }
+
     @Nullable CachedTreePresentation getCachedPresentation() {
       return cachedPresentation != null ? cachedPresentation.cachedTree : null;
     }
@@ -1402,16 +1343,42 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     void markPathExpanded(@NotNull TreePath path) {
-      expandedState.put(path, Boolean.TRUE);
-      if (cachedPresentation != null) {
-        cachedPresentation.setExpanded(path, true);
-      }
+      markPathExpandedState(path, true);
     }
 
     void markPathCollapsed(TreePath path) {
-      expandedState.put(path, Boolean.FALSE);
+      markPathExpandedState(path, false);
+    }
+
+    private void markPathExpandedState(@NotNull TreePath path, boolean expanded) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable((expanded ? "Expanding" : "Collapsing") + " " + path));
+      }
+      else if (LOG.isDebugEnabled()) {
+        LOG.debug((expanded ? "Expanding" : "Collapsing") + " " + path);
+      }
+      var model = getModel();
+      if (!expanded && model != null && model.isLeaf(path.getLastPathComponent())) {
+        expandedState.remove(path); // save memory on leafs
+      }
+      else {
+        expandedState.put(path, expanded);
+      }
       if (cachedPresentation != null) {
-        cachedPresentation.setExpanded(path, false);
+        cachedPresentation.setExpanded(path, expanded);
+      }
+      // If the change came from the view model, we shouldn't translate it back to the view model,
+      // because the change might not be the latest.
+      // E.g., we received expanded=true, but there's another expanded=false update pending.
+      // If we translate expanded=true back to the model, it'll overwrite that expanded=false (which is a newer state!).
+      if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+        if (applyingViewModelChanges.get()) {
+          LOG.debug("Not forwarding the new state to the view model because it came from the model itself");
+        }
+        else {
+          LOG.debug("Forwarding the new state to the view model");
+          viewModel.setExpanded(expanded);
+        }
       }
     }
 
@@ -1702,6 +1669,27 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
 
+    /**
+     * Applies the expanded state from the view model
+     * <p>
+     *   Unlike the regular {@link #setExpandedState(TreePath, boolean)}, does not expand parent paths
+     *   if the node is invisible.
+     * </p>
+     * @param path the path to the node (must be leading to a {@link TreeNodeViewModel})
+     * @param state the new expanded state
+     */
+    void setExpandedStateFromViewModel(@NotNull TreePath path, boolean state) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Setting expanded state=" + state + " from the view model " + path);
+      }
+      if (isVisible(path)) {
+        setExpandedState(path, state);
+      }
+      else {
+        markPathExpandedState(path, state);
+      }
+    }
+
     private boolean expandParentPaths(@NotNull TreePath path) {
       Deque<TreePath> stack = null;
       TreePath parentPath = path.getParentPath();
@@ -1808,9 +1796,28 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       return new TreeModelListenerImpl();
     }
 
-    private class TreeModelListenerImpl implements TreeModelListener {
+    private class TreeModelListenerImpl implements TreeSwingModelListener {
       @Override
-      public void treeNodesChanged(TreeModelEvent e) { }
+      public void treeNodesChanged(TreeModelEvent e) {
+        var path = e.getTreePath();
+        if (path.getLastPathComponent() instanceof TreeNodeViewModel viewModel) {
+          applyViewModelChange(() -> {
+            expandImpl.setExpandedStateFromViewModel(path, viewModel.stateSnapshot().isExpanded());
+          });
+        }
+      }
+
+      private void applyViewModelChange(@NotNull Runnable runnable) {
+        if (!applyingViewModelChanges.compareAndSet(false, true)) {
+          throw new IllegalStateException("Already applying a view model change, changes should not be recursive, it's a bug");
+        }
+        try {
+          runnable.run();
+        }
+        finally {
+          applyingViewModelChanges.set(false);
+        }
+      }
 
       @Override
       public void treeNodesInserted(TreeModelEvent e) {
@@ -1818,9 +1825,41 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         var path = getPath(e);
         if (model == null || path == null) return;
         var parent = path.getLastPathComponent();
-        if (cachedPresentation != null) {
-          for (int i : e.getChildIndices()) {
-            cachedPresentation.updateExpandedNodes(path.pathByAddingChild(model.getChild(parent, i)));
+        var childCount = model.getChildCount(parent);
+        for (int i : e.getChildIndices()) {
+          if (i < 0 || i >= childCount) continue; // Sanity check. This actually happens with some models.
+          var newChild = model.getChild(parent, i);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Inserted child " + i + " " + newChild + " of parent " + parent);
+          }
+          var childPath = path.pathByAddingChild(newChild);
+          if (newChild instanceof TreeNodeViewModel) {
+            applyViewModelChange(() -> {
+              applyNewNodeExpandedState(model, childPath);
+            });
+          }
+          // This has to be done AFTER applying the model's state,
+          // as we should preserve the cached presentation's state to avoid
+          // expand/collapse flickering.
+          // So what happens is that we first apply the model's state (usually collapsed) to the tree
+          // and then reset it right back in case it was expanded in the cached state.
+          if (cachedPresentation != null) {
+            cachedPresentation.updateExpandedNodes(childPath);
+          }
+        }
+      }
+
+      private void applyNewNodeExpandedState(@NotNull TreeModel model, @NotNull TreePath path) {
+        var node = (TreeNodeViewModel)path.getLastPathComponent();
+        var isExpanded = node.stateSnapshot().isExpanded();
+        expandImpl.setExpandedStateFromViewModel(path, isExpanded);
+        if (isExpanded) {
+          var childCount = model.getChildCount(node);
+          for (int i = 0; i < childCount; i++) {
+            var child = model.getChild(node, i);
+            if (child instanceof TreeNodeViewModel) {
+              applyNewNodeExpandedState(model, path.pathByAddingChild(child));
+            }
           }
         }
       }
@@ -1901,6 +1940,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           }
         }
       }
+
+      @Override
+      public void selectionChanged(@NotNull TreeSwingModelSelectionEvent event) {
+        applyViewModelChange(() -> {
+          Tree.this.setSelectionPaths(event.getNewSelection());
+        });
+      }
+
+      @Override
+      public void scrollRequested(@NotNull TreeSwingModelScrollEvent event) {
+        applyViewModelChange(() -> {
+          TreeUtil.scrollToVisible(Tree.this, event.getScrollTo(), Registry.is("ide.tree.autoscrollToVCenter", false));
+        });
+      }
     }
   }
 
@@ -1949,4 +2002,63 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
+  private class MyTreeModelListener implements TreeSwingModelListener {
+    private final @NotNull LazyInitializer.LazyValue<@NotNull TreeModelListener> delegate = LazyInitializer.create(() -> {
+      return expandImpl.createTreeModelListener();
+    });
+
+    private @Nullable TreeModelListener delegate() {
+      // There's little we can do if the model starts spamming events in the JTree constructor.
+      // A well-behaved model should avoid that, but sometimes implementations like AsyncTreeModel
+      // start to eagerly evaluate something they can evaluate right away.
+      // Our best bet is to simply initialize the right state later in the ExpandImpl constructor.
+      return initialized ? delegate.get() : null;
+    }
+
+    @Override
+    public void treeNodesChanged(TreeModelEvent e) {
+      var delegate = delegate();
+      if (delegate != null) {
+        delegate.treeNodesChanged(e);
+      }
+    }
+
+    @Override
+    public void treeNodesInserted(TreeModelEvent e) {
+      var delegate = delegate();
+      if (delegate != null) {
+        delegate.treeNodesInserted(e);
+      }
+    }
+
+    @Override
+    public void treeNodesRemoved(TreeModelEvent e) {
+      var delegate = delegate();
+      if (delegate != null) {
+        delegate.treeNodesRemoved(e);
+      }
+    }
+
+    @Override
+    public void treeStructureChanged(TreeModelEvent e) {
+      var delegate = delegate();
+      if (delegate != null) {
+        delegate.treeStructureChanged(e);
+      }
+    }
+
+    @Override
+    public void selectionChanged(@NotNull TreeSwingModelSelectionEvent event) {
+      if (delegate() instanceof TreeSwingModelListener treeSwingModelListener) {
+        treeSwingModelListener.selectionChanged(event);
+      }
+    }
+
+    @Override
+    public void scrollRequested(@NotNull TreeSwingModelScrollEvent event) {
+      if (delegate() instanceof TreeSwingModelListener treeSwingModelListener) {
+        treeSwingModelListener.scrollRequested(event);
+      }
+    }
+  }
 }

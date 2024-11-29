@@ -32,7 +32,6 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
@@ -104,9 +103,10 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="rhino" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
   </component>
 </module>

@@ -51,6 +51,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.STRUCTURE);
   }
 
+  @Override
   public String toString() {
     return VcsBundle.message("filter.structure.name");
   }

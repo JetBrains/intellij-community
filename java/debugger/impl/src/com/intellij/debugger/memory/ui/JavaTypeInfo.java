@@ -6,6 +6,7 @@ import com.intellij.xdebugger.memory.ui.ReferenceInfo;
 import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import java.util.List;
 public class JavaTypeInfo implements TypeInfo {
   private final ReferenceType referenceType;
 
+  @Unmodifiable
   public static List<TypeInfo> wrap(List<? extends ReferenceType> types) {
     return ContainerUtil.map(types, JavaTypeInfo::new);
   }
@@ -29,6 +31,7 @@ public class JavaTypeInfo implements TypeInfo {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<ReferenceInfo> getInstances(int limit) {
     return ContainerUtil.map(getReferenceType().instances(limit), JavaReferenceInfo::new);
   }

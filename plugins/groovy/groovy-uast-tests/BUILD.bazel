@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.groovy.uast.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "uast-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "uast-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/openapi:java",
+    "//platform/lang-api:lang",
+    "//plugins/groovy/groovy-psi:psi",
+    "//uast/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//java/testFramework",
+  ]
+)
+### auto-generated section `build intellij.groovy.uast.tests` end

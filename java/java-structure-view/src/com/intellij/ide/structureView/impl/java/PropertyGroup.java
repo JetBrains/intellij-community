@@ -124,11 +124,13 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
     return myPropertyName + ": " + myTypeText;
   }
 
+  @Override
   public String toString() {
     return myPropertyName;
   }
 
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PropertyGroup)) return false;
@@ -136,6 +138,7 @@ public final class PropertyGroup implements Group, ColoredItemPresentation, Acce
     return myPropertyName.equals(((PropertyGroup)o).myPropertyName) && myTypeText.equals(((PropertyGroup)o).myTypeText);
   }
 
+  @Override
   public int hashCode() {
     return myPropertyName.hashCode() * 31 + myTypeText.hashCode();
   }

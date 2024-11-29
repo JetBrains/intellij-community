@@ -90,7 +90,7 @@ private class GroovyFieldRenderer(
   fun doRender() {
     var field = renderField()
     field = insertField(field)
-    tryStartTemplate(field)
+    startTemplate(field)
   }
 
   fun renderField(): GrField {
@@ -132,11 +132,11 @@ private class GroovyFieldRenderer(
 
   }
 
-  private fun tryStartTemplate(field: GrField) {
+  private fun startTemplate(field: GrField) {
     val targetFile = targetClass.containingFile ?: return
     val newEditor = positionCursor(field.project, targetFile, field) ?: return
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val template = helper.setupTemplateImpl(field, typeConstraints, targetClass, newEditor, null, constantField, request.isStartTemplate, substitutor) ?: return
+    val template = helper.setupTemplateImpl(field, typeConstraints, targetClass, newEditor, null, constantField, request.isStartTemplate, substitutor)
     val listener = MyTemplateListener(project, newEditor, targetFile)
     startTemplate(newEditor, template, project, listener, null)
   }

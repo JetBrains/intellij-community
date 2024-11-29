@@ -1,13 +1,13 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.runtime.repository` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "runtime-repository",
+jvm_library(
+  name = "repository",
   module_name = "intellij.platform.runtime.repository",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j11",
-  kotlinc_opts = "//:k11",
-  deps = ["@libraries//:annotations"]
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  deps = ["@lib//:jetbrains-annotations"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.runtime.repository` end

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.psi.KtExpression
 
-internal class KotlinIntroduceVariablePostfixTemplate(
+internal abstract class KotlinIntroduceVariablePostfixTemplate(
     val kind: String,
     provider: PostfixTemplateProvider
 ) : PostfixTemplateWithExpressionSelector(

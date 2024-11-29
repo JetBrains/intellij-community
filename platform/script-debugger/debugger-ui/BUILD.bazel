@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.scriptDebugger.ui` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "scriptDebugger-ui",
+  module_name = "intellij.platform.scriptDebugger.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/xdebugger-api:debugger",
+    "//platform/platform-impl:ide-impl",
+    "//platform/script-debugger/backend:scriptDebugger-backend",
+    "//platform/xdebugger-impl:debugger-impl",
+    "@lib//:guava",
+    "//platform/execution-impl",
+    "@lib//:netty-codec-http",
+    "@lib//:fastutil-min",
+    "@lib//:netty-buffer",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/util/jdom",
+  ],
+  exports = ["//platform/execution-impl"]
+)
+### auto-generated section `build intellij.platform.scriptDebugger.ui` end

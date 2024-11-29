@@ -16,6 +16,7 @@ import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -203,6 +204,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
+  @Unmodifiable
   protected static List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
     return ContainerUtil.map(map.entrySet(), entry -> new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
       @Override

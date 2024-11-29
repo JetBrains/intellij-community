@@ -268,6 +268,7 @@
 
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateLocalFileAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateVcsVirtualFileAction$Provider"/>
+    <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.unscramble.AnnotateStackTraceAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$Provider" order="first"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI"
@@ -312,9 +313,6 @@
     <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.important.messages"/>
     <notificationGroup id="Vcs Notifications" displayType="BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.notifications"/>
     <notificationGroup id="Vcs Silent Notifications" displayType="NONE" bundle="messages.VcsBundle" key="notification.group.vcs.silent.notifications"/>
-    <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
-                    serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"
-                    overrides="true"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
@@ -347,6 +345,7 @@
 
     <diff.DiffExtension implementation="com.intellij.vcs.commit.CommitSessionCollector$MyDiffExtension"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.commit.CommitSessionCounterUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.ex.commit.CommitChunkCollector"/>
 
     <advancedSetting id="vcs.annotations.preload" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.process.ignored" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
@@ -367,6 +366,9 @@
     <registryKey key="llm.vcs.shelve.title.generation"
                  description="Enables AI generated shelve change list title"
                  defaultValue="true"/>
+
+    <editorNotificationProvider implementation="com.intellij.openapi.vcs.actions.AnnotateWarningsProvider"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -405,6 +407,8 @@
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManagerShelfManagerListener"
               topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
+    <listener class="com.intellij.openapi.vcs.actions.AnnotationsLineStatusTrackerListener"
+              topic="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener"/>
   </projectListeners>
 </idea-plugin>
 

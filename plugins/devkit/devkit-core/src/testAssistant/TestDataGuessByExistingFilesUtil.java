@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -227,7 +228,7 @@ final class TestDataGuessByExistingFilesUtil {
     }
 
     List<TestLocationDescriptor> descriptors = ContainerUtil.flatten(descriptorsByFileNames.values());
-    filterDirsFromOtherModules(descriptors);
+    descriptors = filterDirsFromOtherModules(descriptors);
     return new TestDataDescriptor(descriptors);
   }
 
@@ -243,14 +244,14 @@ final class TestDataGuessByExistingFilesUtil {
     return processor.getResults();
   }
 
-  private static void filterDirsFromOtherModules(List<TestLocationDescriptor> descriptorsByFileNames) {
+  private static @Unmodifiable @NotNull List<TestLocationDescriptor> filterDirsFromOtherModules(@Unmodifiable List<TestLocationDescriptor> descriptorsByFileNames) {
     if (descriptorsByFileNames.size() < 2) {
-      return;
+      return descriptorsByFileNames;
     }
     if (!ContainerUtil.exists(descriptorsByFileNames, descriptor -> descriptor.isFromCurrentModule)) {
-      return;
+      return descriptorsByFileNames;
     }
-    descriptorsByFileNames.removeIf(d -> !d.isFromCurrentModule);
+    return ContainerUtil.filter(descriptorsByFileNames, d -> d.isFromCurrentModule);
   }
 
   @Nullable
@@ -418,11 +419,12 @@ final class TestDataGuessByExistingFilesUtil {
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<>();
 
-    TestDataDescriptor(Collection<TestLocationDescriptor> descriptors) {
+    TestDataDescriptor(@Unmodifiable Collection<TestLocationDescriptor> descriptors) {
       myDescriptors.addAll(descriptors);
     }
 
     @NotNull
+    @Unmodifiable
     public List<TestDataFile> restoreFiles() {
       return ContainerUtil.mapNotNull(myDescriptors, d -> {
         PsiFile file = ReadAction.compute(() -> d.filePointer.getElement());

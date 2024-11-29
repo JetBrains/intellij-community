@@ -24,10 +24,12 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
  * Test dependencies: 'm.test' -> 'm2'
  */
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
-  enum class ModuleDescriptor(internal val moduleName: String,
-                              internal val sourceRootName: String? = null,
-                              internal val testRootName: String? = null,
-                              internal val resourceRootName : String? = null) {
+  enum class ModuleDescriptor(
+    @JvmField internal val moduleName: String,
+    internal val sourceRootName: String? = null,
+    internal val testRootName: String? = null,
+    internal val resourceRootName: String? = null,
+  ) {
     MAIN(TEST_MODULE_NAME, testRootName = "test_src", resourceRootName = "res"),
     M2("light_idea_test_m2", sourceRootName = "src_m2"),
     M3("light_idea_test_m3", sourceRootName = "src_m3"),
@@ -38,7 +40,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M8("light_idea_test_m8", sourceRootName = "src_m8"),
     MR_MAIN("light.idea.test.mr.main", sourceRootName = "src_mr_main"),
     MR_JAVA9("light.idea.test.mr.java9", sourceRootName = "src_mr_java9"),
-    M_TEST("light_idea_test_m_test", sourceRootName="m_src_src", testRootName = "m_test_src");
+    M_TEST("light_idea_test_m_test", sourceRootName = "m_src_src", testRootName = "m_test_src");
 
     fun sourceRoot(): VirtualFile? = if (this === MAIN) LightPlatformTestCase.getSourceRoot() else findRoot(sourceRootName)
     fun testRoot(): VirtualFile? = findRoot(testRootName)

@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -42,6 +43,7 @@ public final class FileReferenceHelperRegistrar {
     return ContainerUtil.find(getHelpers(), fileReferenceHelper -> fileReferenceHelper.isMine(project, file));
   }
 
+  @Unmodifiable
   public static <T extends PsiFileSystemItem> List<FileReferenceHelper> getHelpers(final @NotNull T psiFileSystemItem) {
     final VirtualFile file = psiFileSystemItem.getVirtualFile();
     if (file == null) return null;

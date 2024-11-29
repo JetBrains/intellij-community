@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.grazie` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "grazie_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "grazie",
+  visibility = ["//visibility:public"],
+  exports = ["//plugins/grazie/src:core"],
+  runtime_deps = [
+    ":grazie_resources",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/java",
+    "//plugins/grazie/json",
+    "//plugins/grazie/markdown",
+    "//plugins/grazie/properties",
+    "//plugins/grazie/xml",
+    "//plugins/grazie/yaml",
+  ]
+)
+### auto-generated section `build intellij.grazie` end

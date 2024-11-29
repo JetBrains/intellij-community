@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.platform.vcs.testFramework` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "vcs-testFramework",
+  module_name = "intellij.platform.vcs.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/testFramework",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.testFramework` end
+
+### auto-generated section `build intellij.platform.vcs.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "vcs-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "vcs-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/vcs-impl",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/core-api:core",
+    "@lib//:junit4",
+    "//platform/platform-api:ide",
+    "//platform/diff-impl/tests:diff-tests_test",
+    "@lib//:mockito",
+    "//platform/util/testSrc:tests_test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/diff-impl",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.tests` end

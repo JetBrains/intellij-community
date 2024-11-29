@@ -254,6 +254,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveThisExpressionAsLambdaReceiver(myFixture)
     }
 
+    fun testResolveThisExpressionForExtensionFunctionType() {
+        checkResolveThisExpressionForExtensionFunctionType(myFixture)
+    }
+
     fun testResolvePropertiesInCompanionObjectFromBinaryDependency() {
         checkResolvePropertiesInCompanionObjectFromBinaryDependency(myFixture)
     }

@@ -8,6 +8,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -36,6 +37,7 @@ public final class CredentialsTypeUtil {
     return false;
   }
 
+  @Unmodifiable
   public static @NotNull <T> List<CredentialsLanguageContribution> getContributions(@NotNull Class<T> languageContributionMarkerInterface) {
     return ContainerUtil.filter(CredentialsLanguageContribution.EP_NAME.getExtensions(),
                                 FilteringIterator.instanceOf(languageContributionMarkerInterface));

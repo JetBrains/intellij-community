@@ -38,7 +38,10 @@ public final class JavaMethodMergingContributor extends CompletionContributor im
       final ArrayList<PsiMethod> allMethods = new ArrayList<>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
-        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
+        if (!(o instanceof PsiMethod psiMethod)) {
+          return super.handleAutoCompletionPossibility(context);
+        }
+        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null) {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }
 
@@ -48,7 +51,7 @@ public final class JavaMethodMergingContributor extends CompletionContributor im
         }
 
         commonName = name;
-        allMethods.add((PsiMethod)o);
+        allMethods.add(psiMethod);
       }
 
       for (LookupElement item : items) {

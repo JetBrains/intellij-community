@@ -392,7 +392,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
     }
 
-    List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : ContainerUtil.emptyList();
+    List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : new ArrayList<>();
     nodes.sort((o1, o2) -> {
       if (o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
         if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;

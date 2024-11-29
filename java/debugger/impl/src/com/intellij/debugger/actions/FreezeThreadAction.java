@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class FreezeThreadAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -29,7 +31,7 @@ public class FreezeThreadAction extends DebuggerAction {
       final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
 
       if (!threadDescriptor.isFrozen()) {
-        DebuggerManagerThreadImpl debuggerManagerThread = debugProcess.getManagerThread();
+        DebuggerManagerThreadImpl debuggerManagerThread = Objects.requireNonNull(debuggerContext.getManagerThread());
         debuggerManagerThread.schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {

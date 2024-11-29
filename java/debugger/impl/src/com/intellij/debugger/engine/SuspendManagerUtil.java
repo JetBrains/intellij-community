@@ -87,7 +87,7 @@ public final class SuspendManagerUtil {
   public static void switchToThreadInSuspendAllContext(@NotNull SuspendContextImpl suspendAllContext, @NotNull ThreadReferenceProxyImpl threadProxy) {
     assert suspendAllContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL;
     DebugProcessImpl debugProcess = suspendAllContext.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
+    suspendAllContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendAllContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl c) {
         DebuggerSession session = debugProcess.getSession();

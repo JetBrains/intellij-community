@@ -752,4 +752,23 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/withLib3/useJavaSAMFromLib.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/parameterInfo/withLib4")
+    public static class WithLib4 extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationWithTypeUse.kt")
+        public void testAnnotationWithTypeUse() throws Exception {
+            runTest("testData/parameterInfo/withLib4/annotationWithTypeUse.kt");
+        }
+    }
 }

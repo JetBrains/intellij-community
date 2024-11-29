@@ -16,6 +16,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +77,7 @@ public final class TestDataGuessByTestDiscoveryUtil {
     }
 
     @NotNull
+    @Unmodifiable
     List<TestDataFile> getTestData() {
       return ContainerUtil.mapNotNull(myTestData, f -> new TestDataFile.LazyResolved(f));
     }

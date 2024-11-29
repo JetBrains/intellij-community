@@ -26,6 +26,7 @@ import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.normalizePackageName
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
@@ -95,7 +96,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
     else {
       val packagesByRepository = manager.repositoryManager.packagesByRepository().map { (repository, packages) ->
-        val shownPackages = packages.asSequence().limitDisplayableResult(repository)
+        val shownPackages = packages.asSequence().limitResultAndFilterOutInstalled(repository)
         PyPackagesViewData(repository, shownPackages, moreItems = packages.size - PACKAGES_LIMIT)
       }.toList()
 
@@ -106,18 +107,25 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun installPackage(specification: PythonPackageSpecification, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    val result = manager.installPackage(specification, options = options)
+
+    val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.new.project.install.failed.title", specification.name), specification.name) {
+      manager.installPackage(specification, options)
+    }
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.installed", specification.name))
   }
 
   suspend fun deletePackage(selectedPackage: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
-    val result = manager.uninstallPackage(selectedPackage.instance)
+    val result =  runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.operation.failed.title")) {
+      manager.uninstallPackage(selectedPackage.instance)
+    }
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.deleted", selectedPackage.name))
   }
 
   suspend fun updatePackage(specification: PythonPackageSpecification) {
-    val result = manager.updatePackage(specification)
+    val result = runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.notification.update.failed", specification.name), specification.name) {
+      manager.updatePackage(specification)
+    }
     if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
   }
 
@@ -138,7 +146,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
     manager = PythonPackageManager.forSdk(project, currentSdk!!)
     manager.repositoryManager.initCaches()
-    manager.reloadPackages()
+    runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.operation.failed.title")) {
+      manager.reloadPackages()
+    }
 
     withContext(Dispatchers.Main) {
       toolWindowPanel?.contentVisible = currentSdk != null
@@ -269,7 +279,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
     val shownPackages = packageNames.asSequence()
       .sortedWith(comparator)
-      .limitDisplayableResult(repository, skipItems)
+      .limitResultAndFilterOutInstalled(repository, skipItems)
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
     return PyPackagesViewData(repository, shownPackages, exactMatch, packageNames.size - shownPackages.size)
   }
@@ -285,7 +295,9 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     serviceScope.launch(Dispatchers.IO) {
       withBackgroundProgress(project, message("python.packaging.loading.packages.progress.text"), cancellable = false) {
         reportRawProgress {
-          manager.reloadPackages()
+          runPackagingOperationOrShowErrorDialog(manager.sdk, message("python.packaging.operation.failed.title")) {
+            manager.reloadPackages()
+          }
           refreshInstalledPackages()
           manager.repositoryManager.refreshCashes()
         }
@@ -326,15 +338,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
     else {
       val packagesFromRepo = manager.repositoryManager.packagesFromRepository(repository)
-      val page = packagesFromRepo.asSequence().limitDisplayableResult(repository, skipItems)
+      val page = packagesFromRepo.asSequence().limitResultAndFilterOutInstalled(repository, skipItems)
       return PyPackagesViewData(repository, page, moreItems = packagesFromRepo.size - (PACKAGES_LIMIT + skipItems))
     }
   }
 
-  private fun Sequence<String>.limitDisplayableResult(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
+  private fun Sequence<String>.limitResultAndFilterOutInstalled(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
     return drop(skipItems)
       .take(PACKAGES_LIMIT)
-      .map { pkg -> installedPackages.values.find { it.name.lowercase() == pkg.lowercase() } ?: InstallablePackage(pkg, repository) }
+      .filter { pkg -> installedPackages.values.find { it.name.lowercase() == pkg.lowercase() } == null }
+      .map { pkg -> InstallablePackage(pkg, repository) }
       .toList()
   }
 

@@ -237,10 +237,12 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return modules.length == 1 ? modules[0] : null;
   }
 
+  @Override
   public String getProjectPathOnTarget() {
     return getOptions().getProjectPathOnTarget();
   }
 
+  @Override
   public void setProjectPathOnTarget(String path) {
     getOptions().setProjectPathOnTarget(path);
   }

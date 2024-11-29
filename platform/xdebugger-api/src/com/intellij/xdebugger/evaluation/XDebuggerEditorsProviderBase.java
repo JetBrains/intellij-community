@@ -15,6 +15,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +57,7 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
   }
 
   @NotNull
+  @Unmodifiable
   public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
     if (context != null) {
       return getSupportedLanguages(context.getProject(), null);

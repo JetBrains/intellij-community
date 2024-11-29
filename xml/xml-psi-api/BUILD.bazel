@@ -1,28 +1,29 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.xml.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "psi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "xml-psi",
+jvm_library(
+  name = "psi",
   module_name = "intellij.xml.psi",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//xml/xml-frontback",
-    "@community//platform/core-api:core",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/analysis-api:analysis",
-    "@community//platform/editor-ui-api:editor",
-    "@libraries//:kotlin-stdlib",
+    "//xml/xml-frontback:frontback",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor",
+    "@lib//:kotlin-stdlib",
   ],
-  exports = ["@community//xml/xml-frontback"],
-  runtime_deps = [":resources"]
+  exports = ["//xml/xml-frontback:frontback"],
+  runtime_deps = [":psi_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml.psi` end

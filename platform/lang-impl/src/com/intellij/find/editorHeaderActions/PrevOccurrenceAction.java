@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -36,6 +37,7 @@ public final class PrevOccurrenceAction extends PrevNextOccurrenceAction {
   }
 
   @Override
+  @Unmodifiable
   protected @NotNull List<Shortcut> getSingleLineShortcuts() {
     if (mySearch) {
       return ContainerUtil.append(Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP),

@@ -7,6 +7,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
@@ -45,7 +46,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                         ) {
                             result.add(KotlinDataClassComponentUsage(element, "component${i + 1}"))
                         } else if ((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName) {
-                            result.add(KotlinParameterUsage(element as KtElement, parameterInfo))
+                            result.add(KotlinParameterUsage(element, parameterInfo))
                         }
                     }
                 }
@@ -83,7 +84,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                         //deleted or changed receiver, must be preserved as simple parameter
                         val parentExpression = expression.parent
                         if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
-                            parentExpression.expressionType?.let { originalReceiverType.semanticallyEquals(it) } == true) {
+                            parentExpression.expressionType?.isSubtypeOf(originalReceiverType) == true) {
                             result.add(
                                 KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
                             )

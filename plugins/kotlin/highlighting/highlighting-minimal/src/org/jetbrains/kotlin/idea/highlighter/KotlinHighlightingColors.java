@@ -49,6 +49,8 @@ public final class KotlinHighlightingColors {
     public static final TextAttributesKey ENUM = createTextAttributesKey("KOTLIN_ENUM", JavaHighlightingColors.ENUM_NAME_ATTRIBUTES);
     public static final TextAttributesKey ENUM_ENTRY = createTextAttributesKey("KOTLIN_ENUM_ENTRY", DefaultLanguageHighlighterColors.STATIC_FIELD);
     public static final TextAttributesKey TYPE_ALIAS = createTextAttributesKey("KOTLIN_TYPE_ALIAS", CLASS);
+    public static final TextAttributesKey DATA_CLASS = createTextAttributesKey("KOTLIN_DATA_CLASS", CLASS);
+    public static final TextAttributesKey DATA_OBJECT = createTextAttributesKey("KOTLIN_DATA_OBJECT", CLASS);
 
     // variable kinds
     public static final TextAttributesKey MUTABLE_VARIABLE = createTextAttributesKey("KOTLIN_MUTABLE_VARIABLE");

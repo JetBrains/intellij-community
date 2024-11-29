@@ -30,7 +30,7 @@ import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkView
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
+import com.jetbrains.python.sdk.pipenv.ui.PyAddPipEnvPanel
 import com.jetbrains.python.sdk.poetry.ui.createPoetryPanel
 import com.jetbrains.python.sdk.sdkSeemsValid
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration

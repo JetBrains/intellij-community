@@ -46,6 +46,7 @@ import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
@@ -90,6 +91,13 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     super(true, 0.75f);
     myProject = project;
     myModel = new MyModel(provider);
+    init(null);
+  }
+
+  InspectorTable(final @NotNull Accessible accessible, @Nullable Project project) {
+    super(true, 0.75f);
+    myProject = project;
+    myModel = new MyModel(accessible);
     init(null);
   }
 
@@ -226,6 +234,11 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     MyModel(@NotNull Component c) {
       myComponent = c;
       myProperties.addAll(ComponentPropertiesCollector.collect(c));
+    }
+
+    MyModel(@NotNull Accessible a) {
+      myComponent = null;
+      myProperties.addAll(ComponentPropertiesCollector.collect(a));
     }
 
     MyModel(@NotNull UiInspectorCustomComponentChildProvider provider) {

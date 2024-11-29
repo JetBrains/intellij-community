@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
+import java.nio.file.Path
 import java.rmi.RemoteException
 import java.rmi.server.UnicastRemoteObject
 
@@ -90,7 +91,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
     }
   }
 
-  fun indexExists(dir: File?): Boolean {
+  fun indexExists(dir: Path?): Boolean {
     try {
       return getOrCreateWrappeeBlocking().indexExists(dir, ourToken)
     }
@@ -144,13 +145,13 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
     }
   }
 
-  fun addArtifacts(mavenIndexId: MavenIndexId, artifactFiles: Collection<File>): List<AddArtifactResponse> {
+  fun addArtifacts(mavenIndexId: MavenIndexId, artifactFiles: Collection<Path>): List<AddArtifactResponse> {
     return perform<List<AddArtifactResponse>, Exception> {
       try {
-        return@perform getOrCreateWrappeeBlocking().addArtifacts(mavenIndexId, ArrayList<File>(artifactFiles), ourToken)
+        return@perform getOrCreateWrappeeBlocking().addArtifacts(mavenIndexId, ArrayList<Path>(artifactFiles), ourToken)
       }
       catch (ignore: Throwable) {
-        return@perform artifactFiles.map { file: File? -> AddArtifactResponse(file, null) }
+        return@perform artifactFiles.map { file: Path? -> AddArtifactResponse(file?.toFile(), null) }
       }
     }
   }

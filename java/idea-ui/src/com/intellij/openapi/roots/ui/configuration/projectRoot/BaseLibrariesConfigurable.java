@@ -34,6 +34,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -182,6 +183,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
   @Override
   @NotNull
+  @Unmodifiable
   protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
     final ArrayList<AnAction> actions = new ArrayList<>();
     actions.add(new CopyLibraryAction());

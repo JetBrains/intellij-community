@@ -129,12 +129,12 @@ def test_case_2(case_setup):
 @pytest.mark.parametrize(
     'skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception',
     (
-        [['NameError'], []],
-        [['NameError'], ['NameError']],
-        [[], []],  # Empty means it'll suspend/print in any exception
-        [[], ['NameError']],
-        [['ValueError'], ['Exception']],
-        [['Exception'], ['ValueError']],  # ValueError will also suspend/print since we're dealing with a NameError
+        pytest.param(['NameError'], [], marks=pytest.mark.xfail(reason="PCQA-698")),
+        (['NameError'], ['NameError']),
+        pytest.param([], [], marks=pytest.mark.xfail(reason="PCQA-699")),  # Empty means it'll suspend/print in any exception
+        ([], ['NameError']),
+        (['ValueError'], ['Exception']),
+        pytest.param(['Exception'], ['ValueError'], marks=pytest.mark.xfail(reason="PCQA-700")),  # ValueError will also suspend/print since we're dealing with a NameError
     )
  )
 def test_case_breakpoint_condition_exc(case_setup, skip_suspend_on_breakpoint_exception, skip_print_breakpoint_exception):
@@ -664,6 +664,7 @@ def test_case_15(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(reason="PCQA-702")
 def test_case_16(case_setup):
     # numpy.ndarray resolver
     try:
@@ -2190,6 +2191,7 @@ def test_fork_with_attach(case_setup_multiproc):
 
     
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-703")
 def test_remote_debugger_basic(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_remote.py') as writer:
         writer.log.append('making initial run')
@@ -2212,6 +2214,7 @@ def test_remote_debugger_basic(case_setup_remote):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(IS_PY3K, reason='PY-76342')
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY37_OR_GREATER, reason='CPython only test.')
 def test_py_37_breakpoint_remote(case_setup_remote):
     with case_setup_remote.test_file('_debugger_case_breakpoint_remote.py') as writer:
@@ -2235,6 +2238,7 @@ def test_py_37_breakpoint_remote(case_setup_remote):
 
 
 @pytest.mark.skipif(not IS_CPYTHON or not IS_PY37_OR_GREATER, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-591")
 def test_py_37_breakpoint_remote_no_import(case_setup_remote):
 
     def get_environ(writer):
@@ -2273,6 +2277,7 @@ def test_py_37_breakpoint_remote_no_import(case_setup_remote):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-704")
 def test_remote_debugger_multi_proc(case_setup_remote):
 
     class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThread):
@@ -2350,6 +2355,7 @@ def test_remote_debugger_multi_proc(case_setup_remote):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PCQA-705")
 def test_remote_unhandled_exceptions(case_setup_remote):
 
     def check_test_suceeded_msg(writer, stdout, stderr):
@@ -2559,9 +2565,9 @@ def scenario_caught_and_uncaught(writer):
 @pytest.mark.parametrize(
     'check_scenario',
     [
-        scenario_uncaught,
-        scenario_caught,
-        scenario_caught_and_uncaught,
+        pytest.param(scenario_uncaught, marks=pytest.mark.xfail(reason="PCQA-706")),
+        pytest.param(scenario_caught, marks=pytest.mark.xfail(reason="PCQA-707")),
+        pytest.param(scenario_caught_and_uncaught, marks=pytest.mark.xfail(reason="PCQA-708")),
     ]
 )
 def test_top_level_exceptions_on_attach(case_setup_remote, check_scenario):

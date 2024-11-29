@@ -163,7 +163,9 @@ public final class ModifierKeyDoubleClickHandler {
 
     public boolean dispatch(@NotNull KeyEvent event) {
       int keyCode = event.getKeyCode();
-      LOG.debug("", this, event);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(this + " " + event);
+      }
       if (keyCode == myModifierKeyCode) {
         if (hasOtherModifiers(event)) {
           resetState();

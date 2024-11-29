@@ -146,14 +146,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             runReadAction { commandProvider.getStepIntoCommand(this, ignoreFilters, smartStepFilter) }
                 ?: dp.createStepIntoCommand(this, ignoreFilters, smartStepFilter)
 
-        dp.managerThread.schedule(stepIntoCommand)
+        managerThread.schedule(stepIntoCommand)
     }
 
     private fun SuspendContextImpl.doStepOut() {
         val stepOutCommand = runReadAction { commandProvider.getStepOutCommand(this, debuggerContext) }
             ?: dp.createStepOutCommand(this)
 
-        dp.managerThread.schedule(stepOutCommand)
+        managerThread.schedule(stepOutCommand)
     }
 
     private fun SuspendContextImpl.doRunToCursor(lineIndex: Int, fileName: String) {
@@ -165,7 +165,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             commandProvider.getRunToCursorCommand(this, xSourcePosition, false) ?: dp.createRunToCursorCommand(this, xSourcePosition, false)
         }
 
-        dp.managerThread.schedule(runToCursorCommand)
+        managerThread.schedule(runToCursorCommand)
     }
 
     override fun setUp() {
@@ -179,7 +179,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             commandProvider.getStepOverCommand(this, ignoreBreakpoints, sourcePosition)
         } ?: dp.createStepOverCommand(this, ignoreBreakpoints)
 
-        dp.managerThread.schedule(stepOverCommand)
+        managerThread.schedule(stepOverCommand)
     }
 
     private fun process(instruction: SteppingInstruction) {
@@ -348,7 +348,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             }
 
             // Try to execute the action inside a command if we aren't already inside it.
-            debuggerSession.process.managerThread.invoke(command)
+            managerThread.invoke(command)
         }
     }
 

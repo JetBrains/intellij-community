@@ -4,6 +4,7 @@ package com.jetbrains.python.testing;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.PanelWithAnchor;
@@ -26,10 +27,10 @@ import static com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfigurat
  */
 public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, PanelWithAnchor {
   private JPanel myRootPanel;
-  private LabeledComponent myTestClassComponent;
-  private LabeledComponent myTestMethodComponent;
-  private LabeledComponent myTestFolderComponent;
-  private LabeledComponent myTestScriptComponent;
+  private LabeledComponentNoThrow myTestClassComponent;
+  private LabeledComponentNoThrow myTestMethodComponent;
+  private LabeledComponentNoThrow myTestFolderComponent;
+  private LabeledComponentNoThrow myTestScriptComponent;
   private JRadioButton myAllInFolderRB;
   private JRadioButton myTestScriptRB;
   private JRadioButton myTestClassRB;

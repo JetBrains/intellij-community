@@ -2,10 +2,11 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -16,15 +17,20 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModCommandAction<KtBinaryExpression, Unit>(
     KtBinaryExpression::class,
-), LowPriorityAction {
+) {
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.ordinary.assignment")
+    override fun getPresentation(context: ActionContext, element: KtBinaryExpression): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.operationReference }

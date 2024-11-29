@@ -1,16 +1,16 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build fleet.preferences` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "fleet-preferences",
+jvm_library(
+  name = "preferences",
   module_name = "fleet.preferences",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//fleet/util/os:fleet-util-os",
+    "@lib//:kotlin-stdlib",
+    "//fleet/util/os:fleet-util-os",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build fleet.preferences` end

@@ -1,20 +1,40 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.markdown.utils` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
+jvm_library(
   name = "markdown-utils",
   module_name = "intellij.platform.markdown.utils",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//platform/editor-ui-api:editor",
-    "@community//platform/util/ui:util-ui",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:markdown-jvm",
-    "@community//platform/lang-impl",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains_markdown",
+    "//platform/lang-impl",
   ]
 )
-### auto-generated section `build` end
+
+kt_jvm_test(
+  name = "markdown-utils_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":markdown-utils"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains_markdown",
+    "@lib//:junit4",
+    "@lib//:kotlin-test",
+    "//platform/lang-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.markdown.utils` end

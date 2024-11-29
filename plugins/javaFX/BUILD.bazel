@@ -1,0 +1,115 @@
+### auto-generated section `build intellij.javaFX` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "javaFX_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "javaFX",
+  module_name = "intellij.javaFX",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/lang-api:lang",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/impl:java-execution-impl",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//xml/openapi:xml",
+    "//xml/impl",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "//plugins/javaFX/common",
+    "//java/manifest",
+    "//java/idea-ui:ui",
+    "//plugins/properties",
+    "//java/typeMigration",
+    "//platform/util/nanoxml",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//spellchecker",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+  ],
+  exports = ["//plugins/javaFX/common"],
+  runtime_deps = [":javaFX_resources"]
+)
+
+kt_jvm_test(
+  name = "javaFX_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":javaFX"],
+  deps = [
+    "//platform/lang-api:lang",
+    "//java/execution/openapi:java-execution",
+    "//java/execution/impl:java-execution-impl",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//xml/openapi:xml",
+    "//xml/impl",
+    "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "//plugins/javaFX/common",
+    "//java/manifest",
+    "//java/idea-ui:ui",
+    "//plugins/properties",
+    "//java/testFramework",
+    "//java/typeMigration",
+    "//platform/util/nanoxml",
+    "//java/java-tests:tests_test",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//spellchecker",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":javaFX_resources"]
+)
+### auto-generated section `build intellij.javaFX` end
+
+### auto-generated section `build intellij.javaFX.properties` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "javaFX-properties_resources",
+  files = glob(["properties/resources/**/*"]),
+  strip_prefix = "properties/resources"
+)
+
+jvm_library(
+  name = "javaFX-properties",
+  module_name = "intellij.javaFX.properties",
+  visibility = ["//visibility:public"],
+  srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/javaFX",
+    "//platform/analysis-api:analysis",
+    "@lib//:stream_ex",
+  ],
+  runtime_deps = [":javaFX-properties_resources"]
+)
+### auto-generated section `build intellij.javaFX.properties` end

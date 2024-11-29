@@ -164,6 +164,8 @@ class CachedTreePresentation(rootPresentation: CachedTreePresentationData) {
 
   fun isLeaf(node: Any): Boolean = getCachedNode(node)?.isLeaf == true
 
+  fun isExpanded(node: Any): Boolean = getCachedNode(node)?.isExpanded == true
+
   fun getChildren(parent: Any): List<Any>? = getCachedChildren(parent)?.nullize()
 
   private fun getCachedChildren(parent: Any): List<CachedTreePresentationNode>? {

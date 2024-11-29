@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.ui.ComponentUtil
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.GraphicsEnvironment
@@ -24,9 +25,7 @@ import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.JPanel
-import javax.swing.JViewport
-import javax.swing.SwingUtilities
+import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -103,7 +102,11 @@ class DecoratedEditor private constructor(
         }
         else if (event is MouseEvent) {
           if (event.id == MouseEvent.MOUSE_CLICKED || event.id == MouseEvent.MOUSE_RELEASED || event.id == MouseEvent.MOUSE_PRESSED) {
-            nestedScrollingSupport.processMouseEvent(event, editor.scrollPane)
+            ComponentUtil.getParentOfType(JScrollPane::class.java, (event.component as? JComponent)
+              ?.findComponentAt(event.point))
+              ?.let { scrollPane ->
+                nestedScrollingSupport.processMouseEvent(event, scrollPane)
+              }
           }
           else if (event.id == MouseEvent.MOUSE_MOVED) {
             nestedScrollingSupport.processMouseMotionEvent(event)

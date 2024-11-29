@@ -65,5 +65,6 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-dependencies" level="project" />
   </component>
 </module>

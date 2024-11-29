@@ -619,10 +619,6 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "module_level_variable1"));
   }
 
-  public void testEpyDocTypeReferenceForInstanceAttributeInClassLevelDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
-  }
-
   // PY-7541
   public void testLoopToUpperReassignment() {
     final PsiReference ref = findReferenceByMarker();
@@ -2135,6 +2131,18 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
        <ref>""";
     assertResolvedElement(LanguageLevel.PYTHON35, starImport, e -> assertResolveResult(e, PyClass.class, "DivisionByZero", null));
     assertResolvedElement(LanguageLevel.PYTHON34, starImport, TestCase::assertNull);
+  }
+
+  // PY-77168
+  public void testResolveFromUnderUnmatchedVersionCheck() {
+    assertResolvesTo("""
+                       import sys
+                       
+                       Alias = int
+                       if sys.version_info < (3, 12):
+                           name: Alias
+                       #          <ref>
+                       """, PyTargetExpression.class, "Alias");
   }
 
   private void assertResolvedElement(@NotNull LanguageLevel languageLevel, @NotNull String text, @NotNull Consumer<PsiElement> assertion) {

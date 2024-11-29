@@ -57,18 +57,19 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
   private val treeContent: List<Any> = listOf(
     Group("Components", children = listOf(
+      ComboBoxPanel(),
+      ComboBoxWithWidePopupPanel(),
       JBIntSpinnerPanel(),
       JButtonPanel(),
       JBOptionButtonPanel(),
+      JBTabsPanel(),
       JBTextAreaPanel(),
       JCheckBoxPanel(),
-      JComboBoxPanel(),
       JRadioButtonPanel(),
       JSpinnerPanel(),
       JTextFieldPanel(),
       SearchTextFieldPanel(),
-      ThreeStateCheckBoxPanel(),
-      JBTabsPanel())),
+      ThreeStateCheckBoxPanel())),
 
     Group("Kotlin UI DSL", children = listOf(
       Group("ListCellRenderer", children = listOf(

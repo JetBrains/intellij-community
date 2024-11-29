@@ -59,6 +59,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -114,6 +115,7 @@ public final class JavaCompletionUtil {
     item.putUserData(ALL_METHODS_ATTRIBUTE, ContainerUtil.map(methods, method -> SmartPointerManager.getInstance(method.getProject()).createSmartPsiElementPointer(method)));
   }
 
+  @Unmodifiable
   public static List<PsiMethod> getAllMethods(@NotNull LookupElement item) {
     List<SmartPsiElementPointer<PsiMethod>> pointers = item.getUserData(ALL_METHODS_ATTRIBUTE);
     if (pointers == null) return null;

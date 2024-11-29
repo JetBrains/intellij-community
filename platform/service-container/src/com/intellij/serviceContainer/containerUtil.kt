@@ -3,8 +3,6 @@
 
 package com.intellij.serviceContainer
 
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -22,11 +20,6 @@ internal fun checkCanceledIfNotInClassInit() {
       throw e
     }
   }
-}
-
-internal fun isGettingServiceAllowedDuringPluginUnloading(descriptor: PluginDescriptor): Boolean {
-  return descriptor.isRequireRestart ||
-         descriptor.pluginId == PluginManagerCore.CORE_ID || descriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID
 }
 
 internal fun isUnderIndicatorOrJob(): Boolean {

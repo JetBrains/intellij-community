@@ -27,6 +27,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -137,10 +138,12 @@ public final class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
+  @Unmodifiable
   public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
     return extractSideEffectExpressions(element, e -> false);
   }
 
+  @Unmodifiable
   public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element,
                                                                  @NotNull Predicate<? super PsiElement> ignoreElement) {
     List<PsiElement> list = new SmartList<>();

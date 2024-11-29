@@ -13,6 +13,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -240,7 +241,7 @@ public final class RunContentBuilder extends RunTab {
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
-    AnAction[] mainChildren = toolbarGroup.getChildren(null);
+    AnAction[] mainChildren = ((CustomisedActionGroup)toolbarGroup).getDefaultChildrenOrStubs();
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
     addAvoidingDuplicates(actionGroup, mainChildren);
 
@@ -255,7 +256,7 @@ public final class RunContentBuilder extends RunTab {
       moreGroup = new MoreActionGroup();
       ActionGroup moreActionGroup =
         (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
-      addAvoidingDuplicates(moreGroup, moreActionGroup.getChildren(null), mainChildren);
+      addAvoidingDuplicates(moreGroup, ((CustomisedActionGroup)moreActionGroup).getDefaultChildrenOrStubs(), mainChildren);
     }
 
     addActionsWithConstraints(afterRunActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);

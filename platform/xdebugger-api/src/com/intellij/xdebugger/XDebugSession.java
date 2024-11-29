@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import javax.swing.event.HyperlinkListener;
  * An instance of this class can be obtained from the {@link XDebugProcess#getSession()} method
  * and can then be used to control the debugging process.
  */
+@ApiStatus.NonExtendable
 public interface XDebugSession extends AbstractDebuggerSession {
   DataKey<XDebugSession> DATA_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 

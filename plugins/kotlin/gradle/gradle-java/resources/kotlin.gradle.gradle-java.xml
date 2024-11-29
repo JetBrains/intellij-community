@@ -1,6 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava" xmlns:xi="http://www.w3.org/2001/XInclude">
-  <id>kotlin.gradle.gradle-java</id>
-  <vendor>JetBrains</vendor>
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava">
 
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
@@ -10,9 +8,6 @@
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.base.external-build-system"/>
   </dependencies>
-
-  <xi:include href="kotlin.gradle.gradle-java.k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
-  <xi:include href="kotlin.gradle.gradle-java.k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
 
   <projectListeners>
     <listener
@@ -62,10 +57,12 @@
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver" order="first"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.PrepareKotlinIdeImportTaskResolver" order="first" />
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectResolverExtension" order="first"/>
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestTasksResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinKPMGradleProjectResolver"/>
+
+    <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestGradleTaskManagerExtension"/>
+    <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinCoroutineDebugGradleTaskManagerExtension"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
@@ -125,7 +122,7 @@
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
 
     <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource"/>
-    <scriptReloadActionAvailability implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptReloadActionAvailability"/>
+    <kotlinScriptLazyResolveProhibitionCondition implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptLazyResolveProhibitionCondition"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptAdditionalIdeaDependenciesProvider"/>
 

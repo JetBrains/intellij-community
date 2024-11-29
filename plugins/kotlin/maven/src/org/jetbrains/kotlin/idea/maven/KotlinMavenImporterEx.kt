@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.maven
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,7 +17,6 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
-import org.jetbrains.kotlin.idea.base.util.substringAfterLastOrNull
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.workspaceModel.*
@@ -26,7 +24,6 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.isKotlinNative
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
@@ -171,20 +168,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
                 } else if (targetPlatform?.idePlatformKind?.isKotlinNative == true) {
                     languageLevel?.coerceAtMostVersion(compilerVersion)
                 } else {
-                    val minVersion =
-                        module.dependencies.mapNotNull { moduleDependencyItem ->
-                            if (moduleDependencyItem !is LibraryDependency) return@mapNotNull null
-                            val name = moduleDependencyItem.library.name
-                            val artifactWithVersion = name.substringAfterLastOrNull("org.jetbrains.kotlin:")
-                            if (artifactWithVersion != null && artifactWithVersion.contains(KOTLIN_JAVA_STDLIB_NAME)) {
-                                return@mapNotNull artifactWithVersion.substringAfterLastOrNull(":")
-                            } else null
-                        }.minOrNull()
-                    if (minVersion != null) {
-                        getDefaultVersion(IdeKotlinVersion.parse(minVersion).getOrNull(), false).languageVersion
-                    } else {
-                        languageLevel
-                    }
+                    languageLevel
                 }
                 LOG.debug("Inferred apiLevel to ", apiLevel)
             }

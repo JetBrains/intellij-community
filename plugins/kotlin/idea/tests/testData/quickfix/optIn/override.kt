@@ -1,8 +1,10 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Derived'" "false"
+// IGNORE_K1
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Go To Super Method
+// ACTION: Move to top level
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'override.kt'
 // ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'foo'

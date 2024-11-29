@@ -376,6 +376,8 @@ public final class RecursionManager {
   }
 
   private static final @NonNls String[] toleratedFrames = {
+    "com.intellij.util.indexing.FileBasedIndexEx.getCurrentDumbModeAccessType_NoDumbChecks(",
+
     "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
     "org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy.getAncestorsCaching(", // RUBY-25487
     "com.intellij.lang.aspectj.psi.impl.PsiInterTypeReferenceImpl.", // IDEA-228779

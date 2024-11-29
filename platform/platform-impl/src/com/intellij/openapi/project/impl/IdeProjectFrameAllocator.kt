@@ -462,6 +462,7 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
     }
   }
   else {
+    checkForNonsenseBounds("IdeProjectFrameAllocatorKt.createNewProjectFrameProducer.deviceBounds", deviceBounds)
     val boundsAndDevice = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
     val state = frameInfo.extendedState
     val isMaximized = FrameInfoHelper.isMaximized(state)

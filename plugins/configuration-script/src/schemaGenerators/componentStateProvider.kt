@@ -24,8 +24,8 @@ internal class ComponentStateJsonSchemaGenerator : SchemaGenerator {
 
   // schema is generated without project - we cannot rely on created component adapter for services
   override fun generate(rootBuilder: JsonObjectBuilder) {
-    for (plugin in PluginManagerCore.loadedPlugins) {
-      for (serviceDescriptor in (plugin as IdeaPluginDescriptorImpl).projectContainerDescriptor.services) {
+    for (plugin in PluginManagerCore.getPluginSet().getEnabledModules()) {
+      for (serviceDescriptor in plugin.projectContainerDescriptor.services) {
         processServiceDescriptor(serviceDescriptor, plugin)
       }
     }

@@ -835,6 +835,7 @@ public abstract class Statement implements IMatchable {
   }
 
   // helper methods
+  @Override
   public String toString() {
     return toString(0);
   }

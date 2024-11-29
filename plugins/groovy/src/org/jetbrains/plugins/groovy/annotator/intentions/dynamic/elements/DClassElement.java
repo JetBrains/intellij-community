@@ -78,6 +78,7 @@ public class DClassElement implements DNamedElement {
     return myMethods.remove(methodElement);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -89,6 +90,7 @@ public class DClassElement implements DNamedElement {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myName != null ? myName.hashCode() : 0);

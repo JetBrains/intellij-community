@@ -271,6 +271,7 @@ public abstract class Configuration implements JDOMExternalizable {
 
   public abstract void removeUnusedVariables();
 
+  @Override
   public boolean equals(Object configuration) {
     if (!(configuration instanceof Configuration other)) return false;
     return Objects.equals(category, other.category) && name.equals(other.name);

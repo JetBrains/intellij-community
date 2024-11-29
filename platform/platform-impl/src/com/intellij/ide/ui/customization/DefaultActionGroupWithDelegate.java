@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/** @deprecated Use {@link com.intellij.openapi.actionSystem.ActionGroupWrapper} */
 @ApiStatus.Experimental
+@Deprecated(forRemoval = true)
 public final class DefaultActionGroupWithDelegate extends DefaultActionGroup implements ActionWithDelegate<ActionGroup> {
   private final ActionGroup myDelegate;
 

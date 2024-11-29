@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -34,10 +34,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.InspectionsKt;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunAll;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.*;
@@ -54,11 +51,11 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
-import java.util.HashSet;
 import java.util.*;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.function.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -66,6 +63,12 @@ import java.util.stream.Stream;
 public final class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance(MadTestingUtil.class);
   private static final boolean USE_ROULETTE_WHEEL = true;
+
+  public static @NotNull ImperativeCommand assertNoErrorLoggedIn(@NotNull ImperativeCommand command) {
+    return (env) -> {
+      TestLoggerKt.assertNoErrorLogged(() -> command.performCommand(env));
+    };
+  }
 
   public static void restrictChangesToDocument(Document document, Runnable r) {
     letSaveAllDocumentsPassIfAny();
@@ -278,7 +281,7 @@ public final class MadTestingUtil {
                                                                  FileFilter fileFilter,
                                                                  BiConsumer<? super ImperativeCommand.Environment, ? super VirtualFile> action) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
-    return () -> env -> new RunAll(
+    return () -> assertNoErrorLoggedIn(env -> new RunAll(
       () -> {
         File ioFile = env.generateValue(randomFiles, "Working with %s");
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
@@ -297,7 +300,7 @@ public final class MadTestingUtil {
       }),
       () -> PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments(),
       () -> UIUtil.dispatchAllInvocationEvents()
-    ).run();
+    ).run())::performCommand;
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {

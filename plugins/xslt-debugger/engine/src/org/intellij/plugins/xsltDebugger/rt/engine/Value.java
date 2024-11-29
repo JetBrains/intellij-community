@@ -28,6 +28,7 @@ public interface Value extends Serializable {
   enum XPathType implements Type {
     BOOLEAN, NUMBER, STRING, NODESET, OBJECT, UNKNOWN;
 
+    @Override
     public String getName() {
       return name().toLowerCase(Locale.ENGLISH);
     }
@@ -40,6 +41,7 @@ public interface Value extends Serializable {
       myName = name;
     }
 
+    @Override
     public String getName() {
       return myName;
     }
@@ -81,14 +83,17 @@ public interface Value extends Serializable {
       myStringValue = stringValue;
     }
 
+    @Override
     public String getURI() {
       return myURI;
     }
 
+    @Override
     public int getLineNumber() {
       return myLineNumber;
     }
 
+    @Override
     public String toString() {
       return "Node{" +
              "myURI='" + myURI + '\'' +

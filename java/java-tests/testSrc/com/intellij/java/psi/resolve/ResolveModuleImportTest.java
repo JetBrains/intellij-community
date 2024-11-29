@@ -116,8 +116,8 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testResolveTransitiveDependency() {
-    Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.getModuleName$intellij_java_tests());
-    Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.getModuleName$intellij_java_tests());
+    Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.moduleName);
+    Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.moduleName);
     ModuleRootModificationUtil.addDependency(m2, m3, DependencyScope.COMPILE, true);
     addCode("module-info.java", """
       module my.source.moduleB {
@@ -263,8 +263,8 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testResolveTransitiveRecursion() {
-    Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.getModuleName$intellij_java_tests());
-    Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.getModuleName$intellij_java_tests());
+    Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.moduleName);
+    Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.moduleName);
     ModuleRootModificationUtil.addDependency(m2, m3, DependencyScope.COMPILE, true);
     addCode("module-info.java", """
       module my.source.moduleB {

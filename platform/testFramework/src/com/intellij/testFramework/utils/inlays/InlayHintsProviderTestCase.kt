@@ -31,7 +31,7 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
                                provider: InlayHintsProvider<T>,
                                settings: T = provider.createSettings(),
                                verifyHintPresence: Boolean = false) {
-    val sourceText = InlayDumpUtil.removeHints(expectedText)
+    val sourceText = InlayDumpUtil.removeInlays(expectedText)
     myFixture.configureByText(fileName, sourceText)
     val actualText = dumpInlayHints(sourceText, provider, settings)
     assertEquals(expectedText, actualText)
@@ -50,9 +50,9 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     val collector = provider.getCollectorFor(file, editor, settings, sink) ?: error("Collector is expected")
     val collectorWithSettings = CollectorWithSettings(collector, provider.key, file.language, sink)
     collectorWithSettings.collectTraversingAndApply(editor, file, true)
-    return InlayDumpUtil.dumpHintsInternal(sourceText, renderer = { renderer, _ ->
+    return InlayDumpUtil.dumpInlays(sourceText, editor = myFixture.editor, renderer = { renderer, _ ->
       if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
       renderer.toString()
-    }, file = myFixture.file!!, editor = myFixture.editor, document = myFixture.getDocument(myFixture.file!!))
+    })
   }
 }

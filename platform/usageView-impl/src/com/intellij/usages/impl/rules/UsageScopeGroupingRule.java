@@ -102,12 +102,14 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
       return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof UsageScopeGroup usageTypeGroup)) return false;
       return myCode == usageTypeGroup.myCode;
     }
 
+    @Override
     public int hashCode() {
       return myCode;
     }

@@ -40,10 +40,12 @@ public class ModuleGroupItem extends PackagingSourceItem {
     myPath = path;
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof ModuleGroupItem && myPath.equals(((ModuleGroupItem)obj).myPath);
   }
 
+  @Override
   public int hashCode() {
     return myPath.hashCode();
   }

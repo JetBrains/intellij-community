@@ -67,8 +67,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
@@ -203,6 +203,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
             toolbar.setReservePlaceAutoPopupIcon(false);
             toolbar.setTargetComponent(tree);
             XDebuggerEmbeddedComboBox<XExpression> comboBox = new XDebuggerEmbeddedComboBox<>(model, width);
+            comboBox.setName("Debugger.EvaluateExpression.combobox");
             comboBox.setExtension(toolbar);
             return comboBox;
           }
@@ -294,7 +295,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     XExpression expression = myEvaluateComboBox.getExpression();
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
       myEvaluateComboBox.saveTextInHistory();
-      XDebugSession session = getSession(getTree());
+      XDebugSession session = getSession();
       if (session != null) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(XEvaluationListener.TOPIC)
           .inlineEvaluatorInvoked(session, expression);
@@ -417,7 +418,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   public void addWatchExpression(@NotNull XExpression expression, int index, final boolean navigateToWatchNode, boolean noDuplicates) {
     ThreadingAssertions.assertEventDispatchThread();
-    XDebugSession session = getSession(getTree());
+    XDebugSessionImpl session = getSession();
     boolean found = false;
     if (noDuplicates) {
       for (WatchNode child : myRootNode.getWatchChildren()) {
@@ -432,7 +433,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       updateSessionData();
     }
     if (navigateToWatchNode && session != null) {
-      XDebugSessionTab.showWatchesView((XDebugSessionImpl)session);
+      XDebugSessionTab.showWatchesView(session);
     }
   }
 
@@ -463,12 +464,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   public void addInlineWatchExpression(@NotNull InlineWatch watch, int index, boolean navigateToWatchNode) {
     ThreadingAssertions.assertEventDispatchThread();
-    XDebugSession session = getSession(getTree());
+    XDebugSessionImpl session = getSession();
 
     ((InlineWatchesRootNode)myRootNode).addInlineWatchExpression(session != null ? session.getCurrentStackFrame() : null, watch, index, navigateToWatchNode);
 
     if (navigateToWatchNode && session != null) {
-      XDebugSessionTab.showWatchesView((XDebugSessionImpl)session);
+      XDebugSessionTab.showWatchesView(session);
     }
   }
 
@@ -520,10 +521,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @NotNull
   protected List<XExpression> getExpressions() {
     XDebuggerTree tree = getTree();
-    XDebugSession session = getSession(tree);
+    XDebugSessionImpl session = getSession();
     List<XExpression> expressions;
     if (session != null) {
-      expressions = ((XDebugSessionImpl)session).getSessionData().getWatchExpressions();
+      expressions = session.getSessionData().getWatchExpressions();
     }
     else {
       XDebuggerTreeNode root = tree.getRoot();
@@ -595,8 +596,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   public void updateSessionData() {
     List<XExpression> watchExpressions = myRootNode.getWatchExpressions();
-    XDebugSession session = getSession(getTree());
-    XDebugSessionData data = (session != null) ? ((XDebugSessionImpl)session).getSessionData()
+    XDebugSessionImpl session = getSession();
+    XDebugSessionData data = (session != null) ? session.getSessionData()
                                                : getData(XDebugSessionData.DATA_KEY, getTree());
     if (data != null) {
       data.setWatchExpressions(watchExpressions);

@@ -4,15 +4,18 @@ package com.intellij.ui.dsl.listCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Color
 import java.awt.Font
+import java.awt.RenderingHints
 import javax.swing.UIManager
 
 @ApiStatus.Experimental
-class LcrTextInitParams(foreground: Color) : LcrInitParams() {
+@ApiStatus.NonExtendable
+abstract class LcrTextInitParams(foreground: Color) : LcrInitParams() {
 
   /**
-   * A gray text, that is usually used for non-primary information in renderers
+   * A gray text that is usually used for non-primary information in renderers
    */
   val greyForeground: Color
     get() = NamedColorUtil.getInactiveTextColor()
@@ -34,5 +37,19 @@ class LcrTextInitParams(foreground: Color) : LcrInitParams() {
   /**
    * true if the text is used by speed search and therefore should be highlighted while searching
    */
+  @Deprecated("Use speedSearch() instead")
+  @ScheduledForRemoval
   var speedSearchHighlighting: Boolean = false
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  var renderingHints: Map<RenderingHints.Key, Any?>? = null
+
+  /**
+   * The text is used by speed search and therefore should be highlighted while searching.
+   * The following rules should be used to comply with IJ UX standards:
+   * * The speed search filters out items from the list: only the current (selected) item shows the speed search highlighting
+   * * The speed search doesn't filter out items from the list: all items show the speed search highlighting
+   */
+  abstract fun speedSearch(init: LcrTextSpeedSearchParams.() -> Unit)
 }

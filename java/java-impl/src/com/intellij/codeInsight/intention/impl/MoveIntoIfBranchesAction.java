@@ -19,6 +19,7 @@ import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ public final class MoveIntoIfBranchesAction implements ModCommandAction {
     return JavaBundle.message("intention.name.move.into.if.branches");
   }
 
+  @Unmodifiable
   private static List<PsiStatement> extractStatements(@NotNull ActionContext context) {
     PsiFile file = context.file();
     if (!(file instanceof PsiJavaFile)) return Collections.emptyList();

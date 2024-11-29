@@ -253,5 +253,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testGenericInit() { doTest("pkg/TestInitGeneric"); }
   @Test public void testNotNullRecord() { doTest("pkg/TestNotNullRecord"); }
   @Test public void testNestedInheritor() { doTest("pkg/TestNestedInheritor"); }
+  @Test public void testTryCatchFinallyMismatched() { doTest("pkg/TestTryCatchFinallyMismatched"); }
+  @Test public void testNestedCalls() { doTest("pkg/TestNestedCalls"); }
+  @Test public void testBreakpointsContextProvider() { doTest("com/intellij/tasks/context/java/BreakpointsContextProvider"); }
 
 }

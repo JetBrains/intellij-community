@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
@@ -21,12 +20,9 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.log10
@@ -37,10 +33,8 @@ private val sessionSegmentsTotalDurationMs: Key<AtomicLong> = Key.create("sessio
 
 private data class AnalysisStatus(val stamp: Long, val isDumbMode: Boolean)
 
-@ApiStatus.Internal
-open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
+internal open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   private data class SessionData(val daemonStartTime: Long = -1L,
-                                 val dirtyRange: TextRange? = null,
                                  val documentStartedHash: Int = 0,
                                  val isDumbMode: Boolean = false)
 
@@ -59,12 +53,9 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
     }
 
     val document = editor.document
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
-    val dirtyRange = FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
 
     currentSessionSegments.put(fileEditor, SessionData(
       daemonStartTime = System.currentTimeMillis(),
-      dirtyRange = dirtyRange,
       documentStartedHash = document.hashCode(),
       isDumbMode = DumbService.isDumb(project) // it's important to check for dumb mode here because state can change to opposite in daemonFinished
     ))

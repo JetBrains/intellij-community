@@ -100,7 +100,9 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   @FunctionalInterface
   interface Key<T> {
     T get();
+    @Override
     int hashCode();
+    @Override
     boolean equals(Object o);
   }
 

@@ -50,6 +50,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -322,9 +323,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return all highlight infos for current file
    */
   @NotNull
+  @Unmodifiable
   List<HighlightInfo> doHighlighting();
 
   @NotNull
+  @Unmodifiable
   List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minimalSeverity);
 
   @NotNull PsiSymbolReference findSingleReferenceAtCaret();
@@ -374,6 +377,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #findSingleIntention(String)
    */
   @NotNull
+  @Unmodifiable
   List<IntentionAction> filterAvailableIntentions(@NotNull String hint);
 
   /**
@@ -613,6 +617,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
 
+  @Unmodifiable
   List<GutterMark> findAllGutters();
 
   void type(final char c);
@@ -634,6 +639,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Presentation testAction(@NotNull AnAction action);
 
   @Nullable
+  @Unmodifiable
   List<String> getCompletionVariants(@TestDataFile String @NotNull ... filesBefore);
 
   /**
@@ -647,6 +653,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return {@code null} if the only item was auto-completed
    */
   @Nullable
+  @Unmodifiable
   List<String> getLookupElementStrings();
 
   void finishLookup(@MagicConstant(valuesFromClass = Lookup.class) char completionChar);

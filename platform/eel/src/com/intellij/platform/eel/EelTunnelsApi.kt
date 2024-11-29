@@ -1,16 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.EelTunnelsApi.Arguments.hostAddressBuilder
 import com.intellij.platform.eel.EelTunnelsApi.Connection
-import com.intellij.platform.eel.impl.HostAddressBuilderImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * API for sockets. Use [hostAddressBuilder] to create arguments.
@@ -40,6 +40,7 @@ sealed interface EelTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
+  @CheckReturnValue
   suspend fun getConnectionToRemotePort(address: HostAddress): EelResult<Connection, EelConnectionError>
 
 
@@ -117,6 +118,19 @@ sealed interface EelTunnelsApi {
        * Builds a remote host address object.
        */
       fun build(): HostAddress
+    }
+
+    companion object {
+      /**
+       * Creates a builder for address on the remote host.
+       */
+      fun Builder(port: UShort): Builder = HostAddressBuilderImpl(port)
+
+      /**
+       * Creates a builder for address `localhost:0`.
+       * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
+       */
+      fun Builder(): Builder = HostAddressBuilderImpl(0u)
     }
   }
 
@@ -210,6 +224,7 @@ sealed interface EelTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
+  @CheckReturnValue
   suspend fun getAcceptorForRemotePort(address: HostAddress): EelResult<ConnectionAcceptor, EelConnectionError>
 
   /**
@@ -232,19 +247,6 @@ sealed interface EelTunnelsApi {
      * Stops the server from accepting connections.
      */
     suspend fun close()
-  }
-
-  companion object Arguments {
-    /**
-     * Creates a builder for address on the remote host.
-     */
-    fun hostAddressBuilder(port: UShort): HostAddress.Builder = HostAddressBuilderImpl(port)
-
-    /**
-     * Creates a builder for address `localhost:0`.
-     * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
-     */
-    fun hostAddressBuilder(): HostAddress.Builder = HostAddressBuilderImpl(0u)
   }
 }
 
@@ -285,6 +287,7 @@ interface EelTunnelsPosixApi : EelTunnelsApi {
    * }
    * ```
    */
+  @CheckReturnValue
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
   data class ListenOnUnixSocketResult(
@@ -364,7 +367,7 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
-): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
+): T = withConnectionToRemotePort(EelTunnelsApi.HostAddress.Builder(port).hostname(host).build(), errorHandler, action)
 
 suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,
@@ -413,4 +416,24 @@ interface EelConnectionError : EelNetworkError {
    * Unknown failure during a connection establishment
    */
   interface UnknownFailure : EelConnectionError
+}
+
+
+private data class HostAddressBuilderImpl(
+  override var port: UShort = 0u,
+  override var hostname: String = "localhost",
+  override var protocolPreference: EelIpPreference = EelIpPreference.USE_SYSTEM_DEFAULT,
+  override var timeout: Duration = 10.seconds,
+) : EelTunnelsApi.HostAddress.Builder, EelTunnelsApi.HostAddress {
+  override fun hostname(hostname: String): EelTunnelsApi.HostAddress.Builder = apply { this.hostname = hostname }
+
+  override fun preferIPv4(): EelTunnelsApi.HostAddress.Builder = apply { this.protocolPreference = EelIpPreference.PREFER_V4 }
+
+  override fun preferIPv6(): EelTunnelsApi.HostAddress.Builder = apply { this.protocolPreference = EelIpPreference.PREFER_V6 }
+
+  override fun preferOSDefault(): EelTunnelsApi.HostAddress.Builder = this.apply { this.protocolPreference = EelIpPreference.USE_SYSTEM_DEFAULT }
+
+  override fun connectionTimeout(timeout: Duration): EelTunnelsApi.HostAddress.Builder = apply { this.timeout = timeout }
+
+  override fun build(): EelTunnelsApi.HostAddress = this.copy()
 }

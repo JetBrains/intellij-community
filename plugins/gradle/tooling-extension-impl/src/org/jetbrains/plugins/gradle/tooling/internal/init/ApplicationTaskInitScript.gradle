@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 //file:noinspection GrPackage
 
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 
 import java.util.jar.JarOutputStream
@@ -29,7 +31,6 @@ def workingDirectory = WORKING_DIRECTORY
 def intelliJRtPath  = INTELLIJ_RT_PATH
 
 def isOlderThan64 = GradleVersionUtil.isCurrentGradleOlderThan("6.4")
-def isOlderThan33 = GradleVersionUtil.isCurrentGradleOlderThan("3.3")
 
 if (Properties.useManifestJar) {
   gradle.addListener(new ManifestTaskActionListener(Properties.runAppTaskName))
@@ -47,32 +48,24 @@ if (Properties.useClasspathFile && intelliJRtPath != null) {
   )
 }
 
-allprojects {
-  afterEvaluate { project ->
-    def projectPath
-    if (isOlderThan33) {
-      projectPath = project.path
-    }
-    else {
-      projectPath = project.identityPath.toString()
-    }
-    if (projectPath == Properties.gradlePath && JavaPluginUtil.isJavaPluginApplied(project)) {
-      def overwrite = project.tasks.findByName(Properties.runAppTaskName) != null
-      project.tasks.create(name: Properties.runAppTaskName, overwrite: overwrite, type: JavaExec) {
-        if (javaExePath) executable = javaExePath
-        if (isOlderThan64) {
-          main = Properties.mainClassToRun
-        }
-        else {
-          mainClass = Properties.mainClassToRun
-        }
-        PARAMS
-        if (workingDirectory) {
-          workingDir = workingDirectory
-        }
-        standardInput = System.in
-        classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
+GradleLifecycleUtil.afterProject(gradle) { Project project ->
+  def projectPath = GradleProjectUtil.getProjectIdentityPath(project)
+  if (projectPath == Properties.gradlePath && JavaPluginUtil.isJavaPluginApplied(project)) {
+    def overwrite = project.tasks.findByName(Properties.runAppTaskName) != null
+    project.tasks.create(name: Properties.runAppTaskName, overwrite: overwrite, type: JavaExec) {
+      if (javaExePath) executable = javaExePath
+      if (isOlderThan64) {
+        main = Properties.mainClassToRun
       }
+      else {
+        mainClass = Properties.mainClassToRun
+      }
+      PARAMS
+      if (workingDirectory) {
+        workingDir = workingDirectory
+      }
+      standardInput = System.in
+      classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
     }
   }
 }

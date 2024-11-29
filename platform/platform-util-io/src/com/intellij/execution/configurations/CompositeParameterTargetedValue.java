@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
@@ -87,6 +88,7 @@ public class CompositeParameterTargetedValue {
 
   @NotNull
   @Contract(pure = true)
+  @Unmodifiable
   public static Collection<? extends CompositeParameterTargetedValue> targetizeParameters(List<String> parameters) {
     return ContainerUtil.map(parameters, parameter -> new CompositeParameterTargetedValue(parameter));
   }

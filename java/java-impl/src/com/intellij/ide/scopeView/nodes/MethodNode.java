@@ -13,6 +13,7 @@ public class MethodNode extends MemberNode<PsiMethod> {
     super(element);
   }
 
+  @Override
   public String toString() {
     final PsiMethod method = (PsiMethod)getPsiElement();
     if (method == null || !method.isValid()) return "";

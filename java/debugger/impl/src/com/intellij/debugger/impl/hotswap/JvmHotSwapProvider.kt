@@ -5,8 +5,6 @@ import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.ui.HotSwapUI
 import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmMetaLanguage
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -31,9 +29,8 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
     )
   }
 
-  override fun performHotSwap(context: DataContext, session: HotSwapSession<VirtualFile>) {
-    val project = context.getData(CommonDataKeys.PROJECT) ?: return
-    HotSwapUI.getInstance(project).compileAndReload(debuggerSession, *session.getChanges().toTypedArray())
+  override fun performHotSwap(session: HotSwapSession<VirtualFile>) {
+    HotSwapUI.getInstance(session.project).compileAndReload(debuggerSession, *session.getChanges().toTypedArray())
   }
 }
 

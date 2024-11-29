@@ -1,9 +1,7 @@
 // MODE: usages
 
-/*<# block [ 1 Usage] #>*/
-interface SomeClass {
-/*<# block [     3 Usages] #>*/
-    var someProperty = "initialized"
+interface SomeClass {/*<# [1 Usage] #>*/
+var someProperty = "initialized"/*<# [3 Usages] #>*/
     fun someFun() = "it's " + someProperty // <== (1): reference from expression
 }
 

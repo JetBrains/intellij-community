@@ -13,6 +13,7 @@ public class CustomRegExpInspectionToolWrapper extends LocalInspectionToolWrappe
     super(new CustomRegExpFakeInspection(configuration));
   }
 
+  @Override
   public int hashCode() {
     return myTool.getShortName().hashCode();
   }

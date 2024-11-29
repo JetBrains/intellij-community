@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -25,12 +26,18 @@ public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
   }
 
   public void testTwoStatementPattern() {
-    doTest("""
+    SearchConfiguration configuration = new SearchConfiguration();
+    configuration.setName("silly null check");
+    configuration.setSuppressId("SillyNullCheck");
+    final MatchOptions matchOptions = configuration.getMatchOptions();
+    matchOptions.setFileType(JavaFileType.INSTANCE);
+    matchOptions.fillSearchCriteria("""
              $field$ = $something$;
              if ($field$ == null) {
                   throw new $Exception$($msg$);
-             }""",
-           "silly null check");
+             }""");
+    inspectionTest(configuration, HighlightDisplayLevel.ERROR);
+    quickFixTest("Suppress for statement");
   }
 
   public void testBrokenPattern() {

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.light.LightMemberReference
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch

@@ -13,7 +13,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.vfs.findDirectory
+import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.openapi.vfs.isFile
 
 private val logger = logger<LaunchJsonUsagesCollector>()
@@ -33,7 +33,10 @@ internal class LaunchJsonUsagesCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val projectDir = project.guessProjectDir() ?: return emptySet()
     return buildSet {
-      val vsCodeDir = projectDir.findDirectory(".vscode") ?: return@buildSet
+      val vsCodeDir = projectDir.findFileOrDirectory(".vscode") ?: return@buildSet
+      if (!vsCodeDir.isDirectory) {
+        logger.warn(".vscode is not a directory")
+      }
       if (!vsCodeDir.isValid) return@buildSet
       add(vsCodeFolderDetectedEvent.metric())
 

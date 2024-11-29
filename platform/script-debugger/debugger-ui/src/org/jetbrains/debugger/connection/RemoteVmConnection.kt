@@ -3,6 +3,7 @@ package org.jetbrains.debugger.connection
 
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -16,7 +17,6 @@ import io.netty.bootstrap.Bootstrap
 import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.rpc.LOG
 import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
@@ -49,7 +49,7 @@ abstract class RemoteVmConnection<VmT : Vm> : VmConnection<VmT>() {
       }
       .onError {
         if (it !is ConnectException) {
-          LOG.errorIfNotMessage(it)
+          thisLogger().errorIfNotMessage(it)
         }
         setState(ConnectionStatus.CONNECTION_FAILED, it.message)
       }

@@ -454,7 +454,15 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (sibling != null && sibling.getText().equals("\n")) return;
         PsiElement parent = self.getParent();
         parent.addAfter(generateSeparator(parent), self);
+        // two EOLs at the top level after a compound value
+        if (parent.getParent() instanceof YAMLDocument && isCompoundValue(((YAMLKeyValue)self).getValue())) {
+          parent.addAfter(generateSeparator(parent), self);
+        }
       }
+    }
+
+    private static boolean isCompoundValue(@Nullable YAMLValue value) {
+      return value instanceof YAMLMapping || value instanceof YAMLSequence;
     }
 
     private static @Nullable PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement> @NotNull ... elementClasses) {

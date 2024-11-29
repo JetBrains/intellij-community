@@ -28,7 +28,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.lang.JavaVersion
@@ -42,7 +41,9 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
+import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
 private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "maven.create.dummy.module.on.first.import"
@@ -64,7 +65,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   override suspend fun configureProjectAsync(project: Project, context: ConfiguratorContext) {
     val basePath = context.projectPath.pathString
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
-    if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
+    if (!Files.exists(Path(pomXmlFile))) return
 
     val service = service<EnvironmentService>()
     val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.Keys.PROJECT_OPEN_PROCESSOR, "Maven")

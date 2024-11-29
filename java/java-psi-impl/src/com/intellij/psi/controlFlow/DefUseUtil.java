@@ -262,27 +262,40 @@ public final class DefUseUtil {
     return unusedDefs;
   }
 
-  /**
-   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
-   * @param def        variable which value is to be defined
-   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
-   *                   
-   * @return variable {@code def} initializers which should be used when inlining {@code ref}
-   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
-   */
+  /// @see #getDefs(PsiCodeBlock, PsiVariable, PsiElement, boolean)
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getDefs(body, def, ref, false);
   }
 
-  /**
-   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
-   * @param def        variable which value is to be defined
-   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
-   *                   
-   * @return variable {@code def} initializers which should be used when inlining {@code ref}
-   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
-   */
-  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+  /// Retrieves reaching definitions of variable `def` at the place `ref` in the scope of `block`.
+  ///
+  /// ### Example
+  ///
+  /// Consider the following code:
+  ///
+  /// ```java
+  /// void func() {
+  ///   String[] arr = {"bar", "baz", "foo"};
+  ///   arr = new String[]{"well", "actually"};
+  ///   System.out.println(arr);
+  /// }
+  /// ```
+  ///
+  /// Here's an example of arguments that you could call this method with (in the context of the sample code above):
+  ///  * `block` is the method's body
+  ///  * `def` is a [PsiLocalVariable] `arr`, which is a child of [PsiDeclarationStatement] `String[] arr = {"bar", "baz", "foo"};`
+  ///  * `ref` is a [PsiReferenceExpression] `arr`, inside the call to println.
+  ///
+  /// In this example, this method returns an array containing a single [PsiReferenceExpression] `arr`, which would be a child
+  /// of the [PsiAssignmentExpression] `arr = new String[]{"well", "actually"}`. This menas that `{"well", "actually"}` is the
+  /// actual value of variable `def` {at place of/when referenced by} `ref`.
+  ///
+  /// @param def variable which value is to be defined. Usually you can get to it by resolving `ref`.
+  /// @param ref element which contains a reference to the variable `def` and where the variable's value is to be defined
+  ///
+  /// @return Initializers/assignments of variable `def` which should be used when inlining `ref`.
+  /// When this array's length is more than 1, it's unclear what initializer to use, and such results are normally rejected by the callers.
+  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock block, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
      if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
       final PsiElement defContainer = LambdaUtil.getContainingClassOrLambda(def);
       PsiElement refContainer = LambdaUtil.getContainingClassOrLambda(ref);
@@ -293,7 +306,7 @@ public final class DefUseUtil {
     }
 
     try {
-      RefsDefs refsDefs = new RefsDefs(body) {
+      RefsDefs refsDefs = new RefsDefs(block) {
         final PsiManager psiManager = def.getManager();
         private final IntList[] myBackwardTraces = getBackwardTraces(instructions);
 

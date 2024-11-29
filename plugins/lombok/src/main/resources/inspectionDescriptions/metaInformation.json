@@ -31,6 +31,14 @@
     {
       "id": "RedundantModifiersValueLombok",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StaticMethodImportLombok",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DeprecatedLombok",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

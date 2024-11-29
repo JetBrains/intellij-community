@@ -16,5 +16,5 @@ fun javaParameters() {
 
     some.singleParamDslWithSameParamName(/*<# [javaParameters.dependency.java:200]singleParamDslWithSameParamNam…|: #>*/"no hint param name equals method name")
     some.sameFirstParamNameAndVararg(/*<# [javaParameters.dependency.java:294]sameFirstParamNameAndVararg|: #>*/"no hint param name equals method name")
-    some.sameFirstParamNameAndVararg(/*<# [javaParameters.dependency.java:294]sameFirstParamNameAndVararg|: #>*/"no hint param name equals method name", /*<# …|[javaParameters.dependency.java:330]variables|: #>*/>123)
+    some.sameFirstParamNameAndVararg(/*<# [javaParameters.dependency.java:294]sameFirstParamNameAndVararg|: #>*/"no hint param name equals method name", /*<# …|[javaParameters.dependency.java:330]variables|: #>*/123)
 }

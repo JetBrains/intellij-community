@@ -32,6 +32,7 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
@@ -72,6 +73,7 @@ public class LibraryDownloadSettings {
     mySelectedDownloads = selectedDownloads;
   }
 
+  @Unmodifiable
   private static List<? extends DownloadableLibraryFileDescription> getRequiredFiles(List<? extends DownloadableLibraryFileDescription> files) {
     return ContainerUtil.filter(files, (Condition<DownloadableLibraryFileDescription>)description -> !description.isOptional());
   }

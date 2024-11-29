@@ -1,0 +1,64 @@
+### auto-generated section `build kotlin.code-insight.intentions.shared` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "kotlin-code-insight-intentions-shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "kotlin-code-insight-intentions-shared_resources_1",
+  files = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-intentions-shared",
+  module_name = "kotlin.code-insight.intentions.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:guava",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/formatter",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//platform/lang-impl",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [
+    ":kotlin-code-insight-intentions-shared_resources",
+    ":kotlin-code-insight-intentions-shared_resources_1",
+  ]
+)
+### auto-generated section `build kotlin.code-insight.intentions.shared` end

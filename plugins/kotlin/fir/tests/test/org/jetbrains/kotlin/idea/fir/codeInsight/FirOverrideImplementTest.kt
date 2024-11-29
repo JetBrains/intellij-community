@@ -96,6 +96,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testProperty()
     }
 
+    override fun testPropertyWithGetter() {
+        super.testPropertyWithGetter()
+    }
+
     override fun testInterfaceGenericImplement() {
         super.testInterfaceGenericImplement()
     }

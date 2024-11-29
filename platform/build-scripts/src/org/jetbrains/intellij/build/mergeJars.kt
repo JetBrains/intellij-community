@@ -28,6 +28,8 @@ internal interface NativeFileHandler {
 
   fun isNative(name: String): Boolean
 
+  fun isCompatibleWithTargetPlatform(name: String): Boolean
+
   suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
@@ -41,6 +43,7 @@ internal suspend fun buildJar(
   compress: Boolean = false,
   notify: Boolean = true,
   nativeFileHandler: NativeFileHandler? = null,
+  addDirEntries: Boolean = false,
 ) {
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
@@ -65,6 +68,7 @@ internal suspend fun buildJar(
           nativeFileHandler = nativeFileHandler,
           compress = compress,
           filesToMerge = filesToMerge,
+          addClassDir = addDirEntries,
         )
 
         if (notify) {
@@ -77,7 +81,7 @@ internal suspend fun buildJar(
         zipCreator.uncompressedData(nameString = listOfEntitiesFileName, data = filesToMerge.joinToString("\n") { it.trim() })
       }
 
-      packageIndexBuilder?.writePackageIndex(zipCreator)
+      packageIndexBuilder?.writePackageIndex(zipCreator, if (addDirEntries) AddDirEntriesMode.ALL else AddDirEntriesMode.NONE)
     }
   }
 }
@@ -92,17 +96,19 @@ private suspend fun writeSource(
   nativeFileHandler: NativeFileHandler?,
   compress: Boolean,
   filesToMerge: MutableList<CharSequence>,
+  addClassDir: Boolean = false,
 ) {
   val indexWriter = packageIndexBuilder?.indexWriter
   when (source) {
     is DirSource -> {
+      val includeManifest = sources.size == 1
       val archiver = ZipArchiver(zipCreator = zipCreator, fileAdded = { name, file ->
         if (name == listOfEntitiesFileName) {
           filesToMerge.add(Files.readString(file))
           false
         }
-        else if (uniqueNames.putIfAbsent(name, source.dir) == null && (!source.removeModuleInfo || name != "module-info.class")) {
-          packageIndexBuilder?.addFile(name)
+        else if (uniqueNames.putIfAbsent(name, source.dir) == null && (includeManifest || name != "META-INF/MANIFEST.MF")) {
+          packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
           true
         }
         else {
@@ -124,7 +130,7 @@ private suspend fun writeSource(
         throw IllegalStateException("in-memory source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
       }
 
-      packageIndexBuilder?.addFile(source.relativePath)
+      packageIndexBuilder?.addFile(source.relativePath, addClassDir = addClassDir)
       zipCreator.uncompressedData(
         nameString = source.relativePath,
         maxSize = source.data.size,
@@ -139,7 +145,7 @@ private suspend fun writeSource(
         throw IllegalStateException("fileSource source must always be first (targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
       }
 
-      packageIndexBuilder?.addFile(source.relativePath)
+      packageIndexBuilder?.addFile(source.relativePath, addClassDir = addClassDir)
       zipCreator.file(file = source.file, nameString = source.relativePath)
     }
 
@@ -157,6 +163,7 @@ private suspend fun writeSource(
           compress = compress,
           targetFile = targetFile,
           filesToMerge = filesToMerge,
+          addClassDir = addClassDir,
         )
       }
       finally {
@@ -179,7 +186,8 @@ private suspend fun writeSource(
           sources = sources,
           nativeFileHandler = nativeFileHandler,
           compress = compress,
-          filesToMerge = filesToMerge
+          filesToMerge = filesToMerge,
+          addClassDir = addClassDir
         )
       }
     }
@@ -197,6 +205,7 @@ private suspend fun handleZipSource(
   compress: Boolean,
   targetFile: Path,
   filesToMerge: MutableList<CharSequence>,
+  addClassDir: Boolean,
 ) {
   val nativeFiles = if (nativeFileHandler == null) {
     null
@@ -230,24 +239,26 @@ private suspend fun handleZipSource(
       return@suspendAwareReadZipFile
     }
 
-    val filter = source.filter
-    val isIncluded = if (filter == null) {
-      checkNameForZipSource(name = name, excludes = source.excludes, includeManifest = sources.size == 1)
-    }
-    else {
-      filter(name)
-    }
+    val includeManifest = sources.size == 1
+    val isIncluded = source.filter(name) &&
+                     (includeManifest || name != "META-INF/MANIFEST.MF")
 
     if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
       return@suspendAwareReadZipFile
     }
 
+    val sourceFileName = sourceFile.fileName.toString()
+    val isSkiko = sourceFileName.startsWith("skiko-awt-runtime-all-") && sourceFileName.endsWith(".jar")
+    val shouldStayInJar = if (isSkiko && nativeFileHandler != null) {
+      !nativeFileHandler.isNative(name) || nativeFileHandler.isCompatibleWithTargetPlatform(name)
+    } else true
+
     if (nativeFileHandler?.isNative(name) == true) {
       if (source.isPreSignedAndExtractedCandidate) {
         nativeFiles!!.value.add(name)
       }
-      else {
-        packageIndexBuilder?.addFile(name)
+      else if (shouldStayInJar) {
+        packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
 
         // sign it
         val file = nativeFileHandler.sign(name, dataSupplier)
@@ -261,8 +272,8 @@ private suspend fun handleZipSource(
         }
       }
     }
-    else {
-      packageIndexBuilder?.addFile(name)
+    else if (shouldStayInJar) {
+      packageIndexBuilder?.addFile(name, addClassDir = addClassDir)
 
       val data = dataSupplier()
       writeZipData(data)
@@ -381,12 +392,10 @@ private fun getIgnoredNames(): Set<String> {
 
 private val ignoredNames = getIgnoredNames()
 
-private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeManifest: Boolean): Boolean {
+fun defaultLibrarySourcesNamesFilter(name: String): Boolean {
   @Suppress("SpellCheckingInspection")
   return !ignoredNames.contains(name) &&
-         excludes.none { it.matches(name) } &&
          !name.endsWith(".kotlin_metadata") &&
-         (includeManifest || name != "META-INF/MANIFEST.MF") &&
          !name.startsWith("license/") &&
          !name.startsWith("META-INF/license/") &&
          !name.startsWith("META-INF/LICENSE-") &&

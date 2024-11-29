@@ -6,10 +6,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
@@ -131,27 +130,16 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
   private void processFieldsViaDfa(PsiElement body, ProblemsHolder holder) {
     DfaValueFactory factory = new DfaValueFactory(holder.getProject());
     var flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
-    Set<AssignInstruction> variables = OverwrittenFieldAnalyzer.getOverwrittenFields(flow);
-    for (AssignInstruction instruction : variables) {
-      DfaValue value = instruction.getAssignedValue();
-      if (!(value instanceof DfaVariableValue)) continue;
-      PsiField field = ObjectUtils.tryCast(((DfaVariableValue)value).getPsiVariable(), PsiField.class);
-      if (field == null) continue;
-      PsiExpression lExpression = instruction.getLExpression();
-      PsiExpression expression = instruction.getRExpression();
-      if (lExpression == null) continue;
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(lExpression.getParent());
-      if (parent instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
-          parent instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
-        holder.registerProblem(parent, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
+    Set<DfaAnchor> variables = OverwrittenFieldAnalyzer.getOverwrittenFields(flow);
+    for (DfaAnchor anchor : variables) {
+      if (!(anchor instanceof JavaExpressionAnchor expressionAnchor)) continue;
+      PsiElement expression = expressionAnchor.getExpression();
+      if (expression instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
+          expression instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
+        holder.registerProblem(expression, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
       }
-      else if (parent instanceof PsiAssignmentExpression) {
-        if (expression instanceof PsiArrayInitializerExpression ||
-            expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getArrayInitializer() != null) {
-          // Due to implementation quirk, array initializers are reassigned in CFG, so false warnings appear there
-          continue;
-        }
-        reportAssignmentProblem((PsiAssignmentExpression)parent, holder);
+      else if (expression instanceof PsiAssignmentExpression assignment) {
+        reportAssignmentProblem(assignment, holder);
       }
     }
   }

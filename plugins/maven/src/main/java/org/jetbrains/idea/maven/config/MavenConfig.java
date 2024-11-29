@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
@@ -54,10 +55,10 @@ public class MavenConfig {
     Option option = optionMap.get(configSetting.key);
     if (option == null) return null;
 
-    File file = new File(option.getValue());
-    if (file.isAbsolute() && file.exists()) return option.getValue();
-    file = new File(baseDir, option.getValue());
-    if (file.exists()) return file.getAbsolutePath();
+    Path file = Path.of(option.getValue());
+    if (file.isAbsolute() && Files.exists(file)) return option.getValue();
+    file = Path.of(baseDir, option.getValue());
+    if (Files.exists(file)) return file.toAbsolutePath().toString();
     return null;
   }
 

@@ -238,6 +238,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       }
     }
 
+    @Override
     public void setRange(long scalarRange) {
       myRange = scalarRange;
     }

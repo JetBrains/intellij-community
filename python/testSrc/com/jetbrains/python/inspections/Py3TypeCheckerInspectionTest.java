@@ -358,6 +358,46 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-36889
+  public void testInstanceAndClassAttributeAssignment() {
+    doTestByText("""
+                   from typing import ClassVar
+                   
+                   class ClassAnnotations:
+                       attr: int
+                       class_attr: ClassVar[int]
+                   
+                   ClassAnnotations().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   ClassAnnotations.class_attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   
+                   class ClassAnnotationInstanceAssignment:
+                       attr: int
+                       def __init__(self, x):
+                           self.attr = x
+                   
+                   ClassAnnotationInstanceAssignment(42).attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   
+                   class InstanceAnnotationAndAssignment:
+                       def __init__(self):
+                           self.attr: int = 42
+                   
+                   InstanceAnnotationAndAssignment().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   """);
+  }
+
+  // PY-36889
+  public void testDataclassInstanceAssignment() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   
+                   @dataclass
+                   class C:
+                       attr: int
+                   
+                   C().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   """);
+  }
+
   // PY-24832
   public void testNoTypeMismatchInAssignmentWithoutTypeAnnotation() {
     doTest();
@@ -432,6 +472,20 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    costs: dict[SpecialColors, int] = <warning descr="Expected type 'dict[Literal[Colors.RED], int]', got 'dict[Literal[Colors.GREEN], Literal[7]]' instead">{Colors.GREEN: 7}</warning>""");
   }
 
+  public void testEnumMemberAlias() {
+    doTestByText(
+      """
+        from enum import Enum
+        from typing import Literal
+        
+        class Color(Enum):
+            RED = 1
+            R = RED
+        
+        x: Literal[Color.RED]
+        x = Color.R"""
+    );
+  }
 
   // PY-42418
   public void testParametrizedBuiltinCollectionsAndTheirTypingAliasesAreEquivalent() {
@@ -2317,6 +2371,33 @@ def foo(param: str | int) -> TypeGuard[str]:
                    
                    x = Test("foo")
                    x.member = <warning descr="Expected type 'int' (from '__set__'), got 'str' instead">42</warning>
+                   """);
+  }
+
+  // PY-77539
+  public void testMatchingCallableParameterLists() {
+    doTestByText("""
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   compatible: MyCallable[[int], object] = MyCallable[[object], str]()
+                   incompatible1: MyCallable[[object], object] = <warning descr="Expected type 'MyCallable[[object], object]', got 'MyCallable[[int], str]' instead">MyCallable[[int], str]()</warning>
+                   incompatible2: MyCallable[[int], str] = <warning descr="Expected type 'MyCallable[[int], str]', got 'MyCallable[[object], object]' instead">MyCallable[[object], object]()</warning>
+                   """);    
+  }
+
+  // PY-77541
+  public void testMatchingUnboundParamSpecWithAnotherParamSpecInCustomGeneric() {
+    doTestByText("""
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   
+                   def f[**P, R](callback: MyCallable[P, R]) -> MyCallable[P, R]:
+                       ...
+                   
+                   def g[**P2, R2](callback: MyCallable[P2, R2]) -> MyCallable[P2, R2]:
+                       return f(callback)
                    """);
   }
 

@@ -9,7 +9,6 @@ import com.intellij.psi.impl.JavaSimplePropertyGistKt;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -41,13 +40,14 @@ public final class PropertyUtil extends PropertyUtilBase {
   private static @Nullable PsiField getFieldImpl(@NotNull PsiMethod method,
                                                  @NotNull Supplier<? extends PsiExpression> returnExprSupplier,
                                                  boolean useIndex) {
+    if (!method.getParameterList().isEmpty()) return null;
     if (method instanceof LightRecordMethod) {
       PsiRecordComponent component = JavaPsiRecordUtil.getRecordComponentForAccessor(method);
       return component == null ? null : JavaPsiRecordUtil.getFieldForComponent(component);
     }
     if (useIndex) {
       if (PsiUtil.preferCompiledElement(method) instanceof ClsMethodImpl compiledMethod) {
-        return ProjectBytecodeAnalysis.getInstance(method.getProject()).findFieldForGetter(compiledMethod);
+        return ProjectBytecodeAnalysis.getInstance(method.getProject()).findFieldForAccessor(compiledMethod);
       }
       if (method instanceof PsiMethodImpl && method.isPhysical()) {
         return JavaSimplePropertyGistKt.getFieldOfGetter(method);
@@ -85,69 +85,41 @@ public final class PropertyUtil extends PropertyUtilBase {
     if (useIndex && method instanceof PsiMethodImpl && method.isPhysical()) {
       field = JavaSimplePropertyGistKt.getFieldOfSetter(method);
     }
-    else {
-      @NonNls final String name = method.getName();
-      if (!name.startsWith(SET_PREFIX)) {
-        return null;
-      }
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return null;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length != 1) {
-        return null;
-      }
-      final PsiStatement statement = statements[0];
-      if (!(statement instanceof PsiExpressionStatement possibleAssignmentStatement)) {
-        return null;
-      }
-      final PsiExpression possibleAssignment = possibleAssignmentStatement.getExpression();
-      if (!(possibleAssignment instanceof PsiAssignmentExpression assignment)) {
-        return null;
-      }
-      if (!JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
-        return null;
-      }
-      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression reference)) {
-        return null;
-      }
-      final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
-      if (qualifier instanceof PsiReferenceExpression referenceExpression) {
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiClass)) {
-          return null;
-        }
-      }
-      else if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
-        return null;
-      }
-      final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiField)) {
-        return null;
-      }
-      field = (PsiField)referent;
-
-      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
-      if (!(rhs instanceof PsiReferenceExpression rReference)) {
-        return null;
-      }
-      final PsiExpression rQualifier = rReference.getQualifierExpression();
-      if (rQualifier != null) {
-        return null;
-      }
-      final PsiElement rReferent = rReference.resolve();
-      if (rReferent == null) {
-        return null;
-      }
-      if (!(rReferent instanceof PsiParameter)) {
-        return null;
-      }
+    else if (useIndex && method instanceof ClsMethodImpl) {
+      field = ProjectBytecodeAnalysis.getInstance(method.getProject()).findFieldForAccessor(method);
     }
-    return field != null && field.getType().equals(parameterList.getParameters()[0].getType()) && checkFieldLocation(method, field)
-           ? field
-           : null;
+    else {
+      field = getFieldFromSetterExplicit(method);
+    }
+    if (field == null) return null;
+    return field.getType().equals(parameterList.getParameters()[0].getType()) && 
+           checkFieldLocation(method, field) ? field : null;
+  }
+
+  private static @Nullable PsiField getFieldFromSetterExplicit(@NotNull PsiMethod method) {
+    String name = method.getName();
+    if (!name.startsWith(SET_PREFIX)) return null;
+    PsiCodeBlock body = method.getBody();
+    if (body == null) return null;
+    PsiStatement[] statements = body.getStatements();
+    if (statements.length != 1 || !(statements[0] instanceof PsiExpressionStatement possibleAssignmentStatement)) return null;
+    PsiExpression possibleAssignment = possibleAssignmentStatement.getExpression();
+    if (!(possibleAssignment instanceof PsiAssignmentExpression assignment)) return null;
+    if (!JavaTokenType.EQ.equals(assignment.getOperationTokenType())) return null;
+    PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
+    if (!(lhs instanceof PsiReferenceExpression reference)) return null;
+    PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
+    boolean allowedQualifier =
+      qualifier == null || qualifier instanceof PsiQualifiedExpression ||
+      (qualifier instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiClass);
+    if (!allowedQualifier) return null;
+    if (!(reference.resolve() instanceof PsiField field)) return null;
+
+    PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
+    if (!(rhs instanceof PsiReferenceExpression rReference)) return null;
+    if (rReference.getQualifierExpression() != null) return null;
+    if (!(rReference.resolve() instanceof PsiParameter)) return null;
+    return field;
   }
 
   public static boolean isSimpleSetter(@Nullable PsiMethod method) {

@@ -1,4 +1,5 @@
 // "Make '<init>' private" "true"
+// PRIORITY: HIGH
 // ACTION: Add 'val' or 'var' to parameter 'arg'
 // ACTION: Convert to secondary constructor
 // ACTION: Create test

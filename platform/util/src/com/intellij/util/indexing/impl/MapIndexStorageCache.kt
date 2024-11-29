@@ -45,6 +45,7 @@ interface MapIndexStorageCache<Key : Any, Value> {
   fun invalidateAll()
 }
 
+
 @Internal
 interface MapIndexStorageCacheProvider {
   fun <Key : Any, Value> createCache(
@@ -103,6 +104,9 @@ interface MapIndexStorageCacheProvider {
 /** Implementation uses a [SLRUCache] under the hood */
 @Internal
 object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
+  //RC: unfortunately, we can't create thread-unsafe cache now and rely on storage lock, because storage lock is RW, and we
+  // often _modify_ the cache under storage read operation/storage read lock
+  private const val THREAD_SAFE_IMPL = true
 
   init {
     thisLogger().info("SLRU cache will be used for indexes")
@@ -126,7 +130,15 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
     hashingStrategy: EqualityPolicy<Key>,
     cacheSizeHint: Int,
-  ): MapIndexStorageCache<Key, Value> = SlruCache(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
+  ): MapIndexStorageCache<Key, Value> {
+    val underlyingCache = SlruCache(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
+    return if (THREAD_SAFE_IMPL) {
+      LockedCacheWrapper(underlyingCache)
+    }
+    else {
+      underlyingCache
+    }
+  }
 
   private class SlruCache<Key : Any, Value>(
     val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
@@ -145,42 +157,59 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
       }
 
       override fun onDropFromCache(key: Key, valueContainer: ChangeTrackingValueContainer<Value>) {
-        assert(cacheAccessLock.isHeldByCurrentThread)
-
         totalEvicted.incrementAndGet()
 
         evictedValuesPersister.accept(key, valueContainer)
       }
     }
 
-    private val cacheAccessLock = ReentrantLock()
-
-    override fun read(key: Key): ChangeTrackingValueContainer<Value> = cacheAccessLock.withLock {
+    override fun read(key: Key): ChangeTrackingValueContainer<Value> {
       totalReads.incrementAndGet()
-      cache.get(key)
+      return cache.get(key)
     }
 
-    override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock {
+    override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
       totalReads.incrementAndGet()
-      cache.getIfCached(key)
+      return cache.getIfCached(key)
     }
 
-    override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock { cache.values() }
+    override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> {
+      return cache.values()
+    }
 
     override fun invalidateAll() {
-      while (!cacheAccessLock.tryLock(10, MILLISECONDS)) {
-        IOCancellationCallbackHolder.checkCancelled()
-      }
-      try {
-        cache.clear()
-      }
-      finally {
-        cacheAccessLock.unlock()
-      }
+      cache.clear()
     }
   }
 }
 
+
+/**
+ * Wrapper around a cache implementation: adds simple ReentrantLock over every operation.
+ * Simplest and primitive way to add a thread-safety a non-thread-safe cache implementation
+ */
+internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache: MapIndexStorageCache<Key, Value>) : MapIndexStorageCache<Key, Value> {
+  private val cacheAccessLock = ReentrantLock()
+
+
+  override fun read(key: Key): ChangeTrackingValueContainer<Value> = cacheAccessLock.withLock { underlyingCache.read(key) }
+
+  override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock { underlyingCache.readIfCached(key) }
+
+  override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock { underlyingCache.getCachedValues() }
+
+  override fun invalidateAll() = cacheAccessLock.withLock {
+    while (!cacheAccessLock.tryLock(10, MILLISECONDS)) {
+      IOCancellationCallbackHolder.checkCancelled()
+    }
+    try {
+      underlyingCache.invalidateAll()
+    }
+    finally {
+      cacheAccessLock.unlock()
+    }
+  }
+}
 
 /** Implementation uses a very simple MRU-cache under the hood */
 @Suppress("unused")
@@ -309,7 +338,7 @@ class CaffeineIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
     hashingStrategy: EqualityPolicy<Key>,
     cacheSizeHint: Int,
-  ): MapIndexStorageCache<Key, Value> = CaffeineCache(valueReader, evictedValuesPersister, OFFLOAD_IO, hashingStrategy, cacheSizeHint)
+    ): MapIndexStorageCache<Key, Value> = CaffeineCache(valueReader, evictedValuesPersister, OFFLOAD_IO, hashingStrategy, cacheSizeHint)
 
   //TODO RC: implement
   override fun totalReads(): Long = 0

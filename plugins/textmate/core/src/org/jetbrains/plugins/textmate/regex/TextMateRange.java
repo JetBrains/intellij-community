@@ -3,8 +3,6 @@ package org.jetbrains.plugins.textmate.regex;
 import java.util.Objects;
 
 public final class TextMateRange {
-  public static final TextMateRange EMPTY_RANGE = new TextMateRange(0, 0);
-
   public final int start;
   public final int end;
 

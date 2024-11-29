@@ -43,6 +43,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -543,6 +544,7 @@ class ApplyPatchViewer implements Disposable {
 
     @NotNull
     @RequiresEdt
+    @Unmodifiable
     private List<ApplyPatchChange> getSelectedChanges(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
       BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -655,6 +657,7 @@ class ApplyPatchViewer implements Disposable {
   private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<ApplyPatchChange> {
     @NotNull
     @Override
+    @Unmodifiable
     protected List<ApplyPatchChange> getChanges() {
       return ContainerUtil.filter(getCurrentSide().select(myResultChanges, myPatchChanges), it -> !it.isResolved());
     }

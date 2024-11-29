@@ -27,7 +27,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
@@ -114,7 +113,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   /** Whether a system is able to open a directory in a file manager. */
   public static boolean isDirectoryOpenSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || Holder.fileManagerPresent;
+    return SystemInfo.isWindows || SystemInfo.isMac || Holder.fileManagerApp != null;
   }
 
   public static @ActionText @NotNull String getActionName() {
@@ -308,14 +307,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static final class Holder {
-    private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
-
-    private static final boolean fileManagerPresent;
     private static final @Nullable String fileManagerApp;
     private static final @Nullable @NlsSafe String fileManagerName;
 
     static {
-      boolean fmPresent = false;
       String fmApp = null, fmName = null;
       if (SystemInfo.hasXdgMime()) {
         try (var reader = new ProcessBuilder("xdg-mime", "query", "default", "inode/directory").start().inputReader()) {
@@ -326,12 +321,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
               .filter(Files::exists)
               .findFirst();
             if (desktopFile.isPresent()) {
-              fmPresent = true;
               var lines = Files.readAllLines(desktopFile.get());
               fmApp = lines.stream()
                 .filter(line -> line.startsWith("Exec="))
                 .map(line -> line.substring(5).split(" ")[0])
-                .filter(app -> ContainerUtil.exists(supportedFileManagers, supportedFileManager -> app.endsWith(supportedFileManager)))
                 .findFirst().orElse(null);
               fmName = lines.stream()
                 .filter(line -> line.startsWith("Name="))
@@ -344,7 +337,6 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
           LOG.info(e);
         }
       }
-      fileManagerPresent = fmPresent;
       fileManagerApp = fmApp;
       fileManagerName = fmName;
     }

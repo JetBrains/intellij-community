@@ -93,7 +93,7 @@ public final class MavenPluginDomUtil {
 
   @Nullable
   private static VirtualFile getPluginXmlFile(Project project, String groupId, String artifactId, String version) {
-    Path file = MavenArtifactUtil.getArtifactNioPath(MavenProjectsManager.getInstance(project).getLocalRepository(),
+    Path file = MavenArtifactUtil.getArtifactNioPath(MavenProjectsManager.getInstance(project).getRepositoryPath(),
                                                      groupId, artifactId, version, "jar");
     VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByNioFile(file);
     if (pluginFile == null) return null;

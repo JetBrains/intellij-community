@@ -273,13 +273,13 @@ public abstract class JsonSchemaObject {
   public abstract @Nullable String getLanguageInjection();
 
   /**
-   * @deprecated use {@link JsonSchemaObject#readChildNodeValue)} with the corresponding parameter
+   * @deprecated use {@link JsonSchemaTraversalUtilsKt#getChildAsText(JsonSchemaObject, String...)} with the corresponding parameter
    */
   @Deprecated
   public abstract @Nullable String getLanguageInjectionPrefix();
 
   /**
-   * @deprecated use {@link JsonSchemaObject#readChildNodeValue)} with the corresponding parameter
+   * @deprecated use {@link JsonSchemaTraversalUtilsKt#getChildAsText(JsonSchemaObject, String...)} with the corresponding parameter
    */
   @Deprecated
   public abstract @Nullable String getLanguageInjectionPostfix();

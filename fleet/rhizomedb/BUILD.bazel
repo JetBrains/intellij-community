@@ -1,27 +1,27 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+### auto-generated section `build fleet.rhizomedb` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "17",
-  x_optin = ["kotlin.ExperimentalStdlibApi"]
+  allow_kotlin_package = True,
+  opt_in = ["kotlin.ExperimentalStdlibApi"]
 )
 
-kt_jvm_library(
-  name = "fleet-rhizomedb",
+jvm_library(
+  name = "rhizomedb",
   module_name = "fleet.rhizomedb",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"]),
-  javac_opts = "//:j17",
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
   kotlinc_opts = ":custom",
   deps = [
-    "@community//fleet/util/core:fleet-util-core",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlin-reflect",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@libraries//:annotations",
+    "//fleet/util/core:fleet-util-core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:jetbrains-annotations",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build fleet.rhizomedb` end

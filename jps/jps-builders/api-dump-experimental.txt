@@ -1,3 +1,5 @@
+org.jetbrains.jps.api.GlobalOptions
+- *sf:USE_IN_MEMORY_FAILED_BUILD_LOGGER:java.lang.String
 *a:org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider
 - <init>():V
 - a:provideAuthenticationData(java.lang.String):org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider$AuthenticationData

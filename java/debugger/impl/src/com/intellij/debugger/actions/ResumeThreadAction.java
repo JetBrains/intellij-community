@@ -18,6 +18,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class ResumeThreadAction extends DebuggerAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -33,8 +35,8 @@ public class ResumeThreadAction extends DebuggerAction {
 
       if (threadDescriptor.isSuspended()) {
         final ThreadReferenceProxyImpl thread = threadDescriptor.getThreadReference();
-        DebuggerManagerThreadImpl debuggerManagerThread = debugProcess.getManagerThread();
-        debuggerManagerThread.schedule(new DebuggerCommandImpl() {
+        DebuggerManagerThreadImpl debuggerManagerThread = debuggerContext.getManagerThread();
+        Objects.requireNonNull(debuggerManagerThread).schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             SuspendContextImpl suspendingContext = SuspendManagerUtil.getSuspendingContext(debugProcess.getSuspendManager(), thread);

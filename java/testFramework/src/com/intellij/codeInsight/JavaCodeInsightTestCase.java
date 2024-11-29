@@ -43,6 +43,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -313,6 +314,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
+  @Unmodifiable
   protected final @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     return ContainerUtil.map(editorInfos.keySet(), newVFile -> {
       PsiFile file = myPsiManager.findFile(newVFile);

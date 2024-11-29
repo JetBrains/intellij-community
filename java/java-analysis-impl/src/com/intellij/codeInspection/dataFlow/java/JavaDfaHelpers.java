@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.DfaWrappedValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -72,5 +73,10 @@ public final class JavaDfaHelpers {
       psiType = expression.getFunctionalInterfaceType();
     }
     return (psiType == null ? DfType.TOP : TypeConstraints.exactSubtype(expression, psiType).asDfType()).meet(DfTypes.NOT_NULL_OBJECT);
+  }
+
+  static boolean mayLeakFromExpression(@NotNull PsiExpression expression) {
+    PsiElement parent = ExpressionUtils.getPassThroughParent(expression);
+    return !(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiPolyadicExpression);
   }
 }

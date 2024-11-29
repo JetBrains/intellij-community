@@ -20,6 +20,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
   @Override
@@ -47,7 +49,7 @@ public final class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounde
       final ProgressWindow progressWindow = new ProgressWindow(true, expr.getProject());
       SurroundWithCastWorker worker = new SurroundWithCastWorker(editor, expr, debuggerContext, progressWindow);
       progressWindow.setTitle(JavaDebuggerBundle.message("title.evaluating"));
-      debuggerContext.getDebugProcess().getManagerThread().startProgress(worker, progressWindow);
+      Objects.requireNonNull(debuggerContext.getManagerThread()).startProgress(worker, progressWindow);
     }
     return null;
   }

@@ -37,7 +37,7 @@ PsiJavaFile:LocalRecordWithoutParens.java
         PsiDeclarationStatement
           PsiModifierList:
             <empty list>
-          PsiIdentifier:record('record')
+          PsiKeyword:record('record')
           PsiWhiteSpace(' ')
           PsiIdentifier:R('R')
           PsiErrorElement:'<' or '(' expected

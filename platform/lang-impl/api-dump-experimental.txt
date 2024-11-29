@@ -278,6 +278,16 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+*:com.intellij.codeInsight.hints.codeVision.UsageCounterConfigurationBase
+- a:countUsages(com.intellij.psi.PsiFile,java.util.List,com.intellij.psi.search.SearchScope):I
+- createCacheMap():java.util.concurrent.ConcurrentMap
+*a:com.intellij.codeInsight.hints.codeVision.UsagesCountManagerBase
+- com.intellij.openapi.Disposable
+- <init>(com.intellij.openapi.project.Project,com.intellij.codeInsight.hints.codeVision.UsageCounterConfigurationBase):V
+- f:countMemberUsages(com.intellij.psi.PsiFile,java.lang.Object):I
+- dispose():V
+- pa:findSupers(java.lang.Object):java.util.List
+- pa:getKey(java.lang.Object):java.lang.String
 *f:com.intellij.codeInsight.hints.presentation.ContainerInlayPresentation
 - com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
 - <init>(com.intellij.codeInsight.hints.presentation.InlayPresentation,com.intellij.codeInsight.hints.InlayPresentationFactory$Padding,com.intellij.codeInsight.hints.InlayPresentationFactory$RoundedCorners,java.awt.Color,F):V

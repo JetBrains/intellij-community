@@ -3947,6 +3947,25 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
+            public static class TestEnumConstants extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("enumConstants.0.kt")
+                public void testEnumConstants() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/enumConstants.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestJvmOverloaded extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
@@ -6123,6 +6142,25 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("JKFieldUsages.0.java")
                 public void testJKFieldUsages() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsages.0.java");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/java/findJavaFieldUsages")
+            public static class TestJKFieldUsagesReadWriteAccess extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("JKFieldUsagesReadWriteAccess.0.java")
+                public void testJKFieldUsagesReadWriteAccess() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/java/findJavaFieldUsages/JKFieldUsagesReadWriteAccess.0.java");
                 }
             }
         }

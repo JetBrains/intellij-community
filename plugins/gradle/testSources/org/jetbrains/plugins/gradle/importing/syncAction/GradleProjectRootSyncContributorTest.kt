@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.intellij.openapi.externalSystem.util.ListenerAssertion
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.testFramework.utils.module.assertContentRoots
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings

@@ -115,6 +115,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return myAlternateCollectionRenderers[0].isEnabled();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof NodeRendererSettings)) return false;
 
@@ -364,7 +365,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     else if (rendererId.equals(CompoundReferenceRenderer.UNIQUE_ID) ||
              rendererId.equals(CompoundReferenceRenderer.UNIQUE_ID_OLD) ||
              rendererId.equals(REFERENCE_RENDERER)) {
-      return createCompoundReferenceRenderer("unnamed", CommonClassNames.JAVA_LANG_OBJECT, null, null);
+      CompoundReferenceRenderer renderer = createCompoundReferenceRenderer("unnamed", CommonClassNames.JAVA_LANG_OBJECT, null, null);
+      renderer.setHasOverhead(true);
+      return renderer;
     }
     return null;
   }

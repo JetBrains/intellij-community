@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.indexing.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "indexing-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "indexing-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ]
+)
+### auto-generated section `build intellij.platform.indexing.tests` end

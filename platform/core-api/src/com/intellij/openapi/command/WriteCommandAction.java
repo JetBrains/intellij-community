@@ -112,7 +112,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       Application application = ApplicationManager.getApplication();
       boolean dispatchThread = application.isDispatchThread();
 
-      if (!dispatchThread && application.isReadAccessAllowed()) {
+      if (!dispatchThread && application.holdsReadLock()) {
         throw new IllegalStateException("Must not start write action from within read action in the other thread - deadlock is coming");
       }
 

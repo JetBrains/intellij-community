@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.platform.vcs.log.graph.impl` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "vcs-log-graph-impl",
+  module_name = "intellij.platform.vcs.log.graph.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "@lib//:kotlin-stdlib",
+    "@lib//:guava",
+    "@lib//:fastutil-min",
+  ],
+  exports = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+  ]
+)
+
+kt_jvm_test(
+  name = "vcs-log-graph-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":vcs-log-graph-impl"],
+  deps = [
+    "//platform/util",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "@lib//:junit4",
+    "@lib//:kotlin-stdlib",
+    "@lib//:guava",
+    "@lib//:fastutil-min",
+    "@lib//:assert_j",
+    "@lib//:kotlin-test",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.log.graph.impl` end

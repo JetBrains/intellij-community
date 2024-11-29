@@ -31,7 +31,9 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
           return false;
         }
       }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
+      catch (IndexNotReadyException ignore) {
+      }
+      catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {

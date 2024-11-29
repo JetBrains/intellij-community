@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.vcs.git.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "vcs-git-featuresTrainer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-git-featuresTrainer",
+  module_name = "intellij.vcs.git.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:git-learning-project",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/vcs-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//plugins/git4idea:vcs-git",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":vcs-git-featuresTrainer_resources"]
+)
+
+kt_jvm_test(
+  name = "vcs-git-featuresTrainer_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":vcs-git-featuresTrainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:git-learning-project",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/code-style-api:codeStyle",
+    "//platform/vcs-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//plugins/git4idea:vcs-git",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ],
+  runtime_deps = [":vcs-git-featuresTrainer_resources"]
+)
+### auto-generated section `build intellij.vcs.git.featuresTrainer` end

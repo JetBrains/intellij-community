@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +25,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
                        @NotNull WatchesRootNode parent,
                        @NotNull XExpression expression,
                        @Nullable XStackFrame stackFrame) {
-    this(tree, parent, expression, stackFrame, expression.getExpression());
+    this(tree, parent, expression, stackFrame, renderName(expression));
   }
 
   WatchNodeImpl(@NotNull XDebuggerTree tree,
@@ -46,8 +46,14 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
   }
 
   protected WatchNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression, XNamedValue value) {
-    super(tree, parent, expression.getExpression(), value);
+    super(tree, parent, renderName(expression), value);
     myExpression = expression;
+  }
+
+  protected static String renderName(XExpression expression) {
+    StringBuilder output = new StringBuilder();
+    XValuePresentationUtil.renderName(expression.getExpression(), Integer.MAX_VALUE, s -> output.append(s));
+    return output.toString();
   }
 
   @Override
@@ -81,6 +87,11 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     if (getValuePresentation() == null) {
       getValueContainer().computePresentation(this, XValuePlace.TREE);
     }
+  }
+
+  @Override
+  protected boolean shouldUpdateInlineDebuggerData() { // regular watches do not have inline data
+    return false;
   }
 
   private static class XWatchValue extends XNamedValue {

@@ -1,0 +1,5 @@
+[Other Values]
+3 	return <bold>"impl"</bold>;
+4 		<bold>val s</bold> = b.value (in main(JavaClass))
+4 			val s = <bold>b.value</bold> (in main(JavaClass))
+3 				JAVA: return <bold>"impl"</bold>; (in JavaClass.getValue())

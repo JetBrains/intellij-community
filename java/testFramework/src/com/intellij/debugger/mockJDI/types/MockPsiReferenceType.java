@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -124,6 +125,7 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
   }
 
   @Override
+  @Unmodifiable
   public List<Method> methods() {
     return ContainerUtil.map(myClass.getMethods(), m -> new MockPsiMethod(myVirtualMachine, m));
   }
@@ -137,11 +139,13 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
   }
 
   @Override
+  @Unmodifiable
   public List<Method> allMethods() {
     return ContainerUtil.map(myClass.getAllMethods(), m -> new MockPsiMethod(myVirtualMachine, m));
   }
 
   @Override
+  @Unmodifiable
   public List<Method> methodsByName(String name) {
     return ContainerUtil.map(myClass.findMethodsByName(name, true), m -> new MockPsiMethod(myVirtualMachine, m));
   }

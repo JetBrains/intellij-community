@@ -118,6 +118,7 @@ c:com.intellij.openapi.diff.impl.patch.PatchSyntaxException
 - getLine():I
 - getMessage():java.lang.String
 f:com.intellij.openapi.diff.impl.patch.TextPatchBuilder
+- s:buildPatch(java.util.Collection,java.nio.file.Path,Z):java.util.List
 - s:buildPatch(java.util.Collection,java.nio.file.Path,Z,java.lang.Runnable):java.util.List
 - s:buildPatchHunks(java.lang.String,java.lang.String):java.util.List
 - s:buildPatchHunks(java.lang.String,java.lang.String,I):java.util.List
@@ -985,7 +986,6 @@ c:com.intellij.openapi.vcs.changes.IgnoredViewDialog
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:getDimensionServiceKey():java.lang.String
-- p:getFiles():java.util.List
 - getPreferredFocusedComponent():javax.swing.JComponent
 f:com.intellij.openapi.vcs.changes.LastUnchangedContentTracker
 - <init>():V
@@ -1028,6 +1028,8 @@ f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent
 - closePreview():V
 - openPreview(Z):Z
 - f:updatePreview(Z):V
+f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponentKt
+- sf:shouldHaveSplitterDiffPreview(com.intellij.openapi.project.Project,Z):Z
 c:com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFileWithTabName
@@ -1056,6 +1058,7 @@ c:com.intellij.openapi.vcs.changes.RunnableBackgroundableWrapper
 - run(com.intellij.openapi.progress.ProgressIndicator):V
 c:com.intellij.openapi.vcs.changes.SimpleContentRevision
 - com.intellij.openapi.vcs.changes.ContentRevision
+- <init>(java.lang.String,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.history.VcsRevisionNumber):V
 - <init>(java.lang.String,com.intellij.openapi.vcs.FilePath,java.lang.String):V
 - getContent():java.lang.String
 - getFile():com.intellij.openapi.vcs.FilePath
@@ -1077,7 +1080,6 @@ c:com.intellij.openapi.vcs.changes.UnversionedViewDialog
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:getDimensionServiceKey():java.lang.String
-- p:getFiles():java.util.List
 - getPreferredFocusedComponent():javax.swing.JComponent
 - s:getUnversionedPopupGroup():com.intellij.openapi.actionSystem.ActionGroup
 - s:getUnversionedToolbarGroup():com.intellij.openapi.actionSystem.ActionGroup
@@ -1124,12 +1126,17 @@ f:com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager$State
 - f:getOpenInNewWindow():Z
 - f:setOpenInNewWindow(Z):V
 c:com.intellij.openapi.vcs.changes.VcsFreezingProcess
+- sf:Companion:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Companion
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.Runnable):V
 - execute():V
+f:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Companion
+- f:runFreezing(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener
+- sf:Companion:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
 - onFreeze():V
 - onUnfreeze():V
+f:com.intellij.openapi.vcs.changes.VcsFreezingProcess$Listener$Companion
 com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 - com.intellij.openapi.vcs.changes.FileHolder
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -2618,11 +2625,17 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 - isShowingLocalChanges():Z
 - setBackgroundInsets(com.intellij.util.ui.JBInsets):V
 - setIcon(com.intellij.openapi.vcs.FilePath,Z):V
-a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilePathsNode
+c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilePathsNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
+- p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
+c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilesNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
+- p:<init>(java.lang.Object,java.util.Collection,I,java.lang.Runnable):V
+a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - pf:myDialogShower:java.lang.Runnable
 - pf:myIsMany:Z
-- p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
+- p:<init>(java.lang.Object,java.util.Collection,I,java.lang.Runnable):V
 - getDirectoryCount():I
 - getFileCount():I
 - isManyFiles():Z
@@ -2691,6 +2704,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - sf:IGNORED_FILE_PATHS_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:LOCALLY_DELETED_CHANGES:com.intellij.openapi.actionSystem.DataKey
 - sf:MISSING_FILES_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:MODIFIED_WITHOUT_EDITING_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:UNVERSIONED_FILE_PATHS_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,Z):V
 - dropSelectionButUnderPoint(java.awt.Point):V
@@ -3867,9 +3881,11 @@ f:com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory
 f:com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI
 - f:getInstanceImpl(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+- f:getTOPIC():com.intellij.util.messages.Topic
 com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener
 - java.util.EventListener
 - onTrackerAdded(com.intellij.openapi.vcs.ex.LineStatusTracker):V
+- onTrackerBecomeValid(com.intellij.openapi.vcs.ex.LineStatusTracker):V
 - onTrackerRemoved(com.intellij.openapi.vcs.ex.LineStatusTracker):V
 c:com.intellij.openapi.vcs.impl.LineStatusTrackerManager$ListenerAdapter
 - com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener
@@ -3967,7 +3983,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - iterateVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor,com.intellij.openapi.vcs.VirtualFileFilter):V
 - iterateVfUnderVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 - loadState(org.jdom.Element):V
-- needAutodetectMappings():Z
 - notifyDirectoryMappingChanged():V
 - registerNewDirectMappings(java.util.Collection):V
 - registerVcs(com.intellij.openapi.vcs.AbstractVcs):V
@@ -4660,15 +4675,6 @@ f:com.intellij.vcs.changes.VcsChangesLocalSearchScope
 - getVirtualFiles():com.intellij.openapi.vfs.VirtualFile[]
 - getWeight():I
 f:com.intellij.vcs.changes.VcsChangesLocalSearchScope$Companion
-a:com.intellij.vcs.commit.AbstractCommitMessagePolicy
-- <init>(com.intellij.openapi.project.Project):V
-- pf:getChangeListManager():com.intellij.openapi.vcs.changes.ChangeListManager
-- pf:getCommitMessageForList(com.intellij.openapi.vcs.changes.LocalChangeList):java.lang.String
-- pf:getCommitMessageFromProvider(com.intellij.openapi.vcs.changes.LocalChangeList):java.lang.String
-- pf:getCommitMessageFromVcs(java.util.List):java.lang.String
-- pf:getProject():com.intellij.openapi.project.Project
-- pf:getVcsConfiguration():com.intellij.openapi.vcs.VcsConfiguration
-- pf:listenForDelayedProviders(com.intellij.vcs.commit.CommitMessageUi,com.intellij.openapi.Disposable):V
 a:com.intellij.vcs.commit.AbstractCommitWorkflow
 - sf:Companion:com.intellij.vcs.commit.AbstractCommitWorkflow$Companion
 - <init>(com.intellij.openapi.project.Project):V
@@ -4842,10 +4848,8 @@ f:com.intellij.vcs.commit.CommitAuthorComponent
 a:com.intellij.vcs.commit.CommitChangeListDialogWorkflow
 - com.intellij.vcs.commit.AbstractCommitWorkflow
 - commitState:com.intellij.vcs.commit.ChangeListCommitState
-- <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection):V
-- p:addCommonResultHandlers(com.intellij.vcs.commit.CommitSessionInfo,com.intellij.vcs.commit.Committer):V
+- <init>(com.intellij.openapi.project.Project):V
 - f:getCommitState():com.intellij.vcs.commit.ChangeListCommitState
-- f:getInitiallyIncluded():java.util.Collection
 - a:isPartialCommitEnabled():Z
 - f:setCommitState(com.intellij.vcs.commit.ChangeListCommitState):V
 a:com.intellij.vcs.commit.CommitCheckFailure
@@ -5193,7 +5197,7 @@ f:com.intellij.vcs.commit.ShowNotificationCommitResultHandler
 - onSuccess():V
 f:com.intellij.vcs.commit.SingleChangeListCommitWorkflow
 - com.intellij.vcs.commit.CommitChangeListDialogWorkflow
-- <init>(com.intellij.openapi.project.Project,java.util.Set,java.util.Collection,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,Z,java.lang.String,com.intellij.openapi.vcs.changes.CommitResultHandler):V
+- <init>(com.intellij.openapi.project.Project,java.util.Set,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,Z,com.intellij.openapi.vcs.changes.CommitResultHandler):V
 - f:getInitialChangeList():com.intellij.openapi.vcs.changes.LocalChangeList
 - isDefaultCommitEnabled():Z
 - isPartialCommitEnabled():Z
@@ -5201,11 +5205,12 @@ f:com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler
 - com.intellij.vcs.commit.AbstractCommitWorkflowHandler
 - com.intellij.vcs.commit.CommitWorkflowUiStateListener
 - com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi$ChangeListListener
-- <init>(com.intellij.vcs.commit.CommitChangeListDialogWorkflow,com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi):V
+- <init>(com.intellij.vcs.commit.CommitChangeListDialogWorkflow,com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi,java.lang.String,java.util.Collection):V
 - f:activate():Z
 - beforeCommitChecksEnded(com.intellij.vcs.commit.CommitSessionInfo,com.intellij.vcs.commit.CommitChecksResult):V
 - cancelled():V
 - changeListChanged(com.intellij.openapi.vcs.changes.LocalChangeList,com.intellij.openapi.vcs.changes.LocalChangeList):V
+- f:getInitiallyIncluded():java.util.Collection
 - getUi():com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 - getWorkflow():com.intellij.vcs.commit.CommitChangeListDialogWorkflow
 - isExecutorEnabled(com.intellij.openapi.vcs.changes.CommitExecutor):Z

@@ -1,11 +1,9 @@
 // MODE: inheritors
 
-/*<# block [ 4 Inheritors] #>*/
-open class SomeClass {
-    class NestedDerivedClass: SomeClass() {} // <== (1): nested class
+open class SomeClass {/*<# [5 Inheritors] #>*/
+class NestedDerivedClass: SomeClass() {} // <== (1): nested class
 }
-/*<# block [ 1 Inheritor] #>*/
-open class DerivedClass : SomeClass {} // <== (2): direct derived one
+open class DerivedClass : SomeClass {} // <== (2): direct derived one/*<# [1 Inheritor] #>*/
 class AnotherDerivedClass : SomeClass {} // <== (3): yet another derived one
 class DerivedDerivedClass : DerivedClass { // <== (): indirect inheritor of SomeClass
     fun main() {

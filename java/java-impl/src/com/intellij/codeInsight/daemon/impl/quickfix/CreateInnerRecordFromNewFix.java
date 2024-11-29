@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class CreateInnerRecordFromNewFix extends CreateInnerClassFromNewFix {
   }
 
   @Override
+  @Unmodifiable
   protected List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
     return ContainerUtil.filter(super.filterTargetClasses(element, project), 
                                 cls -> cls.getContainingClass() == null || cls.hasModifierProperty(PsiModifier.STATIC));

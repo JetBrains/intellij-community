@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.ae.database.community` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "ae-database-community_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "ae-database-community",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    ":ae-database-community_resources",
+    "//plugins/feature-usage-database/core:ae-database-core",
+    "//plugins/feature-usage-database/counters:ae-database-counters-community",
+  ]
+)
+### auto-generated section `build intellij.ae.database.community` end

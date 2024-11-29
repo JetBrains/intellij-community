@@ -16,6 +16,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -99,6 +100,7 @@ public class FindUsagesHandlerBase {
     return FindUsagesHelper.processUsagesInText(element, stringToSearch, false, searchScope, processor);
   }
 
+  @Unmodifiable
   protected @Nullable Collection<String> getStringsToSearch(final @NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
@@ -111,6 +113,7 @@ public class FindUsagesHandlerBase {
     return false;
   }
 
+  @Unmodifiable
   public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     return ReferencesSearch.search(createSearchParameters(target, searchScope, null)).findAll();
   }

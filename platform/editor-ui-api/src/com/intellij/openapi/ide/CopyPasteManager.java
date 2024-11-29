@@ -16,6 +16,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.util.EventListener;
 
+@ApiStatus.NonExtendable
 public abstract class CopyPasteManager {
   private static final Logger LOG = Logger.getInstance(CopyPasteManager.class);
 
@@ -78,18 +79,22 @@ public abstract class CopyPasteManager {
   /**
    * Tells whether {@linkplain Toolkit#getSystemSelection() system selection} is supported in the current system.
    */
-  public abstract boolean isSystemSelectionSupported();
+  public boolean isSystemSelectionSupported() {
+    return false;
+  }
 
   /**
    * Returns current system selection contents, or {@code null} if system selection has no contents, or if it's
    * {@linkplain #isSystemSelectionSupported() not supported}.
    */
-  public abstract @Nullable Transferable getSystemSelectionContents();
+  public @Nullable Transferable getSystemSelectionContents() {
+    return null;
+  }
 
   /**
    * Sets current system selection contents. Does nothing if system selection is {@linkplain #isSystemSelectionSupported() not supported}.
    */
-  public abstract void setSystemSelectionContents(@NotNull Transferable content);
+  public void setSystemSelectionContents(@NotNull Transferable content) {}
 
   public interface ContentChangedListener extends EventListener {
     void contentChanged(final @Nullable Transferable oldTransferable, final Transferable newTransferable);

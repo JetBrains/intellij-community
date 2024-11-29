@@ -157,6 +157,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
     return myPackaging;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -173,6 +174,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
       Objects.equals(myJarRepositoryId, that.myJarRepositoryId);
   }
 
+  @Override
   public int hashCode() {
     return Objects.hash(myMavenId, myPackaging, myIncludeTransitiveDependencies, myExcludedDependencies, myArtifactsVerification,
                         myJarRepositoryId);

@@ -19,12 +19,14 @@ public class ThreadGroupData extends DescriptorData<ThreadGroupDescriptorImpl> {
     return new ThreadGroupDescriptorImpl(myThreadGroup);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof ThreadGroupData)) return false;
 
     return myThreadGroup.equals(((ThreadGroupData)object).myThreadGroup);
   }
 
+  @Override
   public int hashCode() {
     return myThreadGroup.hashCode();
   }

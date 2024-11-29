@@ -4,9 +4,16 @@ package com.intellij.lang.properties;
 import com.intellij.lang.Language;
 
 public class PropertiesLanguage extends Language {
+
   public static final PropertiesLanguage INSTANCE = new PropertiesLanguage();
 
+  private static final String ID = "Properties";
+
   private PropertiesLanguage() {
-    super("Properties", "text/properties");
+    super(ID, "text/properties");
+  }
+
+  protected PropertiesLanguage(String id) {
+    super(id, "text/properties");
   }
 }

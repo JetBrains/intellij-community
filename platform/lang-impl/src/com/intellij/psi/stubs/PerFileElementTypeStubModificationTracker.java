@@ -26,6 +26,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -321,6 +322,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
   }
 
+  @Unmodifiable
   private static @NotNull List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<StubFileElementType<?>> types) {
     return ContainerUtil.map(types, (elemType) -> {
       var plugin = PluginManager.getPluginByClass(elemType.getClass());

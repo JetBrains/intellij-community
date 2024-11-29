@@ -11,19 +11,23 @@ import org.jetbrains.intellij.build.BuildContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.createDirectories
 
 internal fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, context: BuildContext): Path {
+  require(pluginSpecs.isNotEmpty())
   val categories = TreeMap<String, MutableList<Plugin>>()
   for (spec in pluginSpecs) {
     val p = readPlugin(spec.pluginZip, spec.pluginXml, context.buildNumber, targetDir)
     categories.computeIfAbsent(p.category) { mutableListOf() }.add(p)
   }
+  Files.createDirectories(targetDir)
   val result = targetDir.resolve("plugins.xml")
   writePluginsXml(result, categories)
   return result
 }
 
 private fun writePluginsXml(target: Path, categories: Map<String, List<Plugin>>) {
+  target.parent.createDirectories()
   Files.newBufferedWriter(target).use { out ->
     out.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
     out.write("<plugin-repository>\n")

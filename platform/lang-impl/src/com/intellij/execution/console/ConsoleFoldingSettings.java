@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -112,6 +113,7 @@ public final class ConsoleFoldingSettings implements PersistentStateComponent<Co
     return negated ? myNegativePatterns : myPositivePatterns;
   }
 
+  @Unmodifiable
   private static Collection<String> filterEmptyStringsFromCollection(Collection<String> collection) {
     return ContainerUtil.filter(collection, input -> !StringUtil.isEmpty(input));
   }

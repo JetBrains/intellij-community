@@ -120,7 +120,7 @@ class MavenModuleImportDependencyProvider(private val moduleImportDataByMavenId:
           artifact.isOptional,
           "jar",
           null,
-          mavenProject.localRepository,
+          mavenProject.localRepositoryPath.toFile(),
           false, false
         )
       }

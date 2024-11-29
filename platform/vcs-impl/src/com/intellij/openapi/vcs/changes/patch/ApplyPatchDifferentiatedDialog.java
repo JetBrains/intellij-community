@@ -64,10 +64,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.log.VcsUser;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -642,6 +639,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     @NotNull
+    @Unmodifiable
     private static List<AbstractFilePatchInProgress.PatchChange> getOnlyValidChanges(@NotNull Collection<? extends AbstractFilePatchInProgress.PatchChange> changes) {
       return ContainerUtil.filter(changes, AbstractFilePatchInProgress.PatchChange::isValid);
     }

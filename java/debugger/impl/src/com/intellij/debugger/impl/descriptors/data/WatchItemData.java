@@ -25,6 +25,7 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor> {
     return myValue == null ? new WatchItemDescriptor(project, myText) : new WatchItemDescriptor(project, myText, myValue);
   }
 
+  @Override
   public boolean equals(final Object object) {
     if (object instanceof WatchItemData) {
       return myText.equals(((WatchItemData)object).myText);
@@ -32,6 +33,7 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor> {
     return false;
   }
 
+  @Override
   public int hashCode() {
     return myText.hashCode();
   }

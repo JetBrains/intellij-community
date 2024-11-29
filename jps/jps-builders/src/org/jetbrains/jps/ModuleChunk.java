@@ -70,6 +70,7 @@ public final class ModuleChunk {
     return myTargets;
   }
 
+  @Override
   public String toString() {
     return getName();
   }

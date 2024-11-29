@@ -54,4 +54,9 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
     public void testSimple() throws Exception {
         runTest("testData/codeInsight/hints/arguments/simple.kt");
     }
+
+    @TestMetadata("varargs.kt")
+    public void testVarargs() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/varargs.kt");
+    }
 }

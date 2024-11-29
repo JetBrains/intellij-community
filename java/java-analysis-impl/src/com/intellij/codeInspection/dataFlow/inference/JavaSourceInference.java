@@ -19,6 +19,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.BitSet;
 import java.util.Collections;
@@ -261,6 +262,7 @@ public final class JavaSourceInference {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<StandardMethodContract> boxReturnValues(List<StandardMethodContract> contracts) {
     return ContainerUtil.mapNotNull(contracts, contract -> {
       if (contract.getReturnValue().isBoolean()) {

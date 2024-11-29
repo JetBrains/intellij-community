@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.util.Suppressions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -89,8 +91,12 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public static void cleanupForNextTest() {
-    TimedZipHandler.closeOpenZipReferences();
+    Suppressions.runSuppressing(
+      () -> TimedZipHandler.closeOpenZipReferences(),
+      () -> ZipHandler.clearFileAccessorCache()
+    );
   }
 
   @Override

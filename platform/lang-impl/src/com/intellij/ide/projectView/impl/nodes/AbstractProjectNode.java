@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -24,6 +25,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     super(project, value, viewSettings);
   }
 
+  @Unmodifiable
   protected @NotNull Collection<AbstractTreeNode<?>> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
     if (getSettings().isFlattenModules()) {
       return ContainerUtil.mapNotNull(modules, moduleDescription -> {

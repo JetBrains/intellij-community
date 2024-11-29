@@ -202,6 +202,7 @@ public final class ChangeSet {
     });
   }
 
+  @Override
   public String toString() {
     return accessChanges(() -> myChanges.toString());
   }

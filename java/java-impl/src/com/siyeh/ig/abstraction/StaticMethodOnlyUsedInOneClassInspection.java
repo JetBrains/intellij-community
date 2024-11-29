@@ -339,6 +339,7 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
     return new StaticMethodOnlyUsedInOneClassLocalInspection(this);
   }
 
+  @SuppressWarnings("InspectionDescriptionNotFoundInspection") // TODO IJPL-166089
   private static class StaticMethodOnlyUsedInOneClassLocalInspection
     extends BaseSharedLocalInspection<StaticMethodOnlyUsedInOneClassInspection> {
 

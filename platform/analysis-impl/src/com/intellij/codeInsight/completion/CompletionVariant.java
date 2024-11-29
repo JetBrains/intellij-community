@@ -155,6 +155,7 @@ public class CompletionVariant {
   private record CompletionVariantItem(Object completion, TailType tailtype){
   }
 
+  @Override
   public String toString(){
     return "completion variant at " + myPosition.toString() + " completions: " + myCompletionsList;
   }

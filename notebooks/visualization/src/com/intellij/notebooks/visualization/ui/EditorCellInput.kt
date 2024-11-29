@@ -1,16 +1,18 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
-import com.intellij.notebooks.ui.visualization.notebookAppearance
+import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
+import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDraggableBar
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.Disposer
 import java.awt.Rectangle
 
 class EditorCellInput(
   private val editor: EditorImpl,
   componentFactory: NotebookCellInlayController.InputFactory,
-  private val cell: EditorCell,
+  val cell: EditorCell,
 ) : EditorCellViewComponent() {
 
   val interval: NotebookCellLines.Interval
@@ -23,6 +25,8 @@ class EditorCellInput(
   val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
 
   val folding = EditorCellFoldingBar(editor, ::getFoldingBounds) { toggleFolding() }
+
+  val draggableBar = EditorCellDraggableBar(editor, this, ::getFoldingBounds)
 
   var folded = false
     private set
@@ -50,7 +54,7 @@ class EditorCellInput(
     return bounds.y + delimiterPanelSize to bounds.height - delimiterPanelSize
   }
 
-  private fun toggleFolding() = cell.manager.update { ctx ->
+  private fun toggleFolding() = editor.updateManager.update { ctx ->
     folded = !folded
     (component as? InputComponent)?.updateFolding(ctx, folded)
   }
@@ -58,6 +62,7 @@ class EditorCellInput(
   override fun dispose() {
     super.dispose()
     folding.dispose()
+    Disposer.dispose(draggableBar)
   }
 
   fun update() {
@@ -78,7 +83,7 @@ class EditorCellInput(
     return bounds
   }
 
-  fun updateInput() = cell.manager.update { ctx ->
+  fun updateInput() = editor.updateManager.update { ctx ->
     (component as? InputComponent)?.updateInput(ctx)
   }
 

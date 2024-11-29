@@ -6,15 +6,20 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.text
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
@@ -23,6 +28,7 @@ import com.jetbrains.python.debugger.*
 import com.jetbrains.python.debugger.array.AbstractDataViewTable
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -34,13 +40,13 @@ import javax.swing.JPanel
 open class PyDataViewerPanel(@JvmField protected val project: Project, val frameAccessor: PyFrameAccessor) :
   JPanel(BorderLayout()), Disposable {
 
-  val sliceTextField: EditorTextField = createEditorField(TextFieldCommandSource.SLICING)
-
   protected val tablePanel = JPanel(BorderLayout())
 
   protected var table: AbstractDataViewTable? = null
 
-  private var formatTextField: EditorTextField = createEditorField(TextFieldCommandSource.FORMATTING)
+  protected val sliceTextFieldOldTable: EditorTextField = createEditorField(TextFieldCommandSource.SLICING)
+
+  protected var formatTextFieldOldTable: EditorTextField = createEditorField(TextFieldCommandSource.FORMATTING)
 
   private var colored: Boolean = PyDataView.isColoringEnabled(project)
 
@@ -53,10 +59,37 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   protected var debugValue: PyDebugValue? = null
 
-  val format: String
+  /**
+   * Represents a formatting string used for specifying format.
+   *
+   * This field is needed to synchronize old and new tables
+   * regarding the actual formatting value.
+   */
+  open var format: String = ""
     get() {
-      val format = formatTextField.getText()
-      return format.ifEmpty { "%" }
+      val format = formatTextFieldOldTable.getText()
+      return format.ifEmpty { "%s" }
+    }
+    protected set(value) {
+      field = value
+      formatTextFieldOldTable.text = value
+    }
+
+  /**
+   * Represents a slicing string used for slicing data in a viewer panel.
+   * For example, numpy_array[:, 0] or df['column_1'].
+   *
+   * This field is needed to synchronize old and new tables
+   * regarding the actual slicing value.
+   */
+  open var slicing: String = ""
+    get() {
+      val slicing = sliceTextFieldOldTable.getText()
+      return slicing.ifEmpty { "None" }
+    }
+    protected set(value) {
+      field = value
+      sliceTextFieldOldTable.text = value
     }
 
   var isColored: Boolean
@@ -80,20 +113,22 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   private lateinit var errorLabel: Cell<JEditorPane>
 
+  protected val isSlicingAndFormattingOldPanelsVisible: AtomicBooleanProperty = AtomicBooleanProperty(true)
+
   init {
-    PyDataViewCompletionProvider().apply(sliceTextField)
+    PyDataViewCompletionProvider().apply(sliceTextFieldOldTable)
 
-    val panel = panel {
-      row { cell(tablePanel).align(Align.FILL).resizableColumn() }.resizableRow()
+    add(tablePanel, BorderLayout.CENTER)
+    add(panel {
       row {
-        cell(sliceTextField).align(AlignX.FILL).resizableColumn()
+        cell(sliceTextFieldOldTable).align(AlignX.FILL).resizableColumn()
         label(PyBundle.message("form.data.viewer.format"))
-        cell(formatTextField)
+        cell(formatTextFieldOldTable)
+      }.visibleIf(isSlicingAndFormattingOldPanelsVisible)
+      row {
+        errorLabel = text("").apply { component.setForeground(JBColor.RED) }
       }
-      row { errorLabel = text("").apply { component.setForeground(JBColor.RED) } }
-    }
-
-    add(panel, BorderLayout.CENTER)
+    }, BorderLayout.SOUTH)
 
     setupChangeListener()
   }
@@ -142,10 +177,10 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   private fun updateDebugValue(model: AsyncArrayTableModel) {
     val oldValue = model.debugValue
-    if (oldValue != null && !oldValue.isTemporary || sliceTextField.getText().isEmpty()) {
+    if (oldValue != null && !oldValue.isTemporary || slicing.isEmpty()) {
       return
     }
-    val newValue = getDebugValue(sliceTextField.getText(), false, false)
+    val newValue = getDebugValue(slicing, false, false)
     if (newValue != null) {
       model.debugValue = newValue
     }
@@ -154,7 +189,11 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
   protected open fun getOrCreateMainTable(): AbstractDataViewTable {
     val mainTable = JBTableWithRowHeaders(PyDataView.isAutoResizeEnabled(project))
     mainTable.scrollPane.border = BorderFactory.createEmptyBorder()
-    tablePanel.add(mainTable.scrollPane, BorderLayout.CENTER)
+    tablePanel.apply {
+      add(mainTable.scrollPane, BorderLayout.CENTER)
+      revalidate()
+      repaint()
+    }
     table = mainTable
     return mainTable
   }
@@ -167,13 +206,17 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
         editor.getContentComponent().addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
             if (e.keyCode == KeyEvent.VK_ENTER) {
-              apply(sliceTextField.getText(), false, commandSource)
+              onEnterPressed(commandSource)
             }
           }
         })
         return editor
       }
     }
+  }
+
+  protected fun onEnterPressed(commandSource: TextFieldCommandSource) {
+    apply(slicing, false, commandSource)
   }
 
   fun apply(name: String?, modifier: Boolean, commandSource: TextFieldCommandSource? = null) {
@@ -206,13 +249,13 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
         ApplicationManager.getApplication().invokeLater { setError(e.localizedMessage, modifier) } //NON-NLS
       }
       catch (e: PyDebuggerException) {
-        LOG.error(e)
+        thisLogger().error(e)
       }
       catch (e: Exception) {
         if (e.message?.let { "Numpy is not available" in it } == true) {
           setError(PyBundle.message("debugger.data.view.numpy.is.not.available", type), modifier)
         }
-        LOG.error(e)
+        thisLogger().error(e)
       }
     }
   }
@@ -233,24 +276,26 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     else {
       originalVarName = realName
     }
-    sliceTextField.setText(originalVarName)
+    originalVarName?.let { slicing = it }
 
     // Modifier flag means that variable changes are temporary
     modifiedVarName = realName
-    if (sliceTextField.editor != null) {
-      sliceTextField.getCaretModel().moveToOffset(originalVarName!!.length)
+    if (sliceTextFieldOldTable.editor != null) {
+      sliceTextFieldOldTable.getCaretModel().moveToOffset(originalVarName!!.length)
     }
     for (listener in listeners) {
       listener.onNameChanged(shownName)
     }
 
     if (chunk != null) {
-      formatTextField.text = chunk.format
+      format = chunk.format
     }
   }
 
-  protected open fun updateUI(chunk: ArrayChunk, originalDebugValue: PyDebugValue,
-                              strategy: DataViewStrategy, modifier: Boolean) {
+  protected open fun updateUI(
+    chunk: ArrayChunk, originalDebugValue: PyDebugValue,
+    strategy: DataViewStrategy, modifier: Boolean,
+  ) {
     val debugValue = chunk.value
     val model = strategy.createTableModel(chunk.rows, chunk.columns, this, debugValue)
     model.addToCache(chunk)
@@ -303,18 +348,22 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   fun resize(autoResize: Boolean) {
     table?.setAutoResize(autoResize)
-    apply(sliceTextField.getText(), false)
+    apply(slicing, false)
   }
 
-  protected fun setError(text: @NlsContexts.Label String, modifier: Boolean) {
+  open fun setError(text: @NlsContexts.Label String, modifier: Boolean) {
     errorLabel.visible(true)
-    errorLabel.text(if (modifier) PyBundle.message("debugger.dataviewer.modifier.error", text) else text)
+    errorLabel.text(composeErrorMessage(text, modifier))
     if (!modifier) {
       table?.setEmpty()
       for (listener in listeners) {
         listener.onNameChanged(PyBundle.message("debugger.data.view.empty.tab"))
       }
     }
+  }
+
+  protected fun composeErrorMessage(text: @NlsContexts.Label String, modifier: Boolean): @Nls String {
+    return if (modifier) PyBundle.message("debugger.dataviewer.modifier.error", text) else text
   }
 
   fun addListener(listener: Listener) {
@@ -349,16 +398,15 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
           }
         }
         catch (e: Exception) {
-          LOG.error(e)
+          thisLogger().error(e)
         }
         return values
       }
   }
 
-  open fun closeEditorTabs() {}
+  open fun closeEditorTabs() = Unit
 
   companion object {
-    private val LOG = Logger.getInstance(PyDataViewerPanel::class.java)
     private const val MODIFIED_VARIABLE_FORMAT = "%s*"
   }
 }

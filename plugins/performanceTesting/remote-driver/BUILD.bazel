@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.performanceTesting.remoteDriver` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "remoteDriver_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "remoteDriver",
+  module_name = "intellij.performanceTesting.remoteDriver",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server:builtInServer-impl",
+    "@lib//:netty-buffer",
+    "@lib//:netty-codec-http",
+    "//platform/core-api:core",
+    "//platform/remote-driver/model:driver-model",
+    "//platform/platform-api:ide",
+    "@lib//:jsoup",
+    "//platform/remote-driver/core:driver-impl",
+    "//platform/remote-driver/client:driver-client",
+    "@lib//:jcef",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ui.jcef:ui-jcef",
+  ],
+  exports = [
+    "//platform/remote-driver/model:driver-model",
+    "//platform/remote-driver/core:driver-impl",
+    "//platform/remote-driver/client:driver-client",
+  ],
+  runtime_deps = [":remoteDriver_resources"]
+)
+### auto-generated section `build intellij.performanceTesting.remoteDriver` end

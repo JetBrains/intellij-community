@@ -184,7 +184,6 @@ object Utils {
   @JvmStatic
   private fun createAsyncDataContextImpl(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
-    dataContext is EdtDataContext -> createAsyncDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
     !ApplicationManager.getApplication().isUnitTestMode() -> dataContext.also {
       reportUnexpectedDataContextKind(dataContext)
     }
@@ -237,7 +236,6 @@ object Utils {
   @JvmStatic
   private fun getRawDataIfCached(dataContext: DataContext, dataId: String, uiOnly: Boolean): Any? = when (dataContext) {
     is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId, uiOnly)
-    is EdtDataContext -> dataContext.getRawDataIfCached(dataId)
     is CustomizedDataContext -> getRawDataIfCached(dataContext.customizedDelegate, dataId, uiOnly)
     else -> null
   }
@@ -1029,20 +1027,28 @@ object Utils {
     result
   }
 
-  fun rearrangeByPromotersNonAsync(actions: List<AnAction>, dataContext: DataContext): List<AnAction> = runBlockingForActionExpand {
-    val asyncDataContext = createAsyncDataContext(dataContext)
-    checkAsyncDataContext(asyncDataContext, "rearrangeByPromotersNonAsync")
-    rearrangeByPromoters(actions, asyncDataContext)
+  @ApiStatus.Internal
+  suspend fun <R> runSuspendingUpdateSessionForActionSearch(updateSession: UpdateSession,
+                                                            block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R) {
+    val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
+    withContext(contextMenuDispatcher + ModalityState.any().asContextElement()) {
+      runUpdateSessionForActionSearch(updater, block)
+    }
   }
 
   fun <R> CoroutineScope.runUpdateSessionForActionSearch(updateSession: UpdateSession,
                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): Deferred<R> {
     val updater = ActionUpdater.getUpdater(updateSession) ?: throw AssertionError()
     return async(contextMenuDispatcher + ModalityState.any().asContextElement()) {
-      updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
-        block {
-          updater.presentation(it)
-        }
+      runUpdateSessionForActionSearch(updater, block)
+    }
+  }
+
+  private suspend fun <R> runUpdateSessionForActionSearch(updater: ActionUpdater,
+                                                          block: suspend CoroutineScope.(suspend (AnAction) -> Presentation) -> R): R {
+    return updater.runUpdateSession(CoroutineName("runUpdateSessionForActionSearch (${updater.place})")) {
+      block {
+        updater.presentation(it)
       }
     }
   }

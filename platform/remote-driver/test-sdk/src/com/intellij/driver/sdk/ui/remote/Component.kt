@@ -4,6 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.BeControlComponentBuilder
 import java.awt.Point
+import java.awt.Rectangle
 
 @Remote("java.awt.Component")
 @BeControlClass(BeControlComponentBuilder::class)
@@ -12,6 +13,7 @@ interface Component {
   val y: Int
   val width: Int
   val height: Int
+  fun getBounds(): Rectangle
   fun isVisible(): Boolean
   fun isShowing(): Boolean
   fun isEnabled(): Boolean

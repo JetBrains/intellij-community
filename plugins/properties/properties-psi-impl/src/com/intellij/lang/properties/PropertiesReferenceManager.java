@@ -44,7 +44,7 @@ public final class PropertiesReferenceManager {
     ConcurrentMap<String, List<PropertiesFile>> map =
       CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
         ConcurrentMap<String, List<PropertiesFile>> factoryMap = ConcurrentFactoryMap.createMap(
-          bundleName1 -> findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName1,
+          bundleName1 -> findPropertiesFiles(GlobalSearchScope.moduleRuntimeScope(module, true), bundleName1,
                                              BundleNameEvaluator.DEFAULT));
         return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
       });

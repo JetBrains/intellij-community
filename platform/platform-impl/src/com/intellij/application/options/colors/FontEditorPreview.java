@@ -103,8 +103,8 @@ public class FontEditorPreview implements PreviewPanel{
       String originalGroupId = editor.getContextMenuGroupId();
       AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);
       DefaultActionGroup group = new DefaultActionGroup();
-      if (originalGroup instanceof ActionGroup) {
-        group.addAll(((ActionGroup)originalGroup).getChildren(null));
+      if (originalGroup instanceof ActionGroup o) {
+        group.addAll(o);
       }
       if (restoreAction != null) {
         group.add(restoreAction);

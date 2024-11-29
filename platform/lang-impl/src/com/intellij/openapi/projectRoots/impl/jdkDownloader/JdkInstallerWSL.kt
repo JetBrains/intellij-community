@@ -11,7 +11,7 @@ private val LOG = logger<JdkInstallerWSL>()
 
 @Internal
 object JdkInstallerWSL {
-  fun unpackJdkOnWsl(wslDistribution: WSLDistributionForJdkInstaller,
+  fun unpackJdkOnWsl(wslDistribution: OsAbstractionForJdkInstaller.Wsl,
                      packageType: JdkPackageType,
                      downloadFile: Path,
                      targetDir: Path,
@@ -31,19 +31,19 @@ object JdkInstallerWSL {
     }
   }
 
-  private fun unpackJdkArchiveOnWsl(wslDistribution: WSLDistributionForJdkInstaller,
+  private fun unpackJdkArchiveOnWsl(osAbstraction: OsAbstractionForJdkInstaller,
                                     packageType: JdkPackageType,
                                     downloadFile: Path,
                                     targetDir: Path) {
-    val downloadFileWslPath = wslDistribution.getWslPath(downloadFile)
-    val targetWslPath = wslDistribution.getWslPath(targetDir)
+    val downloadFileWslPath = osAbstraction.getPath(downloadFile)
+    val targetWslPath = osAbstraction.getPath(targetDir)
     FileUtil.createDirectory(targetDir.toFile())
 
     val command = when (packageType) {
       JdkPackageType.ZIP -> listOf("unzip", downloadFileWslPath)
       JdkPackageType.TAR_GZ -> listOf("tar", "xzf", downloadFileWslPath)
     }
-    val processOutput = wslDistribution.executeOnWsl(command, targetWslPath, 300_000)
+    val processOutput = osAbstraction.execute(command, targetWslPath, 300_000)
     if (processOutput.exitCode != 0) {
       val message = "Failed to unpack $downloadFile to $targetDir"
       LOG.warn(message + ": " + processOutput.stderrLines.takeLast(10).joinToString("") { "\n  $it" })
@@ -52,7 +52,7 @@ object JdkInstallerWSL {
   }
 
   private fun moveUnpackedJdkPrefixOnWsl(
-    wslDistribution: WSLDistributionForJdkInstaller,
+    osAbstraction: OsAbstractionForJdkInstaller,
     unpackDir: Path,
     targetDir: Path,
     packageRootPrefixRaw: String,
@@ -68,13 +68,13 @@ object JdkInstallerWSL {
       error("Invalid package. Directory is expected under '$packageRootPrefixRaw' path on the JDK package")
     }
 
-    val wslTarget = wslDistribution.getWslPath(targetDir)
-    val wslUnpack = wslDistribution.getWslPath(unpackDir)
-    val wslSource = wslDistribution.getWslPath(packageRootDir)
+    val wslTarget = osAbstraction.getPath(targetDir)
+    val wslUnpack = osAbstraction.getPath(unpackDir)
+    val wslSource = osAbstraction.getPath(packageRootDir)
 
     FileUtil.delete(targetDir)
     val command = listOf("mv", wslSource, wslTarget)
-    val processOutput = wslDistribution.executeOnWsl(command, wslUnpack, 300_000)
+    val processOutput = osAbstraction.execute(command, wslUnpack, 300_000)
 
     if (processOutput.exitCode != 0) {
       val message = "Failed to strip package root prefix ${packageRootPrefix}"

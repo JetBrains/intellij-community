@@ -13,9 +13,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -43,11 +40,9 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -133,15 +128,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         }
       }
     };
-
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (myProject == project) {
-          TaskManagerImpl.this.projectOpened();
-        }
-      }
-    });
 
     // remove repositories pertaining to non-existent types
     TaskRepositoryType.addEPListChangeListener(this, () -> {
@@ -252,6 +238,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<Task> getIssues(@Nullable String query,
                               int offset,
                               int limit,
@@ -272,6 +259,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<Task> getCachedIssues(final boolean withClosed) {
     return ContainerUtil.filter(myIssueCache.values(), task -> withClosed || !task.isClosed());
   }
@@ -305,6 +293,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
+  @Unmodifiable
   public List<LocalTask> getLocalTasks(final boolean withClosed) {
     synchronized (myTasks) {
       return ContainerUtil.filter(myTasks.values(), task -> withClosed || !isLocallyClosed(task));
@@ -671,7 +660,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     projectOpened();
   }
 
-  private void projectOpened() {
+  void projectOpened() {
     TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
 
     servers:
@@ -1064,13 +1053,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       if (myConnection != null) {
         myConnection.cancel();
       }
-    }
-  }
-
-  private static final class Activity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      ((TaskManagerImpl)TaskManager.getManager(project)).projectOpened();
     }
   }
 }

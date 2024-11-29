@@ -1,13 +1,13 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.tracing.rt` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "tracing-rt",
   module_name = "intellij.platform.tracing.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j8",
-  kotlinc_opts = "//:k8",
-  deps = ["@libraries//:annotations"]
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  deps = ["@lib//:jetbrains-annotations"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.tracing.rt` end

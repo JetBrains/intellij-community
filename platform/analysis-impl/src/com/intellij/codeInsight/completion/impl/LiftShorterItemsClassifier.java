@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -94,6 +95,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
     Set<LookupElement> lifted = new ReferenceOpenHashSet<>();
     Iterable<LookupElement> iterable = liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);

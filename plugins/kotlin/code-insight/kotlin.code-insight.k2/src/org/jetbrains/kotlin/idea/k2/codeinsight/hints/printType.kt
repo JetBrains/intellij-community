@@ -77,6 +77,10 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
         }
         is KaFunctionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+            if (type.isSuspend) {
+                text(KtTokens.SUSPEND_KEYWORD.value)
+                text(" ")
+            }
             type.receiverType?.let {
                 printKtType(it)
                 text(".")
@@ -240,7 +244,7 @@ private fun truncatedName(classType: KaClassType): String {
         .takeIf { names.size <= 1 || it.length < PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH }
         ?.let { return it }
 
-    var lastJoinString: String = ""
+    var lastJoinString = ""
     for (name in names.reversed()) {
         val nameAsString = name.asString()
         if (lastJoinString.length + nameAsString.length + 1 > PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH) {

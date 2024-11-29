@@ -41,6 +41,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -592,6 +593,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @NotNull
+  @Unmodifiable
   private List<PsiImportStatementBase> getImplicitImports() {
     return ContainerUtil.map(getImplicitlyImportedElements(), element -> element.createImportStatement());
   }

@@ -5,9 +5,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.selects.SelectBuilder
 import kotlinx.coroutines.selects.select
-import java.io.InputStream
-import java.lang.RuntimeException
-import kotlin.coroutines.coroutineContext
 
 inline fun <T, R> SendChannel<T>.use(block: (SendChannel<T>) -> R): R {
   var cause: Throwable? = null
@@ -138,19 +135,3 @@ fun <T> channels(
 ): Pair<SendChannel<T>, ReceiveChannel<T>> = Channel<T>(capacity, onBufferOverflow = onBufferOverlow).split()
 
 val <T> ChannelResult<T>.isFull get() = isFailure && !isClosed
-
-suspend fun <T> InputStream.transferToChannel(channel: SendChannel<T>, transform: (ByteArray) -> T) {
-  val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-  while (true) {
-    coroutineContext.job.ensureActive()
-    val read = runInterruptible { read(buffer, 0, DEFAULT_BUFFER_SIZE) }
-    if (read > 0) {
-      channel.trySend(transform(buffer.copyOf(read)))
-        .onClosed { return }
-        .onFailure { ex -> throw RuntimeException(ex) }
-    }
-    else if (read == -1) {
-      break
-    }
-  }
-}

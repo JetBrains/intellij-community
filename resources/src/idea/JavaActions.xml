@@ -345,7 +345,7 @@
     </action>
 
     <group id="RefactoringMenuRenameFile">
-      <reference id="RenameFile"/>
+      <reference ref="RenameFile"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
     </group>
 
@@ -373,50 +373,8 @@
          correctly labeled -->
     <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
 
-    <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
-
-    <action id="RunToolbarHotSwapAction" class="com.intellij.debugger.actions.RunToolbarHotSwapAction" icon="com.intellij.icons.AllIcons.Actions.BuildAutoReloadChanges">
-      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
-    </action>
-
-    <group id="ToggleBreakpointAction">
-      <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction">
-        <override-text place="MainMenu"/>
-      </action>
-      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
-        <override-text place="MainMenu"/>
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
-      </action>
-      <add-to-group group-id="BreakpointActionsGroup" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
-    </group>
-
-    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-      <add-to-group group-id="XDebugger.Actions"/>
-    </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
-      <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
-    </action>
-
     <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction">
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
-    </action>
-
-    <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction">
-      <add-to-group group-id="Internal.Errors"/>
-    </action>
-
-    <action id="StepOverInstruction" internal="true" class="com.intellij.debugger.actions.StepOverInstructionAction" icon="AllIcons.Actions.Play_forward">
-      <add-to-group group-id="DebuggingActionsGroup"/>
-    </action>
-
-    <action id="RepairDebuggerViewAction" internal="true" class="com.intellij.debugger.actions.RepairDebuggerViewAction" icon="AllIcons.General.Gear">
-      <add-to-group group-id="DebuggingActionsGroup"/>
-    </action>
-
-    <action id="ShowDemoAltClickPromoter" internal="true" class="com.intellij.debugger.actions.ShowDemoAltClickPromoterAction" icon="AllIcons.General.Gear">
-      <add-to-group group-id="DebuggingActionsGroup"/>
     </action>
 
     <group id="Internal.Java" popup="true" internal="true" compact="true">
@@ -429,170 +387,7 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <group id="JavaDebuggerActions">
-      <action id="Debugger.ShowCollectionHistory" class="com.intellij.debugger.actions.ShowCollectionHistoryAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
-      <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
-        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
-      </action>
-      <action id="Debugger.NewCustomField" class="com.intellij.debugger.actions.NewCustomFieldAction">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
-        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.NewWatch"/>
-      </action>
-      <action id="Debugger.EditCustomField" class="com.intellij.debugger.actions.EditCustomFieldAction" use-shortcut-of="XDebugger.SetValue">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
-        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
-      </action>
-      <action id="Debugger.RemoveCustomField" class="com.intellij.debugger.actions.RemoveCustomFieldAction" use-shortcut-of="XDebugger.RemoveWatch">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
-        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
-      </action>
-      <action id="Debugger.EditArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Edit" use-shortcut-of="XDebugger.SetValue">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
-        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
-      </action>
-      <action id="Debugger.RemoveArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Delete" use-shortcut-of="XDebugger.RemoveWatch">
-        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
-        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
-      </action>
-      <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
-      <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
-      </action>
-      <action id="Debugger.LibraryFramesToggle" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
-      </action>
-      <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
-      <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </group>
-      <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
-      <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.ArrayAction$AdjustArrayRangeAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
-      <action id="Debugger.ShowRelatedStack" class="com.intellij.debugger.actions.ShowRelatedStackAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="first"/>
-      </action>
-      <action id="Debugger.ShowTypes" class="com.intellij.debugger.actions.ShowTypesAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
-      <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
-      <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
-      <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
-
-      <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
-      </action>
-
-      <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
-        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
-      </action>
-
-      <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-      </action>
-
-      <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction"
-              icon="AllIcons.Actions.StepOutCodeBlock">
-        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
-        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra" anchor="after" relative-to-action="SmartStepInto"/>
-      </action>
-
-      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
-        <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreePopup"/>
-      </action>
-      <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
-      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
-        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
-      </action>
-
-      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-      </action>
-      <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"/>
-      <action id="Debugger.CallTracer" class="com.intellij.debugger.ui.breakpoints.CallTracer$CallTracerToggleAction"
-              icon="AllIcons.Debugger.Db_set_breakpoint">
-        <add-to-group group-id="XDebugger.ToolWindow.TopToolbar"/>
-      </action>
-      <action id="Debugger.ReloadFile" class="com.intellij.debugger.actions.ReloadFileAction"/>
-    </group>
-
-    <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
-            id="MemoryView.ShowInstancesFromDebuggerTree">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
-                    relative-to-action="Debugger.ShowReferring"/>
-    </action>
-
-    <action class="com.intellij.debugger.memory.action.CalculateRetainedSizeAction"
-            id="Memory.CalculateRetainedSize">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
-                    relative-to-action="MemoryView.ShowInstancesFromDebuggerTree"/>
-    </action>
-
-    <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
-            id="MemoryView.ShowAllocationStackTrace">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after"
-                    relative-to-action="XDebugger.JumpToTypeSource"/>
-    </action>
-
-    <action class="com.intellij.debugger.memory.action.ShowClassesWithInstanceAction"
-            id="MemoryView.ShowOnlyWithInstances">
-      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="before" relative-to-action="MemoryView.ShowOnlyWithDiff"/>
-    </action>
-
-    <action class="com.intellij.debugger.memory.action.ShowTrackedAction"
-            id="MemoryView.ShowOnlyTracked">
-      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="after" relative-to-action="MemoryView.ShowOnlyWithDiff"/>
-    </action>
-
-    <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
-            id="MemoryView.EnableTrackingWithClosedWindow">
-      <add-to-group group-id="MemoryView.SettingsPopupActionGroup" anchor="before" relative-to-action="MemoryView.SwitchUpdateMode"/>
-    </action>
-
-    <group id="MemoryView.ClassesPopupActionGroup">
-      <action class="com.intellij.debugger.memory.action.ShowInstancesFromClassesViewAction"
-              id="MemoryView.ShowInstances"/>
-
-      <action class="com.intellij.debugger.memory.action.ShowNewInstancesAction"
-              id="MemoryView.ShowNewInstances"/>
-
-      <action class="com.intellij.debugger.memory.action.JumpToTypeSourceAction"
-              id="MemoryView.JumpToTypeSource"/>
-      <separator/>
-
-      <action class="com.intellij.debugger.memory.action.tracking.TrackInstancesToggleAction"
-              id="MemoryView.TrackingAction.NewInstancesTracking"/>
-    </group>
-
-    <group id="Debugger.Representation">
-      <reference ref="Debugger.CreateRenderer"/>
-      <separator/>
-      <reference ref="Debugger.AutoRenderer"/>
-    </group>
-
-    <group id="EditorPopupMenuDebugJava">
-      <separator/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <reference ref="XDebugger.Hotswap.Modified.Files"/>
-      <separator/>
-      <add-to-group group-id="EditorPopupMenuDebug" anchor="last"/>
-    </group>
-
     <group id="JavaCompileGroup">
-      <reference ref="ToggleMethodBreakpoint"/>
-      <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
       <add-to-group group-id="ProjectViewCompileGroup" anchor="first"/>
       <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
@@ -605,18 +400,6 @@
               use-shortcut-of="OverrideMethods"/>
       <separator/>
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
-    </group>
-
-    <group id="Debugger.ThreadsPanelPopup">
-      <reference ref="Debugger.ResumeThread"/>
-      <reference ref="Debugger.FreezeThread"/>
-      <reference ref="Debugger.InterruptThread"/>
-      <reference ref="Debugger.PopFrame"/>
-      <separator/>
-      <reference ref="ExportThreads"/>
-      <reference ref="Debugger.AddSteppingFilter"/>
-      <separator/>
-      <reference ref="Debugger.CustomizeThreadsView"/>
     </group>
 
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>

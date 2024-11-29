@@ -42,6 +42,7 @@ public class PackageEntry {
     return false;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof PackageEntry entry)) {
       return false;
@@ -51,6 +52,7 @@ public class PackageEntry {
            && Objects.equals(entry.myPackageName, myPackageName);
   }
 
+  @Override
   public int hashCode() {
     return myPackageName.hashCode();
   }

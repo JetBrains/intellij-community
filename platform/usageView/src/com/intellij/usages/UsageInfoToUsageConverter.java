@@ -15,6 +15,7 @@ import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +51,7 @@ public final class UsageInfoToUsageConverter {
     }
 
     @NotNull
+    @Unmodifiable
     private static List<@NotNull SmartPsiElementPointer<PsiElement>> convertToSmartPointers(@NotNull PsiElement @NotNull [] primaryElements) {
       if (primaryElements.length == 0) return Collections.emptyList();
       final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(primaryElements[0].getProject());
@@ -91,6 +93,7 @@ public final class UsageInfoToUsageConverter {
     }
 
     @NotNull
+    @Unmodifiable
     public List<SmartPsiElementPointer<PsiElement>> getAllElementPointers() {
       return ContainerUtil.concat(myPrimarySearchedElements, myAdditionalSearchedElements);
     }

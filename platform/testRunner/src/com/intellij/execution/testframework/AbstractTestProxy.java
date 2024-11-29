@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -115,6 +116,7 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @NotNull
+  @Unmodifiable
   public List<DiffHyperlink> getDiffViewerProviders() {
     final DiffHyperlink provider = getDiffViewerProvider();
     return ContainerUtil.createMaybeSingletonList(provider);

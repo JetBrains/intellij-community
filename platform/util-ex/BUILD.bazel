@@ -1,29 +1,29 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.util.ex` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "util-ex",
   module_name = "intellij.platform.util.ex",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlin-reflect",
-    "@community//platform/util",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:jcip-annotations",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:netty-buffer",
-    "@libraries//:caffeine",
-    "@community//platform/util/base:util-base",
-    "@community//platform/util-class-loader:util-classLoader",
-    "@libraries//:lz4-java",
-    "@community//platform/diagnostic",
-    "@community//platform/util/coroutines:util-coroutines",
-    "@libraries//:h2-mvstore",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "//platform/util",
+    "//platform/util/jdom",
+    "@lib//:jcip",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:fastutil-min",
+    "@lib//:netty-buffer",
+    "@lib//:caffeine",
+    "//platform/util/base",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:lz4-java",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+    "@lib//:mvstore",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util.ex` end

@@ -335,7 +335,7 @@ class PyTypedDictInspection : PyInspection() {
       if (indexExprValue == null) {
         val type = myTypeEvalContext.getType(indexExpression) ?: return null
         val members = PyTypeUtil.toStream(type)
-          .map { if (it is PyLiteralType) PyEvaluator.evaluate(it.expression, String::class.java) else null }
+          .map { if (it is PyLiteralType) PyEvaluator.evaluateNoResolve(it.expression, String::class.java) else null }
           .toList()
         return if (members.contains(null)) null
         else members

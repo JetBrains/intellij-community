@@ -1,0 +1,13 @@
+### auto-generated section `build intellij.tools.jps.antTasks` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "tools-jps-antTasks",
+  module_name = "intellij.tools.jps.antTasks",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  deps = ["//lib/ant/lib:ant-antlr"]
+)
+### auto-generated section `build intellij.tools.jps.antTasks` end

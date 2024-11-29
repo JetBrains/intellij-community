@@ -144,11 +144,11 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
     try {
       if (compensateParallelism) {
         @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + readActionContext(), action)
+        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + getLockPermitContext(), action)
       }
       else {
         @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(ctx + readActionContext(), action)
+        runBlocking(ctx + getLockPermitContext(), action)
       }
     }
     catch (pce: ProcessCanceledException) {
@@ -202,7 +202,7 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
                   CoroutineName("indicator run blocking")
     try {
       @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(context + readActionContext(), action)
+      runBlocking(context + getLockPermitContext(), action)
     }
     catch (pce: ProcessCanceledException) {
       throw pce
@@ -478,11 +478,16 @@ private fun assertBackgroundThreadOrWriteAction() {
 
 @IntellijInternalApi
 @Internal
-fun readActionContext(): CoroutineContext {
+fun getLockPermitContext(forSharing: Boolean = false): CoroutineContext {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
     if (isLockStoredInContext) {
-      application.lockStateAsCoroutineContext
+      if (EDT.isCurrentThreadEdt()) {
+        application.getLockStateAsCoroutineContext(forSharing) + LockLeakedFromEDTMarker
+      }
+      else {
+        application.getLockStateAsCoroutineContext(forSharing)
+      }
     }
     else if (application.isReadAccessAllowed) {
       RunBlockingUnderReadActionMarker
@@ -498,10 +503,19 @@ fun readActionContext(): CoroutineContext {
 
 @IntellijInternalApi
 @Internal
+fun closeLockPermitContext(ctx: CoroutineContext){
+  if (!isLockStoredInContext) {
+    return
+  }
+  ApplicationManager.getApplication().returnPermitFromContextElement(ctx.minusKey(LockLeakedFromEDTMarker))
+}
+
+@IntellijInternalApi
+@Internal
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
   return if (isLockStoredInContext) {
     val application = ApplicationManager.getApplication()
-    application != null && application.hasLockStateInContext(this)
+    application != null && application.hasLockStateInContext(this) && this[LockLeakedFromEDTMarker] == null
   }
   else {
     this[RunBlockingUnderReadActionMarker] != null
@@ -511,5 +525,11 @@ fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
 private object RunBlockingUnderReadActionMarker
   : CoroutineContext.Element,
     CoroutineContext.Key<RunBlockingUnderReadActionMarker> {
+  override val key: CoroutineContext.Key<*> get() = this
+}
+
+private object LockLeakedFromEDTMarker
+  : CoroutineContext.Element,
+    CoroutineContext.Key<LockLeakedFromEDTMarker> {
   override val key: CoroutineContext.Key<*> get() = this
 }

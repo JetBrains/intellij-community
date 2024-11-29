@@ -8,8 +8,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * Flush single variable
  */
@@ -33,16 +31,12 @@ public class FlushVariableInstruction extends Instruction {
   }
 
   @Override
-  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
-    return List.of(myVariable);
-  }
-
-  @Override
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     stateBefore.flushVariable(getVariable());
     return nextStates(interpreter, stateBefore);
   }
 
+  @Override
   public String toString() {
     return "FLUSH " + myVariable;
   }

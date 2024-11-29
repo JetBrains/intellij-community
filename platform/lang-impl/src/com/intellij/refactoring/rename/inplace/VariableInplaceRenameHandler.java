@@ -63,12 +63,14 @@ public class VariableInplaceRenameHandler implements RenameHandler {
           final PsiElement parent = elementUnderCaret.getParent();
           if (parent instanceof PsiReference) {
             element = ((PsiReference)parent).resolve();
-          } else {
+          }
+          else {
             element = PsiTreeUtil.getParentOfType(elementUnderCaret, PsiNamedElement.class);
           }
         }
         if (element == null) return;
-      } else {
+      }
+      else {
         return;
       }
     }
@@ -109,11 +111,11 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   /**
-   * @param dataContext for {@code null} datacontext, modal rename won't replace failed inplace rename 
+   * @param dataContext for {@code null} datacontext, modal rename won't replace failed inplace rename
    */
   public @Nullable InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
-                                     @NotNull Editor editor,
-                                     @Nullable DataContext dataContext) {
+                                               @NotNull Editor editor,
+                                               @Nullable DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
     List<String> names = dataContext == null ? null : PsiElementRenameHandler.NAME_SUGGESTIONS.getData(dataContext);
     boolean startedRename = renamer != null && renamer.performInplaceRename(names);
@@ -124,7 +126,10 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     return renamer;
   }
 
-  protected static void performDialogRename(PsiElement elementToRename, Editor editor, @NotNull DataContext dataContext, String initialName) {
+  protected static void performDialogRename(PsiElement elementToRename,
+                                            Editor editor,
+                                            @NotNull DataContext dataContext,
+                                            String initialName) {
     try {
       ourPreventInlineRenameFlag.set(initialName == null ? "" : initialName);
       RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
@@ -134,11 +139,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
         editor,
         elementToRename.getContainingFile(), dataContext
       );
-    } finally {
-      ourPreventInlineRenameFlag.set(null);
+    }
+    finally {
+      ourPreventInlineRenameFlag.remove();
     }
   }
-  
+
   public static @Nullable String getInitialName() {
     final String str = ourPreventInlineRenameFlag.get();
     return StringUtil.isEmpty(str) ? null : str;

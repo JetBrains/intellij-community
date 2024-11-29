@@ -15,7 +15,6 @@ import com.jetbrains.python.pyi.PyiFile;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -94,7 +93,9 @@ public final class PyKnownDecoratorUtil {
     ATTRS_MUTABLE("attrs.mutable"),
     ATTRS_FROZEN("attrs.frozen"),
 
-    PYTEST_FIXTURES_FIXTURE("_pytest.fixtures.fixture");
+    PYTEST_FIXTURES_FIXTURE("_pytest.fixtures.fixture"),
+    ENUM_MEMBER(PyNames.TYPE_ENUM_MEMBER),
+    ENUM_NONMEMBER(PyNames.TYPE_ENUM_NONMEMBER);
 
     private final QualifiedName myQualifiedName;
 

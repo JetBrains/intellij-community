@@ -220,6 +220,7 @@ public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalIn
   }
 
   interface Value {
+    @Override
     @NotNull String toString();
     boolean isSatisfied(@NotNull Nls.Capitalization capitalization);
 

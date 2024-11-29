@@ -2,16 +2,17 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMember
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.utils.isLocalClass
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ResolvedImportPath
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.forEachDescendantOfType
@@ -35,6 +38,7 @@ import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.psi.psiUtil.isNull
@@ -88,8 +92,22 @@ fun fullyExpandCall(
                                 is KtCallElement -> {
                                     if (argumentExpression.typeArguments.isEmpty() && argumentExpression.calleeExpression != null) {
                                         val arguments = getRenderedTypeArguments(argumentExpression)
+
                                         if (arguments != null) {
                                             addTypeArguments(argumentExpression, arguments, usage.project)
+
+                                            fun markAsUserCode() {
+                                                val typeArgumentList = argumentExpression.typeArgumentList
+                                                if (typeArgumentList != null) {
+                                                    argumentExpression.putCopyableUserData(USER_CODE_KEY, null)
+                                                    for (child in argumentExpression.children) {
+                                                        (child as? KtElement)?.putCopyableUserData(USER_CODE_KEY, Unit)
+                                                    }
+                                                    typeArgumentList.putCopyableUserData(USER_CODE_KEY, null)
+                                                }
+                                            }
+
+                                            markAsUserCode()
                                         }
                                     }
                                 }
@@ -195,7 +213,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val parent = expression.parent
         if (parent is KtValueArgumentName || parent is KtCallableReferenceExpression) return@forEachDescendantOfType
         val resolve = expression.mainReference.resolve()
-        val target = resolve as? KtNamedDeclaration ?: resolve as? PsiMember
+        val target = (resolve as? KtObjectDeclaration)?.let { if (it.isCompanion()) it.containingClass() else it } ?: resolve as? KtNamedDeclaration ?: resolve as? PsiMember
 
         if (target is KtParameter) {
             fun getParameterName(): Name = if (isAnonymousFunction && target.ownerFunction == originalDeclaration) {
@@ -205,6 +223,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 target.nameAsSafeName
             }
             expression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, getParameterName())
+            if (!target.hasValOrVar() && parent !is KtCallElement) {
+                return@forEachDescendantOfType
+            }
         } else if (target is KtTypeParameter) {
             expression.putCopyableUserData(CodeToInline.TYPE_PARAMETER_USAGE_KEY, target.nameAsName)
         } else if (resolve == (originalDeclaration as? KtNamedFunction)?.receiverTypeReference && isAnonymousFunctionWithReceiver && expression.getReceiverExpression() == null) {
@@ -219,6 +240,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                     is PsiMember -> {
                         if ((t.containingFile as? PsiJavaFile)?.packageName == CommonClassNames.DEFAULT_PACKAGE) {
                             return@analyze false
+                        }
+                        if (t is PsiClass) {
+                            return@analyze t.qualifiedName != null
                         }
                         t.callableSymbol
                     }
@@ -237,11 +261,12 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val isLocalInline =
             originalDeclaration is KtProperty && originalDeclaration.isLocal || originalDeclaration is KtFunction && originalDeclaration.isLocal
         if (!isLocalInline && (targetParent is KtFile ||
+                    target is KtConstructor<*> ||
                     (target as? KtCallableDeclaration)?.receiverTypeReference != null ||
                     target != null && isImportable(target))
         ) {
             val importableFqName =
-                (target as? KtNamedDeclaration)?.fqName ?: (target as? PsiMember)?.kotlinFqName ?: return@forEachDescendantOfType
+                (target as? KtConstructor<*>)?.containingClass()?.fqName ?: (target as? KtNamedDeclaration)?.fqName ?: (target as? PsiMember)?.kotlinFqName ?: return@forEachDescendantOfType
             val shortName = importableFqName.shortName()
             val ktFile = expression.containingKtFile
             val aliasName = if (shortName.asString() != expression.getReferencedName())
@@ -261,61 +286,90 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             )
         }
 
+        fun markToDeleteReceiver(receiverExpression: KtThisExpression) {
+            analyze(receiverExpression) {
+                val originalCallableSymbol = ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol ?: return
+                val originalDispatchReceiverType = originalCallableSymbol.dispatchReceiverType
+                val expressionType = receiverExpression.expressionType ?: return
+                val originalSymbolReceiverType = originalCallableSymbol.receiverType
+                if (originalDispatchReceiverType != null &&
+                    originalSymbolReceiverType != null &&
+                    expressionType.semanticallyEquals(originalDispatchReceiverType) == true
+                ) {
+                    receiverExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
+                }
+                val isSameReceiverType =
+                    originalSymbolReceiverType != null && expressionType.semanticallyEquals(originalSymbolReceiverType) ||
+                            originalDispatchReceiverType != null && expressionType.semanticallyEquals(originalDispatchReceiverType)
+                if (!isSameReceiverType) {
+                    receiverExpression.putCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY, Unit)
+                }
+            }
+        }
+
         val receiverExpression = expression.getReceiverExpression()
         if (receiverExpression == null) {
-            val (receiverValue, isSameReceiverType, deleteReceiver) = analyze(expression) {
-                val resolveCall = expression.resolveToCall()
-                val partiallyAppliedSymbol = resolveCall?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+            if (parent is KtThisExpression) {
+                markToDeleteReceiver(parent)
+            } else {
+                val (receiverValue, isSameReceiverType, deleteReceiver) = analyze(expression) {
+                    val resolveCall = expression.resolveToCall()
+                    val partiallyAppliedSymbol = resolveCall?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
 
-                val value =
-                    (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue
-                val originalSymbol = ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol
-                val originalSymbolReceiverType = originalSymbol?.receiverType
-                val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
-                if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
-                    require(partiallyAppliedSymbol != null)
-                    val receiverToDelete = originalSymbolReceiverType != null
-                            && (partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
-                            && (partiallyAppliedSymbol.dispatchReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
-                    val isSameReceiverType = originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
-                            originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType)
-                    Triple(
-                        getThisQualifier(value),
-                        isSameReceiverType,
-                        receiverToDelete
-                    )
-                } else {
-                    val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KaFunctionType
-                    val receiverType = functionalType?.receiverType
-                    if (receiverType == null) {
-                        Triple(null, true, false)
-                    } else {
-                        val isSame = originalSymbolReceiverType != null && receiverType.semanticallyEquals(originalSymbolReceiverType) ||
-                                originalSymbolDispatchType != null && receiverType.semanticallyEquals(originalSymbolDispatchType)
-                        Triple("this".takeIf { isSame }, isSame, false)
-                    }
-                }
-            }
-
-            if (receiverValue != null) {
-                codeToInline.addPreCommitAction(expression) { expr ->
-                    val expressionToReplace = expr.parent as? KtCallExpression ?: expr
-                    val replaced = codeToInline.replaceExpression(
-                        expressionToReplace, KtPsiFactory.contextual(expressionToReplace).createExpressionByPattern(
-                            "$receiverValue.$0", expressionToReplace
+                    val value =
+                        (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue
+                    val originalSymbol =
+                        ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol
+                    val originalSymbolReceiverType = originalSymbol?.receiverType
+                    val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
+                    if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
+                        require(partiallyAppliedSymbol != null)
+                        val receiverToDelete = originalSymbolReceiverType != null
+                                && (partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
+                                && (partiallyAppliedSymbol.dispatchReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
+                        val isSameReceiverType =
+                            originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
+                                    originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType)
+                        Triple(
+                            getThisQualifier(value),
+                            isSameReceiverType,
+                            receiverToDelete
                         )
-                    ) as? KtQualifiedExpression
-                    val thisExpression = replaced?.receiverExpression ?: return@addPreCommitAction
-                    if (isAnonymousFunctionWithReceiver && isSameReceiverType) {
-                        thisExpression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, Name.identifier("p1"))
-                    } else if (!isSameReceiverType) {
-                        thisExpression.putCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY, Unit)
+                    } else {
+                        val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KaFunctionType
+                        val receiverType = functionalType?.receiverType
+                        if (receiverType == null) {
+                            Triple(null, true, false)
+                        } else {
+                            val isSame = originalSymbolReceiverType != null && receiverType.semanticallyEquals(originalSymbolReceiverType) ||
+                                    originalSymbolDispatchType != null && receiverType.semanticallyEquals(originalSymbolDispatchType)
+                            Triple("this".takeIf { isSame }, isSame, false)
+                        }
                     }
-                    if (deleteReceiver) {
-                        thisExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
+                }
+
+                if (receiverValue != null) {
+                    codeToInline.addPreCommitAction(expression) { expr ->
+                        val expressionToReplace = expr.parent as? KtCallExpression ?: expr
+                        val replaced = codeToInline.replaceExpression(
+                            expressionToReplace, KtPsiFactory.contextual(expressionToReplace).createExpressionByPattern(
+                                "$receiverValue.$0", expressionToReplace
+                            )
+                        ) as? KtQualifiedExpression
+                        val thisExpression = replaced?.receiverExpression ?: return@addPreCommitAction
+                        if (isAnonymousFunctionWithReceiver && isSameReceiverType) {
+                            thisExpression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, Name.identifier("p1"))
+                        } else if (!isSameReceiverType) {
+                            thisExpression.putCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY, Unit)
+                        }
+                        if (deleteReceiver) {
+                            thisExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
+                        }
                     }
                 }
             }
+        } else if (receiverExpression is KtThisExpression) {
+            markToDeleteReceiver(receiverExpression)
         }
     }
 }

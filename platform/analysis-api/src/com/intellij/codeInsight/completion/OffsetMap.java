@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -97,6 +98,7 @@ public final class OffsetMap implements Disposable {
     }
   }
 
+  @Unmodifiable
   public List<OffsetKey> getAllOffsets() {
     synchronized (myMap) {
       ProgressManager.checkCanceled();

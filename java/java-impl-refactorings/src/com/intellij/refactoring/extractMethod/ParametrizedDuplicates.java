@@ -21,6 +21,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -61,7 +62,7 @@ public final class ParametrizedDuplicates {
   @Nullable
   public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor,
                                                       @NotNull DuplicatesFinder.MatchType matchType,
-                                                      @Nullable Set<? extends TextRange> textRanges) {
+                                                      @Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
     DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, matchType, textRanges);
     if (finder == null) {
       return null;
@@ -173,7 +174,7 @@ public final class ParametrizedDuplicates {
   @Nullable
   private static DuplicatesFinder createDuplicatesFinder(@NotNull ExtractMethodProcessor processor,
                                                          @NotNull DuplicatesFinder.MatchType matchType,
-                                                         @Nullable Set<? extends TextRange> textRanges) {
+                                                         @Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
     if (elements.length == 0) {
       return null;

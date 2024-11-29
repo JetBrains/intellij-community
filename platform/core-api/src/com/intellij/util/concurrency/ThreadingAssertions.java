@@ -168,6 +168,15 @@ public final class ThreadingAssertions {
   }
 
   /**
+   * Asserts that the current thread has <b>no</b> read access local to this thread (non-inherited).
+   */
+  public static void assertNoOwnReadAccess() {
+    if (ApplicationManager.getApplication().holdsReadLock()) {
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
+    }
+  }
+
+  /**
    * Asserts that the current thread has write-intent read access.
    */
   public static void assertWriteIntentReadAccess() {
@@ -237,7 +246,10 @@ public final class ThreadingAssertions {
     // Don't report implicit locks for unit tests, too many false positives
     if (app != null && app.isUnitTestMode())
       return false;
-    return implicitLock;
+    // Reset to decrease noise
+    boolean il = implicitLock;
+    implicitLock = false;
+    return il;
   }
 
   public static void setImplicitLockOnEDT(boolean implicitLock) {

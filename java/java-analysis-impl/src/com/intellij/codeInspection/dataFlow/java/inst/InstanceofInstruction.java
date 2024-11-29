@@ -4,21 +4,22 @@ package com.intellij.codeInspection.dataFlow.java.inst;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.DfaCondition;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTypesUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 
@@ -81,6 +82,16 @@ public class InstanceofInstruction extends ExpressionPushingInstruction {
       }
     }
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  @Override
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return StreamEx.of(factory.getValues())
+      .select(DfaVariableValue.class)
+      .map(DfaVariableValue::getDescriptor)
+      .filter(desc -> desc instanceof GetterDescriptor getterDescriptor &&
+                      PsiTypesUtil.isGetClass(getterDescriptor.getPsiElement()))
+      .toList();
   }
 
   @Override

@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -17,6 +19,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.MutableConfigurableGroup;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.options.newEditor.settings.SettingsEditorAdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.Splitter;
@@ -33,6 +36,8 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.SingleEdtTaskScheduler;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -49,11 +54,13 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
+  private static final Logger LOG = Logger.getInstance(SettingsEditor.class);
+
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
@@ -244,7 +251,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     editor.setPreferredSize(JBUI.size(800, 600));
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
-    myBanner = new Banner(editor.getResetAction());
+    myBanner = new Banner(editor.getResetAction(), "Settings applied");
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
     myBanner.setBorder(JBUI.Borders.empty(11, 6, 0, 10));
     search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -309,6 +316,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   @ApiStatus.Internal
   public @NotNull SettingsTreeView getTreeView() {
     return treeView;
+  }
+
+  @ApiStatus.Internal
+  public boolean isModified() {
+    return !filter.context.getModified().isEmpty();
   }
 
   private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
@@ -437,7 +449,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   protected boolean cancel(AWTEvent source) {
-    if (source instanceof KeyEvent && filter.context.isHoldingFilter()) {
+    if (source instanceof KeyEvent && filter.context.isHoldingFilter) {
       search.setText("");
       return false;
     }
@@ -498,7 +510,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   void checkModified(Configurable configurable) {
     Configurable parent = filter.context.getParentConfigurable(configurable);
-    if (ConfigurableWrapper.hasOwnContent(parent)) {
+    if (parent != null && ConfigurableWrapper.hasOwnContent(parent)) {
       checkModifiedForItem(parent);
       for (Configurable child : filter.context.getChildren(parent)) {
         checkModifiedForItem(child);
@@ -510,21 +522,33 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     updateStatus(configurable);
   }
 
-  private void checkModifiedForItem(final Configurable configurable) {
-    if (configurable != null) {
-      JComponent component = editor.getContent(configurable);
-      if (component == null && ConfigurableWrapper.hasOwnContent(configurable)) {
-        component = editor.readContent(configurable);
-      }
-      if (component != null) {
-        checkModifiedInternal(configurable);
-      }
+  private void checkModifiedForItem(@NotNull Configurable configurable) {
+    JComponent component = editor.getContent(configurable);
+    if (component == null && ConfigurableWrapper.hasOwnContent(configurable)) {
+      component = editor.readContent(configurable);
+    }
+    if (component != null) {
+      checkModifiedInternal(configurable);
     }
   }
 
   private void checkModifiedInternal(Configurable configurable) {
     if (configurable.isModified()) {
-      filter.context.fireModifiedAdded(configurable, null);
+      if (SettingsEditorAdvancedSettings.INSTANCE.getInstantSettingsApply()) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            LOG.info("Applying modified settings for " + configurable.getDisplayName());
+            configurable.apply();
+            myBanner.setSavedTextVisible(true);
+            EdtScheduler.getInstance().schedule(1000, () -> myBanner.setSavedTextVisible(false));
+          }
+          catch (ConfigurationException e) {
+            LOG.error("Unable to apply modified settings for " + configurable.getDisplayName(), e);
+          }
+        });
+      } else {
+        filter.context.fireModifiedAdded(configurable, null);
+      }
     }
     else if (!filter.context.getErrors().containsKey(configurable)) {
       filter.context.fireModifiedRemoved(configurable, null);

@@ -48,6 +48,7 @@ public class PackageNode extends PackageDependenciesNode {
     }
   }
 
+  @Override
   public String toString() {
     return myPackageName;
   }
@@ -70,6 +71,7 @@ public class PackageNode extends PackageDependenciesNode {
     return 3;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -80,6 +82,7 @@ public class PackageNode extends PackageDependenciesNode {
            Objects.equals(myPackageQName, packageNode.myPackageQName);
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myPackageName.hashCode();

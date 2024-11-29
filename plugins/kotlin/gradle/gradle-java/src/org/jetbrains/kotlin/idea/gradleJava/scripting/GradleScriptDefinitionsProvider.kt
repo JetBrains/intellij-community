@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
@@ -21,6 +22,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.concurrent.ConcurrentHashMap
 
+@InternalIgnoreDependencyViolation
 class GradleScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionsSource {
     companion object {
         fun getInstance(project: Project): GradleScriptDefinitionsContributor? =

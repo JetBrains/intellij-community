@@ -1,3 +1,4 @@
+// PRIORITY: HIGH
 // COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries -opt-in=kotlin.ExperimentalStdlibApi
 // WITH_STDLIB
 

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JList
 
 @ApiStatus.Internal
 internal class LcrIconImpl(initParams: LcrIconInitParams, baselineAlign: Boolean, beforeGap: LcrRow.Gap, val icon: Icon) :
@@ -16,7 +17,7 @@ internal class LcrIconImpl(initParams: LcrIconInitParams, baselineAlign: Boolean
 
   override val type = Type.ICON
 
-  override fun apply(component: JComponent, enabled: Boolean) {
+  override fun apply(component: JComponent, enabled: Boolean, list: JList<*>, isSelected: Boolean) {
     checkTrue(type.isInstance(component))
 
     component as JLabel

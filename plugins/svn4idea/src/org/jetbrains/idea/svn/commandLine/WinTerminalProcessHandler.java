@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,7 +15,7 @@ public class WinTerminalProcessHandler extends TerminalProcessHandler {
   private static final String NON_CSI_ESCAPE_CODE = "\u001B.[@-_]";
   private static final String CSI_ESCAPE_CODE = "\u001B\\[(.*?)[@-~]";
 
-  public WinTerminalProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
+  public WinTerminalProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, boolean forceUtf8, boolean forceBinary) {
     super(process, commandLine, forceUtf8, forceBinary);
   }
 

@@ -1,16 +1,16 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.testFramework.teamCity` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "testFramework-teamCity",
+jvm_library(
+  name = "teamCity",
   module_name = "intellij.platform.testFramework.teamCity",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.testFramework.teamCity` end

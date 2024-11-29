@@ -111,7 +111,9 @@ public final class IdeErrorMessages {
         MAP.put(EXCEPTION_FROM_ANALYZER, KotlinBaseFe10HighlightingBundle.htmlMessage("html.internal.error.occurred.while.analyzing.this.expression.br.0.html"), HTML_THROWABLE);
         MAP.put(ErrorsJs.JSCODE_ERROR, KotlinBaseFe10HighlightingBundle.htmlMessage("html.javascript.0.html"), JsCallDataHtmlRenderer.INSTANCE);
         MAP.put(ErrorsJs.JSCODE_WARNING, KotlinBaseFe10HighlightingBundle.htmlMessage("html.javascript.0.html"), JsCallDataHtmlRenderer.INSTANCE);
-        MAP.put(UNSUPPORTED_FEATURE, "<html>{0}</html>", new LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.UNSUPPORTED, true));
+        MAP.put(UNSUPPORTED_FEATURE, "<html>{0}</html>",
+                new DecoratedRendererForK2Features(new LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.UNSUPPORTED, true))
+        );
         MAP.put(EXPERIMENTAL_FEATURE_WARNING, "<html>{0}</html>", new LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.WARNING, true));
         MAP.put(NO_ACTUAL_FOR_EXPECT, KotlinBaseFe10HighlightingBundle.htmlMessage("html.expected.0.has.no.actual.declaration.in.module.1.2.html"), DECLARATION_NAME_WITH_KIND, MODULE_WITH_PLATFORM, adaptGenerics1(new PlatformIncompatibilityDiagnosticRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE)));
         MAP.put(ACTUAL_WITHOUT_EXPECT, KotlinBaseFe10HighlightingBundle.htmlMessage("html.0.has.no.corresponding.expected.declaration.1.html"), CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM, adaptGenerics1(new PlatformIncompatibilityDiagnosticRenderer(IdeMultiplatformDiagnosticRenderingMode.INSTANCE)));

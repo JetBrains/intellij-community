@@ -683,12 +683,14 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - a:getList():javax.swing.JList
 - a:getSelected():Z
 - a:getSelectionColor():java.awt.Color
+- a:getToolTipText():java.lang.String
 - a:getValue():java.lang.Object
 - a:icon(javax.swing.Icon,kotlin.jvm.functions.Function1):V
 - bs:icon$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,javax.swing.Icon,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - a:separator(kotlin.jvm.functions.Function1):V
 - a:setBackground(java.awt.Color):V
 - a:setSelectionColor(java.awt.Color):V
+- a:setToolTipText(java.lang.String):V
 - a:text(java.lang.String,kotlin.jvm.functions.Function1):V
 - bs:text$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 *e:com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
@@ -701,7 +703,7 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 *:com.intellij.ui.dsl.listCellRenderer.LcrSeparator
 - a:getText():java.lang.String
 - a:setText(java.lang.String):V
-*f:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+*Fa:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - <init>(java.awt.Color):V
 - f:getAttributes():com.intellij.ui.SimpleTextAttributes
@@ -713,6 +715,11 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - f:setFont(java.awt.Font):V
 - f:setForeground(java.awt.Color):V
 - f:setSpeedSearchHighlighting(Z):V
+- a:speedSearch(kotlin.jvm.functions.Function1):V
+*f:com.intellij.ui.dsl.listCellRenderer.LcrTextSpeedSearchParams
+- <init>():V
+- f:getRanges():java.lang.Iterable
+- f:setRanges(java.lang.Iterable):V
 *a:com.intellij.ui.hover.HoverListener
 - <init>():V
 - f:addTo(javax.swing.JComponent):V
@@ -811,35 +818,27 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 *:com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
 - a:getSizeAndLocation(javax.swing.JComponent):com.intellij.ui.awt.RelativeRectangle
 *:com.intellij.ui.treeStructure.TreeDomainModel
-- a:accessData(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - a:computeRoot(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.ui.treeStructure.TreeDomainModelKt
-- *sf:TreeDomainModel(com.intellij.ide.util.treeView.AbstractTreeStructure,Z,I):com.intellij.ui.treeStructure.TreeDomainModel
 *:com.intellij.ui.treeStructure.TreeNodeDomainModel
 - a:computeChildren(kotlin.coroutines.Continuation):java.lang.Object
-- a:computeLeafState(kotlin.coroutines.Continuation):java.lang.Object
+- a:computeIsLeaf(kotlin.coroutines.Continuation):java.lang.Object
 - a:computePresentation(com.intellij.ui.treeStructure.TreeNodePresentationBuilder,kotlin.coroutines.Continuation):java.lang.Object
-- a:getUserObject():java.lang.Object
 *:com.intellij.ui.treeStructure.TreeNodePresentation
-- a:getFullText():java.util.List
-- a:getIcon():javax.swing.Icon
-- a:getMainText():java.lang.String
-- a:getToolTip():java.lang.String
-- a:isLeaf():Z
 *:com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 - a:appendTextFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - a:build():com.intellij.ui.treeStructure.TreeNodePresentation
 - a:setIcon(javax.swing.Icon):V
 - a:setMainText(java.lang.String):V
 - a:setToolTipText(java.lang.String):V
-*:com.intellij.ui.treeStructure.TreeNodeTextFragment
-- a:getAttributes():com.intellij.ui.SimpleTextAttributes
-- a:getText():java.lang.String
+*:com.intellij.ui.treeStructure.TreeNodeState
+- a:getPresentation():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:isExpanded():Z
 *:com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getChildren():kotlinx.coroutines.flow.Flow
-- a:getPresentation():kotlinx.coroutines.flow.Flow
-- a:getUserObject():java.lang.Object
-- a:presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:getParent():com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getState():kotlinx.coroutines.flow.Flow
+- a:setExpanded(Z):V
+- a:stateSnapshot():com.intellij.ui.treeStructure.TreeNodeState
 *:com.intellij.ui.treeStructure.TreeSwingModel
 - com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
 - com.intellij.ui.treeStructure.BgtAwareTreeModel
@@ -847,19 +846,35 @@ f:com.intellij.ui.treeStructure.TreeDomainModelKt
 - a:getChild(java.lang.Object,I):com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getRoot():com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getShowLoadingNode():Z
+- a:getViewModel():com.intellij.ui.treeStructure.TreeViewModel
 - a:setShowLoadingNode(Z):V
 f:com.intellij.ui.treeStructure.TreeSwingModelKt
 - *sf:TreeSwingModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeViewModel):com.intellij.ui.treeStructure.TreeSwingModel
+*:com.intellij.ui.treeStructure.TreeSwingModelListener
+- javax.swing.event.TreeModelListener
+- a:scrollRequested(com.intellij.ui.treeStructure.TreeSwingModelScrollEvent):V
+- a:selectionChanged(com.intellij.ui.treeStructure.TreeSwingModelSelectionEvent):V
+*f:com.intellij.ui.treeStructure.TreeSwingModelScrollEvent
+- java.util.EventObject
+- <init>(com.intellij.ui.treeStructure.TreeSwingModel,javax.swing.tree.TreePath):V
+- f:getScrollTo():javax.swing.tree.TreePath
+*f:com.intellij.ui.treeStructure.TreeSwingModelSelectionEvent
+- java.util.EventObject
+- <init>(com.intellij.ui.treeStructure.TreeSwingModel,javax.swing.tree.TreePath[]):V
+- f:getNewSelection():javax.swing.tree.TreePath[]
 *:com.intellij.ui.treeStructure.TreeViewModel
-- a:accept(com.intellij.ui.tree.SuspendingTreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:accept(com.intellij.ui.tree.TreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:getComparator():java.util.Comparator
+- a:accept(com.intellij.ui.treeStructure.TreeViewModelVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
 - a:getDomainModel():com.intellij.ui.treeStructure.TreeDomainModel
 - a:getRoot():kotlinx.coroutines.flow.Flow
-- a:invalidate(javax.swing.tree.TreePath,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:setComparator(java.util.Comparator):V
+- a:getScrollEvents():kotlinx.coroutines.flow.Flow
+- a:getSelection():kotlinx.coroutines.flow.StateFlow
+- a:invalidate(com.intellij.ui.treeStructure.TreeNodeViewModel,Z):V
+- a:scrollTo(com.intellij.ui.treeStructure.TreeNodeViewModel):V
+- a:setSelection(java.util.Collection):V
 f:com.intellij.ui.treeStructure.TreeViewModelKt
 - *sf:TreeViewModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeDomainModel):com.intellij.ui.treeStructure.TreeViewModel
+*:com.intellij.ui.treeStructure.TreeViewModelVisitor
+- a:visit(com.intellij.ui.treeStructure.TreeNodeViewModel,kotlin.coroutines.Continuation):java.lang.Object
 *c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - id:java.lang.String

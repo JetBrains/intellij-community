@@ -7,10 +7,7 @@ import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.EdtNoGetDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.ActionCallback;
@@ -338,8 +335,9 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
 
   @Override
   public AnAction @NotNull [] getSettingsActionsList() {
-    final ActionGroup group = (ActionGroup)getSettingsActions();
-    return group.getChildren(null);
+    ActionGroup group = (ActionGroup)getSettingsActions();
+    return group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+           group.getChildren(null);
   }
 
   @Override

@@ -6,6 +6,7 @@ import com.intellij.diff.util.LineRange
 
 data class GHPRReviewEditorGutterControlsState(
   override val linesWithComments: Set<Int>,
+  override val linesWithNewComments: Set<Int>,
   val commentableLines: List<LineRange>
 ) : CodeReviewEditorGutterControlsModel.ControlsState {
   override fun isLineCommentable(lineIdx: Int): Boolean = commentableLines.any {

@@ -1,22 +1,22 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ide.util.netty` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "ide-util-netty",
   module_name = "intellij.platform.ide.util.netty",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
-    "@libraries//:guava",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:netty-buffer",
-    "@libraries//:netty-codec-http2",
-    "@community//platform/platform-util-io:ide-util-io",
-    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "@lib//:guava",
+    "@lib//:fastutil-min",
+    "@lib//:netty-buffer",
+    "@lib//:netty-codec-http",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:kotlinx-coroutines-core",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.ide.util.netty` end

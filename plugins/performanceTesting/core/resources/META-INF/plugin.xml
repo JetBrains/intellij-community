@@ -60,6 +60,11 @@
     <projectService overrides="true"
                     serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticServiceImpl"/>
+
+    <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.jetbrains">
+    <performancePlugin.snapshotOpener implementation="com.jetbrains.performancePlugin.profilers.LocalFileManagerSnapshotOpener"/>
   </extensions>
 
   <applicationListeners>

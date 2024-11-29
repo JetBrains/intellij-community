@@ -22,6 +22,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -114,6 +115,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return aClass -> MyResult.classNameOrGlobalStatic;
   }
 
+  @Unmodifiable
   static List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
     PsiElement typeParent = typeElement.getParent();
     if (typeParent instanceof PsiReferenceParameterList) {

@@ -69,7 +69,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
     context(KaSession)
     private fun getSuperClassSymbolNoAny(classSymbol: KaClassSymbol): KaClassSymbol? =
         classSymbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }.find { superClassSymbol ->
-            superClassSymbol.classKind == KaClassKind.CLASS && superClassSymbol.classId != StandardClassIds.Any
+            superClassSymbol.classKind == KaClassKind.CLASS && superClassSymbol.classId != StandardClassIds.Any && superClassSymbol.classId != StandardClassIds.Enum
         }
 
     context(KaSession)
@@ -213,7 +213,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
                 val isVararg = parameter.isVararg
                 val paramName = suggestSafeNameByName(parameter.name.asString(), validator)
                 val typeToUse = parameter.returnType
-                val paramType = substitutor.substitute(typeToUse).render(position = Variance.IN_VARIANCE)
+                val paramType = substitutor.substitute(typeToUse).render(position = Variance.OUT_VARIANCE)
                 val modifiers = if (isVararg) "vararg " else ""
 
                 parameterList.addParameter(psiFactory.createParameter("$modifiers$paramName: $paramType"))

@@ -17,6 +17,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -172,6 +173,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     });
   }
 
+  @Unmodifiable
   protected List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
     return ContainerUtil.map(type.sourcePaths(myStratumId), this::getRelativePath);
   }

@@ -50,6 +50,8 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun isEditable() = editorComponent.isEditable()
 
+  fun isSoftWrappingEnabled() = interact { getSoftWrapModel().isSoftWrappingEnabled() }
+
   fun clickInlay(inlay: Inlay) {
     val inlayCenter = driver.withContext(OnDispatcher.EDT) { inlay.getBounds() }.center
     click(inlayCenter)
@@ -80,6 +82,12 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun getSelection(): String? {
+    return interact {
+      getSelectionModel().getSelectedText()
+    }
+  }
+
 
   fun deleteFile() {
     driver.withWriteAction {
@@ -96,39 +104,46 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getFontSize() = editor.getColorsScheme().getEditorFontSize()
 
-  fun clickOn(text: String, button: RemoteMouseButton) {
-    val o = this.text.indexOf(text) + text.length / 2
+  fun clickOn(text: String, button: RemoteMouseButton, times: Int = 1) {
+    val offset = this.text.indexOf(text) + text.length / 2
     val point = interact {
-      val p = offsetToVisualPosition(o)
+      val p = offsetToVisualPosition(offset)
       visualPositionToXY(p)
     }
-    robot.click(component, point, button, 1)
+    robot.click(component, point, button, times)
   }
 
   fun setCaretPosition(line: Int, column: Int) {
     click()
-    driver.withContext(OnDispatcher.EDT) {
-      editor.getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
+    interact {
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
     }
   }
 
   fun moveCaretToOffset(offset: Int) {
-    driver.withContext(OnDispatcher.EDT) {
-      editor.getCaretModel().moveToOffset(offset)
+    interact {
+      getCaretModel().moveToOffset(offset)
+    }
+  }
+
+  private fun calculatePositionPoint(line: Int, column: Int): Point {
+    return interact {
+      val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line - 1, column - 1))
+      Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt() + editor.getLineHeight() / 2)
     }
   }
 
   fun clickOnPosition(line: Int, column: Int) {
     setFocus()
-    click(interact {
-      val lowerPoint = editor.logicalPositionToXY(driver.logicalPosition(line - 1, column - 1))
-      Point(lowerPoint.getX().toInt(), lowerPoint.getY().toInt() + editor.getLineHeight() / 2)
-    })
+    click(calculatePositionPoint(line, column))
   }
 
-  fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
-    if (it.size < line) "" else it[line - 1]
+  fun hoverOnPosition(line: Int, column: Int) {
+    setFocus()
+    moveMouse(calculatePositionPoint(line, column))
   }
+
+  fun getLineText(line: Int) = text.lines().getOrElse(line - 1) { "" }
 
   fun <T> interact(block: Editor.() -> T): T {
     return driver.withContext(OnDispatcher.EDT) {

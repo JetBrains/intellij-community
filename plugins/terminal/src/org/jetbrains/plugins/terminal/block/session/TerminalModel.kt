@@ -9,8 +9,8 @@ import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalLine
-import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
@@ -167,13 +167,9 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   internal val terminalListeners: MutableList<TerminalListener> = CopyOnWriteArrayList()
   private val cursorListeners: MutableList<CursorListener> = CopyOnWriteArrayList()
 
-  fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
-    val terminalListener = TerminalModelListener { listener.onContentChanged() }
-    textBuffer.addModelListener(terminalListener)
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable) {
-        textBuffer.removeModelListener(terminalListener)
-      }
+  fun addContentListener(listener: ContentListener, parentDisposable: Disposable) {
+    textBuffer.addModelListener(parentDisposable) {
+      listener.onContentChanged()
     }
   }
 

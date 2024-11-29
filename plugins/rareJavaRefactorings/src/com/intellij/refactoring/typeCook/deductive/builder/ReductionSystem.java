@@ -75,6 +75,7 @@ public class ReductionSystem {
     return memberString(method) + "#" + var.getName();
   }
 
+  @Override
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   public String toString() {
     @NonNls StringBuilder buffer = new StringBuilder();

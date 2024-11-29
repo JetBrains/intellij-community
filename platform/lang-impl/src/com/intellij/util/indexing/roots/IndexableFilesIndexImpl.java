@@ -31,6 +31,7 @@ import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -59,6 +60,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files) {
     if (files.isEmpty()) return Collections.emptyList();
     OriginClassifier classifier = OriginClassifier.classify(project, files);

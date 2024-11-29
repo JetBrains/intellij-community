@@ -46,6 +46,7 @@ public class ThreadGroupReferenceProxyImpl extends ObjectReferenceProxyImpl impl
     return myParentThreadGroupProxy;
   }
 
+  @Override
   public @NonNls String toString() {
     return "ThreadGroupReferenceProxy: " + getThreadGroupReference().toString();
   }

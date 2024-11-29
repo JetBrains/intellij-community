@@ -14,8 +14,11 @@ import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.options.newEditor.settings.SettingsEditorAdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -88,7 +91,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     init(null, project);
   }
 
-  protected final AbstractEditor getEditor() {
+  public final AbstractEditor getEditor() {
     return editor;
   }
 
@@ -179,6 +182,8 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected Action @NotNull [] createActions() {
+    if (SettingsEditorAdvancedSettings.INSTANCE.getInstantSettingsApply())
+      return new Action[0];
     ArrayList<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     actions.add(getCancelAction());
@@ -204,6 +209,10 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   @Override
   public void doOKAction() {
     applyAndClose(true);
+  }
+
+  public void addChildDisposable(@NotNull Disposable disposable) {
+    Disposer.register(myDisposable, disposable);
   }
 
   public void applyAndClose(boolean scheduleSave) {

@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.keymap.eclipse` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "keymap-eclipse_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "keymap-eclipse",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":keymap-eclipse_resources"]
+)
+### auto-generated section `build intellij.keymap.eclipse` end

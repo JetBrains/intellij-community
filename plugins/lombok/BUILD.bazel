@@ -1,0 +1,67 @@
+### auto-generated section `build intellij.lombok` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "lombok_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "lombok",
+  module_name = "intellij.lombok",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//plugins/lombok/generated",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//java/openapi:java",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/java-impl:impl",
+    "//platform/core-ui",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "@lib//:guava",
+    "//java/java-impl-inspections:impl-inspections",
+    "//java/java-impl-refactorings:impl-refactorings",
+  ],
+  runtime_deps = [":lombok_resources"]
+)
+
+kt_jvm_test(
+  name = "lombok_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":lombok"],
+  deps = [
+    "//plugins/lombok/generated",
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//java/openapi:java",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/java-impl:impl",
+    "//platform/core-ui",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//java/testFramework",
+    "@lib//:junit4",
+    "@lib//:mockito",
+    "//java/java-impl-inspections:impl-inspections",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//java/java-tests:tests_test",
+  ],
+  runtime_deps = [":lombok_resources"]
+)
+### auto-generated section `build intellij.lombok` end

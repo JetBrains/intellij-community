@@ -32,6 +32,11 @@ class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: 
     if (visible) showRunButton()
   }
 
+  fun updateIfShown() = when(visible) {
+    true -> showRunButton()
+    false -> Unit
+  }
+
   private fun showRunButton() = try { cell.setGutterAction(currentAction) } catch(_: Exception) {}
   private fun hideRunButton() = cell.setGutterAction(DummyEmptyAction())
 

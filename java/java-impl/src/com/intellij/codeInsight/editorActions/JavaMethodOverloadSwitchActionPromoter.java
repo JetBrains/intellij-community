@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public final class JavaMethodOverloadSwitchActionPromoter implements ActionPromoter {
   @Override
+  @Unmodifiable
   public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return ContainerUtil.findAll(actions, a -> a instanceof JavaMethodOverloadSwitchUpAction ||
                                                a instanceof JavaMethodOverloadSwitchDownAction);

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,7 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
   }
 
   @Override
+  @Unmodifiable
   default @NotNull List<EventPair<?>> getAdditionalUsageData() {
     EventPair<Integer> data = getAlternativeJreUserData(getAlternativeJrePath());
     return ContainerUtil.createMaybeSingletonList(data);

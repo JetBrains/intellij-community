@@ -137,20 +137,17 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       addProgressListeners(listeners);
       withProcessingManager(() -> {
         withExecutionProgressManager(() -> {
-          doExecute();
+          withExecutionState(() -> {
+            doExecute();
+          });
         });
       });
-      setState(ExternalSystemTaskState.FINISHED);
     }
     catch (Exception e) {
       LOG.debug(e);
-      myError.set(e);
-      setState(ExternalSystemTaskState.FAILED);
     }
     catch (Throwable e) {
       LOG.error(e);
-      myError.set(e);
-      setState(ExternalSystemTaskState.FAILED);
     }
   }
 
@@ -166,17 +163,19 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     try {
       addProgressListeners(listeners);
       return withCancellationProgressManager(() -> {
-        return doCancel();
+        return withCancellationState(() -> {
+          return doCancel();
+        });
       });
     }
     catch (NotSupportedException e) {
-      setState(ExternalSystemTaskState.CANCELLATION_FAILED);
       showCancellationFailedNotification(e);
     }
+    catch (Exception e) {
+      LOG.debug(e);
+    }
     catch (Throwable e) {
-      setState(ExternalSystemTaskState.CANCELLATION_FAILED);
-      myError.set(e);
-      LOG.warn(e);
+      LOG.error(e);
     }
     return false;
   }
@@ -248,7 +247,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
   }
 
-  private <R> R withCancellationProgressManager(@NotNull ThrowableComputable<R, Exception> runnable) throws Exception {
+  private boolean withCancellationProgressManager(@NotNull ThrowableComputable<Boolean, Exception> runnable) throws Exception {
     var progressManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl();
     try {
       progressManager.beforeCancel(getId());
@@ -256,6 +255,43 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     }
     finally {
       progressManager.onCancel(myExternalProjectPath, getId());
+    }
+  }
+
+  private void withExecutionState(@NotNull ThrowableRunnable<Exception> runnable) throws Exception {
+    try {
+      runnable.run();
+      setState(ExternalSystemTaskState.FINISHED);
+    }
+    catch (ProcessCanceledException exception) {
+      setState(ExternalSystemTaskState.CANCELED);
+      myError.set(exception);
+      throw exception;
+    }
+    catch (Throwable exception) {
+      setState(ExternalSystemTaskState.FAILED);
+      myError.set(exception);
+      throw exception;
+    }
+  }
+
+  private boolean withCancellationState(@NotNull ThrowableComputable<Boolean, Exception> runnable) throws Exception {
+    try {
+      var isCancelled = runnable.compute();
+      if (isCancelled) {
+        setState(ExternalSystemTaskState.CANCELED);
+      }
+      return isCancelled;
+    }
+    catch (ProcessCanceledException exception) {
+      setState(ExternalSystemTaskState.CANCELED);
+      myError.set(exception);
+      throw exception;
+    }
+    catch (Throwable exception) {
+      setState(ExternalSystemTaskState.CANCELLATION_FAILED);
+      myError.set(exception);
+      throw exception;
     }
   }
 

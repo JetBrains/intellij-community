@@ -51,3 +51,20 @@ public final class Test {
         Test(42, "42")
     }
 }
+
+public final class Util {
+    @null public static final var INSTANCE: Util
+    @kotlin.jvm.JvmOverloads
+    public static final fun baz(@org.jetbrains.annotations.NotNull $this$baz: Test, @org.jetbrains.annotations.NotNull flag: boolean) : void {
+        if (flag) {
+            foo()
+        }else {
+            bar()
+        }
+    }
+    @kotlin.jvm.JvmOverloads
+    public static final fun baz(@org.jetbrains.annotations.NotNull $this$baz: Test) : void {
+        UIdentifier (Identifier (baz))(true)
+    }
+    private fun Util() = UastEmptyExpression
+}

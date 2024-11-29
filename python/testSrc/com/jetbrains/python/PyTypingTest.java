@@ -5959,6 +5959,28 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-77168
+  public void testReferencingImportedTypeFromUnmatchedVersionGuard() {
+    doTest("Literal[42]", """
+      from typing import Literal
+      import sys
+      
+      if sys.version_info < (3, 0):
+          expr: Literal[42]
+      """);
+  }
+
+  // PY-77168
+  public void testReferencingTopLevelTypeFromUnmatchedVersionGuard() {
+    doTest("int", """
+      import sys
+      
+      type Alias = int
+      if sys.version_info < (3, 0):
+          expr: Alias
+      """);
+  }
+  
   // PY-76243
   public void testGenericClassDeclaredInStubPackage() {
     runWithAdditionalClassEntryInSdkRoots("types/" + getTestName(false) + "/site-packages", () -> {
@@ -5980,6 +6002,18 @@ public class PyTypingTest extends PyTestCase {
              for expr in Foo:
                  pass
              """);
+  }
+
+  // PY-77074
+  public void testEnumIndexer() {
+    doTest("Color", """
+      from enum import Enum
+      
+      class Color(Enum):
+        RED = 1
+      
+      expr = Color["RED"]
+      """);
   }
 
   // PY-76149
@@ -6060,6 +6094,105 @@ public class PyTypingTest extends PyTestCase {
       
       My<caret>Class()
       """);
+  }
+
+  public void testTypeAliasToAny() {
+    doTest("int | Any", """
+      from typing import Any, TypeAlias
+      
+      Plug: TypeAlias = Any
+      expr: int | Plug
+      """);
+  }
+
+  public void testNewStyleTypeAliasToAny() {
+    doTest("int | Any", """
+      from typing import Any
+      
+      type Plug = Any
+      expr: int | Plug
+      """);
+  }
+
+  // PY-36416
+  public void testReturnTypeOfNonAnnotatedAsyncOverride() {
+    doTest("Coroutine[Any, Any, str]", """
+      class Base:
+          async def get(self) -> str:
+              ...
+      
+      class Specific(Base):
+          async def get(self):
+              ...
+      
+      expr = Specific().get()
+      """);
+  }
+
+  // PY-40458
+  public void testReturnTypeOfNonAnnotatedAsyncOverrideOfNonAsyncMethod() {
+    doTest("AsyncGenerator[int, Any]", """
+      from typing import AsyncIterator, TypeGuard, Protocol
+      
+      class Base(Protocol):
+          def get(self) -> AsyncIterator[int]:
+              ...
+      
+      class Specific(Base):
+          async def get(self):
+              yield 42
+      
+      expr = Specific().get()
+      """);
+  }
+
+  // PY-40458
+  public void testReturnTypeOfNonAnnotatedAsyncOverrideOfAsyncGeneratorMethod() {
+    doTest("AsyncIterator[int]", """
+      from typing import AsyncIterator, TypeGuard, Protocol
+      
+      class Base(Protocol):
+          async def get(self) -> AsyncIterator[int]:
+              if False: yield
+      
+      class Specific(Base):
+          async def get(self):
+              yield 42
+      
+      expr = Specific().get()
+      """);
+  }
+
+  // PY-77541
+  public void testParamSpecBoundToAnotherParamSpecInCustomGeneric() {
+      doTest("MyCallable[ParamSpec(\"P2\"), R2]", """
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   
+                   def f[**P, R](callback: MyCallable[P, R]) -> MyCallable[P, R]:
+                       ...
+                   
+                   def g[**P2, R2](callback: MyCallable[P2, R2]) -> MyCallable[P2, R2]:
+                       expr = f(callback)
+                   """);
+  }
+
+  // PY-77541
+  public void testParamSpecBoundToConcatenateInCustomGeneric() {
+    doTest("MyCallable[Concatenate(int, ParamSpec(\"P2\")), R2]", """
+                   from typing import Concatenate
+                   
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   
+                   def f[**P, R](callback: MyCallable[P, R]) -> MyCallable[P, R]:
+                       ...
+                   
+                   def g[**P2, R2](callback: MyCallable[Concatenate[int, P2], R2]) -> MyCallable[P2, R2]:
+                       expr = f(callback)
+                   """);
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

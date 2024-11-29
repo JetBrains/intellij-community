@@ -35,6 +35,7 @@ public class XPathType {
         myAbstract = isAbstract;
     }
 
+    @Override
     public String toString() {
         return "XPathType: " + type;
     }

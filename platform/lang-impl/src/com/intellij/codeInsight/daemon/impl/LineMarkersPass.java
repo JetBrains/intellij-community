@@ -39,6 +39,7 @@ import com.intellij.util.containers.NotNullList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -152,6 +153,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     return result;
   }
 
+  @Unmodifiable
   public static @NotNull List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
@@ -179,7 +181,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
           try {
             info = provider.getLineMarkerInfo(element);
           }
-          catch (ProcessCanceledException | IndexNotReadyException e) {
+          catch (IndexNotReadyException e) {
+            continue;
+          }
+          catch (ProcessCanceledException e) {
             throw e;
           }
           catch (Exception e) {
@@ -214,14 +219,16 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();
-    //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
       LineMarkerProvider provider = providers.get(j);
       try {
         provider.collectSlowLineMarkers(elements, slowLineMarkers);
       }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
+      catch (IndexNotReadyException e) {
+        continue;
+      }
+      catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {

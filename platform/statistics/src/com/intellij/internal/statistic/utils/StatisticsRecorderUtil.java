@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +56,7 @@ public final class StatisticsRecorderUtil {
     return StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).isCharsEscapingRequired();
   }
 
+  @Unmodifiable
   private static @NotNull List<String> getCustomTestModeRecorders() {
     String additional = System.getProperty(IDEA_RECORDER_INTERNAL_MODE);
     if (!StringUtil.isEmptyOrSpaces(additional)) {

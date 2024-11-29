@@ -36,9 +36,11 @@ import com.intellij.usages.impl.FileStructureGroupRuleProvider
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.usages.impl.rules.UsageTypeProvider
 import com.intellij.usages.rules.ImportFilteringRule
+import com.intellij.usages.rules.UsageFilteringRule
 import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.config.AnalysisFlag
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
@@ -331,12 +333,12 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
         private val SUPPORTED_EXTENSIONS = setOf("kt", "kts", "java", "xml", "properties", "txt", "groovy")
 
         internal fun getUsageAdapters(
-            filters: Collection<ImportFilteringRule>,
+            filters: Collection<(UsageInfo2UsageAdapter) -> Boolean>,
             usageInfos: Collection<UsageInfo>
         ): Collection<UsageInfo2UsageAdapter> = usageInfos
           .map(::UsageInfo2UsageAdapter)
           .onEach { it.updateCachedPresentation() }
-          .filter { usageAdapter -> filters.all { it.isVisible(usageAdapter) } }
+          .filter { usageAdapter -> filters.all { it(usageAdapter) } }
 
         val KtDeclaration.descriptor: DeclarationDescriptor?
             get() = if (this is KtParameter) this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL) else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)
@@ -356,7 +358,11 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
             it as T
         }): Collection<T> =
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, directive).map {
-                mapper(Class.forName(it).getDeclaredConstructor().newInstance())
+                try {
+                  mapper(Class.forName(it).getDeclaredConstructor().newInstance())
+                } catch (e: Throwable) {
+                    mapper(Class.forName(it).kotlin.objectInstance as Any)
+                }
             }
     }
 }
@@ -401,13 +407,18 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
         ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.ALWAYS_SMART
     }
 
-    val filteringRules = AbstractFindUsagesTest.instantiateClasses<ImportFilteringRule>(mainFileText, "// FILTERING_RULES: ")
+    val importFilteringRules: List<(UsageInfo2UsageAdapter) -> Boolean> = AbstractFindUsagesTest.instantiateClasses<ImportFilteringRule>(mainFileText, "// FILTERING_RULES: ")
+        .map { rule -> { usageInfo -> rule.isVisible(usageInfo) } }
+    val filteringRules: List<(UsageInfo2UsageAdapter) -> Boolean> = AbstractFindUsagesTest.instantiateClasses<UsageFilteringRule>(mainFileText, "// USAGE_FILTERING_RULES: ")
+        .map { rule -> { usageInfo -> rule.isVisible(usageInfo, emptyArray()) } }
+
     val groupingRules =
         AbstractFindUsagesTest.instantiateClasses<UsageGroupingRule>(mainFileText, "// GROUPING_RULES: ") {
             (it as? UsageGroupingRule) ?: (it as? FileStructureGroupRuleProvider)?.getUsageGroupingRule(project) ?: error("UsageGroupingRule is expected, actual is ${it.javaClass.name}")
         }
 
-    val filteredUsages = AbstractFindUsagesTest.getUsageAdapters(filteringRules, usageInfos)
+
+    val filteredUsages = AbstractFindUsagesTest.getUsageAdapters(filteringRules + importFilteringRules, usageInfos)
 
     val usageFiles = filteredUsages.map { it.file.name }.distinct()
     val appendFileName = alwaysAppendFileName || usageFiles.size > 1

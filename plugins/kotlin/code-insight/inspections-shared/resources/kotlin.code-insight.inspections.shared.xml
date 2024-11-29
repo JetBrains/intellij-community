@@ -205,7 +205,6 @@
             groupPath="Kotlin"
             groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
             enabledByDefault="true"
-            cleanupTool="false"
             level="WARNING"
             language="JAVA"
             key="inspection.enum.values.method.soft.deprecate.in.java.display.name" bundle="messages.KotlinBundle"/>
@@ -217,6 +216,7 @@
             enabledByDefault="false"
             level="WEAK WARNING"
             language="kotlin"
+            cleanupTool="true"
             key="inspection.redundant.value.argument.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection

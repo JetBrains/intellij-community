@@ -3,6 +3,7 @@ package com.intellij.internal.ui.sandbox.dsl
 
 import com.intellij.icons.AllIcons
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.items
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -39,7 +40,7 @@ internal class SegmentedButtonPanel : UISandboxPanel {
     result = panel {
       group("Segmented button test board") {
         val segmentedButtonRow = row("Segmented button:") {
-          segmentedButton = segmentedButton(generateItems(3)) {
+          segmentedButton = segmentedButton(items(3)) {
             text = rendererText ?: it
             toolTipText = rendererToolTip
             icon = rendererIcon.icon
@@ -126,7 +127,7 @@ internal class SegmentedButtonPanel : UISandboxPanel {
                   rendererEnabled = true
 
                   textField.text.toIntOrNull()?.let {
-                    segmentedButton.items = generateItems(it)
+                    segmentedButton.items = items(it)
                   }
 
                   rendererText = oldRendererText
@@ -162,17 +163,13 @@ internal class SegmentedButtonPanel : UISandboxPanel {
 
       group("Segmented button without binding") {
         row {
-          segmentedButton(generateItems(5)) { text = it }
+          segmentedButton(items(5)) { text = it }
         }
       }
     }
 
     result.registerValidators(disposable)
     return result
-  }
-
-  private fun generateItems(count: Int): Collection<String> {
-    return (1..count).map { "Item $it" }
   }
 }
 

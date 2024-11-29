@@ -135,6 +135,7 @@ public class Options implements Cloneable {
     logger.debug("options=" + this);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -148,12 +149,14 @@ public class Options implements Cloneable {
     return options.equals(options1.options);
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = options.hashCode();
     return result;
   }
 
+  @Override
   public String toString() {
     return "Options" + "{options=" + options + '}';
   }

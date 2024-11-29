@@ -1,0 +1,65 @@
+### auto-generated section `build kotlin.code-insight.live-templates.k1` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "kotlin-code-insight-live-templates-k1_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-live-templates-k1",
+  module_name = "kotlin.code-insight.live-templates.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+  ],
+  runtime_deps = [":kotlin-code-insight-live-templates-k1_resources"]
+)
+
+kt_jvm_test(
+  name = "kotlin-code-insight-live-templates-k1_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":kotlin-code-insight-live-templates-k1"],
+  deps = [
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+  ],
+  runtime_deps = [":kotlin-code-insight-live-templates-k1_resources"]
+)
+### auto-generated section `build kotlin.code-insight.live-templates.k1` end

@@ -512,11 +512,7 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
-  public void testParamDescriptionEpytext() {
-    checkHTMLOnly();
-  }
-
-  public void testParamAndReturnValueDescriptionNoTagsEpytext() {
+  public void testParamAndReturnValueDescriptionNoTagsRest() {
     checkHTMLOnly();
   }
 
@@ -529,11 +525,6 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   public void testKeywordArgsDescriptionRest() {
-    checkHTMLOnly();
-  }
-
-  // PY-11425
-  public void testKeywordArgsDescriptionEpydoc() {
     checkHTMLOnly();
   }
 
@@ -722,11 +713,6 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   }
 
   // PY-33341
-  public void testClassAndInstanceAttributesInOneSectionEpydoc() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> checkHTMLOnly());
-  }
-
-  // PY-33341
   public void testAttributesOrderGoogle() {
     checkHTMLOnly();
   }
@@ -863,6 +849,14 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
 
   // PY-23067
   public void testFunctoolsWraps() {
+    checkHTMLOnly();
+  }
+
+  public void testExplicitCallableParameterListRendering() {
+    checkHTMLOnly();
+  }
+
+  public void testInferredCallableParameterListRendering() {
     checkHTMLOnly();
   }
 

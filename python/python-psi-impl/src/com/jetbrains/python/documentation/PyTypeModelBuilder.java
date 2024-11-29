@@ -17,7 +17,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -92,20 +91,33 @@ public class PyTypeModelBuilder {
     }
   }
 
+  private static final class NarrowedType extends TypeModel {
+    private final TypeModel narrowedType;
+    private final boolean isTypeIs;
+
+    private NarrowedType(@NotNull TypeModel narrowedType, boolean isTypeIs) {
+      this.narrowedType = narrowedType;
+      this.isTypeIs = isTypeIs;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.narrowedType(this);
+    }
+  }
+  
+
   private static final class CollectionOf extends TypeModel {
     private final TypeModel collectionType;
     private final List<TypeModel> elementTypes;
     private final boolean useTypingAlias;
-    private final Boolean isTypeIs;
 
     private CollectionOf(TypeModel collectionType,
                          List<TypeModel> elementTypes,
-                         boolean useTypingAlias,
-                         @Nullable Boolean isTypeIs) {
+                         boolean useTypingAlias) {
       this.collectionType = collectionType;
       this.elementTypes = elementTypes;
       this.useTypingAlias = useTypingAlias;
-      this.isTypeIs = isTypeIs;
     }
 
     @Override
@@ -256,6 +268,19 @@ public class PyTypeModelBuilder {
       visitor.oneOfLiterals(this);
     }
   }
+  
+  private static class CallableParameterList extends TypeModel {
+    private final List<TypeModel> parameters;
+
+    private CallableParameterList(@NotNull List<TypeModel> parameters) {
+      this.parameters = parameters; 
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.callableParameterList(this);
+    }
+  }
 
   /**
    * Builds tree-like type model for PyType
@@ -316,11 +341,11 @@ public class PyTypeModelBuilder {
         final TypeModel collectionType = build(new PyClassTypeImpl(pyClass, asCollection.isDefinition()), false);
         boolean useTypingAlias =
           PythonLanguageLevelPusher.getLanguageLevelForFile(pyClass.getContainingFile()).isOlderThan(LanguageLevel.PYTHON39);
-        result = new CollectionOf(collectionType,
-                                  elementModels,
-                                  useTypingAlias,
-                                  asCollection instanceof PyNarrowedType pyNarrowedType ? pyNarrowedType.getTypeIs() : null);
+        result = new CollectionOf(collectionType, elementModels, useTypingAlias);
       }
+    }
+    else if (type instanceof PyNarrowedType narrowedType) {
+      result = new NarrowedType(build(narrowedType.getNarrowedType(), true), narrowedType.getTypeIs());
     }
     else if (type instanceof PyUnionType unionType && allowUnions) {
       final Collection<PyType> unionMembers = unionType.getMembers();
@@ -358,6 +383,9 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyTypeVarType typeVarType) {
       result = new TypeVarType(type.getName(), typeVarType.getBound() != null ? build(typeVarType.getBound(), true) : null);
+    }
+    else if (type instanceof PyCallableParameterListType callableParameterListType) {
+      result = new CallableParameterList(buildParameterModels(callableParameterListType.getParameters()));
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -399,23 +427,28 @@ public class PyTypeModelBuilder {
   }
 
   private TypeModel buildCallable(@NotNull PyCallableType type) {
-    List<TypeModel> parameterModels = null;
     final List<PyCallableParameter> parameters = type.getParameters(myContext);
+    List<TypeModel> parameterModels = null;
     if (parameters != null) {
-      parameterModels = new ArrayList<>();
-      for (PyCallableParameter parameter : parameters) {
-        final var paramType = parameter.getType(myContext);
-        if (paramType instanceof PyParamSpecType || paramType instanceof PyConcatenateType) {
-          parameterModels.add(new ParamType(null, build(parameter.getType(myContext), true)));
-        }
-        else {
-          parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
-        }
-      }
+      parameterModels = buildParameterModels(parameters);
     }
     final PyType ret = type.getReturnType(myContext);
     final TypeModel returnType = build(ret, true);
     return new FunctionType(returnType, parameterModels);
+  }
+
+  private @NotNull List<TypeModel> buildParameterModels(@NotNull List<PyCallableParameter> parameters) {
+    List<TypeModel> parameterModels = new ArrayList<>();
+    for (PyCallableParameter parameter : parameters) {
+      final var paramType = parameter.getType(myContext);
+      if (paramType instanceof PyParamSpecType || paramType instanceof PyConcatenateType) {
+        parameterModels.add(new ParamType(null, build(parameter.getType(myContext), true)));
+      }
+      else {
+        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
+      }
+    }
+    return parameterModels;
   }
 
   private interface TypeVisitor {
@@ -440,6 +473,10 @@ public class PyTypeModelBuilder {
     void typeVarType(TypeVarType type);
 
     void oneOfLiterals(OneOfLiterals literals);
+
+    void narrowedType(NarrowedType type);
+
+    void callableParameterList(CallableParameterList list);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -663,15 +700,7 @@ public class PyTypeModelBuilder {
     protected void typingGenericFormat(CollectionOf collectionOf) {
       final boolean prevSwitchBuiltinToTyping = switchBuiltinToTyping;
       switchBuiltinToTyping = collectionOf.useTypingAlias;
-      if (collectionOf.isTypeIs == null) {
-        collectionOf.collectionType.accept(this);
-      }
-      else if (collectionOf.isTypeIs) {
-        add(styled("TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
-      }
-      else {
-        add(styled("TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
-      }
+      collectionOf.collectionType.accept(this);
       switchBuiltinToTyping = prevSwitchBuiltinToTyping;
 
       if (!collectionOf.elementTypes.isEmpty()) {
@@ -679,6 +708,19 @@ public class PyTypeModelBuilder {
         processList(collectionOf.elementTypes);
         add(styled("]", PyHighlighter.PY_BRACKETS));
       }
+    }
+
+    @Override
+    public void narrowedType(@NotNull NarrowedType narrowedType) {
+      if (narrowedType.isTypeIs) {
+        add(styled("TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
+      }
+      else {
+        add(styled("TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
+      }
+      add(styled("[", PyHighlighter.PY_BRACKETS));
+      narrowedType.narrowedType.accept(this);
+      add(styled("]", PyHighlighter.PY_BRACKETS));
     }
 
     @Override
@@ -797,6 +839,13 @@ public class PyTypeModelBuilder {
                     .collect(HtmlChunk.toFragment(styled(", ", PyHighlighter.PY_COMMA))))
           .append(styled("]", PyHighlighter.PY_BRACKETS))
           .toFragment());
+    }
+
+    @Override
+    public void callableParameterList(CallableParameterList list) {
+      add(HtmlChunk.raw("["));
+      processList(list.parameters);
+      add(HtmlChunk.raw("]"));
     }
   }
 

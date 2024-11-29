@@ -19,6 +19,8 @@ class PublicApiImplicitTypeInspection(
     @JvmField var reportPrivate: Boolean = false
 ) : AbstractImplicitTypeInspection(
     { element, inspection ->
+        // To avoid reporting public declarations multiple times (by IDE inspection and by compiler diagnostics),
+        // we want to report them only when Explicit API is disabled in the compiler.
         val shouldCheckForPublic = element.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) == ExplicitApiMode.DISABLED
         val callableMemberDescriptor = element.resolveToDescriptorIfAny() as? CallableMemberDescriptor
         val forInternal = (inspection as PublicApiImplicitTypeInspection).reportInternal

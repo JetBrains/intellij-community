@@ -106,6 +106,7 @@ class MavenAutomaticVersioningResolutionTest : MavenDomTestCase() {
                                           <dependency>
                                             <groupId>test</groupId>
                                             <artifactId>m1</artifactId>
+                                            <version>1.1</version>
                                           </dependency>
                                         </dependencies>
                                        """.trimIndent())

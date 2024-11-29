@@ -137,6 +137,8 @@ com.intellij.ide.structureView.StructureView
 com.intellij.ide.structureView.StructureViewBuilder
 - sf:PROVIDER:com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
+- createStructureViewSuspend(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- bs:createStructureViewSuspend$suspendImpl(com.intellij.ide.structureView.StructureViewBuilder,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - s:getProvider():com.intellij.ide.structureView.StructureViewBuilderProvider
 com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
@@ -220,9 +222,10 @@ e:com.intellij.ide.ui.AntialiasingType
 - s:canUseSubpixelAAForEditor():Z
 - s:canUseSubpixelAAForIDE():Z
 - s:getAAHintForSwingComponent():java.lang.Object
+- s:getAATextInfoForSwingComponent():com.intellij.util.ui.AATextInfo
 - s:getKeyForCurrentScope(Z):java.lang.Object
 - getPresentableName():java.lang.String
-- getTextInfo():java.lang.Object
+- getTextInfo():com.intellij.util.ui.AATextInfo
 - s:updateContext(java.awt.font.FontRenderContext,Z):java.awt.font.FontRenderContext
 - s:valueOf(java.lang.String):com.intellij.ide.ui.AntialiasingType
 - s:values():com.intellij.ide.ui.AntialiasingType[]
@@ -2678,7 +2681,7 @@ f:com.intellij.openapi.fileTypes.SyntaxHighlighterLanguageFactory
 - com.intellij.lang.LanguageExtension
 com.intellij.openapi.fileTypes.SyntaxHighlighterProvider
 - a:create(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.SyntaxHighlighter
-a:com.intellij.openapi.ide.CopyPasteManager
+Fa:com.intellij.openapi.ide.CopyPasteManager
 - sf:CUT_COLOR:java.awt.Color
 - a:addContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener):V
 - a:addContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener,com.intellij.openapi.Disposable):V
@@ -2689,12 +2692,12 @@ a:com.intellij.openapi.ide.CopyPasteManager
 - a:getContents(java.awt.datatransfer.DataFlavor):java.lang.Object
 - s:getCutColor():java.awt.Color
 - s:getInstance():com.intellij.openapi.ide.CopyPasteManager
-- a:getSystemSelectionContents():java.awt.datatransfer.Transferable
+- getSystemSelectionContents():java.awt.datatransfer.Transferable
 - a:isCutElement(java.lang.Object):Z
-- a:isSystemSelectionSupported():Z
+- isSystemSelectionSupported():Z
 - a:removeContentChangedListener(com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener):V
 - a:setContents(java.awt.datatransfer.Transferable):V
-- a:setSystemSelectionContents(java.awt.datatransfer.Transferable):V
+- setSystemSelectionContents(java.awt.datatransfer.Transferable):V
 - a:stopKillRings():V
 - a:stopKillRings(com.intellij.openapi.editor.Document):V
 com.intellij.openapi.ide.CopyPasteManager$ContentChangedListener

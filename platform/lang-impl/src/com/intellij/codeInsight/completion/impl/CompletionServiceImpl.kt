@@ -145,14 +145,6 @@ open class CompletionServiceImpl : BaseCompletionService() {
       CompletionThreadingBase.withBatchUpdate({ super.addAllElements(elements) }, parameters.process)
     }
 
-    override fun passResult(result: CompletionResult) {
-      val element = result.lookupElement
-      if (element != null && element.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR) == null) {
-        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, contributor)
-      }
-      super.passResult(result)
-    }
-
     override fun withPrefixMatcher(matcher: PrefixMatcher): CompletionResultSet {
       if (matcher == prefixMatcher) {
         return this

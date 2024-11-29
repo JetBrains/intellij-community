@@ -333,7 +333,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (manager instanceof FileDocumentManagerImpl) {
         Document[] unsavedDocuments = manager.getUnsavedDocuments();
         manager.saveAllDocuments();
-        app.runWriteAction(((FileDocumentManagerImpl)manager)::dropAllUnsavedDocuments);
+        app.runWriteAction(() -> ((FileDocumentManagerImpl)manager).dropAllUnsavedDocuments());
 
         assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
       }

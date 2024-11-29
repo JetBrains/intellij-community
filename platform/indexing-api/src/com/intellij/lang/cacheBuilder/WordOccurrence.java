@@ -92,6 +92,7 @@ public final class WordOccurrence {
       myName = name;
     }
 
+    @Override
     @NonNls
     public String toString() {
       return "WordOccurrence.Kind(" + myName + ")";

@@ -762,4 +762,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFieldAliasing() { doTest();}
   public void testFieldLocalNoAliasing() { doTest();}
   public void testIoContracts() { doTest(); }
+  public void testGetTernary() { doTest(); }
+  public void testClosureInConstructor() { doTest(); }
 }

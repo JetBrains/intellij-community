@@ -1,4 +1,5 @@
 // "Round using roundToInt()" "true"
+// PRIORITY: LOW
 // WITH_STDLIB
 fun test(f: Float) {
     val x: Int = f<caret>

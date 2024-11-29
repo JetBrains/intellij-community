@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -85,6 +86,7 @@ final class SmartPointerListModel<T> extends AbstractListModel<T> implements Mod
     return getItems().contains(elem);
   }
 
+  @Unmodifiable
   List<T> getItems() {
     return ContainerUtil.map(myDelegate.getItems(), this::unwrap);
   }

@@ -12,7 +12,7 @@ import java.nio.file.Path
  * Public artifacts are generated under [BuildPaths.artifactDir]/maven-artifacts directory.
  * Proprietary artifacts are generated under [BuildPaths.artifactDir]/proprietary-maven-artifacts directory.
  * @see ProductProperties.mavenArtifacts
- * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder.generateMavenArtifacts
+ * @see org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder.generateMavenArtifacts
  */
 class MavenArtifactsProperties {
   /**

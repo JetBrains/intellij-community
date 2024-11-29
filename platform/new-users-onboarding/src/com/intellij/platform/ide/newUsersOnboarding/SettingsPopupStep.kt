@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.UiComponentsUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
@@ -21,7 +22,7 @@ import java.awt.Point
 
 internal class SettingsPopupStep : NewUiOnboardingStep {
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
-    val settingsButton = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButton ->
+    val settingsButton = UiComponentsUtil.findUiComponent(project) { button: ActionButton ->
       button.action is SettingsEntryPointAction
     } ?: return null
 

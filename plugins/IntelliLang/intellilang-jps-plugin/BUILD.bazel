@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.java.langInjection.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "java-langInjection-jps_resources",
+  files = glob(["src/META-INF/services/org.jetbrains.jps.incremental.BuilderService", "src/META-INF/services/org.jetbrains.jps.model.serialization.JpsModelSerializerExtension", "src/META-INF/services/org.jetbrains.jps.intellilang.model.JpsIntelliLangExtensionService"]),
+  strip_prefix = "src"
+)
+
+jvm_library(
+  name = "java-langInjection-jps",
+  module_name = "intellij.java.langInjection.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = "@rules_jvm//:k11",
+  deps = [
+    "//jps/jps-builders:build",
+    "//jps/model-api:model",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//jps/model-serialization",
+    "@lib//:asm",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":java-langInjection-jps_resources"]
+)
+### auto-generated section `build intellij.java.langInjection.jps` end

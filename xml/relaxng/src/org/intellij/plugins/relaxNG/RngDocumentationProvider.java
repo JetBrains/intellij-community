@@ -121,6 +121,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public int hashCode() {
     return 0;   // CompositeDocumentationProvider uses a HashSet that doesn't preserve order. We want to be the first one.
   }

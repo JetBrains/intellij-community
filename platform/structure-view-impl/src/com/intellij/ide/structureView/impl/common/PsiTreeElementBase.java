@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -64,6 +65,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return false;
   }
 
+  @Override
   public String toString() {
     final T element = getElement();
     return element != null ? element.toString() : "";
@@ -108,6 +110,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return canNavigate();
   }
 
+  @Unmodifiable
   public abstract @NotNull Collection<StructureViewTreeElement> getChildrenBase();
 
   @ApiStatus.Internal
@@ -115,6 +118,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return true;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -125,6 +129,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return value == null ? that.getValue() == null : value.equals(that.getValue());
   }
 
+  @Override
   public int hashCode() {
     T value = getValue();
     return value == null ? 0 : value.hashCode();

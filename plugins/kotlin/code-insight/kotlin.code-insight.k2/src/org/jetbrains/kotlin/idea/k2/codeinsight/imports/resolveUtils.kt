@@ -34,13 +34,13 @@ internal fun KaSession.containingDeclarationPatched(symbol: KaSymbol): KaDeclara
  *
  * A workaround for the KT-70301.
  */
-internal fun KaSession.findSamClassFor(samConstructorSymbol: KaSamConstructorSymbol): KaClassSymbol? {
+internal fun KaSession.findSamClassFor(samConstructorSymbol: KaSamConstructorSymbol): KaClassLikeSymbol? {
     val samCallableId = samConstructorSymbol.callableId ?: return null
     if (samCallableId.isLocal) return null
 
     val samClassId = ClassId.fromString(samCallableId.toString())
 
-    return findClass(samClassId)
+    return findClass(samClassId) ?: findTypeAlias(samClassId)
 }
 
 /**

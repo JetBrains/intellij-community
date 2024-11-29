@@ -21,6 +21,7 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,9 +88,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     ActionManager actionManager = ActionManager.getInstance();
 
     List<String> actionIds = actionManager.getActionIdList("");
-    actionIds.sort(null);
     List<DefaultActionGroup> actionGroups = new ArrayList<>();
-    for (String actionId : actionIds) {
+    for (String actionId : ContainerUtil.sorted(actionIds)) {
       if (actionManager.isGroup(actionId)) {
         AnAction anAction = actionManager.getAction(actionId);
         if (anAction instanceof DefaultActionGroup group) {

@@ -10,6 +10,7 @@ public final class VariableComparator implements Comparator<Debugger.Variable> {
   private VariableComparator() {
   }
 
+  @Override
   public int compare(Debugger.Variable o1, Debugger.Variable o2) {
     final boolean og = o2.isGlobal();
     final boolean g = o1.isGlobal();

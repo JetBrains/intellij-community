@@ -10,4 +10,11 @@ public interface SuppressQuickFix extends LocalQuickFix {
   boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context);
 
   boolean isSuppressAll();
+
+  /// Value used to sort quick-fixes.
+  /// - Quick-fixes with bigger priorities will appear last
+  /// - Quick-fixes with the same priority will be sorted alphabetically
+  default int getPriority() {
+    return Integer.MAX_VALUE;
+  }
 }

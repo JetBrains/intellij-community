@@ -224,7 +224,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myChildren;
   }
 
-  protected void sort(List<? extends ExternalSystemNode<?>> list) {
+  protected void sort(List<ExternalSystemNode<?>> list) {
     if (!list.isEmpty()) {
       list.sort(ORDER_AWARE_COMPARATOR);
     }

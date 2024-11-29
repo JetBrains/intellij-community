@@ -10,7 +10,7 @@
     "userPrompts": {
       "METHOD": [
         "cover this method with logging",
-        "simplify the following method",
+        "simplify the method",
         "add exception handling",
         "add comments to the code"
       ]

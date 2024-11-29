@@ -5,10 +5,15 @@ import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +35,19 @@ final class JavaNewFileCategoryHandler implements NewFileActionCategoryHandler {
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
-      if (isInContentRoot(dir.getVirtualFile(), projectFileIndex)) { // cannot distinguish module root from source root
+      VirtualFile dirVirtualFile = dir.getVirtualFile();
+
+      if (isInContentRoot(dirVirtualFile, projectFileIndex)) { // cannot distinguish module root from source root
         return ThreeState.YES;
       }
-      if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), JavaModuleSourceRootTypes.SOURCES)) {
-        return ThreeState.NO;
+      if (projectFileIndex.isUnderSourceRootOfType(dirVirtualFile, JavaModuleSourceRootTypes.SOURCES)) {
+        var module = ModuleUtilCore.findModuleForFile(dirVirtualFile, project);
+        if (module == null) return ThreeState.YES;
+
+        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+          return ThreeState.NO;
+        }
       }
     }
 

@@ -89,4 +89,9 @@ public class FirAnnotatedMembersSearchTestGenerated extends AbstractFirAnnotated
     public void testTestTypeAlias() throws Exception {
         runTest("../../idea/tests/testData/search/annotations/testTypeAlias.kt");
     }
+
+    @TestMetadata("useTarget.kt")
+    public void testUseTarget() throws Exception {
+        runTest("../../idea/tests/testData/search/annotations/useTarget.kt");
+    }
 }

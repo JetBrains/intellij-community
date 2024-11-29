@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -16,10 +17,12 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class AddOpenModifierIntention :
-    KotlinApplicableModCommandAction<KtCallableDeclaration, Unit>(KtCallableDeclaration::class),
-    LowPriorityAction {
+    KotlinApplicableModCommandAction<KtCallableDeclaration, Unit>(KtCallableDeclaration::class) {
     override fun getFamilyName(): String =
         KotlinBundle.message("make.open")
+
+    override fun getPresentation(context: ActionContext, element: KtCallableDeclaration): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean =
         (element is KtProperty || element is KtNamedFunction)

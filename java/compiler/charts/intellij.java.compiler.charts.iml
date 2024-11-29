@@ -39,5 +39,8 @@
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
   </component>
 </module>

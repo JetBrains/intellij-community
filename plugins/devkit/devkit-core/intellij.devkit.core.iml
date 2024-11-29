@@ -79,5 +79,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
+    <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
+    <orderEntry type="library" name="snakeyaml" level="project" />
   </component>
 </module>

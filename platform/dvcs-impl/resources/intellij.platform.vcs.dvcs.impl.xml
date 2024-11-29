@@ -51,16 +51,16 @@
     </group>
 
     <group id="Dvcs.Log.ContextMenu">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
     <group id="Dvcs.FileHistory.ContextMenu">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
 
     <group id="Dvcs.Log.Toolbar">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar"/>
     </group>
 

@@ -4,6 +4,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UClass;
 
 import java.util.Collection;
@@ -29,6 +30,7 @@ public interface RefClass extends RefJavaElement, RefOverridable {
   List<RefMethod> getConstructors();
 
   /** @return the fields of this class */
+  @Unmodifiable
   default List<RefField> getFields() {
     return Collections.emptyList();
   }

@@ -895,7 +895,6 @@ abstract class ComponentManagerImpl(
 
   final override fun <T : Any> instantiateClass(aClass: Class<T>, pluginId: PluginId): T {
     checkCanceledIfNotInClassInit()
-
     return resetThreadContext().use {
       doInstantiateClass(aClass, pluginId)
     }
@@ -1332,12 +1331,12 @@ abstract class ComponentManagerImpl(
     ignoreDisposal {
       componentContainer.getInstanceHolder(keyClass = componentType)
     }?.let {
-      return HolderAdapter(key = componentType, it)
+      return HolderAdapter(key = componentType, holder = it)
     }
     for (holder in componentContainer.instanceHolders()) {
       val instanceClass = holder.instanceClass()
       if (componentType === instanceClass || componentType.isAssignableFrom(instanceClass)) {
-        return HolderAdapter(key = componentType, holder)
+        return HolderAdapter(key = componentType, holder = holder)
       }
     }
     return null
@@ -1647,11 +1646,11 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
-  catch (e : ProcessCanceledException) {
+  catch (e: ProcessCanceledException) {
     throw e
   }
   catch (e: CancellationException) {
-    throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = e)
+    throwAlreadyDisposedIfNotUnderIndicatorOrJob(e)
     throw CeProcessCanceledException(e)
   }
 }
@@ -1669,7 +1668,7 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
       val contextForInitializer =
         (ctx.contextModality()?.asContextElement() ?: EmptyCoroutineContext) + // leak modality state into initialization coroutine
         (ctx[Job] ?: EmptyCoroutineContext) + // bind to caller Job
-        readActionContext() + // capture whether the caller holds the read lock
+        getLockPermitContext() + // capture whether the caller holds the read lock
         (currentTemporaryThreadContextOrNull() ?: EmptyCoroutineContext) + // propagate modality state/CurrentlyInitializingInstance
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       @Suppress("RAW_RUN_BLOCKING")

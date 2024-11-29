@@ -99,6 +99,12 @@ public final class ComponentPropertiesCollector {
     return collector.myProperties;
   }
 
+  public static @NotNull List<PropertyBean> collect(@NotNull Accessible a) {
+    ComponentPropertiesCollector collector = new ComponentPropertiesCollector();
+    collector.collectAccessibleProperties(a);
+    return collector.myProperties;
+  }
+
   private final List<PropertyBean> myProperties = new ArrayList<>();
 
   private ComponentPropertiesCollector() { }
@@ -153,6 +159,13 @@ public final class ComponentPropertiesCollector {
         myProperties.add(new PropertyBean("Editor Placeholder", placeholder));
       }
     }
+  }
+
+  private void collectAccessibleProperties(@NotNull Accessible a) {
+    myProperties.add(new PropertyBean("accessible", true));
+    AccessibleContext context = a.getAccessibleContext();
+    myProperties.add(new PropertyBean("accessibleContext", context));
+    addProperties("  ", a.getAccessibleContext(), ACCESSIBLE_CONTEXT_PROPERTIES);
   }
 
   private void addProperties(@NotNull String prefix, @NotNull Object component, @NotNull List<String> methodNames) {

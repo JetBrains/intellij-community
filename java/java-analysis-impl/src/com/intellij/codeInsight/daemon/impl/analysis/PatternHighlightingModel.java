@@ -26,6 +26,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -791,6 +792,7 @@ final class PatternHighlightingModel {
   }
 
   @Nullable
+  @Unmodifiable
   private static List<PsiType> getComponentTypes(@NotNull PsiElement context, @NotNull PsiType type) {
     return CachedValuesManager.getCachedValue(context, () -> {
       Map<PsiType, List<PsiType>> result = ConcurrentFactoryMap.createMap(descriptionType -> {

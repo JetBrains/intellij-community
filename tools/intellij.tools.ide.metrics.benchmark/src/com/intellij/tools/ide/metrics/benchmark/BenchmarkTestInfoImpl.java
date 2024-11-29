@@ -267,6 +267,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
     start(fullTestName);
   }
 
+  @Override
   public void start(@NotNull KFunction<?> kotlinTestMethod) {
     start(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
   }
@@ -285,6 +286,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
     start(getCallingTestMethod(), subTestName);
   }
 
+  @Override
   public void start(String fullQualifiedTestMethodName) {
     String sanitizedFullQualifiedTestMethodName = sanitizeFullTestNameForArtifactPublishing(fullQualifiedTestMethodName);
     start(IterationMode.WARMUP, sanitizedFullQualifiedTestMethodName);

@@ -5,6 +5,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -21,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +72,11 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
       }
       file = createPsiFileImpl(target);
       if (file == null) return null;
+      if (file.getLanguage() != target) {
+        throw PluginException.createByClass(new IllegalStateException("Inconsistent view provider " + this + " (" + getClass() + ") implementation. " +
+                                            "Its method createPsiFileImpl() was called with language=" + target + ", but returned "
+                                            + file + "(" + file.getClass() + ") with getLanguage()=" + file.getLanguage()), getClass());
+      }
       if (myOriginal != null) {
         PsiFile originalFile = myOriginal.getPsi(target);
         if (originalFile != null) {
@@ -91,6 +98,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   }
 
   @Override
+  @Unmodifiable
   public final @NotNull List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.mapNotNull(myRoots.keySet(), this::getCachedPsi);
   }

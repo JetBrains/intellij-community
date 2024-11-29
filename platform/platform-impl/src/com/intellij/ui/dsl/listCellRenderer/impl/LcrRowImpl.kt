@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.SimpleColoredComponent
@@ -17,7 +18,6 @@ import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
-import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -38,7 +38,7 @@ import kotlin.math.max
 open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
   companion object {
-    const val DEFAULT_GAP = 6
+    const val DEFAULT_GAP: Int = 6
   }
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
@@ -61,6 +61,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
   override var background: Color? = null
   override var selectionColor: Color? = null
+  override var toolTipText: @NlsContexts.Tooltip String? = null
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
@@ -79,7 +80,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
-    val initParams = LcrTextInitParams(foreground)
+    val initParams = LcrTextInitParamsImpl(foreground)
     initParams.accessibleName = text
     if (init != null) {
       initParams.init()
@@ -88,7 +89,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
-  override fun separator(init: (LcrSeparator.() -> Unit)) {
+  override fun separator(init: LcrSeparator.() -> Unit) {
     if (separator != null) {
       throw UiDslException("Separator is defined already")
     }
@@ -145,14 +146,11 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       else -> if (model.isSeparatorAboveOf(value)) ListSeparator(model.getCaptionAboveOf(value)) else null
     }
     result.applySeparator(listSeparator, index == 0, list)
+    result.setToolTipText(toolTipText)
 
     for ((i, cell) in cells.withIndex()) {
       val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.beforeGap))
-      cell.apply(component, enabled)
-
-      if (cell is LcrSimpleColoredTextImpl && cell.initParams.speedSearchHighlighting) {
-        SpeedSearchUtil.applySpeedSearchHighlighting(list, component as SimpleColoredComponent, true, isSelected)
-      }
+      cell.apply(component, enabled, list, isSelected)
     }
 
     return result
@@ -207,7 +205,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       val field = ReflectionUtil.findField(BasicComboPopup::class.java, JComboBox::class.java, "comboBox")
       return field.get(popup) as JComboBox<*>?
     }
-    catch (e: ReflectiveOperationException) {
+    catch (_: ReflectiveOperationException) {
       return null
     }
   }

@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.grazie.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "grazie-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "grazie-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["kotlin/**/*.kt", "kotlin/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//spellchecker",
+    "//plugins/grazie",
+    "@lib//:kotlin-test",
+    "//java/testFramework",
+    "@lib//:grazie_tests_org_jetbrains_intellij_deps_languagetool_languagetool-core",
+    "@lib//:grazie_tests_org_jetbrains_intellij_deps_languagetool_language-ru",
+    "@lib//:grazie_tests_org_jetbrains_intellij_deps_languagetool_language-de",
+    "@lib//:grazie_tests_org_jetbrains_intellij_deps_languagetool_language-it",
+    "@lib//:stream_ex",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test",
+    "//plugins/grazie/java",
+    "//plugins/markdown/core:markdown",
+    "//plugins/markdown/plugin",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/grazie/markdown",
+    "@lib//:assert_j",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//images/backend.svg:backend-svg",
+  ]
+)
+### auto-generated section `build intellij.grazie.tests` end

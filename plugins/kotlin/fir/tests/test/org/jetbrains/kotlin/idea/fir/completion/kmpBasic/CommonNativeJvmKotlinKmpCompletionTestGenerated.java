@@ -742,6 +742,26 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         public void testEnumEntryEmptyCompletion() throws Exception {
             runTest("../../completion/testData/basic/common/enums/EnumEntryEmptyCompletion.kt");
         }
+
+        @TestMetadata("ExpectedEnumEntryCompletion.kt")
+        public void testExpectedEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion.kt");
+        }
+
+        @TestMetadata("InvisibleEnumEntryCompletion.kt")
+        public void testInvisibleEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/InvisibleEnumEntryCompletion.kt");
+        }
+
+        @TestMetadata("NoExpectedEnumEntryCompletion.kt")
+        public void testNoExpectedEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/NoExpectedEnumEntryCompletion.kt");
+        }
+
+        @TestMetadata("NoInvisibleEnumEntryCompletion.kt")
+        public void testNoInvisibleEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/NoInvisibleEnumEntryCompletion.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -1664,6 +1684,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("KTIJ-32210.kt")
+        public void testKTIJ_32210() throws Exception {
+            runTest("../../completion/testData/basic/common/lambdaSignature/KTIJ-32210.kt");
+        }
+
         @TestMetadata("ParameterName1.kt")
         public void testParameterName1() throws Exception {
             runTest("../../completion/testData/basic/common/lambdaSignature/ParameterName1.kt");
@@ -1712,6 +1737,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("ParameterType5.kt")
         public void testParameterType5() throws Exception {
             runTest("../../completion/testData/basic/common/lambdaSignature/ParameterType5.kt");
+        }
+
+        @TestMetadata("TrailingLambdaParameterName1.kt")
+        public void testTrailingLambdaParameterName1() throws Exception {
+            runTest("../../completion/testData/basic/common/lambdaSignature/TrailingLambdaParameterName1.kt");
         }
     }
 
@@ -2332,9 +2362,19 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("KTIJ-26747.kt")
+        public void testKTIJ_26747() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/KTIJ-26747.kt");
+        }
+
         @TestMetadata("parameterDefaultValue.kt")
         public void testParameterDefaultValue() throws Exception {
             runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
+        }
+
+        @TestMetadata("parameterDefaultValueNotContainsUnitializedParams.kt")
+        public void testParameterDefaultValueNotContainsUnitializedParams() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValueNotContainsUnitializedParams.kt");
         }
 
         @TestMetadata("previousParameter.kt")
@@ -2806,6 +2846,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("CompanionObjectMembers.kt")
         public void testCompanionObjectMembers() throws Exception {
             runTest("../../completion/testData/basic/common/staticMembers/CompanionObjectMembers.kt");
+        }
+
+        @TestMetadata("EnumRendering.kt")
+        public void testEnumRendering() throws Exception {
+            runTest("../../completion/testData/basic/common/staticMembers/EnumRendering.kt");
         }
 
         @TestMetadata("EnumWithoutCompanionObject.kt")
@@ -3558,6 +3603,21 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/KTIJ20039.kt");
         }
 
+        @TestMetadata("KTIJ-26747.kt")
+        public void testKTIJ_26747() throws Exception {
+            runTest("../../completion/testData/basic/common/KTIJ-26747.kt");
+        }
+
+        @TestMetadata("KTIJ-28919.kt")
+        public void testKTIJ_28919() throws Exception {
+            runTest("../../completion/testData/basic/common/KTIJ-28919.kt");
+        }
+
+        @TestMetadata("KTIJ-30306.kt")
+        public void testKTIJ_30306() throws Exception {
+            runTest("../../completion/testData/basic/common/KTIJ-30306.kt");
+        }
+
         @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
         public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
             runTest("../../completion/testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
@@ -3591,6 +3651,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("LocalMultideclarationValues.kt")
         public void testLocalMultideclarationValues() throws Exception {
             runTest("../../completion/testData/basic/common/LocalMultideclarationValues.kt");
+        }
+
+        @TestMetadata("MapEntry.kt")
+        public void testMapEntry() throws Exception {
+            runTest("../../completion/testData/basic/common/MapEntry.kt");
         }
 
         @TestMetadata("NamedObject.kt")

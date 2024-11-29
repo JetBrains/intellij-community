@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  */
 public class ApplicationManager {
   @ApiStatus.Internal
-  protected static Application ourApplication;
+  protected volatile static Application ourApplication;
 
   public static Application getApplication() {
     return ourApplication;

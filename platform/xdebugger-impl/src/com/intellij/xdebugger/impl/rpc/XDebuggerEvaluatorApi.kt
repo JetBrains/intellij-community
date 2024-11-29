@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
@@ -27,9 +27,7 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerEvaluatorApi {
-      return withKernel {
-        RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerEvaluatorApi>())
-      }
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerEvaluatorApi>())
     }
   }
 }
@@ -64,4 +62,4 @@ data class XDebuggerEvaluatorId(val eid: EID)
 
 @ApiStatus.Internal
 @Serializable
-data class XValuePresentation(val value: String, val hasChildren: Boolean)
+data class XValuePresentation(val icon: IconId?, val type: String?, val value: String, val hasChildren: Boolean)

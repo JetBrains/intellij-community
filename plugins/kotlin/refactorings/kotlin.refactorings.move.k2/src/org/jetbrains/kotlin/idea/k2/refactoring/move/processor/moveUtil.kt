@@ -11,14 +11,17 @@ import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.util.takeWhileInclusive
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
@@ -98,15 +101,11 @@ fun getOrCreateKotlinFile(
 ): KtFile =
     (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
 
-fun createKotlinFile(
-    fileName: String,
-    targetDir: PsiDirectory,
-    packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
-): KtFile {
-    targetDir.checkCreateFile(fileName)
-    val packageFqName = packageName?.let(::FqName) ?: FqName.ROOT
-    val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
-        fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName.quoteIfNeeded()} \n\n" else ""
-    )
-    return targetDir.add(file) as KtFile
+
+internal fun isValidTargetForImplicitCompanionAsDispatchReceiver(
+    moveTarget: K2MoveTargetDescriptor,
+    companionObject: KtObjectDeclaration
+): Boolean {
+    // TODO: Add support for moving into other classes!
+    return false
 }

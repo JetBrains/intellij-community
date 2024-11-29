@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class ThrowExceptionAction extends DebuggerAction {
   @Override
@@ -41,7 +42,7 @@ public class ThrowExceptionAction extends DebuggerAction {
     if (stackFrame == null || project == null) {
       return;
     }
-    final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     if (debugProcess == null) {
       return;
@@ -50,7 +51,7 @@ public class ThrowExceptionAction extends DebuggerAction {
     final StackFrameProxyImpl proxy = stackFrame.getStackFrameProxy();
     final ThreadReferenceProxyImpl thread = proxy.threadProxy();
 
-    debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
+    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ApplicationManager.getApplication().invokeLater(

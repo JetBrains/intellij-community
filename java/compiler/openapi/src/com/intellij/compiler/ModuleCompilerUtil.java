@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
@@ -22,6 +23,7 @@ public final class ModuleCompilerUtil {
     return ModuleRootManager.getInstance(module).getDependencies();
   }
 
+  @Unmodifiable
   public static @NotNull List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<? extends Module> modules) {
     Collection<Chunk<ModuleSourceSet>> chunks = computeSourceSetCycles(new DefaultModulesProvider(project));
     final Set<Module> modulesSet = new HashSet<>(modules);
@@ -99,6 +101,7 @@ public final class ModuleCompilerUtil {
     return true;
   }
 
+  @Unmodifiable
   private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<? extends Chunk<ModuleSourceSet>> chunks) {
     return ContainerUtil.filter(chunks, chunk -> chunk.getNodes().size() > 1);
   }
@@ -106,6 +109,7 @@ public final class ModuleCompilerUtil {
   /**
    * Remove cycles in tests included in cycles between production parts
    */
+  @Unmodifiable
   private static @NotNull List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<? extends Chunk<ModuleSourceSet>> sourceSetCycles) {
     final List<Set<Module>> productionCycles = new ArrayList<>();
 

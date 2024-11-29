@@ -33,7 +33,7 @@ public final class MultiRoutingFileSystemProvider
    * A production IDE has two VM options file: the bundled one and the user-defined one.
    * The user can only add new options to the user level file, but there's no way to remove a system property
    * defined in the bundled VM options file.
-   *
+   * <p>
    * When it's not possible to unregister a custom file system, this option orders the file system to behave like the default one.
    */
   static final boolean ourForceDefaultFs = Objects.equals(System.getProperty("idea.force.default.filesystem"), "true");
@@ -249,7 +249,7 @@ public final class MultiRoutingFileSystemProvider
 
   @Contract("null -> null; !null -> !null")
   @Override
-  protected @Nullable Path fromDelegatePath(@Nullable Path path) {
+  public @Nullable Path fromDelegatePath(@Nullable Path path) {
     if (path instanceof MultiRoutingFsPath) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.

@@ -31,6 +31,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -41,6 +42,7 @@ import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operat
 public class GitResetOperation {
 
   private final @NotNull Project myProject;
+  @Unmodifiable
   private final @NotNull Map<GitRepository, @NotNull String> myCommits;
   private final @NotNull GitResetMode myMode;
   private final @NotNull ProgressIndicator myIndicator;
@@ -58,7 +60,7 @@ public class GitResetOperation {
   }
 
   public GitResetOperation(@NotNull Project project,
-                           @NotNull Map<GitRepository, @NotNull String> targetCommits,
+                           @NotNull @Unmodifiable Map<GitRepository, @NotNull String> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator,
                            @NotNull OperationPresentation operationPresentation) {

@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -82,6 +83,7 @@ public interface InlayParameterHintsProvider {
   /**
    * List of supported options, shown in settings dialog.
    */
+  @Unmodifiable
   default @NotNull List<Option> getSupportedOptions() {
     return ContainerUtil.emptyList();
   }

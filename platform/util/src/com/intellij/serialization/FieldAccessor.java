@@ -158,6 +158,7 @@ final class FieldAccessor implements MutableAccessor {
     return field.isAccessible();
   }
 
+  @Override
   public @NotNull String toString() {
     return "FieldAccessor(name=" + field.getName() + ", class=" + field.getDeclaringClass().getName() + ")";
   }

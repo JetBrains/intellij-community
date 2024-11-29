@@ -13,7 +13,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
 
-  override val installedPackages: List<PythonPackage>
+  override var installedPackages: List<PythonPackage> = emptyList()
     get() = TODO("Not yet implemented")
   override val repositoryManager: PythonRepositoryManager
     get() = TestPythonRepositoryManager(project, sdk).withPackageNames(packageNames).withPackageDetails(packageDetails)
@@ -28,19 +28,23 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return this
   }
 
-  override suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
-    TODO("Not yet implemented")
-  }
-
-  override suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
-    TODO("Not yet implemented")
-  }
-
-  override suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
-    TODO("Not yet implemented")
-  }
-
   override suspend fun reloadPackages(): Result<List<PythonPackage>> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
     TODO("Not yet implemented")
   }
 }

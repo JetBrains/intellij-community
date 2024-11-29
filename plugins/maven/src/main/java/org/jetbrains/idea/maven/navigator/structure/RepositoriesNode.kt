@@ -26,10 +26,10 @@ internal class RepositoriesNode(structure: MavenProjectsStructure, parent: Proje
   }
 
   fun updateRepositories(project: Project) {
-    val local = MavenProjectsManager.getInstance(project).localRepository
+    val local = MavenProjectsManager.getInstance(project).repositoryPathUnderModalProgress
     val remotes = MavenIndexUtils.getRemoteRepositoriesNoResolve(project)
     myRepositoryNodes.clear()
-    myRepositoryNodes.add(RepositoryNode(myMavenProjectsStructure, this, "local", local.absolutePath, true))
+    myRepositoryNodes.add(RepositoryNode(myMavenProjectsStructure, this, "local", local.toAbsolutePath().toString(), true))
     myRepositoryNodes.addAll(remotes.mapSmart { RepositoryNode(myMavenProjectsStructure, this, it.id, it.url, false) })
     childrenChanged()
   }

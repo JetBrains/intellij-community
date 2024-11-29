@@ -3,7 +3,7 @@ package fleet.kernel.rete.impl
 
 import fleet.kernel.rete.*
 import fleet.util.causeOfType
-import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.select
 import kotlin.coroutines.coroutineContext
@@ -26,14 +26,17 @@ internal class ObservableMatch<T>(
 }
 
 internal suspend fun <U> withObservableMatches(
-  matches: Set<ObservableMatch<*>>,
+  matches: Sequence<ObservableMatch<*>>,
   body: suspend CoroutineScope.() -> U,
 ): WithMatchResult<U> =
   try {
-    val contextMatches = coroutineContext[ContextMatches]?.matches ?: persistentHashSetOf()
+    val contextMatches = coroutineContext[ContextMatches]?.matches ?: persistentListOf()
 
     @Suppress("NAME_SHADOWING")
-    val matches = matches.filter { it !in contextMatches }
+    val matches = run {
+      val set = contextMatches.toSet()
+      matches.filter { it !in set }.toList()
+    }
     when {
       matches.isEmpty() -> coroutineScope { WithMatchResult.Success(body()) }
       else ->

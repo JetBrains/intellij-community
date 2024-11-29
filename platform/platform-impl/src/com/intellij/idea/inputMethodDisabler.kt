@@ -97,7 +97,7 @@ private fun disableInputMethodsImpl() {
 
     val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers.mapNotNull { fh -> SwingUtilities.getRoot(fh.frame) }
 
-    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val startMs = System.currentTimeMillis()
       for (frameRoot in frames) {
         freeIMRecursively(frameRoot)

@@ -89,6 +89,7 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
       """
         something:
           else:
+        
         aa:
         ee:
         

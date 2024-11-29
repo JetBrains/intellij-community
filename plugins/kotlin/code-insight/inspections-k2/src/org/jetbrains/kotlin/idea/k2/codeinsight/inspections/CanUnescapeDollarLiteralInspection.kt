@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeStartOfIdentifierOrBlock
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.dollarLiteralExpressions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.findTextRangesInParentForEscapedDollars
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isEscapedDollar
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
@@ -30,7 +31,7 @@ class CanUnescapeDollarLiteralInspection :
         element: KtStringTemplateExpression,
         context: Context,
     ): @InspectionMessage String {
-        return KotlinBundle.message("inspection.can.unescape.dollar.literal.inspection.display.name")
+        return KotlinBundle.message("inspection.can.unescape.dollar.literal.inspection.problem.description")
     }
 
     override fun createQuickFix(
@@ -88,6 +89,10 @@ class CanUnescapeDollarLiteralInspection :
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
         return element.interpolationPrefix?.textLength?.let { it > 1 } != true
                 || element.languageVersionSettings.supportsFeature(LanguageFeature.MultiDollarInterpolation)
+    }
+
+    override fun getApplicableRanges(element: KtStringTemplateExpression): List<TextRange> {
+        return element.findTextRangesInParentForEscapedDollars()
     }
 
     override fun buildVisitor(

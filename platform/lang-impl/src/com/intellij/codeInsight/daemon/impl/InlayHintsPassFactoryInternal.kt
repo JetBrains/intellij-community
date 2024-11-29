@@ -25,19 +25,19 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
     registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode) return null
     val savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP)
     if (DiffUtil.isDiffEditor(editor)) return null
-    val currentStamp = getCurrentModificationStamp(file)
+    val currentStamp = getCurrentModificationStamp(psiFile)
     if (savedStamp != null && savedStamp == currentStamp) return null
 
-    val language = file.language
+    val language = psiFile.language
     val hintSink = InlayHintsSinkImpl(editor)
-    val collectors = getProviders(file, editor).mapNotNull { it.getCollectorWrapperFor(file, editor, language, hintSink) }
-    val priorityRange = HighlightingSessionImpl.getFromCurrentIndicator(file).visibleRange
+    val collectors = getProviders(psiFile, editor).mapNotNull { it.getCollectorWrapperFor(psiFile, editor, language, hintSink) }
+    val priorityRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).visibleRange
 
-    return InlayHintsPass(file, collectors, editor, priorityRange, hintSink)
+    return InlayHintsPass(psiFile, collectors, editor, priorityRange, hintSink)
   }
 
   @Suppress("CompanionObjectInExtension") // used in external plugins (https://youtrack.jetbrains.com/issue/IDEA-333164/Breaking-change-with-InlayHintsPassFactory-class-moved-in-another-package)

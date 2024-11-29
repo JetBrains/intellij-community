@@ -60,7 +60,6 @@ final class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider
     }
     VirtualFile folder = virtualFile.getParent();
 
-    //TODO support others (intentions, postfix templates)
     if (folder == null || !folder.getName().equals(DescriptionType.INSPECTION.getDescriptionFolder())) {
       return Collections.emptyList();
     }

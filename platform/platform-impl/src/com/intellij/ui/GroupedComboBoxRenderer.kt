@@ -174,11 +174,11 @@ abstract class GroupedComboBoxRenderer<T>(val component: JComponent? = null) : G
 
   protected open fun isSeparatorVisible(list: JList<out T>?, value: T) = (list?.model as? ListPopupModel)?.isSeparatorAboveOf(value) == true
 
-  override fun getDelegateAccessibleName(): String {
+  override fun getDelegateAccessibleName(): String? {
     return coloredComponent.accessibleContext.accessibleName
   }
 
-  override fun getDelegateAccessibleDescription(): String {
+  override fun getDelegateAccessibleDescription(): String? {
     return coloredComponent.accessibleContext.accessibleDescription
   }
 }

@@ -478,7 +478,7 @@ internal class KotlinIdeDeclarationRenderer(
                             val receiverSymbol = callableSymbol.receiverParameter
                             if (receiverSymbol != null) {
                                 withSuffix(highlight(".") { asDot }) {
-                                    val isFunctional = receiverSymbol.type is KaFunctionType
+                                    val isFunctional = receiverSymbol.returnType is KaFunctionType
                                     if (isFunctional) {
                                         append(highlight("(") { asParentheses })
                                     }

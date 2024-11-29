@@ -5,10 +5,22 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ToolWindowContextMenuActionBase extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     ToolWindow toolWindow = e.getDataContext().getData(PlatformDataKeys.TOOL_WINDOW);
@@ -30,15 +42,11 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
     update(e, toolWindow, content);
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
-
   public abstract void update(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content);
   public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content);
 
-  private static @Nullable Content getContextContent(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow) {
+  @ApiStatus.Internal
+  public static @Nullable Content getContextContent(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow) {
     BaseLabel baseLabel = ObjectUtils.tryCast(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT), BaseLabel.class);
     Content selectedContent = baseLabel != null ? baseLabel.getContent() : null;
     if (selectedContent == null) {

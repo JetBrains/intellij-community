@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -199,9 +200,10 @@ internal object KotlinReferenceRestoringHelper {
         targetReference: KtReference,
         sourceFqName: FqName
     ): Boolean {
-        val project = targetReference.element.project
         val importedReference =
-            org.jetbrains.kotlin.psi.KtPsiFactory(project).createImportDirective(ImportPath(sourceFqName, false)).importedReference
+            KtPsiFactory.contextual(targetReference.element.containingFile, markGenerated = false)
+                .createImportDirective(ImportPath(sourceFqName, false))
+                .importedReference
         val reference = importedReference?.getQualifiedElementSelector()?.mainReference ?: return false
         val symbols = reference.resolveToSymbols()
         return symbols.isNotEmpty()

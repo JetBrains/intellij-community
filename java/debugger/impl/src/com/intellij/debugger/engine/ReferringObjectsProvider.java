@@ -9,17 +9,20 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public interface ReferringObjectsProvider {
   @NotNull
+  @Unmodifiable
   List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference value, long limit)
     throws EvaluateException;
 
   ReferringObjectsProvider BASIC_JDI = new ReferringObjectsProvider() {
     @NotNull
     @Override
+    @Unmodifiable
     public List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
                                                      @NotNull ObjectReference value,
                                                      long limit) {

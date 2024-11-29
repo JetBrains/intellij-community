@@ -77,6 +77,7 @@ public final class VcsDirectoryMapping {
     return myVcs.isEmpty();
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -90,6 +91,7 @@ public final class VcsDirectoryMapping {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myDirectory.hashCode();

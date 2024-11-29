@@ -13,5 +13,5 @@ version = "1.0.0-SNAPSHOT"
 
 kotlin {
     jvm()
-    android()
+    {{androidTargetPlaceholder}}
 }

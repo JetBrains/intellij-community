@@ -139,6 +139,7 @@ public non-sealed class ModuleDescriptor implements Dependency {
   /**
    * For debug purposes only
    */
+  @Override
   public String toString() {
     @NonNls final StringBuilder builder = new StringBuilder();
     builder.append("[Module: ").append(getContentRoots()).append(" | ");

@@ -10,12 +10,12 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
-import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
@@ -142,6 +142,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     else if (element instanceof Action) {
       annotateAction((Action)element, holder);
+    }
+    else if (element instanceof Reference) {
+      annotateReference((Reference)element, holder);
     }
     else if (element instanceof Synonym) {
       annotateSynonym((Synonym)element, holder);
@@ -545,7 +548,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     // skip some known offenders in IJ project
     if (name != null
         && (StringUtil.startsWith(name, "Pythonid.") ||
-            StringUtil.startsWith(name, "DevKit."))) {
+            StringUtil.startsWith(name, "DevKit.") ||
+            StringUtil.startsWith(name, "Git4Idea."))) {
       if (IntelliJProjectUtil.isIntelliJPlatformProject(nameAttrValue.getManager().getProject())) {
         return true;
       }
@@ -785,7 +789,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                            Extension extension,
                                            String effectiveQualifiedName,
                                            @Nullable Module module) {
-    if (IdeErrorsDialog.ERROR_HANDLER_EP.getName().equals(effectiveQualifiedName)) {
+    if (ErrorReportSubmitter.EP_NAME.getName().equals(effectiveQualifiedName)) {
       String implementation = extension.getXmlTag().getAttributeValue("implementation");
       if (ITNReporter.class.getName().equals(implementation)) {
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
@@ -1008,6 +1012,15 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
+  private static void annotateReference(Reference reference, DomElementAnnotationHolder holder) {
+    @SuppressWarnings("deprecation") GenericAttributeValue<ActionOrGroup> id = reference.getId();
+    if (id.exists()) {
+      highlightDeprecated(id,
+                          DevKitBundle.message("inspections.plugin.xml.reference.id.deprecated.use.ref"),
+                          holder, false, true);
+    }
+  }
+
   private static void annotateSynonym(Synonym synonym, DomElementAnnotationHolder holder) {
     boolean hasKey = DomUtil.hasXml(synonym.getKey());
     boolean hasText = DomUtil.hasXml(synonym.getText());
@@ -1191,6 +1204,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
+  @SuppressWarnings("HttpUrlsUsage")
   private static void checkValidWebsite(@NotNull GenericDomValue<String> domValue,
                                         DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(domValue)) return;

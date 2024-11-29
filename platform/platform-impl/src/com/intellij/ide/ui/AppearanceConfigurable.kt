@@ -54,6 +54,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
@@ -181,6 +182,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     return panel {
+      useNewComboBoxRenderer()
+
       val autodetectSupportedPredicate = ComponentPredicate.fromValue(lafManager.autodetectSupported)
       val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(ComponentPredicate.fromObservableProperty(syncThemeProperty, disposable))
 
@@ -244,7 +247,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          comboBox(model, textListCellRenderer { it })
+          comboBox(model)
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item, false) != null) return@onChanged
@@ -364,9 +367,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
                 .selected(colorBlindnessProperty.get() != null)
-              comboBox(supportedValues)
+              comboBox(supportedValues, renderer = textListCellRenderer("") { PlatformEditorBundle.message(it.key) })
                 .enabledIf(enableColorBlindness.selected)
-                .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .bind({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                       { it, value -> it.selectedItem = value ?: supportedValues.first() },
@@ -568,7 +570,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.presentation.mode")) {
         row(message("presentation.mode.ide.scale")) {
-          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), textListCellRenderer { it })
+          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel())
             .bindItem({ settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true
@@ -621,19 +623,19 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           {
             val ideAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForIDE()) {
-                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+                listOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               }
               else {
-                AntialiasingType.entries.toTypedArray()
+                AntialiasingType.entries
               }
-            comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
+            comboBox(ideAAOptions, renderer = createAAListCellRenderer(false))
               .label(message("label.text.antialiasing.scope.ide"))
               .bindItem(settings::ideAAType.toNullableProperty())
               .accessibleName(message("label.text.antialiasing.scope.ide"))
               .onApply {
                 for (w in Window.getWindows()) {
                   for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
-                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent())
+                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAATextInfoForSwingComponent())
                   }
                 }
               }
@@ -641,12 +643,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           {
             val editorAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForEditor()) {
-                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+                listOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               }
               else {
-                AntialiasingType.entries.toTypedArray()
+                AntialiasingType.entries
               }
-            comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
+            comboBox(editorAAOptions, renderer = createAAListCellRenderer(true))
               .label(message("label.text.antialiasing.scope.editor"))
               .bindItem(settings::editorAAType.toNullableProperty())
               .accessibleName(message("label.text.antialiasing.scope.editor"))
@@ -701,7 +703,6 @@ private fun Row.fontSizeComboBox(prop: MutableProperty<@Nls String?>): Cell<Comb
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
-      renderer = textListCellRenderer { it }
       selectedItem = prop.get()
     }
     .bind(
@@ -719,24 +720,22 @@ private fun getIntValue(text: String?, defaultValue: Int): Int {
   return defaultValue
 }
 
-private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleListCellRenderer<AntialiasingType>() {
-  private val SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
-  private val GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
-
-  override fun customize(list: JList<out AntialiasingType>, value: AntialiasingType, index: Int, selected: Boolean, hasFocus: Boolean) {
-    val aaType = when (value) {
-      AntialiasingType.SUBPIXEL -> SUBPIXEL_HINT
-      AntialiasingType.GREYSCALE -> GREYSCALE_HINT
-      AntialiasingType.OFF -> null
-    }
-    GraphicsUtil.setAntialiasingType(this, aaType)
-
-    if (myUseEditorFont) {
-      val scheme = EditorColorsManager.getInstance().globalScheme
-      font = UIUtil.getFontWithFallback(scheme.getFont(EditorFontType.PLAIN))
+private fun createAAListCellRenderer(myUseEditorFont: Boolean): ListCellRenderer<AntialiasingType?> {
+  return listCellRenderer {
+    val aaHint = when (value) {
+      AntialiasingType.SUBPIXEL -> RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB
+      AntialiasingType.GREYSCALE -> RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+      AntialiasingType.OFF, null -> RenderingHints.VALUE_TEXT_ANTIALIAS_OFF
     }
 
-    text = value.presentableName
+    text(value?.presentableName ?: "") {
+      renderingHints = mapOf(RenderingHints.KEY_TEXT_ANTIALIASING to aaHint)
+
+      if (myUseEditorFont) {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        font = UIUtil.getFontWithFallback(scheme.getFont(EditorFontType.PLAIN))
+      }
+    }
   }
 }
 

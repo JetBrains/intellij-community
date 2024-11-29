@@ -15,6 +15,15 @@ inline fun <reified T> Map<String, *>.getIfExists(key: String): T? {
   return value
 }
 
+inline fun <reified T> Map<String, *>.getIfExistsOrOverrideWithEnv(key: String): T? {
+  System.getenv(key)?.let {
+    val value = it
+    check(value is T) { "Unexpected type of key <$key> in config" }
+    return value
+  }
+  return getIfExists(key)
+}
+
 inline fun <reified T> Map<String, *>.getOrThrow(key: String): T {
   if (key !in this.keys) throw IllegalArgumentException("No key <$key> found in config")
   val value = this.getValue(key)

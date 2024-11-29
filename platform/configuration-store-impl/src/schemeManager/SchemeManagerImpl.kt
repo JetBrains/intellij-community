@@ -15,8 +15,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.writeWithEnsureWritable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,6 +53,7 @@ import kotlin.io.path.readBytes
 
 @ApiStatus.Internal
 class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
+  private val project: Project?,
   val fileSpec: String,
   processor: SchemeProcessor<T, MUTABLE_SCHEME>,
   private val provider: StreamProvider?,
@@ -331,13 +337,26 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun save() {
     val events = if (isUpdateVfs) mutableListOf<VFileEvent>() else Collections.emptyList()
-    saveImpl(events)
+    wrapWithIndicator(forceIndicator = application.isUnitTestMode) {
+      runBlockingCancellable {
+        saveImpl(events)
+      }
+    }
     if (events.isNotEmpty()) {
       RefreshQueue.getInstance().processEvents(false, events)
     }
   }
 
-  internal fun saveImpl(events: MutableList<VFileEvent>) {
+  private fun wrapWithIndicator(forceIndicator: Boolean, run: () -> Unit) {
+    if (forceIndicator) {
+      ProgressManager.getInstance().runProcess({ run() }, EmptyProgressIndicator())
+    }
+    else {
+      run()
+    }
+  }
+
+  internal suspend fun saveImpl(events: MutableList<VFileEvent>) {
     if (isLoadingSchemes.get()) {
       LOG.warn("Skip save - schemes are loading")
     }
@@ -366,16 +385,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     val filesToDelete = HashSet(filesToDelete)
-    for (scheme in changedSchemes) {
-      try {
-        saveScheme(scheme, nameGenerator, filesToDelete, events)
-      }
-      catch (e: CancellationException) { throw e }
-      catch (e: ProcessCanceledException) { throw e }
-      catch (e: Throwable) {
-        errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
-      }
-    }
+    writeWithEnsureWritable(project, changedSchemes,
+                            { scheme -> saveScheme(scheme, nameGenerator, filesToDelete, events) },
+                            { scheme, e -> errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e)) })
 
     if (filesToDelete.isNotEmpty()) {
       schemeListManager.data.schemeToInfo.values.removeIf { filesToDelete.contains(it.fileName) }

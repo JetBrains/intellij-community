@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.python.syntax.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "syntax-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "syntax-core",
+  module_name = "intellij.python.syntax.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/editor-ui-api:editor",
+    "//platform/core-api:core",
+    "//python/python-parser:parser",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-ast:ast",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/code-style-api:codeStyle",
+    "@lib//:fastutil-min",
+    "//platform/core-impl",
+    "@lib//:guava",
+    "//platform/projectModel-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+  ],
+  runtime_deps = [":syntax-core_resources"]
+)
+### auto-generated section `build intellij.python.syntax.core` end

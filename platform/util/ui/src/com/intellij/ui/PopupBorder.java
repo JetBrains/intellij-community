@@ -32,9 +32,14 @@ public interface PopupBorder extends Border {
 
     public static @NotNull PopupBorder create(boolean active, boolean windowWithShadow) {
       boolean visible = !(SystemInfoRt.isMac && windowWithShadow) || UIManager.getBoolean("Popup.paintBorder") == Boolean.TRUE;
-      PopupBorder border = new BaseBorder(visible, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
+      PopupBorder border = createPopupBorder(visible);
       border.setActive(active);
       return border;
+    }
+
+    @ApiStatus.Internal
+    public static @NotNull PopupBorder createPopupBorder(boolean visible) {
+      return new BaseBorder(visible, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
     }
 
     public static PopupBorder createColored(Color color) {

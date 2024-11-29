@@ -18,6 +18,7 @@ import com.intellij.vcs.VcsActivity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -110,6 +111,7 @@ public class VcsShelveChangesSaver {
   }
 
   @NotNull
+  @Unmodifiable
   private List<Change> filterChangesByRoots(@NotNull Collection<? extends Change> changes,
                                             @NotNull Set<? extends VirtualFile> rootsToSave) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);

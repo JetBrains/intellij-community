@@ -2,7 +2,9 @@ from __future__ import print_function
 
 import pytest
 
+from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.smart_step_into import get_stepping_variants
+from _pydevd_bundle.pydevd_constants import IS_PY38
 
 
 @pytest.fixture
@@ -71,6 +73,7 @@ def consecutive_calls():
 
 
 @pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+@pytest.mark.xfail(not IS_PY38, reason="PCQA-718")
 def test_candidates_for_inner_decorator_py2(inner_decorator_code):
     variants = list(get_stepping_variants(inner_decorator_code))
     assert len(variants) == 1
@@ -122,6 +125,7 @@ def test_candidates_for_consecutive_calls_py3(consecutive_calls):
     assert variants[4].argval == '__add__'
 
 
+@pytest.mark.xfail(IS_PY38, reason="PCQA-592")
 def test_candidates_for_returned_object_method(returned_object_method):
     variants = list(get_stepping_variants(returned_object_method))
     assert len(variants) == 3

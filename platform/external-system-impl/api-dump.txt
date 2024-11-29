@@ -1096,6 +1096,10 @@ f:com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtensi
 - getIcon(Z):javax.swing.Icon
 f:com.intellij.openapi.externalSystem.service.ui.spinner.ComponentSpinnerExtension$Companion
 - f:setSpinning(javax.swing.JComponent,Z):V
+com.intellij.openapi.externalSystem.service.ui.util.AsyncDistributionsInfo
+- com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
+- a:isReady():Z
+- a:prepare():V
 com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 - com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 - com.intellij.openapi.roots.ui.distribution.FileChooserInfo

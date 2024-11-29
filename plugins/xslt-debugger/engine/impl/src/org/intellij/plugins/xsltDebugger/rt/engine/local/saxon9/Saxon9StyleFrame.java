@@ -48,10 +48,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
     myXPathContext = xPathContext;
   }
 
+  @Override
   public String getInstruction() {
     return myElement.getExpressionName();
   }
 
+  @Override
   public Value eval(String expr) throws Debugger.EvaluationException {
     assert isValid();
 
@@ -82,6 +84,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
     return new SequenceValue(value, it, itemType);
   }
 
+  @Override
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
@@ -165,6 +168,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myItemType = itemType;
     }
 
+    @Override
     public Object getValue() {
       try {
         return myValue != null ? myValue.getStringValue() : null;
@@ -174,6 +178,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       }
     }
 
+    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString());
     }
@@ -193,10 +198,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myItemType = type;
     }
 
+    @Override
     public Object getValue() {
       return myValue;
     }
 
+    @Override
     public Type getType() {
       return new ObjectType(myItemType.toString() + "+");
     }
@@ -215,10 +222,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myExpression = expression;
     }
 
+    @Override
     public ItemType getItemType(TypeHierarchy hierarchy) {
       return myExpression.getItemType();
     }
 
+    @Override
     public SequenceIterator iterate(XPathContext context) throws XPathException {
       return myExpression.iterate(context);
     }
@@ -231,10 +240,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myVariable = variable;
     }
 
+    @Override
     public ItemType getItemType(TypeHierarchy hierarchy) {
       return myVariable.getRequiredType().getPrimaryType();
     }
 
+    @Override
     public SequenceIterator iterate(XPathContext context) throws XPathException {
       List<ComponentBinding> bindings = context.getCurrentComponent().getComponentBindings();
       if (bindings.size() <= myVariable.getBinderySlotNumber()) return EmptyIterator.emptyIterator();
@@ -250,6 +261,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myValue = value;
     }
 
+    @Override
     public ItemType getItemType(TypeHierarchy hierarchy) {
       if (myValue instanceof FloatValue) {
         return ((FloatValue)myValue).getItemType();
@@ -260,6 +272,7 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       return AnyItemType.getInstance();
     }
 
+    @Override
     public SequenceIterator iterate(XPathContext context) {
       return myValue.iterate();
     }
@@ -274,10 +287,12 @@ class Saxon9StyleFrame extends AbstractSaxon9Frame<Debugger.StyleFrame, TraceExp
       myFacade = facade;
     }
 
+    @Override
     public Object getValue() {
       return " - error: " + myError + " - ";
     }
 
+    @Override
     public Type getType() {
       return new ObjectType(myFacade.getItemType(myXPathContext.getConfiguration().getTypeHierarchy()).toString());
     }

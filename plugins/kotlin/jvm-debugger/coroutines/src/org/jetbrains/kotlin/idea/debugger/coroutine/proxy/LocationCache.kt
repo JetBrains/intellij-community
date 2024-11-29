@@ -8,5 +8,5 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionCon
 
 class LocationCache(val context: DefaultExecutionContext) {
     fun createLocation(stackTraceElement: StackTraceElement): Location =
-        DebuggerUtilsEx.findOrCreateLocation(context.suspendContext.virtualMachineProxy.virtualMachine, context.classesCache, stackTraceElement)
+        DebuggerUtilsEx.findOrCreateLocation(context.suspendContext.virtualMachineProxy.virtualMachine, stackTraceElement)
 }

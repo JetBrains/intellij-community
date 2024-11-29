@@ -14,10 +14,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -118,6 +115,7 @@ public final class DependenciesIndexedStatusService {
   }
 
 
+  @Unmodifiable
   public @NotNull List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
     LOG.assertTrue(shouldSaveStatus());
     List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
@@ -144,6 +142,7 @@ public final class DependenciesIndexedStatusService {
     return libraries;
   }
 
+  @Unmodifiable
   public @NotNull List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
     LOG.assertTrue(shouldSaveStatus());
     @NotNull List<IndexableSetContributorDescriptor> descriptors = IndexableSetContributorDescriptor.collectDescriptors(project);
@@ -248,6 +247,7 @@ public final class DependenciesIndexedStatusService {
       return result;
     }
 
+    @Unmodifiable
     public @NotNull Map<IndexableSetContributor, IndexableSetContributorDescriptor> contributorsToMap() {
       LOG.assertTrue(contributors != null);
       return ContainerUtil.map2Map(contributors, descriptor -> com.intellij.openapi.util.Pair.create(descriptor.contributor, descriptor));

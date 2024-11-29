@@ -1,24 +1,37 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.tips` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "intellij.platform.tips",
-  visibility = ["//visibility:public"],
-  srcs = glob(["resources/**/*.kt", "resources/**/*.java", "src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
-  deps = [
-    "@community//platform/platform-impl:intellij.platform.ide.impl",
-    "@community//platform/statistics:intellij.platform.statistics",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@libraries//:jsoup",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:jackson-core",
-    "@libraries//:jackson-databind",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@libraries//:kotlinx-datetime-jvm",
-    "@community//platform/feedback:intellij.platform.feedback"
-  ]
+jvm_resources(
+  name = "tips_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
+
+jvm_library(
+  name = "tips",
+  module_name = "intellij.platform.tips",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "@lib//:jsoup",
+    "@lib//:fastutil-min",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "//platform/ide-core-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/feedback",
+  ],
+  runtime_deps = [":tips_resources"]
+)
+### auto-generated section `build intellij.platform.tips` end

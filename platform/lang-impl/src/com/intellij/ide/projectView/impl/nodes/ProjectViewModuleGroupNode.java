@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -42,6 +43,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
 
 
   @Override
+  @Unmodifiable
   protected @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file) {
     return ContainerUtil.createMaybeSingletonList(ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file, false));
   }

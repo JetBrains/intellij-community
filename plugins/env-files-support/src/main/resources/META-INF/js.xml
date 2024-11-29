@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="JavaScript" implementationClass="ru.adelf.idea.dotenv.js.JsEnvCompletionProvider"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.js.JsEnvCompletionProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.js.JsEnvironmentVariablesUsagesProvider"/>
+  </extensions>
+</idea-plugin>

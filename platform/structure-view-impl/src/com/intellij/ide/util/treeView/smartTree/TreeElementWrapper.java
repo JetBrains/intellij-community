@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,9 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
 
   @Override
   public void update(@NotNull PresentationData presentation) {
-    if (((StructureViewTreeElement)getValue()).getValue() != null) {
+    StructureViewTreeElement value = (StructureViewTreeElement)getValue();
+    Object valueValue = value == null ? null : value.getValue();
+    if (valueValue != null) {
       presentation.updateFrom(getValue().getPresentation());
     }
   }
@@ -32,25 +35,33 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
   public void initChildren() {
     clearChildren();
     TreeElement value = getValue();
+    if (value == null) return;
     TreeElement[] children = value.getChildren();
     for (TreeElement child : children) {
       if (child == null) {
         LOG.error(value + " returned null child: " + Arrays.toString(children));
+        continue;
       }
       addSubElement(createChildNode(child));
     }
-    if (myTreeModel instanceof ProvidingTreeModel) {
-      Collection<NodeProvider<?>> originalProviders = ((ProvidingTreeModel)myTreeModel).getNodeProviders();
+    if (myTreeModel instanceof ProvidingTreeModel model) {
+      Collection<NodeProvider<?>> originalProviders = model.getNodeProviders();
       Collection<NodeProvider<?>> providers = DumbService.getInstance(myProject).filterByDumbAwareness(originalProviders);
       for (NodeProvider<?> provider : providers) {
-        if (((ProvidingTreeModel)myTreeModel).isEnabled(provider)) {
-          Collection<TreeElement> nodes = (Collection<TreeElement>)provider.provideNodes(value);
-          for (TreeElement node : nodes) {
-            if (node == null) {
-              LOG.error(provider + " returned null node: " + nodes);
-            }
-            addSubElement(createChildNode(node));
+        if (!model.isEnabled(provider)) continue;
+        Collection<?> nodes;
+        try {
+          nodes = provider.provideNodes(value);
+        }
+        catch (IndexNotReadyException ignore) {
+          continue;
+        }
+        for (Object node : nodes) {
+          if (node == null) {
+            LOG.error(provider + " returned null node: " + nodes);
+            continue;
           }
+          addSubElement(createChildNode((TreeElement)node));
         }
       }
     }

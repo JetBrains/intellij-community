@@ -49,6 +49,7 @@ public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
     return myRevision;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -59,10 +60,12 @@ public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
 
   }
 
+  @Override
   public int hashCode() {
     return myRevision.hashCode();
   }
 
+  @Override
   public String toString() {
     return myRevision.toString();
   }

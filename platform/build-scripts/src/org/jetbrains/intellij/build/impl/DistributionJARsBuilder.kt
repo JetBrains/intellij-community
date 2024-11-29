@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -134,7 +133,7 @@ internal suspend fun buildDistribution(
     }
     createBuildThirdPartyLibraryListJob(contentReport.bundled(), context)
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
-      launch(Dispatchers.IO + CoroutineName("generate runtime module repository")) {
+      launch(CoroutineName("generate runtime module repository")) {
         spanBuilder("generate runtime module repository").use {
           generateRuntimeModuleRepository(contentReport.bundled(), context)
         }
@@ -319,13 +318,15 @@ private suspend fun buildOsSpecificBundledPlugins(
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): Map<SupportedDistribution, List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>> {
+  // we do not support arch-dependent plugins for now, so, use only current arch
+  val currentArch = JvmArchitecture.currentJvmArch
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
-    .block {
+    .use {
       pluginDirs.mapNotNull { (dist, targetDir) ->
         val (os, arch) = dist
-        if (!context.shouldBuildDistributionForOS(os = os, arch = arch)) {
+        if (arch != currentArch || !context.shouldBuildDistributionForOS(os = os, arch = arch)) {
           return@mapNotNull null
         }
 
@@ -336,7 +337,7 @@ private suspend fun buildOsSpecificBundledPlugins(
           return@mapNotNull null
         }
 
-        dist to async(Dispatchers.IO + CoroutineName("build bundled plugins")) {
+        dist to async(CoroutineName("build bundled plugins")) {
           spanBuilder("build bundled plugins")
             .setAttribute("os", os.osName)
             .setAttribute("arch", arch.name)
@@ -396,14 +397,12 @@ internal suspend fun buildNonBundledPlugins(
       return@executeStep emptyList()
     }
 
-    val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
-    val autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
     var buildKeymapPluginsTask = if (context.options.buildStepsToSkip.contains(BuildOptions.KEYMAP_PLUGINS_STEP)) {
       null
     }
     else {
       async(CoroutineName("build keymap plugins")) {
-        buildKeymapPlugins(targetDir = autoUploadingDir, context = context)
+        buildKeymapPlugins(targetDir = context.nonBundledPluginsToBePublished, context = context)
       }
     }
     val moduleOutputPatcher = ModuleOutputPatcher()
@@ -413,7 +412,7 @@ internal suspend fun buildNonBundledPlugins(
 
     // buildPlugins pluginBuilt listener is called concurrently
     val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
-    val autoPublishPluginChecker = loadPluginAutoPublishList(context)
+    val autoPublishPluginChecker = context.pluginAutoPublishList
     val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                         !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
     val mappings = buildPlugins(
@@ -437,7 +436,11 @@ internal suspend fun buildNonBundledPlugins(
         ).pluginVersion
       }
 
-      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
+      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) {
+        context.nonBundledPluginsToBePublished
+      } else {
+        context.nonBundledPlugins
+      }
       val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
       val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
@@ -451,7 +454,7 @@ internal suspend fun buildNonBundledPlugins(
       val spec = buildHelpPlugin(
         helpPlugin = helpPlugin,
         pluginsToPublishDir = stageDir,
-        targetDir = autoUploadingDir,
+        targetDir = context.nonBundledPluginsToBePublished,
         moduleOutputPatcher = moduleOutputPatcher,
         state = state,
         searchableOptionSetDescriptor = searchableOptionSet,
@@ -468,8 +471,14 @@ internal suspend fun buildNonBundledPlugins(
 
     if (prepareCustomPluginRepository) {
       val list = pluginSpecs.sortedBy { it.pluginZip }
-      generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
-      generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
+      if (list.isNotEmpty()) {
+        generatePluginRepositoryMetaFile(list, context.nonBundledPlugins, context)
+      }
+
+      val pluginsToBePublished = list.filter { it.pluginZip.startsWith(context.nonBundledPluginsToBePublished) }
+      if (pluginsToBePublished.isNotEmpty()) {
+        generatePluginRepositoryMetaFile(pluginsToBePublished, context.nonBundledPluginsToBePublished, context)
+      }
     }
 
     validatePlugins(context, pluginSpecs)
@@ -579,6 +588,8 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
   }
 }
 
+private class ScrambleTask(@JvmField val plugin: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
+
 internal suspend fun buildPlugins(
   moduleOutputPatcher: ModuleOutputPatcher,
   plugins: Collection<PluginLayout>,
@@ -592,8 +603,6 @@ internal suspend fun buildPlugins(
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
-
-  class ScrambleTask(@JvmField val plugin: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
 
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
@@ -770,9 +779,9 @@ suspend fun layoutPlatformDistribution(
       }
       launch(CoroutineName("write patched app info")) {
         spanBuilder("write patched app info").use {
-          val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
+          val module = context.findRequiredModule("intellij.platform.core")
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-          val result = injectAppInfo(inFile = moduleOutDir.resolve(relativePath), newFieldValue = context.appInfoXml)
+          val result = injectAppInfo(inFileBytes = context.readFileContentFromModuleOutput(module, relativePath) ?: error("app info not found"), newFieldValue = context.appInfoXml)
           moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
         }
       }
@@ -827,7 +836,7 @@ private suspend fun checkOutputOfPluginModules(
           excludes = moduleExcludes[module] ?: emptyList(),
           context = context,
         )) {
-      "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
+      "Runtime classes of GUI designer must not be packaged to '$module' module in '$mainPluginModule' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
       "to the output directory' is disabled in Settings | Editor | GUI Designer."
     }
@@ -852,26 +861,6 @@ private suspend fun containsFileInOutput(
   }
 
   return true
-}
-
-fun getPluginAutoUploadFile(context: BuildContext): Path? {
-  val autoUploadFile = context.paths.communityHomeDir.resolve("../build/plugins-autoupload.txt")
-  return when {
-    Files.isRegularFile(autoUploadFile) -> autoUploadFile
-    // public sources build
-    context.paths.projectHome.toUri() == context.paths.communityHomeDir.toUri() -> null
-    else -> error("File '$autoUploadFile' must exist")
-  }
-}
-
-fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
-  return autoUploadFile.useLines { lines ->
-    lines
-      .map { StringUtil.split(it, "//", true, false)[0] }
-      .map { StringUtil.split(it, "#", true, false)[0].trim() }
-      .filter { !it.isEmpty() }
-      .toCollection(TreeSet(String.CASE_INSENSITIVE_ORDER))
-  }
 }
 
 private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
@@ -959,33 +948,6 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFamily?, arc
     osFamily != null && (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily)) -> false
     arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL -> false
     else -> arch == null || bundlingRestrictions.supportedArch.contains(arch)
-  }
-}
-
-/**
- * @see [[build/plugins-autoupload.txt]] for the specification.
- *
- * @return predicate to test if the given plugin should be auto-published
- */
-private fun loadPluginAutoPublishList(context: BuildContext): Predicate<PluginLayout> {
-  val file = getPluginAutoUploadFile(context) ?: return Predicate<PluginLayout> { false }
-  val config = readPluginAutoUploadFile(file)
-
-  val productCode = context.applicationInfo.productCode
-  return Predicate<PluginLayout> { plugin ->
-    val mainModuleName = plugin.mainModule
-
-    val includeInAllProducts = config.contains(mainModuleName)
-    val includeInProduct = config.contains("+$productCode:$mainModuleName")
-    val excludedFromProduct = config.contains("-$productCode:$mainModuleName")
-
-    if (includeInProduct && (excludedFromProduct || includeInAllProducts)) {
-      context.messages.error("Unsupported rules combination: " + config.filter {
-        it == mainModuleName || it.endsWith(":$mainModuleName")
-      })
-    }
-
-    !excludedFromProduct && (includeInAllProducts || includeInProduct)
   }
 }
 

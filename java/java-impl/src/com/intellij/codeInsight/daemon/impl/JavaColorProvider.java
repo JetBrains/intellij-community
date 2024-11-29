@@ -60,7 +60,7 @@ public final class JavaColorProvider implements ElementColorProvider {
   }
 
   public static boolean isColorType(@Nullable PsiType type) {
-    if (type != null) {
+    if (type != null && type.isValid()) {
       final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
       if (aClass != null) {
         final String fqn = aClass.getQualifiedName();

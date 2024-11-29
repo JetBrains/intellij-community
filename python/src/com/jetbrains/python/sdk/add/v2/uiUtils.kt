@@ -157,7 +157,9 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: P
     }
     is ExistingSelectableInterpreter -> {
       icon = PythonPsiApiIcons.Python
-      append(interpreter.sdk.versionString!!)
+      // This is a dirty hack, but version string might be null for invalid pythons
+      // We must fix it after PythonInterpreterService will make sdk needless
+      append(interpreter.sdk.versionString ?: "broken interpreter")
       append(" " + replaceHomePathToTilde(interpreter.homePath), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
   }
@@ -244,7 +246,8 @@ internal fun Row.pythonInterpreterComboBox(
       preferredHeight = 30
       isEditable = true
     }.validationOnApply {
-      if (comboBox.isBusy) {
+      // This component must set sdk: clients expect it not to be null (PY-77463)
+      if (comboBox.isBusy || (comboBox.isVisible && selectedSdkProperty.get() == null)) {
         ValidationInfo(message("python.add.sdk.panel.wait"))
       }
       else null
@@ -261,11 +264,9 @@ internal fun Row.pythonInterpreterComboBox(
     }
   }
   return cell
-
-
 }
 
-class PythonInterpreterComboBox(
+internal class PythonInterpreterComboBox(
   val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
   val controller: PythonAddInterpreterModel,
   val onPathSelected: (String) -> Unit,

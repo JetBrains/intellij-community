@@ -87,8 +87,8 @@ class JaegerJsonSpanExporter(
             writer.writeEndObject()
             writer.writeStartObject()
             writer.writeStringField("key", "error")
-            writer.writeStringField("type", "bool")
-            writer.writeBooleanField("value", true)
+            writer.writeStringField("type", "boolean")
+            writer.writeStringField("value", "true")
             writer.writeEndObject()
           }
           writeAttributesAsJson(writer, attributes)

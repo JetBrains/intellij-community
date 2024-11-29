@@ -30,25 +30,19 @@ public interface DebuggerBackendExtension {
   String id();
 
   /**
-   * Provide an initialization code for an external system execution.
-   * If the extension is {@link #isAlwaysAttached()}, the method should be idempotent (should always return the same value)
-   * and should not depend on passed values.
-   *
-   * @param project      the associated project.
-   * @param dispatchPort the value is effective-not null for all extensions with {@link #isAlwaysAttached()} is false.
-   * @param parameters   debug parameters.
-   * @return value should always be the same if {@link #isAlwaysAttached()} is true.
+   * @deprecated this is a Gradle specific method.
+   * Use {@link org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension#configureTasks} instead.
    */
+  @Deprecated
   default List<String> initializationCode(@Nullable Project project, @Nullable String dispatchPort, @NotNull String parameters) {
     return new ArrayList<>();
   }
 
   /**
-   * @param project    the associated project. The passed value is exactly the same as for {@link #initializationCode(Project, String, String)}.
-   * @param dispatchPort the actual value can be null, depending on settings of the executed operation
-   * @param parameters debug parameters. The passed value is exactly the same as for {@link #initializationCode(Project, String, String)}.
-   * @return map of values that should be passed to the execution environment.
+   * @deprecated this is a Gradle specific method.
+   * Use {@link org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension#configureTasks} instead.
    */
+  @Deprecated
   default @NotNull Map<String, String> executionEnvironmentVariables(@Nullable Project project,
                                                                      @Nullable String dispatchPort,
                                                                      @NotNull String parameters) {
@@ -56,8 +50,10 @@ public interface DebuggerBackendExtension {
   }
 
   /**
-   * Only for debugger extensions configurable via environment.
+   * @deprecated this is a Gradle specific method.
+   * Use {@link org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension#configureTasks} instead.
    */
+  @Deprecated
   default boolean isAlwaysAttached() {
     return false;
   }
@@ -67,16 +63,6 @@ public interface DebuggerBackendExtension {
                                                             @NotNull String processParameters);
 
   default HashMap<String, String> splitParameters(@NotNull String processParameters) {
-    HashMap<String, String> result = new HashMap<>();
-
-    final String[] envVars = processParameters.split(ForkedDebuggerHelper.PARAMETERS_SEPARATOR);
-    for (String envVar : envVars) {
-      final int idx = envVar.indexOf('=');
-      if (idx > -1) {
-        result.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
-      }
-    }
-
-    return result;
+    return ForkedDebuggerHelper.splitParameters(processParameters);
   }
 }

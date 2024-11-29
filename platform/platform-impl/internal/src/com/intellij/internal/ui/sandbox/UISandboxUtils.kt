@@ -85,3 +85,7 @@ internal fun <T : JTextArea> Cell<T>.initWithText(): Cell<T> {
 internal fun <T : JTextArea> T.addText() {
   text = (1..20).joinToString(separator = "\n") { "Line $it" }
 }
+
+internal fun items(count: Int, prefix: String = "Item"): List<String> {
+  return (1..count).map { "$prefix $it" }.toList()
+}

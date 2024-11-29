@@ -165,3 +165,5 @@ com.intellij.xdebugger.impl.ui.XValueTextProvider
 - a:getDebuggersShortName():java.lang.String
 *:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction$ReferrersTreeCustomizer
 - a:getDialog(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,java.lang.String,com.intellij.xdebugger.XDebugSession):com.intellij.openapi.ui.DialogWrapper
+f:com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil
+- *s:renderName(java.lang.String,I,java.util.function.Consumer):V

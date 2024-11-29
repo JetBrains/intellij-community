@@ -28,8 +28,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-class RpcExecutor private constructor(private val serialization: () -> Serialization,
-                                      private val services: RpcServiceLocator,
+class RpcExecutor private constructor(private val services: RpcServiceLocator,
                                       private val route: UID,
                                       private val queue: SendChannel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>,
                                       private val coroutineScope: CoroutineScope,
@@ -42,7 +41,6 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
     internal val logger = KLoggers.logger(RpcExecutor::class)
 
     suspend fun serve(services: RpcServiceLocator,
-                      json: () -> Serialization,
                       route: UID,
                       sendChannel: SendChannel<TransportMessage>,
                       receiveChannel: ReceiveChannel<TransportMessage>,
@@ -50,8 +48,7 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
                       rpcCallDispatcher: CoroutineDispatcher? = null) {
       val queueChannel = Channel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>(Channel.UNLIMITED)
       val rpcScope = CoroutineScope(coroutineContext + SupervisorJob(coroutineContext[Job]))
-      val executor = RpcExecutor(serialization = json,
-                                 services = services,
+      val executor = RpcExecutor(services = services,
                                  queue = queueChannel,
                                  coroutineScope = rpcScope,
                                  rpcInterceptor = rpcInterceptor,
@@ -119,8 +116,7 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
   }
 
   private suspend fun processRpcMessage(clientId: UID, message: RpcMessage) {
-    val serialization = serialization()
-    val json = rpcJsonImplementationDetail(serialization)
+    val json = rpcJsonImplementationDetail()
 
     when (message) {
       is RpcMessage.CallRequest -> {
@@ -146,7 +142,7 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
             }
             streamDescriptors.forEach {
               registerStream(it, clientId)
-              serveStream(requireNotNull(channels[it.uid]), serialization, clientId)
+              serveStream(requireNotNull(channels[it.uid]), clientId)
             }
             `object`
           }
@@ -207,7 +203,7 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
             sendAsync(result.seal(destination = clientId, origin = route, otelData = null)) { ex ->
               if (ex == null) {
                 registeredStreams.forEach {
-                  serveStream(it, serialization, clientId)
+                  serveStream(it, clientId)
                 }
               }
             }
@@ -239,7 +235,7 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
           }
 
           streamDescriptors.forEach { stream ->
-            serveStream(registerStream(stream, clientId), serialization, clientId)
+            serveStream(registerStream(stream, clientId), clientId)
           }
           runCatching { stream.requireBufferedChannel().send(InternalStreamMessage.Payload(de)) }
             .onFailure { ex ->
@@ -279,11 +275,10 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
     routeChannels[clientId]?.onEach { channelId -> closeChannel(channelId, clientId) }
   }
 
-  private fun serveStream(descriptor: InternalStreamDescriptor, json: Serialization, clientId: UID) {
+  private fun serveStream(descriptor: InternalStreamDescriptor, clientId: UID) {
     serveStream(origin = route,
                 coroutineScope = coroutineScope,
                 descriptor = descriptor,
-                serialization = { json },
                 registerStream = { stream -> registerStream(stream, clientId) },
                 unregisterStream = { streamId ->
                   channels.remove(streamId)?.also { s -> routeChannels[s.route]?.remove(s.uid) }

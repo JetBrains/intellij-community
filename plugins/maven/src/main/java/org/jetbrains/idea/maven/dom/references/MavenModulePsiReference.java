@@ -27,8 +27,9 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -153,7 +154,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       String modulePath = FileUtil.toCanonicalPath(baseDir.getPath() + "/" + myModulePath);
       String pomFileName = MavenConstants.POM_XML;
 
-      if (!new File(FileUtil.toSystemDependentName(modulePath)).isDirectory()) {
+      if (!Files.isDirectory(Path.of(FileUtil.toSystemDependentName(modulePath)))) {
         String fileName = PathUtil.getFileName(modulePath);
         if (MavenUtil.isPomFileName(fileName) || MavenUtil.isPotentialPomFile(fileName)) {
           modulePath = PathUtil.getParentPath(modulePath);

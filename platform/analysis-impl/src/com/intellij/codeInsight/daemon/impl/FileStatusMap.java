@@ -18,6 +18,7 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -240,7 +241,7 @@ public final class FileStatusMap implements Disposable {
           status.markWholeFileDirty(myProject);
           status.defensivelyMarked = false;
         }
-        assertRegisteredPass(passId, status);
+        assertPassIsRegistered(passId, status);
         marker = status.dirtyScopes.get(passId);
       }
     }
@@ -253,8 +254,10 @@ public final class FileStatusMap implements Disposable {
     return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
   }
 
-  private static void assertRegisteredPass(int passId, @NotNull FileStatus status) {
-    if (!status.dirtyScopes.containsKey(passId)) throw new IllegalStateException("Unknown pass " + passId);
+  private static void assertPassIsRegistered(int passId, @NotNull FileStatus status) {
+    if (!status.dirtyScopes.containsKey(passId)) {
+      throw new IllegalStateException("Unknown pass " + passId);
+    }
   }
 
   void markFileScopeDirtyDefensively(@NotNull Document document, @NotNull @NonNls Object reason) {
@@ -274,6 +277,7 @@ public final class FileStatusMap implements Disposable {
   }
   void markScopeDirty(@NotNull Document document, @NotNull TextRange scope, @NotNull @NonNls Object reason) {
     ApplicationManager.getApplication().assertIsNonDispatchThread(); // assert dirty scope updates happen in BGT only, see IJPL-163033
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     combineDirtyScopes(document, scope, reason);
   }
   private void combineDirtyScopes(@NotNull Document document, @NotNull TextRange scope, @NonNls @NotNull Object reason) {
@@ -311,14 +315,18 @@ public final class FileStatusMap implements Disposable {
   }
 
   /**
-   * (Dis)Allows file modifications during highlighting testing. Might be useful to catch unexpected modification requests.
-   * @return the old value: true if modifications were allowed, false otherwise
+   * Runs {@code runnable} while (Dis)Allowing file modifications during highlighting testing. Might be useful to catch unexpected modification requests.
    */
   @TestOnly
-  boolean allowDirt(boolean allow) {
+  <E extends Exception> void runAllowingDirt(boolean allowDirt, @NotNull ThrowableRunnable<E> runnable) throws E {
     boolean old = myAllowDirt;
-    myAllowDirt = allow;
-    return old;
+    try {
+      myAllowDirt = allowDirt;
+      runnable.run();
+    }
+    finally {
+      myAllowDirt = old;
+    }
   }
 
   private static final RangeMarker WHOLE_FILE_DIRTY_MARKER =

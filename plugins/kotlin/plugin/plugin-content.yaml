@@ -32,6 +32,10 @@
   - name: kotlin.formatter.minimal
 - name: lib/kotlin-plugin.jar
   projectLibraries:
+  - name: jackson-dataformat-toml
+    files:
+    - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar
+    reason: withProjectLibrary
   - name: javax-inject
     files:
     - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
@@ -66,6 +70,9 @@
   - name: kotlinc.kotlin-scripting-compiler-impl
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2/kotlin-scripting-compiler-impl-2.jar
+  - name: kotlinc.kotlin-scripting-dependencies
+    files:
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2/kotlin-scripting-dependencies-2.jar
   - name: kotlinc.kotlin-scripting-jvm
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2/kotlin-scripting-jvm-2.jar
@@ -153,6 +160,8 @@
   - name: kotlin.gradle.gradle
   - name: kotlin.gradle.code-insight-common
   - name: kotlin.gradle.gradle-java
+  - name: kotlin.gradle.gradle-java.k1
+  - name: kotlin.gradle.gradle-java.k2
   - name: kotlin.gradle.code-insight-groovy
   - name: kotlin.gradle.code-insight-toml
   - name: kotlin.native
@@ -215,7 +224,6 @@
   - name: kotlin.base.fir.analysis-api-platform
   - name: kotlin.base.fir.code-insight
   - name: kotlin.base.fir.project-structure
-  - name: kotlin.base.fir.analysis
   - name: kotlin.code-insight.api
   - name: kotlin.code-insight.utils
   - name: kotlin.code-insight.intentions.shared

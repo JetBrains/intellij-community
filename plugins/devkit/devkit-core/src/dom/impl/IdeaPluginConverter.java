@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.intellij.ide.plugins.IdeaPluginOsRequirement;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -13,9 +14,11 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomJavaUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.PluginModule;
 import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex;
@@ -31,6 +34,7 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
 
   @Override
   @NotNull
+  @Unmodifiable
   public Collection<? extends IdeaPlugin> getVariants(final @NotNull ConvertContext context) {
     Collection<IdeaPlugin> plugins = getAllPluginsWithoutSelf(context);
     return ContainerUtil.filter(plugins, NON_CORE_PLUGINS);
@@ -45,6 +49,13 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
         ContainerUtil.addIfNotNull(result, module.getValue().getValue());
       }
     }
+
+    if (DomJavaUtil.findClass(IdeaPluginOsRequirement.class.getName(), context.getInvocationElement()) != null) {
+      for (IdeaPluginOsRequirement value : IdeaPluginOsRequirement.getEntries()) {
+        result.add(value.getModuleId().getIdString());
+      }
+    }
+
     return result;
   }
 
@@ -53,6 +64,7 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
     return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
   }
 
+  @Unmodifiable
   private static Collection<IdeaPlugin> getAllPluginsWithoutSelf(final ConvertContext context) {
     final IdeaPlugin self = context.getInvocationElement().getParentOfType(IdeaPlugin.class, true);
     if (self == null) return Collections.emptyList();

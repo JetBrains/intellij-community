@@ -26,5 +26,8 @@
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="jackson-dataformat-toml" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
   </component>
 </module>

@@ -173,7 +173,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
-        evalContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+        evalContext.getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
           @Override
           public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             // re-setting the context will cause value recalculation

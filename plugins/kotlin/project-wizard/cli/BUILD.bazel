@@ -1,0 +1,24 @@
+### auto-generated section `build kotlin.project-wizard.cli` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-project-wizard-cli",
+  module_name = "kotlin.project-wizard.cli",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:snakeyaml",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/project-wizard/core:kotlin-project-wizard-core",
+  ],
+  runtime_deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlinc_kotlin-compiler-common",
+  ]
+)
+### auto-generated section `build kotlin.project-wizard.cli` end

@@ -2,14 +2,16 @@
 package com.intellij.execution.target.value;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
-class MapTargetValue<S, T> implements TargetValue<T> {
+@ApiStatus.Internal
+public class MapTargetValue<S, T> implements TargetValue<T> {
   @NotNull private final TargetValue<? extends S> myOriginalValue;
   @NotNull private final Function<? super S, ? extends T> myMapper;
 
-  MapTargetValue(@NotNull TargetValue<? extends S> originalValue, @NotNull Function<? super S, ? extends T> mapper) {
+  public MapTargetValue(@NotNull TargetValue<? extends S> originalValue, @NotNull Function<? super S, ? extends T> mapper) {
     myOriginalValue = originalValue;
     myMapper = mapper;
   }

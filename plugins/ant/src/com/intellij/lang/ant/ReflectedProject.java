@@ -65,7 +65,7 @@ public final class ReflectedProject {
   }
 
   ReflectedProject(final ClassLoader classLoader) {
-    Object project = null;
+    Object project;
     try {
       final Class<?> projectClass = classLoader.loadClass(ANT_PROJECT_CLASS);
       project = projectClass.getConstructor().newInstance();

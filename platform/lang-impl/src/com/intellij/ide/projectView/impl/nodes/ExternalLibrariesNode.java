@@ -55,9 +55,13 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   @Override
   public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     Project project = Objects.requireNonNull(getProject());
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    return getChildren(project, modules);
+  }
+
+  protected @NotNull List<AbstractTreeNode<?>> getChildren(@NotNull Project project, Module[] modules) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-    Module[] modules = ModuleManager.getInstance(project).getModules();
     Map<String, List<Library>> processedLibraries = new HashMap<>();
     Set<Sdk> processedSdk = new HashSet<>();
 

@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -73,6 +74,7 @@ class MultipleRootsInjectedFileViewProvider extends MultiplePsiFilesPerDocumentF
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Set<Language> getLanguages() {
     FileViewProvider original = myOriginalProvider;
     Set<Language> languages = original.getLanguages();

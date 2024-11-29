@@ -26,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -205,6 +206,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   @NotNull
+  @Unmodifiable
   protected abstract List<? extends ThreesideDiffChangeBase> getChanges();
 
   @NotNull

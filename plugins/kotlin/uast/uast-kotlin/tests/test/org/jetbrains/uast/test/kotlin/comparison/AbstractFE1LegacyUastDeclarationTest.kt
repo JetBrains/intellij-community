@@ -3,5 +3,10 @@
 package org.jetbrains.uast.test.kotlin.comparison
 
 import org.jetbrains.uast.test.common.kotlin.LegacyUastRenderLogTestBase
+import java.io.File
 
-abstract class AbstractFE1LegacyUastDeclarationTest : AbstractFE1UastDeclarationTest(), LegacyUastRenderLogTestBase
+abstract class AbstractFE1LegacyUastDeclarationTest : AbstractFE1UastDeclarationTest(), LegacyUastRenderLogTestBase {
+    override fun getTestMetadataFileFromPath(filePath: String, ext: String): File {
+        return super<LegacyUastRenderLogTestBase>.getTestMetadataFileFromPath(filePath, ext)
+    }
+}

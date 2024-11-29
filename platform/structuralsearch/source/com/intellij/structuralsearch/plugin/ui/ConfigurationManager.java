@@ -13,10 +13,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -183,6 +180,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return ContainerUtil.map(getAllConfigurations(), c -> c.getRefName());
   }
 
+  @Unmodifiable
   public List<Configuration> getAllConfigurations() {
     return ContainerUtil.concat(StructuralSearchUtil.getPredefinedTemplates(), getIdeConfigurations(), getProjectConfigurations());
   }

@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -27,6 +28,7 @@ import java.util.Collection;
  * Conflict resolver that makes a merge commit after all conflicts are resolved.
  */
 public class GitMergeCommittingConflictResolver extends GitConflictResolver {
+  @Unmodifiable
   private final Collection<? extends VirtualFile> myMergingRoots;
   private final boolean myRefreshAfterCommit;
 
@@ -40,7 +42,7 @@ public class GitMergeCommittingConflictResolver extends GitConflictResolver {
   }
 
   public GitMergeCommittingConflictResolver(@NotNull Project project,
-                                            @NotNull Collection<? extends VirtualFile> mergingRoots,
+                                            @NotNull @Unmodifiable Collection<? extends VirtualFile> mergingRoots,
                                             @NotNull Params params,
                                             boolean refreshAfterCommit) {
     super(project, mergingRoots, params);

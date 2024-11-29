@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.library.KotlinLibrary
 import com.intellij.openapi.projectRoots.Sdk as OpenapiSdk
 import com.intellij.openapi.roots.libraries.Library as OpenapiLibrary
 
@@ -166,6 +167,14 @@ fun Library.toKaLibraryModules(project: Project): List<KaLibraryModule> =
     project.ideProjectStructureProvider.getKaLibraryModules(this)
 
 /**
+ * Converts the [OpenapiSdk] to a list of [KaLibraryModule] in the specified [project].
+ *
+ * @return A list of corresponding [KaLibraryModule].
+ */
+fun OpenapiSdk.toKaLibraryModule(project: Project): KaLibraryModule =
+    project.ideProjectStructureProvider.getKaLibraryModule(this)
+
+/**
  * Returns a [KaModule] for a given PsiElement in the context of the [useSiteModule].
  *
  * The use-site module is the [KaModule] from which [getKaModule] is called. This concept is the same as the use-site module accepted by
@@ -207,8 +216,10 @@ inline fun <reified M : KaModule> PsiElement.getKaModuleOfType(project: Project,
  * Thus, it never returns [org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule] as a result.
 */
 fun VirtualFile.getContainingKaModules(project: Project): List<KaModule> =
-project.ideProjectStructureProvider.getContainingKaModules(this)
+    project.ideProjectStructureProvider.getContainingKaModules(this)
 
+fun KaLibraryModule.getKotlinLibraries(project: Project): List<KotlinLibrary> =
+    project.ideProjectStructureProvider.getKotlinLibraries(this)
 
 /**
  * [forcedKaModule] provides a [KaModule] instance for a dummy file. It must not be changed after the first assignment because

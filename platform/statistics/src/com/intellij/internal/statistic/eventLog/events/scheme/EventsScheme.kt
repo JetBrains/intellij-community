@@ -17,7 +17,7 @@ class FieldDataTypeIncludeFilter {
   }
 }
 
-data class FieldDescriptor(val path: String,
+data class FieldDescriptor(val path: String, // path="object1.object2.name"
                            val value: Set<String>,
                            @JsonInclude(JsonInclude.Include.NON_DEFAULT)
                            val shouldBeAnonymized: Boolean = false,
@@ -25,9 +25,14 @@ data class FieldDescriptor(val path: String,
                            val dataType: FieldDataType = FieldDataType.PRIMITIVE,
                            val description: String? = null)
 
+/**
+ * [objectArrays] enumerates all arrays in the event data structure.
+ * Required to reconstruct the data model from the metadata scheme.
+ */
 data class EventDescriptor(val event: String,
                            val fields: Set<FieldDescriptor>,
-                           val description: String? = null)
+                           val description: String? = null,
+                           val objectArrays: List<String>? = null)
 
 data class PluginSchemeDescriptor(val id: String)
 

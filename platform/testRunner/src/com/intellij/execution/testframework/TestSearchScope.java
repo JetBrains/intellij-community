@@ -22,6 +22,7 @@ public interface TestSearchScope {
       return SourceScope.wholeProject(configuration.getProject());
     }
 
+    @Override
     public @NlsSafe String toString() {
       return "WHOLE_PROJECT";
     }
@@ -33,6 +34,7 @@ public interface TestSearchScope {
       return SourceScope.modules(configuration.getModules());
     }
 
+    @Override
     public @NlsSafe String toString() {
       return "SINGLE_MODULE";
     }
@@ -44,6 +46,7 @@ public interface TestSearchScope {
       return SourceScope.modulesWithDependencies(configuration.getModules());
     }
 
+    @Override
     public @NlsSafe String toString() {
       return "MODULE_WITH_DEPENDENCIES";
     }

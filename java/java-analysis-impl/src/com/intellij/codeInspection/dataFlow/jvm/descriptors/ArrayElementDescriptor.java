@@ -22,6 +22,11 @@ import org.jetbrains.annotations.Nullable;
 public final class ArrayElementDescriptor extends JvmVariableDescriptor {
   private final int myIndex;
 
+  /**
+   * Creates a descriptor that represents an array element with a fixed index
+   * 
+   * @param index index of an array element
+   */
   private ArrayElementDescriptor(int index) {
     myIndex = index;
   }
@@ -198,5 +203,16 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
       return componentType.meet(DfaNullability.fromNullability(DfaPsiUtil.getTypeNullability(arrayType.getComponentType())).asDfType());
     }
     return componentType;
+  }
+
+  /**
+   * @param arrayAccess expression to create a descriptor for
+   * @return an array element descriptor that describes a specified array access expression;
+   * null if it's not possible to describe a given array access expression with a single
+   * {@code ArrayElementDescriptor}
+   */
+  public static @Nullable ArrayElementDescriptor fromArrayAccess(@NotNull PsiArrayAccessExpression arrayAccess) {
+    return ExpressionUtils.computeConstantExpression(arrayAccess.getIndexExpression()) instanceof Integer index ?
+         new ArrayElementDescriptor(index) : null;
   }
 }

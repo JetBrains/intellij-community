@@ -221,6 +221,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myEndOffset;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof TreeRangeReference)) return false;
@@ -233,6 +234,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
              myVirtualFile.equals(that.myVirtualFile);
     }
 
+    @Override
     public int hashCode() {
       int result = myInfo.hashCode();
       result = 31 * result + myStartOffset;
@@ -277,6 +279,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
     }
 
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof HardReference)) return false;
@@ -286,6 +289,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myElement.equals(that.myElement);
     }
 
+    @Override
     public int hashCode() {
       return myElement.hashCode();
     }

@@ -72,6 +72,7 @@ public class ReplaceConfiguration extends Configuration {
     myReplaceOptions.writeExternal(element);
   }
 
+  @Override
   public boolean equals(Object configuration) {
     if (this == configuration) return true;
     if (!(configuration instanceof ReplaceConfiguration)) return false;
@@ -79,6 +80,7 @@ public class ReplaceConfiguration extends Configuration {
     return myReplaceOptions.equals(((ReplaceConfiguration)configuration).myReplaceOptions);
   }
 
+  @Override
   public int hashCode() {
     return 31 * super.hashCode() + myReplaceOptions.hashCode();
   }

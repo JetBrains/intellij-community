@@ -176,11 +176,12 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         fireStateChanged(context, event);
       };
 
-      if (context.getSuspendContext() == null) {
+      SuspendContextImpl suspendContext = context.getSuspendContext();
+      if (suspendContext == null) {
         setStateRunnable.run();
       }
       else {
-        getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(context.getSuspendContext()) {
+        suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
           @Override
           public Priority getPriority() {
             return Priority.HIGH;
@@ -783,7 +784,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public static void switchContext(@NotNull SuspendContextImpl suspendContext) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerSession session = debugProcess.getSession();

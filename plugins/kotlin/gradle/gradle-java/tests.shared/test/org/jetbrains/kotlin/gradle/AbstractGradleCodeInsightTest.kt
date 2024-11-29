@@ -126,15 +126,13 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
             withSettingsFile(useKotlinDsl = true) {
                 setProjectName("version-catalogs-kotlin-dsl")
                 includeBuild("includedBuild1")
+                includeBuild("includedBuildWithoutSettings")
             }
             withBuildFile(gradleVersion, useKotlinDsl = true) {
                 withKotlinDsl()
                 withMavenCentral()
             }
-            withFile(
-                "gradle/libs.versions.toml",
-                /* language=TOML */
-                """
+            withFile("gradle/libs.versions.toml", /* language=TOML */ """
                 [libraries]
                 some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
                 [plugins]
@@ -145,17 +143,12 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 """.trimIndent()
             )
             // included build files
-            withSettingsFile(relativeModulePath = "includedBuild1", useKotlinDsl = true) {
-                setProjectName("includedBuild1")
-            }
+            withSettingsFile(relativeModulePath = "includedBuild1", useKotlinDsl = true) { }
             withBuildFile(gradleVersion, relativeModulePath = "includedBuild1", useKotlinDsl = true) {
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
-            withFile(
-                "includedBuild1/gradle/libs.versions.toml",
-                /* language=TOML */
-                """
+            withFile("includedBuild1/gradle/libs.versions.toml", /* language=TOML */ """
                 [libraries]
                 some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
                 [plugins]
@@ -163,6 +156,13 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 [versions]
                 test_library-version = "1.0"
                 kotlin = "1.9.24"
+                """.trimIndent()
+            )
+            // included build without settings
+            withBuildFile(gradleVersion, relativeModulePath = "includedBuildWithoutSettings", useKotlinDsl = true) {}
+            withFile("includedBuildWithoutSettings/gradle/libs.versions.toml", /* language=TOML */ """
+                [libraries]
+                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
                 """.trimIndent()
             )
         }

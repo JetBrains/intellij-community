@@ -26,6 +26,7 @@ import git4idea.util.GitVcsConsoleWriter;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -236,7 +237,7 @@ public final class GitVFSListener extends VcsVFSListener {
 
   private Set<File> executeForceMove(@NotNull VirtualFile root,
                                      @NotNull List<? extends FilePath> files,
-                                     @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
+                                     @Unmodifiable @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
     Set<File> toRefresh = new HashSet<>();
     for (FilePath file : files) {
       MovedFileInfo info = filesToMove.get(file);

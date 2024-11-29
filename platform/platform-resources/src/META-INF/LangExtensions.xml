@@ -3,10 +3,15 @@
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
                         overrides="true"/>
+    <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                    serviceImplementation="com.intellij.configurationStore.ProjectWithModulesStoreReloadManagerImpl"
+                    overrides="true"/>
 
-    <projectServiceContainerInitializedListener
+    <projectServiceInitializer.essential
       id="moduleBridgeLoaderService"
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService" order="first"/>
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService"
+      order="before workspaceFileIndexInitializer"/>
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
                     serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloaderImpl" overrides="true"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootManager"
@@ -49,6 +54,7 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.configuration.SdkLookupImpl"/>
 
     <registryKey key="sdk.detector.enabled" defaultValue="true" description="Toggles SDK detection features"/>
+    <registryKey key="java.home.finder.use.eel" defaultValue="true" description="Use new API for OS abstraction in Project SDKs"/>
 
     <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
@@ -58,7 +64,8 @@
     <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper" preload="notLightEdit"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
-                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"/>
+                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"
+                        overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
                         serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="notLightEdit"/>
@@ -121,6 +128,8 @@
                  description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
+    <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
+                 description="Use specialized Eel API for working with remote filesystems. This may result in a signigicant performance improvement and better CPU utilization"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
@@ -131,9 +140,6 @@
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
-
-    <applicationService serviceInterface="com.intellij.ui.ExperimentalUI"
-                        serviceImplementation="com.intellij.ui.ExperimentalUIImpl"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
 
@@ -158,8 +164,6 @@
     <applicationService serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
 
     <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
-                        serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.LineMarkerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl"/>
 
@@ -229,9 +233,6 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTypeService"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
-                        serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
-
     <applicationService serviceInterface="com.intellij.ui.icons.PredefinedIconOverlayService"
                         serviceImplementation="com.intellij.ui.PredefinedIconOverlayServiceImpl"/>
 
@@ -272,9 +273,6 @@
     <applicationService serviceImplementation="com.intellij.lang.IdeLanguageCustomization"/>
 
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
-
-    <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
-                        serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.util.gist.GistManager"
                         serviceImplementation="com.intellij.util.gist.GistManagerImpl"/>
@@ -362,9 +360,6 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.inlinePrompt.InlinePromptManager"
-                    serviceImplementation="com.intellij.inlinePrompt.EmptyInlinePromptManager"/>
-
     <applicationService
       serviceImplementation="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"/>
 
@@ -395,7 +390,6 @@
                     serviceImplementation="com.intellij.find.impl.FindManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.ide.hierarchy.HierarchyBrowserManager" client="all"/>
-    <toolWindowExtractorMode id="Hierarchy" mode="per_client"/>
 
     <projectService serviceImplementation="com.intellij.codeInsight.documentation.DocumentationManager"/>
 
@@ -689,6 +683,14 @@
                  description="Show logical structure in Structure View"
                  defaultValue="true"
                  restartRequired="false"/>
+    <registryKey key="logical.structure.actions.enabled"
+                 description="Show action icons for logical structure nodes"
+                 defaultValue="false"
+                 restartRequired="false"/>
+    <registryKey key="logical.structure.actions.on.hover"
+                 description="Show action icons on hover instead of on selection"
+                 defaultValue="false"
+                 restartRequired="false"/>
 
     <idIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
     <todoIndexer filetype="PLAIN_TEXT" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
@@ -785,8 +787,6 @@
     <projectConfigurable groupId="build" id="Runtime.Targets.Configurable" bundle="messages.IdeBundle"
                          key="configurable.Runtime.Targets.Configurable.display.name"
                          provider="com.intellij.execution.target.TargetEnvironmentsConfigurableProvider"/>
-
-    <projectService serviceImplementation="com.intellij.execution.configurations.RunConfigurationVcsSupport"/>
 
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
@@ -1745,16 +1745,6 @@
     <applicationService serviceInterface="com.intellij.psi.stubs.StubInconsistencyReporter"
                         serviceImplementation="com.intellij.util.indexing.diagnostic.StubInconsistencyReporterImpl"/>
 
-    <advancedSetting id="ide.suppress.double.click.handler" default="false" groupKey="group.advanced.settings.ui"/>
-    <advancedSetting id="ide.remember.last.search.scope" default="false" groupKey="group.advanced.settings.search.scopes"/>
-    <advancedSetting id="ide.similar.usages.clustering.enable" default="true" groupKey="group.advanced.settings.find"/>
-    <advancedSetting id="ide.usages.page.size" default="100" groupKey="group.advanced.settings.find"/>
-    <advancedSetting id="bigger.font.in.project.view" default="false" groupKey="group.advanced.settings.project.view"/>
-    <advancedSetting id="editor.comment.line.caret.down" default="true" groupKey="group.advanced.settings.editor"/>
-    <advancedSetting id="editor.maximize.on.double.click" default="true" groupKey="group.advanced.settings.editor.tabs"/>
-    <advancedSetting id="editor.maximize.in.splits.on.double.click" default="false" groupKey="group.advanced.settings.editor.tabs"/>
-    <advancedSetting id="editor.normalize.splits" default="false" groupKey="group.advanced.settings.editor.tabs"/>
-    <advancedSetting id="editor.keep.pinned.tabs.on.left" default="true" groupKey="group.advanced.settings.editor.tabs"/>
     <advancedSetting id="floating.codeToolbar.hide" default="false" groupKey="group.advanced.settings.editor"/>
 
     <actionOnSaveInfoProvider id="FormatOnSaveInfoProvider"
@@ -1798,7 +1788,6 @@
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.LanguageBundleListener" topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.ui.ExperimentalUiAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
               class="com.intellij.codeInsight.daemon.impl.EditorTrackerImpl$MyAppLevelFileEditorManagerListener"/>
@@ -1806,6 +1795,8 @@
 
     <listener class="com.intellij.ide.projectView.impl.ProjectViewImpl$MyToolWindowManagerListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+    <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"

@@ -39,6 +39,7 @@ public class PsiElementResolveResult implements ResolveResult{
     return myValidResult;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -50,10 +51,12 @@ public class PsiElementResolveResult implements ResolveResult{
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myElement.hashCode();
   }
 
+  @Override
   public @NonNls String toString() {
     return "PsiElementResolveResult with " + myElement.getClass() + ": " +
            (myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText());

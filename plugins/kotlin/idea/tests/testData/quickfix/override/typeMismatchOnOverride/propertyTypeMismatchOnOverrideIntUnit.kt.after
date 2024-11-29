@@ -7,5 +7,6 @@ abstract class B : A() {
     override abstract var x<caret>: Int
 }
 
+// In K2, this fix works if a type of `x` is defined, for example, see propertyTypeMismatchOnOverrideIntLong.kt
 /* IGNORE_K2 */
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix$OnType

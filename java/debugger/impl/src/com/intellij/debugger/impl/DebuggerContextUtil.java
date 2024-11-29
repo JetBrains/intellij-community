@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -38,7 +39,7 @@ public final class DebuggerContextUtil {
 
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null) {
-      session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
+      Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
         @Override
         protected void action() {
           SuspendContextImpl threadSuspendContext =
@@ -86,7 +87,7 @@ public final class DebuggerContextUtil {
       action.accept(defaultDebuggerContext);
     }
     else {
-      debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
+      pausedContext.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(

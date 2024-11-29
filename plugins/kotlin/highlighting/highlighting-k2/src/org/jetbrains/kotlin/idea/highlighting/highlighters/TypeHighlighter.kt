@@ -6,7 +6,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -41,13 +40,18 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
         val color = when (symbol) {
             is KaAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
             is KaNamedClassSymbol -> when (symbol.classKind) {
-                KaClassKind.CLASS -> when (symbol.modality) {
-                    KaSymbolModality.FINAL, KaSymbolModality.SEALED , KaSymbolModality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
-                    KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+                KaClassKind.CLASS -> if (symbol.isData) {
+                    KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
+                } else {
+                    when (symbol.modality) {
+                        KaSymbolModality.FINAL, KaSymbolModality.SEALED, KaSymbolModality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
+                        KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+                    }
                 }
                 KaClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
                 KaClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
-                KaClassKind.OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+                KaClassKind.OBJECT ->
+                    if (symbol.isData) KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT else KotlinHighlightInfoTypeSemanticNames.OBJECT
                 KaClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
                 KaClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
                 KaClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS

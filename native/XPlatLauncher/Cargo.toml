@@ -2,7 +2,7 @@
 name = "xplat-launcher"
 version = "1.0.0"
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.82.0"
 publish = false
 build = "build.rs"
 
@@ -18,11 +18,11 @@ codegen-units = 1
 
 [dependencies]
 log = { version = "0.4.22", features = ["std"] }
-serde = { version = "1.0.203", features = ["derive"] }
-serde_json = "1.0.120"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
 jni = "0.21.1"
-libloading = "0.8.4"
-anyhow = { version = "1.0.86", features = ["std", "backtrace"] }
+libloading = "0.8.5"
+anyhow = { version = "1.0.93", features = ["std", "backtrace"] }
 va_list = { version = "0.2.0"}
 
 [target.'cfg(target_os = "windows")'.dependencies]
@@ -32,7 +32,7 @@ windows = { version = "0.58.0", features = [
 ] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
-libc = "0.2.142"
+libc = "0.2.164"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.0"
@@ -43,14 +43,14 @@ native-dialog = "0.7.0"
 # `cargo-deny` and `cargo-about` are used in separate build steps
 # we don't have to actually build them, but having them in the manifest shows if any updates are available
 [target.'cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))'.build-dependencies]
-cargo-deny = "0.16.1"  # checks licenses and problematic dependencies
-cargo-about = "0.6.1"   # generates license report
+cargo-deny = "0.16.2"  # checks licenses and problematic dependencies
+cargo-about = "0.6.5"   # generates license report
 
 [build-dependencies]
-anyhow = { version = "1.0.86", features = ["std", "backtrace"] }
+anyhow = { version = "1.0.93", features = ["std", "backtrace"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
-reqwest = { version = "0.12.5", features = ["blocking"] }
+reqwest = { version = "0.12.9", features = ["blocking"] }
 sha1 = "0.10.6"
 winresource = "0.1.17"
 
@@ -63,4 +63,4 @@ OriginalFilename = "WinLauncher.exe"
 ProductName = "IntelliJ Platform"
 
 [dev-dependencies]
-tempfile = "3.10.1"
+tempfile = "3.14.0"

@@ -2,21 +2,19 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.codevision
 
+import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
 abstract class AbstractKotlinCodeVisionProviderTest :
-    InlayHintsProviderTestCase(),
+    CodeVisionTestCase(),
     ExpectedPluginModeProvider { // Abstract- prefix is just a convention for GenerateTests
-
-    companion object {
-        const val INHERITORS_KEY = "kotlin.code-vision.inheritors"
-        const val USAGES_KEY = "kotlin.code-vision.usages"
-    }
 
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
@@ -27,27 +25,16 @@ abstract class AbstractKotlinCodeVisionProviderTest :
     }
 
     private fun assertThatActualHintsMatch(fileName: String) {
-        val fileContents = FileUtil.loadFile(File(fileName), true)
+        val file = File(fileName)
+        val fileContents = FileUtil.loadFile(file, true)
 
-        val usagesLimit = InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// USAGES-LIMIT: ")?.toInt() ?: 100
-        val inheritorsLimit = InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// INHERITORS-LIMIT: ")?.toInt() ?: 100
-
-        val provider = KotlinCodeVisionProvider()
-        provider.usagesLimit = usagesLimit
-        provider.inheritorsLimit = inheritorsLimit
-
-        when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
-            "inheritors" -> provider.mode(usages = false, inheritors = true)
-            "usages" -> provider.mode(usages = true, inheritors = false)
-            "usages-&-inheritors" -> provider.mode(usages = true, inheritors = true)
-            else -> provider.mode(usages = false, inheritors = false)
+        val mode = when (InTextDirectivesUtils.findStringWithPrefixes(fileContents, "// MODE: ")) {
+            "inheritors" -> arrayOf("inheritors")
+            "usages" -> arrayOf("references")
+            "usages-&-inheritors" -> arrayOf("references", "inheritors")
+            else -> emptyArray()
         }
 
-        doTestProvider("kotlinCodeVision.kt", fileContents, provider)
-    }
-
-    private fun KotlinCodeVisionProvider.mode(usages: Boolean, inheritors: Boolean) {
-        showUsages = usages
-        showInheritors = inheritors
+        testProviders(fileContents, file.name, *mode)
     }
 }

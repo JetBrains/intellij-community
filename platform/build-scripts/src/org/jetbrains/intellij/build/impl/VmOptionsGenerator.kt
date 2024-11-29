@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.BuildContext
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 
 object VmOptionsGenerator {
   private const val DEFAULT_MIN_HEAP = "128m"
@@ -47,7 +48,7 @@ object VmOptionsGenerator {
   private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
     val artifactsServer = context.proprietaryBuildTools.artifactsServer
     if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.applicationInfo.productCode}-plugins/plugins.xml")
+      val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")
       if (builtinPluginsRepoUrl != null) {
         if (builtinPluginsRepoUrl.startsWith("http:")) {
           context.messages.error("Insecure artifact server: ${builtinPluginsRepoUrl}")

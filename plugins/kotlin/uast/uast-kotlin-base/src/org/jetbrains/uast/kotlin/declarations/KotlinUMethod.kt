@@ -107,6 +107,10 @@ open class KotlinUMethod(
         val callArguments = mutableListOf<String>()
         for (uParam in jvmOverload!!.uastParameters) {
             val currentMethodParameter = uastParameters.getOrNull(currentMethodParameterIndex++)
+            // Skip the extension receiver
+            if (currentMethodParameter is KotlinReceiverUParameter) {
+                continue
+            }
             if (currentMethodParameter?.name == uParam.name) {
                 callArguments.add(currentMethodParameter.name)
             } else {

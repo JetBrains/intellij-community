@@ -856,7 +856,10 @@ f:com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings$Hints
 f:com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 - com.intellij.codeInsight.hints.declarative.InlayPosition
 - <init>(I):V
+- <init>(I,I):V
+- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getLine():I
+- f:getPriority():I
 e:com.intellij.codeInsight.hints.declarative.HintColorKind
 - java.lang.Enum
 - sf:Default:com.intellij.codeInsight.hints.declarative.HintColorKind

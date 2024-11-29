@@ -1,0 +1,38 @@
+### auto-generated section `build kotlin.jvm-debugger.eval4j` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "kotlin-jvm-debugger-eval4j",
+  module_name = "kotlin.jvm-debugger.eval4j",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:asm",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//platform/util",
+    "//java/debugger/impl:java-debugger-impl",
+  ],
+  runtime_deps = ["//platform/core-api:core"]
+)
+
+kt_jvm_test(
+  name = "kotlin-jvm-debugger-eval4j_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":kotlin-jvm-debugger-eval4j"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:asm",
+    "@lib//:junit4",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//platform/util",
+    "//java/debugger/impl:java-debugger-impl",
+  ]
+)
+### auto-generated section `build kotlin.jvm-debugger.eval4j` end

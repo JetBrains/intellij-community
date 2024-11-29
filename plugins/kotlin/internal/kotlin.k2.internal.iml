@@ -20,5 +20,6 @@
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="kotlin.base.resources" />
+    <orderEntry type="module" module-name="kotlin.base.project-structure" />
   </component>
 </module>

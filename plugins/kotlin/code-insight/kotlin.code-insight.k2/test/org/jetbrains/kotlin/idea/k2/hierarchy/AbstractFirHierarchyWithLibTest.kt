@@ -5,12 +5,17 @@ import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 import com.intellij.ide.hierarchy.type.TypeHierarchyTreeStructure
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinTypeHierarchyTreeStructure
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 abstract class AbstractFirHierarchyWithLibTest : AbstractFirHierarchyTest() {
     protected fun doTest(folderName: String) {
@@ -25,20 +30,25 @@ abstract class AbstractFirHierarchyWithLibTest : AbstractFirHierarchyTest() {
 
         doHierarchyTest(
             Computable {
-                val targetClass = findTargetJavaClass(directive.trim())
+                val targetClass = findTargetLibraryClass(directive.trim())
 
-                TypeHierarchyTreeStructure(
-                    project,
-                    targetClass,
-                    HierarchyBrowserBaseEx.SCOPE_PROJECT
-                )
+                when (targetClass) {
+                    is PsiClass ->
+                        TypeHierarchyTreeStructure(
+                            project,
+                            targetClass,
+                            HierarchyBrowserBaseEx.SCOPE_PROJECT
+                        )
+                    is KtClassOrObject ->
+                        KotlinTypeHierarchyTreeStructure(
+                            project,
+                            targetClass,
+                            HierarchyBrowserBaseEx.SCOPE_PROJECT
+                        )
+                    else -> error("Could not find java class or kotlin class: $directive")
+                }
             }, *filesToConfigure
         )
-    }
-
-    private fun findTargetJavaClass(targetClass: String): PsiClass {
-        return JavaFullClassNameIndex.getInstance().getClasses(targetClass, project, GlobalSearchScope.allScope(project))
-            .find { it.qualifiedName == targetClass } ?: error("Could not find java class: $targetClass")
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()

@@ -1,0 +1,32 @@
+### auto-generated section `build kotlin.base.test` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-base-test",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-base-test_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_analysis-api-impl-base",
+    "@lib//:kotlinc_analysis-api-impl-base-tests",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:guava",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+    "//java/testFramework",
+    "//plugins/junit_rt:junit-rt",
+    "@lib//:slf4j-api",
+  ]
+)
+### auto-generated section `build kotlin.base.test` end

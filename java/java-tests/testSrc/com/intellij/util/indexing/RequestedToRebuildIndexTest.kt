@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.ide.startup.ServiceNotReadyException
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -41,7 +42,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     assertNotNull(moduleEntity)
     val iterators = createIterators(moduleEntity, IndexingUrlRootHolder.fromUrl(fileA.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())),
                                     storage)
-    UnindexedFilesScanner(myFixture.project, ArrayList(iterators), null,
+    UnindexedFilesScanner(myFixture.project, ArrayList(iterators),
                           "Partial reindex of one of two indexable files").queue()
   }
 
@@ -110,6 +111,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
   private fun assertCountingIndexBehavesCorrectlyAfterRebuildRequest(countingIndex: CountingIndexBase, vararg files: VirtualFile) {
     assertEquals("File was not reindexed after requesting index rebuild", 0, countingIndex.counter.get())
     if (countingIndex.dependsOnFileContent()) {
+      if (!Registry.`is`("ide.dumb.mode.check.awareness")) return
       for (file in files) {
         assertThrows(ServiceNotReadyException::class.java,
                      ThrowableRunnable<RuntimeException> {

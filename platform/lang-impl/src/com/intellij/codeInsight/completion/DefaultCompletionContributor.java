@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInsight.completion.BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR;
+
 public class DefaultCompletionContributor extends CompletionContributor implements DumbAware {
 
   static void addDefaultAdvertisements(LookupImpl lookup, boolean includePsiFeatures) {
@@ -48,14 +50,26 @@ public class DefaultCompletionContributor extends CompletionContributor implemen
 
   @Override
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
-    final LookupElement[] items = context.getItems();
-    if (items.length == 1) {
-      final LookupElement item = items[0];
-      if (!StringUtil.isEmpty(context.getLookup().itemPattern(item)) || context.getParameters().getCompletionType() == CompletionType.SMART) {
-        return AutoCompletionDecision.insertItem(item);
+    LookupElement[] items = context.getItems();
+    if (items.length == 0) return null;
+    LookupElement first = items[0];
+    String firstPattern = context.getLookup().itemPattern(first);
+    if (StringUtil.isEmpty(firstPattern) &&
+        context.getParameters().getCompletionType() != CompletionType.SMART) return null;
+    for (int i = 1; i < items.length; i++) {
+      LookupElement item = items[i];
+      // same strings with different decorators produce different results
+      // word completion is known to be very simple
+      if (!(item.getUserData(LOOKUP_ELEMENT_CONTRIBUTOR) instanceof WordCompletionContributor)) {
+        return null;
       }
+      String itemPattern = context.getLookup().itemPattern(item);
+      // check if the word item has the same text
+      String firstSuffix = StringUtil.trimStart(first.getLookupString(), firstPattern);
+      String itemSuffix = StringUtil.trimStart(item.getLookupString(), itemPattern);
+      if (!firstSuffix.equals(itemSuffix)) return null;
     }
-    return null;
+    return AutoCompletionDecision.insertItem(first);
   }
 
 }

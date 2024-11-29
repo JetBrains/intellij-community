@@ -159,6 +159,7 @@ class HighlightVisitorRunner {
         HighlightInfo info = holder.get(i);
         newInfos.add(info);
         info.toolId = toolId;
+        info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
       }
     }
     else {
@@ -194,7 +195,10 @@ class HighlightVisitorRunner {
         try {
           visitor.visit(psiElement);
         }
-        catch (ProcessCanceledException | IndexNotReadyException | AlreadyDisposedException e) {
+        catch (IndexNotReadyException e) {
+          break;
+        }
+        catch (ProcessCanceledException | AlreadyDisposedException e) {
           throw e;
         }
         catch (Exception e) {
@@ -215,6 +219,7 @@ class HighlightVisitorRunner {
             //myErrorFound = true;
           }
           info.toolId = toolId;
+          info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
           infos.add(info);
         }
       }

@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
@@ -220,10 +221,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     additionalJvmOptions: List<String>,
     systemProperties: Map<String, String>,
   ) {
-    if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT) {
+    if (runConfigurationProperties.testSearchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES) {
       context.messages.warning(
         "Run configuration '${runConfigurationProperties.name}' uses test search scope '${runConfigurationProperties.testSearchScope.serialized}', " +
-        "while only '${JUnitRunConfigurationProperties.TestSearchScope.WHOLE_PROJECT.serialized}' is supported. Scope will be ignored"
+        "while only '${JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized}' is supported. Scope will be ignored"
       )
     }
     try {
@@ -429,7 +430,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (isRunningInBatchMode) {
       messages.info("Running tests from $mainModule matched by '${options.batchTestIncludes}' pattern.")
     }
-    else {
+    else if (!testPatterns.isNullOrEmpty()) {
+      messages.info("Starting tests from patterns '${testPatterns}' from classpath of module '${mainModule}'")
+    } else {
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
     }
     if (options.bucketsCount > 1) {
@@ -572,6 +575,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         systemProperties.putIfAbsent(k, v)
       }
     }
+
+    systemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG] = options.bucketIndex.toString()
+    systemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG] = options.bucketsCount.toString()
 
     System.getProperties().forEach { key, value ->
       key as String

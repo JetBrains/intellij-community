@@ -1,38 +1,38 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+### auto-generated section `build intellij.platform.buildScripts.downloader` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "17",
-  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
-kt_jvm_library(
+jvm_library(
   name = "buildScripts-downloader",
   module_name = "intellij.platform.buildScripts.downloader",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
   kotlinc_opts = ":custom",
   deps = [
-    "@libraries//:annotations",
-    "@libraries//:commons-compress",
-    "@libraries//:serviceMessages",
-    "@libraries//:guava",
-    "@libraries//:zstd-jni",
-    "@libraries//:commons-io",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:ktor-client-auth-jvm",
-    "@libraries//:ktor-client-encoding-jvm",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@libraries//:opentelemetry-extension-kotlin",
-    "@libraries//:ktor-client-okhttp-jvm",
-    "@libraries//:okhttp",
-    "@libraries//:ktor-client-core-jvm",
-    "@libraries//:hash4j",
+    "@lib//:jetbrains-annotations",
+    "@lib//:commons-compress",
+    "@lib//:tc_service_messages",
+    "@lib//:guava",
+    "@lib//:zstd-jni",
+    "@lib//:commons-io",
+    "@lib//:kotlin-stdlib",
+    "@lib//:ktor-client-auth",
+    "@lib//:ktor-client-encoding",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@lib//:ktor-client-okhttp",
+    "@lib//:okhttp",
+    "@lib//:ktor-client-core",
+    "@lib//:hash4j",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.buildScripts.downloader` end

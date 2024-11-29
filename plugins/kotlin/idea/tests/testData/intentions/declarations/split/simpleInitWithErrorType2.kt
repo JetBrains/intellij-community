@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 // ERROR: Unresolved reference: X
 // SKIP_ERRORS_AFTER
 

@@ -4,5 +4,5 @@
   "withRuntime": "true",
   "outerInstanceParameter": "test",
   "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

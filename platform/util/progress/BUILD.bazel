@@ -1,32 +1,60 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+### auto-generated section `build intellij.platform.util.progress` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "1.8",
-  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
 
-kt_jvm_library(
-  name = "util-progress",
+jvm_library(
+  name = "progress",
   module_name = "intellij.platform.util.progress",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
   kotlinc_opts = ":custom",
-  plugins = ["@libraries//:serialization_plugin"],
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:annotations",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@libraries//:guava",
-    "@community//platform/util",
-    "@community//platform/util/coroutines:util-coroutines",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:guava",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.util.progress` end
+
+### auto-generated section `build intellij.platform.util.progress.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "progress-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "progress-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "//platform/util/progress",
+    "//platform/testFramework/common",
+    "//platform/util",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+  ]
+)
+### auto-generated section `build intellij.platform.util.progress.tests` end

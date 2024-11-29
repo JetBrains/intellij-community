@@ -1,0 +1,87 @@
+### auto-generated section `build intellij.java.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "ui_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui",
+  module_name = "intellij.java.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/openapi:java",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "//java/java-impl:impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//platform/vcs-impl",
+    "@lib//:guava",
+    "@lib//:jna",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "@lib//:stream_ex",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/workspace/jps",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/feedback",
+    "//platform/util/jdom",
+    "//platform/backend/workspace",
+    "//xml/dom-openapi:dom",
+    "//platform/util/coroutines",
+    "//platform/backend/observation",
+    "//platform/eel",
+    "//platform/eelProvider:eel-provider",
+  ],
+  runtime_deps = [":ui_resources"]
+)
+### auto-generated section `build intellij.java.ui` end
+
+### auto-generated section `build intellij.java.ui.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "ui-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "ui-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//java/idea-ui:ui",
+    "//java/testFramework",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//aether-dependency-resolver:java-aetherDependencyResolver_test",
+    "//java/execution/impl:java-execution-impl",
+    "@lib//:assert_j",
+    "//platform/platform-tests:tests_test",
+    "//platform/core-ui",
+    "//java/compiler/openapi:java-compiler",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "@lib//:kotlin-test",
+  ]
+)
+### auto-generated section `build intellij.java.ui.tests` end

@@ -12,6 +12,9 @@ interface CodeReviewCommentableEditorModel {
   @RequiresEdt
   fun requestNewComment(lineIdx: Int)
 
+  @RequiresEdt
+  fun cancelNewComment(lineIdx: Int) {}
+
   interface WithMultilineComments : CodeReviewCommentableEditorModel {
     @RequiresEdt
     fun canCreateComment(lineRange: LineRange): Boolean

@@ -3,7 +3,10 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.evaluable.AIA_RESPONSE
+import com.intellij.cce.evaluable.REFERENCE_PROPERTY
 import com.intellij.cce.metric.util.Bootstrap
+import com.intellij.cce.metric.util.computeBleuScore
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
@@ -108,4 +111,20 @@ class EditSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showByDe
       expectedText.length - LevenshteinDistance.getDefaultInstance().apply(it.text.drop(lookup.prefix.length), expectedText)
     }?.toDouble()?.coerceAtLeast(0.0)
   }
+}
+
+
+class BleuScore(showByDefault: Boolean = true) : SimilarityMetric(showByDefault) {
+  override val name = "BLEU Score"
+  override val description: String = "Calculates the BLEU score for the AIA response compared to the reference text."
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+    val aiaResponse = lookup.additionalInfo[AIA_RESPONSE] as? String ?: return null
+    val reference = lookup.additionalInfo[REFERENCE_PROPERTY] as? String ?: return null
+    val bleuScore = computeBleuScore(aiaResponse, reference)
+
+    return bleuScore
+  }
+
+  override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }

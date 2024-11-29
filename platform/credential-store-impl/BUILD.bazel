@@ -1,30 +1,78 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.credentialStore.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-kt_jvm_library(
-  name = "intellij.platform.credentialStore.impl",
-  visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  deps = [
-    "@community//platform/credential-store:intellij.platform.credentialStore",
-    "@community//platform/ide-core:intellij.platform.ide.core",
-    "@community//platform/ide-core-impl:intellij.platform.ide.core.impl",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
-    "@community//platform/remote-core:intellij.platform.remote.core",
-    "@community//platform/editor-ui-api:intellij.platform.editor",
-    "@community//platform/util/ui:intellij.platform.util.ui",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:jna-platform",
-    "@libraries//:guava",
-    "@libraries//:bcpkix-jdk18on",
-    "@libraries//:snakeyaml",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:dbus-java-transport-native-unixsocket",
-    "@libraries//:caffeine"
-  ]
+jvm_resources(
+  name = "credentialStore-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
+
+jvm_library(
+  name = "credentialStore-impl",
+  module_name = "intellij.platform.credentialStore.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/credential-store:credentialStore",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "//platform/projectModel-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/remote-core",
+    "//platform/editor-ui-api:editor",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jna",
+    "@lib//:guava",
+    "@lib//:bouncy-castle-provider",
+    "@lib//:snakeyaml",
+    "@lib//:fastutil-min",
+    "@lib//:platform_credential_store_impl_dbus-java",
+    "@lib//:caffeine",
+  ],
+  runtime_deps = [":credentialStore-impl_resources"]
+)
+
+kt_jvm_test(
+  name = "credentialStore-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":credentialStore-impl"],
+  deps = [
+    "//platform/credential-store:credentialStore",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "//platform/projectModel-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/remote-core",
+    "//platform/editor-ui-api:editor",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jna",
+    "@lib//:guava",
+    "@lib//:bouncy-castle-provider",
+    "@lib//:snakeyaml",
+    "@lib//:fastutil-min",
+    "@lib//:platform_credential_store_impl_dbus-java",
+    "@lib//:caffeine",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "@lib//:junit4",
+  ],
+  runtime_deps = [":credentialStore-impl_resources"]
+)
+### auto-generated section `build intellij.platform.credentialStore.impl` end

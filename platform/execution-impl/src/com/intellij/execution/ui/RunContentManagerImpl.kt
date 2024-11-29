@@ -430,13 +430,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
+    val dashboardManager = RunDashboardManager.getInstance(project) // initialize RunDashboardManager before getting content manger
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
       updateToolWindowDecoration(id, executor)
       return contentManager
     }
 
-    val dashboardManager = RunDashboardManager.getInstance(project)
     if (dashboardManager.toolWindowId == id) {
       initToolWindow(null, dashboardManager.toolWindowId, dashboardManager.toolWindowIcon, dashboardManager.dashboardContentManager)
       return dashboardManager.dashboardContentManager

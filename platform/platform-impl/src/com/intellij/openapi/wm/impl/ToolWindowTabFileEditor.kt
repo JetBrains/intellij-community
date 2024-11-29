@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.LayoutFocusTraversalPolicy
 
 
 internal class ToolWindowTabFileEditor(
@@ -19,7 +20,7 @@ internal class ToolWindowTabFileEditor(
   override fun getComponent(): JComponent = file.component
 
   override fun getPreferredFocusedComponent(): JComponent? = file.component.let {
-    it.focusTraversalPolicy?.getDefaultComponent(it) as? JComponent ?: it
+    (it.focusTraversalPolicy ?: LayoutFocusTraversalPolicy()).getDefaultComponent(it) as? JComponent ?: it
   }
 
   override fun getName(): @NlsSafe String = file.name

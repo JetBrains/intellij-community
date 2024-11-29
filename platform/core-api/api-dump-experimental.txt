@@ -200,9 +200,6 @@ f:com.intellij.openapi.application.CoroutinesKt
 a:com.intellij.openapi.application.ReadAction
 - com.intellij.openapi.application.BaseActionRunnable
 - *s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-com.intellij.openapi.application.ThreadingSupport
-- *a:runWriteActionWithCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
-- *a:runWriteActionWithNonCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
 *a:com.intellij.openapi.application.WriteIntentReadAction
 - <init>():V
 - *s:compute(com.intellij.openapi.util.Computable):java.lang.Object

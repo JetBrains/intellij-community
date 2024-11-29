@@ -5,7 +5,5 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.rpc.backend.remoteApiProvider
       implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerRemoteApiProviders"/>
-    <platform.entityTypes implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerEntityTypesProvider"/>
-    <postStartupActivity implementation="com.intellij.platform.debugger.impl.backend.BackendXDebuggerActiveSessionControllerProjectActivity"/>
   </extensions>
 </idea-plugin>

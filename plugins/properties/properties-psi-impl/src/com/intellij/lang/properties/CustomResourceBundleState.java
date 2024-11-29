@@ -12,6 +12,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ public class CustomResourceBundleState {
     return myFileUrls;
   }
 
+  @Unmodifiable
   public List<VirtualFile> getFiles(@NotNull final VirtualFileManager manager) {
     return ContainerUtil.mapNotNull(getFileUrls(), url -> manager.findFileByUrl(url));
   }

@@ -198,7 +198,7 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 print(result, ProcessOutputTypes.SYSTEM)
             }
             assert(debugProcess.isAttached)
-            debugProcess.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+            suspendContext.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     completion()
                 }

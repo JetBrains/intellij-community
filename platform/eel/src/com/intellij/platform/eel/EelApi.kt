@@ -49,16 +49,19 @@ interface EelApi : EelApiBase {
   val mapper: EelPathMapper
 }
 
-interface EelPosixApi : EelApiBase {
+interface EelPosixApiBase : EelApiBase {
   override val platform: EelPlatform.Posix
   override val tunnels: EelTunnelsPosixApi
   override val userInfo: EelUserPosixInfo
   override val fs: EelFileSystemPosixApi
 }
 
-interface EelWindowsApi : EelApiBase {
+interface EelWindowsApiBase : EelApiBase {
   override val platform: EelPlatform.Windows
   override val tunnels: EelTunnelsWindowsApi
   override val userInfo: EelUserWindowsInfo
   override val fs: EelFileSystemWindowsApi
 }
+
+interface EelPosixApi : EelApi, EelPosixApiBase
+interface EelWindowsApi : EelApi, EelWindowsApiBase

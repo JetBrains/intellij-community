@@ -20,6 +20,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.auth.PasswordAuthenticationData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.ByteArrayOutputStream;
@@ -75,6 +76,18 @@ public class CommandExecutor {
     }
     myCommandLine.addParameter(command.getName().getName());
     myCommandLine.addParameters(prepareParameters(command));
+
+    PasswordAuthenticationData auth = command.getAuthParameters();
+    if (auth != null) {
+      myCommandLine.addParameter("--username");
+      myCommandLine.addParameter(auth.getUserName());
+      myCommandLine.addParameter("--password");
+      myCommandLine.addParameter(auth.getPassword());
+      if (!auth.isStorageAllowed()) {
+        myCommandLine.addParameter("--no-auth-cache");
+      }
+    }
+
     myExitCodeReference = new AtomicReference<>();
   }
 
@@ -229,7 +242,7 @@ public class CommandExecutor {
 
   @NotNull
   protected SvnProcessHandler createProcessHandler() {
-    return new SvnProcessHandler(myProcess, myCommandLine.getCommandLineString(), needsUtf8Output(), needsBinaryOutput());
+    return new SvnProcessHandler(myProcess, myCommandLine, needsUtf8Output(), needsBinaryOutput());
   }
 
   protected boolean needsBinaryOutput() {

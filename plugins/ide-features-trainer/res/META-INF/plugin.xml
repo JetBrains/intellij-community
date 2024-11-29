@@ -92,8 +92,10 @@
       <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
       <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
       <action internal="true" id="ResetOnboardingFeedbackState" class="training.actions.ResetOnboardingFeedbackStateAction"/>
+      <action internal="true" id="ShowDemoAltClickPromoter" class="training.featuresSuggester.suggesters.promo.ShowDemoAltClickPromoterAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+
 
     <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"
             icon="AllIcons.Actions.Back"/>

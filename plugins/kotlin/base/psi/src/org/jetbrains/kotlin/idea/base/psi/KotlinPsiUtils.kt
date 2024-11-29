@@ -232,6 +232,9 @@ fun KtModifierListOwner.hasInlineModifier(): Boolean =
 fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
     containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
 
+fun KtNamedDeclaration.isAlwaysActual(): Boolean = safeAs<KtParameter>()?.parent?.parent?.safeAs<KtPrimaryConstructor>()
+    ?.mustHaveValOrVar() ?: false
+
 fun KtPrimaryConstructor.isRedundant(): Boolean {
     val containingClass = containingClass() ?: return false
     return when {

@@ -36,10 +36,12 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
+import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -177,12 +179,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
     ): IdeaModuleInfo? where T : KaModule, T : KtModuleByModuleInfoBase {
         val infoProvider = ModuleInfoProvider.getInstance(project)
 
-        val config = ModuleInfoProvider.Configuration(
-            createSourceLibraryInfoForLibraryBinaries = false,
-            preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) &&
-                    (!RootKindFilter.projectSources.matches(psiElement) || isInSpecialSrcDir(psiElement)),
-            contextualModuleInfo = contextualModule?.ideaModuleInfo,
-        )
+        val config = getConfiguration(contextualModule, virtualFile, psiElement)
 
         val baseModuleInfo = infoProvider.firstOrNull(psiElement, config)
         if (baseModuleInfo != null) {
@@ -198,6 +195,25 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
         }
 
         return null
+    }
+
+    private fun <T> getConfiguration(
+        contextualModule: T?,
+        virtualFile: VirtualFile?,
+        psiElement: PsiElement
+    ): ModuleInfoProvider.Configuration where T : KaModule, T : KtModuleByModuleInfoBase {
+        val preferModulesFromExtensions =
+            if (KotlinPluginModeProvider.isK2Mode()) {
+                isScriptOrItsDependency(contextualModule, virtualFile)
+            } else {
+                isScriptOrItsDependency(contextualModule, virtualFile) && (!RootKindFilter.projectSources.matches(psiElement) || isInSpecialSrcDir(psiElement))
+            }
+
+        return ModuleInfoProvider.Configuration(
+            createSourceLibraryInfoForLibraryBinaries = false,
+            preferModulesFromExtensions = preferModulesFromExtensions,
+            contextualModuleInfo = contextualModule?.ideaModuleInfo,
+        )
     }
 
     override fun getKaSourceModule(
@@ -271,11 +287,20 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
         return null
     }
 
+    override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
+        val moduleInfo = SdkInfo(project, sdk)
+        return getKtModuleByModuleInfo(moduleInfo) as KaLibraryModule
+    }
 
     override fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule> {
         return ModuleInfoProvider.getInstance(project)
             .collectLibraryBinariesModuleInfos(virtualFile)
             .mapTo(mutableListOf()) { getKtModuleByModuleInfo(it) }
+    }
+
+    override fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary> {
+        val kotlinLibrary = (module.moduleInfo as? AbstractKlibLibraryInfo)?.resolvedKotlinLibrary ?: return emptyList()
+        return listOf(kotlinLibrary)
     }
 
     override fun getForcedKaModule(file: PsiFile): KaModule? {
@@ -284,12 +309,13 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
 
     override fun setForcedKaModule(file: PsiFile, kaModule: KaModule?) {
         when (kaModule) {
-          null -> {
-              file.forcedModuleInfo = null
-          }
-          is KtModuleByModuleInfoBase -> {
-              file.forcedModuleInfo = kaModule.moduleInfo
-          }
+            null -> {
+                file.forcedModuleInfo = null
+            }
+
+            is KtModuleByModuleInfoBase -> {
+                file.forcedModuleInfo = kaModule.moduleInfo
+            }
         }
     }
 

@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -425,6 +426,7 @@ public class InjectedLanguageUtilBase {
     return (ConcurrentList<DocumentWindow>)injected;
   }
 
+  @Unmodifiable
   static @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
     List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
 

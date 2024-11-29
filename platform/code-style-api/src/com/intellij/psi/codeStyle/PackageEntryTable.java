@@ -29,6 +29,7 @@ import java.util.List;
 public class PackageEntryTable implements JDOMExternalizable, Cloneable {
   private final List<PackageEntry> myEntries = new ArrayList<>();
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof PackageEntryTable other)) {
       return false;
@@ -46,6 +47,7 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     if (!myEntries.isEmpty() && myEntries.get(0) != null) {
       return myEntries.get(0).hashCode();

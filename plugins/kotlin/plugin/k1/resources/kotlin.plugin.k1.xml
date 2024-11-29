@@ -1,4 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <module value="kotlin.plugin.k1"/>
+
   <xi:include href="/META-INF/analysis-api/analysis-api-fe10.xml"/> <!-- comes from the Kotlin compiler -->
 
   <xi:include href="kotlin-core.xml"/>
@@ -34,6 +37,7 @@
   <xi:include href="platform-kind-resolution-fe10.xml"/>
   <xi:include href="jvm.xml"/>
   <xi:include href="jvm-k1.xml"/>
+  <xi:include href="actions-fe10.xml"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="ultimate-plugin.xml">
@@ -54,6 +58,7 @@
     <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.code-insight-toml"/>
     <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.gradle.gradle-java.k1"/>
     <module name="kotlin.maven"/>
     <module name="kotlin.onboarding"/>
     <module name="kotlin.onboarding.gradle"/>

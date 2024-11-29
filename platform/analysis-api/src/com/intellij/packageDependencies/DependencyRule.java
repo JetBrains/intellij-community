@@ -53,6 +53,7 @@ public final class DependencyRule {
            : AnalysisBundle.message("scope.display.name.allow.scope", toScopeName, fromScopeName);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof DependencyRule other)) return false;
     return getDisplayText().equals(other.getDisplayText()) &&
@@ -71,6 +72,7 @@ public final class DependencyRule {
     return null;
   }
 
+  @Override
   public int hashCode() {
     return getDisplayText().hashCode();
   }

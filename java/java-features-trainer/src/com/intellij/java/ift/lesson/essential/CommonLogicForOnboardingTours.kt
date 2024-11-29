@@ -49,7 +49,6 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import training.learn.course.LessonProperties
 import training.learn.lesson.general.run.clearBreakpoints
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.ui.LearningUiHighlightingManager
@@ -357,7 +356,7 @@ abstract class CommonLogicForOnboardingTours(id: String, @Nls lessonName: String
     val jdkVersionsFuture = CompletableFuture<List<String>>()
     runBackgroundableTask(ProjectBundle.message("progress.title.detecting.sdks"), project, false) { indicator ->
       val jdkVersions = mutableListOf<String>()
-      SdkDetector.getInstance().detectSdks(JavaSdk.getInstance(), indicator, object : SdkDetector.DetectedSdkListener {
+      SdkDetector.getInstance().detectSdks(project, JavaSdk.getInstance(), indicator, object : SdkDetector.DetectedSdkListener {
         override fun onSdkDetected(type: SdkType, version: String, home: String) {
           jdkVersions.add(version)
         }

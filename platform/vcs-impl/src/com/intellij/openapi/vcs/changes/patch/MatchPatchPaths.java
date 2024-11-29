@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -178,12 +179,13 @@ public final class MatchPatchPaths {
           newOrWithoutMatches.add(patch); // just to be sure
         }
         else {
-          candidates.add(new PatchAndVariants(variants));
+          candidates.add(new PatchAndVariants(new ArrayList<>(variants)));
         }
       }
     }
   }
 
+  @Unmodifiable
   private Collection<VirtualFile> findFilesFromIndex(@NotNull final PatchBaseDirectoryDetector directoryDetector,
                                                      @NotNull final String fileName) {
     Collection<VirtualFile> files = ReadAction.compute(() -> directoryDetector.findFiles(fileName));

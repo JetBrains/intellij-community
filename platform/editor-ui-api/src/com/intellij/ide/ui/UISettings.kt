@@ -680,7 +680,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
+      GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAATextInfoForSwingComponent())
     }
 
     @JvmStatic

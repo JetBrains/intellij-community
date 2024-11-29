@@ -4,7 +4,10 @@
 package org.editorconfig.configmanagement.extended
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.application.options.codeStyle.properties.*
+import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil
+import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
+import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper
 import com.intellij.application.options.codeStyle.properties.OverrideLanguageIndentOptionsAccessor.OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
@@ -17,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -30,9 +32,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
-import com.intellij.util.application
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.runBlocking
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.EditorConfigNotifier
 import org.editorconfig.Utils
@@ -65,18 +65,10 @@ class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
       return false
     }
 
-    return if (application.isDispatchThread && application.isHeadlessEnvironment) {
-      // see also CodeStyleCachedValueProvider.AsyncComputation.start
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking { doModifySettings(psiFile, settings, project) }
-    }
-    else {
-      runBlockingMaybeCancellable { doModifySettings(psiFile, settings, project) }
-    }
-
+    return doModifySettings(psiFile, settings, project)
   }
 
-  private suspend fun doModifySettings(psiFile: PsiFile, settings: TransientCodeStyleSettings, project: Project): Boolean {
+  private fun doModifySettings(psiFile: PsiFile, settings: TransientCodeStyleSettings, project: Project): Boolean {
     try {
       // Get editorconfig settings
       val (properties, editorConfigs) = processEditorConfig(project, psiFile)
@@ -356,7 +348,7 @@ private fun applyCodeStyleSettings(settings: TransientCodeStyleSettings, propert
   return isModified
 }
 
-private suspend fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
+private fun processEditorConfig(project: Project, psiFile: PsiFile): Pair<ResourceProperties, List<VirtualFile>> {
   val file = psiFile.virtualFile
   val filePath = Utils.getFilePath(project, file)
   if (filePath != null) {

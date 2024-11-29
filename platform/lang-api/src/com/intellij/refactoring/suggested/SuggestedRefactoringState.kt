@@ -268,7 +268,6 @@ fun SuggestedRefactoringData.getIntentionText(): @Nls String {
     is SuggestedRenameData -> RefactoringBundle.message(
       "suggested.refactoring.rename.intention.text",
       oldName,
-      newName
     )
     is SuggestedChangeSignatureData -> RefactoringBundle.message(
       "suggested.refactoring.change.signature.intention.text",

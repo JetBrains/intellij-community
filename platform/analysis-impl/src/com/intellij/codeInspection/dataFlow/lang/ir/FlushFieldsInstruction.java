@@ -16,6 +16,7 @@ public class FlushFieldsInstruction extends Instruction {
     return nextStates(interpreter, stateBefore);
   }
 
+  @Override
   public String toString() {
     return "FLUSH_ALL_FIELDS";
   }

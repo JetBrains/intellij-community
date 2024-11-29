@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -340,6 +341,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
   }
 
   @NotNull
+  @Unmodifiable
   static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
     final Collection<PsiComment> psiComments = ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class),
     comment -> !PsiTreeUtil.isAncestor(body, comment, false));

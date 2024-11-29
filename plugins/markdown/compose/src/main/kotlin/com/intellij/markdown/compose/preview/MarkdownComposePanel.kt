@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,11 +26,12 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.bridge.code.highlighting.CodeHighlighterFactory
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
 import org.jetbrains.jewel.markdown.Markdown
-import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import javax.swing.JComponent
 
 @ExperimentalJewelApi
@@ -55,6 +57,11 @@ class MarkdownComposePanel(
     val fontSize = scheme.fontSize.sp / scheme.scale
     ProvideMarkdownStyling(
       markdownStyling = JcefLikeMarkdownStyling(scheme, fontSize),
+      codeHighlighter = remember(project) {
+        project?.let {
+          CodeHighlighterFactory.getInstance(project).createHighlighter()
+        } ?: NoOpCodeHighlighter
+      },
     ) {
       Box(
         modifier = Modifier

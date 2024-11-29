@@ -98,6 +98,12 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       }
+
+      addEmptyDirectoryAsset("src/main/groovy")
+      addEmptyDirectoryAsset("src/main/resources")
+      addEmptyDirectoryAsset("src/test/groovy")
+      addEmptyDirectoryAsset("src/test/resources")
+
       if (parent.addSampleCode) {
         val sourcePath = AssetsJava.getJavaSampleSourcePath("src/main/groovy", parent.groupId, "Main.groovy")
         addTemplateAsset(sourcePath, "Groovy Sample Code", "PACKAGE_NAME" to parent.groupId)

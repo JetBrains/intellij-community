@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
@@ -10,7 +11,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase() {
+open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase(enlargeWelcomeScreen = true) {
   override val customProductCode: String
     get() = "PC"
 
@@ -26,7 +27,7 @@ open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharm
     productLayout.productImplementationModules = listOf(
       "intellij.platform.starter",
       "intellij.pycharm.community",
-      "intellij.platform.whatsNew",
+      "intellij.platform.whatsNew"
     )
     productLayout.bundledPluginModules +=
       sequenceOf(
@@ -39,6 +40,7 @@ open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharm
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
+    additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
     qodanaProductProperties = QodanaProductProperties("QDPYC", "Qodana Community for Python")
   }
 

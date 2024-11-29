@@ -117,6 +117,8 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.kmp.K2ModuleInfoBasedForwardDeclarationScopeProvider"
+                    serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.kmp.K2ForwardDeclarationScopeProvider"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
@@ -553,7 +555,9 @@
 
     <usageFeaturesProvider implementation="org.jetbrains.kotlin.idea.findUsages.similarity.KotlinUsageSimilarityFeaturesProvider"/>
 
-    <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector" id="kotlin"/>
+    <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector"
+                             id="kotlin"
+                             order="first"/> <!--before lombok -->
 
     <projectFileScanner implementation="org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider$LibraryKindScanner"/>
 
@@ -577,6 +581,8 @@
   <!-- Copy-paste -->
   <extensions defaultExtensionNs="com.intellij">
     <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
   </extensions>
 
   <actions>
@@ -628,23 +634,15 @@
                 id="CheckComponentsUsageSearchAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
         <action
-                id="FindImplicitNothingAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.FindImplicitNothingAction"/>
-        <action
                 id="PrintOutNotPropertyMatches"
                 class="org.jetbrains.kotlin.idea.actions.internal.SearchNotPropertyCandidatesAction"/>
         <action
                 id="StoredExceptionsThrowToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
-        <action
-                id="DebugTypeResolutionAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.resolutionDebugging.DebugTypeResolutionAction"/>
+
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
-        <action
-                id="CopyAsDiagnosticTest"
-                class="org.jetbrains.kotlin.idea.actions.internal.CopyAsDiagnosticTestAction"/>
         <action
                 id="KotlinFormattingSettingsStatusAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.KotlinFormattingSettingsStatusAction"/>

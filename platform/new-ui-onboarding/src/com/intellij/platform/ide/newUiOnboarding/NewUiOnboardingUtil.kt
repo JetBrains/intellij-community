@@ -32,7 +32,6 @@ import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -73,22 +72,6 @@ object NewUiOnboardingUtil {
 
   fun @Nls String.dropMnemonic(): @Nls String {
     return TextWithMnemonic.parse(this).dropMnemonic(true).text
-  }
-
-  inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
-    val root = WindowManager.getInstance().getFrame(project) ?: return null
-    findUiComponent(root, predicate)?.let { return it }
-    for (window in root.ownedWindows) {
-      findUiComponent(window, predicate)?.let { return it }
-    }
-    return null
-  }
-
-  inline fun <reified T : Component> findUiComponent(root: Component, predicate: (T) -> Boolean): T? {
-    val component = UIUtil.uiTraverser(root).find {
-      it is T && it.isVisible && it.isShowing && predicate(it)
-    }
-    return component as? T
   }
 
   suspend fun showToolbarComboButtonPopup(button: ToolbarComboButton, action: ExpandableComboAction, disposable: Disposable): JBPopup? {

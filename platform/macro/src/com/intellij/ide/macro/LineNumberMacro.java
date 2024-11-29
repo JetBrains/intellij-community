@@ -18,10 +18,17 @@ package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 public final class LineNumberMacro extends EditorMacro {
   public LineNumberMacro() {
-    super("LineNumber", IdeCoreBundle.message("macro.line.number"));
+    super("LineNumber");
+  }
+
+  @Override
+  @NotNull
+  public String getDescription() {
+    return IdeCoreBundle.message("macro.line.number");
   }
 
   @Override

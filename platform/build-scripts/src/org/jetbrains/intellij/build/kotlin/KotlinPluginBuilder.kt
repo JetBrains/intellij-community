@@ -96,6 +96,8 @@ object KotlinPluginBuilder {
     "kotlin.gradle.gradle",
     "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
+    "kotlin.gradle.gradle-java.k1",
+    "kotlin.gradle.gradle-java.k2",
     "kotlin.gradle.code-insight-groovy",
     "kotlin.gradle.code-insight-toml",
     "kotlin.native",
@@ -155,7 +157,6 @@ object KotlinPluginBuilder {
     "kotlin.base.fir.analysis-api-platform",
     "kotlin.base.fir.code-insight",
     "kotlin.base.fir.project-structure",
-    "kotlin.base.fir.analysis",
     "kotlin.code-insight.api",
     "kotlin.code-insight.utils",
     "kotlin.code-insight.intentions.shared",
@@ -219,6 +220,7 @@ object KotlinPluginBuilder {
     "kotlinc.analysis-api-impl-base",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
+    "kotlinc.kotlin-scripting-dependencies",
     "kotlinc.kotlin-gradle-statistics",
     "kotlinc.analysis-api-k2",
     "kotlinc.kotlin-compiler-fir",
@@ -320,6 +322,7 @@ object KotlinPluginBuilder {
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("vavr")
       spec.withProjectLibrary("javax-inject")
+      spec.withProjectLibrary("jackson-dataformat-toml")
 
       withKotlincInPluginDirectory(spec)
 

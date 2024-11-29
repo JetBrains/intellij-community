@@ -1,4 +1,4 @@
-<idea-plugin url="https://confluence.jetbrains.com/display/PYH/" package="com.intellij.python.community.plugin.minorRider">
+<idea-plugin url="https://www.jetbrains.com/pycharm/" package="com.intellij.python.community.plugin.minorRider">
   <dependencies>
     <!--Any IDE but NOT PyCharm-->
     <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>

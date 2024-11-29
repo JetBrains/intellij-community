@@ -525,6 +525,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                         runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverLaunch.kt");
                     }
 
+                    @TestMetadata("stepOverSuspendCallAndStopAtFirstLineBug.kt")
+                    public void testStepOverSuspendCallAndStopAtFirstLineBug() throws Exception {
+                        runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverSuspendCallAndStopAtFirstLineBug.kt");
+                    }
+
                     @TestMetadata("stepOverThroughAllMethods.kt")
                     public void testStepOverThroughAllMethods() throws Exception {
                         runTest("../testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverThroughAllMethods.kt");
@@ -2631,6 +2636,16 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/multipleBreakpoints/privateMembersPriority.kt");
             }
 
+            @TestMetadata("protectedDerivedPropertyWithField.kt")
+            public void testProtectedDerivedPropertyWithField() throws Exception {
+                runTest("../testData/evaluation/multipleBreakpoints/protectedDerivedPropertyWithField.kt");
+            }
+
+            @TestMetadata("protectedPropertyWithoutFieldInBase.kt")
+            public void testProtectedPropertyWithoutFieldInBase() throws Exception {
+                runTest("../testData/evaluation/multipleBreakpoints/protectedPropertyWithoutFieldInBase.kt");
+            }
+
             @TestMetadata("remappedParameterInInline.kt")
             public void testRemappedParameterInInline() throws Exception {
                 runTest("../testData/evaluation/multipleBreakpoints/remappedParameterInInline.kt");
@@ -2679,6 +2694,53 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("withoutBodyTypeParameters.kt")
             public void testWithoutBodyTypeParameters() throws Exception {
                 runTest("../testData/evaluation/multipleBreakpoints/withoutBodyTypeParameters.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/evaluation/jvmMultiModule")
+    public abstract static class JvmMultiModule extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/jvmMultiModule/delegates")
+        public static class Delegates extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("multiModuleDelegateInlineAccessor.kt")
+            public void testMultiModuleDelegateInlineAccessor() throws Exception {
+                runTest("../testData/evaluation/jvmMultiModule/delegates/multiModuleDelegateInlineAccessor.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/jvmMultiModule")
+        public static class Uncategorized extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doJvmMultiModuleTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("inlineFunWithSamFromOtherModule.kt")
+            public void testInlineFunWithSamFromOtherModule() throws Exception {
+                runTest("../testData/evaluation/jvmMultiModule/inlineFunWithSamFromOtherModule.kt");
+            }
+
+            @TestMetadata("inlineInternal.kt")
+            public void testInlineInternal() throws Exception {
+                runTest("../testData/evaluation/jvmMultiModule/inlineInternal.kt");
             }
         }
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -52,22 +53,27 @@ public class ProcessOutput {
     return myStderrBuilder.toString();
   }
 
+  @Unmodifiable
   public @NotNull List<@NlsSafe String> getStdoutLines() {
     return getStdoutLines(true);
   }
 
+  @Unmodifiable
   public @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
     return splitLines(getStdout(), excludeEmptyLines);
   }
 
+  @Unmodifiable
   public @NotNull List<@NlsSafe String> getStderrLines() {
     return getStderrLines(true);
   }
 
+  @Unmodifiable
   public @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
     return splitLines(getStderr(), excludeEmptyLines);
   }
 
+  @Unmodifiable
   private static List<String> splitLines(String s, boolean excludeEmptyLines) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n", true, excludeEmptyLines);

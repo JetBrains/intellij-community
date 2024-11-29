@@ -1,0 +1,13 @@
+### auto-generated section `build intellij.platform.frontend.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "frontend-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//platform/main/intellij.platform.main:main",
+    "//platform/navbar/frontend",
+    "//platform/xdebugger-impl/frontend:debugger-impl-frontend",
+  ]
+)
+### auto-generated section `build intellij.platform.frontend.main` end

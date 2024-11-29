@@ -346,7 +346,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
       if (eventRootPane === pane) {
         if (!listenerToCursor.isEmpty()) {
           val cursor = listenerToCursor.values.iterator().next()
-          val point = SwingUtilities.convertPoint(e.component, e.point, pane.contentPane)
+          val point = SwingUtilities.convertPoint(e.component, e.point, pane.contentPane.parent)
           var target = SwingUtilities.getDeepestComponentAt(pane.contentPane.parent, point.x, point.y)
           if (canProcessCursorFor(target)) {
             target = getCompWithCursor(target)

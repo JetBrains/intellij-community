@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -32,7 +33,7 @@ public final class RollbackUtil {
    */
   @NotNull
   @Nls(capitalization = Nls.Capitalization.Title)
-  public static String getRollbackOperationName(@NotNull Collection<? extends AbstractVcs> vcses) {
+  public static String getRollbackOperationName(@NotNull @Unmodifiable Collection<? extends AbstractVcs> vcses) {
     String operationName = null;
     for (AbstractVcs vcs : vcses) {
       final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();

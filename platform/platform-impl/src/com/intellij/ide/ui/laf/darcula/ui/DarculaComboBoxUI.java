@@ -879,16 +879,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     @Override
     public void show(Component invoker, int x, int y) {
-      int sideBorders = 0;
-
-      if (ExperimentalUI.isNewUI() && ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
-        scroller.setViewportBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
-        sideBorders = 10;
+      if (ExperimentalUI.isNewUI()) {
+        list.setBorder(JBUI.Borders.empty(getListVerticalInset()));
       }
 
-      if (comboBox instanceof ComboBoxWithWidePopup) {
+      if (comboBox instanceof ComboBoxWithWidePopup<?> comboBoxWithWidePopup) {
         Dimension popupSize = comboBox.getSize();
-        int minPopupWidth = ((ComboBoxWithWidePopup<?>)comboBox).getMinimumPopupWidth() + 2 * sideBorders;
+        int minPopupWidth = comboBoxWithWidePopup.getMinimumPopupWidth();
         Insets insets = getInsets();
 
         popupSize.width = Math.max(popupSize.width, minPopupWidth);
@@ -901,7 +898,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         list.revalidate();
       }
 
-      super.show(invoker, x - sideBorders, y);
+      super.show(invoker, x, y);
     }
 
     @Override
@@ -948,7 +945,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         result += UIUtil.updateListRowHeight(preferredSize).height;
       }
 
-      return result;
+      Insets borderInsets = ExperimentalUI.isNewUI() ? getListVerticalInset() : JBInsets.emptyInsets();
+      return result + borderInsets.top + borderInsets.bottom;
+    }
+
+    private @NotNull Insets getListVerticalInset() {
+      return ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer()) ? PopupUtil.getListInsets(false, false) : JBInsets.emptyInsets();
     }
 
     private final class MyDelegateRenderer implements ListCellRenderer {

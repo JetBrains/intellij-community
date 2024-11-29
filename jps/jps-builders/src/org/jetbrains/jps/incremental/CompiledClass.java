@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.BuildTarget;
 
 import java.io.File;
@@ -62,6 +63,7 @@ public class CompiledClass extends UserDataHolderBase{
     return mySourceFiles;
   }
 
+  @Unmodifiable
   public @NotNull List<String> getSourceFilesPaths() {
     return ContainerUtil.map(mySourceFiles, file -> file.getPath());
   }

@@ -2,13 +2,10 @@
 package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
 import java.util.*
 
 data class GHPRHeadRefForcePushedEvent(override val actor: GHActor?,
                                        override val createdAt: Date,
-                                       val ref: GHGitRefName?,
-                                       val beforeCommit: GHCommitHash,
-                                       val afterCommit: GHCommitHash)
+                                       val ref: GHGitRefName?)
   : GHPRTimelineEvent.Branch

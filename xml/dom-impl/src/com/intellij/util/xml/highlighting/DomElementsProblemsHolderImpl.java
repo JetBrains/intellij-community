@@ -81,6 +81,7 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
   }
 
   @Override
+  @Unmodifiable
   public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
                                                        boolean includeXmlProblems,
                                                        boolean withChildren) {
@@ -100,6 +101,7 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
   }
 
   @Override
+  @Unmodifiable
   public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
     return ContainerUtil.findAll(getProblems(domElement, true, withChildren),
                                  object -> SeverityRegistrar.getSeverityRegistrar(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0);

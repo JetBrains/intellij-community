@@ -12,6 +12,7 @@ import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -47,6 +48,7 @@ public final class RenameHandlerRenamerFactory implements RenamerFactory {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<? extends @NotNull Renamer> createRenamers(@NotNull DataContext dataContext) {
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     if (project == null) {

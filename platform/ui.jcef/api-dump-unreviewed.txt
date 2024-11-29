@@ -1,7 +1,3 @@
-c:com.intellij.ui.jcef.CefBrowserFactoryImpl
-- com.intellij.ui.jcef.CefOsrBrowserFactory
-- <init>():V
-- createOsrBrowser(com.intellij.ui.jcef.JBCefOSRHandlerFactory,org.cef.CefClient,java.lang.String,org.cef.browser.CefRequestContext,org.cef.browser.CefBrowser,java.awt.Point,Z,org.cef.CefBrowserSettings):org.cef.browser.CefBrowser
 c:com.intellij.ui.jcef.HwFacadeJPanel
 - javax.swing.JPanel
 - <init>():V
@@ -237,14 +233,11 @@ c:com.intellij.ui.jcef.JBCefJSQuery$Response
 - isSuccess():Z
 - response():java.lang.String
 com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- a:createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
-- a:createComponent(Z):javax.swing.JComponent
-- s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory
-c:com.intellij.ui.jcef.JBCefOSRHandlerFactoryImpl
-- com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- <init>():V
+- sf:DEFAULT:com.intellij.ui.jcef.JBCefOSRHandlerFactory
 - createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
 - createComponent(Z):javax.swing.JComponent
+- createScreenBoundsProvider():com.intellij.util.Function
+- s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory
 a:com.intellij.ui.jcef.JBCefOsrHandlerBrowser
 - com.intellij.ui.jcef.JBCefBrowserBase
 - p:<init>(com.intellij.ui.jcef.JBCefClient,java.lang.String,org.cef.handler.CefRenderHandler,Z):V

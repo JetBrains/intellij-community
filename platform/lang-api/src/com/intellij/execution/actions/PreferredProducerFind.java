@@ -18,6 +18,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -138,6 +139,7 @@ final class PreferredProducerFind {
     return configurationsFromContext;
   }
 
+  @Unmodifiable
   private static @Nullable List<ConfigurationFromContext> getConfigurationsFromAlternativeLocations(
     @NotNull MultipleRunLocationsProvider.AlternativeLocationsInfo alternativeLocationsInfo,
     @NotNull Location originalLocation,

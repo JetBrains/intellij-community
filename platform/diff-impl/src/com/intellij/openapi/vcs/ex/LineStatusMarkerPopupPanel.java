@@ -60,7 +60,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     boolean isEditorVisible = myEditorComponent != null;
 
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarComponent.setBorder(JBUI.Borders.empty(2, 0));
+    toolbarComponent.setBorder(JBUI.Borders.empty(3, 0));
     toolbarComponent.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
     JComponent toolbarPanel = JBUI.Panels.simplePanel().addToLeft(new BorderLayoutPanel().addToTop(toolbarComponent));
@@ -150,14 +150,6 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     }
 
     return size;
-  }
-
-
-  public static void showPopupAt(@NotNull Editor editor,
-                                 @NotNull LineStatusMarkerPopupPanel panel,
-                                 @Nullable Point mousePosition,
-                                 @NotNull Disposable popupDisposable) {
-    LineStatusMarkerPopupService.getInstance().showPopupAt(editor, panel, mousePosition, popupDisposable);
   }
 
   @NotNull

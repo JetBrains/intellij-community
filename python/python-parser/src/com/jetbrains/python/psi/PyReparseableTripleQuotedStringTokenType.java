@@ -25,7 +25,8 @@ public class PyReparseableTripleQuotedStringTokenType extends PyReparseableToken
   }
 
   private static boolean isTripleQuotedString(@NotNull String newText) {
-    return (newText.startsWith("\"\"\"") && newText.endsWith("\"\"\"")) ||
-           (newText.startsWith("'''") && newText.endsWith("'''"));
+    return newText.length() >= 6
+           && ((newText.startsWith("\"\"\"") && newText.endsWith("\"\"\""))
+               || (newText.startsWith("'''") && newText.endsWith("'''")));
   }
 }

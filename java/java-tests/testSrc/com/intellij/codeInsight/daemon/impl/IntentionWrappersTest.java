@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -25,10 +26,11 @@ import java.util.function.Supplier;
 
 public class IntentionWrappersTest extends TestCase {
   public void testIntentionWrapperDelegatesDumbawareness() {
-    checkDumbAwarenessIsDelegatedThrough(()->new IntentionWrapper(new MyIntentionAction()));
+    checkDumbAwarenessIsDelegatedThrough(() -> new IntentionWrapper(new MyIntentionAction()));
   }
 
   private static void checkDumbAwarenessIsDelegatedThrough(Supplier<?> o) {
+    if (!Registry.is("ide.dumb.mode.check.awareness")) return;
     MyIntentionAction.SWITCH = false;
     assertFalse(DumbService.isDumbAware(o.get()));
     MyIntentionAction.SWITCH = true;

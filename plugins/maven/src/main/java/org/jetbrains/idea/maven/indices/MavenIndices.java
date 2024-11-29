@@ -31,6 +31,9 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -78,21 +81,31 @@ public class MavenIndices implements Disposable {
   }
 
   @NotNull
-  private static List<MavenIndexUtils.IndexPropertyHolder> readCurrentIndexFileProperty(@NotNull File indicesDir) {
-    File[] indices = indicesDir.listFiles();
-    if (indices == null) return Collections.emptyList();
+  private static List<MavenIndexUtils.IndexPropertyHolder> readCurrentIndexFileProperty(@NotNull Path indicesDir) {
+    Path[] indices = null;
+    try {
+      indices = Files.list(indicesDir).toArray(Path[]::new);
+    }
+    catch (IOException e) {
+      return Collections.emptyList();
+    }
     Arrays.sort(indices);
 
     ArrayList<MavenIndexUtils.IndexPropertyHolder> result = new ArrayList<>();
-    for (File each : indices) {
-      if (!each.isDirectory()) continue;
+    for (Path each : indices) {
+      if (!Files.isDirectory(each)) continue;
 
       try {
         MavenIndexUtils.IndexPropertyHolder propertyHolder = MavenIndexUtils.readIndexProperty(each);
         result.add(propertyHolder);
       }
       catch (Exception e) {
-        FileUtil.delete(each);
+        try {
+          Files.delete(each);
+        }
+        catch (IOException ex) {
+          MavenLog.LOG.warn(ex);
+        }
         MavenLog.LOG.warn(e);
       }
     }
@@ -112,18 +125,25 @@ public class MavenIndices implements Disposable {
   }
 
   @NotNull
-  private static File createNewIndexDir(File parent) {
+  private static Path createNewIndexDir(Path parent) {
     return createNewDir(parent, "Index", 1000);
   }
 
   @NotNull
-  static File createNewDir(File parent, String prefix, int max) {
+  static Path createNewDir(Path parent, String prefix, int max) {
     synchronized (ourDirectoryLock) {
       for (int i = 0; i < max; i++) {
         String name = prefix + i;
-        File f = new File(parent, name);
-        if (!f.exists()) {
-          boolean createSuccessFull = f.mkdirs();
+        Path f = parent.resolve(name);
+        if (!Files.exists(f)) {
+          boolean createSuccessFull;
+          try {
+            Files.createDirectories(f);
+            createSuccessFull = true;
+          }
+          catch (IOException e) {
+            createSuccessFull = false;
+          }
           if (createSuccessFull) {
             return f;
           }

@@ -101,6 +101,7 @@ com.intellij.execution.ConfigurationWithCommandLineShortener
 a:com.intellij.execution.ConsoleFolding
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
+- getNestingPriority():I
 - getPlaceholderText(com.intellij.openapi.project.Project,java.util.List):java.lang.String
 - getPlaceholderText(java.util.List):java.lang.String
 - isEnabledForConsole(com.intellij.execution.ui.ConsoleView):Z
@@ -1081,6 +1082,8 @@ f:com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 - isTemporary():Z
 - f:needsToBeMigrated():Z
 - f:readExternal(org.jdom.Element,Z):V
+- f:readExternal(org.jdom.Element,Z,java.lang.String):V
+- bs:readExternal$default(com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl,org.jdom.Element,Z,java.lang.String,I,java.lang.Object):V
 - setActivateToolWindowBeforeRun(Z):V
 - f:setConfiguration(com.intellij.execution.configurations.RunConfiguration):V
 - setEditBeforeRun(Z):V

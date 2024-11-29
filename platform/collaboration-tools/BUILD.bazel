@@ -1,0 +1,90 @@
+### auto-generated section `build intellij.platform.collaborationTools` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "collaborationTools_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "collaborationTools",
+  module_name = "intellij.platform.collaborationTools",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-impl",
+    "@lib//:miglayout-swing",
+    "@lib//:kotlin-stdlib",
+    "//platform/diff-api:diff",
+    "@lib//:fastutil-min",
+    "//platform/diff-impl",
+    "//platform/credential-store-ui:credentialStore-ui",
+    "//platform/vcs-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/vcs-log/api:vcs-log",
+    "@lib//:caffeine",
+    "//platform/collaboration-tools/auth-base:collaborationTools-auth-base",
+    "//platform/collaboration-tools/auth:collaborationTools-auth",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains_markdown",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/util/coroutines",
+    "//platform/credential-store-impl:credentialStore-impl",
+  ],
+  runtime_deps = [":collaborationTools_resources"]
+)
+
+kt_jvm_test(
+  name = "collaborationTools_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":collaborationTools"],
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-impl",
+    "@lib//:miglayout-swing",
+    "@lib//:kotlin-stdlib",
+    "//platform/diff-api:diff",
+    "@lib//:fastutil-min",
+    "//platform/diff-impl",
+    "@lib//:junit4",
+    "//platform/credential-store-ui:credentialStore-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/vcs-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/vcs-log/api:vcs-log",
+    "@lib//:caffeine",
+    "//platform/collaboration-tools/auth-base:collaborationTools-auth-base",
+    "//platform/collaboration-tools/auth:collaborationTools-auth",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains_markdown",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinx-coroutines-test",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/util/coroutines",
+    "@lib//:io_mockk",
+    "@lib//:io_mockk_jvm",
+    "//platform/credential-store-impl:credentialStore-impl",
+  ],
+  runtime_deps = [":collaborationTools_resources"]
+)
+### auto-generated section `build intellij.platform.collaborationTools` end

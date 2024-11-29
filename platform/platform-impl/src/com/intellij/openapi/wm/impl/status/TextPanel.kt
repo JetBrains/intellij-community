@@ -56,7 +56,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
   override fun getToolTipText(): String? = toolTipTextSupplier?.invoke() ?: super.getToolTipText()
 
   override fun updateUI() {
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent())
     UISettings.setupFractionalMetrics(this)
     recomputeSize()
   }

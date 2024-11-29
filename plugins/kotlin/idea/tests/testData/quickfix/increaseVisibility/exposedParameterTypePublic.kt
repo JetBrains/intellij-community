@@ -1,4 +1,5 @@
 // "Make 'Nested' public" "true"
+// PRIORITY: HIGH
 // ACTION: Convert parameter to receiver
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Make 'Nested' internal

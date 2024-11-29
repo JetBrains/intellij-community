@@ -1,47 +1,53 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
-
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
-)
+### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
 create_kotlinc_options(
   name = "custom",
   jvm_target = "11",
-  x_optin = ["kotlinx.serialization.ExperimentalSerializationApi"]
+  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
 )
 
-kt_jvm_library(
-  name = "diagnostic-telemetry-impl",
+jvm_resources(
+  name = "telemetry-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "telemetry-impl",
   module_name = "intellij.platform.diagnostic.telemetry.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j11",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
   kotlinc_opts = ":custom",
-  plugins = ["@libraries//:serialization_plugin"],
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:jackson-core",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:opentelemetry-extension-kotlin",
-    "@community//platform/util",
-    "@libraries//:opentelemetry-exporter-otlp-common",
-    "@libraries//:HdrHistogram",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@community//platform/core-impl",
-    "@community//platform/util/http:util-http",
-    "@libraries//:kotlinx-serialization-protobuf-jvm",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@community//platform/diagnostic",
-    "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
-    "@community//platform/util/coroutines:util-coroutines",
+    "@lib//:jackson",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:opentelemetry-extension-kotlin",
+    "//platform/util",
+    "@lib//:opentelemetry-exporter-otlp-common",
+    "@lib//:hdr_histogram",
+    "//platform/diagnostic/telemetry",
+    "//platform/core-impl",
+    "//platform/util/http",
+    "@lib//:kotlinx-serialization-protobuf",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/diagnostic",
+    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/util/coroutines",
+    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "@lib//:guava",
   ],
-  exports = ["@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters"],
-  runtime_deps = [":resources"]
+  exports = [
+    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+  ],
+  runtime_deps = [":telemetry-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` end

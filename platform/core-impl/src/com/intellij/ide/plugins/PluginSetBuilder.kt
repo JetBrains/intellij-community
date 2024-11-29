@@ -97,7 +97,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
           continue
         }
       }
-      else if (module.moduleLoadingRule != ModuleLoadingRule.REQUIRED && !enabledPluginIds.containsKey(module.pluginId)) {
+      else if (!module.isRequiredContentModule && !enabledPluginIds.containsKey(module.pluginId)) {
         disabledModuleToProblematicPlugin.put(module.moduleName, module.pluginId)
         continue
       }
@@ -123,7 +123,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 
       if (module.moduleName == null) {
         for (contentModule in module.content.modules) {
-          if (contentModule.loadingRule == ModuleLoadingRule.REQUIRED && !enabledRequiredContentModules.containsKey(contentModule.name)) {
+          if (contentModule.loadingRule.required && !enabledRequiredContentModules.containsKey(contentModule.name)) {
             module.isEnabled = false
             loadingErrors.add(createCannotLoadError(
               descriptor = module,
@@ -142,13 +142,13 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
           enabledModuleV2Ids.put(module.pluginId.idString, module)
         }
         for (contentModule in module.content.modules) {
-          if (contentModule.loadingRule == ModuleLoadingRule.REQUIRED) {
+          if (contentModule.loadingRule.required) {
             val requiredContentModule = enabledRequiredContentModules.remove(contentModule.name)!!
             markModuleAsEnabled(contentModule.name, requiredContentModule)
           }
         }
       }
-      else if (module.moduleLoadingRule == ModuleLoadingRule.REQUIRED) {
+      else if (module.isRequiredContentModule) {
         enabledRequiredContentModules.put(module.moduleName, module)
       }
       else {

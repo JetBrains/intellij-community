@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.uast.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//uast/uast-common:uast",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//platform/core-impl",
+    "//uast/uast-java-ide:java-uast-ide",
+    "//java/java-runtime:rt",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/testFramework",
+    "//uast/testFramework",
+    "//java/testFramework",
+    "//platform/vcs-impl",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ]
+)
+### auto-generated section `build intellij.platform.uast.tests` end

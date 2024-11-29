@@ -110,7 +110,6 @@ public final class AsyncStacksUtils {
       evaluationContext);
     if (value != null) {
       List<StackFrameItem> res = new ArrayList<>();
-      ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
       try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
         while (dis.available() > 0) {
           StackFrameItem item = null;
@@ -119,7 +118,7 @@ public final class AsyncStacksUtils {
             String methodName = dis.readUTF();
             int line = dis.readInt();
             Location location =
-              DebuggerUtilsEx.findOrCreateLocation(virtualMachineProxy.getVirtualMachine(), classesByName, className, methodName, line);
+              DebuggerUtilsEx.findOrCreateLocation(virtualMachineProxy.getVirtualMachine(), className, methodName, line);
             item = new StackFrameItem(location, null);
           }
           res.add(item);

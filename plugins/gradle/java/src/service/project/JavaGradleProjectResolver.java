@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.intellij.execution.CommandLineUtil;
 import com.intellij.externalSystem.JavaModuleData;
 import com.intellij.externalSystem.JavaProjectData;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -12,24 +10,18 @@ import com.intellij.openapi.externalSystem.model.project.ModuleSdkData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
 import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
-import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioPathUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.JavaVersion;
 import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.idea.IdeaJavaLanguageSettings;
@@ -41,7 +33,6 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
-import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -58,7 +49,6 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
-  private final static Logger LOG = Logger.getInstance(JavaGradleProjectResolver.class);
 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
@@ -181,68 +171,6 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     if (projectDependencies != null) {
       ideModule.createChild(ProjectKeys.DEPENDENCIES_GRAPH, projectDependencies);
     }
-  }
-
-  @Override
-  public @NotNull Map<String, String> enhanceTaskProcessing(
-    @Nullable Project project,
-    @NotNull List<String> taskNames,
-    @NotNull Consumer<String> initScriptConsumer,
-    @NotNull Map<String, String> parameters
-  ) {
-    var isRunAsTest = Boolean.parseBoolean(parameters.get(IS_RUN_AS_TEST_KEY));
-    var isBuiltInTestEventsUsed = Boolean.parseBoolean(parameters.get(IS_BUILT_IN_TEST_EVENTS_USED_KEY));
-    var jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);
-    if (isRunAsTest) {
-      var initScript = isBuiltInTestEventsUsed
-                       ? GradleInitScriptUtil.loadFileComparisonTestLoggerInitScript()
-                       : GradleInitScriptUtil.loadIjTestLoggerInitScript();
-      initScriptConsumer.consume(initScript);
-    }
-    enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
-    return Map.of();
-  }
-
-  @Override
-  public void enhanceTaskProcessing(@NotNull List<String> taskNames,
-                                    @Nullable String jvmParametersSetup,
-                                    @NotNull Consumer<String> initScriptConsumer) {
-    if (!StringUtil.isEmpty(jvmParametersSetup)) {
-      LOG.assertTrue(!jvmParametersSetup.contains(ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX),
-                     "Please use org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend to setup debugger");
-
-      final String names = "[" + toStringListLiteral(taskNames, ", ") + "]";
-      List<String> argv = ParametersListUtil.parse(jvmParametersSetup);
-      if (SystemInfo.isWindows) {
-        argv = ContainerUtil.map(argv, s -> CommandLineUtil.escapeParameterOnWindows(s, false));
-      }
-      final String jvmArgs = toStringListLiteral(argv, " << ");
-
-      final String[] lines = {
-        "gradle.taskGraph.whenReady { taskGraph ->",
-        "  taskGraph.allTasks.each { Task task ->",
-        "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
-        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
-        "        jvmArgs << " + jvmArgs,
-        "        task.jvmArgs = jvmArgs",
-        "    }",
-        "  }",
-        "}",
-      };
-      final String script = StringUtil.join(lines, System.lineSeparator());
-      initScriptConsumer.consume(script);
-    }
-  }
-
-  @NotNull
-  private static String toStringListLiteral(@NotNull List<String> strings, @NotNull String separator) {
-    final List<String> quotedStrings = ContainerUtil.map(strings, s -> StringUtil.escapeChar(toStringLiteral(s), '$'));
-    return StringUtil.join(quotedStrings, separator);
-  }
-
-  @NotNull
-  private static String toStringLiteral(@NotNull String s) {
-    return StringUtil.wrapWithDoubleQuote(StringUtil.escapeStringCharacters(s));
   }
 
   @NotNull

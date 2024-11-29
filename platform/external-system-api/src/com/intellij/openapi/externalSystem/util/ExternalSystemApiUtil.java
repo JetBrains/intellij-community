@@ -50,10 +50,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -715,6 +712,7 @@ public final class ExternalSystemApiUtil {
     getSettings(project, systemId).subscribe(listener, parentDisposable);
   }
 
+  @Unmodifiable
   public static @NotNull Collection<TaskData> findProjectTasks(
     @NotNull Project project,
     @NotNull ProjectSystemId systemId,

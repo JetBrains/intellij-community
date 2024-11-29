@@ -37,6 +37,7 @@ import kotlin.jvm.functions.Function1;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -938,6 +939,7 @@ public final class PsiClassImplUtil {
     return withSubstitutors(psiClass, list.toArray(PsiMember.EMPTY_ARRAY));
   }
 
+  @Unmodifiable
   private static @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> withSubstitutors(@NotNull PsiClass psiClass, PsiMember[] members) {
     ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(psiClass, psiClass.getResolveScope());
     LanguageLevel level = PsiUtil.getLanguageLevel(psiClass);

@@ -76,7 +76,7 @@ abstract class BaseResolveConflictsLocallyViewModel<Error : Any>(
 
   private suspend fun rebase() {
     prepareAndPerformUpdate { brancher, baseBranch ->
-      brancher.rebase(repositories, baseBranch.nameForLocalOperations)
+      brancher.rebase(repositories, baseBranch)
     }
   }
 

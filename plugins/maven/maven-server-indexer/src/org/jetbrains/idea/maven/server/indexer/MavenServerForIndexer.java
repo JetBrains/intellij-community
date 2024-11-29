@@ -127,6 +127,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
     throw new UnsupportedOperationException("indexing server");
   }
 
+  @Override
   public MavenServerStatus getDebugStatus(boolean clean) {
     MavenServerStatus result = new MavenServerStatus();
     result.statusCollected = false;

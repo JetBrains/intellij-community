@@ -1,3 +1,4 @@
+// PRIORITY: HIGH
 // INTENTION_TEXT: "Import members from 'JavaUtilClass'"
 // WITH_STDLIB
 // ERROR: None of the following functions can be called with the arguments supplied: <br>public open fun overloadedMethod(i: Int): Unit defined in JavaUtilClass<br>public open fun overloadedMethod(i: String!): Unit defined in JavaUtilClass

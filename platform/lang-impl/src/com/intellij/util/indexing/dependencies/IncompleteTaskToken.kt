@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * This class is to solve a technical problem: you cannot obtain ScanningRequestToken from EDT, because
- * obtaining a token may trigger fingerprint calculation. FutureScanningRequestToken is EDT-safe.
+ * obtaining a token may trigger fingerprint calculation. IncompleteTaskToken is EDT-safe.
  */
 @Internal
 class IncompleteTaskToken

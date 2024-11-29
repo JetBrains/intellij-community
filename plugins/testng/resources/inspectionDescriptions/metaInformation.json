@@ -35,6 +35,10 @@
     {
       "id": "DuplicatedDataProviderNames",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "dependsOnMethodTestNG",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

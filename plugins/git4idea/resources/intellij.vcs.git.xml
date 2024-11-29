@@ -4,6 +4,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
@@ -81,7 +82,7 @@
       <reference ref="Compare.Selected"/>
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithRefAction"/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
-      <reference id="Vcs.ShowHistoryForBlock"/>
+      <reference ref="Vcs.ShowHistoryForBlock"/>
     </group>
 
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
@@ -132,14 +133,14 @@
       <action id="Git.Reset" class="git4idea.actions.GitResetHead"/>
       <separator/>
       <reference ref="Vcs.Show.Log"/>
-      <reference id="Patch.MainMenu"/>
-      <reference id="Git.MainMenu.LocalChanges"/>
-      <reference id="Git.MainMenu.FileActions"/>
+      <reference ref="Patch.MainMenu"/>
+      <reference ref="Git.MainMenu.LocalChanges"/>
+      <reference ref="Git.MainMenu.FileActions"/>
       <separator/>
       <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction"/>
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction"/>
       <separator/>
-      <reference id="Vcs.QuickListPopupAction"/>
+      <reference ref="Vcs.QuickListPopupAction"/>
       <separator/>
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert"/>
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
@@ -175,12 +176,12 @@
     <action id="git.update.force.pushed.branch" class="git4idea.actions.branch.GitForcePushedBranchUpdateAction" internal="true"/>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
-      <reference id="Git.Rebase.Abort"/>
-      <reference id="Git.Merge.Abort"/>
-      <reference id="Git.CherryPick.Abort"/>
-      <reference id="Git.Revert.Abort"/>
-      <reference id="Git.Rebase.Continue"/>
-      <reference id="Git.Rebase.Skip"/>
+      <reference ref="Git.Rebase.Abort"/>
+      <reference ref="Git.Merge.Abort"/>
+      <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.Revert.Abort"/>
+      <reference ref="Git.Rebase.Continue"/>
+      <reference ref="Git.Rebase.Skip"/>
     </group>
 
     <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
@@ -275,36 +276,36 @@
     <group id="Git.LogContextMenu"/>
 
     <group id="Git.FileHistory.ContextMenu">
-      <reference id="Git.Revert.In.Log"/>
+      <reference ref="Git.Revert.In.Log"/>
       <separator/>
-      <reference id="Git.CreateNewTag"/>
+      <reference ref="Git.CreateNewTag"/>
       <separator/>
       <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="VcsHistoryActionsGroup" anchor="before"/>
     </group>
 
     <group id="Git.Log.ContextMenu.CheckoutBrowse">
-      <reference id="Git.CheckoutGroup"/>
-      <reference id="Git.BrowseRepoAtRevision"/>
+      <reference ref="Git.CheckoutGroup"/>
+      <reference ref="Git.BrowseRepoAtRevision"/>
 
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.CompareRevisions" anchor="before"/>
     </group>
 
     <group id="Git.Log.ContextMenu">
-      <reference id="Git.Reset.In.Log"/>
-      <reference id="Git.Revert.In.Log"/>
-      <reference id="Git.Uncommit"/>
+      <reference ref="Git.Reset.In.Log"/>
+      <reference ref="Git.Revert.In.Log"/>
+      <reference ref="Git.Uncommit"/>
       <separator/>
-      <reference id="Git.Reword.Commit"/>
-      <reference id="Git.Fixup.To.Commit"/>
-      <reference id="Git.Squash.Into.Commit"/>
-      <reference id="Git.Drop.Commits"/>
-      <reference id="Git.Squash.Commits"/>
-      <reference id="Git.Interactive.Rebase"/>
-      <reference id="Git.PushUpToCommit"/>
+      <reference ref="Git.Reword.Commit"/>
+      <reference ref="Git.Fixup.To.Commit"/>
+      <reference ref="Git.Squash.Into.Commit"/>
+      <reference ref="Git.Drop.Commits"/>
+      <reference ref="Git.Squash.Commits"/>
+      <reference ref="Git.Interactive.Rebase"/>
+      <reference ref="Git.PushUpToCommit"/>
       <separator/>
-      <reference id="Git.BranchOperationGroup"/>
-      <reference id="Git.CreateNewBranch"/>
-      <reference id="Git.CreateNewTag"/>
+      <reference ref="Git.BranchOperationGroup"/>
+      <reference ref="Git.CreateNewBranch"/>
+      <reference ref="Git.CreateNewTag"/>
       <separator/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
     </group>
@@ -317,14 +318,14 @@
     <action id="Git.Log.GitUseSharedLogAction" class="git4idea.actions.GitUseSharedLogAction" internal="true"/>
     <action id="Git.Log.GitDumpLogIndexDataAction" class="git4idea.actions.GitDumpLogIndexDataAction" internal="true"/>
     <group id="Git.Log.ShareLogIndexData" internal="true">
-      <reference id="Git.Log.GitUseSharedLogAction"/>
-      <reference id="Git.Log.GitDumpLogIndexDataAction"/>
+      <reference ref="Git.Log.GitUseSharedLogAction"/>
+      <reference ref="Git.Log.GitDumpLogIndexDataAction"/>
     </group>
 
     <group id="Git.Log.Internal" internal="true">
-      <reference id="Git.Log.ShareLogIndexData"/>
+      <reference ref="Git.Log.ShareLogIndexData"/>
       <separator/>
-      <reference id="Git.Log.Show.Command"/>
+      <reference ref="Git.Log.Show.Command"/>
       <add-to-group group-id="Vcs.Log.Internal" anchor="last"/>
     </group>
 
@@ -384,56 +385,56 @@
 
     <group id="Git.Stage.Configure" popup="true">
       <separator key="separator.Git.Stage.Configure.display.as"/>
-      <reference id="Git.Stage.Enable"/>
-      <reference id="Git.Stage.Disable"/>
+      <reference ref="Git.Stage.Enable"/>
+      <reference ref="Git.Stage.Disable"/>
       <add-to-group group-id="CommitView.GearActions"/>
     </group>
 
     <group id="Git.Stage.Toolbar">
-      <reference id="Diff.ShowDiff"/>
-      <reference id="ChangesView.Refresh"/>
-      <reference id="Git.Stage.Add.Tracked"/>
-      <reference id="Git.Stash.Silently"/>
+      <reference ref="Diff.ShowDiff"/>
+      <reference ref="ChangesView.Refresh"/>
+      <reference ref="Git.Stage.Add.Tracked"/>
+      <reference ref="Git.Stash.Silently"/>
       <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.GroupBy" popup="true">
-        <reference id="ChangesView.GroupBy"/>
+        <reference ref="ChangesView.GroupBy"/>
         <separator key="separator.show"/>
-        <reference id="Git.Stage.ToggleIgnored"/>
+        <reference ref="Git.Stage.ToggleIgnored"/>
       </group>
     </group>
     <group id="Git.Stage.Tree.Menu">
-      <reference id="Git.Stage.Merge"/>
-      <reference id="Git.Stage.AcceptTheirs"/>
-      <reference id="Git.Stage.AcceptYours"/>
-      <reference id="Git.Stage.Add"/>
-      <reference id="Git.Stage.Add.No.Content"/>
-      <reference id="Git.Stage.Reset"/>
+      <reference ref="Git.Stage.Merge"/>
+      <reference ref="Git.Stage.AcceptTheirs"/>
+      <reference ref="Git.Stage.AcceptYours"/>
+      <reference ref="Git.Stage.Add"/>
+      <reference ref="Git.Stage.Add.No.Content"/>
+      <reference ref="Git.Stage.Reset"/>
       <reference ref="Git.Stage.Stash.Files"/>
-      <reference id="Git.Stage.Revert"/>
-      <reference id="$Delete"/>
-      <reference id="Git.Ignore.File"/>
+      <reference ref="Git.Stage.Revert"/>
+      <reference ref="$Delete"/>
+      <reference ref="Git.Ignore.File"/>
       <separator/>
-      <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
-      <reference id="Git.Stage.ThreeSideDiff"/>
+      <reference ref="Git.Stage.ThreeSideDiff"/>
       <reference ref="EditSource"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="ChangesView.CreatePatchToClipboard"/>
       <separator/>
-      <reference id="Vcs.ShowTabbedFileHistory"/>
-      <reference id="LocalHistory"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="LocalHistory"/>
     </group>
     <group id="Git.Stage.Local.File.Menu" popup="false">
-      <reference id="Git.Stage.Show.Staged"/>
-      <reference id="Git.Stage.Compare.Local.Staged"/>
-      <reference id="Git.Stage.Compare.Three.Versions"/>
+      <reference ref="Git.Stage.Show.Staged"/>
+      <reference ref="Git.Stage.Compare.Local.Staged"/>
+      <reference ref="Git.Stage.Compare.Three.Versions"/>
 
       <add-to-group group-id="Git.ContextMenu" relative-to-action="ChangesView.RevertFiles" anchor="after"/>
     </group>
     <group id="Git.Stage.Index.File.Menu" popup="true" class="git4idea.index.actions.GitStageIndexFileMenuGroup">
-      <reference id="Git.Stage.Show.Local"/>
-      <reference id="Git.Stage.Compare.Staged.Head"/>
-      <reference id="Git.Stage.Compare.Staged.Local"/>
-      <reference id="Git.Stage.Compare.Three.Versions"/>
+      <reference ref="Git.Stage.Show.Local"/>
+      <reference ref="Git.Stage.Compare.Staged.Head"/>
+      <reference ref="Git.Stage.Compare.Staged.Local"/>
+      <reference ref="Git.Stage.Compare.Three.Versions"/>
 
       <add-to-group group-id="EditorPopupMenu"/>
     </group>
@@ -453,11 +454,11 @@
     </action>
 
     <group id="Git.Stash.Operations.ContextMenu" class="git4idea.stash.ui.GitStashOperationsGroup">
-      <reference id="Git.Stash.Pop"/>
-      <reference id="Git.Stash.Apply"/>
-      <reference id="Git.Stash.UnstashAs"/>
-      <reference id="Git.Stash.Drop"/>
-      <reference id="Git.Stash.Clear"/>
+      <reference ref="Git.Stash.Pop"/>
+      <reference ref="Git.Stash.Apply"/>
+      <reference ref="Git.Stash.UnstashAs"/>
+      <reference ref="Git.Stash.Drop"/>
+      <reference ref="Git.Stash.Clear"/>
       <add-to-group group-id="Vcs.SavedPatches.ContextMenu" anchor="first"/>
     </group>
 
@@ -478,26 +479,26 @@
 
     <group id="Vcs.ToolbarWidget.CreateRepository" searchable="false">
       <group id="Vcs.ToolbarWidget.ShareProject" popup="true" searchable="false">
-        <reference id="Start.Use.Vcs"/>
+        <reference ref="Start.Use.Vcs"/>
       </group>
-      <reference id="Git.Init"/>
+      <reference ref="Git.Init"/>
       <separator/>
-      <reference id="LocalHistory.ShowProjectHistory"/>
+      <reference ref="LocalHistory.ShowProjectHistory"/>
     </group>
 
     <group id="MainToolbarVCSGroup">
-      <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" />
+      <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction"/>
       <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget"/>
       <add-to-group group-id="MainToolbarLeft" relative-to-action="MainToolbarGeneralActionsGroup" anchor="before"/>
     </group>
 
     <group id="GitMergeRebaseWidgetGroup">
-      <reference id="Git.ResolveConflicts"/>
-      <reference id="Git.Rebase.Continue"/>
-      <reference id="Git.Rebase.Abort"/>
-      <reference id="Git.Merge.Abort"/>
-      <reference id="Git.CherryPick.Abort"/>
-      <reference id="Git.Revert.Abort"/>
+      <reference ref="Git.ResolveConflicts"/>
+      <reference ref="Git.Rebase.Continue"/>
+      <reference ref="Git.Rebase.Abort"/>
+      <reference ref="Git.Merge.Abort"/>
+      <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.Revert.Abort"/>
     </group>
 
     <group id="GitMainToolbarQuickActions" searchable="false" popup="false">
@@ -806,7 +807,7 @@
                         isInCommitToolWindow="true"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <postStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
-    <postStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
+    <backgroundPostStartupActivity implementation="git4idea.commit.signing.GpgAgentConfiguratorStartupActivity"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
@@ -821,6 +822,9 @@
 
     <vcs.commitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
+
+    <postStartupActivity implementation="git4idea.commit.GitMergeCommitMessageActivity"/>
+    <vcs.defaultCommitMessagePolicy implementation="git4idea.commit.GitMergeCommitMessagePolicy"/>
 
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.UpdateQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>
     <toolbarQuickAction implementationClass="git4idea.ui.toolbar.CommitQuickAction" listGroupID="MainToolbarQuickActions.VCS"/>

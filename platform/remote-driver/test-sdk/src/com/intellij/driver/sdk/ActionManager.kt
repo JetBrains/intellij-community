@@ -28,6 +28,7 @@ interface ActionUtils {
 @Remote(value = "com.intellij.openapi.actionSystem.AnAction")
 interface AnAction {
   fun getShortcutSet(): ShortcutSet
+  fun getTemplateText(): String
 }
 
 @Remote("com.intellij.openapi.actionSystem.ShortcutSet")

@@ -30,6 +30,9 @@ public final class FileUtilRt {
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
 
   /**
+   * File size that is 'big enough' to load.
+   * Used to either skip the file content loading completely, if larger -- or at least to switch from simple
+   * one-chunk loading to more memory-efficient incremental loading
    * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getContentLoadLimit}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")

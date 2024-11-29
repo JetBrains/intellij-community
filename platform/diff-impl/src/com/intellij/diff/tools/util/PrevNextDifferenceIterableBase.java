@@ -10,11 +10,13 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDifferenceIterable {
   @NotNull
+  @Unmodifiable
   protected abstract List<? extends T> getChanges();
 
   @NotNull

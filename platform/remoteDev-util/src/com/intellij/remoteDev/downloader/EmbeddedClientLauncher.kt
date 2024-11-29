@@ -143,7 +143,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
 
     if (SystemInfo.isMac) {
       val appPath = ideHome.parent
-      if (appPath != null && appPath.name.endsWith(".app")) {
+      return if (appPath != null && appPath.name.endsWith(".app")) {
         CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
       }
       else {

@@ -131,7 +131,7 @@ f:com.intellij.xdebugger.XDebuggerBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-a:com.intellij.xdebugger.XDebuggerManager
+Fa:com.intellij.xdebugger.XDebuggerManager
 - sf:TOPIC:com.intellij.util.messages.Topic
 - <init>():V
 - a:getBreakpointManager():com.intellij.xdebugger.breakpoints.XBreakpointManager

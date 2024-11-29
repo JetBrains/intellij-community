@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -69,6 +70,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
 
   @NotNull
   @Override
+  @Unmodifiable
   protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
     List<? extends AnAction> actions = super.createCopyActions(fromPopup);
     if (fromPopup) {

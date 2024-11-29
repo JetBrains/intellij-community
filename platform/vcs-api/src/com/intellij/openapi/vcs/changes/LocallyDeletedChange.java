@@ -55,6 +55,7 @@ public class LocallyDeletedChange {
     return null;
   }
 
+  @Override
   @Nls
   public String toString() {
     return myPath.getPath();

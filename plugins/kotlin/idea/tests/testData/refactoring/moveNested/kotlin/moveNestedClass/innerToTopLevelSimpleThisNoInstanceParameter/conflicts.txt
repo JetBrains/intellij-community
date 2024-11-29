@@ -1,0 +1,1 @@
+Usages of outer class instance inside declaration 'Inner' won't be processed

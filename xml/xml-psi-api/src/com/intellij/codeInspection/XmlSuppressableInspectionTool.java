@@ -96,6 +96,11 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     public @Nullable PsiElement getContainer(@Nullable PsiElement context) {
       return PsiTreeUtil.getParentOfType(context, XmlTag.class);
     }
+
+    @Override
+    public int getPriority() {
+      return 10;
+    }
   }
 
   public static class SuppressForFile extends XmlSuppressFix {
@@ -123,6 +128,11 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     public @Nullable PsiElement getContainer(@Nullable PsiElement context) {
       return context == null || !context.isValid() ? null : context.getContainingFile();
     }
+
+    @Override
+    public int getPriority() {
+      return 20;
+    }
   }
 
   public static class SuppressAllForFile extends SuppressForFile {
@@ -137,6 +147,11 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     @Override
     public @NotNull String getName() {
       return XmlPsiBundle.message("xml.suppressable.all.for.file.title");
+    }
+
+    @Override
+    public boolean isSuppressAll() {
+      return true;
     }
   }
 }

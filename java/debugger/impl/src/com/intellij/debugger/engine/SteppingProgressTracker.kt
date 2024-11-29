@@ -49,7 +49,8 @@ private class CancelingSteppingListener : SteppingListener {
     val steppingName = steppingAction.steppingName
     val stepCompetedStatus = CompletableDeferred<Unit>()
 
-    debuggerProcessImpl.managerThread.schedule(PrioritizedTask.Priority.NORMAL) {
+    val managerThread = suspendContext.managerThread
+    managerThread.schedule(PrioritizedTask.Priority.NORMAL) {
       // Need to schedule in the separate debugger command, so async name getter will not fail
       // because of the current suspend context become resumed
       val whereStrFuture: CompletableFuture<String> = if (threadForStepping != null) {
@@ -64,11 +65,11 @@ private class CancelingSteppingListener : SteppingListener {
       whereStrFuture.thenAccept { whereStr ->
         @Suppress("HardCodedStringLiteral")
         val steppingRestrictionMessage = getSteppingRestrictionMessage(whereStr, steppingAction)
-        debuggerProcessImpl.managerThread.makeCancelable(debuggerProcessImpl.project, steppingRestrictionMessage, steppingName, stepCompetedStatus) {
+        managerThread.makeCancelable(debuggerProcessImpl.project, steppingRestrictionMessage, steppingName, stepCompetedStatus) {
           val command: DebuggerCommandImpl =
             if (needSuspendOnlyThread) debuggerProcessImpl.createFreezeThreadCommand(threadForStepping)
             else debuggerProcessImpl.createPauseCommand(threadForStepping)
-          debuggerProcessImpl.managerThread.schedule(command)
+          managerThread.schedule(command)
         }
       }
     }

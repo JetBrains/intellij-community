@@ -28,7 +28,7 @@ data class Config private constructor(
   val fileDataset: FileDataset?,
   val interpret: ActionsInterpretation,
   val reorder: ReorderElements,
-  val reports: ReportGeneration
+  val reports: ReportGeneration,
 ) {
   companion object {
     fun build(init: Builder.() -> Unit): Config {
@@ -90,6 +90,7 @@ data class Config private constructor(
    * @property saveContent Whether to save the content of files.
    * @property logLocationAndItemText Whether to log location and item text in detailed ranking logs.
    * @property trainTestSplit The train test split for detailed ranking logs.
+   * @property registry List of registry values to be updated before the evaluation in the format "key1=value1,key2=value2"
    */
   data class ActionsInterpretation internal constructor(
     val experimentGroup: Int?,
@@ -103,7 +104,9 @@ data class Config private constructor(
     val saveFeatures: Boolean,
     val saveContent: Boolean,
     val logLocationAndItemText: Boolean,
-    val trainTestSplit: Int)
+    val trainTestSplit: Int,
+    val registry: String,
+  )
 
   /**
    * Represents the configuration for reordering elements step.
@@ -115,7 +118,7 @@ data class Config private constructor(
   data class ReorderElements internal constructor(
     val useReordering: Boolean,
     val title: String,
-    val features: List<String>
+    val features: List<String>,
   )
 
   /**
@@ -130,7 +133,8 @@ data class Config private constructor(
     val evaluationTitle: String,
     val defaultMetrics: List<String>?,
     val sessionsFilters: List<SessionsFilter>,
-    val comparisonFilters: List<CompareSessionsFilter>)
+    val comparisonFilters: List<CompareSessionsFilter>,
+  )
 
   class Builder internal constructor() {
     var actions: ActionsGeneration? = null
@@ -144,6 +148,7 @@ data class Config private constructor(
     var saveContent = false
     var logLocationAndItemText = false
     var trainTestSplit: Int = 70
+    var registry: String = ""
     var evaluationTitle: String = "BASIC"
     var experimentGroup: Int? = null
     var sessionsLimit: Int? = null
@@ -218,7 +223,8 @@ data class Config private constructor(
         saveFeatures,
         saveContent,
         logLocationAndItemText,
-        trainTestSplit
+        trainTestSplit,
+        registry,
       ),
       ReorderElements(
         useReordering,

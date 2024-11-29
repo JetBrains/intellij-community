@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
-import org.jetbrains.plugins.textmate.regex.StringWithId;
+import org.jetbrains.plugins.textmate.regex.TextMateString;
 
 import java.util.Objects;
 
@@ -17,13 +17,13 @@ public final class TextMateLexerState {
   // offset in line where state was emitted. used for local loop protection only
   public final int enterByteOffset;
   public final boolean matchedEOL;
-  @Nullable public final StringWithId string;
+  @Nullable public final TextMateString string;
 
   TextMateLexerState(@NotNull SyntaxNodeDescriptor syntaxRule,
                      @NotNull MatchData matchData,
                      @NotNull TextMateWeigh.Priority priority,
                      int enterByteOffset,
-                     @Nullable StringWithId line) {
+                     @Nullable TextMateString line) {
     this.syntaxRule = syntaxRule;
     this.matchData = matchData;
     this.priorityMatch = priority;

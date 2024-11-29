@@ -122,6 +122,7 @@ public class SwitchedFileHolder implements FileHolder {
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -130,6 +131,7 @@ public class SwitchedFileHolder implements FileHolder {
     return Iterables.elementsEqual(myMap.entrySet(), that.myMap.entrySet());
   }
 
+  @Override
   public int hashCode() {
     return myMap.hashCode();
   }

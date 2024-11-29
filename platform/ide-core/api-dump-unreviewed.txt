@@ -689,6 +689,7 @@ c:com.intellij.notification.Notification
 - isExpired():Z
 - isImportant():Z
 - isImportantSuggestion():Z
+- isRemoveWhenExpired():Z
 - isSuggestionType():Z
 - notify(com.intellij.openapi.project.Project):V
 - setBalloon(com.intellij.openapi.ui.popup.Balloon):V
@@ -703,6 +704,7 @@ c:com.intellij.notification.Notification
 - setImportantSuggestion(Z):com.intellij.notification.Notification
 - setListener(com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - setRemindLaterHandlerId(java.lang.String):com.intellij.notification.Notification
+- setRemoveWhenExpired(Z):com.intellij.notification.Notification
 - setSubtitle(java.lang.String):com.intellij.notification.Notification
 - setSuggestionType(Z):com.intellij.notification.Notification
 - setTitle(java.lang.String):com.intellij.notification.Notification
@@ -726,6 +728,7 @@ a:com.intellij.notification.NotificationAction
 - s:create(java.util.function.Supplier,java.util.function.BiConsumer):com.intellij.notification.NotificationAction
 - s:createExpiring(java.lang.String,java.util.function.BiConsumer):com.intellij.notification.NotificationAction
 - s:createSimple(java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction
+- s:createSimple(java.lang.String,java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction
 - s:createSimple(java.util.function.Supplier,java.lang.Runnable):com.intellij.notification.NotificationAction
 - s:createSimpleExpiring(java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction
 - s:createSimpleExpiring(java.lang.String,java.lang.String,java.lang.Runnable):com.intellij.notification.NotificationAction
@@ -2018,6 +2021,8 @@ com.intellij.openapi.ui.TextComponentAccessor
 - sf:TEXT_FIELD_WHOLE_TEXT:com.intellij.openapi.ui.TextComponentAccessor
 - a:getText(java.awt.Component):java.lang.String
 - a:setText(java.awt.Component,java.lang.String):V
+f:com.intellij.openapi.ui.UiComponentsUtil
+- sf:INSTANCE:com.intellij.openapi.ui.UiComponentsUtil
 f:com.intellij.openapi.ui.ValidationInfo
 - f:component:javax.swing.JComponent
 - f:message:java.lang.String
@@ -2129,7 +2134,9 @@ com.intellij.openapi.ui.popup.JBPopup
 - a:setUiVisible(Z):V
 - setUserData(java.util.List):V
 - a:show(com.intellij.ui.awt.RelativePoint):V
+- show(com.intellij.ui.awt.RelativePoint,com.intellij.openapi.ui.popup.PopupShowOptions):V
 - a:show(java.awt.Component):V
+- showAboveOf(java.awt.Component,com.intellij.openapi.ui.popup.PopupShowOptions):V
 - a:showCenteredInCurrentWindow(com.intellij.openapi.project.Project):V
 - a:showInBestPositionFor(com.intellij.openapi.actionSystem.DataContext):V
 - a:showInBestPositionFor(com.intellij.openapi.editor.Editor):V
@@ -2176,6 +2183,11 @@ c:com.intellij.openapi.ui.popup.ListSeparator
 - <init>(java.lang.String,javax.swing.Icon):V
 - getIcon():javax.swing.Icon
 - getText():java.lang.String
+com.intellij.openapi.ui.popup.PopupShowOptions
+- a:withMinimumHeight(java.lang.Integer):com.intellij.openapi.ui.popup.PopupShowOptions
+- a:withPopupComponentUnscaledGap(java.lang.Integer):com.intellij.openapi.ui.popup.PopupShowOptions
+f:com.intellij.openapi.ui.popup.PopupShowOptionsKt
+- sf:PopupShowOptions():com.intellij.openapi.ui.popup.PopupShowOptions
 com.intellij.openapi.util.Expirable
 - a:isExpired():Z
 com.intellij.openapi.util.ExpirableRunnable
@@ -2526,6 +2538,7 @@ com.intellij.openapi.wm.ToolWindowId
 - sf:MESSAGES_WINDOW:java.lang.String
 - sf:MODULES_DEPENDENCIES:java.lang.String
 - sf:PREVIEW:java.lang.String
+- sf:PROBLEMS_VIEW:java.lang.String
 - sf:PROJECT_VIEW:java.lang.String
 - sf:RUN:java.lang.String
 - sf:SERVICES:java.lang.String
@@ -2572,8 +2585,8 @@ c:com.intellij.projectImport.ProjectAttachProcessor
 - beforeAttach(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - beforeDetach(com.intellij.openapi.module.Module):V
 - sf:canAttachToProject():Z
+- defaultOptionIndex(com.intellij.openapi.project.Project):I
 - getActionText(com.intellij.openapi.project.Project):java.lang.String
-- getDefaultOptionIndex():I
 - getDescription(com.intellij.openapi.project.Project):java.lang.String
 - sf:getProcessor(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):com.intellij.projectImport.ProjectAttachProcessor
 - isEnabled(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.openapi.project.Project):Z

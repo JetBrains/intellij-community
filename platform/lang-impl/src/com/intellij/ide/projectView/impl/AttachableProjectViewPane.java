@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -119,6 +120,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
       myDropArea.add(myLabel, BorderLayout.CENTER);
     }
 
+    @Unmodifiable
     private static @NotNull List<VirtualFile> getDirectories(@NotNull DnDEvent event) {
       return ContainerUtil.filter(getVirtualFileListFromAttachedObject(event.getAttachedObject()),
                                   file -> file.isDirectory());

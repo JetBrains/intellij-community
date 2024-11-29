@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.properties.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test",
+    "//xml/impl",
+    "//plugins/properties",
+    "//java/testFramework",
+    "//platform/platform-tests:tests_test",
+    "//platform/boot",
+    "//platform/core-ui",
+    "//plugins/properties/properties-psi-impl:psi-impl",
+    "@lib//:assert_j",
+    "//platform/structuralsearch:structuralSearch-tests_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+  ]
+)
+### auto-generated section `build intellij.properties.tests` end

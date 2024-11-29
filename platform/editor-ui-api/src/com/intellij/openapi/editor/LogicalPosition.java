@@ -74,16 +74,19 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     return new LogicalPosition(line, column, value);
   }
   
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof LogicalPosition logicalPosition)) return false;
 
     return column == logicalPosition.column && line == logicalPosition.line;
   }
 
+  @Override
   public int hashCode() {
     return 29 * line + column;
   }
 
+  @Override
   public @NonNls String toString() {
     return "LogicalPosition: (" + line + ", " + column + ")"
            + (leansForward ? "; leans forward" : "");

@@ -1,8 +1,10 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.should
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.time.Duration.Companion.seconds
 
 @Internal
 fun Finder.settingsDialog(@Language("xpath") xpath: String? = null): SettingsDialogUiComponent {
@@ -26,8 +28,12 @@ class SettingsDialogUiComponent(data: ComponentData) : UiComponent(data) {
   val checkBoxTree
     get() = x("//div[@class='CheckboxTree']", JCheckboxTreeFixture::class.java)
 
+  val settingsTree
+    get() = tree("//div[@accessiblename='Settings categories']")
+
   fun openTreeSettingsSection(vararg path: String, fullMatch: Boolean = true) {
-    tree("//div[@accessiblename='Settings categories']").clickPath(*path, fullMatch=fullMatch)
+    settingsTree.should(message = "Settings tree is empty", timeout = 5.seconds) { collectExpandedPaths().isNotEmpty() }
+    settingsTree.clickPath(*path, fullMatch = fullMatch)
   }
 
   fun installPluginFromList(pluginName: String) {

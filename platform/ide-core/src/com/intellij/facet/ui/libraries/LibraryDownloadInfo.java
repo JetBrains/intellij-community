@@ -86,6 +86,7 @@ public class LibraryDownloadInfo {
     return myPresentableUrl != null ? myPresentableUrl : mirror;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -101,6 +102,7 @@ public class LibraryDownloadInfo {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myRemoteRepository != null ? myRemoteRepository.hashCode() : 0;
     result = 31 * result + (myRelativeDownloadUrl != null ? myRelativeDownloadUrl.hashCode() : 0);

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +69,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     return null;
   }
 
+  @Unmodifiable
   protected List<T> createReferences(final TextRange range, final int index) {
     T reference = createReference(range, index);
 

@@ -6,6 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -31,16 +33,31 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
      */
     private val testDirPlaceholder: String = "TEST_DIR"
 
+    /**
+     * We want to test the scenario for the non-yet-downloaded jars from 'kotlin-dist-for-ide' location.
+     *
+     * See KTIJ-32221 and [org.jetbrains.kotlin.idea.fir.extensions.FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider].
+     */
+    private val testKotlinDistForIdePlaceholder: String = "TEST_KOTLIN_DIST_FOR_IDE"
+
     override fun setUp() {
         super.setUp()
 
         // N.B. We don't use PathMacroContributor here because it's too late to register at this point
-        PathMacros.getInstance().setMacro(testDirPlaceholder, testDataDirectory.toString())
+        PathMacros.getInstance().apply {
+            setMacro(testDirPlaceholder, testDataDirectory.toString())
+            setMacro(testKotlinDistForIdePlaceholder, KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toString())
+        }
     }
 
     override fun tearDown() {
         runAll(
-            { PathMacros.getInstance().setMacro(testDirPlaceholder, null) },
+            {
+                PathMacros.getInstance().apply {
+                    setMacro(testDirPlaceholder, null)
+                    setMacro(testKotlinDistForIdePlaceholder, null)
+                }
+            },
             { super.tearDown() },
         )
     }

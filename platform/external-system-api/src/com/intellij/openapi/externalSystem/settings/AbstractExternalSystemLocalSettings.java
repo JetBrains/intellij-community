@@ -22,6 +22,7 @@ import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -107,6 +108,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   @NotNull
+  @Unmodifiable
   public List<ExternalTaskExecutionInfo> getRecentTasks() {
     return ContainerUtil.notNullize(state.recentTasks);
   }

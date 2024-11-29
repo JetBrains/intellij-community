@@ -576,7 +576,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    if (application.isReadAccessAllowed()) {
+    if (application.holdsReadLock()) {
       LOG.error("Don't call commitAndRunReadAction inside ReadAction, it will cause a deadlock. "+Thread.currentThread());
     }
 

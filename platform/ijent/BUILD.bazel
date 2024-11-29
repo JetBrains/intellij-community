@@ -1,26 +1,46 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.ijent` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "ijent_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "ijent",
   module_name = "intellij.platform.ijent",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/core-api:core",
-    "@community//platform/util/coroutines:util-coroutines",
-    "@community//platform/eel",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util/coroutines",
+    "//platform/eel",
   ],
-  exports = ["@community//platform/eel"],
-  runtime_deps = [":resources"]
+  exports = ["//platform/eel"],
+  runtime_deps = [":ijent_resources"]
 )
-### auto-generated section `build` end
+
+kt_jvm_test(
+  name = "ijent_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":ijent"],
+  deps = [
+    "@lib//:junit5",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "//platform/core-api:core",
+    "//platform/util/coroutines",
+    "//platform/eel",
+  ],
+  runtime_deps = [":ijent_resources"]
+)
+### auto-generated section `build intellij.platform.ijent` end

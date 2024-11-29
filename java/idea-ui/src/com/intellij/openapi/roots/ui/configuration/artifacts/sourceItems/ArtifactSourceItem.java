@@ -60,6 +60,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     return Collections.singletonList(PackagingElementFactory.getInstance().createArtifactElement(pointer, project));
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof ArtifactSourceItem && myArtifact.equals(((ArtifactSourceItem)obj).myArtifact);
   }
@@ -74,6 +75,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     return myArtifact;
   }
 
+  @Override
   public int hashCode() {
     return myArtifact.hashCode();
   }

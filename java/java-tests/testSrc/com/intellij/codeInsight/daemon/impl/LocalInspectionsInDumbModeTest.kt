@@ -9,7 +9,10 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.psi.JavaElementVisitor
 import com.intellij.psi.PsiComment
@@ -18,16 +21,15 @@ import com.intellij.psi.PsiLiteralExpression
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.enableInspectionTools
+import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.Throws
+import java.util.concurrent.atomic.AtomicInteger
 
 @CanChangeDocumentDuringHighlighting
 class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    DaemonProgressIndicator.setDebug(true)
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable?>) {
+    DaemonProgressIndicator.runInDebugMode<Exception> { -> super.runTestRunnable(testRunnable) }
   }
 
   fun testLocalInspectionInDumbMode() {
@@ -44,14 +46,14 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     assertOneElement(dumbInfos)
     assertExistsInfo(dumbInfos, "Dumb0")
 
-    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false));
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false))
     // dumb and smart inspections run in dumb mode
     val smartInfos = doHighlighting()
     assertSize(2, smartInfos)
     assertExistsInfo(smartInfos, "Dumb1")
     assertExistsInfo(smartInfos, "Smart0")
 
-    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false));
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false))
     // only dumb inspection runs in dumb mode, but the results of smart inspection are frozen from the previous run
     val dumbInfos2 = doHighlightingInDumbMode()
     assertSize(2, dumbInfos2)
@@ -74,7 +76,7 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     assertExistsInfo(smartInfos, "Dumb0")
     assertExistsInfo(smartInfos, "Smart0")
 
-    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false));
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart(getTestName(false))
     // only dumb inspection runs in dumb mode, but the results of smart inspection are frozen from the previous run
     val dumbInfos = doHighlightingInDumbMode()
     assertSize(2, dumbInfos)
@@ -139,12 +141,14 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     configureByText(JavaFileType.INSTANCE, text)
 
     // smart infos don't contain String because Suppressor works in smart mode and suppresses it
-    val smartInfos = doHighlighting().map { it.description }
-    assertDoesntContain(smartInfos, "String")
+    val smartInfos = doHighlighting()
+    assertDoesntContain(smartInfos.map { it.description }, "String")
 
-    // dumb infos contain String because Suppressor does not work in dumb mode
-    val dumbInfos = doHighlightingInDumbMode().map { it.description }
-    assertContainsElements(dumbInfos, "String")
+    if (Registry.`is`("ide.dumb.mode.check.awareness")) {
+      // dumb infos contain String because Suppressor does not work in dumb mode
+      val dumbInfos = doHighlightingInDumbMode()
+      assertContainsElements(dumbInfos.map { it.description }, "String")
+    }
   }
 
   fun testRedundantJavaSuppression() {
@@ -166,9 +170,11 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     """
     configureByText(JavaFileType.INSTANCE, text)
 
-    // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
-    val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
-    assertDoesntContain(initialDumbInfos, "Redundant suppression")
+    if (Registry.`is`("ide.dumb.mode.check.awareness")) {
+      // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
+      val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
+      assertDoesntContain(initialDumbInfos, "Redundant suppression")
+    }
 
     // smart infos contain a redundant suppression, because suppression is in fact redundant,
     // and redundant suppressor for Java works in smart mode
@@ -216,28 +222,25 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
   }
 
   private class DumbInspection : LocalInspectionTool(), DumbAware {
-    @Volatile
-    var counter = 0
+    val counter = AtomicInteger()
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
       return object : PsiElementVisitor() {
         override fun visitComment(comment: PsiComment) {
-          holder.registerProblem(comment, "Dumb$counter")
-          counter++
+          holder.registerProblem(comment, "Dumb${counter.andIncrement}")
         }
       }
     }
   }
 
   private class SmartInspection : LocalInspectionTool() {
-    @Volatile
-    var counter = 0
+    val counter = AtomicInteger()
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
       return object : PsiElementVisitor() {
         override fun visitComment(comment: PsiComment) {
-          holder.registerProblem(comment, "Smart$counter")
-          counter++
+          if (DumbService.isDumb(comment.project)) throw IndexNotReadyException.create()
+          else holder.registerProblem(comment, "Smart${counter.andIncrement}")
         }
       }
     }

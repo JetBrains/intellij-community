@@ -854,15 +854,21 @@ open class FileEditorManagerImpl(
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
-        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
-          file = file,
-          fileEditorManager = this,
-          isSingletonEditorInWindow = options.isSingletonEditorInWindow,
-        ) { editorWindow ->
-          if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
-            closeFile(file = file)
+
+        // Don't create a new window on backend for OpenMode.NEW_WINDOW,
+        // it will lead to creating two windows -- one from backend (Lux-ed),
+        // and another from frontend
+        if (ClientId.isCurrentlyUnderLocalId) {
+          return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
+            file = file,
+            fileEditorManager = this,
+            isSingletonEditorInWindow = options.isSingletonEditorInWindow,
+          ) { editorWindow ->
+            if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
+              closeFile(file = file)
+            }
+            doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
           }
-          doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
@@ -1244,15 +1250,18 @@ open class FileEditorManagerImpl(
       if (isNewEditor) {
         openFileSetModificationCount.increment()
       }
-      else {
+      else if (fileEntry != null) {
         for (editorWithProvider in composite.allEditorsWithProviders) {
-          restoreEditorState(
-            file = file,
-            fileEditorWithProvider = editorWithProvider,
-            isNewEditor = false,
-            exactState = options.isExactState,
-            project = project,
-          )
+          val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
+            ?.let { editorWithProvider.provider.readState(it, project, file) }
+          if (state != null && state != FileEditorState.INSTANCE) {
+            restoreEditorState(
+              fileEditorWithProvider = editorWithProvider,
+              state = state,
+              exactState = options.isExactState,
+              project = project,
+            )
+          }
         }
 
         // restore selected editor

@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.ae.database.core" />
-    <orderEntry type="module" module-name="intellij.ae.database.counters.community" />
+    <orderEntry type="module" module-name="intellij.ae.database.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.ae.database.counters.community" scope="RUNTIME" />
   </component>
 </module>

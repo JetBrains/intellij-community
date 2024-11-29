@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeIntention
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.inferClassIdByPsi
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -42,7 +42,7 @@ private fun hasRedundantType(property: KtProperty): Boolean {
     if (type is AbbreviatedType) return false
     when (initializer) {
         is KtConstantExpression -> {
-            val fqName = initializer.getClassId()?.asSingleFqName() ?: return false
+            val fqName = initializer.inferClassIdByPsi()?.asSingleFqName() ?: return false
             if (!KotlinBuiltIns.isConstructedFromGivenClass(type, fqName) || type.isMarkedNullable) return false
         }
 

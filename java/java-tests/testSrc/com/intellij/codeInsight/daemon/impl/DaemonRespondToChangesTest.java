@@ -69,9 +69,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Disposer;
@@ -86,7 +84,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
-import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.*;
@@ -94,7 +91,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import kotlin.Unit;
@@ -106,8 +102,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -133,7 +129,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
   }
 
   @Override
@@ -155,6 +150,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -214,73 +214,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     action.actionPerformed(alienEditor, c, dataContext);
   }
-
-  public void testHighlightersUpdate() throws Exception {
-    configureByFile(BASE_PATH + "HighlightersUpdate.java");
-    Document document = getDocument(getFile());
-    assertNotEmpty(highlightErrors());
-    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, getProject());
-    assertSize(1, errors);
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
-    assertNull(dirty);
-
-    type(' ');
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
-    assertNotNull(dirty);
-  }
-
-
-  public void testNoPsiEventsAltogether() throws Exception {
-    configureByFile(BASE_PATH + "HighlightersUpdate.java");
-    Document document = getDocument(getFile());
-    assertNotEmpty(highlightErrors());
-    type(' ');
-    backspace();
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
-    assertEquals(getFile().getTextRange(), dirty); // have to rehighlight whole file in case no PSI events have come
-  }
-
-  public void testRenameClass() {
-    configureByText(JavaFileType.INSTANCE, """
-      class AClass<caret> {
-    
-      }
-    """);
-    Document document = getDocument(getFile());
-    assertEmpty(highlightErrors());
-    PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
-    new RenameProcessor(myProject, psiClass, "Class2", false, false).run();
-    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
-    assertEquals(getFile().getTextRange(), dirty);
-
-    assertEmpty(highlightErrors());
-    assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
-  }
-
-  public void testTypingSpace() {
-    configureByText(JavaFileType.INSTANCE, """
-      class AClass<caret> {
-    
-      }
-    """);
-    Document document = getDocument(getFile());
-    assertEmpty(highlightErrors());
-
-    type("  ");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    PsiElement elementAtCaret = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-    assertTrue(elementAtCaret instanceof PsiWhiteSpace);
-    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
-    TextRange dirty = myDaemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(document, getFile(), Pass.UPDATE_ALL);
-    assertEquals(elementAtCaret.getTextRange(), dirty);
-    assertEmpty(highlightErrors());
-    assertTrue(myDaemonCodeAnalyzer.isErrorAnalyzingFinished(getFile()));
-  }
-
 
   public void testTypingSpaceInsideError() {
     configureByText(JavaFileType.INSTANCE, """
@@ -779,123 +712,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return highlighters;
   }
 
-  public void testFileStatusMapDirtyPSICachingWorks() {
-    myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false); // to prevent auto-start highlighting
-    UIUtil.dispatchAllInvocationEvents();
-    configureByText(JavaFileType.INSTANCE, "class <caret>S { int ffffff =  0;}");
-    UIUtil.dispatchAllInvocationEvents();
-
-    int[] creation = {0};
-    class Fac implements TextEditorHighlightingPassFactory {
-      @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
-        if (textRange == null) return null;
-        return new TestFileStatusMapDirtyCachingWorksPass(myProject);
-      }
-
-      final class TestFileStatusMapDirtyCachingWorksPass extends TextEditorHighlightingPass {
-        private TestFileStatusMapDirtyCachingWorksPass(Project project) {
-          super(project, getEditor().getDocument(), false);
-          creation[0]++;
-        }
-
-        @Override
-        public void doCollectInformation(@NotNull ProgressIndicator progress) {
-        }
-
-        @Override
-        public void doApplyInformationToEditor() {
-        }
-      }
-    }
-    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
-    registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
-    assertEmpty(highlightErrors());
-    assertEquals(1, creation[0]);
-
-    //cached
-    assertEmpty(highlightErrors());
-    assertEquals(1, creation[0]);
-    assertEmpty(highlightErrors());
-    assertEquals(1, creation[0]);
-
-    type(' ');
-    assertEmpty(highlightErrors());
-    assertEquals(2, creation[0]);
-    assertEmpty(highlightErrors());
-    assertEquals(2, creation[0]);
-    assertEmpty(highlightErrors());
-    assertEquals(2, creation[0]);
-  }
-
-  public void testFileStatusMapDirtyDocumentRangeWorks() {
-    configureByText(PlainTextFileType.INSTANCE, "class <caret>S { int ffffff =  0;}");
-    UIUtil.dispatchAllInvocationEvents();
-
-    Document document = myEditor.getDocument();
-    FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
-    fileStatusMap.disposeDirtyDocumentRangeStorage(document);
-    assertEquals(TextRange.EMPTY_RANGE, fileStatusMap.getCompositeDocumentDirtyRange(document));
-
-    int offset = myEditor.getCaretModel().getOffset();
-    type(' ');
-    assertEquals(new TextRange(offset, offset+1), fileStatusMap.getCompositeDocumentDirtyRange(document));
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(10, 11, "xxx"));
-    assertEquals(new TextRange(offset, 13), fileStatusMap.getCompositeDocumentDirtyRange(document));
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("  "));
-    assertEquals(new TextRange(0, 2), fileStatusMap.getCompositeDocumentDirtyRange(document));
-    fileStatusMap.disposeDirtyDocumentRangeStorage(document);
-    assertEquals(new TextRange(0, 0), fileStatusMap.getCompositeDocumentDirtyRange(document));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0,"x"));
-    assertEquals(new TextRange(0, 1), fileStatusMap.getCompositeDocumentDirtyRange(document));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1,"x"));
-    assertEquals(new TextRange(0, 2), fileStatusMap.getCompositeDocumentDirtyRange(document));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(4,"x"));
-    assertEquals(new TextRange(0, 5), fileStatusMap.getCompositeDocumentDirtyRange(document));
-  }
-
-  public void testDefensivelyDirtyFlagDoesNotClearPrematurely() {
-    class Fac implements TextEditorHighlightingPassFactory {
-      @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        return null;
-      }
-    }
-    TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
-    registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
-
-    configureByText(JavaFileType.INSTANCE, "@Deprecated<caret> class S { } ");
-
-    List<HighlightInfo> infos = doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
-    assertSize(2, infos);
-
-    assertEquals("@Deprecated", infos.get(0).getText());
-    assertEquals("S", infos.get(1).getText());
-
-    backspace();
-    type('d');
-
-    List<HighlightInfo> after = doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
-
-    assertEquals("@Deprecated", after.get(0).getText());
-    assertEquals("S", after.get(1).getText());
-
-    backspace();
-    type('d');
-
-    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getTextLength());
-    type(" ");
-
-    after = doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
-    assertSize(2, after);
-
-    assertEquals("@Deprecated", after.get(0).getText());
-    assertEquals("S", after.get(1).getText());
-  }
-
   public void testModificationInsideCodeBlockDoesNotAffectErrorMarkersOutside() {
     configureByText(JavaFileType.INSTANCE, """
       class SSSSS {
@@ -1101,37 +917,37 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X{ void f() {" + body + "<caret>\n} }");
 
     Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"), getTestRootDisposable());
-    DaemonProgressIndicator.setDebug(true);
+    DaemonProgressIndicator.runInDebugMode(() -> {
+      try {
+        Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
+        VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
+        PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
+        OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
+          VirtualFile alienFile = alienRoot.createChildData(this, "AlienFile.java");
+          setFileText(alienFile, "class Alien { }");
+          return new OpenFileDescriptor(alienProject, alienFile);
+        });
 
-    try {
-      Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
-      VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
-      PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
-      OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
-        VirtualFile alienFile = alienRoot.createChildData(this, "AlienFile.java");
-        setFileText(alienFile, "class Alien { }");
-        return new OpenFileDescriptor(alienProject, alienFile);
-      });
+        FileEditorManager fe = FileEditorManager.getInstance(alienProject);
+        Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
+        ((EditorImpl)alienEditor).setCaretActive();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
 
-      FileEditorManager fe = FileEditorManager.getInstance(alienProject);
-      Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
-      ((EditorImpl)alienEditor).setCaretActive();
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
-
-      // start daemon in the main project. should check for its cancel when typing in alien
-      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
-      AtomicBoolean checked = new AtomicBoolean();
-      Runnable callbackWhileWaiting = () -> {
-        if (checked.getAndSet(true)) return;
-        typeInAlienEditor(alienEditor, 'x');
-      };
-      myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
-    }
-    catch (ProcessCanceledException ignored) {
-      return;
-    }
-    fail("must throw PCE");
+        // start daemon in the main project. should check for its cancel when typing in alien
+        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+        AtomicBoolean checked = new AtomicBoolean();
+        Runnable callbackWhileWaiting = () -> {
+          if (checked.getAndSet(true)) return;
+          typeInAlienEditor(alienEditor, 'x');
+        };
+        myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
+      }
+      catch (ProcessCanceledException ignored) {
+        return;
+      }
+      fail("must throw PCE");
+    });
   }
 
   public void testPasteInAnonymousCodeBlock() {
@@ -1190,7 +1006,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assert profile.isToolEnabled(myDeadCodeKey, myFile);
   }
 
-  public void testErrorDisappearsRightAfterTypingInsideVisibleAreaWhileDaemonContinuesToChugAlong() {
+  public void testErrorDisappearsRightAfterTypingInsideVisibleAreaWhileDaemonContinuesToChugAlong_Stress() {
     String text = "class X{\nint xxx;\n{\nint i = <selection>null</selection><caret>;\n" + StringUtil.repeat("{ this.hashCode(); }\n\n\n", 10000) + "}}";
     configureByText(JavaFileType.INSTANCE, text);
 
@@ -1266,7 +1082,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertNotEmpty(highlightErrors());
   }
 
-  public void testInterruptOnTyping() throws Throwable {
+  public void testInterruptOnTyping_Stress() throws Throwable {
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     assertEmpty(highlightErrors());
@@ -1401,8 +1217,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private void registerFakePass(@NotNull Collection<? super Editor> applied, @NotNull Collection<? super Editor> collected) {
     class Fac implements TextEditorHighlightingPassFactory {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        return new EditorBoundHighlightingPass(editor, file, false) {
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+        return new EditorBoundHighlightingPass(editor, psiFile, false) {
           @Override
           public void doCollectInformation(@NotNull ProgressIndicator progress) {
             collected.add(editor);
@@ -1605,50 +1421,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", error2.getDescription());
   }
 
-
-  public void testModificationInExcludedFileDoesNotCauseRehighlight() {
-    @Language("JAVA")
-    String text = "class EEE { void f(){} }";
-    VirtualFile excluded = configureByText(JavaFileType.INSTANCE, text).getVirtualFile();
-    PsiTestUtil.addExcludedRoot(myModule, excluded.getParent());
-
-    configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
-    assertEmpty(highlightErrors());
-    FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
-    TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
-    assertNull(scope);
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> ((PsiJavaFile)PsiManager.getInstance(myProject).findFile(excluded)).getClasses()[0].getMethods()[0].delete());
-
-    UIUtil.dispatchAllInvocationEvents();
-    scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
-    assertNull(scope);
-  }
-
-  public void testModificationInWorkspaceXmlDoesNotCauseRehighlight() {
-    configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
-    StoreUtilKt.runInAllowSaveMode(true, () -> {
-      StoreUtil.saveDocumentsAndProjectsAndApp(true);
-      VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
-      PsiFile excluded = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
-
-      assertEmpty(highlightErrors());
-      FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(getProject()).getFileStatusMap();
-      TextRange scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
-      assertNull(scope);
-
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(excluded));
-        document.insertString(0, "<!-- dsfsd -->");
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      });
-      UIUtil.dispatchAllInvocationEvents();
-      scope = me.getFileDirtyScope(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
-      assertNull(scope);
-      return Unit.INSTANCE;
-    });
-  }
-
   static void runWithReparseDelay(int reparseDelayMs, @NotNull Runnable task) {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int oldDelay = settings.getAutoReparseDelay();
@@ -1782,39 +1554,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public void testFileReload() throws Exception {
-    VirtualFile file = createFile("a.java", "").getVirtualFile();
-    Document document = getDocument(file);
-    assertNotNull(document);
-
-    FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
-
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-      GCWatcher.tracking(documentManager.getCachedPsiFile(document)).ensureCollected();
-      assertNull(documentManager.getCachedPsiFile(document));
-
-      @Language("JAVA")
-      String text = "class X { void foo() {}}";
-      document.insertString(0, text);
-      documentManager.commitAllDocuments();
-      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, documentManager.getPsiFile(document), Pass.UPDATE_ALL));
-
-      FileContentUtilCore.reparseFiles(file);
-      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, documentManager.getPsiFile(document), Pass.UPDATE_ALL));
-
-      findClass("X").getMethods()[0].delete();
-      assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, documentManager.getPsiFile(document), Pass.UPDATE_ALL));
-    });
-  }
-
   public void testDumbAwareHighlightingPassesStartEvenInDumbMode() {
     List<TextEditorHighlightingPassFactory> collected = Collections.synchronizedList(new ArrayList<>());
     List<TextEditorHighlightingPassFactory> applied = Collections.synchronizedList(new ArrayList<>());
       class DumbFac implements TextEditorHighlightingPassFactory, DumbAware {
         @Override
-        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-          return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, file);
+        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+          return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, psiFile);
         }
 
         class TestDumbAwareHighlightingPassesStartEvenInDumbModePass extends EditorBoundHighlightingPass implements DumbAware {
@@ -1838,15 +1584,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     registrar.registerTextEditorHighlightingPass(dumbFac, null, null, false, -1);
       class SmartFac implements TextEditorHighlightingPassFactory {
         @Override
-        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-          return new EditorBoundHighlightingPass(editor, file, false) {
+        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+          return new EditorBoundHighlightingPass(editor, psiFile, false) {
             @Override
             public void doCollectInformation(@NotNull ProgressIndicator progress) {
+              if (DumbService.isDumb(myProject)) throw IndexNotReadyException.create();
               collected.add(SmartFac.this);
             }
 
             @Override
             public void doApplyInformationToEditor() {
+              if (DumbService.isDumb(myProject)) return;
               applied.add(SmartFac.this);
             }
           };
@@ -1920,7 +1668,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     AtomicBoolean applied = new AtomicBoolean();
     class MyCheckingConstructorTraceFac implements TextEditorHighlightingPassFactory {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
         return new TestHighlightingPassesAreInstantiatedOutsideEDTToImproveResponsivenessPass(myProject);
       }
 
@@ -1954,8 +1702,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private static class EmptyPassFactory implements TextEditorHighlightingPassFactory {
     @Override
-    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-      return new EmptyPass(file.getProject(), editor.getDocument());
+    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+      return new EmptyPass(psiFile.getProject(), editor.getDocument());
     }
 
     static class EmptyPass extends TextEditorHighlightingPass {
@@ -2287,59 +2035,61 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   // after all typings are over, wait for final highlighting to complete and check that no errors are left in the markup
   private void assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(String initialText, String textToType, Runnable afterWaitForDaemon) {
     // run expensive consistency checks on each typing
-    HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = true; Disposer.register(getTestRootDisposable(), () -> HighlightInfoUpdaterImpl.ASSERT_INVARIANTS = false);
-    String finalText = initialText.replace("<caret>", textToType);
-    configureByText(JavaFileType.INSTANCE, finalText);
-    assertEmpty(doHighlighting(HighlightSeverity.ERROR));
-    runWithReparseDelay(0, () -> {
-      for (int i=0; i<10; i++) {
-        //System.out.println("i = " + i);
-        PassExecutorService.LOG.debug("i = " + i);
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText("  "));
-        doHighlighting(); // reset various optimizations e.g. FileStatusMap.getCompositeDocumentDirtyRange
-        MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
-        for (int c = 0; c < finalText.length(); c++) {
-          PassExecutorService.LOG.debug("c = " + c);
-          //System.out.println("  c = " + c);
-          int o=c;
-          //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
-          WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-            assertFalse(myDaemonCodeAnalyzer.isRunning());
-            long docStamp = myEditor.getDocument().getModificationStamp();
-            char charToType = finalText.charAt(o);
-            type(charToType);
-            if (docStamp != myEditor.getDocument().getModificationStamp()) { // condition could be false when type handler does overtype ')' with already existing ')'
-              assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
+    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdaterImpl.getInstance(getProject());
+    updater.runAssertingInvariants(() -> {
+      String finalText = initialText.replace("<caret>", textToType);
+      configureByText(JavaFileType.INSTANCE, finalText);
+      assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+      runWithReparseDelay(0, () -> {
+        for (int i=0; i<10; i++) {
+          //System.out.println("i = " + i);
+          PassExecutorService.LOG.debug("i = " + i);
+          WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText("  "));
+          doHighlighting(); // reset various optimizations e.g. FileStatusMap.getCompositeDocumentDirtyRange
+          MarkupModel markupModel = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
+          for (int c = 0; c < finalText.length(); c++) {
+            PassExecutorService.LOG.debug("c = " + c);
+            //System.out.println("  c = " + c);
+            int o=c;
+            //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
+            WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+              assertFalse(myDaemonCodeAnalyzer.isRunning());
+              long docStamp = myEditor.getDocument().getModificationStamp();
+              char charToType = finalText.charAt(o);
+              type(charToType);
+              if (docStamp != myEditor.getDocument().getModificationStamp()) { // condition could be false when type handler does overtype ')' with already existing ')'
+                assertFalse(myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile));
+              }
+            });
+            //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
+            TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
+            myDaemonCodeAnalyzer.restart(myFile);
+            List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
+            //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
+            //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);
+            PassExecutorService.LOG.debug(" errorsfrommarkup:\n" + StringUtil.join(ContainerUtil.sorted(errorsFromMarkup, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n") + "\n-----\n");
+            while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)/*in case the highlighting has already finished miraculously by now*/) {
+              Thread.yield();
+              UIUtil.dispatchAllInvocationEvents();
+              if (t.timedOut()) {
+                throw new RuntimeException(new TimeoutException());
+              }
             }
-          });
-          //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
-          TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
-          myDaemonCodeAnalyzer.restart(myFile);
-          List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
-          //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
-          //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);
-          PassExecutorService.LOG.debug(" errorsfrommarkup:\n" + StringUtil.join(ContainerUtil.sorted(errorsFromMarkup, Segment.BY_START_OFFSET_THEN_END_OFFSET), "\n") + "\n-----\n");
-          while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile)/*in case the highlighting has already finished miraculously by now*/) {
-            Thread.yield();
-            UIUtil.dispatchAllInvocationEvents();
-            if (t.timedOut()) {
-              throw new RuntimeException(new TimeoutException());
+            if (afterWaitForDaemon != null) {
+              afterWaitForDaemon.run();
             }
           }
-          if (afterWaitForDaemon != null) {
-            afterWaitForDaemon.run();
+          // some chars might be inserted by TypeHandlers
+          while (!myEditor.getDocument().getText().substring(myEditor.getCaretModel().getOffset()).isEmpty()) {
+            delete(myEditor);
           }
+          LOG.debug("All typing completed. " +
+                    "\neditor text:-----------\n"+myEditor.getDocument().getText()+"\n-------\n"+
+                    "errors in markup: " + StringUtil.join(getErrorsFromMarkup(markupModel), "\n") + "\n-----\n");
+          waitForDaemon(getProject(), myEditor.getDocument());
+          assertEmpty(myEditor.getDocument().getText(), getErrorsFromMarkup(markupModel));
         }
-        // some chars might be inserted by TypeHandlers
-        while (!myEditor.getDocument().getText().substring(myEditor.getCaretModel().getOffset()).isEmpty()) {
-          delete(myEditor);
-        }
-        LOG.debug("All typing completed. " +
-                  "\neditor text:-----------\n"+myEditor.getDocument().getText()+"\n-------\n"+
-                  "errors in markup: " + StringUtil.join(getErrorsFromMarkup(markupModel), "\n") + "\n-----\n");
-        waitForDaemon(getProject(), myEditor.getDocument());
-        assertEmpty(myEditor.getDocument().getText(), getErrorsFromMarkup(markupModel));
-      }
+      });
     });
   }
 

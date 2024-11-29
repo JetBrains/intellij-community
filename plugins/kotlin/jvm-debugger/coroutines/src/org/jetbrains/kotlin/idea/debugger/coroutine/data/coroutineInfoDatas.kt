@@ -5,20 +5,26 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.data
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.SuspendContext
 import com.sun.jdi.ThreadReference
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData.Companion.DEFAULT_COROUTINE_NAME
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData.Companion.DEFAULT_COROUTINE_STATE
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineInfo
+
+@ApiStatus.Internal
+data class CoroutineStacksInfoData(
+    val continuationStackFrames: List<CoroutineStackFrameItem>,
+    val creationStackFrames: List<CreationCoroutineStackFrameItem>,
+) {
+    val topFrameVariables: List<JavaValue> by lazy {
+        continuationStackFrames.firstOrNull()?.spilledVariables ?: emptyList()
+    }
+}
 
 abstract class CoroutineInfoData(val descriptor: CoroutineDescriptor) {
     abstract val continuationStackFrames: List<CoroutineStackFrameItem>
     abstract val creationStackFrames: List<CreationCoroutineStackFrameItem>
     abstract val activeThread: ThreadReference?
     abstract val jobHierarchy: List<String>
-
-    val topFrameVariables: List<JavaValue> by lazy {
-        continuationStackFrames.firstOrNull()?.spilledVariables ?: emptyList()
-    }
 
     fun isSuspended() = descriptor.state == State.SUSPENDED
 

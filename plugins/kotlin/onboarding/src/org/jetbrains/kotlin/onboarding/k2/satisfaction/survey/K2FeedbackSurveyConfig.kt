@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.onboarding.FeedbackNotificationWithKotlinLogo
 class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "k2_feedback"
-    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 11, 1)
+    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2025, 4, 1)
     override val requireIdeEAP: Boolean = false
 
     private val suitableIdeVersion: String = Registry.stringValue("k2.feedback.survey.ide.version.number")

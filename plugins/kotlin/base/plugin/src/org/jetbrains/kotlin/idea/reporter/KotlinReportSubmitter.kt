@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.idea.reporter
 
+import com.intellij.diagnostic.ITNReporter
 import com.intellij.diagnostic.IdeaReportingEvent
-import com.intellij.diagnostic.ReportMessages
 import com.intellij.ide.DataManager
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -30,9 +31,9 @@ private const val ENABLED_VALUE = "enabled"
 private const val KOTLIN_K2_MESSAGE = "This report is from the K2 Kotlin plugin."
 
 /**
- * We need to wrap ITNReporter for force showing of errors from Kotlin plugin even from a released version of IDEA.
+ * We need to wrap `ITNReporter` for force showing of errors from Kotlin plugin even from a released version of IDEA.
  */
-class KotlinReportSubmitter : ITNReporterCompat() {
+class KotlinReportSubmitter : ITNReporter() {
     private val isIdeaAndKotlinRelease: Boolean by lazy {
         // Disabled in a released version of IDEA and Android Studio
         // Enabled in EAPs, Canary and Beta
@@ -63,10 +64,10 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         return true
     }
 
-    override fun submitCompat(
+    override fun submit(
         events: Array<IdeaLoggingEvent>,
         additionalInfo: String?,
-        parentComponent: Component?,
+        parentComponent: Component,
         consumer: Consumer<in SubmittedReportInfo>
     ): Boolean {
         val effectiveEvents = when {
@@ -76,14 +77,13 @@ class KotlinReportSubmitter : ITNReporterCompat() {
 
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
         if (KotlinIdePlugin.hasPatchedVersion) {
-            ReportMessages.GROUP
-                .createNotification(KotlinBasePluginBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
+            Notification("Error Report", KotlinBasePluginBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
                 .setImportant(false)
                 .notify(project)
             return true
         }
 
-        return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
+        return super.submit(effectiveEvents, additionalInfo, parentComponent, consumer)
     }
 
     private fun markEventForK2(event: IdeaLoggingEvent): IdeaLoggingEvent {

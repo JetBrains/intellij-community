@@ -1,0 +1,25 @@
+### auto-generated section `build kotlin.util.compiler-classpath` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "util-compiler-classpath",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:asm",
+    "@lib//:java_compatibility",
+    "@lib//:javax-inject",
+    "@lib//:vavr",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jna",
+    "@lib//:lz4-java",
+    "@lib//:jsr305",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/util/jdom",
+    "//java/java-impl:impl",
+  ]
+)
+### auto-generated section `build kotlin.util.compiler-classpath` end

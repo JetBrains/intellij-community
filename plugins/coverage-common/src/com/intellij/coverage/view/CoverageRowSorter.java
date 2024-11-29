@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBTreeTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -47,6 +48,7 @@ class CoverageRowSorter extends RowSorter<TableModel> {
   }
 
   @Override
+  @Unmodifiable
   public List<? extends SortKey> getSortKeys() {
     return ContainerUtil.createMaybeSingletonList(mySortKey);
   }

@@ -123,4 +123,9 @@ final class NonCancelableIndicator implements StandardProgressIndicator {
   public boolean isShowing() {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "NonCancelableIndicator.INSTANCE: "+super.toString();
+  }
 }

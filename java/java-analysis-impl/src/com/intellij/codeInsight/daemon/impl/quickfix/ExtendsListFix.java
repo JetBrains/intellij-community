@@ -12,9 +12,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance(ExtendsListFix.class);
@@ -44,7 +44,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     myToAdd = toAdd;
     myTypeToExtendFrom = aClass instanceof PsiTypeParameter ? typeToExtendFrom : (PsiClassType)GenericsUtil.eliminateWildcards(typeToExtendFrom);
 
-    @NonNls final String messageKey;
+    @PropertyKey(resourceBundle = QuickFixBundle.BUNDLE) String messageKey;
     if (classToExtendFrom != null && aClass.isInterface() == classToExtendFrom.isInterface() || aClass instanceof PsiTypeParameter) {
       messageKey = toAdd ? "add.class.to.extends.list" : "remove.class.from.extends.list";
     }

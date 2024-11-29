@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.CommonBundle
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -158,7 +157,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     minimumSize = size
   }
 
-  protected open fun calcHeight(): Int = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader(UISettings.getInstance()))
+  protected open fun calcHeight(): Int = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader())
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
 

@@ -211,6 +211,7 @@ public final class FileAttributes {
 
     boolean isHidden = false;
     boolean isWritable = false;
+    // TODO KN: We should look at the OS of a Path, not at the OS of the IDE.
     if (SystemInfo.isWindows) {
       isHidden = path.getParent() != null && ((DosFileAttributes)attrs).isHidden();
       isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();

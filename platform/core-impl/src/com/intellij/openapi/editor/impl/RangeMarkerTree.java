@@ -264,6 +264,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         ((RMNode<?>)node).onRemoved();
       }
       if (!node.isValid()) {
+        //noinspection DataFlowIssue
         node.processAliveKeys(t->invalidated.add(t));
       }
     }

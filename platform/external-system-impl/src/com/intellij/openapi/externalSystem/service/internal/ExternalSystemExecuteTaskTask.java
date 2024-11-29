@@ -85,6 +85,9 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       .withEnvironmentVariables(myEnv)
       .passParentEnvs(myPassParentEnvs);
 
+    settings.setTasks(myTasksToExecute);
+    settings.setJvmParameters(myJvmParametersSetup);
+
     putUserDataTo(settings);
 
     TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
@@ -111,7 +114,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       var facade = manager.getFacade(project, projectPath, projectSystemId);
       var taskManager = facade.getTaskManager();
       //noinspection unchecked
-      taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmParametersSetup);
+      taskManager.executeTasks(projectPath, id, settings);
     }
     finally {
       activity.finished();

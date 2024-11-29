@@ -43,8 +43,7 @@ import java.util.Locale;
  * The class contains utilities for interacting with Linux AppArmor for solving the restricted user namespaces problem.
  * <a href="https://youtrack.jetbrains.com/articles/JBR-A-11">The problem description.</a>
  */
-@ApiStatus.Experimental
-public final class JBCefAppArmorUtils {
+final class JBCefAppArmorUtils {
   private static final Logger LOG = Logger.getInstance(JBCefAppArmorUtils.class);
   private static final LazyInitializer.LazyValue<Boolean> myUnprivilegedUserNameSpacesRestricted = LazyInitializer.create(
     () -> areUnprivilegedUserNameSpacesRestrictedImpl());
@@ -57,28 +56,6 @@ public final class JBCefAppArmorUtils {
    */
   public static boolean areUnprivilegedUserNamespacesRestricted() {
     return myUnprivilegedUserNameSpacesRestricted.get();
-  }
-
-  public static @NotNull InlineBanner createUnprivilegedUserNamespacesRestrictedBanner() {
-    String message = "%s. %s".formatted(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.title"),
-                                        IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.message"));
-    return
-      new InlineBanner(message, EditorNotificationPanel.Status.Error)
-        .setMessage(message)
-        .showCloseButton(false)
-        .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.add.apparmor.profile"),
-                   () -> {
-                     installAppArmorProfile();
-                   })
-        .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.disable.sandbox"),
-                   () -> {
-                     RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
-                     ApplicationManager.getApplication().restart();
-                   })
-        .addAction(IdeBundle.message("notification.content.jcef.unprivileged.userns.restricted.action.learn.more"),
-                   () -> {
-                     BrowserUtil.browse("https://youtrack.jetbrains.com/articles/JBR-A-11");
-                   });
   }
 
   public static void showUnprivilegedUserNamespacesRestrictedDialog(Component parentComponent) {

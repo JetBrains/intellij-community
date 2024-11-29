@@ -32,6 +32,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.io.File;
@@ -360,6 +361,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.emptyList(), scope);
   }
 
+  @Unmodifiable
   public static @NotNull List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
     return ContainerUtil.map(jarPaths, OrderEntryFix::refreshAndConvertToUrl);
   }

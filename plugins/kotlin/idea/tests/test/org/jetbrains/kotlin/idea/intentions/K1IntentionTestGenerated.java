@@ -2516,6 +2516,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/anonymousFunctionToLambda/expressionBody.kt");
         }
 
+        @TestMetadata("extensionFunction.kt")
+        public void testExtensionFunction() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/extensionFunction.kt");
+        }
+
         @TestMetadata("fullParam.kt")
         public void testFullParam() throws Exception {
             runTest("testData/intentions/anonymousFunctionToLambda/fullParam.kt");
@@ -7385,6 +7390,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("brokenCode.kt")
+        public void testBrokenCode() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/brokenCode.kt");
+        }
+
         @TestMetadata("caretAfterParameterName.kt")
         public void testCaretAfterParameterName() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/caretAfterParameterName.kt");
@@ -7488,6 +7498,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("testData/intentions/convertParameterToReceiver/topLevelFun.kt");
+        }
+
+        @TestMetadata("unresolvedCode.kt")
+        public void testUnresolvedCode() throws Exception {
+            runTest("testData/intentions/convertParameterToReceiver/unresolvedCode.kt");
         }
 
         @TestMetadata("vararg.kt")
@@ -8152,6 +8167,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("replaceThis.kt")
         public void testReplaceThis() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/replaceThis.kt");
+        }
+
+        @TestMetadata("smartCasts.kt")
+        public void testSmartCasts() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/smartCasts.kt");
         }
 
         @TestMetadata("thisCall.kt")
@@ -9910,6 +9930,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             @TestMetadata("parameterExpression.kt")
             public void testParameterExpression() throws Exception {
                 runTest("testData/intentions/convertToScope/convertToWith/parameterExpression.kt");
+            }
+
+            @TestMetadata("searchForUsages.kt")
+            public void testSearchForUsages() throws Exception {
+                runTest("testData/intentions/convertToScope/convertToWith/searchForUsages.kt");
             }
 
             @TestMetadata("singleCall.kt")
@@ -12819,6 +12844,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/iterateExpression/noNameConflict.kt");
         }
 
+        @TestMetadata("noNameConflict2.kt")
+        public void testNoNameConflict2() throws Exception {
+            runTest("testData/intentions/iterateExpression/noNameConflict2.kt");
+        }
+
         @TestMetadata("nonOperatorIterator.kt")
         public void testNonOperatorIterator() throws Exception {
             runTest("testData/intentions/iterateExpression/nonOperatorIterator.kt");
@@ -15059,45 +15089,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/mergeElseIf")
-    public static class MergeElseIf extends AbstractK1IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("comments.kt")
-        public void testComments() throws Exception {
-            runTest("testData/intentions/mergeElseIf/comments.kt");
-        }
-
-        @TestMetadata("else.kt")
-        public void testElse() throws Exception {
-            runTest("testData/intentions/mergeElseIf/else.kt");
-        }
-
-        @TestMetadata("expression.kt")
-        public void testExpression() throws Exception {
-            runTest("testData/intentions/mergeElseIf/expression.kt");
-        }
-
-        @TestMetadata("ifNotSingle.kt")
-        public void testIfNotSingle() throws Exception {
-            runTest("testData/intentions/mergeElseIf/ifNotSingle.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/mergeElseIf/simple.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/mergeIfs")
     public static class MergeIfs extends AbstractK1IntentionTest {
         @java.lang.Override
@@ -15347,14 +15338,29 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflict.kt");
         }
 
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflictK2.kt");
+        }
+
         @TestMetadata("redeclarationConflictWithPackage.kt")
         public void testRedeclarationConflictWithPackage() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackage.kt");
         }
 
+        @TestMetadata("redeclarationConflictWithPackageK2.kt")
+        public void testRedeclarationConflictWithPackageK2() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackageK2.kt");
+        }
+
         @TestMetadata("redeclarationPropertyConflict.kt")
         public void testRedeclarationPropertyConflict() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflict.kt");
+        }
+
+        @TestMetadata("redeclarationPropertyConflictK2.kt")
+        public void testRedeclarationPropertyConflictK2() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflictK2.kt");
         }
 
         @TestMetadata("script.kts")

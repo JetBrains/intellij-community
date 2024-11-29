@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUt
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
+import org.jetbrains.kotlin.idea.k2.refactoring.util.AnonymousFunctionToLambdaUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.idea.k2.refactoring.util.isRedundantUnit
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractInlinePostProcessor
@@ -60,8 +61,8 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
         val facility = ShortenReferencesFacility.getInstance()
         return pointers.mapNotNull { p ->
             val ktElement = p.element ?: return@mapNotNull null
-            facility.shorten(ktElement, ShortenOptions.ALL_ENABLED)
-            p.element
+            val shorten = facility.shorten(ktElement, ShortenOptions.ALL_ENABLED)
+            p.element ?: shorten as? KtElement
         }
     }
 
@@ -235,5 +236,11 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
             }
         }
         replacementMap.forEach { (argument, replacement) -> argument.replace(replacement) }
+    }
+
+    override fun convertFunctionToLambdaAndMoveOutsideParentheses(function: KtNamedFunction) {
+        analyze(function) {
+            AnonymousFunctionToLambdaUtil.prepareAnonymousFunctionToLambdaContext(function)
+        }?.let { AnonymousFunctionToLambdaUtil.convertAnonymousFunctionToLambda(function, it) }
     }
 }

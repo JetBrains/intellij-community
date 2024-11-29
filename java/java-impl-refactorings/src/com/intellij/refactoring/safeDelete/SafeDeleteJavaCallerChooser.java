@@ -24,6 +24,7 @@ import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -224,12 +225,13 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     }
 
     @Override
+    @Unmodifiable
     protected List<PsiMethod> computeCallers() {
       if (getTopMember().equals(getMember())) {
         List<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
         return ContainerUtil.map(items, info -> info.getCallerMethod());
       }
-      final List<PsiMethod> methods = super.computeCallers();
+      final List<PsiMethod> methods = new ArrayList<>(super.computeCallers());
       methods.remove(getTopMember());
       return methods;
     }

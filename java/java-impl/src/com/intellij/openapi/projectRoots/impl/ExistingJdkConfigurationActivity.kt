@@ -42,7 +42,7 @@ private class ExistingJdkConfigurationActivity : ProjectActivity {
     val rootManager = project.serviceAsync<ProjectRootManager>()
     val addedJdks = registeredJdks.toMutableList()
 
-    val priorityPaths = JavaHomeFinder.getFinder().findInJavaHome()
+    val priorityPaths = JavaHomeFinder.getFinder(project).findInJavaHome()
 
     writeAction {
       // Register collected JDKs

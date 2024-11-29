@@ -86,7 +86,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     try {
       Location location = frame.location();
       CompoundPositionManager positionManager = frame.getVirtualMachine().getDebugProcess().getPositionManager();
-      return positionManager.getSourcePositionAsync(location);
+      return positionManager.getSourcePositionFuture(location);
     }
     catch (Exception e) {
       return CompletableFuture.failedFuture(e);

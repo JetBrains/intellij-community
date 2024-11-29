@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -10,6 +9,7 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
+import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 
@@ -28,7 +28,7 @@ class GradleKotlinBuildSystemDependencyManager(private val project: Project) : K
 
     override fun isProjectSyncPending(): Boolean {
         val isNotificationVisible =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("GRADLE", "Gradle"))
+            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, GRADLE_SYSTEM_ID)
         return isNotificationVisible.get()
     }
 

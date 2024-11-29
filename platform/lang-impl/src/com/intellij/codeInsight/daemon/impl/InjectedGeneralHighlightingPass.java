@@ -239,6 +239,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
       HighlightInfo info = builder.createUnconditionally();
       info.markFromInjection();
       info.toolId = InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID;
+      info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
       result.add(info);
     }
     resultSink.accept(InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID, injectedPsi, result);

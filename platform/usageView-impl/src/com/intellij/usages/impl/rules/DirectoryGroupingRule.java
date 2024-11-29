@@ -177,12 +177,14 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof DirectoryGroup)) return false;
       return myDir.equals(((DirectoryGroup)o).myDir);
     }
 
+    @Override
     public int hashCode() {
       return myDir.hashCode();
     }

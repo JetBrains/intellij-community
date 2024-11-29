@@ -598,7 +598,31 @@ public final class VariableAccessUtils {
              .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
   }
 
-  static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
+  /// Returns true if the type of element that `reference` refers to can be safely changed to `targetType`.
+  ///
+  /// ### Example
+  ///
+  /// Consider the following (obviously wrong, but good enough for demo purpose) code:
+  ///
+  /// ```java
+  /// void foo(Optional<String> opt) {
+  ///   Object obj = opt.get();
+  ///   if (obj instanceof Integer) {
+  ///     doStuff();
+  ///   }
+  ///   // ...
+  /// }
+  /// ```
+  ///
+  /// Let's say you'd like to know if it's "safe" to change the type of local variable `obj` from `Object` to `String`.
+  /// "Safe" means that there likely will be no compile-time errors or behavior difference after such a type change is performed.
+  ///
+  /// In our example, this method returns false because changing the type of `obj`
+  /// to `String` will cause a compile-time error like `cannot cast 'java.lang.String' to 'java.lang.Integer'`.
+  ///
+  /// It's possible there are cases not covered by this method.
+  /// If you discover such a case, consider updating the implementation.
+  public static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(reference.getParent());
     if (PsiUtil.isAccessedForWriting(reference)) {
       PsiAssignmentExpression assignmentExpression = tryCast(parent, PsiAssignmentExpression.class);

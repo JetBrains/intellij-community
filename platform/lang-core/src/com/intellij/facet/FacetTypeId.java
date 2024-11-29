@@ -11,6 +11,7 @@ public final class FacetTypeId<F extends Facet> {
     myDebugName = debugName;
   }
 
+  @Override
   public String toString() {
     return myDebugName;
   }

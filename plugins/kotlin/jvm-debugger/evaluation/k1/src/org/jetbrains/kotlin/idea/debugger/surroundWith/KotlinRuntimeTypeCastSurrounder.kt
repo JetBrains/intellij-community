@@ -57,7 +57,7 @@ class KotlinRuntimeTypeCastSurrounder : Surrounder {
             val progressWindow = ProgressWindow(true, expression.project)
             val worker = SurroundWithCastWorker(editor, expression, debuggerContext, progressWindow)
             progressWindow.title = JavaDebuggerBundle.message("title.evaluating")
-            debuggerContext.debugProcess?.managerThread?.startProgress(worker, progressWindow)
+            debuggerContext.managerThread?.startProgress(worker, progressWindow)
         }
         return null
     }

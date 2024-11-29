@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -28,8 +29,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable.Parent {
@@ -169,6 +170,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private void doAddContent(final @NotNull Content content, final int index) {
     ThreadingAssertions.assertEventDispatchThread();
+    String tabName = content.getTabName();
+    if (tabName != null && myUI instanceof ToolWindowContentUi toolWindowContentUi) {
+      String toolWindowId = toolWindowContentUi.getToolWindowId();
+      ToolWindowContentPostProcessor contentReplacer = ContainerUtil
+        .find(ToolWindowContentPostProcessor.EP_NAME.getExtensionList(),
+              provider -> provider.getContentId().isSame(toolWindowId, tabName) && provider.isEnabled(myProject));
+      if (contentReplacer != null) {
+        contentReplacer.postprocessContent(myProject, content, toolWindowContentUi.getWindow());
+      }
+    }
+
     if (contents.contains(content)) {
       contents.remove(content);
       contents.add(index < 0 ? contents.size() : index, content);

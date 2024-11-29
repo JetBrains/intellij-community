@@ -20,8 +20,6 @@ import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.addTypeParameter
 import org.jetbrains.kotlin.idea.core.setDefaultValue
-import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
-import org.jetbrains.kotlin.js.translate.declaration.hasCustomSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -318,6 +316,10 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         }
         return this
     }
+
+    private fun KtProperty.hasCustomGetter() = getter?.hasBody() ?: false
+
+    private fun KtProperty.hasCustomSetter() = setter?.hasBody() ?: false
 
     private fun KtProperty.replaceProperty(searchTemplate: KtProperty, match: KtProperty): KtProperty {
         if (initializer == null) equalsToken?.let {  // when count filter = 0 on the initializer

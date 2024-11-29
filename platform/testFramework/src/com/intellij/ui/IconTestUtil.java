@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,6 +49,7 @@ public final class IconTestUtil {
   }
 
   @NotNull
+  @Unmodifiable
   static List<Icon> autopsyIconsFrom(@NotNull Icon icon) {
     if (icon instanceof RetrievableIcon) {
       return autopsyIconsFrom(((RetrievableIcon)icon).retrieveIcon());

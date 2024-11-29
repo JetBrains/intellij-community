@@ -30,10 +30,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -305,7 +302,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
   }
 
   @Contract("_,null -> false")
-  private static boolean isRedundantComment(@NotNull Set<String> existingComments, @Nullable PsiElement element) {
+  private static boolean isRedundantComment(@NotNull @Unmodifiable Set<String> existingComments, @Nullable PsiElement element) {
     if (element instanceof PsiComment comment) {
       String text = TryWithIdenticalCatchesInspection.getCommentText(comment);
       return text.isEmpty() || existingComments.contains(text);
@@ -431,6 +428,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     private Branch myBranchToMergeWith;
     private List<PsiElement> myBranchPrefixToMove;
     private PsiSwitchLabelStatement myLabelToMergeWith;
+    @Unmodifiable
     private Set<String> myCommentsToMergeWith;
     private PsiElement myNextFromLabelToMergeWith;
 
@@ -464,7 +462,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
       myNextFromLabelToMergeWith = PsiTreeUtil.skipWhitespacesForward(myLabelToMergeWith);
 
-      myCommentsToMergeWith = ContainerUtil.immutableSet(myBranchToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(myBranchToMergeWith.myCommentTexts)));
       return true;
     }
 
@@ -1216,7 +1214,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
           }
         }
       }
-      myCommentsToMergeWith = ContainerUtil.immutableSet(myRuleToMergeWith.myCommentTexts);
+      myCommentsToMergeWith = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(myRuleToMergeWith.myCommentTexts)));
       return true;
     }
 

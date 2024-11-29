@@ -1305,7 +1305,8 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, myJavaSettings.SPACE_WITHIN_RECORD_HEADER);
     }
     else if (myType1 == JavaTokenType.COMMA) {
-      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+      int minLineFeed = myJavaSettings.BLANK_LINES_BETWEEN_RECORD_COMPONENTS == 0 ? 0 : myJavaSettings.BLANK_LINES_BETWEEN_RECORD_COMPONENTS + 1;
+      createSpaceProperty(mySettings.SPACE_AFTER_COMMA, mySettings.KEEP_LINE_BREAKS, minLineFeed, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
     else if (myType2 == JavaTokenType.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
@@ -1663,6 +1664,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private void createSpaceProperty(boolean space, boolean keepLineBreaks, int keepBlankLines) {
+    createSpaceProperty(space, keepLineBreaks, 0, keepBlankLines);
+  }
+
+  private void createSpaceProperty(boolean space, boolean keepLineBreaks, int minLineFeeds, int keepBlankLines) {
     ASTNode prev = getPrevElementType(myChild2);
     if (prev != null && prev.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -1671,7 +1676,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (!space && !canStickChildrenTogether(myChild1, myChild2)) {
         space = true;
       }
-      myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
+      myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, minLineFeeds, keepLineBreaks, keepBlankLines);
     }
   }
 

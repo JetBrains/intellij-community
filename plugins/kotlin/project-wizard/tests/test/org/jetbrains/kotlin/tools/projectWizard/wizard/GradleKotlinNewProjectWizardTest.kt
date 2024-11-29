@@ -15,7 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -38,6 +38,7 @@ import java.io.File
  * Only files that are mentioned in these folders are asserted to be generated correctly.
  */
 @TestRoot("project-wizard/tests")
+@Disabled("Temporarily disabled until timeouts are fixed: KTI-2059")
 class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotlinProjectTestUtils {
 
     override var testDirectory = "testData/gradleNewProjectWizard"
@@ -134,7 +135,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         baseData!!.path = testRoot.toNioPath().getResolvedPath(path).parent.toCanonicalPath()
         kotlinBuildSystemData!!.buildSystem = GRADLE
         kotlinGradleData!!.parentData = parentData
-        kotlinGradleData!!.generateSingleModule = !generateMultipleModules
+        kotlinGradleData!!.generateMultipleModules = generateMultipleModules
         kotlinGradleData!!.gradleDsl = if (useKotlinDsl) GradleDsl.KOTLIN else GradleDsl.GROOVY
         kotlinGradleData!!.groupId = groupId
         kotlinGradleData!!.artifactId = name

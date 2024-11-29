@@ -10,10 +10,10 @@ import java.awt.Graphics2D
 internal class StickyLineShadowPainter(var isDarkColorScheme: Boolean = false) {
 
   // shadow settings
-  private val SHADOW_HEIGHT_FACTOR_LIGHT: Double = 0.2
-  private val SHADOW_HEIGHT_FACTOR_DARK : Double = 0.3
-  private val SHADOW_COLOR_ALPHA_LIGHT  : Int = 13
-  private val SHADOW_COLOR_ALPHA_DARK   : Int = 45
+  private val SHADOW_HEIGHT_FACTOR_LIGHT: Double = 0.17
+  private val SHADOW_HEIGHT_FACTOR_DARK : Double = 0.25
+  private val SHADOW_COLOR_ALPHA_LIGHT  : Int = 8
+  private val SHADOW_COLOR_ALPHA_DARK   : Int = 32
   private val SHADOW_COLOR_LIGHT       = Color(0, 0, 0, SHADOW_COLOR_ALPHA_LIGHT)
   private val SHADOW_COLOR_DARK        = Color(0, 0, 0, SHADOW_COLOR_ALPHA_DARK)
   private val SHADOW_COLOR_TRANSPARENT = Color(0, 0, 0, 0)

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -22,8 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 @OptIn(KaIdeApi::class)
 internal class ImportMemberIntention :
-    KotlinApplicableModCommandAction<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
-    HighPriorityAction {
+    KotlinApplicableModCommandAction<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class) {
 
     data class Context(
         val fqName: FqName,
@@ -40,6 +42,7 @@ internal class ImportMemberIntention :
         val (fqName) = getElementContext(context, element)
             ?: return null
         return Presentation.of(KotlinBundle.message("add.import.for.0", fqName.asString()))
+            .withPriority(PriorityAction.Priority.HIGH)
     }
 
     override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean =

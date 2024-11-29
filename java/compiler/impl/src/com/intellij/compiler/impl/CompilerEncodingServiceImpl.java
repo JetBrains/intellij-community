@@ -18,6 +18,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.nio.charset.Charset;
@@ -102,6 +103,7 @@ public final class CompilerEncodingServiceImpl extends CompilerEncodingService {
 
   @NotNull
   @Override
+  @Unmodifiable
   public Collection<Charset> getAllModuleEncodings(@NotNull Module module) {
     final Set<Charset> encodings = myModuleFileEncodings.getValue().get(module);
     if (encodings != null) {

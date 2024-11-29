@@ -12,10 +12,7 @@ import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import kotlin.reflect.KMutableProperty0;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -286,6 +283,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
                                                                @NotNull Function<? super String, @Nls String> nameConverter) {
     List<CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
@@ -335,6 +333,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
   }
 
+  @Unmodifiable
   private List<JComponent> getComponents() {
     return ContainerUtil.map(myFields, field -> field.getComponent());
   }

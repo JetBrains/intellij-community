@@ -134,9 +134,6 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
-    val elementsEvents = getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider,
-                                          cache.sessionStartTime)
-
     eventId.log(project) {
       val tabId = cache.tabId
       addAll(additionalEvents)
@@ -158,7 +155,8 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       )
 
       addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
-      addAll(elementsEvents)
+      addAll(getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider,
+                               cache.sessionStartTime))
     }
   }
 
@@ -296,7 +294,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 107, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 110, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")

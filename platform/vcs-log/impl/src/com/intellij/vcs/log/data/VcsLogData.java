@@ -259,7 +259,13 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private void fireDataPackChangeEvent(final @NotNull DataPack dataPack) {
     ApplicationManager.getApplication().invokeLater(() -> {
       for (DataPackChangeListener listener : myDataPackChangeListeners) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Starting data pack change listener " + listener);
+        }
         listener.onDataPackChange(dataPack);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Finished data pack change listener " + listener);
+        }
       }
     }, o -> myDisposableFlag.isDisposed());
   }

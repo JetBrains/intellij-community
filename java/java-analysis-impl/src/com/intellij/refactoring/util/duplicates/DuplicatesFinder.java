@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -34,6 +35,7 @@ public final class DuplicatesFinder {
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
+  @Unmodifiable
   @Nullable private final Set<? extends TextRange> myTextRanges;
   private final MatchType myMatchType;
   private final Set<? extends PsiVariable> myEffectivelyLocal;
@@ -46,7 +48,7 @@ public final class DuplicatesFinder {
                           @NotNull List<? extends PsiVariable> outputParameters,
                           @NotNull MatchType matchType,
                           @Nullable Set<? extends PsiVariable> effectivelyLocal,
-                          @Nullable Set<? extends TextRange> textRanges) {
+                          @Nullable @Unmodifiable Set<? extends TextRange> textRanges) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
     myPattern = pattern;
@@ -971,6 +973,7 @@ public final class DuplicatesFinder {
       return myFolded;
     }
 
+    @Override
     public String toString() {
       return myVariable + ", " + myType + (myFolded ? ", folded" : "");
     }

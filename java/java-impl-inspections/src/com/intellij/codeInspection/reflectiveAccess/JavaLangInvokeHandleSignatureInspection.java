@@ -323,6 +323,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
   }
 
   @NotNull
+  @Unmodifiable
   private static List<PsiMethod> findMethodBySignature(@NotNull List<? extends PsiMethod> methods,
                                                        @NotNull ReflectiveSignature expectedMethodSignature) {
     return ContainerUtil.filter(methods, method -> expectedMethodSignature.equals(getMethodSignature(method)));

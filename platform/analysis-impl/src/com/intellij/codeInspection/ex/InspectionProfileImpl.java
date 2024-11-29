@@ -39,6 +39,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -425,6 +426,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return null;
   }
 
+  @Unmodifiable
   public @NotNull List<InspectionToolWrapper<?, ?>> findToolsById(@NotNull String id, @NotNull PsiElement element) {
     initInspectionTools();
     List<InspectionToolWrapper<?, ?>> result = null;

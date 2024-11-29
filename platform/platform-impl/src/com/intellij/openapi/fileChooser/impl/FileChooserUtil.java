@@ -118,6 +118,7 @@ public final class FileChooserUtil {
     return SystemProperties.getUserHome();
   }
 
+  @Unmodifiable
   public static @NotNull List<VirtualFile> getChosenFiles(@NotNull FileChooserDescriptor descriptor, @NotNull List<VirtualFile> selectedFiles) {
     return ContainerUtil.mapNotNull(selectedFiles, file -> file != null && file.isValid() ? descriptor.getFileToSelect(file) : null);
   }

@@ -426,15 +426,19 @@ public abstract class GitHandler {
     if (myStartTime > 0) {
       long time = System.currentTimeMillis() - myStartTime;
       if (!TIME_LOG.isDebugEnabled() && time > LONG_TIME) {
-        LOG.info(String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString()));
+        LOG.info(formatDurationMessage(time));
       }
       else {
-        TIME_LOG.debug(String.format("git %s took %s ms", myCommand, time));
+        TIME_LOG.debug(formatDurationMessage(time));
       }
     }
     else {
       LOG.debug(String.format("git %s finished.", myCommand));
     }
+  }
+
+  private @NotNull String formatDurationMessage(long time) {
+    return String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString());
   }
 
   private void start() {

@@ -2,8 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.*
-import com.intellij.psi.impl.light.LightModifierList
-import com.intellij.psi.impl.light.LightParameterListBuilder
+import com.intellij.psi.impl.light.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -143,6 +142,46 @@ constructor(
             }
         }
     }
+
+    private val typeParameterListPart = UastLazyPart<PsiTypeParameterList>()
+
+    @OptIn(KaExperimentalApi::class)
+    override fun getTypeParameterList(): PsiTypeParameterList =
+        typeParameterListPart.getOrBuild {
+            object : LightTypeParameterListBuilder(context.manager, context.language) {
+                override fun getParent(): PsiElement = this@UastFakeDeserializedSymbolLightMethod
+                override fun getContainingFile(): PsiFile = parent.containingFile
+
+                init {
+                    val typeParameterList = this
+                    val typeParameterOwner = this@UastFakeDeserializedSymbolLightMethod
+                    val context = this@UastFakeDeserializedSymbolLightMethod.context
+
+                    analyzeForUast(context) l@{
+                        val functionSymbol = original.restoreSymbol() ?: return@l
+                        for ((i, typeParamSymbol) in functionSymbol.typeParameters.withIndex()) {
+                            typeParameterList.addParameter(
+                                object : LightTypeParameterBuilder(typeParamSymbol.name.identifier, typeParameterOwner, i) {
+                                    private val myExtendsListPart = UastLazyPart<LightReferenceListBuilder>()
+
+                                    override fun getExtendsList(): LightReferenceListBuilder =
+                                        myExtendsListPart.getOrBuild {
+                                            super.getExtendsList().apply {
+                                                analyzeForUast(context) {
+                                                    for (bound in typeParamSymbol.upperBounds) {
+                                                        val psiType = bound.asPsiType(context, allowErrorTypes = true)
+                                                        (psiType as? PsiClassType)?.let { addReference(it) }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
     private val parameterListPart = UastLazyPart<PsiParameterList>()
 

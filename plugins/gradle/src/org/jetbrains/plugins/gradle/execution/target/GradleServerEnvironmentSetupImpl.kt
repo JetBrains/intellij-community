@@ -10,7 +10,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredLocalTargetValue
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -20,7 +19,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
@@ -341,10 +339,6 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     classpathInferer.add(JDK14LoggerFactory::class.java)
     // gradle tooling proxy module
     classpathInferer.add(Main::class.java)
-    // intellij.gradle.toolingExtension - for use of model adapters classes
-    classpathInferer.add(GradleToolingExtensionClass::class.java)
-    // intellij.platform.externalSystem.rt
-    classpathInferer.add(ExternalSystemRtClass::class.java)
     // groovy runtime for serialization
     classpathInferer.add(MissingMethodException::class.java)
 

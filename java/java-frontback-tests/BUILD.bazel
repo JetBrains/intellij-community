@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.java.frontback.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "frontback-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "frontback-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:easymock",
+    "@lib//:mockito",
+    "@lib//:assert_j",
+    "@lib//:kotlin-test",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//platform/backend/workspace",
+    "//java/java-frontback-impl:frontback-impl",
+    "//platform/platform-tests:tests_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "//java/testFramework",
+    "//java/java-impl:impl",
+  ]
+)
+### auto-generated section `build intellij.java.frontback.tests` end

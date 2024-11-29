@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -46,6 +47,7 @@ public class CompoundTestFailedState extends TestFailedState {
   }
 
   @NotNull
+  @Unmodifiable
   public List<DiffHyperlink> getHyperlinks() {
     return ContainerUtil.map(ContainerUtil.filter(myStates, state -> state instanceof TestComparisonFailedState),
                              state -> ((TestComparisonFailedState)state).getHyperlink());

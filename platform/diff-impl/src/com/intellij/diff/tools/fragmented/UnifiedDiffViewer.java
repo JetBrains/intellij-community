@@ -1477,19 +1477,29 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   }
 
   private final class UnifiedBreadcrumbsPanel extends DiffBreadcrumbsPanel {
-    private final VirtualFile myFile1;
-    private final VirtualFile myFile2;
+    private final @Nullable VirtualFile myFile1;
+    private final @Nullable VirtualFile myFile2;
+
+    // effectively nullable: The 'com.intellij.xml.breadcrumbs.BreadcrumbsPanel.<init>' may synchronously execute update in tests
+    private final @Nullable DiffBreadcrumbCollectorHolder myCollectorHolder1;
+    private final @Nullable DiffBreadcrumbCollectorHolder myCollectorHolder2;
 
     private UnifiedBreadcrumbsPanel() {
       super(getEditor(), UnifiedDiffViewer.this);
 
       myFile1 = FileDocumentManager.getInstance().getFile(getDocument(Side.LEFT));
       myFile2 = FileDocumentManager.getInstance().getFile(getDocument(Side.RIGHT));
+
+      myCollectorHolder1 = new DiffBreadcrumbCollectorHolder();
+      myCollectorHolder2 = new DiffBreadcrumbCollectorHolder();
     }
 
     @Override
     protected boolean updateCollectors(boolean enabled) {
-      return enabled && (findCollector(myFile1) != null || findCollector(myFile2) != null);
+      // null check: The 'com.intellij.xml.breadcrumbs.BreadcrumbsPanel.<init>' may synchronously execute update in tests
+      boolean update1 = myCollectorHolder1 != null && myCollectorHolder1.update(myFile1, enabled);
+      boolean update2 = myCollectorHolder2 != null && myCollectorHolder2.update(myFile2, enabled);
+      return update1 || update2;
     }
 
     @Nullable
@@ -1502,7 +1512,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       int twosideOffset = pair.first;
 
       VirtualFile file = side.select(myFile1, myFile2);
-      FileBreadcrumbsCollector collector = side.select(findCollector(myFile1), findCollector(myFile2));
+      DiffBreadcrumbCollectorHolder holder = side.select(myCollectorHolder1, myCollectorHolder2);
+      FileBreadcrumbsCollector collector = holder != null ? holder.getBreadcrumbsCollector() : null;
       if (file == null || collector == null) return null;
 
       Iterable<? extends Crumb> crumbs = collector.computeCrumbs(file, getDocument(side), twosideOffset, null);

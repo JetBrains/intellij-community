@@ -46,7 +46,9 @@ public abstract class DetectedFrameworkDescription {
    */
   public abstract void setupFramework(@NotNull ModifiableModelsProvider modifiableModelsProvider, @NotNull ModulesProvider modulesProvider);
 
+  @Override
   public abstract boolean equals(Object obj);
 
+  @Override
   public abstract int hashCode();
 }

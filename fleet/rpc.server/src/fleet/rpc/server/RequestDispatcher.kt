@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.server
 
-import fleet.rpc.core.Serialization
 import fleet.rpc.core.TransportMessage
 import fleet.tracing.spannedScope
 import fleet.util.UID
@@ -29,7 +28,6 @@ interface RequestDispatcher {
 
 suspend fun RequestDispatcher.serveRpc(
   route: UID,
-  json: () -> Serialization,
   services: RpcServiceLocator,
   interceptor: RpcExecutorMiddleware = RpcExecutorMiddleware,
 ) {
@@ -44,8 +42,7 @@ suspend fun RequestDispatcher.serveRpc(
                                   receive = dispatcherReceive)
     }
     withContext(coroutineNameAppended("Serving RPC as provider ${route}")) {
-      RpcExecutor.serve(json = json,
-                        services = services,
+      RpcExecutor.serve(services = services,
                         sendChannel = executorSend,
                         receiveChannel = executorReceive,
                         rpcInterceptor = interceptor,

@@ -241,7 +241,7 @@ private class EssentialHighlightingModeListener : RegistryValueListener {
 
       // Run all checks after disabling essential highlighting
       if (!value.asBoolean()) {
-        (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).restartToCompleteEssentialHighlighting()
+        (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).requestRestartToCompleteEssentialHighlighting()
       }
     }
   }

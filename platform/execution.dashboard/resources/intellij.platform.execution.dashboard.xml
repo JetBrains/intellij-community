@@ -47,8 +47,8 @@
       <action id="RunDashboard.Stop" icon="AllIcons.Actions.Suspend" use-shortcut-of="Stop"
               class="com.intellij.platform.execution.dashboard.actions.StopAction"/>
       <separator/>
-      <reference id="ExpandAll"/>
-      <reference id="CollapseAll"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" icon="AllIcons.Actions.EditSource" use-shortcut-of="EditSourceInNewWindow"
@@ -92,7 +92,7 @@
     <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
       <add-to-group group-id="ServiceView.AddService"/>
     </action>
-    <reference id="RunDashboard.RestoreHiddenConfigurations">
+    <reference ref="RunDashboard.RestoreHiddenConfigurations">
       <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddConfiguration"/>
     </reference>
     <action id="RunDashboard.DoubleClickRun"

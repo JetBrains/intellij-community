@@ -14,7 +14,6 @@ import java.awt.Rectangle
 fun Driver.hasFocus(c: Component) = utility(IJSwingUtilities::class).hasFocus(c)
 fun Driver.hasFocus(c: UiComponent) = hasFocus(c.component)
 
-
 fun Driver.requestFocusFromIde(project: Project?) {
   fileLogger().info("Requesting focus from IDE for project: $project")
   withContext(OnDispatcher.EDT) {
@@ -51,17 +50,12 @@ interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
 }
 
-@Remote("java.awt.Rectangle")
-interface RectangleRef {
-  fun contains(p: Point): Boolean
-  fun getX(): Double
-  fun getY(): Double
-  fun getWidth(): Double
-  fun getCenterX(): Double
-  fun getCenterY(): Double
+@Remote("javax.swing.SwingUtilities")
+interface SwingUtilities {
+  fun computeDifference(rectA: Rectangle, rectB: Rectangle): Array<Rectangle>
 }
 
-val RectangleRef.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
+val Rectangle.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
 
 fun printableString(toPrint: String): String {
   val resultString = toPrint.let {
@@ -74,20 +68,6 @@ fun printableString(toPrint: String): String {
     }
   }
   return resultString
-}
-
-fun Driver.setRegistry(key: String, value: String) {
-  utility(Registry::class).get(key).setValue(value)
-}
-
-@Remote("com.intellij.openapi.util.registry.Registry")
-interface Registry {
-  fun get(key: String): RegistryValue
-}
-
-@Remote("com.intellij.openapi.util.registry.RegistryValue")
-interface RegistryValue {
-  fun setValue(value: String)
 }
 
 @Remote("org.assertj.swing.driver.CellRendererReader")

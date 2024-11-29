@@ -72,6 +72,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return myId;
   }
 
+  @Override
   public final boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ModuleType moduleType)) return false;
@@ -79,10 +80,12 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return myId.equals(moduleType.myId);
   }
 
+  @Override
   public final int hashCode() {
     return myId.hashCode();
   }
 
+  @Override
   public String toString() {
     return getName();
   }

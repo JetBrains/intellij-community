@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
@@ -94,12 +95,17 @@ public final class JavaExecutionUtil {
          !DumbService.getInstance(project).isAlternativeResolveEnabled())) {
       return null;
     }
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final String shortName = StringUtil.getShortName(mainClassName);
-    final String packageName = StringUtil.getPackageName(mainClassName);
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
-    final PsiClass psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, shortName.replace('$', '.')), scope);
-    return psiClass == null ? psiFacade.findClass(mainClassName, scope) : psiClass;
+    PsiManager psiManager = PsiManager.getInstance(project);
+    String shortName = StringUtil.getShortName(mainClassName);
+    String packageName = StringUtil.getPackageName(mainClassName);
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+    try {
+      PsiClass psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, shortName.replace('$', '.')), scope);
+      return psiClass == null ? psiFacade.findClass(mainClassName, scope) : psiClass;
+    }
+    catch (IndexNotReadyException ex) {
+      return null;
+    }
   }
 
 

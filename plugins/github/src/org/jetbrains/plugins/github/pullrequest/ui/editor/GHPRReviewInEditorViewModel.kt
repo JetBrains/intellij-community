@@ -47,7 +47,7 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
 
   private val changesComputationState =
-    dataProvider.changesData.changesComputationState.onEach {
+    dataProvider.changesData.changesComputationState().onEach {
       it.onFailure {
         LOG.warn("Couldn't load changes for PR ${dataProvider.id.number}", it)
       }

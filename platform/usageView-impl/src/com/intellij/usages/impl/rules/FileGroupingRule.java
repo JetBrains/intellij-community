@@ -86,6 +86,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof FileUsageGroup fileUsageGroup)) return false;
@@ -93,6 +94,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return myFile.equals(fileUsageGroup.myFile);
     }
 
+    @Override
     public int hashCode() {
       return myFile.hashCode();
     }

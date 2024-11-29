@@ -1,46 +1,49 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.xml.psi.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "psi-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "xml-psi-impl",
+jvm_library(
+  name = "psi-impl",
   module_name = "intellij.xml.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//xml/xml-psi-api:xml-psi",
-    "@community//platform/core-impl",
-    "@community//platform/analysis-impl",
-    "@community//platform/projectModel-impl",
-    "@community//platform/indexing-impl",
-    "@libraries//:xercesImpl",
-    "@community//RegExpSupport:regexp",
-    "@community//platform/lang-api:lang",
-    "@community//platform/lang-impl",
-    "@libraries//:xml-resolver",
-    "@community//platform/util/nanoxml:util-nanoxml",
-    "@community//platform/util/ui:util-ui",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:jackson-core",
-    "@libraries//:jackson-databind",
-    "@libraries//:jackson-module-kotlin",
-    "@libraries//:caffeine",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/webSymbols",
-    "@community//platform/markdown-utils",
+    "//xml/xml-frontback-impl:frontback-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/projectModel-impl",
+    "//platform/indexing-impl",
+    "@lib//:xerces",
+    "//RegExpSupport:regexp",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:xml-resolver",
+    "//platform/util/nanoxml",
+    "//platform/util:util-ui",
+    "@lib//:fastutil-min",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:caffeine",
+    "//platform/util/jdom",
+    "//platform/webSymbols",
+    "//platform/markdown-utils",
   ],
   exports = [
-    "@community//xml/xml-psi-api:xml-psi",
-    "@community//RegExpSupport:regexp",
+    "//xml/xml-frontback-impl:frontback-impl",
+    "//xml/xml-psi-api:psi",
+    "//RegExpSupport:regexp",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":psi-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.xml.psi.impl` end

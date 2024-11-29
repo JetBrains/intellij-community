@@ -40,13 +40,7 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.ui.JBUI
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.swing.*
-import javax.swing.JFrame
-import javax.swing.JRootPane
 
 private typealias MainToolbarActions = List<Pair<ActionGroup, HorizontalLayout.Group>>
 
@@ -146,7 +140,7 @@ internal class ProjectFrameCustomHeaderHelper(
       else {
         val uiSettings = UISettings.shadowInstance
         !IdeFrameDecorator.isCustomDecorationActive() && uiSettings.showMainMenu && !hideNativeLinuxTitle(uiSettings) &&
-        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader(uiSettings) { computeMainActionGroups() }))
+        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader { computeMainActionGroups() }))
       }
       if (visible != menuBar.isVisible) {
         menuBar.isVisible = visible
@@ -235,7 +229,7 @@ internal class ProjectFrameCustomHeaderHelper(
   ): Boolean {
     return !isFullScreen ||
            !SystemInfoRt.isMac && CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullScreen) ||
-           SystemInfoRt.isMac && !isCompactHeader(uiSettings, mainToolbarActionSupplier)
+           SystemInfoRt.isMac && !isCompactHeader(mainToolbarActionSupplier)
   }
 
   private inline fun isToolbarVisible(
@@ -245,12 +239,12 @@ internal class ProjectFrameCustomHeaderHelper(
   ): Boolean {
     val isNewToolbar = ExperimentalUI.isNewUI()
     return isNewToolbar && !CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullScreen)
-           && !isCompactHeader(uiSettings, mainToolbarActionSupplier)
+           && !isCompactHeader(mainToolbarActionSupplier)
            || !isNewToolbar && uiSettings.showMainToolbar
   }
 
-  private inline fun isCompactHeader(uiSettings: UISettings, mainToolbarActionSupplier: () -> MainToolbarActions): Boolean =
-    isLightEdit || CustomWindowHeaderUtil.isCompactHeader(uiSettings, mainToolbarActionSupplier)
+  private inline fun isCompactHeader(mainToolbarActionSupplier: () -> MainToolbarActions): Boolean =
+    isLightEdit || CustomWindowHeaderUtil.isCompactHeader(mainToolbarActionSupplier)
 }
 
 private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame, isFullScreen: () -> Boolean): JComponent {

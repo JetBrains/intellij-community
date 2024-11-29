@@ -1,28 +1,29 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.indexing` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "indexing_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "indexing",
   module_name = "intellij.platform.indexing",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:annotations",
-    "@community//platform/core-api:core",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/util/concurrency",
-    "@libraries//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//platform/util/concurrency",
+    "@lib//:kotlin-stdlib",
   ],
-  exports = ["@community//platform/core-api:core"],
-  runtime_deps = [":resources"]
+  exports = ["//platform/core-api:core"],
+  runtime_deps = [":indexing_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.indexing` end

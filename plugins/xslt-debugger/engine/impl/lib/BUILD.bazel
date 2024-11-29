@@ -1,0 +1,15 @@
+### auto-generated section `local-libs` start
+load("@rules_java//java:defs.bzl", "java_import")
+
+java_import(
+  name = "saxon",
+  jars = ["saxon.jar"],
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "saxon9he",
+  jars = ["saxon9he.jar"],
+  visibility = ["//visibility:public"]
+)
+### auto-generated section `local-libs` end

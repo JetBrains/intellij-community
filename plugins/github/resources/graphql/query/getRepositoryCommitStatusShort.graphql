@@ -8,4 +8,8 @@ query($repoOwner: String!, $repoName: String!, $oid: GitObjectID!) {
       }
     }
   }
+
+  rateLimit {
+    ...rates
+  }
 }

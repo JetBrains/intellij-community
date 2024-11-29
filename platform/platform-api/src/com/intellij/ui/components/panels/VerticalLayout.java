@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -246,6 +247,7 @@ public final class VerticalLayout implements LayoutManager2 {
     }
   }
 
+  @Unmodifiable
   public @NotNull List<? extends Component> getComponents() {
     return ContainerUtil.concat(myTop, myCenter, myBottom);
   }

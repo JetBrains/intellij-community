@@ -41,7 +41,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.remote.RemoteProcessControl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -72,12 +71,13 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.remote.RemoteProcessControl;
+import com.jetbrains.python.tables.TableCommandParameters;
+import com.jetbrains.python.tables.TableCommandType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.tables.TableCommandParameters;
-import com.jetbrains.python.tables.TableCommandType;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -874,13 +874,10 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private void showFailedTestInfoIfNecessary(@NotNull PyStackFrame frame) throws PyDebuggerException {
     PyExecutionStack pyExecutionStack = null;
-    XDebugSession session = getSession();
-    if (session != null) {
-      XSuspendContext suspendContext = session.getSuspendContext();
-      if (suspendContext != null) {
-        XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
-        pyExecutionStack = executionStack != null ? (PyExecutionStack)executionStack : null;
-      }
+    XSuspendContext suspendContext = getSession().getSuspendContext();
+    if (suspendContext != null) {
+      XExecutionStack executionStack = suspendContext.getActiveExecutionStack();
+      pyExecutionStack = executionStack != null ? (PyExecutionStack)executionStack : null;
     }
 
     if (pyExecutionStack == null || !isFailedTestStop(pyExecutionStack.getThreadInfo())) return;
@@ -912,7 +909,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         isTestSetUpFail = true;
       }
       getProject().getService(PyUnitTestsDebuggingService.class).showFailedTestInlay(
-        session, frame, exceptionType, errorMessage, isTestSetUpFail);
+        getSession(), frame, exceptionType, errorMessage, isTestSetUpFail);
     }
   }
 

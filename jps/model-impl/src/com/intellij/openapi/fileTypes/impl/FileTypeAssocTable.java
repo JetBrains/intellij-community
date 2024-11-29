@@ -248,6 +248,7 @@ public final class FileTypeAssocTable<T> {
   }
 
   @NotNull
+  @Unmodifiable
   public List<String> getHashBangPatterns(@NotNull T type) {
     return myHashBangMap.entrySet().stream()
       .filter(e -> e.getValue().equals(type))

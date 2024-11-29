@@ -12,6 +12,8 @@ import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepos
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
@@ -33,27 +35,31 @@ internal suspend fun generateRuntimeModuleRepository(entries: Sequence<Distribut
 
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
-                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context) }
+                            SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context) }
   for (entry in entries) {
     val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
     val pathInDist = rootPath.relativize(entry.path).pathString
-    repositoryEntries.add(RuntimeModuleRepositoryEntry(distribution, pathInDist, entry))
+    repositoryEntries.add(RuntimeModuleRepositoryEntry(distribution = distribution, relativePath = pathInDist, origin = entry))
   }
 
   if (repositoryEntries.all { it.distribution == null }) {
     generateRepositoryForDistribution(
-      context.paths.distAllDir, repositoryEntries, compiledModulesDescriptors,
-      context
+      targetDirectory = context.paths.distAllDir,
+      entries = repositoryEntries,
+      compiledModulesDescriptorsData = compiledModulesDescriptors,
+      context = context,
     )
   }
   else {
-    SUPPORTED_DISTRIBUTIONS.forEach { distribution ->
-      val targetDirectory = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
+    for (distribution in SUPPORTED_DISTRIBUTIONS) {
+      val targetDirectory = getOsAndArchSpecificDistDirectory(osFamily = distribution.os, arch = distribution.arch, context = context)
       val actualEntries = repositoryEntries.filter { it.distribution == null || it.distribution == distribution }
       generateRepositoryForDistribution(
-        targetDirectory, actualEntries, compiledModulesDescriptors,
-        context
+        targetDirectory = targetDirectory,
+        entries = actualEntries,
+        compiledModulesDescriptorsData = compiledModulesDescriptors,
+        context = context,
       )
     }
   }
@@ -89,7 +95,7 @@ suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<Distrib
 
 /**
  * Merges module repositories for different OS to a common one which can be used in the cross-platform distribution. 
- * @return path to the generated repository or `null` if [distAllPath] already contains common module repository file which is used for all OSes
+ * @return path to the generated repository or `null` if [distAllPath] already contains a common module repository file which is used for all OSes
  */
 internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPaths: List<Path>, context: BuildContext): Path? {
   val commonRepositoryFile = distAllPath.resolve(MODULE_DESCRIPTORS_JAR_PATH)
@@ -118,11 +124,15 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
     commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
   }
   val targetFile = context.paths.tempDir.resolve("cross-platform-module-repository").resolve(JAR_REPOSITORY_FILE_NAME)
-  saveModuleRepository(commonDescriptors, targetFile, context)
+  saveModuleRepository(commonDescriptors, targetFile)
   return targetFile
 }
 
-private data class RuntimeModuleRepositoryEntry(val distribution: SupportedDistribution?, val relativePath: String, val origin: DistributionFileEntry)
+private data class RuntimeModuleRepositoryEntry(
+  @JvmField val distribution: SupportedDistribution?,
+  @JvmField val relativePath: String,
+  @JvmField val origin: DistributionFileEntry,
+)
 
 private suspend fun generateRepositoryForDistribution(
   targetDirectory: Path,
@@ -141,7 +151,8 @@ private suspend fun generateRepositoryForDistribution(
   }
 
   val compiledModulesDescriptors = compiledModulesDescriptorsData.allIds.associateBy(
-    { RuntimeModuleId.raw(it) }, { compiledModulesDescriptorsData.findDescriptor(it)!! }
+    keySelector = { RuntimeModuleId.raw(it) },
+    valueTransform = { compiledModulesDescriptorsData.findDescriptor(it)!! },
   )
   addMappingsForDuplicatingLibraries(resourcePathMapping, compiledModulesDescriptors)
 
@@ -185,20 +196,20 @@ private suspend fun generateRepositoryForDistribution(
 
   val errors = ArrayList<String>()
   RuntimeModuleRepositoryValidator.validate(distDescriptors) { errors.add(it) }
-  if (errors.isNotEmpty()) {
-    context.messages.error("Runtime module repository has ${errors.size} ${StringUtil.pluralize("error", errors.size)}:\n" +
-                           errors.joinToString("\n"))
+  require(errors.isEmpty()) {
+    "Runtime module repository has ${errors.size} ${StringUtil.pluralize("error", errors.size)}:\n" + errors.joinToString("\n")
   }
-  saveModuleRepository(distDescriptors, targetDirectory.resolve(MODULE_DESCRIPTORS_JAR_PATH), context)
+  withContext(Dispatchers.IO) {
+    saveModuleRepository(distDescriptors = distDescriptors, targetFile = targetDirectory.resolve(MODULE_DESCRIPTORS_JAR_PATH))
+  }
 }
 
-private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescriptor>, targetFile: Path, context: BuildContext) {
+private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescriptor>, targetFile: Path) {
   try {
-    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap", 
-                                                   targetFile, GENERATOR_VERSION)
+    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap", targetFile, GENERATOR_VERSION)
   }
   catch (e: IOException) {
-    context.messages.error("Failed to save runtime module repository: ${e.message}", e)
+    throw RuntimeException("Failed to save runtime module repository: ${e.message}", e)
   }
 }
 

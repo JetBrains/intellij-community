@@ -47,6 +47,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
+import one.util.streamex.EntryStream;
 import org.jdom.Element;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
@@ -538,21 +540,22 @@ public class RefManagerImpl extends RefManager {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
-    answer = getElements();
-    List<RefElement> list = answer;
-    ReadAction.run(() -> ContainerUtil.quickSort(list, (o1, o2) -> {
-      VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
-      VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
-      int v21 = VfsUtilCore.compareByPath(v1, v2);
-      if (v21 != 0) {
-        return v21;
+    Map<VirtualFile, List<RefElement>> map = new HashMap<>();
+    for (RefElement ref : getElements()) {
+      map.computeIfAbsent(((RefElementImpl)ref).getVirtualFile(), k -> new ArrayList<>()).add(ref);
+    }
+    for (List<RefElement> elementsInFile : map.values()) {
+      if (elementsInFile.size() > 1) {
+        ReadAction.run(() -> {
+          elementsInFile.sort(
+            Comparator.comparing(o -> ObjectUtils.notNull(o.getPointer().getRange(), TextRange.EMPTY_RANGE),
+                                 Segment.BY_START_OFFSET_THEN_END_OFFSET));
+        });
       }
-      Segment r1 = ObjectUtils.notNull(o1.getPointer().getRange(), TextRange.EMPTY_RANGE);
-      Segment r2 = ObjectUtils.notNull(o2.getPointer().getRange(), TextRange.EMPTY_RANGE);
-      return Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(r1, r2);
-    }));
-    myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
-    return answer;
+    }
+    return myCachedSortedRefs = Collections.unmodifiableList(EntryStream.of(map)
+      .sorted((e1, e2) -> VfsUtilCore.compareByPath(e1.getKey(), e2.getKey()))
+      .values().toFlatList(Function.identity()));
   }
 
   public @NotNull List<RefElement> getElements() {

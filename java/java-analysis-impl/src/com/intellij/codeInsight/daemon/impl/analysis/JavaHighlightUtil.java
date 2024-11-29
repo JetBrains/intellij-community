@@ -97,8 +97,8 @@ public final class JavaHighlightUtil {
     PsiType type = null;
     for (PsiExpression expression : expressions) {
       PsiType currentType;
-      if (expression instanceof PsiArrayInitializerExpression) {
-        currentType = getArrayInitializerType((PsiArrayInitializerExpression)expression);
+      if (expression instanceof PsiArrayInitializerExpression initializerExpression) {
+        currentType = getArrayInitializerType(initializerExpression);
       }
       else {
         currentType = expression.getType();
@@ -120,10 +120,10 @@ public final class JavaHighlightUtil {
   }
 
   public static boolean isSuperOrThisCall(@NotNull PsiStatement statement, boolean testForSuper, boolean testForThis) {
-    if (!(statement instanceof PsiExpressionStatement)) return false;
-    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+    if (!(statement instanceof PsiExpressionStatement expressionStatement)) return false;
+    PsiExpression expression = expressionStatement.getExpression();
+    if (!(expression instanceof PsiMethodCallExpression callExpression)) return false;
+    PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
     if (testForSuper) {
       if ("super".equals(methodExpression.getText())) return true;
     }
@@ -163,9 +163,9 @@ public final class JavaHighlightUtil {
   @Nullable
   public static @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
     if (type instanceof PsiPrimitiveType) return null;
-    if (type instanceof PsiArrayType) return checkPsiTypeUseInContext(((PsiArrayType) type).getComponentType(), context);
+    if (type instanceof PsiArrayType arrayType) return checkPsiTypeUseInContext(arrayType.getComponentType(), context);
     if (PsiUtil.resolveClassInType(type) != null) return null;
-    if (type instanceof PsiClassType) return checkClassType((PsiClassType)type, context);
+    if (type instanceof PsiClassType classType) return checkClassType(classType, context);
     return invalidJavaTypeMessage();
   }
 
@@ -203,7 +203,7 @@ public final class JavaHighlightUtil {
    */
   public static boolean isJavaHashBangScript(@NotNull PsiFile containingFile) {
     if (!(containingFile instanceof PsiJavaFile)) return false;
-    if (containingFile instanceof PsiFileEx && !((PsiFileEx)containingFile).isContentsLoaded()) {
+    if (containingFile instanceof PsiFileEx fileEx && !fileEx.isContentsLoaded()) {
       VirtualFile vFile = containingFile.getVirtualFile();
       if (vFile.isInLocalFileSystem()) {
         try {
@@ -222,8 +222,8 @@ public final class JavaHighlightUtil {
         firstChild = sibling.getFirstChild();
       }
     }
-    return firstChild instanceof PsiComment &&
-           ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT &&
+    return firstChild instanceof PsiComment comment &&
+           comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT &&
            firstChild.getText().startsWith("#!");
   }
 

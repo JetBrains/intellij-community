@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitReference;
@@ -227,11 +226,20 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-    new CommonBackgroundTask(myProject, GitBundle.message("branch.rebasing.onto.process", branchName), null) {
+  public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull GitReference reference) {
+    doRebase(repositories, reference.getFullName(), reference.getName());
+  }
+
+  @Override
+  public void rebase(@NotNull List<? extends @NotNull GitRepository> repositories, @NotNull String reference) {
+    doRebase(repositories, reference, reference);
+  }
+
+  private void doRebase(@NotNull List<? extends GitRepository> repositories, @NotNull String reference, @NotNull String displayName) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.rebasing.onto.process", displayName), null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).rebase(repositories, branchName);
+        newWorker(indicator).rebase(repositories, reference);
       }
     }.runInBackground();
   }

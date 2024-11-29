@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +90,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @param descriptor problem descriptor
    * @return list of ranges to highlight, along with highlight attributes; empty list if no specific highlighting should be done
    */
+  @Unmodifiable
   default @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
     return List.of();
   }

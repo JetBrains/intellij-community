@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
@@ -31,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
-  public static final String ID = "Problems View";
+  public static final String ID = ToolWindowId.PROBLEMS_VIEW;
 
   public static @Nullable ToolWindow getToolWindow(@NotNull Project project) {
     return project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);

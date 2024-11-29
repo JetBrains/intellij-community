@@ -52,6 +52,7 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     myBaseList.setDescription(newMessage);
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -63,6 +64,7 @@ public class ReceivedChangeList extends CommittedChangeListImpl {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myBaseList.hashCode();
   }

@@ -6,8 +6,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -151,6 +149,9 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
   @Test void testGetClassReturnTypeInMethodReference() { doTest(); }
   @Test void testCaptureTypeOfNewArrayExpression() { doTest(); }
   @Test void testIDEA152659() { doTest(); }
+  @Test void testIDEA173183() { doTest(); }
+  @Test void testIDEA208532() { doTest(); }
+  @Test void testIDEA337371() { doTest(); }
   //removing one unsound capture conversion is not enough to leave the system consistent
   void _testRegistryOptionToSkipUnsoundCaptureConversionInMethodReferenceReturnType() { doTest(); }
   @Test void testFreshVariableLowerBoundsDuringSuperTypeChecks() { doTest(); }

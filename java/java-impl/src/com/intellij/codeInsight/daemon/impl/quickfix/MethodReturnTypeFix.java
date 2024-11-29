@@ -77,6 +77,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       PsiSubstitutor.EMPTY, showClassName ? PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS : PsiFormatUtilBase.SHOW_NAME,
       0
     );
+    returnType = PsiTypesUtil.removeExternalAnnotations(returnType);
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     mySuggestSuperTypes = suggestSuperTypes;

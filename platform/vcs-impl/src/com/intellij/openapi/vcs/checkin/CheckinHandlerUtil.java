@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public final class CheckinHandlerUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files,
                                                                      @NotNull Project project) {
     return ContainerUtil.filter(files, file -> !isGeneratedOrExcluded(project, file));

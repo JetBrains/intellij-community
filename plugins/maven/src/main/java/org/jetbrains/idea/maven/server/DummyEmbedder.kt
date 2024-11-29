@@ -24,7 +24,7 @@ abstract class DummyEmbedder : MavenServerEmbedder {
   override fun resolveArtifacts(longRunningTaskInput: LongRunningTaskInput,
                                 requests: ArrayList<MavenArtifactResolutionRequest>,
                                 token: MavenToken?): MavenServerResponse<ArrayList<MavenArtifact>> {
-    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun resolveArtifactsTransitively(artifacts: ArrayList<MavenArtifactInfo>,
@@ -37,14 +37,14 @@ abstract class DummyEmbedder : MavenServerEmbedder {
                               pluginResolutionRequests: ArrayList<PluginResolutionRequest>,
                               forceUpdateSnapshots: Boolean,
                               token: MavenToken?): MavenServerResponse<ArrayList<PluginResolutionResponse>> {
-    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun executeGoal(longRunningTaskInput: LongRunningTaskInput,
                            requests: ArrayList<MavenGoalExecutionRequest>,
                            goal: String,
                            token: MavenToken?): MavenServerResponse<ArrayList<MavenGoalExecutionResult>> {
-    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun release(token: MavenToken?) {
@@ -85,7 +85,7 @@ class UntrustedDummyEmbedder(val myProject: Project) : DummyEmbedder() {
                                request: ProjectResolutionRequest,
                                token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
     showUntrustedProjectNotification(myProject)
-    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
 
@@ -108,7 +108,7 @@ class MisconfiguredPlexusDummyEmbedder(private val myProject: Project,
       ),
       MessageEvent.Kind.ERROR
     )
-    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY, emptyByteArray)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
 }

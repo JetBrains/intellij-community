@@ -1,28 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
-import java.util.regex.Pattern
-
-
-/**
- *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
- */
-
-data class PoetryOutdatedVersion(
-  @SerializedName("currentVersion") var currentVersion: String,
-  @SerializedName("latestVersion") var latestVersion: String)
 
 
 class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
@@ -33,7 +24,7 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
 
   private var requirements: List<PyRequirement>? = null
 
-  private var outdatedPackages: Map<String, PoetryOutdatedVersion> = emptyMap()
+  private var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
   override fun installManagement() {}
 
@@ -57,7 +48,7 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     }
 
     try {
-      runPoetry(sdk, *args.toTypedArray())
+      runBlockingCancellable { runPoetryWithSdk(sdk, *args.toTypedArray()) }
     }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
@@ -69,7 +60,7 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
     val args = listOf("remove") +
                packages.map { it.name }
     try {
-      runPoetry(sdk, *args.toTypedArray())
+      runBlockingCancellable { runPoetryWithSdk(sdk, *args.toTypedArray()) }
     }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
@@ -101,23 +92,19 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage> {
     if (alwaysRefresh || packages == null) {
       packages = null
-      val outputInstallDryRun = try {
-        runPoetry(sdk, "install", "--dry-run", "--no-root")
-      }
-      catch (e: ExecutionException) {
+      val outputInstallDryRun = runBlockingCancellable { runPoetryWithSdk(sdk, "install", "--dry-run", "--no-root") }.getOrElse {
         packages = emptyList()
         return packages ?: emptyList()
       }
+
       val allPackage = parsePoetryInstallDryRun(outputInstallDryRun)
       packages = allPackage.first
       requirements = allPackage.second
 
-      val outputOutdatedPackages = try {
-        runPoetry(sdk, "show", "--outdated")
-      }
-      catch (e: ExecutionException) {
+      val outputOutdatedPackages = runBlockingCancellable { runPoetryWithSdk(sdk, "show", "--outdated") }.getOrElse {
         outdatedPackages = emptyMap()
       }
+
       if (outputOutdatedPackages is String) {
         outdatedPackages = parsePoetryShowOutdated(outputOutdatedPackages)
       }
@@ -180,17 +167,5 @@ class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
         }
       }
     return Pair(pyPackages.distinct().toList(), pyRequirements.distinct().toList())
-  }
-
-  /**
-   * Parses the output of `poetry show --outdated` into a list of packages.
-   */
-  private fun parsePoetryShowOutdated(input: String): Map<String, PoetryOutdatedVersion> {
-    return input
-      .lines()
-      .mapNotNull { line ->
-        line.split(Pattern.compile(" +"))
-          .takeIf { it.size > 3 }?.let { it[0] to PoetryOutdatedVersion(it[1], it[2]) }
-      }.toMap()
   }
 }

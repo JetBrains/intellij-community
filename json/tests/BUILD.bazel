@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.json.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//json",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:kotlin-stdlib",
+    "//plugins/IntelliLang:langInjection",
+    "@lib//:jsonpath",
+    "@lib//:kotlinx-coroutines-core",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test",
+    "@lib//:kotlin-reflect",
+  ]
+)
+### auto-generated section `build intellij.json.tests` end

@@ -187,7 +187,7 @@ public final class PyCompatibilityInspection extends PyInspection {
       if (resolvedCallee instanceof PyFunction function) {
         final PyClass containingClass = function.getContainingClass();
 
-        final String functionName = PyUtil.isInitOrNewMethod(function) ? callee.getText() : function.getName();
+        final String functionName = PyUtil.isConstructorLikeMethod(function) ? callee.getText() : function.getName();
 
         if (containingClass != null) {
           final String className = containingClass.getName();

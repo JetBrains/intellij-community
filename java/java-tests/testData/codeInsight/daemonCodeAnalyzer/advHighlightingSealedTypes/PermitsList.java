@@ -20,7 +20,8 @@ sealed interface Indirect permits <error descr="Invalid permits clause: 'Indirec
 non-sealed interface MiddleMan extends Indirect {}
 final class IndirectInheritor implements MiddleMan {}
 
-sealed class AnotherPackage permits <error descr="Class is not allowed to extend sealed class from another package">p1.P1</error> {}
+sealed class AnotherPackage permits <error descr="Class 'p1.P1' from another package not allowed to extend sealed class 'AnotherPackage' in unnamed module">p1.P1</error> {}
+final class Mail extends <error descr="Class 'Mail' from another package not allowed to extend sealed class 'p1.Envelope' in unnamed module">p1.Envelope</error> {}
 
 enum ImlicitlySealedWithPermitsClause <error descr="'permits' not allowed on enum">permits</error> FOO {
   FOO {};

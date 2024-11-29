@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.jetbrains.JBR;
 import com.jetbrains.cef.SharedMemory;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefNativeRenderHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +31,10 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   private final Map<String, SharedMemory.WithRaster> mySharedMemCache = new ConcurrentHashMap<>();
   private SharedMemory.WithRaster myCurrentFrame;
   private volatile boolean myIsDisposed = false;
+
+  JBCefNativeOsrHandler(@NotNull JComponent component, @NotNull Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
+    super(component, screenBoundsProvider);
+  }
 
   @Override
   synchronized public void disposeNativeResources() {
@@ -132,7 +138,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
         frame.lock();
         if (!FORCE_USE_SOFTWARE_RENDERING && JBR.isNativeRasterLoaderSupported()) {
           JBR.getNativeRasterLoader().loadNativeRaster(vi, frame.getPtr(), frame.getWidth(), frame.getHeight(),
-                                                       frame.getPtr() + 4L * frame.getWidth() * frame.getHeight(),
+                                                       frame.getPtr() + frame.getRectsOffset(),
                                                        frame.getDirtyRectsCount());
           return;
         }
@@ -159,16 +165,19 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   }
 
   private static void loadBuffered(BufferedImage bufImage, SharedMemory.WithRaster mem) {
-    final int width = mem.getWidth();
-    final int height = mem.getHeight();
-    final int rectsCount = mem.getDirtyRectsCount();
+    final int srcW = mem.getWidth();
+    final int srcH = mem.getHeight();
+    ByteBuffer srcBuffer = mem.wrapRaster();
+    IntBuffer src = srcBuffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
 
-    ByteBuffer buffer = mem.wrapRaster();
+    final int dstW = bufImage.getRaster().getWidth();
+    final int dstH = bufImage.getRaster().getHeight();
     int[] dst = ((DataBufferInt)bufImage.getRaster().getDataBuffer()).getData();
-    IntBuffer src = buffer.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
 
-    Rectangle[] dirtyRects = new Rectangle[]{new Rectangle(0, 0, width, height)};
+    final int rectsCount = mem.getDirtyRectsCount();
+    Rectangle[] dirtyRects = new Rectangle[]{new Rectangle(0, 0, srcW, srcH)};
     if (rectsCount > 0) {
+      dirtyRects = new Rectangle[rectsCount];
       ByteBuffer rectsMem = mem.wrapRects();
       IntBuffer rects = rectsMem.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
       for (int c = 0; c < rectsCount; ++c) {
@@ -182,17 +191,18 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
       }
     }
 
-    // flip image here
-    // TODO: consider to optimize
     for (Rectangle rect : dirtyRects) {
-      if (rect.width < width) {
-        for (int line = rect.y; line < rect.y + rect.height; line++) {
-          int offset = line*width + rect.x;
-          src.position(offset).get(dst, offset, rect.width);
-        }
-      }
-      else { // optimized for a buffer wide dirty rect
-        src.position(rect.y*width).get(dst, rect.y*width, width*rect.height);
+      if (rect.width < srcW || dstW != srcW) {
+        for (int line = rect.y; line < rect.y + rect.height; line++)
+          copyLine(src, srcW, srcH, dst, dstW, dstH, rect.x, line, rect.x + rect.width);
+      } else {
+        // Optimization for a buffer wide dirty rect
+        // rect.width == srcW && dstW == srcW
+        int offset = rect.y*srcW;
+        if (rect.y + rect.height <= dstH)
+          src.position(offset).get(dst, offset, srcW*rect.height);
+        else
+          src.position(offset).get(dst, offset, srcW*(dstH - rect.y));
       }
     }
 
@@ -202,5 +212,19 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     //            for (Rectangle r : dirtyRects)
     //                g.drawRect(r.x, r.y, r.width, r.height);
     //            g.dispose();
+  }
+
+  private static void copyLine(IntBuffer src, int sw, int sh, int[] dst, int dw, int dh, int x0, int y0, int x1) {
+    if (x0 < 0 || x0 >= sw || x0 >= dw || x1 <= x0)
+      return;
+    if (y0 < 0 || y0 >= sh || y0 >= dh)
+      return;
+
+    int offsetSrc = y0*sw + x0;
+    int offsetDst = y0*dw + x0;
+    if (x1 > dw)
+      src.position(offsetSrc).get(dst, offsetDst, dw - x0);
+    else
+      src.position(offsetSrc).get(dst, offsetDst, x1 - x0);
   }
 }

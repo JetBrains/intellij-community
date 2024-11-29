@@ -20,6 +20,7 @@ internal fun Document.convertToHtml(): String {
 
     sw.append("<script src=\"static/updateButton.js\"></script>\n")
     sw.append("<div id=\"updateButton\"></div>\n")
+    sw.append("<meta charset=\"UTF-8\">")
 
     val tf = TransformerFactory.newInstance()
     val transformer: Transformer = tf.newTransformer()

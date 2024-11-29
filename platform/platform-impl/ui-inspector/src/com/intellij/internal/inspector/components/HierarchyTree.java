@@ -174,6 +174,15 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       return;
     }
 
+    // this will be performed for elements that implement Accessible interface, but are not Components (for example JTree nodes)
+    if (paths.length > 0 &&
+        paths[0].getLastPathComponent() instanceof ComponentNode node &&
+        node.getComponent() == null &&
+        node.getAccessible() != null) {
+      onAccessibleChanged(node.getAccessible());
+      return;
+    }
+
     List<List<PropertyBean>> clickInfos = ContainerUtil.mapNotNull(paths, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof ComponentNode) {
@@ -204,6 +213,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
   public abstract void onComponentsChanged(List<? extends Component> components);
 
   public abstract void onCustomComponentChanged(UiInspectorCustomComponentChildProvider provider);
+
+  public abstract void onAccessibleChanged(Accessible a);
 
   public static final class ComponentNode extends DefaultMutableTreeNode {
     private final Component myComponent;

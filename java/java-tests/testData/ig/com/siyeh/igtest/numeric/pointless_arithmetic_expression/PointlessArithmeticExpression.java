@@ -178,6 +178,11 @@ class FloatingPoint {
     float nan = 0.0f / 0.0f;
   }
   
+  void testNanWithZero() {
+    double d = 0.0;
+    System.out.println(d / d);
+  }
+  
   void multiplyToCast(int x, int y) {
     double xyz = (1.0 * x) / y;
   }

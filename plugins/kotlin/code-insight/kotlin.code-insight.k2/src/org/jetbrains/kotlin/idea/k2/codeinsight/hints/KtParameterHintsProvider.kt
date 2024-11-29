@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -56,18 +58,15 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val valueArgumentList = element as? KtValueArgumentList ?: return
         val callElement = valueArgumentList.parent as? KtCallElement ?: return
         analyze(valueArgumentList) {
-            collectFromParameters(valueArgumentList, callElement, sink)
+            collectFromParameters(callElement, sink)
         }
     }
 
     context(KaSession)
     private fun collectFromParameters(
-        valueArgumentList: KtValueArgumentList,
         callElement: KtCallElement,
         sink: InlayTreeSink
     ) {
-        val arguments = valueArgumentList.arguments
-
         val functionCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return
         val functionSymbol: KaFunctionSymbol = functionCall.symbol
         val valueParameters: List<KaValueParameterSymbol> = functionSymbol.valueParameters
@@ -81,7 +80,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         //}
 
         if (!blackListed) {
-            functionSymbol.collectFromParameters(valueParameters, arguments, sink)
+            // TODO: KTIJ-30439 it should respect parameter names when KT-65846 is fixed
+            if ((functionSymbol as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke != true) {
+                collectFromParameters(functionCall.argumentMapping, valueParameters, sink)
+            }
         }
     }
 
@@ -96,20 +98,17 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     }
 
     context(KaSession)
-    private fun KaFunctionSymbol.collectFromParameters(
+    private fun collectFromParameters(
+        args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         valueParameters: List<KaValueParameterSymbol>,
-        arguments: MutableList<KtValueArgument>,
         sink: InlayTreeSink
     ) {
-        // TODO: KTIJ-30439 it should respect parameter names when KT-65846 is fixed
-        if ((this as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke == true) {
-            return
-        }
-        for ((index, symbol) in valueParameters.withIndex()) {
-            if (index >= arguments.size) break
-            val argument = arguments[index]
+        for (symbol in valueParameters) {
             val symbolName = symbol.name
             val name: Name = symbolName
+            val arg = args.filter { (_, signature) -> signature.symbol == symbol }.keys.firstOrNull() ?: continue
+            val argument = arg.parent as? KtValueArgument ?: continue
+
             // do not put inlay hints for a named argument
             if (argument.isNamed()) {
                 // it is possible to place named argument in a wrong position when there is some default value
@@ -121,7 +120,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             if (argument.isArgumentNamed(symbol)) continue
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
-                sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hintFormat = HintFormat.default) {
+                sink.addPresentation(InlineInlayPosition(arg.startOffset, true), hintFormat = HintFormat.default) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
                     text(stringName,
                          symbol.psi?.createSmartPointer()?.let {

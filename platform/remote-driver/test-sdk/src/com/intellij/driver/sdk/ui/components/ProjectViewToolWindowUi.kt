@@ -19,7 +19,7 @@ fun Finder.openProjectViewToolWindow(): ProjectViewToolWindowUi {
 }
 
 class ProjectViewToolWindowUi(data: ComponentData) : JTreeUiComponent(data) {
-  fun expandAll() = x("//div[@myicon='expandAll.svg']").click()
+  fun expandAll() = x("//div[@myicon='expandAll.svg']").waitVisible().click()
 }
 
 

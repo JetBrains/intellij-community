@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,12 +38,14 @@ public class MockPsiLambda extends MockMirror implements Method {
   }
 
   @Override
+  @Unmodifiable
   public List<String> argumentTypeNames() {
     // Captured values are not yet supported in mock
     return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());
   }
 
   @Override
+  @Unmodifiable
   public List<Type> argumentTypes() {
     return ContainerUtil.map(
       myPsiLambdaExpression.getParameterList().getParameters(),
@@ -126,6 +129,7 @@ public class MockPsiLambda extends MockMirror implements Method {
   }
 
   @Override
+  @Unmodifiable
   public List<LocalVariable> arguments() {
     return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), p -> new MockLocalVariable(myVirtualMachine, p));
   }

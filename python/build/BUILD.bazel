@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.pycharm.community.build` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "pycharm-community-build",
+  module_name = "intellij.pycharm.community.build",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//build",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//build/tasks",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-extension-kotlin",
+    "//platform/core-api:core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//python/python-sdk:sdk",
+    "//python/python-parser:parser",
+    "//jps/model-api:model",
+    "@lib//:jsoup",
+  ]
+)
+
+kt_jvm_test(
+  name = "pycharm-community-build_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":pycharm-community-build"],
+  deps = [
+    "//build",
+    "//platform/build-scripts/testFramework:buildScripts-testFramework",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//build/tasks",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@lib//:junit5",
+    "//platform/core-api:core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//python/python-sdk:sdk",
+    "//python/python-parser:parser",
+    "//jps/model-api:model",
+    "@lib//:jsoup",
+  ]
+)
+### auto-generated section `build intellij.pycharm.community.build` end

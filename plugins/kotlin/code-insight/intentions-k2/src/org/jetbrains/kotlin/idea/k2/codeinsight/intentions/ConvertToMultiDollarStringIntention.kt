@@ -10,13 +10,14 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.multiDollarStrings.convertToMultiDollarString
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.multiDollarStrings.simplifyDollarEntries
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.MultiDollarConversionInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertToMultiDollarString
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.prepareMultiDollarConversionInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.simplifyDollarEntries
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
-internal class ConvertToMultiDollarStringIntention : KotlinApplicableModCommandAction<KtStringTemplateExpression, Unit>(
-    KtStringTemplateExpression::class,
-) {
+internal class ConvertToMultiDollarStringIntention :
+    KotlinApplicableModCommandAction<KtStringTemplateExpression, MultiDollarConversionInfo>(KtStringTemplateExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.multi.dollar.string")
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
@@ -27,13 +28,15 @@ internal class ConvertToMultiDollarStringIntention : KotlinApplicableModCommandA
     override fun invoke(
         actionContext: ActionContext,
         element: KtStringTemplateExpression,
-        elementContext: Unit,
+        elementContext: MultiDollarConversionInfo,
         updater: ModPsiUpdater
     ) {
-        val replaced = convertToMultiDollarString(element)
+        val replaced = convertToMultiDollarString(element, elementContext)
         simplifyDollarEntries(replaced)
     }
 
     context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): Unit = Unit
+    override fun prepareContext(element: KtStringTemplateExpression): MultiDollarConversionInfo? {
+        return prepareMultiDollarConversionInfo(element, useFallbackPrefix = true)
+    }
 }

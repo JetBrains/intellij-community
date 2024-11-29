@@ -9,7 +9,7 @@ import com.intellij.execution.ui.ShortenCommandLineModeCombo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.PanelWithAnchor;
@@ -25,8 +25,8 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     private CommonJavaParametersPanel commonProgramParameters;
     private JrePathEditor jrePathEditor;
     private TextFieldWithBrowseButton chooseScriptFileTextField;
-    private LabeledComponent<TextFieldWithBrowseButton> chooseScriptFileComponent;
-    private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
+    private LabeledComponentNoThrow<TextFieldWithBrowseButton> chooseScriptFileComponent;
+    private LabeledComponentNoThrow<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
     private JComponent anchor;
 
     public KotlinStandaloneScriptRunConfigurationEditor(Project project) {
@@ -82,7 +82,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     }
 
     private void createUIComponents() {
-        chooseScriptFileComponent = new LabeledComponent<>();
+        chooseScriptFileComponent = new LabeledComponentNoThrow<>();
         chooseScriptFileTextField = new TextFieldWithBrowseButton();
         chooseScriptFileComponent.setComponent(chooseScriptFileTextField);
     }

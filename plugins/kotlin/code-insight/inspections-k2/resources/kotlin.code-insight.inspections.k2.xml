@@ -64,9 +64,17 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.can.unescape.dollar.literal.inspection.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.CanConvertToMultiDollarStringInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.code.migration"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.can.convert.to.multi.dollar.string.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantModalityModifierInspection"
                      groupPath="Kotlin"
@@ -263,6 +271,13 @@
                      cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin" key="inspection.remove.redundant.qualifier.name.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceIsEmptyWithIfEmptyInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin" key="inspection.replace.isempty.with.ifempty.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinEqualsBetweenInconvertibleTypesInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
@@ -384,6 +399,13 @@
                      enabledByDefault="true"
                      cleanupTool="true"
                      level="WARNING" key="inspection.self.assignment.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FloatingPointLiteralPrecisionInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
+                     enabledByDefault="true"
+                     level="WEAK WARNING" key="floating.point.literal.precision.inspection.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.UselessCallOnNotNullInspection"
                      groupPath="Kotlin"
@@ -511,5 +533,29 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.redundant.run.catching.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.JavaDefaultMethodsNotOverriddenByDelegationInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.java.default.methods.not.overridden.by.delegation.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.BooleanLiteralArgumentInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.boolean.literal.argument.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.ReplaceArrayEqualityOpWithArraysEqualsInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.replace.array.equality.op.with.arrays.equals.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

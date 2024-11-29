@@ -15,10 +15,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.beans.Introspector;
 import java.util.*;
@@ -175,6 +172,7 @@ public class PropertyUtilBase {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<PsiMethod> getAccessors(@NotNull final PsiClass psiClass,
                                              final String propertyName,
                                              final boolean acceptStatic,

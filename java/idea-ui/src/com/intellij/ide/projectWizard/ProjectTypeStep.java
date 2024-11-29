@@ -52,6 +52,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -273,6 +274,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     return FRAMEWORKS_CARD.equals(myCurrentCard) && Objects.equals(getSelectedBuilder(), myContext.getProjectBuilder());
   }
 
+  @Unmodifiable
   private @NotNull List<TemplateGroupItem> fillGroupTemplateMap(@NotNull WizardContext context) {
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     Map<String, TemplatesGroup> groupMap = new HashMap<>();

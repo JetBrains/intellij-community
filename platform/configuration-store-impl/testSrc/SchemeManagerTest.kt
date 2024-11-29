@@ -155,7 +155,7 @@ class SchemeManagerTest {
     }
 
     // use provider to specify the exact order of files (it is critical to test both variants - old, new or new, old)
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
+    val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
       override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
@@ -204,7 +204,7 @@ class SchemeManagerTest {
   @Test
   fun setSchemes() {
     val dir = fsRule.fs.getPath("/test")
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), provider = null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
+    val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
 
@@ -355,7 +355,7 @@ class SchemeManagerTest {
      * 3. Create a [SchemeManagerImpl] with the [StreamProvider] from #1 and [com.intellij.openapi.options.SchemeProcessor] from #2.
      *    We now have a SchemeManager that can be manipulated to exhibit the error.
      */
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, schemeProcessor, streamProvider, dir)
+    val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, schemeProcessor, streamProvider, dir)
 
     /**
      * 4. Add a scheme and save it. The scheme manager will now have a scheme named in the style of our
@@ -532,7 +532,7 @@ class SchemeManagerTest {
     val busDisposable = Disposer.newDisposable()
     try {
       timeoutRunBlocking(1.minutes) {
-        val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), provider = null, dir, fileChangeSubscriber = { schemeManager ->
+        val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir, fileChangeSubscriber = { schemeManager ->
           @Suppress("UNCHECKED_CAST")
           val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
           ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
@@ -575,7 +575,7 @@ class SchemeManagerTest {
   }
 
   private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> =
-    SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), provider = null, dir)
+    SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -595,7 +595,7 @@ class SchemeManagerTest {
   }
 
   private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
+    val schemesManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }

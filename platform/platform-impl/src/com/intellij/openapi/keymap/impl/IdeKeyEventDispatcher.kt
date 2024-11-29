@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionMenu
-import com.intellij.openapi.actionSystem.impl.EdtDataContext
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
@@ -840,10 +839,6 @@ private fun doPerformActionInner(e: InputEvent,
                                  actionEvent: AnActionEvent) {
   processor.onUpdatePassed(e, action, actionEvent)
   val eventCount = IdeEventQueue.getInstance().eventCount
-  // this is not true for test data contexts
-  if (context is EdtDataContext) {
-    context.setEventCount(eventCount)
-  }
 
   ActionUtil.performDumbAwareWithCallbacks(action, actionEvent) {
     LOG.assertTrue(eventCount == IdeEventQueue.getInstance().eventCount, "Event counts do not match: $eventCount != ${IdeEventQueue.getInstance().eventCount}")

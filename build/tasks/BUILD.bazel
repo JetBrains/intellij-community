@@ -1,50 +1,94 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.idea.community.build.tasks` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "tasks_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
-  name = "build-tasks",
+jvm_library(
+  name = "tasks",
   module_name = "intellij.idea.community.build.tasks",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlinx-serialization-core-jvm",
-    "@libraries//:kotlinx-serialization-json-jvm",
-    "@community//platform/util/zip:util-zip",
-    "@libraries//:kotlinx-collections-immutable-jvm",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@libraries//:jackson-jr-objects",
-    "@libraries//:jackson-core",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/util/rt-java8:util-rt-java8",
-    "@community//java/java-runtime:java-rt",
-    "@community//platform/util-rt",
-    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
-    "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
-    "@community//platform/build-scripts/downloader:buildScripts-downloader",
-    "@libraries//:annotations",
-    "@community//platform/util/base:util-base",
-    "@libraries//:hash4j",
-    "@libraries//:serviceMessages",
-    "@libraries//:opentelemetry-extension-kotlin",
-    "@libraries//:netty-buffer",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/util/zip",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:fastutil-min",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:jackson-jr-objects",
+    "@lib//:jackson",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/rt-java8",
+    "//java/java-runtime:rt",
+    "//platform/util-rt",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base",
+    "@lib//:hash4j",
+    "@lib//:tc_service_messages",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@rules_jvm//zip:build-zip",
   ],
   runtime_deps = [
-    ":resources",
-    "@libraries//:slf4j-api",
-    "@libraries//:slf4j-jdk14",
-    "@libraries//:bcpkix-jdk18on",
+    ":tasks_resources",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:bouncy-castle-provider",
   ]
 )
-### auto-generated section `build` end
+
+kt_jvm_test(
+  name = "tasks_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":tasks"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/util/zip",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:fastutil-min",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:jackson-jr-objects",
+    "@lib//:jackson",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/rt-java8",
+    "//java/java-runtime:rt",
+    "//platform/util-rt",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "@lib//:memoryfilesystem",
+    "@lib//:junit5",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base",
+    "@lib//:hash4j",
+    "@lib//:tc_service_messages",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@rules_jvm//zip:build-zip",
+  ],
+  runtime_deps = [":tasks_resources"]
+)
+### auto-generated section `build intellij.idea.community.build.tasks` end

@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.code-insight-toml" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="RUNTIME" />
@@ -74,7 +75,6 @@
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.fir.analysis" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" scope="RUNTIME" />

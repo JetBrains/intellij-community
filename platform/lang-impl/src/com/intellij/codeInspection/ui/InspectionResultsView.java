@@ -100,6 +100,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
 
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
   private final Executor myRightPanelUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Right-Panel-Updater");
+  private Component myFixToolbar;
   private volatile boolean myUpdating;
   private volatile boolean myFixesAvailable;
   private ToolWindow myToolWindow;
@@ -236,6 +237,12 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
         .addToRight(createRightActionsToolbar());
     }
     add(westComponent, BorderLayout.WEST);
+  }
+
+  void updateAvailableSuppressActions() {
+    if (myFixToolbar instanceof QuickFixPreviewPanelFactory.QuickFixReadyPanel quickFixPanel) {
+      quickFixPanel.updateAvailableSuppressors(this);
+    }
   }
 
   private static DefaultActionGroup createExportActions() {
@@ -406,8 +413,8 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
                 });
               });
             }
-            else if (node instanceof InspectionNode) {
-              if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
+            else if (node instanceof InspectionNode inspectionNode) {
+              if (myGlobalInspectionContext.getPresentation(inspectionNode.getToolWrapper()).isDummy()) {
                 mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
               }
               else {
@@ -458,8 +465,8 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
       final TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object last = path.getLastPathComponent();
-        if (last instanceof ProblemDescriptionNode) {
-          CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)last).getDescriptor();
+        if (last instanceof ProblemDescriptionNode problemDescriptionNode) {
+          CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
           if (descriptor != null) {
             previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
             JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
@@ -485,20 +492,19 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     editorPanel.add(previewPanel, BorderLayout.CENTER);
     if (problemCount > 0) {
       var paths = myTree.getSelectionPaths();
-      if (paths != null) for (TreePath path: paths) {
-        var node = (InspectionTreeNode)path.getLastPathComponent();
-        if (node instanceof SuppressableInspectionTreeNode) ((SuppressableInspectionTreeNode)node).updateAvailableSuppressActions();
+      if (paths != null) {
+        InspectionResultsViewUtil.INSTANCE.updateAvailableSuppressActions(getProject(), paths, this);
       }
-      final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(this);
-      if (fixToolbar != null) {
-        if (fixToolbar instanceof InspectionTreeLoadingProgressAware) {
-          myLoadingProgressPreview = (InspectionTreeLoadingProgressAware)fixToolbar;
+      myFixToolbar = QuickFixPreviewPanelFactory.create(this);
+      if (myFixToolbar != null) {
+        if (myFixToolbar instanceof InspectionTreeLoadingProgressAware progressPreview) {
+          myLoadingProgressPreview = progressPreview;
         }
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
         String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
-        actionsPanel.add(fixToolbar, borderLayout);
+        actionsPanel.add(myFixToolbar, borderLayout);
       }
     }
     if (previewEditor != null) {
@@ -508,16 +514,16 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
   }
 
   private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
-    if (selectedEntity instanceof RefElement &&
+    if (selectedEntity instanceof RefElement refElement &&
         selectedEntity.isValid() &&
-        !(((RefElement)selectedEntity).getPsiElement() instanceof PsiDirectory)) {
-      PsiElement selectedElement = ((RefElement)selectedEntity).getPsiElement();
+        !(refElement.getPsiElement() instanceof PsiDirectory)) {
+      PsiElement selectedElement = refElement.getPsiElement();
       if (problemCount == 1) {
         CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
         if (descriptors.length != 0) {
           final CommonProblemDescriptor descriptor = descriptors[0];
-          if (descriptor instanceof ProblemDescriptorBase) {
-            final PsiElement element = ((ProblemDescriptorBase)descriptor).getPsiElement();
+          if (descriptor instanceof ProblemDescriptorBase problemDescriptorBase) {
+            final PsiElement element = problemDescriptorBase.getPsiElement();
             if (element != null) {
               selectedElement = element;
             }
@@ -719,7 +725,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
       RefEntity[] refElements = myTree.getElementsFromSelection(paths);
       List<PsiElement> psiElements = new ArrayList<>();
       for (RefEntity refElement : refElements) {
-        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
+        PsiElement psiElement = refElement instanceof RefElement r ? r.getPsiElement() : null;
         if (psiElement != null && psiElement.isValid()) {
           psiElements.add(psiElement);
         }
@@ -749,7 +755,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
       });
       sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         RefEntity item = ((ProblemDescriptionNode)selectedNode).getElement();
-        return item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
+        return item instanceof RefElement r ? r.getPsiElement() : null;
       });
 
     }
@@ -763,14 +769,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
   }
 
   public @NlsContexts.TabTitle String getViewTitle() {
-    if (ExperimentalUI.isNewUI()) {
-      return InspectionsBundle.message("inspection.results.toolwindow.title", myScope.getShortenName());
-    }
-
-    return InspectionsBundle.message(isSingleInspectionRun() ?
-                              "inspection.results.for.inspection.toolwindow.title" :
-                              "inspection.results.for.profile.toolwindow.title",
-                              getCurrentProfileName(), myScope.getShortenName());
+    return InspectionsBundle.message("inspection.results.toolwindow.title", myScope.getShortenName());
   }
 
   void setFixesAvailable(boolean available) {

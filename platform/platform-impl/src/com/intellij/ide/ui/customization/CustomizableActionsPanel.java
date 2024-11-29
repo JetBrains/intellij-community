@@ -37,6 +37,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -272,6 +273,7 @@ public class CustomizableActionsPanel {
 
   protected void onModified() { }
 
+  @Unmodifiable
   private static List<String> toActionIDs(List<? extends TreePath> paths) {
     return ContainerUtil.map(paths, path -> getActionId((DefaultMutableTreeNode)path.getLastPathComponent()));
   }

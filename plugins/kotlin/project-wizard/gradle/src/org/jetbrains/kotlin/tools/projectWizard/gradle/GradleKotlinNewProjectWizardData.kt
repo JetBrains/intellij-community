@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizar
 
 interface GradleKotlinNewProjectWizardData : GradleNewProjectWizardData, KotlinOnboardingProjectWizardData {
 
-    var generateSingleModule: Boolean
+    var generateMultipleModules: Boolean
 
     companion object {
 

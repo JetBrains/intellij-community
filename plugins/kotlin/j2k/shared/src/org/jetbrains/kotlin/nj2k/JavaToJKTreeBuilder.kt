@@ -75,6 +75,11 @@ class JavaToJKTreeBuilder(
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
         nullabilityInfo = null
 
+        val file = psi as? PsiJavaFile ?: psi.containingFile as? PsiJavaFile
+        if (file != null) {
+            collectNullabilityInfo(file)
+        }
+
         return when (psi) {
             is PsiJavaFile -> psi.toJK()
             is PsiReferenceExpression -> with(expressionTreeMapper) { psi.toJK(ignoreFacades = false) }
@@ -1159,8 +1164,6 @@ class JavaToJKTreeBuilder(
     }
 
     private fun PsiJavaFile.toJK(): JKFile {
-        collectNullabilityInfo(this)
-
         return JKFile(
             packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier("")),
             importList.toJK(saveImports = false),
@@ -1170,7 +1173,6 @@ class JavaToJKTreeBuilder(
 
     /**
      * See also [org.jetbrains.kotlin.nj2k.conversions.NullabilityConversion]
-     * TODO support not only PsiJavaFile but any PsiElement
      */
     private fun collectNullabilityInfo(element: PsiJavaFile) {
         val nullityInferrer = J2KNullityInferrer()

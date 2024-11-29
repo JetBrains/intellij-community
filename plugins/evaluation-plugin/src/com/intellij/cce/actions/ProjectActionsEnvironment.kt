@@ -246,6 +246,7 @@ open class ProjectActionsEnvironment(
   ) : EvaluationChunk {
     override val datasetName: String = config.projectName
     override val name: String = fileActions.path
+    override val sessionsExist: Boolean = fileActions.sessionsCount > 0
 
     override fun evaluate(
       handler: InterpretationHandler,

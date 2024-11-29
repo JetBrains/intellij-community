@@ -4,6 +4,7 @@ package com.intellij.util.concurrency;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -31,6 +32,7 @@ final class BoundedScheduledExecutorService extends SchedulingWrapper {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<Runnable> shutdownNow() {
     List<Runnable> runnables = super.shutdownNow();
     return ContainerUtil.concat(runnables, backendExecutorService.shutdownNow());

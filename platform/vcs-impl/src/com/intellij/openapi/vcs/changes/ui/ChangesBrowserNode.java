@@ -310,6 +310,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     renderer.append(getCountText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
+  @Override
   public String toString() {
     return getTextPresentation();
   }

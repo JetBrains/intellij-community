@@ -67,6 +67,7 @@ public abstract class GrTupleType extends GrLiteralClassType {
     return builder.toString();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof GrTupleType) {
       List<PsiType> componentTypes = getComponentTypes();

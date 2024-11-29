@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.TestStateStorage;
@@ -26,7 +27,9 @@ import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Date;
 import java.util.List;
 
@@ -43,26 +46,15 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testNestedTestClass() {
-    TestStateStorage stateStorage = TestStateStorage.getInstance(getProject());
     String testUrl = "java:suite://Main$MainTest";
-    try {
-      stateStorage.writeState(testUrl, new TestStateStorage.Record(TestStateInfo.Magnitude.FAILED_INDEX.getValue(), new Date(), 0, 0, "",
-                                                                   "", ""));
-      myFixture.addClass("package junit.framework; public class TestCase {}");
-      PsiFile file = myFixture.configureByText("MainTest.java", """
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    myFixture.configureByText("MainTest.java", """
         public class Main {
           public static class Main<caret>Test extends junit.framework.TestCase {
             public void testFoo() {
             }
           }}""");
-
-      RunLineMarkerContributor.Info info = new TestRunLineMarkerProvider().getInfo(file.findElementAt(myFixture.getCaretOffset()));
-      assertNotNull(info);
-      assertEquals(AllIcons.RunConfigurations.TestState.Red2, info.icon);
-    }
-    finally {
-      stateStorage.removeState(testUrl);
-    }
+    doTestState(testUrl, TestStateInfo.Magnitude.FAILED_INDEX.getValue(), AllIcons.RunConfigurations.TestState.Red2);
   }
 
   public void testTestAnnotationInSuperMethodOnly() {
@@ -177,20 +169,92 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
      """);
   }
 
-  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount, String testClass) {
-    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
-    myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
+  public void testClassInDumbMode() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    PsiFile file = myFixture.configureByText("MyTest.java", """
+      public class My<caret>Test extends junit.framework.TestCase {
+          public void testFoo() {
+          }
+      }""");
+    PsiClass psiClass = ((PsiJavaFile)file).getClasses()[0];
+    TestRunLineMarkerProvider provider = new TestRunLineMarkerProvider();
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
+      assertNotNull(info);
+    });
+  }
 
-    RunManager manager = RunManager.getInstance(myFixture.getProject());
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
-      new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager,configuration);
-    manager.addConfiguration(runnerAndConfigurationSettings);
-    myTempSettings.add(runnerAndConfigurationSettings);
-    manager.setSelectedConfiguration(runnerAndConfigurationSettings);
+  public void testRetryingTestAnnotationSingle() {
+    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
+    myFixture.configureByText("ClassWithRetryingTest.java", """
+      import org.junitpioneer.jupiter.RetryingTest;
+      
+      public class ClassWithRetryingTst {
+          @RetryingTest(value = 2)
+          void <caret>retryingTest() {
+          }
+      }
+      """);
+    GutterMark mark = findSingleGutterAtCaret();
+    assertEquals(ExecutionBundle.message("run.text"), mark.getTooltipText());
+  }
 
-    myFixture.configureByText("DisabledMethodTest.java", testClass);
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
-    assertEquals(marksCount, marks.size());
+  public void testRetryingTestAnnotationWithRegularTest() {
+    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
+    myFixture.configureByText("ClassWithRetryingTest.java", """
+      import org.junit.jupiter.api.Test;
+      import org.junitpioneer.jupiter.RetryingTest;
+      
+      public class ClassWithRetryingTest {
+          @RetryingTest(value = 2)
+          void <caret>retryingTest() {
+          }
+      
+          @Test
+          void regularTest() {
+          }
+      }
+      """);
+
+    GutterMark mark = findSingleGutterAtCaret();
+    assertEquals(ExecutionBundle.message("run.text"), mark.getTooltipText());
+  }
+
+  public void testRetryingTestAnnotationWithDifferentParameters() {
+    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
+    myFixture.configureByText("ClassWithRetryingTestWithDifferentParameters.java", """
+      import org.junit.jupiter.api.Test;
+      import org.junitpioneer.jupiter.RetryingTest;
+      
+      public class ClassWithRetryingTestWithDifferentParameters {
+          @RetryingTest(maxAttempts = 2, minSuccess = 1, suspendForMs = 0)
+          void <caret>retryingTest() {
+          }
+      
+          @Test
+          void regularTest() {
+          }
+      }
+      """);
+    GutterMark mark = findSingleGutterAtCaret();
+    assertEquals(ExecutionBundle.message("run.text"), mark.getTooltipText());
+  }
+
+  public void testRetryingTestAnnotationSupportGradle() {
+    JUnit5TestFrameworkSetupUtil.setupJunit5WithExtensionLibrary(myFixture);
+
+    myFixture.configureByText("ClassWithRetryingTest.java", """
+      import org.junitpioneer.jupiter.RetryingTest;
+      
+      public class ClassWithRetryingTest {
+          @RetryingTest(value = 2)
+          void <caret>retryingTest() {
+          }
+      }
+      """);
+    setupRunConfiguration(new MockGradleRunConfiguration(myFixture.getProject(), "ClassWithRetryingTest"));
+    doTestState("java:suite://ClassWithRetryingTest/retryingTest", TestStateInfo.Magnitude.PASSED_INDEX.getValue(), AllIcons.RunConfigurations.TestState.Green2);
+
   }
 
   private void doTestClassWithMain(Runnable setupExisting) {
@@ -229,18 +293,36 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     assertEquals("MainTest", selectedConfiguration.getName());
   }
 
-  public void testClassInDumbMode() {
-    myFixture.addClass("package junit.framework; public class TestCase {}");
-    PsiFile file = myFixture.configureByText("MyTest.java", """
-      public class My<caret>Test extends junit.framework.TestCase {
-          public void testFoo() {
-          }
-      }""");
-    PsiClass psiClass = ((PsiJavaFile)file).getClasses()[0];
-    TestRunLineMarkerProvider provider = new TestRunLineMarkerProvider();
-    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-      RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
+  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount, String testClass) {
+    JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
+    myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
+
+    setupRunConfiguration(configuration);
+
+    myFixture.configureByText("DisabledMethodTest.java", testClass);
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(marksCount, marks.size());
+  }
+
+  private void doTestState(String testUrl, int indexValue, @NotNull Icon expectedIcon) {
+    TestStateStorage stateStorage = TestStateStorage.getInstance(getProject());
+    try {
+      stateStorage.writeState(testUrl, new TestStateStorage.Record(indexValue, new Date(), 0, 0, "",
+                                                                   "", ""));
+
+
+      RunLineMarkerContributor.Info info = new TestRunLineMarkerProvider().getInfo(myFixture.getFile().findElementAt(myFixture.getCaretOffset()));
       assertNotNull(info);
-    });
+      assertEquals(expectedIcon, info.icon);
+    }
+    finally {
+      stateStorage.removeState(testUrl);
+    }
+  }
+
+  private @NotNull GutterMark findSingleGutterAtCaret() {
+    List<GutterMark> markList = myFixture.findGuttersAtCaret();
+    assertSize(1, markList);
+    return ContainerUtil.getOnlyItem(markList);
   }
 }

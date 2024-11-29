@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -50,6 +51,7 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
 
 
   @NotNull
+  @Unmodifiable
   static List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
     return ContainerUtil.map(PsiViewerExtension.EP_NAME.getExtensionList(), el -> new PsiViewerSourceWrapper(el));
   }

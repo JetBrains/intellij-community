@@ -1,4 +1,5 @@
 // "Make 'arg' private" "true"
+// PRIORITY: HIGH
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter

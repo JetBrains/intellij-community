@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.xml.xmlbeans` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_library(
+  name = "xmlbeans",
+  module_name = "intellij.xml.xmlbeans",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//xml/impl",
+    "@lib//:xml_xmlbeans__xml_beans",
+    "@lib//:xml_xmlbeans_apache_logging_log4j_to_slf4j",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+  ]
+)
+
+kt_jvm_test(
+  name = "xmlbeans_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":xmlbeans"],
+  deps = [
+    "//xml/impl",
+    "@lib//:xml_xmlbeans__xml_beans",
+    "@lib//:xml_xmlbeans_apache_logging_log4j_to_slf4j",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "@lib//:assert_j",
+    "//java/testFramework",
+    "//platform/editor-ui-api:editor",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+  ]
+)
+### auto-generated section `build intellij.xml.xmlbeans` end

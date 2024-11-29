@@ -8,7 +8,13 @@
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
   </content>
+
   <xi:include href="/META-INF/common-ide-modules.xml"/>
+
+  <!--suppress XmlPathReference -->
+  <xi:include href="/META-INF/community-extensions.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

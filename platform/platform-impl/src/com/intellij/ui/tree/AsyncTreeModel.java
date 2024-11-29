@@ -20,10 +20,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
@@ -271,6 +268,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     }
   }
 
+  @Unmodifiable
   private @Nullable Collection<@NotNull Node> getChildrenForWalker(@NotNull Node node, TreeWalkerBase<Node> walker, boolean allowLoading) {
     if (node.leafState == LeafState.ALWAYS || !allowLoading) return ContainerUtil.filter(node.getChildren(), Node::isLoaded);
     promiseChildren(node)
@@ -348,6 +346,7 @@ public final class AsyncTreeModel extends AbstractTreeModel
     });
   }
 
+  @Unmodifiable
   private @Nullable List<Node> getChildrenFromCachedPresentation(@NotNull AsyncTreeModel.Node parent) {
     var cachedPresentation = tree.cachedPresentation;
     if (cachedPresentation == null) return null;

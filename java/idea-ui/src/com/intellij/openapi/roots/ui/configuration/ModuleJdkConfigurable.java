@@ -76,6 +76,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     final Project project = getRootModel().getModule().getProject();
 
     Predicate<SdkTypeId> predicate = SimpleJavaSdkType.notSimpleJavaSdkType();
+    // TODO Use EelApi here.
     myCbModuleJdk = new JdkComboBox(project, myJdksModel, predicate::test,
                                     WslSdkFilter.filterSdkByWsl(project), WslSdkFilter.filterSdkSuggestionByWsl(project),
                                     null, jdk -> {

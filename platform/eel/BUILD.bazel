@@ -1,17 +1,44 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.eel` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_library(
   name = "eel",
   module_name = "intellij.platform.eel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
-    "@libraries//:annotations",
-    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-coroutines-core",
   ]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.eel` end
+
+### auto-generated section `build intellij.platform.eel.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "eel-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "eel-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/eel",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:kotlinx-coroutines-test",
+  ]
+)
+### auto-generated section `build intellij.platform.eel.tests` end

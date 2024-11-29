@@ -25,6 +25,7 @@ object TelemetryAgentResolver {
   private const val JAVA_AGENT_URI = "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases" +
                                      "/download/v$JAVA_AGENT_VERSION/opentelemetry-javaagent.jar"
 
+  @JvmStatic
   fun getAgentLocation(): Path? {
     val location = PathManager.getSystemDir()
       .resolve("otlp-agent")

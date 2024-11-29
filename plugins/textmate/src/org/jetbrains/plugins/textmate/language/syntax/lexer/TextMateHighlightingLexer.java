@@ -6,6 +6,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
+import org.jetbrains.plugins.textmate.regex.RegexFactory;
+import org.jetbrains.plugins.textmate.regex.joni.JoniRegexFactory;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -23,8 +25,18 @@ public class TextMateHighlightingLexer extends LexerBase {
   private int myTokenEnd;
   private boolean myRestartable;
 
-  public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor, int lineLimit) {
-    myLexer = new TextMateLexer(languageDescriptor, lineLimit);
+  /**
+   * @deprecated pass regex factory to a constructor
+   */
+  public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
+                                   int lineLimit) {
+    myLexer = new TextMateLexer(languageDescriptor, new JoniRegexFactory(), lineLimit);
+  }
+  
+  public TextMateHighlightingLexer(@NotNull TextMateLanguageDescriptor languageDescriptor,
+                                   @NotNull RegexFactory regexFactory,
+                                   int lineLimit) {
+    myLexer = new TextMateLexer(languageDescriptor, regexFactory, lineLimit);
   }
 
   @Override

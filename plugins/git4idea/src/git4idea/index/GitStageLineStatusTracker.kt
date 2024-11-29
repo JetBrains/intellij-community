@@ -14,10 +14,7 @@ import com.intellij.diff.util.DiffDrawUtil.InlineHighlighterBuilder
 import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
@@ -37,7 +34,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.*
-import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel.showPopupAt
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
@@ -125,6 +121,8 @@ class GitStageLineStatusTracker(
       isInitialized = true
       updateHighlighters()
     }
+
+    if (isValid()) listeners.multicaster.onBecomingValid()
   }
 
   @RequiresEdt
@@ -353,6 +351,8 @@ class GitStageLineStatusTracker(
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
       listeners.multicaster.onRangesChanged()
+
+      if (isValid()) listeners.multicaster.onBecomingValid()
     }
 
     private fun isTrackerEmpty(): Boolean {
@@ -544,22 +544,22 @@ class GitStageLineStatusTracker(
         return
       }
 
-      val popupDisposable = Disposer.newDisposable(tracker.disposable)
+      LineStatusMarkerPopupService.instance.buildAndShowPopup(tracker.disposable, editor, mousePosition) { popupDisposable->
+        val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
+        val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+        installWordDiff(editor, stagedTextField, vcsTextField, range, popupDisposable)
 
-      val stagedTextField = createTextField(editor, tracker.stagedDocument, range.stagedLine1, range.stagedLine2)
-      val vcsTextField = createTextField(editor, tracker.vcsDocument, range.vcsLine1, range.vcsLine2)
-      installWordDiff(editor, stagedTextField, vcsTextField, range, popupDisposable)
+        val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
 
-      val editorsPanel = createEditorComponent(editor, stagedTextField, vcsTextField)
+        val actions = createToolbarActions(editor, range, mousePosition)
+        val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
 
-      val actions = createToolbarActions(editor, range, mousePosition)
-      val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, popupDisposable)
+        val additionalPanel = createStageLinksPanel(editor, range, mousePosition, popupDisposable)
 
-      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, popupDisposable)
-
-      val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
-      toolbar.setTargetComponent(popupPanel)
-      showPopupAt(editor, popupPanel, mousePosition, popupDisposable)
+        val popupPanel = LineStatusMarkerPopupPanel.create(editor, toolbar, editorsPanel, additionalPanel)
+        toolbar.setTargetComponent(popupPanel)
+        popupPanel
+      }
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {
@@ -792,9 +792,16 @@ class GitStageLineStatusTracker(
       actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(StageShowDiffAction(editor, range))
       actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
-      actions.add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this))
       return actions
     }
+
+    override fun createEditorContextMenuActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = listOf(
+      LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range),
+      Separator.getInstance(),
+      LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this).apply {
+        templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
+      },
+    )
 
     override fun toString(): String = "GitStageLineStatusTracker.MyLineStatusMarkerPopupRenderer(tracker=$tracker)"
 

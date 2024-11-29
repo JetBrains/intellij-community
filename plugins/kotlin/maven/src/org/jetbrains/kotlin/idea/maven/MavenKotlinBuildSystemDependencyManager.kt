@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -12,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.kotlin.idea.base.util.isMavenModule
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
@@ -50,7 +50,7 @@ class MavenKotlinBuildSystemDependencyManager(
 
     override fun isProjectSyncPending(): Boolean {
         val isNotificationVisible =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("MAVEN")).get()
+            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, MavenUtil.SYSTEM_ID).get()
         return isNotificationVisible
     }
 

@@ -94,8 +94,8 @@ internal class GHPRDiffChangeViewModelImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val aiComments: StateFlow<Collection<GHPRAICommentViewModel>> =
-    GHPRAIReviewExtension.EP.extensionListFlow()
-      .flatMapLatest { it.firstOrNull()?.provideCommentVms(project, dataProvider, change, diffData) ?: flowOf(listOf()) }
+    GHPRAIReviewExtension.singleFlow
+      .flatMapLatest { it?.provideCommentVms(project, dataProvider, change, diffData) ?: flowOf(listOf()) }
       .stateIn(cs, SharingStarted.Eagerly, emptyList())
 
   init {

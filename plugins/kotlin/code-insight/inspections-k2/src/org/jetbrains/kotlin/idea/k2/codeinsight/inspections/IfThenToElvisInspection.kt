@@ -35,11 +35,10 @@ internal class IfThenToElvisInspection @JvmOverloads constructor(
         ApplicabilityRanges.ifExpressionExcludingBranches(element)
 
     override fun getProblemHighlightType(element: KtIfExpression, context: IfThenToElvisInspectionData): ProblemHighlightType {
-        if (context.transformationStrategy.shouldSuggestTransformation() && (highlightStatement || context.isUsedAsExpression)) {
-            return ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-        }
-        else {
-            return ProblemHighlightType.INFORMATION
+        return if (context.transformationStrategy.shouldSuggestTransformation() && (highlightStatement || context.isUsedAsExpression)) {
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        } else {
+            ProblemHighlightType.INFORMATION
         }
     }
 

@@ -122,8 +122,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -137,8 +136,8 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1587,6 +1586,14 @@ public final class BuildManager implements Disposable {
     cmdLine.addPathParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + '=', FileUtil.toSystemIndependentName(PathManager.getPluginsPath()));
 
     cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+    if (AdvancedSettings.getBoolean("compiler.inMemoryLogger")) {
+      cmdLine.addParameter("-D" + GlobalOptions.USE_IN_MEMORY_FAILED_BUILD_LOGGER + "=true");
+    }
+
+    if (Registry.is("jps.report.registered.unexistent.output", false)) {
+      cmdLine.addParameter("-Djps.report.registered.unexistent.output=true");
+    }
+
     if (myFallbackSdkHome != null && myFallbackSdkVersion != null) {
       cmdLine.addPathParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + '=', myFallbackSdkHome);
       cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + '=' + myFallbackSdkVersion);
@@ -2240,8 +2247,6 @@ public final class BuildManager implements Disposable {
   }
 
   private final class ProjectWatcher implements ProjectCloseListener {
-    private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
-
     @Override
     public void projectClosingBeforeSave(@NotNull Project project) {
       myAutoMakeTask.cancelPendingExecution();
@@ -2280,10 +2285,6 @@ public final class BuildManager implements Disposable {
         if (myProjectDataMap.isEmpty()) {
           InternedPath.clearCache();
         }
-      }
-      MessageBusConnection connection = myConnections.remove(project);
-      if (connection != null) {
-        connection.disconnect();
       }
     }
   }

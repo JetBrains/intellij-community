@@ -34,7 +34,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
   }
 
   public static void clearCallState() {
-    myCallState.set(null);
+    myCallState.remove();
   }
 
   public static boolean wasCalled() {

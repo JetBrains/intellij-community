@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,20 +15,17 @@ public interface ProductIcons {
   }
 
   /**
-   * Returns a node icon to represent projects which may be opened by the IDE (e.g. in file choosers).
+   * Returns a node icon to represent projects which may be opened by the IDE (e.g., in a file tree).
    */
-  @NotNull
-  Icon getProjectNodeIcon();
+  @NotNull Icon getProjectNodeIcon();
 
   /**
    * Returns an action icon to represent a project directory.
    */
-  @NotNull
-  Icon getProjectIcon();
+  @NotNull Icon getProjectIcon();
 
   /**
-   * Returns icon containing logo of this IDE.
+   * Returns the logo of this IDE.
    */
-  @NotNull
-  Icon getProductIcon();
+  @NotNull Icon getProductIcon();
 }

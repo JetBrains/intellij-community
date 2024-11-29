@@ -28,6 +28,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
@@ -247,6 +248,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   @NotNull
+  @Unmodifiable
   List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
     return ContainerUtil.filter(ModuleRootManager.getInstance(module).getContentRoots(), root -> {
       if (!shouldBeShown(root, settings)) return false;

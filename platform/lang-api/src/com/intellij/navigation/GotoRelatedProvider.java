@@ -4,6 +4,7 @@ package com.intellij.navigation;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,10 +18,12 @@ import java.util.List;
  * Use extension point `com.intellij.gotoRelatedProvider`.
  */
 public abstract class GotoRelatedProvider {
+  @Unmodifiable
   public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull PsiElement psiElement) {
     return Collections.emptyList();
   }
 
+  @Unmodifiable
   public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     return Collections.emptyList();
   }

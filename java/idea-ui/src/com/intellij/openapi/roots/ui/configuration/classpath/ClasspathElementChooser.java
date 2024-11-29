@@ -16,10 +16,12 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 interface ClasspathElementChooser<T> {
   @NotNull
+  @Unmodifiable
   List<T> chooseElements();
 }

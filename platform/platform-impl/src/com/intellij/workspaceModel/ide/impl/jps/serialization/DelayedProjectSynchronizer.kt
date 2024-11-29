@@ -45,7 +45,8 @@ class DelayedProjectSynchronizer : ProjectActivity {
       }
 
       val loadingTime = measureTimeMillis {
-        projectModelSynchronizer.loadProject(project)
+        val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
+        projectModelSynchronizer.applyLoadedStorage(projectEntities)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
       syncTimeMs.duration.addAndGet(loadingTime)

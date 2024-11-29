@@ -90,6 +90,13 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return myFrameProxy;
   }
 
+  public @Nullable DebuggerManagerThreadImpl getManagerThread() {
+    if (mySuspendContext != null) return mySuspendContext.getManagerThread();
+    DebugProcessImpl debugProcess = getDebugProcess();
+    //noinspection UsagesOfObsoleteApi
+    return debugProcess != null ? debugProcess.getManagerThread() : null;
+  }
+
   public SourcePosition getSourcePosition() {
     LOG.assertTrue(myInitialized);
     return mySourcePosition;

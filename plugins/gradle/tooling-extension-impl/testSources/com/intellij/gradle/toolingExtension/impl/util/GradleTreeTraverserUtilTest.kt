@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.util
 
-import com.intellij.platform.testFramework.treeAssertion.buildTree
-import com.intellij.platform.testFramework.treeAssertion.getTreeString
+import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
+import com.intellij.platform.testFramework.assertion.treeAssertion.getTreeString
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 

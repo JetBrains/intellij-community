@@ -14,6 +14,10 @@
                     interface="org.jetbrains.plugins.github.ai.GHPRAIReviewExtension"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="intellij.vcs.github.aiSummaryExtension"
+                    interface="org.jetbrains.plugins.github.ai.GHPRAISummaryExtension"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.vcs.github.gistContentsCollector"
                     interface="org.jetbrains.plugins.github.GithubGistContentsCollector"
                     dynamic="true"/>
@@ -70,6 +74,10 @@
                  description="Milliseconds margin used when comparing known last seen date with last updated at date for PRs"
                  key="github.last.seen.state.margin.millis"/>
 
+    <registryKey defaultValue="30"
+                 description="Seconds between checking the ETag for the PR list"
+                 key="github.pr.list.automatic.refresh.seconds"/>
+
     <vcs.github.gistContentsCollector
       implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"
       id="default"
@@ -88,6 +96,10 @@
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$BranchPresenter"/>
     <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.github.notification.GHPushNotificationCustomizer"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.plugins.github.extensions.GHActionJsonSchemaProviderFactory"/>
   </extensions>
 
   <actions>
@@ -153,52 +165,52 @@
     <group id="Github.PullRequest.ToolWindow.List.Popup">
       <action id="Github.PullRequest.Show"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestAction"/>
-      <reference id="Github.PullRequest.Open.Link"/>
-      <reference id="Github.PullRequest.Copy.Link"/>
+      <reference ref="Github.PullRequest.Open.Link"/>
+      <reference ref="Github.PullRequest.Copy.Link"/>
       <separator/>
       <action id="Github.PullRequest.List.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>
     </group>
     <group id="Github.PullRequest.Details.Popup">
-      <reference id="Github.PullRequest.Details.Reload"/>
-      <reference id="Github.PullRequest.Open.Link"/>
-      <reference id="Github.PullRequest.Copy.Link"/>
+      <reference ref="Github.PullRequest.Details.Reload"/>
+      <reference ref="Github.PullRequest.Open.Link"/>
+      <reference ref="Github.PullRequest.Copy.Link"/>
     </group>
 
     <action id="Github.PullRequest.Review.Submit"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction"/>
 
     <group id="Github.PullRequest.Changes.Toolbar">
-      <reference id="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowDiff"/>
       <separator/>
-      <reference id="ChangesView.GroupBy"/>
+      <reference ref="ChangesView.GroupBy"/>
     </group>
 
     <group id="Github.PullRequest.Changes.Popup">
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Diff.ShowStandaloneDiff"/>
-      <reference id="EditSource"/>
+      <reference ref="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowStandaloneDiff"/>
+      <reference ref="EditSource"/>
       <action id="Github.PullRequest.Changes.MarkViewed"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesViewedAction"/>
       <action id="Github.PullRequest.Changes.MarkNotViewed"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRMarkFilesNotViewedAction"/>
       <separator/>
       <group id="Github.PullRequest.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
-        <reference id="ChangesView.GroupBy"/>
+        <reference ref="ChangesView.GroupBy"/>
       </group>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
       <separator/>
-      <reference id="Github.PullRequest.Details.Reload"/>
-      <reference id="Github.PullRequest.Open.Link"/>
-      <reference id="Github.PullRequest.Copy.Link"/>
+      <reference ref="Github.PullRequest.Details.Reload"/>
+      <reference ref="Github.PullRequest.Open.Link"/>
+      <reference ref="Github.PullRequest.Copy.Link"/>
     </group>
 
     <group id="Github.PullRequest.Timeline.Popup">
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
-      <reference id="Github.PullRequest.Open.Link"/>
-      <reference id="Github.PullRequest.Copy.Link"/>
+      <reference ref="Github.PullRequest.Open.Link"/>
+      <reference ref="Github.PullRequest.Copy.Link"/>
     </group>
 
     <action id="Github.Break.Api.Requests" internal="true"
@@ -220,7 +232,7 @@
               class="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$ShowAction"
               icon="AllIcons.Vcs.Vendors.Github">
       </action>
-      <reference id="Github.PullRequest.Review.Submit"/>
+      <reference ref="Github.PullRequest.Review.Submit"/>
       <action id="Github.Pull.Request.Branch.Update"
               class="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$UpdateAction"
               icon="org.jetbrains.plugins.github.GithubIcons.GithubWarning">

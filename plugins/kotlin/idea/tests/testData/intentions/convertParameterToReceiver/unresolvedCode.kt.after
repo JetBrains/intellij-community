@@ -1,0 +1,9 @@
+// DISABLE-ERRORS
+
+fun main() {
+    listOf(1, 2, 3).foo()
+}
+
+fun UnresolvedClass.foo() {
+    println(this)
+}

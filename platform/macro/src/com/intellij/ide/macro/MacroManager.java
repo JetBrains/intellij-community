@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -107,6 +108,7 @@ public final class MacroManager {
    * @return all macros (built-in and provided via {@link Macro} extension point)
    */
   @NotNull
+  @Unmodifiable
   public Collection<Macro> getMacros() {
     return ContainerUtil.concat(predefinedMacros, Macro.EP_NAME.getExtensionList());
   }

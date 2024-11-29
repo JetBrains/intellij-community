@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.jsonpath` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "jsonpath_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jsonpath",
+  module_name = "intellij.jsonpath",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jsonpath",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//json",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "@lib//:guava",
+  ],
+  runtime_deps = [":jsonpath_resources"]
+)
+
+kt_jvm_test(
+  name = "jsonpath_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":jsonpath"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jsonpath",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//json",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//plugins/IntelliLang:langInjection",
+    "//platform/testFramework/extensions:testExtensions",
+  ],
+  runtime_deps = [":jsonpath_resources"]
+)
+### auto-generated section `build intellij.jsonpath` end

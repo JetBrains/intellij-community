@@ -5,6 +5,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,6 +24,7 @@ public final class CodeStylePropertiesUtil {
     collector.accept(new GeneralCodeStylePropertyMapper(settings));
   }
 
+  @Unmodifiable
   public static @NotNull List<String> getValueList(@NotNull String string) {
     return ContainerUtil.map(string.split(","), s -> s.trim());
   }

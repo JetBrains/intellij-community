@@ -4,6 +4,7 @@ package com.intellij.lang;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -25,5 +26,6 @@ public abstract class LighterAST {
 
   public abstract @Nullable LighterASTNode getParent(final @NotNull LighterASTNode node);
 
+  @Unmodifiable
   public abstract @NotNull List<LighterASTNode> getChildren(final @NotNull LighterASTNode parent);
 }

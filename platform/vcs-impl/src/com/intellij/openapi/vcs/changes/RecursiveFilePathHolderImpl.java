@@ -79,6 +79,7 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
     return scope.belongsTo(filePath);
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -87,6 +88,7 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
     return myMap.equals(that.myMap);
   }
 
+  @Override
   public int hashCode() {
     return myMap.hashCode();
   }

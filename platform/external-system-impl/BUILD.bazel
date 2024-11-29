@@ -1,40 +1,98 @@
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.externalSystem.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
-  name = "intellij.platform.externalSystem.impl",
+jvm_resources(
+  name = "externalSystem-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "externalSystem-impl",
+  module_name = "intellij.platform.externalSystem.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
-  plugins = ["@libraries//:serialization_plugin"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
   deps = [
-    "@community//platform/external-system-api:intellij.platform.externalSystem",
-    "@community//platform/projectModel-impl:intellij.platform.projectModel.impl",
-    "@community//platform/platform-impl:intellij.platform.ide.impl",
-    "@community//platform/lang-impl:intellij.platform.lang.impl",
-    "@community//platform/execution-impl:intellij.platform.execution.impl",
-    "@community//platform/testRunner:intellij.platform.testRunner",
-    "@community//platform/configuration-store-impl:intellij.platform.configurationStore.impl",
-    "@libraries//:kotlin-reflect",
-    "@community//platform/object-serializer:intellij.platform.objectSerializer",
-    "@community//platform/object-serializer/annotations:intellij.platform.objectSerializer.annotations",
-    "@community//platform/xdebugger-api:intellij.platform.debugger",
-    "@community//platform/statistics:intellij.platform.statistics",
-    "@community//platform/workspace/jps:intellij.platform.workspace.jps",
-    "@community//platform/workspace/storage:intellij.platform.workspace.storage",
-    "@libraries//:intellij-deps-fastutil",
-    "@libraries//:commons-cli",
-    "@community//platform/core-ui:intellij.platform.core.ui",
-    "@community//platform/platform-util-io-impl:intellij.platform.ide.util.io.impl",
-    "@community//platform/util/jdom:intellij.platform.util.jdom",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@community//platform/diagnostic/telemetry:intellij.platform.diagnostic.telemetry",
-    "@libraries//:opentelemetry-sdk",
-    "@libraries//:opentelemetry-semconv",
-    "@community//platform/backend/workspace:intellij.platform.backend.workspace",
-    "@community//platform/diagnostic:intellij.platform.diagnostic",
-    "@community//platform/backend/observation:intellij.platform.backend.observation",
-    "@community//platform/settings:intellij.platform.settings",
-    "@libraries//:kotlinx-serialization-core-jvm"
+    "//platform/external-system-api:externalSystem",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/testRunner",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "@lib//:kotlin-reflect",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer-annotations",
+    "//platform/xdebugger-api:debugger",
+    "//platform/statistics",
+    "//platform/workspace/jps",
+    "//platform/workspace/storage",
+    "@lib//:fastutil-min",
+    "@lib//:commons-cli",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/backend/observation",
+    "//platform/settings",
+    "@lib//:kotlinx-serialization-core",
+  ],
+  runtime_deps = [":externalSystem-impl_resources"]
+)
+### auto-generated section `build intellij.platform.externalSystem.impl` end
+
+### auto-generated section `build intellij.platform.externalSystem.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "externalSystem-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "externalSystem-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer_test",
+    "//platform/testFramework/extensions:testExtensions",
+    "//java/testFramework",
+    "//platform/configuration-store-impl:configurationStore-tests_test",
+    "//java/compiler:compiler-tests_test",
+    "//java/compiler/impl:java-compiler-impl",
+    "@lib//:kotlin-reflect",
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "@lib//:mockito",
+    "//platform/lang-impl:lang-tests_test",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-ui",
+    "//platform/workspace/storage",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/external-system-api/testFramework:externalSystem-testFramework",
+    "//platform/util/jdom",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test",
+    "//plugins/gradle",
   ]
 )
+### auto-generated section `build intellij.platform.externalSystem.tests` end

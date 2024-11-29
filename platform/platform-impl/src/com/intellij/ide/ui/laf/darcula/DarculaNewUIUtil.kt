@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf.darcula
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.MacUIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.*
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
@@ -47,7 +48,17 @@ object DarculaNewUIUtil {
     }
   }
 
+  /**
+   * Will be removed after the next 25.1 release
+   */
+  @ApiStatus.Internal
+  @Deprecated("Use drawRoundedRectangle instead")
+  @ScheduledForRemoval
   fun paintComponentBorder(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
+    drawRoundedRectangle(g, rect, color, arc, thick)
+  }
+
+  fun drawRoundedRectangle(g: Graphics, rect: Rectangle, color: Color, arc: Float, thick: Int) {
     val g2 = g.create() as Graphics2D
 
     try {
@@ -63,10 +74,17 @@ object DarculaNewUIUtil {
     }
   }
 
-  /**
-   * Fills part of component inside border
-   */
+  @Deprecated("Use fillInsideComponentBorder instead")
   fun fillInsideComponentBorder(g: Graphics, rect: Rectangle, color: Color) {
+    fillInsideComponentBorder(g, rect, color, DarculaUIUtil.COMPONENT_ARC.float)
+  }
+
+  /**
+   * Fills part of a component inside the border. The resulting rectangle is a little bit smaller than [rect],
+   * so inside background doesn't protrude outside the line border (can be visible near rounded corners).
+   * This method should be used together with [paintComponentBorder],[drawRoundedRectangle], or other methods that draw lined border.
+   */
+  fun fillInsideComponentBorder(g: Graphics, rect: Rectangle, color: Color, arc: Float = DarculaUIUtil.COMPONENT_ARC.float) {
     if (rect.width <= 0 || rect.height <= 0) {
       return
     }
@@ -78,7 +96,6 @@ object DarculaNewUIUtil {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
-      val arc = DarculaUIUtil.COMPONENT_ARC.float
       val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
       // Reduce size a little bit, so inside background is not protruded outside the border near rounded corners
       border.append(RoundRectangle2D.Float(0.5f, 0.5f, rect.width - 1f, rect.height - 1f, arc, arc), false)

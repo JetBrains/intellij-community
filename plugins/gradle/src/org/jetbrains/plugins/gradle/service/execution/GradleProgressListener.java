@@ -28,6 +28,7 @@ import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -60,11 +61,11 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   public GradleProgressListener(
     @NotNull ExternalSystemTaskNotificationListener listener,
     @NotNull ExternalSystemTaskId taskId,
-    @Nullable String buildRootDir
+    @Nullable Path buildRootDir
   ) {
     myListener = listener;
     myTaskId = taskId;
-    myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
+    myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir.toString());
     myProgressMapper = new GradleExecutionProgressMapper();
     myDownloadProgressMapper = new GradleDownloadProgressMapper();
     sendProgressEventsToOutput = Registry.is(SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY, true);

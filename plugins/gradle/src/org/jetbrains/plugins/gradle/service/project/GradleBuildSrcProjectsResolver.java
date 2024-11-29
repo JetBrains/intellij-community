@@ -7,11 +7,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import org.gradle.tooling.ProjectConnection;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleLightBuild;
@@ -59,45 +55,32 @@ public final class GradleBuildSrcProjectsResolver {
   public void discoverAndAppendTo(@NotNull DataNode<ProjectData> mainBuildProjectDataNode) {
     Index index = prepareIndexes(mainBuildProjectDataNode);
 
-    List<String> jvmOptions = new SmartList<>();
-    // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
-    // to avoid spawning of the second gradle daemon
-    BuildEnvironment mainBuildEnvironment = myResolverContext.getBuildEnvironment();
-    if (mainBuildEnvironment != null) {
-      jvmOptions.addAll(mainBuildEnvironment.getJava().getJvmArguments());
-    }
-
     GradleExecutionSettings mainBuildExecutionSettings = myResolverContext.getSettings();
 
     for (GradleLightBuild build : myResolverContext.getAllBuilds()) {
       String buildPath = FileUtil.toSystemIndependentName(build.getBuildIdentifier().getRootDir().getPath());
 
-      GradleExecutionSettings buildSrcProjectSettings = mainBuildExecutionSettings != null
-                                                        ? new GradleExecutionSettings(mainBuildExecutionSettings)
-                                                        : new GradleExecutionSettings();
+      GradleExecutionSettings buildSrcProjectSettings = new GradleExecutionSettings(mainBuildExecutionSettings);
 
       if (myGradleHome != null) {
         buildSrcProjectSettings.setGradleHome(myGradleHome);
         buildSrcProjectSettings.setDistributionType(DistributionType.LOCAL);
-        buildSrcProjectSettings.withVmOptions(jvmOptions);
         includeRootBuildIncludedBuildsIfNeeded(buildSrcProjectSettings, index.compositeBuildData(), buildPath);
       }
 
-      final String buildSrcProjectPath = buildPath + "/buildSrc";
       DefaultProjectResolverContext buildSrcResolverCtx = new DefaultProjectResolverContext(
-        myResolverContext, buildSrcProjectPath, buildSrcProjectSettings, true
+        myResolverContext, buildPath + "/buildSrc", buildSrcProjectSettings, true
       );
+
+      buildSrcResolverCtx.setBuildEnvironment(myResolverContext.getBuildEnvironment());
+
       String buildName = index.buildNames().get(buildPath);
-
       String buildSrcGroup = getBuildSrcGroup(buildPath, buildName);
-
       buildSrcResolverCtx.setBuildSrcGroup(buildSrcGroup);
-      handleBuildSrcProject(mainBuildProjectDataNode,
-                            buildName,
-                            index.buildClasspathNodesMap().getModifiable(Paths.get(buildPath)),
-                            index.includedModulesPaths(),
-                            buildSrcResolverCtx,
-                            myProjectResolver.getProjectDataFunction(buildSrcResolverCtx, myResolverChain));
+
+      var buildClasspathNodes = index.buildClasspathNodesMap().getModifiable(Paths.get(buildPath));
+      var includedModulesPaths = index.includedModulesPaths();
+      handleBuildSrcProject(mainBuildProjectDataNode, buildName, buildClasspathNodes, includedModulesPaths, buildSrcResolverCtx);
     }
   }
 
@@ -182,12 +165,13 @@ public final class GradleBuildSrcProjectsResolver {
     return compositeBuildDataNode != null ? compositeBuildDataNode.getData() : null;
   }
 
-  private void handleBuildSrcProject(@NotNull DataNode<ProjectData> resultProjectDataNode,
-                                     @Nullable String buildName,
-                                     @NotNull Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes,
-                                     @NotNull Map<String, DataNode<ModuleData>> includedModulesPaths,
-                                     @NotNull DefaultProjectResolverContext buildSrcResolverCtx,
-                                     @NotNull Function<ProjectConnection, DataNode<ProjectData>> projectConnectionDataNodeFunction) {
+  private void handleBuildSrcProject(
+    @NotNull DataNode<ProjectData> resultProjectDataNode,
+    @Nullable String buildName,
+    @NotNull Collection<DataNode<BuildScriptClasspathData>> buildClasspathNodes,
+    @NotNull Map<String, DataNode<ModuleData>> includedModulesPaths,
+    @NotNull DefaultProjectResolverContext buildSrcResolverCtx
+  ) {
     final String projectPath = buildSrcResolverCtx.getProjectPath();
     File projectPathFile = new File(projectPath);
     if (!projectPathFile.isDirectory()) {
@@ -203,13 +187,8 @@ public final class GradleBuildSrcProjectsResolver {
       return;
     }
 
-    final DataNode<ProjectData> buildSrcProjectDataNode = myProjectResolver.getHelper().execute(
-      buildSrcResolverCtx.getProjectPath(),
-      buildSrcResolverCtx.getSettings(),
-      buildSrcResolverCtx.getExternalSystemTaskId(),
-      buildSrcResolverCtx.getListener(),
-      buildSrcResolverCtx.getCancellationToken(),
-      projectConnectionDataNodeFunction
+    var buildSrcProjectDataNode = GradleProjectResolver.executeProjectResolverTask(buildSrcResolverCtx, myResolverChain, connection ->
+      myProjectResolver.doResolveProjectInfo(connection, buildSrcResolverCtx, myResolverChain)
     );
 
     if (buildSrcProjectDataNode == null) return;

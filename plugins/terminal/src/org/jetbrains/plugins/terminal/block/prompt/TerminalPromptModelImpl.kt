@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
@@ -89,8 +90,10 @@ internal class TerminalPromptModelImpl(
 
   @RequiresEdt
   override fun resetChangesHistory() {
-    val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
-    undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
+    WriteIntentReadAction.run {
+      val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
+      undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
+    }
   }
 
   private fun updatePrompt(state: TerminalPromptState?) {

@@ -44,7 +44,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" exported="" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="ktor-client-logging" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />

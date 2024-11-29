@@ -470,6 +470,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     builder.isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
 
+    builder.setCreateEmptyContentRoots(false)
     builder.setGradleVersion(
       GradleVersion.version(
         when (distributionType) {

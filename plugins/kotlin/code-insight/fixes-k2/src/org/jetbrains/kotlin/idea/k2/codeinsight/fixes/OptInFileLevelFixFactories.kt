@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
-import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -67,11 +66,11 @@ internal object OptInFileLevelFixFactories {
         val result = mutableListOf<IntentionAction>()
         val argumentClassFqName = optInMarkerClassId.asSingleFqName()
         result += UseOptInFileAnnotationFix(
-            file = containingFile,
+            element = containingFile,
             optInFqName = optInFqName,
+            annotationFinder = { file: KtFile, annotationFqName: FqName -> findFileAnnotation(file, annotationFqName) },
             argumentClassFqName = argumentClassFqName,
-            existingAnnotationEntry = findFileAnnotation(containingFile, optInFqName)?.createSmartPointer(),
-        )
+        ).asIntention()
 
         containingFile.module?.let { module ->
             result += AddModuleOptInFix(

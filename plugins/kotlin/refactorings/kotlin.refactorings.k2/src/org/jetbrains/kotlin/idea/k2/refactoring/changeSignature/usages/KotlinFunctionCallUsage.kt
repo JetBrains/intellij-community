@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -111,7 +112,8 @@ internal class KotlinFunctionCallUsage(
             allowAnalysisOnEdt {
                 analyze(element) {
                     val partiallyAppliedSymbol = element.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol
-                    when (val receiver = partiallyAppliedSymbol?.extensionReceiver) {
+                    val receiverValue = partiallyAppliedSymbol?.extensionReceiver
+                    when (val receiver = (receiverValue as? KaSmartCastedReceiverValue)?.original ?: receiverValue) {
                         is KaExplicitReceiverValue -> receiver.expression.text
                         is KaImplicitReceiverValue -> {
                             val symbol = receiver.symbol

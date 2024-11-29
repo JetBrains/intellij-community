@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -41,6 +42,8 @@ val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lazyPub {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
         ?: FirKotlinUastLanguagePlugin()
 }
+
+private val COMPOSABLE_CLASS_ID: ClassId = ClassId.fromString("androidx/compose/runtime/Composable")
 
 @OptIn(KaAllowAnalysisOnEdt::class)
 internal inline fun <R> analyzeForUast(
@@ -177,6 +180,11 @@ private fun toPsiMethodForDeserialized(
         if (isSuspend) {
             // Drop the Continuation added by the compiler
             methodParameters = methodParameters.dropLast(1)
+        }
+        val isComposable = COMPOSABLE_CLASS_ID in functionSymbol.annotations
+        if (isComposable) {
+            // Drop the last two parameters added by Compose compiler plugin
+            methodParameters = methodParameters.dropLast(2)
         }
         val symbolParameters: List<KaParameterSymbol> =
             if (functionSymbol.isExtension) {

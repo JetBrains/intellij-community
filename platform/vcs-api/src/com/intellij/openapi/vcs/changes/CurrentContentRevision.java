@@ -73,6 +73,7 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     return new CurrentContentRevision(file);
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "CurrentContentRevision:" + myFile;

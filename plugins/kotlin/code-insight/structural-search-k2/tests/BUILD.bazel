@@ -1,0 +1,35 @@
+### auto-generated section `build kotlin.code-insight.structural-search.k2.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-code-insight-structural-search-k2-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-code-insight-structural-search-k2-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//platform/structuralsearch:structuralSearch",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//java/testFramework",
+    "//java/idea-ui:ui",
+    "//java/openapi:java",
+    "//plugins/kotlin/test-framework:test-framework_test",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test",
+    "//plugins/kotlin/code-insight/structural-search-k2:kotlin-code-insight-structural-search-k2",
+    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+  ]
+)
+### auto-generated section `build kotlin.code-insight.structural-search.k2.tests` end

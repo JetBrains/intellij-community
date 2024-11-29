@@ -56,7 +56,7 @@ public class PathsToClosestGcRootsDialog extends MemoryAgentDialog {
     DebugProcessImpl debugProcess = javaDebugProcess.getDebuggerSession().getProcess();
     SuspendContextImpl suspendContext = debugProcess.getSuspendManager().getPausedContext();
     PathsToClosestGcRootsDialog dialog = this;
-    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         if (dialog.isDisposed()) {

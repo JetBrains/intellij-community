@@ -95,6 +95,8 @@
     </intentionAction>
     <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="notification.group.shell.script"/>
     <statistics.notificationIdsHolder implementation="com.intellij.sh.ShNotificationDisplayIds"/>
+
+    <lang.floatingToolbar language="Shell Script" minimal="true"/>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>

@@ -6,6 +6,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -37,6 +38,7 @@ public abstract class Classifier<T> {
    * May return an empty list if there are no suitable objects available.
    * Used for diagnostics and statistic collection.
    */
+  @Unmodifiable
   public abstract @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull ProcessingContext context);
 
   public final @Nullable Classifier<T> getNext() {

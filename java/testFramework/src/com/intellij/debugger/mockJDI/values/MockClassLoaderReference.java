@@ -26,6 +26,7 @@ public class MockClassLoaderReference extends MockObjectReference implements Cla
     throw new UnsupportedOperationException("Not implemented: \"visibleClasses\" in " + getClass().getName());
   }
 
+  @Override
   public boolean equals(Object obj) {
     // For now assume that all mocked class loaders are the same
     return obj instanceof MockClassLoaderReference;

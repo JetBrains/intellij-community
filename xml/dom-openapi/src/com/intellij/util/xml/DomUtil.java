@@ -21,10 +21,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -246,10 +243,12 @@ public class DomUtil {
     return true;
   }
 
+  @Unmodifiable
   public static <T> List<T> getDefinedChildrenOfType(final @NotNull DomElement parent, final Class<T> type, boolean tags, boolean attributes) {
     return ContainerUtil.findAll(getDefinedChildren(parent, tags, attributes), type);
   }
 
+  @Unmodifiable
   public static <T> List<T> getDefinedChildrenOfType(final @NotNull DomElement parent, final Class<T> type) {
     return getDefinedChildrenOfType(parent, type, true, true);
   }

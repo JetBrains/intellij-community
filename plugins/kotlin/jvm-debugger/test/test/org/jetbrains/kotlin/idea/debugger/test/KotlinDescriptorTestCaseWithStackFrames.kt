@@ -63,10 +63,6 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
         out("Thread stack trace:")
         for (frame in XDebuggerTestUtil.collectFrames(executionStack)) {
             printStackFrame(frame)
-            if (frame is CoroutinePreflightFrame) {
-                val key = frame.coroutineInfoData.descriptor
-                out(0, "CoroutineInfo: ${key.id} ${key.name} ${key.state}")
-            }
         }
     }
 

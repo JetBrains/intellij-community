@@ -100,7 +100,7 @@ public final class StandardMethodContract extends MethodContract {
   Stream<StandardMethodContract> excludeContract(StandardMethodContract contract) {
     assert contract.getParameterCount() == myParameters.length;
     List<ValueConstraint> constraints = contract.getConstraints();
-    List<ValueConstraint> template = StreamEx.constant(ValueConstraint.ANY_VALUE, myParameters.length).toList();
+    List<ValueConstraint> template = new ArrayList<>(StreamEx.constant(ValueConstraint.ANY_VALUE, myParameters.length).toList());
     List<StandardMethodContract> antiContracts = new ArrayList<>();
     for (int i = 0; i < constraints.size(); i++) {
       ValueConstraint constraint = constraints.get(i);

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.xml.namespace.QName;
 import java.util.HashMap;
@@ -246,6 +247,7 @@ public class XPath2Type extends XPathType {
       return this == NUMERIC;
     }
 
+    @Unmodifiable
     public static List<XPath2Type> listSchemaTypes() {
       return ContainerUtil.filter(ourMap.values(), type1 -> type1.getQName().getNamespaceURI().equals(XMLSCHEMA_NS) && !type1.isAbstract());
     }

@@ -1,0 +1,66 @@
+### auto-generated section `build intellij.tools.ide.metrics.collector` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  opt_in = ["kotlin.time.ExperimentalTime"]
+)
+
+jvm_library(
+  name = "ide-metrics-collector",
+  module_name = "intellij.tools.ide.metrics.collector",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:fastutil-min",
+  ]
+)
+
+kt_jvm_test(
+  name = "ide-metrics-collector_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = ":custom",
+  associates = [":ide-metrics-collector"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:junit5",
+    "@lib//:mockito",
+    "@lib//:mockito-junit-jupiter",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:fastutil-min",
+    "@lib//:assert_j",
+  ]
+)
+### auto-generated section `build intellij.tools.ide.metrics.collector` end

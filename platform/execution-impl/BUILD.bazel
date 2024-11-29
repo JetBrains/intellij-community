@@ -1,50 +1,84 @@
-### auto-generated section `build` start
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.execution.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-kt_jvm_library(
+jvm_resources(
+  name = "execution-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
   name = "execution-impl",
   module_name = "intellij.platform.execution.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//platform/platform-api:ide",
-    "@community//platform/lang-api:lang",
-    "@community//platform/editor-ui-ex:editor-ex",
-    "@community//platform/statistics",
-    "@community//platform/platform-impl:ide-impl",
-    "@community//platform/macro",
-    "@libraries//:miglayout-swing",
-    "@libraries//:guava",
-    "@community//platform/ide-core-impl",
-    "@libraries//:streamex",
-    "@community//platform/util/concurrency",
-    "@community//platform/util-ex",
-    "@community//platform/projectModel-impl",
-    "@libraries//:intellij-deps-fastutil",
-    "@community//platform/core-ui",
-    "@community//platform/platform-util-io-impl:ide-util-io-impl",
-    "@libraries//:jediterm-core",
-    "@libraries//:jediterm-ui",
-    "@libraries//:pty4j",
-    "@community//platform/execution",
-    "@community//platform/wsl-impl",
-    "@community//platform/util/jdom:util-jdom",
-    "@community//platform/workspace/storage:workspace-storage",
-    "@libraries//:kotlinx-coroutines-core-jvm",
-    "@libraries//:jna-platform",
-    "@libraries//:hash4j",
-    "@community//platform/workspace/jps:workspace-jps",
-    "@community//platform/backend/workspace:backend-workspace",
-    "@community//platform/diagnostic",
-    "@community//platform/ijent",
-    "@community//platform/ijent/impl:ijent-community-impl",
-    "@libraries//:rd-core",
-    "@community//platform/rd-platform-community:rd-community",
-    "@community//platform/util/coroutines:util-coroutines",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/statistics",
+    "//platform/platform-impl:ide-impl",
+    "//platform/macro",
+    "@lib//:miglayout-swing",
+    "@lib//:guava",
+    "//platform/ide-core-impl",
+    "@lib//:stream_ex",
+    "//platform/util/concurrency",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:jediterm-core",
+    "@lib//:jediterm-ui",
+    "@lib//:pty4j",
+    "//platform/execution",
+    "//platform/wsl-impl",
+    "//platform/util/jdom",
+    "//platform/workspace/storage",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jna",
+    "@lib//:hash4j",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/ijent",
+    "//platform/ijent/impl:community-impl",
+    "@lib//:rd-core",
+    "//platform/rd-platform-community:rd-community",
+    "//platform/util/coroutines",
+    "//platform/eelProvider:eel-provider",
   ],
-  exports = ["@community//platform/macro"]
+  exports = ["//platform/macro"],
+  runtime_deps = [":execution-impl_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.execution.impl` end
+
+### auto-generated section `build intellij.platform.execution.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "execution-tests",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "execution-tests_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/execution-impl",
+    "@lib//:assert_j",
+  ]
+)
+### auto-generated section `build intellij.platform.execution.tests` end

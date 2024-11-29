@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.slicer
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.slicer.SliceLanguageSupportProvider
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -15,7 +17,7 @@ import java.io.File
 abstract class AbstractSlicerMultiplatformTest : AbstractMultiModuleTest() {
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("slicer/mpp")
 
-    protected fun doTest(filePath: String) {
+    protected open fun doTest(filePath: String) {
         val testRoot = File(filePath)
         setupMppProjectFromDirStructure(testRoot)
 
@@ -24,7 +26,11 @@ abstract class AbstractSlicerMultiplatformTest : AbstractMultiModuleTest() {
         val offset = document.extractMarkerOffset(project, "<caret>")
 
         testSliceFromOffset(file, offset) { _, rootNode ->
-            KotlinTestUtils.assertEqualsToFile(testRoot.resolve("results.txt"), buildTreeRepresentation(rootNode))
+            KotlinTestUtils.assertEqualsToFile(getResultsFile(testRoot), ActionUtil.underModalProgress(project, "") {  buildTreeRepresentation(rootNode) })
         }
     }
+
+    protected open fun getResultsFile(testRoot: File): File = testRoot.resolve("results.txt")
+
+    protected open fun createSliceProvider(): SliceLanguageSupportProvider = KotlinSliceProvider()
 }

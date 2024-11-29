@@ -1,0 +1,5 @@
+7 private fun bar(<bold>x: Int</bold>) { (in bar(Int))
+8 	foo(b = 1, a = <bold>x</bold>) (in bar(Int))
+3 		private fun foo(<bold>a: Int</bold>, b: Int) { (in foo(Int, Int))
+4 			val result = <bold>a</bold> (in foo(Int, Int))
+4 				<bold>val result</bold> = a (in foo(Int, Int))

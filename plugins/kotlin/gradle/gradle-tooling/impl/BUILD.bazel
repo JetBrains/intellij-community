@@ -1,0 +1,59 @@
+### auto-generated section `build kotlin.gradle.gradle-tooling.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "kotlin-gradle-gradle-tooling-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-gradle-gradle-tooling-impl",
+  module_name = "kotlin.gradle.gradle-tooling.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlin-tooling-core",
+    "@lib//:kotlin-gradle-plugin-idea-proto",
+    "@lib//:kotlin-gradle-plugin-idea",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//platform/extensions",
+  ],
+  runtime_deps = [":kotlin-gradle-gradle-tooling-impl_resources"]
+)
+
+kt_jvm_test(
+  name = "kotlin-gradle-gradle-tooling-impl_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j8",
+  kotlinc_opts = "@rules_jvm//:k8",
+  associates = [":kotlin-gradle-gradle-tooling-impl"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlin-tooling-core",
+    "@lib//:kotlin-gradle-plugin-idea-proto",
+    "@lib//:kotlin-gradle-plugin-idea",
+    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:junit4",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test",
+  ],
+  runtime_deps = [":kotlin-gradle-gradle-tooling-impl_resources"]
+)
+### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end

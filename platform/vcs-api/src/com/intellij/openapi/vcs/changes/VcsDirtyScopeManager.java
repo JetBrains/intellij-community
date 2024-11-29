@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -26,14 +26,14 @@ public abstract class VcsDirtyScopeManager {
   public abstract void markEverythingDirty();
 
   /**
-   * Requests an asynchronous file status update for the specified virtual file. Must be called from a read action.
+   * Requests an asynchronous file status update for the specified virtual file.
    *
    * @param file the file for which the status update is requested.
    */
   public abstract void fileDirty(@NotNull VirtualFile file);
 
   /**
-   * Requests an asynchronous file status update for the specified file path. Must be called from a read action.
+   * Requests an asynchronous file status update for the specified file path.
    *
    * @param file the file path for which the status update is requested.
    */

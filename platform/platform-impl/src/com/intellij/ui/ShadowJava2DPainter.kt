@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -18,14 +17,27 @@ private val DEF_COLOR = Gray._200.withAlpha(50)
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCorners: Boolean, private val borderColor: Color? = null) {
+class ShadowJava2DPainter(private val type: Type, private val arc: Int, private val borderColor: Color? = null) {
+
+  enum class Type(private val uiKeyGroup: String) {
+    IDE("Ide"),
+    NOTIFICATION("Notification");
+
+    val insets: Insets
+      get() = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
+
+    fun getColor(sideKey: String, gradientKey: String): Color {
+      return JBColor.namedColor("${uiKeyGroup}.Shadow.${sideKey}${gradientKey}Color", DEF_COLOR)
+    }
+  }
+
   private var hideTopCorners = false
   private var hideBottomSide = false
 
-  companion object {
-    fun enabled(): Boolean = Registry.`is`("ide.java2d.shadowEnabled", true)
-
-    fun getInsets(uiKeyGroup: String): Insets = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
+  init {
+    if (arc < 0) {
+      throw IllegalArgumentException("Arc cannot be negative, arc = $arc")
+    }
   }
 
   fun hideSide(topCorners: Boolean, bottom: Boolean) {
@@ -33,7 +45,7 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
     hideBottomSide = bottom
   }
 
-  fun getInsets() = Companion.getInsets(uiKeyGroup)
+  fun getInsets(): Insets = type.insets
 
   fun paintShadow(g: Graphics2D, x: Int, y: Int, width: Int, height: Int) {
     val insets = getInsets()
@@ -44,21 +56,19 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
     val widthLR = width - insets.left - insets.right
     val heightTB = height - insets.top - insets.bottom
 
-    if (roundedCorners) {
-      val size = JBUI.scale(6)
+    if (arc > 0) {
+      g.color = type.getColor("topLeft", "1")
+      g.fillRect(x + insets.left, y + insets.top, arc, arc)
 
-      g.color = getColor("topLeft", "1")
-      g.fillRect(x + insets.left, y + insets.top, size, size)
-
-      g.color = getColor("topRight", "1")
-      g.fillRect(xxRight - size, y + insets.top, size, size)
+      g.color = type.getColor("topRight", "1")
+      g.fillRect(xxRight - arc, y + insets.top, arc, arc)
 
       if (!hideBottomSide) {
-        g.color = getColor("bottomRight", "1")
-        g.fillRect(xxRight - size, yyBottom - size, size, size)
+        g.color = type.getColor("bottomRight", "1")
+        g.fillRect(xxRight - arc, yyBottom - arc, arc, arc)
 
-        g.color = getColor("bottomLeft", "1")
-        g.fillRect(x + insets.left, yyBottom - size, size, size)
+        g.color = type.getColor("bottomLeft", "1")
+        g.fillRect(x + insets.left, yyBottom - arc, arc, arc)
       }
     }
 
@@ -105,10 +115,6 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
   }
 
   private fun setGradient(g: Graphics2D, sideKey: String, gKey0: String, gKey1: String, x0: Int, y0: Int, x1: Int, y1: Int) {
-    g.paint = GradientPaint(x0.toFloat(), y0.toFloat(), getColor(sideKey, gKey0), x1.toFloat(), y1.toFloat(), getColor(sideKey, gKey1))
-  }
-
-  private fun getColor(sideKey: String, gradientKey: String): Color {
-    return JBColor.namedColor("${uiKeyGroup}.Shadow.${sideKey}${gradientKey}Color", DEF_COLOR)
+    g.paint = GradientPaint(x0.toFloat(), y0.toFloat(), type.getColor(sideKey, gKey0), x1.toFloat(), y1.toFloat(), type.getColor(sideKey, gKey1))
   }
 }

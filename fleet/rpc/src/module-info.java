@@ -7,7 +7,6 @@ module fleet.rpc {
   requires kotlin.reflect;
   requires io.opentelemetry.context;
   requires kotlinx.coroutines.core;
-  requires bifurcan;
   requires java.net.http;
   requires org.jetbrains.annotations;
   requires io.opentelemetry.api;

@@ -73,6 +73,7 @@ public class ThreadState {
     return Collections.unmodifiableSet(myThreadsWaitingForMyLock);
   }
 
+  @Override
   public String toString() {
     return myName;
   }

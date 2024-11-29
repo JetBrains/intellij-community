@@ -259,6 +259,7 @@ public final class FilterPattern {
         this.methodType = methodType;
     }
 
+    @Override
     public String toString() {
         return "FilterPattern{" +
                 "fieldName='" + fieldName + "'" +

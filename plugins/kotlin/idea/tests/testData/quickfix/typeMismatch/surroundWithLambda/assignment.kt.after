@@ -1,4 +1,5 @@
 // "Surround with lambda" "true"
+// PRIORITY: HIGH
 fun foo() {
     val block: () -> Long
     block = { 123 }

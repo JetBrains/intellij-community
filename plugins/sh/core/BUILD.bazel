@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.sh.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.sh.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "@lib//:pty4j",
+    "@lib//:gson",
+    "//spellchecker",
+    "//platform/statistics",
+    "//platform/xdebugger-api:debugger",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":core_resources"]
+)
+### auto-generated section `build intellij.sh.core` end

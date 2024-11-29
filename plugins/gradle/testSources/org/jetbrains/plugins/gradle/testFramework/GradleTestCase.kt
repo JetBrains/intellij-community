@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.Dispatchers

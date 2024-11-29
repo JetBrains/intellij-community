@@ -11,5 +11,5 @@ test_library-version = "1.0.5"
 rootProject.name = "includedBuild1"
 
 // FILE: settings.gradle.kts
-# this is the settings file for the root build of a composite build
+// this is the settings file for the root build of a composite build
 includeBuild("includedBuild1")

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaDebuggerCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -82,8 +83,8 @@ public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory 
       }
 
       final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
-      DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
-      if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
+      DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
+      if (managerThread != null) {
         final Semaphore semaphore = new Semaphore();
         semaphore.down();
         final AtomicReference<PsiType> nameRef = new AtomicReference<>();
@@ -95,7 +96,7 @@ public class DefaultCodeFragmentFactory extends JavaDebuggerCodeFragmentFactory 
               semaphore.up();
             }
           };
-        debuggerSession.getProcess().getManagerThread().invoke(worker);
+        managerThread.invoke(worker);
         for (int i = 0; i < 50; i++) {
           ProgressManager.checkCanceled();
           if (semaphore.waitFor(20)) break;

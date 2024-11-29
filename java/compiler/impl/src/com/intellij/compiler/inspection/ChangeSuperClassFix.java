@@ -23,6 +23,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -200,6 +201,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<PsiMethod> getOverridenMethodsToDelete(List<MemberInfo> candidates,
                                                              String newClassName,
                                                              Project project) {

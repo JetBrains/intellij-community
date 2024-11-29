@@ -80,6 +80,11 @@ public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessG
         runTest("testData/slicer/inflow/delegateToJavaGetter.kt");
     }
 
+    @TestMetadata("delegation.kt")
+    public void testDelegation() throws Exception {
+        runTest("testData/slicer/inflow/delegation.kt");
+    }
+
     @TestMetadata("diamondHierarchyJKMiddleClassFun.kt")
     public void testDiamondHierarchyJKMiddleClassFun() throws Exception {
         runTest("testData/slicer/inflow/diamondHierarchyJKMiddleClassFun.kt");
@@ -113,6 +118,11 @@ public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessG
     @TestMetadata("doubleLambdaResult.kt")
     public void testDoubleLambdaResult() throws Exception {
         runTest("testData/slicer/inflow/doubleLambdaResult.kt");
+    }
+
+    @TestMetadata("enumConstants.kt")
+    public void testEnumConstants() throws Exception {
+        runTest("testData/slicer/inflow/enumConstants.kt");
     }
 
     @TestMetadata("extensionLambdaImplicitParameter.kt")
@@ -180,6 +190,11 @@ public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessG
         runTest("testData/slicer/inflow/getterReturnExpression.kt");
     }
 
+    @TestMetadata("getterUsingField.kt")
+    public void testGetterUsingField() throws Exception {
+        runTest("testData/slicer/inflow/getterUsingField.kt");
+    }
+
     @TestMetadata("ifExpression.kt")
     public void testIfExpression() throws Exception {
         runTest("testData/slicer/inflow/ifExpression.kt");
@@ -193,6 +208,11 @@ public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessG
     @TestMetadata("inlineFunctionManyCalls.kt")
     public void testInlineFunctionManyCalls() throws Exception {
         runTest("testData/slicer/inflow/inlineFunctionManyCalls.kt");
+    }
+
+    @TestMetadata("javaSyntheticGetter.kt")
+    public void testJavaSyntheticGetter() throws Exception {
+        runTest("testData/slicer/inflow/javaSyntheticGetter.kt");
     }
 
     @TestMetadata("lambdaImplicitParameter.kt")
@@ -408,6 +428,11 @@ public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessG
     @TestMetadata("topLevelVar.kt")
     public void testTopLevelVar() throws Exception {
         runTest("testData/slicer/inflow/topLevelVar.kt");
+    }
+
+    @TestMetadata("tryExpr.kt")
+    public void testTryExpr() throws Exception {
+        runTest("testData/slicer/inflow/tryExpr.kt");
     }
 
     @TestMetadata("valParameter.kt")

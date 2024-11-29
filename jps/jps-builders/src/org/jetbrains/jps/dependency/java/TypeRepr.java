@@ -13,8 +13,10 @@ public abstract class TypeRepr {
 
   public abstract @NotNull String getDescriptor();
 
+  @Override
   public abstract boolean equals(Object o);
 
+  @Override
   public abstract int hashCode();
 
   public Iterable<Usage> getUsages() {

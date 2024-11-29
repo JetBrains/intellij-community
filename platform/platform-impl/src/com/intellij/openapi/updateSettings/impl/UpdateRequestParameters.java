@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.Url;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,10 @@ public final class UpdateRequestParameters {
     lazyNullable(() -> MachineIdManager.INSTANCE.getAnonymizedMachineId("JetBrainsUpdates"));
 
   public static @NotNull Url amendUpdateRequest(@NotNull Url url) {
+    if (URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
+      return url;
+    }
+
     var parameters = new LinkedHashMap<String, String>();
 
     parameters.put("build", ApplicationInfo.getInstance().getBuild().asString());

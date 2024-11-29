@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 final class InterruptThreadAction extends DebuggerAction {
   @Override
@@ -40,7 +41,7 @@ final class InterruptThreadAction extends DebuggerAction {
       final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
       final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
       if (debugProcess != null) {
-        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+        Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             boolean unsupported = false;

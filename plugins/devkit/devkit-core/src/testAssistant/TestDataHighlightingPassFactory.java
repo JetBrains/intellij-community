@@ -35,11 +35,11 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
 
   @Override
   @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    final VirtualFile virtualFile = file.getVirtualFile();
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull final Editor editor) {
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null) {
-      Project project = file.getProject();
-      Document document = file.getViewProvider().getDocument();
+      Project project = psiFile.getProject();
+      Document document = psiFile.getViewProvider().getDocument();
       if (isSupported(virtualFile, project) && document != null) {
         return new TestDataHighlightingPass(project, document);
       }

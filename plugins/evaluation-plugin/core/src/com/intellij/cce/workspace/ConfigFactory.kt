@@ -125,32 +125,19 @@ object ConfigFactory {
 
   private fun deserializeActionsInterpretation(map: Map<String, Any>?, builder: Config.Builder) {
     if (map == null) return
-    if (map.containsKey("experimentGroup")) {
-      builder.experimentGroup = map.getAs<Double?>("experimentGroup")?.toInt()
-    }
-    if (map.containsKey("sessionsLimit")) {
-      builder.sessionsLimit = map.getAs<Double?>("sessionsLimit")?.toInt()
-    }
-    if (map.containsKey("filesLimit")) {
-      builder.filesLimit = map.getAs<Double?>("filesLimit")?.toInt()
-    }
-    builder.sessionProbability = map.getAs("sessionProbability")
-    builder.sessionSeed = map.getAs<Double?>("sessionSeed")?.toLong()
-    if (map.containsKey("order")) {
-      builder.order = InterpretationOrder.valueOf(map.getAs<String>("order"))
-    }
-    builder.saveLogs = map.getAs("saveLogs")
-    builder.saveFusLogs = map.getIfExists<Boolean?>("saveFusLogs") ?: false
-    if (map.containsKey("saveFeatures")) {
-      builder.saveFeatures = map.getAs("saveFeatures")
-    }
-    if (map.containsKey("saveContent")) {
-      builder.saveContent = map.getAs("saveContent")
-    }
-    if (map.containsKey("logLocationAndItemText")) {
-      builder.logLocationAndItemText = map.getAs("logLocationAndItemText")
-    }
-    builder.trainTestSplit = map.getAs<Double>("trainTestSplit").toInt()
+    map.getIfExists<Double?>("experimentGroup")?.let { builder.experimentGroup = it.toInt() }
+    map.getIfExists<Double?>("sessionsLimit")?.let { builder.sessionsLimit = it.toInt() }
+    map.getIfExists<Double?>("filesLimit")?.let { builder.filesLimit = it.toInt() }
+    map.getIfExists<Double?>("sessionProbability")?.let { builder.sessionProbability = it }
+    map.getIfExists<Double?>("sessionSeed")?.let { builder.sessionSeed = it.toLong() }
+    map.getIfExists<String?>("order")?.let { builder.order = InterpretationOrder.valueOf(it) }
+    map.getIfExists<Boolean?>("saveLogs")?.let { builder.saveLogs = it }
+    map.getIfExists<Boolean?>("saveFusLogs")?.let { builder.saveFusLogs = it }
+    map.getIfExists<Boolean?>("saveFeatures")?.let { builder.saveFeatures = it }
+    map.getIfExists<Boolean?>("saveContent")?.let { builder.saveContent = it }
+    map.getIfExists<Boolean?>("logLocationAndItemText")?.let { builder.logLocationAndItemText = it }
+    map.getIfExists<Double?>("trainTestSplit")?.let { builder.trainTestSplit = it.toInt() }
+    map.getIfExists<String?>("registry")?.let { builder.registry = it }
   }
 
   private fun <T : EvaluationStrategy> deserializeStrategy(map: Map<String, Any>?,
@@ -180,16 +167,16 @@ object ConfigFactory {
     if (map.containsKey("defaultMetrics")) {
       builder.defaultMetrics = map.getAs("defaultMetrics")
     }
-    val filtersList = map.getAs<List<Map<String, Any>>>("sessionsFilters")
+    val filtersList = map.getIfExists<List<Map<String, Any>>>("sessionsFilters")
     val filters = mutableListOf<SessionsFilter>()
-    filtersList.forEach {
+    filtersList?.forEach {
       val name = it.getAs<String>("name")
       filters.add(SessionsFilter(name, EvaluationFilterReader.readFilters(it, language ?: NO_LANGUAGE)))
     }
     builder.mergeFilters(filters)
-    val comparisonFiltersList = map.getAs<List<Map<String, Any>>>("comparisonFilters")
+    val comparisonFiltersList = map.getIfExists<List<Map<String, Any>>>("comparisonFilters")
     val comparisonFilters = mutableListOf<CompareSessionsFilter>()
-    comparisonFiltersList.forEach {
+    comparisonFiltersList?.forEach {
       comparisonFilters.add(CompareSessionsFilter.create(it.getAs("filterType"), it.getAs("name"), it.getAs("evaluationType")))
     }
     builder.mergeComparisonFilters(comparisonFilters)

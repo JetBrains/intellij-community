@@ -1,0 +1,84 @@
+### auto-generated section `build kotlin.base.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "kotlin-base-plugin_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-base-plugin",
+  module_name = "kotlin.base.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:guava",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/statistics",
+    "//platform/util/xmlDom",
+    "//platform/workspace/storage",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//platform/util",
+  ],
+  runtime_deps = [
+    ":kotlin-base-plugin_resources",
+    "//platform/util/trove",
+  ]
+)
+
+kt_jvm_test(
+  name = "kotlin-base-plugin_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":kotlin-base-plugin"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:commons-compress",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-jps-common",
+    "@lib//:guava",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//platform/statistics",
+    "//platform/util/xmlDom",
+    "//platform/workspace/storage",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//platform/util",
+  ],
+  runtime_deps = [":kotlin-base-plugin_resources"]
+)
+### auto-generated section `build kotlin.base.plugin` end

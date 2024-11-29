@@ -1,0 +1,57 @@
+### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps` start
+load("@rules_jvm//:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "11",
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "devkit-runtimeModuleRepository-jps_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "devkit-runtimeModuleRepository-jps",
+  module_name = "intellij.devkit.runtimeModuleRepository.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = ":custom",
+  deps = [
+    "//jps/model-api:model",
+    "//jps/jps-builders:build",
+    "//platform/runtime/repository",
+    "@lib//:kotlin-stdlib",
+    "//jps/model-serialization",
+    "@lib//:hash4j",
+  ],
+  runtime_deps = [":devkit-runtimeModuleRepository-jps_resources"]
+)
+
+kt_jvm_test(
+  name = "devkit-runtimeModuleRepository-jps_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j11",
+  kotlinc_opts = ":custom",
+  associates = [":devkit-runtimeModuleRepository-jps"],
+  deps = [
+    "//jps/model-api:model",
+    "//jps/jps-builders:build",
+    "//platform/runtime/repository",
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test",
+    "//jps/jps-builders:build-tests_test",
+    "//jps/model-serialization",
+    "@lib//:hash4j",
+  ],
+  runtime_deps = [":devkit-runtimeModuleRepository-jps_resources"]
+)
+### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps` end

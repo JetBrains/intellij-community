@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -103,10 +104,13 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     // a part of the Project View popup customization, so we get that and dig for the New subgroup.
     // There has to be a better way to do it...
     var projectViewPopupGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
-    if (!(projectViewPopupGroup instanceof ActionGroup)) {
+    if (!(projectViewPopupGroup instanceof ActionGroup group)) {
       return null;
     }
-    for (AnAction child : ((ActionGroup)projectViewPopupGroup).getChildren(null)) {
+    AnAction[] actions = group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+                         group instanceof CustomisedActionGroup o && o.getDelegate() instanceof DefaultActionGroup oo ? oo.getChildren(ActionManager.getInstance()) :
+                         group.getChildren(null);
+    for (AnAction child : actions) {
        if (child instanceof ActionGroup childGroup && isNewElementGroup(childGroup)) {
          return childGroup;
        }

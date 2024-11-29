@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.inline.completion` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "inline-completion_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "inline-completion",
+  module_name = "intellij.platform.inline.completion",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/ide-core-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":inline-completion_resources"]
+)
+### auto-generated section `build intellij.platform.inline.completion` end

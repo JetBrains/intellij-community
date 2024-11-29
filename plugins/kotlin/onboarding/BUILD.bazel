@@ -1,0 +1,84 @@
+### auto-generated section `build kotlin.onboarding` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+jvm_resources(
+  name = "onboarding_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "onboarding",
+  module_name = "kotlin.onboarding",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//platform/statistics",
+    "//platform/analysis-api:analysis",
+    "//plugins/stats-collector:statsCollector",
+    "//platform/projectModel-impl",
+    "//platform/feedback",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "@lib//:kotlinx-datetime-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/preferences",
+  ],
+  runtime_deps = [":onboarding_resources"]
+)
+
+kt_jvm_test(
+  name = "onboarding_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  associates = [":onboarding"],
+  plugins = ["@lib//:serialization_plugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "//platform/statistics",
+    "//platform/analysis-api:analysis",
+    "//plugins/stats-collector:statsCollector",
+    "//platform/projectModel-impl",
+    "//platform/feedback",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "@lib//:kotlinx-datetime-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:kotlin-test-junit",
+    "@lib//:junit5",
+    "//java/testFramework",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/preferences",
+  ],
+  runtime_deps = [":onboarding_resources"]
+)
+### auto-generated section `build kotlin.onboarding` end

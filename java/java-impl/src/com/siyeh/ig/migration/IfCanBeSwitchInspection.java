@@ -331,7 +331,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
         final PsiExpression condition = factory.createExpressionFromText("null", switchExpression.getContext());
         if (defaultBranch != null){
-          defaultBranch.addCaseExpression(condition);
+          if (switchExpressionCanBeNullInsideDefault(switchExpression, defaultBranch)) {
+            defaultBranch.addCaseExpression(condition);
+          }
         }
         else {
           IfStatementBranch nullBranch = new IfStatementBranch(new PsiEmptyStatementImpl(), !hasUnconditionalPatternCheck(ifStatement, switchExpression));
@@ -375,6 +377,39 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       statement.replace(breakTarget);
       breakTarget.replace(labeledStatement);
     }
+  }
+
+  private static boolean switchExpressionCanBeNullInsideDefault(@NotNull PsiExpression switchExpression,
+                                                                @NotNull IfStatementBranch branch) {
+    EquivalenceChecker equivalenceChecker = EquivalenceChecker.getCanonicalPsiEquivalence();
+    var visitor = new JavaRecursiveElementVisitor() {
+
+      private boolean isNotNull = false;
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (isNotNull) {
+          return;
+        }
+        super.visitElement(element);
+      }
+
+      @Override
+      public void visitExpression(@NotNull PsiExpression expression) {
+        PsiStatement statement = PsiTreeUtil.getParentOfType(expression, PsiStatement.class);
+        if (statement != null &&
+            //check only high-level statements
+            statement.getParent() instanceof PsiCodeBlock codeBlock &&
+            codeBlock.getParent() == branch.getStatement() &&
+            equivalenceChecker.expressionsAreEquivalent(switchExpression, expression) &&
+            getNullability(expression) == Nullability.NOT_NULL) {
+          isNotNull = true;
+        }
+        super.visitExpression(expression);
+      }
+    };
+    visitor.visitElement(branch.getStatement());
+    return !visitor.isNotNull;
   }
 
 
@@ -426,6 +461,12 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
 
   private static void extractCaseExpressions(PsiExpression expression, PsiExpression switchExpression, IfStatementBranch branch) {
     if (expression instanceof PsiMethodCallExpression methodCallExpression) {
+      if (SwitchUtils.STRING_IS_EMPTY.test(methodCallExpression)) {
+        final PsiElementFactory factory = PsiElementFactory.getInstance(methodCallExpression.getProject());
+        final PsiExpression caseWithEmptyText = factory.createExpressionFromText("\"\"", switchExpression.getContext());
+        branch.addCaseExpression(caseWithEmptyText);
+        return;
+      }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression argument = arguments[0];

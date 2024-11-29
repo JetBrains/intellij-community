@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.*
+import com.intellij.settingsSync.communicator.RemoteCommunicatorHolder
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.*
 import java.util.*
@@ -23,7 +24,7 @@ internal class SettingsSyncEnabler {
 
   fun checkServerState() {
     eventDispatcher.multicaster.serverStateCheckStarted()
-    val communicator = SettingsSyncMain.getInstance().getRemoteCommunicator()
+    val communicator = RemoteCommunicatorHolder.getRemoteCommunicator()
     object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.check.server.data.progress"), true) {
       private lateinit var updateResult: UpdateResult
 
@@ -49,7 +50,7 @@ internal class SettingsSyncEnabler {
       private lateinit var updateResult: UpdateResult
 
       override fun run(indicator: ProgressIndicator) {
-        val result = settingsSyncControls.remoteCommunicator.receiveUpdates()
+        val result = RemoteCommunicatorHolder.getRemoteCommunicator().receiveUpdates()
         updateResult = result
         if (result is UpdateResult.Success) {
           val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId, syncSettings)

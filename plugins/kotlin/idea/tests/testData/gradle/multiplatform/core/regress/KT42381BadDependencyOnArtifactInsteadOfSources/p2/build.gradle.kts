@@ -8,5 +8,5 @@ plugins {
 kotlin {
     js() // arbitrary
     jvm()
-    android()
+    {{androidTargetPlaceholder}}
 }

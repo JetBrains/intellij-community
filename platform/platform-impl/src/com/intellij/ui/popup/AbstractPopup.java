@@ -72,8 +72,8 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -658,13 +658,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
+    show(aPoint, new PopupShowOptionsBuilder());
+  }
+
+  @Override
+  public void show(@NotNull RelativePoint aPoint, @NotNull PopupShowOptions options) {
     if (UiInterceptors.tryIntercept(this, aPoint)) return;
+
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
     fitXToComponentScreen(screenPoint, aPoint.getComponent());
 
     stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
-    show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
+
+    showImpl(
+      ((PopupShowOptionsBuilder) options)
+        .withOwner(aPoint.getComponent())
+        .withScreenXY(screenPoint.x, screenPoint.y)
+        .withForcedXY(false)
+    );
   }
 
   @Override
@@ -1026,6 +1038,22 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+    var builder = new PopupShowOptionsBuilder();
+    showImpl(
+      builder
+        .withOwner(owner)
+        .withScreenXY(aScreenX, aScreenY)
+        .withForcedXY(considerForcedXY)
+    );
+  }
+
+  @ApiStatus.Internal
+  protected void showImpl(@NotNull PopupShowOptionsBuilder optionsBuilder) {
+    var options = optionsBuilder.build();
+    var owner = options.getOwner();
+    var aScreenX = options.getScreenX();
+    var aScreenY = options.getScreenY();
+    var considerForcedXY = options.getConsiderForcedXY();
     if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
@@ -1072,7 +1100,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("START calculating bounds for a popup at (" + aScreenX + "," + aScreenY + "," + (considerForcedXY ? "forced" : "not forced") + ") for " + owner);
+      LOG.debug("START calculating bounds for a popup with options = " + options);
     }
     Dimension sizeToSet = getStoredSize();
     if (LOG.isDebugEnabled()) {
@@ -1183,6 +1211,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Target bounds " + targetBounds);
     }
+    if (options.getPopupAnchor() != AnchoredPoint.Anchor.TOP_LEFT) {
+      adjustForAnchor(targetBounds, options, screen);
+    }
     if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
       StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
       sb.append(targetBounds.width).append("x").append(targetBounds.height);
@@ -1271,6 +1302,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       else {
         LOG.debug("cannot fix size for non-heavy-weight popup because its window is null");
       }
+    }
+    if (options.getMinimumHeight() != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Settings the size to " + targetBounds.getSize() + " because the popup has a minimum height");
+      }
+      setSize(targetBounds.getSize()); // Might need to make it smaller than its preferred size.
     }
 
     if (myResizable) {
@@ -1370,18 +1407,37 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     PopupLocationTracker.register(this);
 
-    if (bounds.width > screen.width || bounds.height > screen.height) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Bounds won't fit into the screen, adjusting");
+    if (myLocateWithinScreen) {
+      if (
+        bounds.x < screen.x ||
+        bounds.y < screen.y ||
+        bounds.x + bounds.width > screen.x + screen.width ||
+        bounds.y + bounds.height > screen.y + screen.height
+      ) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds won't fit into the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
       }
-      ScreenUtil.fitToScreen(bounds);
-      window.setBounds(bounds);
+    }
+    else {
+      if (bounds.width > screen.width || bounds.height > screen.height) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds are larger than the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
+      }
     }
 
     if (LOG.isDebugEnabled()) {
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       StringBuilder sb = new StringBuilder("Popup is shown with bounds " + bounds);
-      if (device != null) sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"");
+      if (device != null) {
+        sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"")
+          .append(" and bounds ").append(device.getDefaultConfiguration().getBounds());
+      }
       LOG.debug(sb.toString());
     }
 
@@ -1449,6 +1505,103 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myOpeningTime = System.currentTimeMillis();
 
     afterShowSync();
+  }
+
+  private void adjustForAnchor(
+    @NotNull Rectangle bounds,
+    @NotNull PopupShowOptionsImpl options,
+    @NotNull Rectangle screen
+  ) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Adjusting the bounds " + bounds + " for the screen " + screen + " with the options = " + options);
+    }
+    var anchorPoint = options.getPopupAnchor().getPointOnRectangle(bounds);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Anchor point " + anchorPoint);
+    }
+    var offsetX = bounds.x - anchorPoint.x;
+    var offsetY = bounds.y - anchorPoint.y;
+    bounds.x += offsetX;
+    bounds.y += offsetY;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The bounds after moving the anchor point " + bounds);
+    }
+    if (options.getPopupComponentUnscaledGap() != 0 && options.getRelativePosition() != null) {
+      var gap = JBUI.scale(options.getPopupComponentUnscaledGap());
+      switch (options.getRelativePosition()) {
+        case LEFT -> {
+          bounds.x -= gap;
+        }
+        case RIGHT -> {
+          bounds.x += gap;
+        }
+        case TOP -> {
+          bounds.y -= gap;
+        }
+        case BOTTOM -> {
+          bounds.y += gap;
+        }
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The bounds after adjusting for the gap " + bounds);
+      }
+    }
+    if (myLocateWithinScreen && !screen.contains(bounds)) {
+      LOG.debug("The bounds won't fit into the screen");
+      // If the popup is to the left of the screen, move it to the left edge.
+      if (bounds.x < screen.x) {
+        var shift = screen.x - bounds.x;
+        bounds.x += shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting horizontally to the left side " + bounds);
+        }
+      }
+      // If the popup is above the screen, move it to the top edge.
+      if (bounds.y < screen.y) {
+        var shift = screen.y - bounds.y;
+        bounds.y += shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting vertically to the top side " + bounds);
+        }
+        // Now, if it's above the owner, try to decrease its height to compensate for the shift,
+        // if this popup can reduce it height at all.
+        if (options.getRelativePosition() == PopupRelativePosition.TOP && options.getMinimumHeight() != null) {
+          var reducedHeight = bounds.height - shift;
+          bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
+          }
+        }
+      }
+      // If the popup is to the right of the screen, move it to the right edge.
+      if (bounds.x + bounds.width > screen.x + screen.width) {
+        var shift = (bounds.x + bounds.width) - (screen.x + screen.width);
+        bounds.x -= shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting horizontally to the right side " + bounds);
+        }
+      }
+      // If the popup is below the screen, try to decrease its height first: this is not symmetrical to the "above the screen" case,
+      // because if it's below the owner, then we'd like to keep its Y coordinate intact if possible.
+      if (bounds.y + bounds.height > screen.y + screen.height) {
+        var shift = (bounds.y + bounds.height) - (screen.y + screen.height);
+        if (options.getRelativePosition() == PopupRelativePosition.BOTTOM && options.getMinimumHeight() != null) {
+          var reducedHeight = bounds.height - shift;
+          bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The bounds after adjusting height to fit below the owner " + bounds);
+          }
+        }
+      }
+      // And only failing that, we shift it upwards.
+      if (bounds.y + bounds.height > screen.y + screen.height) {
+        var shift = (bounds.y + bounds.height) - (screen.y + screen.height);
+        bounds.height -= shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting vertically to the bottom side " + bounds);
+        }
+      }
+    }
   }
 
   public void notifyListeners() {
@@ -2541,6 +2694,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return point == null ? null : new Rectangle(point, component.getSize());
   }
 
+  @Unmodifiable
   public static @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
     return ContainerUtil.filter(all.toStrongList(), popup -> {
       Component owner = popup.getOwner();

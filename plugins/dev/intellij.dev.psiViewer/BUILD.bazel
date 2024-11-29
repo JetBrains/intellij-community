@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.dev.psiViewer` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "psiViewer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psiViewer",
+  module_name = "intellij.dev.psiViewer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util:util-ui",
+    "//platform/core-api:core",
+    "//platform/extensions",
+    "//platform/code-style-api:codeStyle",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/lang-impl",
+    "//platform/platform-api:ide",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":psiViewer_resources"]
+)
+### auto-generated section `build intellij.dev.psiViewer` end

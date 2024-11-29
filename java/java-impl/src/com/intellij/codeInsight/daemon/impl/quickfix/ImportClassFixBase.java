@@ -110,10 +110,12 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected abstract PsiElement getReferenceNameElement(@NotNull R reference);
   protected abstract boolean hasTypeParameters(@NotNull R reference);
 
+  @Unmodifiable
   public @NotNull List<? extends PsiClass> getClassesToImport() {
     return getClassesToImport(false);
   }
 
+  @Unmodifiable
   public @NotNull List<? extends PsiClass> getClassesToImport(boolean acceptWrongNumberOfTypeParams) {
     if (!acceptWrongNumberOfTypeParams && hasTypeParameters(myReference)) {
       return ContainerUtil.findAll(myClassesToImport, PsiTypeParameterListOwner::hasTypeParameters);

@@ -155,19 +155,6 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                         else -> null
                     }
 
-                if (existingClass != null) {
-                    // TODO: Override dialog method when it becomes protected
-                    val answer = Messages.showYesNoDialog(
-                        project,
-                        KotlinBundle.message("test.integration.message.text.kotlin.class", existingClass.name.toString()),
-                        CommonBundle.getErrorTitle(),
-                        KotlinBundle.message("test.integration.button.text.rewrite"),
-                        KotlinBundle.message("test.integration.button.text.cancel"),
-                        Messages.getErrorIcon()
-                    )
-                    if (answer == Messages.NO) return
-                }
-
                 val generatedClass = project.executeCommand(CodeInsightBundle.message("intention.create.test"), this) {
                     val generator = TestGenerators.INSTANCE.forLanguage(dialog.selectedTestFrameworkDescriptor.language)
                     project.runWithAlternativeResolveEnabled {

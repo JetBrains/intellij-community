@@ -8,17 +8,20 @@ import com.intellij.execution.TargetDebuggerConnectionUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.LocalEelApi;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +70,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
     try {
       JavaParameters parameters = getJavaParameters();
-      WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters.getJdk());
-      return config == null ? null : new WslTargetEnvironmentRequest(config);
+      var config = checkCreateNonLocalConfiguration(parameters.getJdk());
+      return config == null ? null : new EelTargetEnvironmentRequest(config);
     }
     catch (ExecutionException e) {
       // ignore
@@ -76,6 +79,31 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
+  @Nullable
+  @ApiStatus.Internal
+  public static EelTargetEnvironmentRequest.Configuration checkCreateNonLocalConfiguration(@Nullable Sdk jdk) {
+    if (jdk == null) {
+      return null;
+    }
+
+    VirtualFile virtualFile = jdk.getHomeDirectory();
+
+    if (virtualFile == null) {
+      return null;
+    }
+
+    var vitrualFilePath = virtualFile.toNioPath();
+    var eel = EelProviderUtil.getEelApiBlocking(vitrualFilePath);
+
+    if (!(eel instanceof LocalEelApi)) {
+      var config = new EelTargetEnvironmentRequest.Configuration(eel);
+      addJavaLangConfig(config, Objects.requireNonNull(eel.getMapper().getOriginalPath(vitrualFilePath)).toString(), jdk);
+      return config;
+    }
+    return null;
+  }
+
+  @ApiStatus.Obsolete
   public static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(@Nullable Sdk jdk) {
     if (jdk == null) {
       return null;
@@ -87,16 +115,20 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     WslPath wslPath = WslPath.parseWindowsUncPath(virtualFile.getPath());
     if (wslPath != null) {
       WslTargetEnvironmentConfiguration config = new WslTargetEnvironmentConfiguration(wslPath.getDistribution());
-      JavaLanguageRuntimeConfiguration javaConfig = new JavaLanguageRuntimeConfiguration();
-      javaConfig.setHomePath(wslPath.getLinuxPath());
-      String jdkVersionString = jdk.getVersionString();
-      if (jdkVersionString != null) {
-        javaConfig.setJavaVersionString(jdkVersionString);
-      }
-      config.addLanguageRuntime(javaConfig);
+      addJavaLangConfig(config, wslPath.getLinuxPath(), jdk);
       return config;
     }
     return null;
+  }
+
+  private static void addJavaLangConfig(TargetEnvironmentConfiguration config, String javaHomePath, Sdk jdk) {
+    JavaLanguageRuntimeConfiguration javaConfig = new JavaLanguageRuntimeConfiguration();
+    javaConfig.setHomePath(javaHomePath);
+    String jdkVersionString = jdk.getVersionString();
+    if (jdkVersionString != null) {
+      javaConfig.setJavaVersionString(jdkVersionString);
+    }
+    config.addLanguageRuntime(javaConfig);
   }
 
   protected boolean shouldPrepareDebuggerConnection() {

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.BlockingJob;
@@ -94,10 +95,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     this.lo = lo;
     this.hi = hi;
     this.failedSubTasks = failedSubTasks;
-    CoroutineContext nonStructuredContext = ThreadContext.currentThreadContext().minusKey(BlockingJob.Companion);
-    try (AccessToken ignored = ThreadContext.installThreadContext(nonStructuredContext, true)) {
-      this.childContext = Propagation.createChildContext("ApplierCompleter");
-    }
+    this.childContext = Propagation.createChildContextIgnoreStructuredConcurrency("ApplierCompleter");
   }
 
   @Override
@@ -175,6 +173,8 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     try {
       processArray();
     }
+    catch (IndexNotReadyException ignore) {
+    }
     catch (Throwable e) {
       e = accumulateException(myThrown, e);
       cancelProgress();
@@ -184,6 +184,8 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   private void helpAll() {
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       helpOthers();
+    }
+    catch (IndexNotReadyException ignore) {
     }
     catch (Throwable e) {
       e = accumulateException(myThrown, e);

@@ -292,7 +292,7 @@ public final class JavaFormatterUtil {
       if (prev != null && prev.getElementType() == JavaElementType.MODIFIER_LIST) {
         ASTNode last = prev.getLastChildNode();
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
-          if (isTypeAnnotation(last) ||
+          if (isTypeAnnotation(last) && parent.getElementType() != JavaElementType.RECORD_COMPONENT ||
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
               javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER &&
               isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
@@ -316,12 +316,12 @@ public final class JavaFormatterUtil {
           return null;
         }
 
-        else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent)) {
+        else if (isAnnoInsideModifierListWithAtLeastOneKeyword(child, parent) || (JavaFormatterRecordUtil.isInRecordComponent(child) && prev == null)) {
           return Wrap.createWrap(WrapType.NONE, false);
         }
 
         if (isTypeAnnotation(child)) {
-          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotation(prev)) {
+          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || (isTypeAnnotation(prev) && !JavaFormatterRecordUtil.isInRecordComponent(child))) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
         }
@@ -506,6 +506,10 @@ public final class JavaFormatterUtil {
       return settings.FIELD_ANNOTATION_WRAP;
     }
 
+    if (nodeType == JavaElementType.RECORD_COMPONENT) {
+      return isAnnotationOnNewLineInRecordComponent(javaSettings) ? CommonCodeStyleSettings.WRAP_ALWAYS : CommonCodeStyleSettings.DO_NOT_WRAP;
+    }
+
     if (nodeType == JavaElementType.PARAMETER ||
         nodeType == JavaElementType.RECEIVER_PARAMETER ||
         nodeType == JavaElementType.RESOURCE_VARIABLE) {
@@ -525,6 +529,11 @@ public final class JavaFormatterUtil {
     }
 
     return CommonCodeStyleSettings.DO_NOT_WRAP;
+  }
+
+  private static boolean isAnnotationOnNewLineInRecordComponent(JavaCodeStyleSettings javaSettings) {
+    return CommonCodeStyleSettings.WRAP_ALWAYS == javaSettings.RECORD_COMPONENTS_WRAP &&
+           javaSettings.ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT;
   }
 
   private static boolean isAnnoInsideModifierListWithAtLeastOneKeyword(@NotNull ASTNode current, @NotNull ASTNode parent) {

@@ -1,16 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.performanceTesting
 
+import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import git4idea.repo.GitRepositoryManager
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration.Companion.minutes
 
 class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
@@ -19,9 +22,10 @@ class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCorou
     const val PREFIX = CMD_PREFIX + NAME
   }
 
-  @Suppress
+  @TestOnly
   override suspend fun doExecute(context: PlaybackContext) {
-    val repository = GitRepositoryManager.getInstance(context.project).repositories.single()
+    val repository = getGitRepository(context)
+
     withContext(Dispatchers.EDT) {
       val treePopup = (GitBranchesTreePopup.create(context.project, repository) as GitBranchesTreePopup)
       treePopup.showCenteredInCurrentWindow(context.project)
@@ -30,6 +34,13 @@ class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCorou
         span.setAttribute("expandedPaths",treePopup.getExpandedPathsSize().toLong())
       }
     }
+  }
+
+  @TestOnly
+  private fun getGitRepository(context: PlaybackContext): GitRepository {
+    VcsInitialization.getInstance(context.project).waitFinished()
+    val repositoryManager = VcsRepositoryManager.getInstance(context.project)
+    return repositoryManager.getRepositoryForFile(context.project.guessProjectDir()) as GitRepository
   }
 
   override fun getName(): String = NAME

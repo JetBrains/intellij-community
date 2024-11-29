@@ -3,10 +3,10 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -35,9 +35,8 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends Descriptio
   public void testIntentionDescription() {
     myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
 
-    List<GutterMark> gutters = myFixture.findAllGutters("MyIntentionActionWithDescription.java");
+    List<GutterMark> gutters = ContainerUtil.sorted(myFixture.findAllGutters("MyIntentionActionWithDescription.java"),Comparator.comparing(GutterMark::getTooltipText));
     assertThat(gutters.size()).isEqualTo(2);
-    Collections.sort(gutters, Comparator.comparing(GutterMark::getTooltipText));
     DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", DevKitIcons.Gutter.DescriptionFile, "description.html");
     DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevKitIcons.Gutter.Diff,
                                                   "after.java.template", "before.java.template");

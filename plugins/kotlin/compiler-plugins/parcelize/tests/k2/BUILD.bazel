@@ -1,0 +1,33 @@
+### auto-generated section `build kotlin.compiler-plugins.parcelize.tests.k2` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
+
+java_library(
+  name = "kotlin-compiler-plugins-parcelize-tests-k2",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_test(
+  name = "kotlin-compiler-plugins-parcelize-tests-k2_test",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fir",
+    "@lib//:kotlinc_kotlin-compiler-tests",
+    "@lib//:kotlinc_analysis-api",
+    "@lib//:kotlinc_parcelize-compiler-plugin",
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//plugins/kotlin/code-insight/inspections-k2/tests:kotlin-code-insight-inspections-k2-tests_test",
+    "//plugins/kotlin/compiler-plugins/parcelize/k2:kotlin-compiler-plugins-parcelize-k2",
+    "//plugins/kotlin/compiler-plugins/parcelize/tests:kotlin-compiler-plugins-parcelize-tests_test",
+    "//plugins/kotlin/base/test:kotlin-base-test_test",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test",
+    "//plugins/kotlin/tests-common:tests-common_test",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test",
+  ]
+)
+### auto-generated section `build kotlin.compiler-plugins.parcelize.tests.k2` end

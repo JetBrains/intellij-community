@@ -549,7 +549,7 @@
           <action id="SelectAllOccurrences" class="com.intellij.openapi.editor.actions.SelectAllOccurrencesAction"/>
           <reference ref="SelectNextOccurrence"/>
           <action id="UnselectPreviousOccurrence" class="com.intellij.openapi.editor.actions.UnselectPreviousOccurrenceAction"/>
-          <reference id="ToggleFindInSelection"/>
+          <reference ref="ToggleFindInSelection"/>
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
           <action id="FindPrevWordAtCaret" class="com.intellij.openapi.editor.actions.FindPrevWordAtCaretAction"/>
@@ -766,7 +766,8 @@
           <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
           <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
           <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
-          <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.MoveToolWindowTabToEditorAction"/>
+          <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.MoveToolWindowTabToEditorAction"
+                  icon="AllIcons.Actions.OpenNewTab"/>
           <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction" use-shortcut-of="PinActiveTab"/>
           <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
@@ -802,6 +803,7 @@
             <action id="CloseAllToTheLeft" class="com.intellij.ide.actions.CloseAllEditorsToTheLeftAction"/>
             <action id="CloseAllToTheRight" class="com.intellij.ide.actions.CloseAllEditorsToTheRightAction"/>
             <action id="CloseAllReadonly" class="com.intellij.ide.actions.CloseAllReadonlyEditorsAction"/>
+            <reference ref="MoveToolWindowTabToEditorAction"/>
           </group>
           <separator/>
           <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction"/>
@@ -912,9 +914,9 @@
     </group>
 
     <group id="SplitRevealGroup" popup="false">
-      <reference id="OpenInRightSplit"/>
-      <reference id="SplitChooser"/>
-      <reference id="RevealGroup"/>
+      <reference ref="OpenInRightSplit"/>
+      <reference ref="SplitChooser"/>
+      <reference ref="RevealGroup"/>
     </group>
 
     <action id="ZoomInIdeAction" class="com.intellij.ide.actions.ZoomInIdeAction">
@@ -928,22 +930,22 @@
     </action>
 
     <group id="MainToolbarPopupActions" searchable="false">
-      <reference id="ViewToolBar"/>
+      <reference ref="ViewToolBar"/>
       <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
     </group>
 
     <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
-      <reference id="RecentFiles"/>
-      <reference id="RecentLocations"/>
+      <reference ref="RecentFiles"/>
+      <reference ref="RecentLocations"/>
       <separator/>
-      <reference id="CloseAllEditors"/>
-      <reference id="ReopenClosedTab"/>
+      <reference ref="CloseAllEditors"/>
+      <reference ref="ReopenClosedTab"/>
       <separator/>
-      <reference id="Unsplit"/>
-      <reference id="UnsplitAll"/>
-      <reference id="ChangeSplitOrientation"/>
+      <reference ref="Unsplit"/>
+      <reference ref="UnsplitAll"/>
+      <reference ref="ChangeSplitOrientation"/>
       <separator/>
-      <reference id="ConfigureEditorTabs"/>
+      <reference ref="ConfigureEditorTabs"/>
     </group>
 
     <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
@@ -1159,10 +1161,10 @@
               use-shortcut-of="$Delete"/>
     </group>
     <group id="WelcomeScreen.KeymapGroup" searchable="false">
-      <reference id="WelcomeScreen.Options"/>
-      <reference id="WelcomeScreenRecentProjectActionGroup"/>
-      <reference id="WelcomeScreen.Configure"/>
-      <reference id="WelcomeScreen.OpenDirectoryProject"/>
+      <reference ref="WelcomeScreen.Options"/>
+      <reference ref="WelcomeScreenRecentProjectActionGroup"/>
+      <reference ref="WelcomeScreen.Configure"/>
+      <reference ref="WelcomeScreen.OpenDirectoryProject"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
@@ -1322,6 +1324,7 @@
           <action id="ShowGotItDemo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction"/>
           <action id="ShowInlineBanner" internal="true" class="com.intellij.internal.ui.InlineBannerTestAction"/>
           <action id="ToolbarDemo" internal="true" class="com.intellij.internal.ToolbarDemoAction"/>
+          <action id="TreeViewModelDemo" internal="true" class="com.intellij.internal.ui.TreeViewModelDemoAction"/>
         </group>
         <group id="Internal.UI.Animation" popup="true">
           <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>
@@ -1495,10 +1498,10 @@
     </action>
 
     <group id="BlankDiffViewerEditorPopupMenu">
-      <reference id="OpenBlankEditorInBlankDiffWindow"/>
-      <reference id="OpenFileEditorInBlankDiffWindow"/>
-      <reference id="OpenRecentEditorInBlankDiffWindow"/>
-      <reference id="ToggleThreeSideInBlankDiffWindow"/>
+      <reference ref="OpenBlankEditorInBlankDiffWindow"/>
+      <reference ref="OpenFileEditorInBlankDiffWindow"/>
+      <reference ref="OpenRecentEditorInBlankDiffWindow"/>
+      <reference ref="ToggleThreeSideInBlankDiffWindow"/>
 
       <add-to-group group-id="Diff.EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ShowBlankDiffWindow" anchor="after"/>
@@ -1552,13 +1555,13 @@
       <action id="GoToTab9" class="com.intellij.ide.actions.TabNavigationActionBase$GoToTab9Action"/>
       <action id="GoToLastTab" class="com.intellij.ide.actions.TabNavigationActionBase$GoToLastTabAction"/>
 
-      <reference id="NextEditorTab"/>
-      <reference id="PreviousEditorTab"/>
-      <reference id="ReopenClosedTab"/>
-      <reference id="PinActiveTab"/>
+      <reference ref="NextEditorTab"/>
+      <reference ref="PreviousEditorTab"/>
+      <reference ref="ReopenClosedTab"/>
+      <reference ref="PinActiveTab"/>
 
-      <reference id="MoveEditorToOppositeTabGroup"/>
-      <reference id="OpenEditorInOppositeTabGroup"/>
+      <reference ref="MoveEditorToOppositeTabGroup"/>
+      <reference ref="OpenEditorInOppositeTabGroup"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
@@ -1671,14 +1674,14 @@
 
     <group id="UpdateEntryPointGroup"/>
     <group id="SettingsEntryPointGroup" class="com.intellij.ide.actions.SettingsEntryPointGroup">
-      <reference id="RunAnything"/>
+      <reference ref="RunAnything"/>
       <separator/>
-      <reference id="ShowSettings"/>
-      <reference id="WelcomeScreen.Plugins"/>
+      <reference ref="ShowSettings"/>
+      <reference ref="WelcomeScreen.Plugins"/>
       <separator/>
-      <reference id="ChangeLaf"/>
-      <reference id="ChangeKeymap"/>
-      <reference id="ChangeView"/>
+      <reference ref="ChangeLaf"/>
+      <reference ref="ChangeKeymap"/>
+      <reference ref="ChangeView"/>
     </group>
 
     <action id="CheckSuggestedPlugins" class="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.CheckSuggestedPluginsAction"/>
@@ -1686,7 +1689,7 @@
     <action id="MainMenuButton.ShowMenu" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
     <group id="FindInFiles.Results.ContextMenu" searchable="false">
-      <reference id="CopyReferencePopupGroup"/>
+      <reference ref="CopyReferencePopupGroup"/>
     </group>
 
     <group id="TopStripeActionGroup" class="com.intellij.toolWindow.StripeActionGroup"/>
@@ -1711,11 +1714,11 @@
     <group id="ToolbarPopupActions"/>
 
     <group id="ToolbarPopupActions.MainToolbarNewUI">
-      <reference id="MainToolbarQuickActions"/>
-      <reference id="MainMenuAsSeparateToolbarAction"/>
+      <reference ref="MainToolbarQuickActions"/>
+      <reference ref="MainMenuAsSeparateToolbarAction"/>
       <separator/>
-      <reference id="ChangeProjectColorActionGroup"/>
-      <reference id="WelcomeScreen.ChangeProjectIcon"/>
+      <reference ref="ChangeProjectColorActionGroup"/>
+      <reference ref="WelcomeScreen.ChangeProjectIcon"/>
       <action id="ColoredHeaderAction" class="com.intellij.ide.ui.customization.UseProjectColorsCheckboxAction"/>
       <separator/>
       <action id="MergeMenuWithWindowTitleAction" class="com.intellij.ide.actions.MergeMenuWithWindowTitleAction"/>
@@ -1723,12 +1726,6 @@
 
     <action id="RemoveMainToolbarActionsAction" class="com.intellij.openapi.wm.impl.headertoolbar.RemoveMainToolbarActionsAction"
             internal="true"/>
-
-    <group id="Search.Everywhere.Preview.Close">
-      <action id="search.everywhere.preview.close"
-              class="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview"
-              icon="AllIcons.Actions.CloseDarkGrey"/>
-    </group>
 
     <action id="plugins.autoupdate.repository.view" class="com.intellij.openapi.application.PluginsAutoUpdateRepositoryViewAction"
             internal="true"/>

@@ -291,7 +291,7 @@ public final class MavenPropertyResolver {
       if (result != null) return result;
 
       if ("settings.localRepository".equals(propName)) {
-        return mavenProject.getLocalRepository().getAbsolutePath();
+        return mavenProject.getLocalRepositoryPath().toAbsolutePath().toString();
       }
 
       return null;
@@ -335,7 +335,7 @@ public final class MavenPropertyResolver {
 
 
       if ("settings.localRepository".equals(propName)) {
-        return MavenProjectsManager.getInstance(projectDom.getManager().getProject()).getLocalRepository().getAbsolutePath();
+        return MavenProjectsManager.getInstance(projectDom.getManager().getProject()).getRepositoryPath().toAbsolutePath().toString();
       }
 
       return null;

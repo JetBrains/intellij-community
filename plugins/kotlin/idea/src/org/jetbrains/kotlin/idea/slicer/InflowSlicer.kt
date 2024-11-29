@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.processAllUsages
 import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.references.KtPropertyDelegationMethodsReference
@@ -44,7 +45,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 class InflowSlicer(
     element: KtElement,
     processor: Processor<in SliceUsage>,
-    parentUsage: KotlinSliceUsage
+    parentUsage: AbstractKotlinSliceUsage
 ) : Slicer(element, processor, parentUsage) {
 
     override fun processChildren(forcedExpressionMode: Boolean) {

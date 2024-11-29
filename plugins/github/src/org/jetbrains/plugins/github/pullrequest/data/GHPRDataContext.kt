@@ -8,27 +8,29 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
-internal class GHPRDataContext(val scope: CoroutineScope,
-                               val listLoader: GHPRListLoader,
-                               val listUpdatesChecker: GHPRListUpdatesChecker,
-                               val dataProviderRepository: GHPRDataProviderRepository,
-                               val securityService: GHPRSecurityService,
-                               val repositoryDataService: GHPRRepositoryDataService,
-                               val creationService: GHPRCreationService,
-                               val detailsService: GHPRDetailsService,
-                               val changesService: GHPRChangesService,
-                               val reactionsService: GHReactionsService,
-                               val htmlImageLoader: AsyncHtmlImageLoader,
-                               val avatarIconsProvider: GHAvatarIconsProvider,
-                               val reactionIconsProvider: IconsProvider<GHReactionContent>,
-                               val filesManager: GHPRFilesManager,
-                               val interactionState: GHPRPersistentInteractionState) {
-
+@ApiStatus.Internal
+class GHPRDataContext internal constructor(
+  val scope: CoroutineScope,
+  internal val listLoader: GHPRListLoader,
+  internal val listUpdatesChecker: GHPRListUpdatesChecker,
+  internal val dataProviderRepository: GHPRDataProviderRepository,
+  val securityService: GHPRSecurityService,
+  val repositoryDataService: GHPRRepositoryDataService,
+  internal val creationService: GHPRCreationService,
+  internal val detailsService: GHPRDetailsService,
+  internal val reactionsService: GHReactionsService,
+  internal val htmlImageLoader: AsyncHtmlImageLoader,
+  internal val avatarIconsProvider: GHAvatarIconsProvider,
+  internal val reactionIconsProvider: IconsProvider<GHReactionContent>,
+  internal val filesManager: GHPRFilesManager,
+  internal val interactionState: GHPRPersistentInteractionState,
+) {
   private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")
 
   init {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
@@ -7,24 +7,25 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class DebugMetadata private constructor(context: DefaultExecutionContext) :
         BaseMirror<ObjectReference, MirrorOfDebugProbesImpl>("kotlin.coroutines.jvm.internal.DebugMetadataKt", context) {
     private val getStackTraceElementMethod by MethodMirrorDelegate("getStackTraceElement", StackTraceElement(context))
     private val getSpilledVariableFieldMappingMethod by MethodDelegate<ArrayReference>("getSpilledVariableFieldMapping",
                                                                                        "(Lkotlin/coroutines/jvm/internal/BaseContinuationImpl;)[Ljava/lang/String;")
-    val baseContinuationImpl = BaseContinuationImpl(context, this)
+    private val baseContinuationImpl = BaseContinuationImpl(context, this)
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfDebugProbesImpl =
             throw IllegalStateException("Not meant to be mirrored.")
 
-    fun fetchContinuationStack(continuation: ObjectReference?, context: DefaultExecutionContext): List<MirrorOfStackFrame> {
-        continuation ?: return emptyList()
+    internal fun fetchContinuationStack(continuation: ObjectReference?, context: DefaultExecutionContext): List<MirrorOfStackFrame> {
+        if (continuation == null) return emptyList()
         val coroutineStack = mutableListOf<MirrorOfStackFrame>()
         var loopContinuation: ObjectReference? = continuation
         while (loopContinuation != null) {
             val continuationMirror = baseContinuationImpl.mirror(loopContinuation, context) ?: break
-            coroutineStack.add(MirrorOfStackFrame(loopContinuation, continuationMirror))
+            coroutineStack.add(MirrorOfStackFrame(continuationMirror))
             loopContinuation = continuationMirror.nextContinuation
         }
         return coroutineStack
@@ -33,7 +34,7 @@ class DebugMetadata private constructor(context: DefaultExecutionContext) :
     fun getStackTraceElement(value: ObjectReference, context: DefaultExecutionContext) =
             getStackTraceElementMethod.mirror(value, context)
 
-    fun getSpilledVariableFieldMapping(value: ObjectReference, context: DefaultExecutionContext) =
+    internal fun getSpilledVariableFieldMapping(value: ObjectReference, context: DefaultExecutionContext) =
             getSpilledVariableFieldMappingMethod.value(value, context)
 
     companion object {
@@ -51,7 +52,7 @@ class DebugMetadata private constructor(context: DefaultExecutionContext) :
     }
 }
 
-class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMetadata: DebugMetadata) :
+internal class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMetadata: DebugMetadata) :
         BaseMirror<ObjectReference, MirrorOfBaseContinuationImpl>("kotlin.coroutines.jvm.internal.BaseContinuationImpl", context) {
 
     private val getCompletion by MethodMirrorDelegate("getCompletion", this, "()Lkotlin/coroutines/Continuation;")
@@ -62,15 +63,12 @@ class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMe
         val completionValue = getCompletion.value(value, context)
         return MirrorOfBaseContinuationImpl(
             value,
-            stackTraceElementMirror,
+            stackTraceElementMirror?.stackTraceElement(),
             fieldVariables,
             getNextContinuation(completionValue),
             getCoroutineOwner(completionValue)
         )
     }
-
-    fun getNextContinuation(value: ObjectReference, context: DefaultExecutionContext): ObjectReference? =
-        getNextContinuation(getCompletion.value(value, context))
 
     private fun getCoroutineOwner(completion: ObjectReference?) =
         if (completion != null && DebugProbesImplCoroutineOwner.instanceOf(completion)) completion else null
@@ -82,19 +80,14 @@ class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMe
         val getSpilledVariableFieldMappingReference =
                 debugMetadata.getSpilledVariableFieldMapping(value, context) ?: return emptyList()
 
-        val length = getSpilledVariableFieldMappingReference.length() / 2
-        val fieldVariables = ArrayList<FieldVariable>()
-        for (index in 0 until length) {
-            val fieldVariable = getFieldVariableName(getSpilledVariableFieldMappingReference, index) ?: continue
-            fieldVariables.add(fieldVariable)
+        val fieldVariables = mutableListOf<FieldVariable>()
+        val values = getSpilledVariableFieldMappingReference.values // fetch all values at once
+        for (index in 0 until values.size / 2) {
+            val fieldName = values[2 * index].safeAs<StringReference>()?.value() ?: continue
+            val variableName = values[2 * index + 1].safeAs<StringReference>()?.value() ?: continue
+            fieldVariables.add(FieldVariable(fieldName, variableName))
         }
         return fieldVariables
-    }
-
-    private fun getFieldVariableName(rawSpilledVariables: ArrayReference, index: Int): FieldVariable? {
-        val fieldName = (rawSpilledVariables.getValue(2 * index) as? StringReference)?.value() ?: return null
-        val variableName = (rawSpilledVariables.getValue(2 * index + 1) as? StringReference)?.value() ?: return null
-        return FieldVariable(fieldName, variableName)
     }
 }
 

@@ -225,13 +225,17 @@ public interface Application extends ComponentManager {
    * <h3>Obsolescence notice</h3>
    * <p>
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
-   * Annotate the function with {@link RequiresReadLock} (in Java),
-   * or use {@link ThreadingAssertions#assertReadAccess()},
-   * or use {@link ThreadingAssertions#softAssertReadAccess} instead.
+   * The equivalent {@link ThreadingAssertions#softAssertReadAccess} should be used when migrating existing code.
+   * <br>
+   * However, in new code it's better to use {@link RequiresReadLock @RequiresReadLock} (in Java) or 
+   * {@link ThreadingAssertions#assertReadAccess()},
+   * which throw an exception instead of just logging an error if the assertion is violated.
+   * In existing code it also makes sense to migrate to one of these variants after fixing all reports of the assertion violation from that
+   * place.
    * </p>
    * <hr>
    *
-   * Asserts that read access is allowed.
+   * Asserts that read access is allowed. If it isn't, <strong>logs an error but continues execution</strong>.
    */
   @ApiStatus.Obsolete
   void assertReadAccessAllowed();
@@ -328,6 +332,12 @@ public interface Application extends ComponentManager {
    * 5 minutes ago, see {@link com.intellij.openapi.components.Storage#useSaveThreshold() useSaveThreshold} for details.
    */
   void saveSettings();
+
+  /**
+   * @return true if this thread is inside read action.
+   * @see #runReadAction(Runnable)
+   */
+  boolean holdsReadLock();
 
   /**
    * Exits the application, showing the exit confirmation prompt if it is enabled.
@@ -677,8 +687,13 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default CoroutineContext getLockStateAsCoroutineContext() {
+  default CoroutineContext getLockStateAsCoroutineContext(boolean shared) {
     return EmptyCoroutineContext.INSTANCE;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  default void returnPermitFromContextElement(CoroutineContext ctx) {
   }
 
   @ApiStatus.Experimental

@@ -61,13 +61,13 @@ fun textAttributesKeyForKtFunction(function: PsiElement): HighlightInfoType? = w
 fun textAttributesKeyForTypeDeclaration(declaration: PsiElement): HighlightInfoType? = when {
     declaration is KtTypeParameter || declaration is PsiTypeParameter -> KotlinHighlightInfoTypeSemanticNames.TYPE_PARAMETER
     declaration is KtTypeAlias -> KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS
-    declaration is KtClass -> when {
-        declaration.isAnnotation() -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
-        else -> textAttributesForClass(declaration)
-    }
+    declaration is KtClass -> textAttributesForClass(declaration)
     declaration is PsiClass && declaration.isInterface && !declaration.isAnnotationType -> KotlinHighlightInfoTypeSemanticNames.TRAIT
     declaration is KtPrimaryConstructor && declaration.containingClassOrObject?.isAnnotation() == true -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
-    declaration is KtObjectDeclaration -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+    declaration is KtObjectDeclaration -> when {
+        declaration.isData() -> KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT
+        else -> KotlinHighlightInfoTypeSemanticNames.OBJECT
+    }
     declaration is PsiEnumConstant -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
     declaration is PsiClass -> when {
         declaration.isAnnotationType -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
@@ -84,6 +84,7 @@ fun textAttributesForClass(klass: KtClass): HighlightInfoType = when {
     klass.isEnum() -> KotlinHighlightInfoTypeSemanticNames.ENUM
     klass is KtEnumEntry -> KotlinHighlightInfoTypeSemanticNames.ENUM_ENTRY
     klass.isAbstract() -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
+    klass.isData() -> KotlinHighlightInfoTypeSemanticNames.DATA_CLASS
     else -> KotlinHighlightInfoTypeSemanticNames.CLASS
 }
 

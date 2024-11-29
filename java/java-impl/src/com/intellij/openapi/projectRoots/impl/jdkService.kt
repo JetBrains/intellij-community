@@ -19,6 +19,10 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.APP)
 @ApiStatus.Internal
 class AddJdkService(private val coroutineScope: CoroutineScope) {
+  /**
+   * Creates a JDK and calls [onJdkAdded] later if JDK creation was successful.
+   * If you need to acquire a [Sdk] immediately, use [createIncompleteJdk].
+   */
   fun createJdkFromPath(path: String, onJdkAdded: (Sdk) -> Unit = {}) {
     coroutineScope.launch {
       val jdk = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -26,6 +30,21 @@ class AddJdkService(private val coroutineScope: CoroutineScope) {
       }
       if (jdk != null) onJdkAdded.invoke(jdk)
     }
+  }
+
+  /**
+   * Creates and registers an incomplete JDK with a unique name pointing to the given [path].
+   * Initiates the JDK setup in a coroutine.
+   */
+  fun createIncompleteJdk(path: String): Sdk? {
+    val jdkType = JavaSdk.getInstance()
+    val sdk = SdkConfigurationUtil.createIncompleteSDK(path, jdkType) ?: return null
+
+    coroutineScope.launch {
+      jdkType.setupSdkPaths(sdk)
+    }
+
+    return sdk
   }
 }
 

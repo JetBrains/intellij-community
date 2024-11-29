@@ -232,7 +232,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
   @Nullable
   static LocalAttachInfo getProcessAttachInfo(@NotNull BaseProcessHandler processHandler) {
     try {
-      return getAttachInfo(null, (int)processHandler.getProcess().pid(), processHandler.getCommandLine(), null);
+      return getAttachInfo(null, (int)processHandler.getProcess().pid(), processHandler.getCommandLineForLog(), null);
     }
     catch (UnsupportedOperationException e) {
       return null;

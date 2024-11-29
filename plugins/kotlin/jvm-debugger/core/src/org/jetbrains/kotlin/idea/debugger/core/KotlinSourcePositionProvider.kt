@@ -21,11 +21,9 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_RECEIVER_FIELD
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_THIS_FIELD
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.LABELED_THIS_FIELD
 import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
@@ -142,9 +140,9 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
     ): SourcePosition? {
         val fieldName = descriptor.field.name()
 
-        if (fieldName == CAPTURED_THIS_FIELD
-            || fieldName == CAPTURED_RECEIVER_FIELD
-            || fieldName.startsWith(LABELED_THIS_FIELD)
+        if (fieldName == AsmUtil.CAPTURED_THIS_FIELD
+            || fieldName == AsmUtil.CAPTURED_RECEIVER_FIELD
+            || fieldName.startsWith(AsmUtil.LABELED_THIS_FIELD)
         ) {
             return null
         }

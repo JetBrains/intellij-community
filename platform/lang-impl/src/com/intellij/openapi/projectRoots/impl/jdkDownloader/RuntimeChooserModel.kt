@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.FileUtil
@@ -49,7 +48,7 @@ internal class RuntimeChooserModel {
         file = Paths.get(path + "-" + (it + 1))
       }
     }
-    return service<RuntimeChooserJbrInstaller>().defaultInstallDir(item)
+    return RuntimeChooserJbrInstaller.defaultInstallDir(item)
   }
 
   private fun updateMainCombobox(newSelection: RuntimeChooserItem? = null) {

@@ -279,6 +279,7 @@ public final class TextDiffViewerUtil {
 
     @NotNull
     @Override
+    @Unmodifiable
     protected List<T> getAvailableOptions() {
       return ContainerUtil.sorted(Arrays.asList(myPolicies));
     }

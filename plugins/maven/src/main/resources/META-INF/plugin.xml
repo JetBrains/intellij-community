@@ -107,9 +107,9 @@
       serviceImplementation="org.jetbrains.idea.maven.server.MavenServerResultTransformerImpl"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
-                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
+                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
                         serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
@@ -405,6 +405,9 @@
     <registryKey key="maven.build.additional.jars" defaultValue="true"
                  description="Build additional jars with classifier"/>
 
+    <registryKey key="maven.server.opentelemetry.agent.enabled" defaultValue="false"
+                 description="Enable performance trace collection from the Maven server side collected by OTLP java agent"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
@@ -569,8 +572,8 @@
       <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
 
-    <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.wsl.WslMavenRemoteProcessSupportFactory"/>
-    <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.wsl.WslRemotePathTransformFactory"/>
+    <mavenServerSupportFactory implementation="org.jetbrains.idea.maven.server.eel.EelMavenRemoteProcessSupportFactory"/>
+    <remotePathTransformerFactory implementation="org.jetbrains.idea.maven.server.eel.EelRemotePathTransformFactory"/>
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven3.Maven3Support"/>
     <versionAwareMavenSupport implementation="org.jetbrains.idea.maven.maven4.Maven4Support"/>
 
@@ -703,8 +706,8 @@
     </action>
 
     <group id="Maven.ShowSettingsGroup" popup="true" icon="AllIcons.General.Settings">
-      <reference id="ExternalSystem.ShowCommonSettings"/>
-      <reference id="Maven.ShowSettings"/>
+      <reference ref="ExternalSystem.ShowCommonSettings"/>
+      <reference ref="Maven.ShowSettings"/>
     </group>
 
     <action id="Maven.ToggleOffline"
@@ -795,71 +798,71 @@
     </group>
 
     <group id="Maven.DownloadAllGroup">
-      <reference id="Maven.DownloadAllSources"/>
-      <reference id="Maven.DownloadAllDocs"/>
-      <reference id="Maven.DownloadAllSourcesAndDocs"/>
+      <reference ref="Maven.DownloadAllSources"/>
+      <reference ref="Maven.DownloadAllDocs"/>
+      <reference ref="Maven.DownloadAllSourcesAndDocs"/>
     </group>
 
     <group id="Maven.SyncAllGroup">
-      <reference id="Maven.SyncIncrementally"/>
-      <reference id="Maven.Reimport"/>
+      <reference ref="Maven.SyncIncrementally"/>
+      <reference ref="Maven.Reimport"/>
     </group>
 
     <group id="Maven.NavigatorActionsToolbar">
       <group id="Maven.SyncAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.SyncActionGroup"
              icon="AllIcons.Actions.Refresh">
-        <reference id="Maven.SyncAllGroup"/>
+        <reference ref="Maven.SyncAllGroup"/>
       </group>
-      <reference id="Maven.UpdateFolders"/>
+      <reference ref="Maven.UpdateFolders"/>
       <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
              icon="AllIcons.Actions.Download">
-        <reference id="Maven.DownloadAllGroup"/>
+        <reference ref="Maven.DownloadAllGroup"/>
       </group>
       <separator/>
-      <reference id="Maven.AddManagedFiles"/>
+      <reference ref="Maven.AddManagedFiles"/>
       <separator/>
-      <reference id="Maven.RunBuild"/>
-      <reference id="Maven.ExecuteGoal"/>
-      <reference id="Maven.ToggleOffline"/>
-      <reference id="Maven.ToggleSkipTests"/>
-      <reference id="Maven.CollapseAll"/>
+      <reference ref="Maven.RunBuild"/>
+      <reference ref="Maven.ExecuteGoal"/>
+      <reference ref="Maven.ToggleOffline"/>
+      <reference ref="Maven.ToggleSkipTests"/>
+      <reference ref="Maven.CollapseAll"/>
       <separator/>
-      <reference id="Maven.NavigatorDependencyAnalyzer"/>
+      <reference ref="Maven.NavigatorDependencyAnalyzer"/>
       <separator/>
-      <reference id="Maven.ShowSettingsGroup"/>
+      <reference ref="Maven.ShowSettingsGroup"/>
     </group>
 
     <group id="Maven.DependencyMenu">
-      <reference id="Maven.DownloadSelectedSources"/>
-      <reference id="Maven.DownloadSelectedDocs"/>
-      <reference id="Maven.DownloadSelectedSourcesAndDocs"/>
+      <reference ref="Maven.DownloadSelectedSources"/>
+      <reference ref="Maven.DownloadSelectedDocs"/>
+      <reference ref="Maven.DownloadSelectedSourcesAndDocs"/>
       <separator/>
-      <reference id="Maven.ViewDependencyAnalyzer"/>
+      <reference ref="Maven.ViewDependencyAnalyzer"/>
     </group>
 
     <group id="Maven.BaseProjectMenu">
-      <reference id="Maven.ReimportProject"/>
-      <reference id="Maven.UpdateFoldersForProject"/>
+      <reference ref="Maven.ReimportProject"/>
+      <reference ref="Maven.UpdateFoldersForProject"/>
       <separator/>
-      <reference id="Maven.IgnoreProjects"/>
-      <reference id="Maven.RemoveManagedFiles"/>
+      <reference ref="Maven.IgnoreProjects"/>
+      <reference ref="Maven.RemoveManagedFiles"/>
       <separator/>
-      <reference id="Maven.OpenSettingsXml"/>
+      <reference ref="Maven.OpenSettingsXml"/>
       <separator/>
-      <reference id="Maven.DownloadAllGroup"/>
+      <reference ref="Maven.DownloadAllGroup"/>
       <separator/>
-      <reference id="Maven.ShowEffectivePom"/>
+      <reference ref="Maven.ShowEffectivePom"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
       <reference ref="Maven.BaseProjectMenu"/>
       <separator/>
-      <reference id="Maven.NavigatorDependencyAnalyzer"/>
+      <reference ref="Maven.NavigatorDependencyAnalyzer"/>
       <separator/>
-      <reference id="Maven.RunBuild"/>
+      <reference ref="Maven.RunBuild"/>
       <reference ref="RunContextGroup"/>
       <separator/>
-      <reference id="EditSource"/>
+      <reference ref="EditSource"/>
     </group>
 
     <group id="Maven.ProfilesMenu" popup="true">

@@ -433,7 +433,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     if (node.isObsolete()) {
       return false;
     }
-    evaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(command.getSuspendContext()) {
+    SuspendContextImpl suspendContext = evaluationContext.getSuspendContext();
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         if (node.isObsolete()) {
@@ -521,7 +522,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void computeTypeSourcePosition(@NotNull final XNavigatable navigatable) {
     if (myEvaluationContext.getSuspendContext().isResumed()) return;
     DebugProcessImpl debugProcess = myEvaluationContext.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new NavigateCommand(getDebuggerContext(), myValueDescriptor, debugProcess, null) {
+    myEvaluationContext.getManagerThread().schedule(new NavigateCommand(getDebuggerContext(), myValueDescriptor, debugProcess, null) {
       @Override
       public Priority getPriority() {
         return Priority.HIGH;
@@ -737,7 +738,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       catch (ClassNotLoadedException ex) {
         final String className = ex.className();
         if (loadClass(className) != null) {
-          myDebugProcess.getManagerThread().schedule(createRetryCommand());
+          suspendContext.getManagerThread().schedule(createRetryCommand());
         }
       }
     }

@@ -61,14 +61,7 @@ public class UsernamePasswordCallback extends AuthCallbackCase {
   @Override
   public void updateParameters(@NotNull Command command) {
     if (myAuthentication instanceof PasswordAuthenticationData auth) {
-
-      command.put("--username");
-      command.put(auth.getUserName());
-      command.put("--password");
-      command.put(auth.getPassword());
-      if (!auth.isStorageAllowed()) {
-        command.put("--no-auth-cache");
-      }
+      command.putAuth(auth);
     }
   }
 

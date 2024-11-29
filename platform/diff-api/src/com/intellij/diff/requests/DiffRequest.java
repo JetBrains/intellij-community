@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -75,6 +76,7 @@ public abstract class DiffRequest implements UserDataHolder {
    * @see com.intellij.openapi.fileEditor.FileEditor#getFilesToRefresh()
    */
   @NotNull
+  @Unmodifiable
   public List<VirtualFile> getFilesToRefresh() {
     return Collections.emptyList();
   }

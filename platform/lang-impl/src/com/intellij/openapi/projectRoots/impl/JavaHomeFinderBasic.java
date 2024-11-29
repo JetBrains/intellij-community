@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller;
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore;
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.OsAbstractionForJdkInstaller;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -23,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -156,7 +158,7 @@ public class JavaHomeFinderBasic {
     Set<Path> paths = new HashSet<>();
 
     if (myCheckDefaultInstallDir) {
-      paths.add(JdkInstaller.getInstance().defaultInstallDir());
+      paths.add(JdkInstaller.getInstance().defaultInstallDir((OsAbstractionForJdkInstaller)null));
     }
 
     if (myCheckUsedInstallDirs) {
@@ -164,13 +166,14 @@ public class JavaHomeFinderBasic {
     }
 
     if (myCheckConfiguredJdks) {
+      Collection<Path> availableRoots = mySystemInfo.getFsRoots();
       for (Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
         if (!(jdk.getSdkType() instanceof JavaSdkType) || jdk.getSdkType() instanceof DependentSdkType) {
           continue;
         }
 
         String homePath = jdk.getHomePath();
-        if (homePath == null) {
+        if (homePath == null || ContainerUtil.all(availableRoots, root -> !homePath.startsWith(root.toString()))) {
           continue;
         }
 
@@ -249,6 +252,9 @@ public class JavaHomeFinderBasic {
       //noinspection UnnecessaryLocalVariable
       var homes = listJavaHomeDirsInstalledBySdkMan(javasDir);
       return homes;
+    }
+    catch (CancellationException e) {
+      throw e;
     }
     catch (Exception e) {
       log.warn("Unexpected exception while looking for Sdkman directory: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);

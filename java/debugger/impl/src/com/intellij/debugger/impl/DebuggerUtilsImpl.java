@@ -249,40 +249,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     action.accept(wrapIntoThrowable ? new Throwable(e) : e);
   }
 
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
-                                                              T defaultValue) throws E {
-    return suppressExceptions(supplier, defaultValue, true, null);
-  }
-
-  public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
-                                                              T defaultValue,
-                                                              boolean ignorePCE,
-                                                              Class<E> rethrow) throws E {
-    try {
-      return supplier.compute();
-    }
-    catch (ProcessCanceledException e) {
-      if (!ignorePCE) {
-        throw e;
-      }
-    }
-    catch (VMDisconnectedException | ObjectCollectedException e) {
-      throw e;
-    }
-    catch (InternalException e) {
-      LOG.info(e);
-    }
-    catch (Exception | AssertionError e) {
-      if (rethrow != null && rethrow.isInstance(e)) {
-        throw e;
-      }
-      else {
-        LOG.error(e);
-      }
-    }
-    return defaultValue;
-  }
-
   public static @NlsContexts.Label String getConnectionWaitStatus(@NotNull RemoteConnection connection) {
     String connectionName = ObjectUtils.doIfNotNull(connection, DebuggerUtilsImpl::getConnectionDisplayName);
     return connection instanceof RemoteConnectionStub

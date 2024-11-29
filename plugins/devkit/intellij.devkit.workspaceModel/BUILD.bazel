@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.devkit.workspaceModel` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_resources(
+  name = "workspaceModel_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "workspaceModel",
+  module_name = "intellij.devkit.workspaceModel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "//platform/ide-core",
+    "//platform/editor-ui-api:editor",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common.provided",
+    "//platform/analysis-api:analysis",
+    "//java/java-psi-impl:psi-impl",
+    "@lib//:kotlinx-collections-immutable",
+    "//platform/platform-api:ide",
+    "//platform/lang-core",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "@lib//:kotlinc_kotlin-compiler-fe10.provided",
+    "//platform/lang-impl",
+    "//plugins/devkit/devkit-core:core",
+    "//java/idea-ui:ui",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//java/openapi:java",
+    "@lib//:workspace-model-codegen",
+    "//platform/util-class-loader:util-classLoader",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "@lib//:kotlinc_kotlin-jps-common.provided",
+    "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
+  ],
+  runtime_deps = [":workspaceModel_resources"]
+)
+### auto-generated section `build intellij.devkit.workspaceModel` end

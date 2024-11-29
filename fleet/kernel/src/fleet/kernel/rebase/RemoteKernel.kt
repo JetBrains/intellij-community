@@ -8,7 +8,9 @@ import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.InstanceId
 import fleet.util.UID
+import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -18,9 +20,11 @@ val REMOTE_KERNEL_SERVICE_ID: InstanceId = InstanceId("fleet.reserved.RemoteKern
 @Rpc
 interface RemoteKernel : RemoteApi<Unit> {
   @Serializable
-  data class Subscription(val snapshot: RpcFlow<DurableSnapshot.DurableEntity>,
-                          val vectorClock: Map<UID, Long>,
-                          val txs: RpcFlow<Broadcast>)
+  data class Subscription(
+    val snapshot: RpcFlow<DurableSnapshot.DurableEntity>,
+    val vectorClock: Map<UID, Long>,
+    val txs: RpcFlow<Broadcast>,
+  )
 
   @Serializable
   sealed interface Broadcast {
@@ -51,15 +55,18 @@ interface RemoteKernel : RemoteApi<Unit> {
 
 
 @Serializable
-data class Transaction(val id: UID,
-                       val instructions: List<SharedInstruction>,
-                       val origin: UID,
-                       val index: Long)
+data class Transaction(
+  val id: UID,
+  val instructions: List<SharedInstruction>,
+  val origin: UID,
+  val index: Long,
+)
 
-@Polymorphic
-interface SharedInstruction {
-  val seed: Long
-}
+@Serializable
+data class SharedInstruction(
+  val name: String,
+  val instruction: SerializedValue,
+)
 
 @Serializable
 sealed interface SharedQuery {
@@ -89,8 +96,7 @@ sealed interface SharedQuery {
 }
 
 @Serializable
-@SerialName("Validate")
-data class SharedValidate(val q: SharedQuery,
-                          val trace: Long) : SharedInstruction {
-  override val seed: Long get() = 0
-}
+data class SharedValidate(
+  val q: SharedQuery,
+  val trace: Long,
+)

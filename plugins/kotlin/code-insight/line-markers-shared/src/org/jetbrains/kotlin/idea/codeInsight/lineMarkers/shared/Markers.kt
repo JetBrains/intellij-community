@@ -155,7 +155,7 @@ fun KaModule.nameForTooltip(): String {
     (this as? KaSourceModule)?.stableModuleName?.let { Name.guessByFirstCharacter(it) }?.asStringStripSpecialMarkers()?.let { return it }
 
     // We want to represent actual descriptors, so let's represent them by platform
-    return platform.componentPlatforms.joinToString(", ", "{", "}") { it.platformName }
+    return targetPlatform.componentPlatforms.joinToString(", ", "{", "}") { it.platformName }
 }
 
 /*

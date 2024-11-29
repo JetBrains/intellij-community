@@ -43,10 +43,12 @@ public final class ArtifactsSourceItemsProvider extends PackagingSourceItemsProv
       super(false);
     }
 
+    @Override
     public boolean equals(Object obj) {
       return obj instanceof ArtifactsGroupSourceItem;
     }
 
+    @Override
     public int hashCode() {
       return 0;
     }

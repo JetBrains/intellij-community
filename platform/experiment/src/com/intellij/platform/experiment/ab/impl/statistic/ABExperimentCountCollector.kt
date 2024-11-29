@@ -4,14 +4,15 @@ package com.intellij.platform.experiment.ab.impl.statistic
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
+import com.intellij.platform.experiment.ab.impl.experiment.OPTION_ID_FREE_GROUP
+import com.intellij.platform.experiment.ab.impl.experiment.getJbABExperimentOptionList
 
-object ABExperimentCountCollector : CounterUsagesCollector() {
+internal object ABExperimentCountCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("experiment.ab", 3)
 
   /**
-   * For the case when user enables plugin and then disables it.
+   * For the case when user enables a plugin and then disables it.
    *
    * When the plugin is disabled, then a corresponding option is missing and the validation rule will reject such an option id,
    * because the option is not present at runtime.
@@ -32,12 +33,12 @@ object ABExperimentCountCollector : CounterUsagesCollector() {
       return
     }
 
-    if (userOptionId == ABExperiment.OPTION_ID_FREE_GROUP) {
+    if (userOptionId == OPTION_ID_FREE_GROUP) {
       AB_EXPERIMENT_OPTION_USED.log(userOptionId.value, userGroupNumber, userBucketNumber)
       return
     }
 
-    val option = ABExperiment.getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
+    val option = getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
     if (option != null) {
       AB_EXPERIMENT_OPTION_USED.log(option.id.value, userGroupNumber, userBucketNumber)
       return

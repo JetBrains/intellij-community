@@ -15,6 +15,7 @@ public class CallInstruction extends InstructionImpl {
     myCallee = callee;
   }
 
+  @Override
   @NonNls
   public String toString() {
     return super.toString() + " CALL " + myCallee.num();

@@ -302,6 +302,8 @@ object CommunityRepositoryModules {
       }
 
       spec.excludeProjectLibrary("Gradle")
+      // android jar is already quite big - put into separate JAR
+      spec.withProjectLibrary("jewel-ide-laf-bridge", "jewel-ide-laf-bridge.jar")
 
       // modules:
       // adt-ui.jar
@@ -375,9 +377,12 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.compose-common", "android.jar")
       spec.withModule("intellij.android.device", "android.jar")
       spec.withModule("intellij.android.core", "android.jar")
+      spec.withModule("intellij.android.core.editing.documentation", "android.jar")
+      spec.withModule("intellij.android.core.editing.metrics", "android.jar")
       spec.withModule("intellij.android.navigator", "android.jar")
       spec.withModule("intellij.android.dagger", "android.jar")
       spec.withModule("intellij.android.databinding", "android.jar")
+      spec.withModule("intellij.android.databinding.gradle", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.database", "android.jar")
       spec.withModule("intellij.android.debuggers", "android.jar")
       spec.withModule("intellij.android.deploy", "android.jar")
@@ -385,7 +390,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.device-explorer-files", "android.jar")
       spec.withModule("intellij.android.device-explorer-monitor", "android.jar")
       spec.withModule("intellij.android.device-explorer-common", "android.jar")
-      spec.withModule("intellij.android.device-manager", "android.jar")
+      //spec.withModule("intellij.android.device-manager", "android.jar")
       spec.withModule("intellij.android.device-manager-v2", "android.jar")
       spec.withModule("intellij.android.ml-api", "android.jar")
       // Packaged as a gradle-dsl plugin
@@ -694,7 +699,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
       dirFilter = { !it.endsWith("src") },
       fileFilter = { file ->
         if (file.toString().endsWith(".jar")) {
-          sources.add(ZipSource(file = file, distributionFileEntryProducer = null))
+          sources.add(ZipSource(file = file, distributionFileEntryProducer = null, filter = ::defaultLibrarySourcesNamesFilter))
           false
         }
         else {

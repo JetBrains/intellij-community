@@ -53,6 +53,8 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
   private lateinit var configureAnnotations: JButton
 
   override fun createPanel() = panel {
+    useNewComboBoxRenderer()
+
     row(JavaCompilerBundle.message("label.option.resource.patterns.text")) {
       resourcePatternsField = cell(RawCommandLineEditor(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER))
         .comment(JavaCompilerBundle.message("compiler.ui.pattern.legend.text"))

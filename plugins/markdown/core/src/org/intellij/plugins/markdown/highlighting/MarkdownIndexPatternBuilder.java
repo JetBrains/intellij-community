@@ -39,7 +39,7 @@ public final class MarkdownIndexPatternBuilder implements IndexPatternBuilder {
       return ((MarkdownFile)file).getParserDefinition().createLexer(file.getProject());
     }
     finally {
-      LayeredLexer.ourDisableLayersFlag.set(null);
+      LayeredLexer.ourDisableLayersFlag.remove();
     }
   }
 

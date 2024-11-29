@@ -195,6 +195,7 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
     }
   }
 
+  @Override
   public String toString() {
     return getName();
   }

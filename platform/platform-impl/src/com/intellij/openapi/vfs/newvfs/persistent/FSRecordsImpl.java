@@ -763,7 +763,7 @@ public final class FSRecordsImpl implements Closeable {
   @NotNull
   ListResult update(@NotNull VirtualFile parent,
                     int parentId,
-                    @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+                    @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
     SlowOperations.assertSlowOperationsAreAllowed();
     PersistentFSConnection.ensureIdIsValid(parentId);
 
@@ -1446,13 +1446,18 @@ public final class FSRecordsImpl implements Closeable {
         }
 
         @Override
-        public void close() {
+        public void close() throws IOException {
           long lockStamp = lock.writeLock();
           try {
             super.close();
           }
+          catch (FileTooBigException e) {
+            LOG.warn("Error storing " + attribute + " of file(" + fileId + ")", e);
+            //don't mark VFS as corrupted, error is due to data supplied from outside
+            throw e;
+          }
           catch (Throwable t) {
-            LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
+            LOG.warn("Error storing " + attribute + " of file(" + fileId + ")", t);
             throw handleError(t);
           }
           finally {

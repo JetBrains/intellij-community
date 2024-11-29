@@ -2,7 +2,6 @@
 package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents name-value pair in @snippet tag.
  * @see PsiSnippetDocTag
  */
-@ApiStatus.Experimental
 public interface PsiSnippetAttribute extends PsiElement {
   /**
    * Snippet ID (adds an anchor to generated javadoc)

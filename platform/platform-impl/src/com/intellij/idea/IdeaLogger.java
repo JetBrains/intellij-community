@@ -47,9 +47,9 @@ public final class IdeaLogger extends JulLogger {
    * so that instead of polluting the log with hundreds of identical {@link com.intellij.openapi.diagnostic.Logger#error(Throwable) LOG.errors}
    * we print the error message and the stacktrace once in a while.
    * <p>
-   *  "-Didea.logger.exception.expiration.minutes=5" means to forget about this particular exception if it didn't occur for five minutes.
+   * {@code -Didea.logger.exception.expiration.minutes=5} means to forget about this particular exception if it didn't occur for five minutes.
    * <p>
-   *  To disable this "mute frequent exceptions" feature completely specify "-Didea.logger.exception.expiration.minutes=0"
+   * To disable the "mute frequent exceptions" feature completely, specify {@code -Didea.logger.exception.expiration.minutes=0}
    */
   private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 8*60);
 
@@ -61,7 +61,7 @@ public final class IdeaLogger extends JulLogger {
       .build();
 
     private static @NotNull AtomicInteger getOrCreate(int hash, @NotNull Throwable t) {
-      return cache.get(hash+":"+t, __ -> new AtomicInteger());
+      return cache.get(hash + ":" + t, __ -> new AtomicInteger());
     }
   }
 
@@ -111,6 +111,7 @@ public final class IdeaLogger extends JulLogger {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void error(Object message) {
     if (message instanceof IdeaLoggingEvent) {
       logSevere(message.toString());

@@ -20,11 +20,11 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
+import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
-import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode

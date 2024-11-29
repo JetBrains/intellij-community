@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
+import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.vfs.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiCompiledFile
@@ -44,6 +45,9 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     try {
       FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
       EditorHistoryManager.getInstance(project).removeAllFiles()
+
+      val defaultState = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH)
+      IdeaDecompilerSettings.getInstance().loadState(defaultState)
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -73,11 +77,34 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testNavigation() {
+  fun testNavigation_high() {
+    val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH)
+    IdeaDecompilerSettings.getInstance().loadState(state)
+
     myFixture.openFileInEditor(getTestFile("Navigation.class"))
-    doTestNavigation(11, 14, 14, 10)  // to "m2()"
-    doTestNavigation(15, 21, 14, 17)  // to "int i"
-    doTestNavigation(16, 28, 15, 13)  // to "int r"
+    doTestNavigation(8, 14, 11, 10)  // to "m2()"
+    doTestNavigation(12, 21, 11, 17)  // to "int i"
+    doTestNavigation(13, 28, 12, 13)  // to "int r"
+  }
+
+  fun testNavigation_medium() {
+    val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.MEDIUM)
+    IdeaDecompilerSettings.getInstance().loadState(state)
+
+    myFixture.openFileInEditor(getTestFile("Navigation.class"))
+    doTestNavigation(12, 14, 15, 10)  // to "m2()"
+    doTestNavigation(16, 21, 15, 17)  // to "int i"
+    doTestNavigation(17, 28, 16, 13)  // to "int r"
+  }
+
+  fun testNavigation_low() {
+    val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.LOW)
+    IdeaDecompilerSettings.getInstance().loadState(state)
+
+    myFixture.openFileInEditor(getTestFile("Navigation.class"))
+    doTestNavigation(12, 14, 15, 10)  // to "m2()"
+    doTestNavigation(16, 21, 15, 17)  // to "int i"
+    doTestNavigation(17, 28, 16, 13)  // to "int r"
   }
 
   private fun doTestNavigation(line: Int, column: Int, expectedLine: Int, expectedColumn: Int) {
@@ -93,19 +120,19 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.setReadEditorMarkupModel(true)
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
       myFixture.openFileInEditor(getTestFile("Navigation.class"))
-      myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
+      myFixture.editor.caretModel.moveToOffset(offset(8, 14))  // m2(): usage, declaration
       assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
+      myFixture.editor.caretModel.moveToOffset(offset(11, 10))  // m2(): usage, declaration
       assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
+      myFixture.editor.caretModel.moveToOffset(offset(11, 17))  // int i: usage, declaration
       assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
+      myFixture.editor.caretModel.moveToOffset(offset(12, 21))  // int i: usage, declaration
       assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
+      myFixture.editor.caretModel.moveToOffset(offset(12, 13))  // int r: usage, declaration
       assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
+      myFixture.editor.caretModel.moveToOffset(offset(13, 28))  // int r: usage, declaration
       assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
+      myFixture.editor.caretModel.moveToOffset(offset(16, 24))  // throws: declaration, m4() call
       assertEquals(2, highlightUnderCaret().size)
     })
   }
@@ -128,10 +155,11 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
       assertEquals(5, infos.size)
       val texts = infos.map { it.text }.toSet()
-      assertContainsElements(texts,
-                             "module",
-                             "requires",
-                             "exports",
+      assertContainsElements(
+        texts,
+        "module",
+        "requires",
+        "exports",
       )
     })
   }
@@ -139,16 +167,17 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   fun testNameHighlightingInsideCompiledFileWithRecords() {
     myFixture.setReadEditorMarkupModel(true)
     val testFile = getTestFile("RecordHighlighting.class")
-    testFile.parent.children ; testFile.parent.refresh(false, true)  // inner classes
+    testFile.parent.children; testFile.parent.refresh(false, true)  // inner classes
     myFixture.openFileInEditor(testFile)
     IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
       val infos = myFixture.doHighlighting()
         .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
       val texts = infos.map { it.text }.toSet()
-      assertContainsElements(texts,
-                             "sealed",
-                             "record",
-                             "permits",
+      assertContainsElements(
+        texts,
+        "sealed",
+        "record",
+        "permits",
       )
     })
   }
@@ -158,20 +187,48 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     return myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
   }
 
-  fun testLineNumberMapping() {
+  fun testLineNumberMapping_high() = doTestLineMapping(DecompilerPreset.HIGH) { mapping ->
+    assertEquals(8, mapping.bytecodeToSource(3)) // Assert that line 8 in decompiled class file maps to line 3 in Java source file
+    assertEquals(18, mapping.bytecodeToSource(13))
+    assertEquals(13, mapping.sourceToBytecode(18)) // Assert that line 13 in Java source file maps to line 18 in Java class file
+    assertEquals(-1, mapping.bytecodeToSource(1000))
+    assertEquals(-1, mapping.sourceToBytecode(1000))
+  }
+
+  fun testLineNumberMapping_medium() = doTestLineMapping(DecompilerPreset.MEDIUM) { mapping ->
+    assertEquals(12, mapping.bytecodeToSource(3)) // Assert that line 12 in decompiled class file maps to line 2 in Java source file
+    assertEquals(3, mapping.sourceToBytecode(12))
+    assertEquals(21, mapping.bytecodeToSource(12))
+    assertEquals(12, mapping.sourceToBytecode(21))
+    assertEquals(-1, mapping.bytecodeToSource(1000))
+    assertEquals(-1, mapping.sourceToBytecode(1000))
+  }
+
+  fun testLineNumberMapping_low() = doTestLineMapping(DecompilerPreset.LOW) { mapping ->
+    assertEquals(12, mapping.bytecodeToSource(3)) // Assert that line 12 in decompiled class file maps to line 2 in Java source file
+    assertEquals(3, mapping.sourceToBytecode(12))
+    assertEquals(21, mapping.bytecodeToSource(12))
+    assertEquals(12, mapping.sourceToBytecode(21))
+    assertEquals(-1, mapping.bytecodeToSource(1000))
+    assertEquals(-1, mapping.sourceToBytecode(1000))
+  }
+
+  private fun doTestLineMapping(preset: DecompilerPreset, assertion: (mapping: LineNumbersMapping) -> Unit) {
     Registry.get("decompiler.use.line.mapping").withValue(true) {
       val file = getTestFile("LineNumbers.class")
-      assertNull(file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY))
+      try {
+        val state = IdeaDecompilerSettings.State.fromPreset(preset)
+        IdeaDecompilerSettings.getInstance().loadState(state)
+        assertNull(file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY))
 
-      IdeaDecompiler().getText(file)
+        IdeaDecompiler().getText(file)
 
-      val mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)!!
-      assertEquals(11, mapping.bytecodeToSource(3))
-      assertEquals(3, mapping.sourceToBytecode(11))
-      assertEquals(21, mapping.bytecodeToSource(13))
-      assertEquals(13, mapping.sourceToBytecode(21))
-      assertEquals(-1, mapping.bytecodeToSource(1000))
-      assertEquals(-1, mapping.sourceToBytecode(1000))
+        val mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)!!
+        assertion(mapping)
+      }
+      finally {
+        file.removeUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)
+      }
     }
   }
 
@@ -185,7 +242,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testStructureView() {
     val file = getTestFile("StructureView.class")
-    file.parent.children ; file.parent.refresh(false, true)  // inner classes
+    file.parent.children; file.parent.refresh(false, true)  // inner classes
     checkStructure(file, """
       -StructureView.class
        -StructureView
@@ -203,11 +260,9 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       -StructureView.java
        -StructureView
         -B
-         B()
          -build(int): StructureView
-          -${'$'}1
+          -$1
            class initializer
-        StructureView()
         getData(): int
         setData(int): void
         data: int""")

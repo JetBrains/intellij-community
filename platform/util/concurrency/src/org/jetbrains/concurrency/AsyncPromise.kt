@@ -9,6 +9,7 @@ import com.intellij.util.Function
 import com.intellij.util.concurrency.captureBiConsumerThreadContext
 import com.intellij.util.concurrency.createChildContext
 import kotlinx.coroutines.DelicateCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
@@ -19,9 +20,18 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-open class AsyncPromise<T> private constructor(internal val f: CompletableFuture<T>,
-                                               private val hasErrorHandler: AtomicBoolean,
-                                               addExceptionHandler: Boolean) : CancellablePromise<T>, CompletablePromise<T> {
+/**
+ * **Obsolescence notice**
+ *
+ * Please use [Kotlin coroutines](https://youtrack.jetbrains.com/articles/IJPL-A-3/Kotlin-Coroutines)
+ * Instead of this class use [kotlinx.coroutines.CompletableDeferred]
+ */
+@ApiStatus.Obsolete
+open class AsyncPromise<T> private constructor(
+  internal val f: CompletableFuture<T>,
+  private val hasErrorHandler: AtomicBoolean,
+  addExceptionHandler: Boolean,
+) : CancellablePromise<T>, CompletablePromise<T> {
   companion object {
     private val LOG = Logger.getInstance(AsyncPromise::class.java)
 

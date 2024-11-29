@@ -46,7 +46,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
-import com.jetbrains.extensions.failure
+import com.jetbrains.python.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
@@ -112,7 +112,7 @@ fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
   module.pythonSdk = sdk
   module.excludeInnerVirtualEnv(sdk)
 }
-
+// TODO: PythonInterpreterService: get system pythons
 /**
  * @param context used to get [BASE_DIR] in [com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.suggestLocalHomePaths]
  */
@@ -141,7 +141,7 @@ private fun PythonSdkFlavor<*>.detectSdks(
     .map { createDetectedSdk(it, targetModuleSitsOn?.asTargetConfig, this) }
 
 
-internal fun PythonSdkFlavor<*>.detectSdkPaths(
+private fun PythonSdkFlavor<*>.detectSdkPaths(
   module: Module?,
   context: UserDataHolder,
   targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
@@ -171,6 +171,15 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
 
 fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
+
+@Deprecated("Please use version with sdkAdditionalData parameter")
+fun createSdkByGenerateTask(
+  generateSdkHomePath: Task.WithResult<String, ExecutionException>,
+  existingSdks: List<Sdk>,
+  baseSdk: Sdk?,
+  associatedProjectPath: String?,
+  suggestedSdkName: String?,
+): Sdk = createSdkByGenerateTask(generateSdkHomePath, existingSdks, baseSdk, associatedProjectPath, suggestedSdkName, null)
 
 fun createSdkByGenerateTask(
   generateSdkHomePath: Task.WithResult<String, ExecutionException>,
@@ -207,6 +216,36 @@ fun createSdkByGenerateTask(
     PythonSdkType.getInstance(),
     sdkAdditionalData,
     sdkName)
+}
+
+@Internal
+suspend fun createSdk(
+  sdkHomePath: Path,
+  existingSdks: List<Sdk>,
+  associatedProjectPath: String?,
+  suggestedSdkName: String?,
+  sdkAdditionalData: PythonSdkAdditionalData? = null,
+): Result<Sdk> {
+  val homeFile = withContext(Dispatchers.IO) { StandardFileSystems.local().refreshAndFindFileByPath(sdkHomePath.pathString) }
+                 ?: return Result.failure(ExecutionException(
+                   PyBundle.message("python.sdk.directory.not.found", sdkHomePath.pathString)
+                 ))
+
+  val sdkName = suggestedSdkName ?: withContext(Dispatchers.IO) {
+    suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
+  }
+
+  val sdk = SdkConfigurationUtil.setupSdk(
+    existingSdks.toTypedArray(),
+    homeFile,
+    PythonSdkType.getInstance(),
+    false,
+    sdkAdditionalData,
+    sdkName)
+
+  return sdk?.let { Result.success(it) } ?: Result.failure(ExecutionException(
+    PyBundle.message("python.sdk.failed.to.create.interpreter.title")
+  ))
 }
 
 fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {

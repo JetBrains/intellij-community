@@ -116,7 +116,7 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             get() {
                 if (KotlinPluginModeProvider.isK2Mode()) {
                     val virtualFile = StandardFileSystems.local()?.refreshAndFindFileByPath(filePath) ?: return false
-                    return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getConfiguration(virtualFile)?.valueOrNull() != null
+                    return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getScriptConfigurationResult(virtualFile)?.valueOrNull() != null
                 }
                 return script != null
             }

@@ -35,15 +35,10 @@ f:org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt
 - sf:getBuiltInServerUrls(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String):java.util.List
 - sf:getBuiltInServerUrls(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z):java.util.List
 - sf:getBuiltInServerUrls(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode):java.util.List
-- sf:getBuiltInServerUrls(org.jetbrains.builtInWebServer.PathInfo,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode):com.intellij.util.SmartList
 - bs:getBuiltInServerUrls$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode,I,java.lang.Object):java.util.List
-- bs:getBuiltInServerUrls$default(org.jetbrains.builtInWebServer.PathInfo,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode,I,java.lang.Object):com.intellij.util.SmartList
-f:org.jetbrains.builtInWebServer.BuiltInWebServer
-- org.jetbrains.ide.HttpRequestHandler
+f:org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 - <init>():V
-- isAccessible(io.netty.handler.codec.http.HttpRequest):Z
-- isSupported(io.netty.handler.codec.http.FullHttpRequest):Z
-- process(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
+- f:acquireToken():java.lang.String
 f:org.jetbrains.builtInWebServer.BuiltInWebServerKt
 - sf:TOKEN_HEADER_NAME:java.lang.String
 - sf:TOKEN_PARAM_NAME:java.lang.String
@@ -51,13 +46,9 @@ f:org.jetbrains.builtInWebServer.BuiltInWebServerKt
 - sf:compareNameAndProjectBasePath(java.lang.String,com.intellij.openapi.project.Project):Z
 - sf:findIndexFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - sf:findIndexFile(java.nio.file.Path):java.nio.file.Path
-- sf:isSignedRequest(io.netty.handler.codec.http.HttpRequest):Z
-- sf:validateToken(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,Z):io.netty.handler.codec.http.HttpHeaders
 f:org.jetbrains.builtInWebServer.ConsoleManager
 - <init>():V
 - getConsole(org.jetbrains.builtInWebServer.NetService):com.intellij.execution.ui.ConsoleView
-f:org.jetbrains.builtInWebServer.DefaultWebServerPathHandlerKt
-- sf:getChromeVersionFromUserAgent():java.util.regex.Pattern
 org.jetbrains.builtInWebServer.FileResolver
 - a:resolve(java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
 - bs:resolve$default(org.jetbrains.builtInWebServer.FileResolver,java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery,I,java.lang.Object):org.jetbrains.builtInWebServer.PathInfo
@@ -102,17 +93,10 @@ f:org.jetbrains.builtInWebServer.StaticFileHandlerKt
 a:org.jetbrains.builtInWebServer.WebServerFileHandler
 - <init>():V
 - getPageFileExtensions():java.util.List
+- pf:getRequestPath(java.lang.CharSequence,java.lang.String):java.lang.String
 - a:process(org.jetbrains.builtInWebServer.PathInfo,java.lang.CharSequence,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.Channel,java.lang.String,io.netty.handler.codec.http.HttpHeaders):Z
-f:org.jetbrains.builtInWebServer.WebServerFileHandlerKt
-- sf:getRequestPath(java.lang.CharSequence,java.lang.String):java.lang.String
-a:org.jetbrains.builtInWebServer.WebServerPathHandler
-- <init>():V
-- a:process(java.lang.String,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext,java.lang.String,java.lang.String,Z):Z
-a:org.jetbrains.builtInWebServer.WebServerPathHandlerAdapter
-- org.jetbrains.builtInWebServer.WebServerPathHandler
-- <init>():V
-- pa:process(java.lang.String,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
-- process(java.lang.String,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext,java.lang.String,java.lang.String,Z):Z
+org.jetbrains.builtInWebServer.WebServerPathHandler
+- a:process(java.lang.String,com.intellij.openapi.project.Project,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext,java.lang.String,io.netty.handler.codec.http.HttpHeaders,Z):Z
 f:org.jetbrains.builtInWebServer.WebServerPathToFileManager
 - sf:Companion:org.jetbrains.builtInWebServer.WebServerPathToFileManager$Companion
 - <init>(com.intellij.openapi.project.Project):V

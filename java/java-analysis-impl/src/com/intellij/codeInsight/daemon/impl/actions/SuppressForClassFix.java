@@ -60,4 +60,9 @@ public class SuppressForClassFix extends SuppressFix {
   public String getFamilyName() {
     return JavaAnalysisBundle.message("suppress.inspection.class");
   }
+
+  @Override
+  public int getPriority() {
+    return 50;
+  }
 }

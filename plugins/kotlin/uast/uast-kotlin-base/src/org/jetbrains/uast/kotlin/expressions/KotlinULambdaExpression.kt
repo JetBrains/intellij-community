@@ -67,11 +67,16 @@ class KotlinULambdaExpression(
         }
 
     private fun getParameters(includeExplicitParameters: Boolean): List<UParameter> {
-        val explicitParameters = sourcePsi.valueParameters.mapIndexed { i, p ->
-            KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
+        // For [valueParameters] (includeExplicitParameters = false)
+        // but only if there are value parameters indeed
+        if (!includeExplicitParameters && sourcePsi.valueParameters.isNotEmpty()) {
+            return sourcePsi.valueParameters.mapIndexed { i, p ->
+                KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
+            }
         }
-        if (explicitParameters.isNotEmpty()) return explicitParameters
 
+        // For [parameters] (includeExplicitParameters = true)
+        // or for [valueParameters] without explicit value parameters
         return baseResolveProviderService.getImplicitParameters(sourcePsi, this, includeExplicitParameters)
     }
 

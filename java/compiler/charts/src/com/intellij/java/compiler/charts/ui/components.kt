@@ -1,9 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
+import com.intellij.ide.nls.NlsMessages
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Filter
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.*
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.StatisticData
+import com.intellij.java.compiler.charts.ui.Colors.FILTERED_ALPHA
+import com.intellij.java.compiler.charts.ui.Colors.NO_ALPHA
+import com.intellij.java.compiler.charts.ui.Settings.Block.MIN_SIZE
 import com.intellij.openapi.util.text.Formats
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
@@ -104,38 +108,44 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
   ) {
     data.list().forEachIndexed { thread, events ->
       events.forEach { event ->
-        if (state.filter.test(event.key) &&
-            compareWithViewport(event.start.target.time,
+        if (compareWithViewport(event.start.target.time,
                                 event.finish?.target?.time,
                                 settings, zoom, bracket) == 0 &&
             !isSmall(event, state)) {
 
-
           val rect = getRectangle(event, thread, settings)
 
           settings.mouse.module(rect, event.key, mutableMapOf(
-            "duration" to Formats.formatDuration(((event.finish?.target?.time ?: state.currentTime) - event.start.target.time) / 1_000_000),
+            "duration" to NlsMessages.formatDurationApproximate(((event.finish?.target?.time ?: state.currentTime) - event.start.target.time) / 1_000_000),
             "name" to event.start.target.name,
             "type" to event.start.target.type,
             "test" to event.start.target.isTest.toString(),
             "fileBased" to event.start.target.isFileBased.toString(),
           ))
 
-          withColor(block.color(event.start)) { // module
+          val alpha = if (state.filter.test(event.key)) NO_ALPHA else FILTERED_ALPHA
+          withColor(block.color(event.start).alpha(alpha)) { // module
             fill(rect)
           }
-          withColor(if (selected == event.key) block.selected(event.start) else block.outline(event.start)) { // module border
+          withColor(block.color(event, selected).alpha(alpha)) { // module border
             draw(rect)
           }
-          create().withColor(settings.font.color) {
+          create().withColor(settings.font.color.alpha(alpha)) {
             withFont(UIUtil.getLabelFont(settings.font.size)) { // name
               clip(rect)
               drawString(" ${event.start.target.name}", rect.x.toFloat(), (rect.y + (height - block.padding * 2) / 2 + fontMetrics().ascent / 2).toFloat())
             }
           }
-
         }
       }
+    }
+  }
+
+  private fun ModuleBlock.color(event: ProgressEvent, selected: EventKey?): Color {
+    if (selected == event.key) {
+      return selected(event.start)
+    } else {
+      return outline(event.start)
     }
   }
 
@@ -143,7 +153,7 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
     val filter = state.filter
     if (filter is Filter && filter.text.isEmpty()) {
       val finish = event.finish ?: return false
-      return zoom.toPixels(finish.target.time) - zoom.toPixels(event.start.target.time) < 2
+      return zoom.toPixels(finish.target.time) - zoom.toPixels(event.start.target.time) < MIN_SIZE
     }
     else {
       return false
@@ -169,12 +179,12 @@ class ChartProgress(private val zoom: Zoom, internal val state: ChartModel, thre
       for ((idx, thread) in events.withIndex()) {
         if (canBeAdded(thread, event)) {
           thread.add(event)
-          index[event.key] = Pair(idx, thread.size - 1)
+          index[event.key] = idx to thread.size - 1
           return
         }
       }
       events.add(mutableListOf(event))
-      index[event.key] = Pair(events.size - 1, 0)
+      index[event.key] = events.size - 1 to 0
       threadAddedEvent()
     }
 

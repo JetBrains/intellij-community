@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.application.WriteAction;
@@ -20,9 +20,11 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.productModules.ProductModulesElement;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.util.ArrayList;
@@ -98,7 +100,13 @@ public final class DescriptorUtil {
     return plugin != null ? plugin.getRootElement() : null;
   }
 
+  public static boolean isProductModulesXml(@Nullable PsiFile file) {
+    if (!(file instanceof XmlFile xmlFile)) return false;
+    return DomManager.getDomManager(file.getProject()).getFileElement(xmlFile, ProductModulesElement.class) != null;
+  }
+
   @NotNull
+  @Unmodifiable
   public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 

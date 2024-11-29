@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
+import com.intellij.ui.ColorUtil
 import com.intellij.util.JBHiDPIScaledImage
+import java.awt.Color
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
@@ -90,4 +92,8 @@ internal fun compareWithViewport(startTime: Long, finishTime: Long?, settings: C
   val finishPixel = zoom.toPixels(finishTime - settings.duration.from)
   if (finishPixel < x0) return -1
   return 0
+}
+
+fun Color.alpha(alpha: Double): Color {
+  return ColorUtil.withAlpha(this, alpha)
 }

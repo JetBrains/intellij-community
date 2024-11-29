@@ -136,21 +136,24 @@ private fun replaceAtCaretAndGetParentObject(element: PsiElement,
 }
 
 private fun cleanupWhitespacesAndDelete(it: PsiElement, walker: JsonLikePsiWalker) {
+  val toCleanup = mutableSetOf<PsiElement>()
   // cleanup redundant whitespace
   var next = it.nextSibling
   while (next != null && next.text.isBlank()) {
     val n = next
     next = next.nextSibling
-    n.delete()
+    toCleanup.add(n)
   }
   var prev = it.prevSibling
   while (prev != null && prev.text.isBlank()) {
     val n = prev
     prev = prev.prevSibling
     if (walker.getParentPropertyAdapter(prev) == null || it.nextSibling == null) {
-      n.delete()
+      toCleanup.add(n)
     }
   }
+  // we have to collect elements to avoid getting siblings of already deleted items
+  toCleanup.forEach { it.delete() }
   it.delete()
 }
 
@@ -255,7 +258,7 @@ private fun addBeforeOrAfter(value: JsonValueAdapter,
   return if (lastPropertyBefore != null) {
     val newElement = lastPropertyBefore.delegate.parent.addAfter(elementToAdd, lastPropertyBefore.delegate)
     if (lastPropertyBefore.delegate != fakeProperty) {
-      JsonLikePsiWalker.getWalker(newElement)?.getSyntaxAdapter(newElement.project)?.ensureComma(
+      JsonLikePsiWalker.getWalker(element)?.getSyntaxAdapter(element.project)?.ensureComma(
         lastPropertyBefore.delegate, newElement
       )
     }

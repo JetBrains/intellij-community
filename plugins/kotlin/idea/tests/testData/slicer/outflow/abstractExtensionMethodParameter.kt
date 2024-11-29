@@ -6,7 +6,7 @@ interface I {
 
 class C1 : I {
     override fun Int.foo(p: Any) {
-        val v = p
+        val v = (p)
     }
 }
 

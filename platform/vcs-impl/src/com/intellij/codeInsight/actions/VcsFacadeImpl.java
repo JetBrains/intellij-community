@@ -166,6 +166,7 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @NotNull
+  @Unmodifiable
   public <T extends PsiElement> List<T> getPostCommitChangedElements(@NotNull Project project,
                                                                      @NotNull Change change,
                                                                      @NotNull Function<? super VirtualFile, ? extends List<T>> elementExtractor) {
@@ -191,6 +192,7 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @Nullable
+  @Unmodifiable
   private static List<? extends Range> getChangedRangesFromLineStatusTracker(@NotNull Project project,
                                                                              @NotNull Document document,
                                                                              @NotNull Change change) {

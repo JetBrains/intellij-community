@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.k2.postProcessings.*
 import org.jetbrains.kotlin.j2k.postProcessings.*
@@ -25,7 +26,9 @@ internal class K2J2KPostProcessor : PostProcessor {
     override val phasesCount: Int = processings.size
 
     override fun insertImport(file: KtFile, fqName: FqName) {
-        TODO("Not supported in K2 J2K yet")
+        runUndoTransparentActionInEdt(inWriteAction = true) {
+            file.addImport(fqName)
+        }
     }
 
     override fun doAdditionalProcessing(

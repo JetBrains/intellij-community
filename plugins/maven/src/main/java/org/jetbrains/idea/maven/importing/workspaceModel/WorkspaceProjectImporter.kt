@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
@@ -40,6 +41,7 @@ import org.jetbrains.idea.maven.importing.tree.MavenProjectImportContextProvider
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
+import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -75,7 +77,9 @@ internal open class WorkspaceProjectImporter(
 
     val storageBeforeImport = WorkspaceModel.getInstance(myProject).currentSnapshot
 
-    val projectChangesInfo = collectProjectChanges(storageBeforeImport, projectsToImportWithChanges, migratedToExternalStorage)
+    val projectChangesInfo = tracer.spanBuilder("collectProjectChanges").use {
+      collectProjectChanges(storageBeforeImport, projectsToImportWithChanges, migratedToExternalStorage)
+    }
 
     if (!projectChangesInfo.hasChanges) return emptyList()
 
@@ -92,16 +96,24 @@ internal open class WorkspaceProjectImporter(
     val contextData = UserDataHolderBase()
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
-      importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also {
-        beforeModelApplied(it, builder, contextData, stats)
+      tracer.spanBuilder("populateWorkspace").use {
+        importModules(storageBeforeImport, builder, allProjectsToChanges, mavenProjectToModuleName, contextData, stats).also { projectWithModules ->
+          tracer.spanBuilder("beforeModelApplied").use {
+            beforeModelApplied(projectWithModules, builder, contextData, stats)
+          }
+        }
       }
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
-      commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
+      tracer.spanBuilder("commitWorkspace").use {
+        commitModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
+      }
     }
 
     stats.recordPhase(MavenImportCollector.WORKSPACE_LEGACY_IMPORTERS_PHASE) { activity ->
-      configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
+      tracer.spanBuilder("configLegacyFacets").use {
+        configLegacyFacets(appliedProjectsWithModules, mavenProjectToModuleName, postTasks, activity)
+      }
     }
 
     MavenProjectImporterUtil.scheduleRefreshResolvedArtifacts(postTasks, projectChangesInfo.changedProjectsOnly)
@@ -265,7 +277,7 @@ internal open class WorkspaceProjectImporter(
       MavenProjectWithModulesData(mavenProject, partialData.changes, partialData.modules)
     }
 
-    configureModules(result, builder, contextData, stats)
+    tracer.spanBuilder("configureModules").use { configureModules(result, builder, contextData, stats) }
     return result
   }
 

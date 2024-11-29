@@ -33,8 +33,7 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
     if (delay < 0 || myRetries-- <= 0) {
       return false;
     }
-    DebugProcess process = suspendContext.getDebugProcess();
-    DebuggerManagerThreadImpl managerThread = ((DebuggerManagerThreadImpl)process.getManagerThread());
+    DebuggerManagerThreadImpl managerThread = suspendContext.getManagerThread();
     VirtualMachine virtualMachine = suspendContext.getVirtualMachineProxy().getVirtualMachine();
     if (!(virtualMachine instanceof VirtualMachineImpl) ||
         !managerThread.hasAsyncCommands() && ((VirtualMachineImpl)virtualMachine).isIdle()) {
@@ -43,10 +42,7 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
     else {
       // reschedule with a small delay
       hold();
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-        DebuggerManagerThreadImpl thread = (DebuggerManagerThreadImpl)process.getManagerThread();
-        return thread.schedule(this);
-      }, delay, TimeUnit.MILLISECONDS);
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> managerThread.schedule(this), delay, TimeUnit.MILLISECONDS);
       return true;
     }
   }

@@ -59,9 +59,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test simple modification tracking in xml`() {
     test {
       val settingsFile = createSettingsVirtualFile("settings.xml")
-      assertStateAndReset(numReload = 0, notified = true, event = "settings file is created")
-      scheduleProjectReload()
-      assertStateAndReset(numReload = 1, notified = false, event = "project is reloaded")
+      assertStateAndReset(numReload = 0, notified = false, event = "empty settings file created")
       settingsFile.replaceContent("""
         <element>
           <name description="This is a my super name">my-name</name>
@@ -107,9 +105,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test unrecognized settings file`() {
     test {
       val settingsFile = createSettingsVirtualFile("settings.elvish")
-      assertStateAndReset(numReload = 0, notified = true, event = "settings file is created")
-      scheduleProjectReload()
-      assertStateAndReset(numReload = 1, notified = false, event = "project is reloaded")
+      assertStateAndReset(numReload = 0, notified = false, event = "empty settings file created")
 
       settingsFile.appendString("q71Gpj5 .9jR°`N.")
       assertStateAndReset(numReload = 0, notified = true, event = "modification")
@@ -142,7 +138,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       scheduleProjectReload()
       assertStateAndReset(numReload = 1, notified = false, event = "project refresh")
 
-      var newSettingsFile = createFile(SETTINGS_FILE)
+      var newSettingsFile = createFileWithSampleText(SETTINGS_FILE)
       assertStateAndReset(numReload = 0, notified = true, event = "create registered settings")
       newSettingsFile.modify(EXTERNAL)
       assertStateAndReset(numReload = 0, notified = true, event = "modify registered settings")
@@ -151,7 +147,7 @@ class AutoReloadTest : AutoReloadTestCase() {
 
       newSettingsFile.delete()
       assertStateAndReset(numReload = 0, notified = true, event = "delete registered settings")
-      newSettingsFile = createFile(SETTINGS_FILE)
+      newSettingsFile = createFileWithSampleText(SETTINGS_FILE)
       assertStateAndReset(numReload = 0, notified = true, event = "create registered settings immediately after deleting")
       newSettingsFile.modify(EXTERNAL)
       assertStateAndReset(numReload = 0, notified = false, event = "modify registered settings immediately after deleting")
@@ -161,8 +157,8 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test directory deletion tracking`() {
     test {
       val directory = findOrCreateDirectory("directory")
-      createSettingsVirtualFile("directory/settings.txt")
-      assertStateAndReset(numReload = 0, notified = true, event = "settings created")
+      createSettingsVirtualFileWithSampleText("settings.txt", "directory")
+      assertStateAndReset(numReload = 0, notified = true, event = "non-empty settings file created")
       scheduleProjectReload()
       assertStateAndReset(numReload = 1, notified = false, event = "project reloaded")
 
@@ -170,7 +166,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 0, notified = true, event = "deleted directory with settings")
       findOrCreateDirectory("directory")
       assertStateAndReset(numReload = 0, notified = true, event = "deleted directory created without settings")
-      createSettingsVirtualFile("directory/settings.txt")
+      createSettingsVirtualFileWithSampleText("settings.txt", "directory")
       assertStateAndReset(numReload = 0, notified = false, event = "reverted deleted settings")
     }
   }
@@ -187,7 +183,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       configFile.replaceContent("println('hello')")
       assertStateAndReset(numReload = 0, notified = false, event = "modify unregistered settings")
 
-      val scriptFile = createSettingsVirtualFile("script.groovy")
+      val scriptFile = createSettingsVirtualFileWithSampleText("script.groovy")
       assertStateAndReset(numReload = 0, notified = true, event = "created new settings file")
       scriptFile.replaceContent("println('hello')")
       assertStateAndReset(numReload = 0, notified = true, event = "modify settings file")
@@ -400,7 +396,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   }
 
   fun `test move and rename settings files`() {
-    test { settingsFile ->
+    test(withSampleText = true) { settingsFile ->
       registerSettingsFile("script.groovy")
       registerSettingsFile("dir/script.groovy")
       registerSettingsFile("dir1/script.groovy")
@@ -501,7 +497,7 @@ class AutoReloadTest : AutoReloadTestCase() {
   }
 
   fun `test files generation during refresh`() {
-    test { settingsFile ->
+    test(withSampleText = true) { settingsFile ->
       assertStateAndReset(numReload = 0, notified = false, event = "some file is created")
       onceWhenReloading {
         registerSettingsFile(settingsFile)
@@ -595,14 +591,18 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertActivationStatus(projectId1, event = "register project 2")
 
     registerSettingsFile(projectAware1, "settings.groovy")
+    registerSettingsFile(projectAware1, "settings-empty.groovy")
     registerSettingsFile(projectAware2, "sub-project/settings.groovy")
-    val settingsFile1 = createIoFile("settings.groovy")
-    val settingsFile2 = createIoFile("sub-project/settings.groovy")
+    registerSettingsFile(projectAware2, "sub-project/settings-empty.groovy")
+    createIoFile("settings-empty.groovy")
+    createIoFile("sub-project/settings-empty.groovy")
+    val settingsFile1 = createIoFile("settings.groovy", withSampleText = true)
+    val settingsFile2 = createIoFile("sub-project/settings.groovy", withSampleText = true)
     assertProjectAware(projectAware1, numReload = 2, event = "externally created both settings files, but project 2 is inactive")
     assertProjectAware(projectAware2, numReload = 0, event = "externally created both settings files, but project 2 is inactive")
 
-    settingsFile1.replaceContentInIoFile("println 'hello'")
-    settingsFile2.replaceContentInIoFile("println 'hello'")
+    settingsFile1.replaceContentInIoFile("another println 'hello'")
+    settingsFile2.replaceContentInIoFile("another println 'hello'")
     assertProjectAware(projectAware1, numReload = 3, event = "externally modified both settings files, but project 2 is inactive")
     assertProjectAware(projectAware2, numReload = 0, event = "externally modified both settings files, but project 2 is inactive")
     assertNotificationAware(projectId2, event = "externally modified both settings files, but project 2 is inactive")
@@ -735,9 +735,9 @@ class AutoReloadTest : AutoReloadTestCase() {
 
   fun `test settings files modification partition`() {
     test {
-      val settingsFile1 = createSettingsVirtualFile("settings1.groovy")
-      val settingsFile2 = createSettingsVirtualFile("settings2.groovy")
-      val settingsFile3 = createSettingsVirtualFile("settings3.groovy")
+      val settingsFile1 = createSettingsVirtualFileWithSampleText("settings1.groovy")
+      val settingsFile2 = createSettingsVirtualFileWithSampleText("settings2.groovy")
+      val settingsFile3 = createSettingsVirtualFileWithSampleText("settings3.groovy")
       assertStateAndReset(numReload = 0, notified = true, event = "settings files creation")
 
       onceWhenReloading {
@@ -783,14 +783,11 @@ class AutoReloadTest : AutoReloadTestCase() {
     test {
       val settings1File = createSettingsVirtualFile("settings1.groovy")
       val settings2File = createSettingsVirtualFile("settings2.groovy")
-      assertStateAndReset(numReload = 0, numSettingsAccess = 2, notified = true, event = "settings files creation")
+      assertStateAndReset(numReload = 0, numSettingsAccess = 2, notified = false, event = "empty settings files creation")
 
       val configFile1 = createFile("file1.config")
       val configFile2 = createFile("file2.config")
-      assertStateAndReset(numReload = 0, numSettingsAccess = 2, notified = true, event = "non settings files creation")
-
-      scheduleProjectReload()
-      assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project reload")
+      assertStateAndReset(numReload = 0, numSettingsAccess = 2, notified = false, event = "non settings empty files creation")
 
       configFile1.modify(INTERNAL)
       configFile2.modify(INTERNAL)
@@ -928,13 +925,13 @@ class AutoReloadTest : AutoReloadTestCase() {
   fun `test generation during reload`() {
     test {
       onceWhenReloading {
-        createSettingsVirtualFile("settings1.cfg")
+        createSettingsVirtualFileWithSampleText("settings1.cfg")
       }
       forceReloadProject()
       assertStateAndReset(numReload = 1, notified = false, event = "create file during reload")
 
       onceWhenReloading {
-        createSettingsVirtualFile("settings2.cfg")
+        createSettingsVirtualFileWithSampleText("settings2.cfg")
           .replaceContent("{ name: project }")
       }
       forceReloadProject()
@@ -952,6 +949,7 @@ class AutoReloadTest : AutoReloadTestCase() {
 
     val settingsFile1 = createFile("script1.groovy")
     val settingsFile2 = createFile("script2.groovy")
+    val settingsFile3 = createFileWithSampleText("script3.groovy")
 
     val projectAware = mockProjectAware()
     projectAware.registerSettingsFile(settingsFile1)
@@ -963,13 +961,17 @@ class AutoReloadTest : AutoReloadTestCase() {
 
     projectAware.registerSettingsFile(settingsFile2)
     projectAware.fireSettingsFilesListChanged()
-    assertProjectAware(projectAware, numReload = 2, event = "handle settings files list change event when file added")
+    assertProjectAware(projectAware, numReload = 1, event = "handle settings files list change event when empty file added")
+
+    projectAware.registerSettingsFile(settingsFile3)
+    projectAware.fireSettingsFilesListChanged()
+    assertProjectAware(projectAware, numReload = 2, event = "handle settings files list change event when non-empty file added")
   }
 
   fun `test partial ignoring settings files modification events`() {
     test {
       ignoreSettingsFileWhen("ignored.groovy") { it.event == UPDATE }
-      val ignoredSettingsFile = createSettingsVirtualFile("ignored.groovy")
+      val ignoredSettingsFile = createSettingsVirtualFileWithSampleText("ignored.groovy")
       assertStateAndReset(numReload = 0, notified = true, event = "settings file creation")
       scheduleProjectReload()
       assertStateAndReset(numReload = 1, notified = false, event = "reload")
@@ -986,7 +988,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 1, notified = false, event = "reload")
 
       ignoreSettingsFileWhen("build.lock") { it.reloadStatus == IN_PROGRESS && it.modificationType == EXTERNAL }
-      val propertiesFile = createSettingsVirtualFile("build.lock")
+      val propertiesFile = createSettingsVirtualFileWithSampleText("build.lock")
       assertStateAndReset(numReload = 0, notified = true, event = "settings file creation")
       onceWhenReloading {
         propertiesFile.modify(EXTERNAL)
@@ -1012,10 +1014,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       }
 
       val hiddenSettingsFile = createSettingsVirtualFile("settings.hidden")
-      assertStateAndReset(numReload = 0, notified = true, event = "settings file creation", autoReloadType = ALL)
-
-      scheduleProjectReload()
-      assertStateAndReset(numReload = 1, notified = false, event = "reload", autoReloadType = ALL)
+      assertStateAndReset(numReload = 0, notified = false, event = "settings file creation", autoReloadType = ALL)
 
       settingsFile.modify(INTERNAL)
       assertStateAndReset(numReload = 1, notified = false, event = "settings file modification", autoReloadType = ALL)
@@ -1040,13 +1039,15 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
+  // TODO this test doesn't really test adjusting modification type when the reload type is SELECTIVE -
+  //  the test passes with and without type adjustment
   fun `test adjust modification type to hidden with external changes`() {
     test { settingsFile ->
       setModificationTypeAdjustingRule { path, type ->
         if (type == INTERNAL && path.endsWith(".hidden")) HIDDEN else type
       }
 
-      val hiddenSettingsFile = createSettingsVirtualFile("settings.hidden")
+      val hiddenSettingsFile = createSettingsVirtualFileWithSampleText("settings.hidden")
       assertStateAndReset(numReload = 0, notified = true, event = "settings file creation")
 
       scheduleProjectReload()
@@ -1081,5 +1082,53 @@ class AutoReloadTest : AutoReloadTestCase() {
       scheduleProjectReload()
       assertStateAndReset(numReload = 1, notified = false, event = "reload")
     }
+  }
+
+  fun `test with custom CRC calculator`() {
+    test { settingsFile ->
+      val forbiddenText = "forbidden_"
+      createCustomCrcCalculator { tokenText ->
+        forbiddenText.contentEquals(tokenText)
+      }
+
+      settingsFile.appendString(forbiddenText)
+      assertStateAndReset(numReload = 0, notified = false, event = "non-CRC-changing modification")
+
+      settingsFile.replaceContent("something")
+      assertStateAndReset(numReload = 0, notified = true, event = "CRC-changing modification")
+      scheduleProjectReload()
+      assertStateAndReset(numReload = 1, notified = false, event = "project refresh")
+
+      settingsFile.replaceContent("$forbiddenText  ")
+      assertStateAndReset(numReload = 0, notified = true, event = "revert from CRC != 0 to CRC == 0")
+      scheduleProjectReload()
+      assertStateAndReset(numReload = 1, notified = false, event = "project refresh")
+
+      settingsFile.appendString("// some  text")
+      settingsFile.appendString("  ")
+      assertStateAndReset(numReload = 0, notified = false, event = "non-CRC-changing modifications")
+
+      settingsFile.delete()
+      assertStateAndReset(numReload = 0, notified = false, event = "settings file with CRC == 0 deletion")
+
+      var newSettingsFile = createFile(SETTINGS_FILE)
+      assertStateAndReset(numReload = 0, notified = false, event = "create empty registered settings")
+
+      newSettingsFile.appendString(SAMPLE_TEXT)
+      assertStateAndReset(numReload = 0, notified = true, event = "CRC-changing modification")
+      scheduleProjectReload()
+      assertStateAndReset(numReload = 1, notified = false, event = "project refresh")
+
+      newSettingsFile.delete()
+      assertStateAndReset(numReload = 0, notified = true, event = "settings file with CRC != 0 deletion")
+    }
+  }
+
+  fun `test settings file deletion by java nio`() {
+     test(withSampleText = true) { settingsFile ->
+       settingsFile.toNioPath().deleteExisting()
+       createSettingsVirtualFile("config.groovy") // it's just to trigger AsyncFilesChangesListener
+       assertStateAndReset(numReload = 0, notified = false, event = "settings file deleted by java nio")
+     }
   }
 }

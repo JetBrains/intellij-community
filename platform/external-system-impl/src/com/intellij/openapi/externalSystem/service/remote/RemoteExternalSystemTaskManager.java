@@ -36,7 +36,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
 
   RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> NULL_OBJECT = new RemoteExternalSystemTaskManager<>() {
     //@formatter:off
-    @Override public void executeTasks(@NotNull ExternalSystemTaskId id, @NotNull List<String> taskNames, @NotNull String projectPath, @Nullable ExternalSystemExecutionSettings settings, @Nullable String jvmParametersSetup) { }
+    @Override public void executeTasks(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @Nullable ExternalSystemExecutionSettings settings) { }
     @Override public boolean cancelTask(@NotNull ExternalSystemTaskId id) { return false; }
     @Override public void setSettings(@NotNull ExternalSystemExecutionSettings settings) { }
     @Override public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) { }
@@ -45,12 +45,27 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
     //@formatter:on
   };
 
-  void executeTasks(
+  /**
+   * @deprecated use {@link RemoteExternalSystemTaskManager#executeTasks(String, ExternalSystemTaskId, ExternalSystemExecutionSettings)} instead.
+   */
+  @Deprecated
+  default void executeTasks(
     @NotNull ExternalSystemTaskId id,
     @NotNull List<String> taskNames,
     @NotNull String projectPath,
     @Nullable S settings,
     @Nullable String jvmParametersSetup
+  ) throws RemoteException, ExternalSystemException {
+    assert settings != null;
+    settings.setTasks(taskNames);
+    settings.setJvmParameters(jvmParametersSetup);
+    executeTasks(projectPath, id, settings);
+  }
+
+  void executeTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull S settings
   ) throws RemoteException, ExternalSystemException;
 
   @Override

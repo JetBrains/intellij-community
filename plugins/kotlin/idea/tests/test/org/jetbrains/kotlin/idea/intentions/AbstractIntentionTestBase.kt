@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -9,11 +9,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandExecutor
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -142,7 +140,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
                         InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")?.let { minJavaVersion ->
-                            if (!SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@configureRegistryAndRun
+                            if (Runtime.version().feature() < minJavaVersion.toInt()) return@configureRegistryAndRun
                         }
 
                         checkForErrorsBefore(fileText)
@@ -214,6 +212,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                 isApplicableExpected == isApplicableOnEdt
             )
         }
+
+        DirectiveBasedActionUtils.checkPriority(fileText, intentionAction)
 
         val intentionTextString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// " + intentionTextDirectiveName() + ": ")
 

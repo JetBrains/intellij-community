@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.openapi.editor.impl.EditorId
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.evaluation.ExpressionInfo
@@ -31,9 +30,7 @@ interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerValueLookupHintsRemoteApi {
-      return withKernel {
-        RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
-      }
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueLookupHintsRemoteApi>())
     }
   }
 }

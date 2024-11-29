@@ -1757,6 +1757,8 @@ com.intellij.execution.ui.ConsoleView
 c:com.intellij.execution.ui.ConsoleViewPlace
 - sf:UNKNOWN:com.intellij.execution.ui.ConsoleViewPlace
 - <init>(java.lang.String):V
+com.intellij.execution.ui.ConsoleViewWithDelegate
+- a:getDelegate():com.intellij.execution.ui.ConsoleView
 com.intellij.execution.ui.ExecutionConsole
 - com.intellij.openapi.ui.ComponentContainer
 - sf:CONSOLE_CONTENT_ID:java.lang.String

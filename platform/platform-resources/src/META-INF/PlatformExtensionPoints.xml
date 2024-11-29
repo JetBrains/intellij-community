@@ -264,7 +264,7 @@
     </extensionPoint>
     <extensionPoint name="statistics.validation.customValidationRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule" dynamic="true"/>
     <extensionPoint name="statistics.validation.customValidationRuleFactory" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory" dynamic="true"/>
-    <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension"/>
+    <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension" dynamic="true"/>
     <extensionPoint name="statistics.actionCustomPlaceAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist" dynamic="true"/>
     <extensionPoint name="statistics.notificationIdsHolder" interface="com.intellij.notification.impl.NotificationIdsHolder" dynamic="true"/>
     <extensionPoint name="statistics.actionIdsHolder" interface="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdsHolder" dynamic="true"/>
@@ -449,7 +449,8 @@
     <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler"/>
 
     <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer" dynamic="true"/>
-    <extensionPoint name="projectServiceContainerInitializedListener" interface="com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener" dynamic="true"/>
+    <extensionPoint name="projectServiceInitializer" interface="com.intellij.openapi.project.impl.ProjectServiceInitializer" dynamic="true"/>
+    <extensionPoint name="projectServiceInitializer.essential" interface="com.intellij.openapi.project.impl.ProjectServiceInitializer" dynamic="true"/>
 
     <extensionPoint name="actionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer" dynamic="false"/>
     <extensionPoint name="dynamicActionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer" dynamic="true"/>
@@ -504,6 +505,8 @@
     <extensionPoint name="dependencyCollector" beanClass="com.intellij.ide.plugins.DependencyCollectorBean" dynamic="true">
       <with attribute="implementation" implements="com.intellij.ide.plugins.DependencyCollector"/>
     </extensionPoint>
+    <extensionPoint name="ide.dynamicPluginVetoer" interface="com.intellij.ide.plugins.DynamicPluginVetoer" dynamic="true"/>
+
     <extensionPoint name="dependencySupport" beanClass="com.intellij.ide.plugins.DependencySupportBean" dynamic="true"/>
     <extensionPoint name="actionOnSaveInfoProvider" interface="com.intellij.ide.actionsOnSave.ActionOnSaveInfoProvider" dynamic="true"/>
     <extensionPoint name="actionOnSave" interface="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener$ActionOnSave" dynamic="true"/>
@@ -598,6 +601,15 @@
                     interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
     <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
 
-    <extensionPoint name="iconSerializer" interface="com.intellij.ide.ui.icons.IconSerializer" dynamic="true"/>
+    <extensionPoint name="customTypeRpcSerializer" interface="com.intellij.ide.rpc.CustomTypeRpcSerializer" dynamic="true"/>
+
+    <extensionPoint name="projectTaskManagerListener" interface="com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint" dynamic="true" />
+
+    <extensionPoint name="logLevelConfigurationListener" interface="com.intellij.diagnostic.logs.LogLevelConfigurationManager$Listener" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.ui.content.impl.toolWindowContentPostprocessor"
+                    interface="com.intellij.ui.content.impl.ToolWindowContentPostProcessor"
+                    dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>

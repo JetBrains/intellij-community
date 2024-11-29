@@ -3,6 +3,7 @@
 
 package com.intellij.ide.ui.search
 
+import com.intellij.BundleBase.replaceMnemonicAmpersand
 import com.intellij.DynamicBundle
 import com.intellij.IntelliJResourceBundle
 import com.intellij._doResolveBundle
@@ -131,11 +132,9 @@ private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("c
 
 private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: Locale): String {
   val matches = INDEX_ENTRY_REGEXP.findAll(s)
-  if (matches.none()) {
-    return s
-  }
 
-  val result = StringBuilder()
+  var result: MutableList<String>? = null
+  var first: String? = null
   for (match in matches) {
     val groups = match.groups
     val bundle = findBundle(classLoader = classLoader, locale = locale, bundlePath = groups[1]!!.value) ?: continue
@@ -146,10 +145,29 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
     }
 
     val messageKey = groups[2]!!.value
-    val resolvedMessage = bundle.getMessageOrNull(messageKey) ?: continue
-    result.append(resolvedMessage)
+    val resolvedMessage = replaceMnemonicAmpersand(bundle.getMessageOrNull(messageKey)) ?: continue
+
+    if (first == null) {
+      first = resolvedMessage
+    }
+    else {
+      if (result == null) {
+        result = mutableListOf()
+        result.add(first)
+      }
+      result.add(resolvedMessage)
+    }
   }
-  return result.toString()
+
+  if (result == null) {
+    return first ?: s
+  }
+
+  if (result.size == 2 && result[0].contains("{0}")) {
+    return result[0].replace("{0}", result[1])
+  }
+
+  return result.joinToString(separator = "")
 }
 
 private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: String): ResourceBundle? {

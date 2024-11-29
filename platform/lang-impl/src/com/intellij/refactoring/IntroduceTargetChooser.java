@@ -23,6 +23,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -59,6 +60,7 @@ public final class IntroduceTargetChooser {
   }
 
   public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
+                                                        @Unmodifiable
                                                         @NotNull List<? extends T> expressions,
                                                         @NotNull Pass<? super T> callback,
                                                         @NotNull Function<? super T, String> renderer,

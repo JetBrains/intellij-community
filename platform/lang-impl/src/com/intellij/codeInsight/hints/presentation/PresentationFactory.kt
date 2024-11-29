@@ -120,6 +120,24 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
 
   @ApiStatus.Internal
   @Contract(pure = true)
+  @Suppress("unused")
+  fun opaqueBorderedRoundWithBackgroundAndSmallInset(base: InlayPresentation, borderColor: Color): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundBorderedPresentation(
+      RoundWithBackgroundPresentation(
+        InsetPresentation(
+        base,
+        left = 3,
+        right = 3,
+        top = 0,
+        down = 0
+        ), 8, 8, null, 1f
+      ), borderColor
+    ))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
   fun roundWithBackgroundAndNoInset(base: InlayPresentation): InlayPresentation {
     val rounding = withInlayAttributes(RoundWithBackgroundPresentation(base, 8, 8))
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)

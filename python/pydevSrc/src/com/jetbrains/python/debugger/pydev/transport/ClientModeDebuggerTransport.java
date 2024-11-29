@@ -15,7 +15,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -56,6 +56,8 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
 
   @NotNull private final String myHost;
   private final int myPort;
+  private final Duration myRetryTimeout;
+  private final int myMaxRetries;
 
   @NotNull private volatile State myState = State.INIT;
 
@@ -64,10 +66,14 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
 
   public ClientModeDebuggerTransport(@NotNull RemoteDebugger debugger,
                                      @NotNull String host,
-                                     int port) {
+                                     int port,
+                                     Duration retryTimeout,
+                                     int maxRetries) {
     super(debugger);
     myHost = host;
     myPort = port;
+    myRetryTimeout = retryTimeout;
+    myMaxRetries = maxRetries;
   }
 
   @Override
@@ -83,10 +89,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
     However, capturing stdout from the process at this point is not straightforward. Hence, we use this retry workaround.
     */
     var attempts = 0;
-    var maxRetries = 10;
-    var retryInterval = TimeUnit.MILLISECONDS.toMillis(500);
     boolean connected = false;
-
     do {
       try {
         Socket clientSocket = new Socket();
@@ -127,14 +130,14 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
       catch (IOException e) {
         attempts++;
         try {
-          Thread.sleep(retryInterval);
+          Thread.sleep(myRetryTimeout.toMillis());
         }
         catch (InterruptedException ex) {
-          LOG.debug("Connection to the debugger thread is interrupted during the retry delay", e);
+          LOG.warn("Connection to the debugger thread is interrupted during the retry delay", e);
           Thread.currentThread().interrupt();
         }
       }
-    } while (attempts < maxRetries && !connected);
+    } while (attempts < myMaxRetries && !connected);
 
     if (!connected) {
       myState = State.DISCONNECTED;

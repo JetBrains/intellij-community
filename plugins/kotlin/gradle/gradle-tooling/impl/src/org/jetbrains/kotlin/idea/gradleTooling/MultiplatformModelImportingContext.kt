@@ -4,10 +4,14 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import org.gradle.api.Project
+import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP_DEPENDENCY_RESOLUTION
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImportReflection
-import org.jetbrains.kotlin.idea.projectModel.*
+import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
+import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
@@ -86,7 +90,8 @@ internal val MultiplatformModelImportingContext.isHMPPEnabled: Boolean
 
 internal fun Project.readProperty(propertyId: String): Boolean? =
     try {
-        (findProperty(propertyId) as? String)?.toBoolean()
+        (project.extensions.extraProperties.getOrNull(propertyId) as? String)?.toBoolean()
+            ?: providers.gradleProperty(propertyId).orNull?.toBoolean()
     } catch (e: Exception) {
         logger.error("Error while trying to read property $propertyId from project $project", e)
         null
@@ -186,4 +191,8 @@ internal class MultiplatformModelImportingContextImpl(
         sourceSetToParticipatedCompilations[sourceSet]
 
     override fun sourceSetByName(name: String): KotlinSourceSet? = sourceSetsByName[name]
+}
+
+private fun ExtraPropertiesExtension.getOrNull(name: String): Any? {
+    return if (has(name)) get(name) else null
 }

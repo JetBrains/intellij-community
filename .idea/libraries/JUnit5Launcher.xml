@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="JUnit5Launcher" type="repository">
-    <properties maven-id="org.junit.platform:junit-platform-launcher:1.11.0">
+    <properties maven-id="org.junit.platform:junit-platform-launcher:1.11.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.0/junit-platform-launcher-1.11.0.jar">
-          <sha256sum>a44535e639814236844e2247204f89247d13af0cebdea53a42314100dfde19ce</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3.jar">
+          <sha256sum>b4727459201b0011beb0742bd807421a1fc8426b116193031ed87825bc2d4f04</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.0/junit-platform-engine-1.11.0.jar">
-          <sha256sum>a7e67279c651c516949512b506916475a6d9e284cd4f4c30d029b4ad73a944d8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3.jar">
+          <sha256sum>0043f72f611664735da8dc9a308bf12ecd2236b05339351c4741edb4d8fab0da</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -16,13 +16,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.0/junit-platform-launcher-1.11.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.0/junit-platform-engine-1.11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.0/junit-platform-launcher-1.11.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.0/junit-platform-engine-1.11.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

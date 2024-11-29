@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -62,16 +63,16 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
                                                       @NotNull CommitContext commitContext) {
     Collection<PatchApplier> appliers = new ArrayList<>();
     for (VirtualFile base : patchGroups.keySet()) {
-      appliers.add(new PatchApplier(myProject, base, ContainerUtil.map(patchGroups.get(base), patchInProgress -> {
+      appliers.add(new PatchApplier(myProject, base, new ArrayList<>(ContainerUtil.map(patchGroups.get(base), patchInProgress -> {
         return patchInProgress.getPatch();
-      }), localList, commitContext));
+      })), localList, commitContext));
     }
     return appliers;
   }
 
 
   public static void applyAdditionalInfoBefore(@NotNull Project project,
-                                               @NotNull ThrowableComputable<? extends Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
+                                               @NotNull ThrowableComputable<? extends @Unmodifiable Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                                @Nullable CommitContext commitContext) {
     List<PatchEP> extensions = PatchEP.EP_NAME.getExtensionList();
     if (extensions.isEmpty()) {

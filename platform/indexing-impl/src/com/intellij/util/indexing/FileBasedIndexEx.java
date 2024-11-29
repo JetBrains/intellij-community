@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -40,6 +41,7 @@ import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.*;
@@ -213,6 +215,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull <K, V> Map<K, V> getFileData(@NotNull ID<K, V> id, @NotNull VirtualFile virtualFile, @NotNull Project project) {
     if (!(virtualFile instanceof VirtualFileWithId)) return Collections.emptyMap();
     int fileId = getFileId(virtualFile);
@@ -642,6 +645,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
+      if (!Registry.is("ide.dumb.mode.check.awareness")) {
+        return DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE;
+      }
       return null;
     }
 

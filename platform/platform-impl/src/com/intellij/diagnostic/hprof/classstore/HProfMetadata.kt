@@ -39,6 +39,9 @@ class HProfMetadata(var classStore: ClassStore, // TODO: private-set, public-get
     for (entry in Long2ObjectMaps.fastIterable(roots)) {
       try {
         val newKey = idMapper.getID(entry.longKey)
+        if (newKey == 0L) {
+          continue
+        }
         assert(!newRoots.containsKey(newKey))
         newRoots.put(newKey, entry.value)
       } catch (e: RemapException) {

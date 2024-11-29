@@ -117,7 +117,7 @@ private fun readPluginId(pluginJar: Path): String? {
       return readXmlAsModel(zip.getInputStream("META-INF/plugin.xml") ?: return null).getChild("id")?.content
     }
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return null
   }
 }
@@ -130,7 +130,7 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext, configDir: Pa
     val pluginId = child?.content ?: continue
     if (!explicitlyEnabledPlugins.contains(pluginId)) {
       toDisable.add(pluginId)
-      Span.current().addEvent("\'$pluginId\' will be disabled, because it\'s mentioned in \'compatiblePluginsToIgnore\'")
+      Span.current().addEvent("'$pluginId' will be disabled, because it's mentioned in 'compatiblePluginsToIgnore'")
     }
   }
   if (!toDisable.isEmpty()) {

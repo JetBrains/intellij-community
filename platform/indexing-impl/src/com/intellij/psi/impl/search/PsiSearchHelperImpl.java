@@ -57,9 +57,11 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -477,7 +479,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         try {
           processVirtualFile(vfile, stopped, localProcessor);
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (CancellationException | IndexNotReadyException e) {
           throw e;
         }
         catch (Throwable e) {
@@ -1365,6 +1367,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return new TextIndexQuery(keys, trigrams, context, useOnlyWordHashToSearch, words);
     }
 
+    @Unmodifiable
     private static @NotNull List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
       List<String> words = StringUtil.getWordsInStringLongestFirst(name);
       if (words.isEmpty()) {

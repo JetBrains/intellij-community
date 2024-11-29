@@ -16,6 +16,7 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,7 @@ public abstract class CoverageViewExtension {
   @Nullable
   public abstract String getPercentage(int columnIdx, @NotNull AbstractTreeNode<?> node);
 
+  @Unmodifiable
   public abstract List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode<?> node);
 
   public abstract ColumnInfo[] createColumnInfos();

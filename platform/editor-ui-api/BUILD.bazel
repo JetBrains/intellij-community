@@ -1,32 +1,33 @@
-### auto-generated section `build` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+### auto-generated section `build intellij.platform.editor` start
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:rules.bzl", "jvm_library")
 
-java_library(
-  name = "resources",
-  resources = glob(["resources/**/*"])
+jvm_resources(
+  name = "editor_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
-kt_jvm_library(
+jvm_library(
   name = "editor",
   module_name = "intellij.platform.editor",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
-  javac_opts = "//:j17",
-  kotlinc_opts = "//:k17",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
   deps = [
-    "@community//platform/core-api:core",
-    "@community//platform/util",
-    "@community//platform/projectModel-api:projectModel",
-    "@community//platform/indexing-api:indexing",
-    "@libraries//:kotlin-stdlib",
-    "@community//platform/util/jdom:util-jdom",
-    "@libraries//:annotations",
-    "@community//platform/util/concurrency",
-    "@community//platform/util/ui:util-ui",
-    "@community//platform/core-ui",
-    "@community//platform/diagnostic",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/indexing-api:indexing",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/jdom",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/diagnostic",
   ],
-  runtime_deps = [":resources"]
+  runtime_deps = [":editor_resources"]
 )
-### auto-generated section `build` end
+### auto-generated section `build intellij.platform.editor` end

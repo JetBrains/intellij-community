@@ -129,7 +129,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
       CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
       LaterInvocator.purgeExpiredItems();
       LaterInvocator.dispatchPendingFlushes();
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getUpdateProgress().clear();
+      DaemonCodeAnalyzer.getInstance(getProject()).restart();
     }
     try {
       GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();

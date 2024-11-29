@@ -41,7 +41,7 @@ internal open class ClassifierImportCandidatesProvider(
     ): List<KaClassLikeSymbol> {
         if (positionContext.explicitReceiver != null) return emptyList()
 
-        val unresolvedName = positionContext.getName()
+        val unresolvedName = positionContext.name
         val fileSymbol = getFileSymbol()
 
         return buildList {

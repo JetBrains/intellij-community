@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +29,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<PsiFileSystemItem> getRoots(final @NotNull Module module) {
     return ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getContentRoots(), virtualFile -> PsiManager.getInstance(module.getProject()).findDirectory(virtualFile));
   }

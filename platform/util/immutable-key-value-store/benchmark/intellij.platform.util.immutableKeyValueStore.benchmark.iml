@@ -12,6 +12,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.zip" scope="TEST" />
   </component>
 </module>

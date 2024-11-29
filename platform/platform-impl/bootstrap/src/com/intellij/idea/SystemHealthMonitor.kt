@@ -253,7 +253,7 @@ private suspend fun checkEnvironment() {
 private fun checkLauncher() {
   if (
     (SystemInfo.isWindows || SystemInfo.isLinux) &&
-    !System.getProperty("ide.native.launcher").toBoolean() &&
+    System.getProperty("ide.native.launcher") == null &&
     !ExternalUpdateManager.isCreatingDesktopEntries() &&
     !PlatformUtils.isJetBrainsClient() //our tools, which start JetBrains Client, aren't migrated to the new launcher yet (see GTW-9619)
   ) {

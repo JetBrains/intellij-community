@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil;
@@ -84,6 +85,7 @@ public final class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentio
   private static final class SearchUsagesTask extends Task.Modal {
     private final PropertyInfo myProperty;
     private Collection<PsiReference> myReferences;
+    @Unmodifiable
     private Set<PsiFile> myFiles;
 
     SearchUsagesTask(@NotNull Project project,

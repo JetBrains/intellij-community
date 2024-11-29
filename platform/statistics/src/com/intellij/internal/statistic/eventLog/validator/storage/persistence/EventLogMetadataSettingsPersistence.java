@@ -11,6 +11,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -65,7 +66,7 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
     }
   }
 
-  public @NotNull Map<String, String> updateOptions(@NotNull String recorderId, @NotNull Map<String, String> newOptions) {
+  public @NotNull Map<String, String> updateOptions(@NotNull String recorderId, @NotNull @Unmodifiable Map<String, String> newOptions) {
     synchronized (optionsLock) {
       Map<String, String> persistedOptions = getOptions(recorderId);
       Map<String, String> changedOptions = new HashMap<>();

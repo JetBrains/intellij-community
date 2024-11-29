@@ -39,7 +39,7 @@ public class a12 {
 
 
   //////////////////////////
-  void f() {
+  void f(<error descr="Cannot resolve symbol 'Unknown'">Unknown</error> ufo) {
     a12 a[] = new a12[4];
     int[] ai = null;
 
@@ -51,8 +51,12 @@ public class a12 {
     <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Expression expected">String</error>);
     <error descr="Cannot resolve method 'foo123Unresolved' in 'a12'">foo123Unresolved</error>(<error descr="Cannot resolve symbol 'xxxx'">xxxx</error>);
     int i = 0;
-    System.out.println(i.<error descr="Cannot access member because 'i' has primitive type int">x</error>);
-    System.out.println(true.<error descr="Cannot call method because 'true' has primitive type boolean">toString</error>());
+    System.out.println(i.<error descr="Cannot access fields on 'int' type">x</error>);
+    System.out.println(true.<error descr="Cannot call methods on 'boolean' type">toString</error>());
+    System.out.println().<error descr="Cannot access fields on 'void' type">field</error>;
+    System.out.println().<error descr="Cannot call methods on 'void' type">method</error>();
+    System.out.println(ufo.lights);
+    System.out.println(ufo.hover());
 
     <error descr="Cannot resolve method 'xxxxxx' in 'a12'">xxxxxx</error>(<error descr="Cannot resolve symbol 'xxxxxx'">xxxxxx</error>);
 

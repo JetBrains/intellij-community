@@ -281,6 +281,8 @@ com.intellij.ide.plugins.DynamicPluginListener
 - pluginLoaded(com.intellij.ide.plugins.IdeaPluginDescriptor):V
 - pluginUnloaded(com.intellij.ide.plugins.IdeaPluginDescriptor,Z):V
 f:com.intellij.ide.plugins.DynamicPluginListener$Companion
+com.intellij.ide.plugins.DynamicPluginVetoer
+- a:vetoPluginUnload(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
 @:com.intellij.ide.plugins.DynamicallyLoaded
 - java.lang.annotation.Annotation
 com.intellij.ide.plugins.IdeaPluginDependency
@@ -1103,6 +1105,7 @@ com.intellij.openapi.application.Application
 - a:getModalityStateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 - a:getStartTime():J
 - a:hasWriteAction(java.lang.Class):Z
+- a:holdsReadLock():Z
 - a:invokeAndWait(java.lang.Runnable):V
 - a:invokeAndWait(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
 - a:invokeLater(java.lang.Runnable):V
@@ -1168,6 +1171,7 @@ com.intellij.openapi.application.ApplicationListener
 - applicationExiting():V
 - beforeWriteActionStart(java.lang.Object):V
 - canExitApplication():Z
+- canRestartApplication():Z
 - writeActionFinished(java.lang.Object):V
 - writeActionStarted(java.lang.Object):V
 c:com.intellij.openapi.application.ApplicationManager
@@ -1326,28 +1330,6 @@ f:com.intellij.openapi.application.RunResult
 - run():com.intellij.openapi.application.RunResult
 - setThrowable(java.lang.Exception):V
 - throwException():com.intellij.openapi.application.RunResult
-com.intellij.openapi.application.ThreadingSupport
-- a:acquireReadActionLock():com.intellij.openapi.application.AccessToken
-- a:acquireWriteActionLock(java.lang.Class):com.intellij.openapi.application.AccessToken
-- a:executeOnPooledThread(java.lang.Runnable,java.util.function.BooleanSupplier):java.util.concurrent.Future
-- a:executeOnPooledThread(java.util.concurrent.Callable,java.util.function.BooleanSupplier):java.util.concurrent.Future
-- a:executeSuspendingWriteAction(com.intellij.openapi.project.Project,java.lang.String,java.lang.Runnable):V
-- a:hasWriteAction(java.lang.Class):Z
-- a:isReadAccessAllowed():Z
-- a:isReadLockedByThisThread():Z
-- a:isWriteAccessAllowed():Z
-- a:isWriteActionInProgress():Z
-- a:isWriteActionPending():Z
-- a:prohibitWriteActionsInside():com.intellij.openapi.application.AccessToken
-- a:runReadAction(com.intellij.openapi.util.Computable):java.lang.Object
-- a:runReadAction(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- a:runReadAction(java.lang.Runnable):V
-- a:runWriteAction(com.intellij.openapi.util.Computable):java.lang.Object
-- a:runWriteAction(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- a:runWriteAction(java.lang.Runnable):V
-- a:runWriteIntentReadAction(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- a:setWriteActionListener(com.intellij.openapi.application.WriteActionListener):V
-- a:tryRunReadAction(java.lang.Runnable):Z
 a:com.intellij.openapi.application.TransactionGuard
 - <init>():V
 - a:assertWriteSafeContext(com.intellij.openapi.application.ModalityState):V
@@ -1528,6 +1510,14 @@ f:com.intellij.openapi.components.ServiceBean
 - getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - s:loadServicesFromBeans(com.intellij.openapi.extensions.ExtensionPointName,java.lang.Class):java.util.List
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+f:com.intellij.openapi.components.ServiceDescriptor
+- f:client:com.intellij.openapi.client.ClientKind
+- f:headlessImplementation:java.lang.String
+- f:os:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- f:overrides:Z
+- f:serviceImplementation:java.lang.String
+- f:serviceInterface:java.lang.String
+- f:testServiceImplementation:java.lang.String
 f:com.intellij.openapi.components.ServiceManager
 - s:createLazyKey(java.lang.Class):com.intellij.openapi.util.NotNullLazyKey
 - s:getService(com.intellij.openapi.project.Project,java.lang.Class):java.lang.Object
@@ -2654,7 +2644,6 @@ c:com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 com.intellij.openapi.vfs.LocalFileProvider
 com.intellij.openapi.vfs.NonPhysicalFileSystem
 f:com.intellij.openapi.vfs.PersistentFSConstants
-- sf:FILE_LENGTH_TO_CACHE_THRESHOLD:J
 - s:getMaxIntellisenseFileSize():I
 - s:setMaxIntellisenseFileSize(I):V
 a:com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -3101,11 +3090,11 @@ a:com.intellij.openapi.vfs.impl.ArchiveHandler
 - p:getEntryInfo(java.lang.String):com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
 - getFile():java.io.File
 - getInputStream(java.lang.String):java.io.InputStream
+- getPath():java.nio.file.Path
 - list(java.lang.String):java.lang.String[]
 - p:normalizeName(java.lang.String):java.lang.String
 - pf:processEntry(java.util.Map,com.intellij.openapi.diagnostic.Logger,java.lang.String,java.util.function.BiFunction):V
 - pf:processEntry(java.util.Map,java.lang.String,java.util.function.BiFunction):V
-- p:setFile(java.io.File):V
 pc:com.intellij.openapi.vfs.impl.ArchiveHandler$EntryInfo
 - f:isDirectory:Z
 - f:length:J
@@ -3125,7 +3114,7 @@ a:com.intellij.openapi.vfs.impl.TempCopyArchiveHandler
 - com.intellij.openapi.vfs.impl.ArchiveHandler
 - p:<init>(java.lang.String):V
 - clearCaches():V
-- p:getTempCopy(com.intellij.util.ThrowableConsumer):java.io.File
+- p:getTempCopy(com.intellij.openapi.util.ThrowableComputable):java.nio.file.Path
 - pa:getTempDir():java.lang.String
 com.intellij.openapi.vfs.newvfs.BulkFileListener
 - after(java.util.List):V
@@ -3875,6 +3864,7 @@ com.intellij.psi.PsiDirectory
 - a:findFile(java.lang.String):com.intellij.psi.PsiFile
 - a:findSubdirectory(java.lang.String):com.intellij.psi.PsiDirectory
 - a:getFiles():com.intellij.psi.PsiFile[]
+- getFiles(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile[]
 - a:getName():java.lang.String
 - a:getParent():com.intellij.psi.PsiDirectory
 - a:getParentDirectory():com.intellij.psi.PsiDirectory
@@ -5846,6 +5836,7 @@ f:com.intellij.util.UniqueResultsQuery
 f:com.intellij.util.concurrency.ThreadingAssertions
 - s:assertBackgroundThread():V
 - s:assertEventDispatchThread():V
+- s:assertNoOwnReadAccess():V
 - s:assertNoReadAccess():V
 - s:assertReadAccess():V
 - s:assertWriteAccess():V

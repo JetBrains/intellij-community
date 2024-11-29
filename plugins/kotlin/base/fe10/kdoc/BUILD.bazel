@@ -1,0 +1,24 @@
+### auto-generated section `build kotlin.base.fe10.kdoc` start
+load("@rules_jvm//:rules.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-base-fe10-kdoc",
+  module_name = "kotlin.base.fe10.kdoc",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  javac_opts = "@rules_jvm//:j17",
+  kotlinc_opts = "@rules_jvm//:k17",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc_kotlin-compiler-common",
+    "@lib//:kotlinc_kotlin-compiler-fe10",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+    "//java/java-indexing-impl:indexing-impl",
+  ]
+)
+### auto-generated section `build kotlin.base.fe10.kdoc` end

@@ -15,12 +15,12 @@ import com.sun.jdi.BooleanValue
 import com.sun.jdi.ClassType
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
-import java.util.concurrent.ConcurrentHashMap
+import java.util.*
 
 private const val CANCELLATION_FQN = "com.intellij.openapi.progress.Cancellation"
 
 private object PauseListener : DebuggerManagerListener {
-  private val sessions = ConcurrentHashMap<DebuggerSession, SessionThreadsData>()
+  private val sessions = WeakHashMap<DebuggerSession, SessionThreadsData>()
 
   override fun sessionAttached(session: DebuggerSession?) {
     if (session == null) return
