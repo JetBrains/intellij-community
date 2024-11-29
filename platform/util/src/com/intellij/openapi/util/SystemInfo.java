@@ -111,6 +111,7 @@ public final class SystemInfo {
   public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
   public static final boolean isMacOSVentura = isMac && isOsVersionAtLeast("13.0");
   public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
+  public static final boolean isMacOSSequoia = isMac && isOsVersionAtLeast("15.0");
 
   /**
    * Build number is the only more or less stable approach to get comparable Windows versions.

@@ -966,6 +966,7 @@ f:com.intellij.openapi.util.SystemInfo
 - sf:isMacOSBigSur:Z
 - sf:isMacOSCatalina:Z
 - sf:isMacOSMonterey:Z
+- sf:isMacOSSequoia:Z
 - sf:isMacOSSonoma:Z
 - sf:isMacOSVentura:Z
 - sf:isMacSystemMenu:Z
