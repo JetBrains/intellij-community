@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
-import org.apache.maven.model.Model;
-import org.apache.maven.repository.internal.MavenWorkspaceReader;
+import org.apache.maven.api.model.Model;
+import org.apache.maven.internal.impl.resolver.MavenWorkspaceReader;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.repository.WorkspaceRepository;

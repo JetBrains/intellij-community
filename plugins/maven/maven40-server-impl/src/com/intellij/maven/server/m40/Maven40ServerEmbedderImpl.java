@@ -18,7 +18,6 @@ import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cli.MavenCli;
-import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
@@ -46,8 +45,6 @@ import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.util.ExceptionUtils;
-import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.DependencyFilter;
@@ -118,7 +115,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     ClassWorld classWorld = new ClassWorld("plexus.core", Thread.currentThread().getContextClassLoader());
     MavenCli cli = new MavenCli(classWorld) {
       @Override
-      protected void customizeContainer(PlexusContainer container) {
+      public void customizeContainer(PlexusContainer container) {
         ((DefaultPlexusContainer)container).setLoggerManager(new BaseLoggerManager() {
           @Override
           protected Logger createLogger(String s) {
@@ -405,13 +402,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     String baseMessage = each.getMessage() != null ? each.getMessage() : "";
     Throwable rootCause = ExceptionUtils.getRootCause(each);
     String rootMessage = rootCause != null ? rootCause.getMessage() : "";
-    return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
+    return isNotEmpty(rootMessage) ? rootMessage : baseMessage;
+  }
+
+  private static boolean isNotEmpty(String str) {
+    return ((str != null) && (!str.isEmpty()));
   }
 
   @Nullable
   private static Artifact getProblemTransferArtifact(Throwable each) {
     Throwable[] throwables = ExceptionUtils.getThrowables(each);
-    if (throwables == null) return null;
     for (Throwable throwable : throwables) {
       if (throwable instanceof ArtifactTransferException) {
         return RepositoryUtils.toArtifact(((ArtifactTransferException)throwable).getArtifact());
@@ -462,8 +462,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     try {
       Field field = exception.getClass().getDeclaredField("extension");
       field.setAccessible(true);
-      CoreExtension extension = (CoreExtension)field.get(exception);
-      return new MavenId(extension.getGroupId(), extension.getArtifactId(), extension.getVersion());
+      return null;
+      //CoreExtension extension = (CoreExtension)field.get(exception);
+      //return new MavenId(extension.getGroupId(), extension.getArtifactId(), extension.getVersion());
     }
     catch (Throwable e) {
       return null;
@@ -1197,7 +1198,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
         DependencyCoordinates dependencyCoordinate = session.createDependencyCoordinates(coordinate);
 
-        Node dependencyNode = session.collectDependencies(dependencyCoordinate);
+        // TODO: what's the correct PathScope here?
+        Node dependencyNode = session.collectDependencies(dependencyCoordinate, PathScope.MAIN_COMPILE);
 
         List<DependencyCoordinates> dependencyCoordinates = dependencyNode.stream()
           .filter(node -> node != dependencyNode)

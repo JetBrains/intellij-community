@@ -573,7 +573,7 @@ public class Maven40ProjectResolver {
                                      ProjectBuildingRequest projectBuildingRequest,
                                      File pomFile) {
     try {
-      ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
+      ProjectBuildingResult build = builder.build(Collections.singletonList(pomFile), false, projectBuildingRequest).get(0);
       buildingResults.add(build);
     }
     catch (ProjectBuildingException e) {
