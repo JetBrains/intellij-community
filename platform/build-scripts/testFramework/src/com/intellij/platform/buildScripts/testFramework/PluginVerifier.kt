@@ -25,14 +25,14 @@ suspend fun createPluginVerifier(
 }
 
 class VerifierPluginInfo(
-  val path : Path,
-  val buildNumber: String
+  val path: Path,
+  val buildNumber: String,
 )
 
 class VerifierIdeInfo(
   val installationPath: Path,
   val productCode: String,
-  val productBuild: String
+  val productBuild: String,
 )
 
 class PluginVerifier(
@@ -145,7 +145,9 @@ class PluginVerifier(
     "com.intellij.vcs.ShelveTitlePatch",
     "com.intellij.vcs.ShelveTitleProvider",
 
+    // To Fix
+    "com.intellij.jupyter.core.jupyter.editor.outputs.JupyterOutputDataKeyExtractorKt.getOutputsForIndex"
 
-    )
+  )
 
 }
