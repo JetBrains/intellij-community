@@ -10,7 +10,7 @@ import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
 import com.intellij.cce.python.execution.output.PythonErrorLogProcessor
 import com.intellij.cce.python.execution.output.PythonProcessExecutionLog
-import com.intellij.openapi.roots.ProjectRootManager
+import com.jetbrains.python.sdk.pythonSdk
 import java.io.File
 
 class PythonCodeExecutionManager() : CodeExecutionManager() {
@@ -81,6 +81,8 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
     val coverageFilePath = "${project.basePath}/$testName-coverage"
 
+    project.pythonSdk ?: return PythonProcessExecutionLog("", "Python SDK not found", -1)
+
     try {
       val executionLog = runPythonProcess(
         ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target)
@@ -110,7 +112,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
   private fun runPythonProcess(processBuilder: ProcessBuilder):
     PythonProcessExecutionLog {
     // Set the correct Python interpreter
-    processBuilder.environment()["PYTHON"] = ProjectRootManager.getInstance(project).projectSdk!!.homePath
+    processBuilder.environment()["PYTHON"] =  project.pythonSdk!!.homePath
     // Move to project's root
     processBuilder.directory(File(project.basePath!!))
     // Start the process
