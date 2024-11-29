@@ -26,7 +26,7 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
     return this
   }
 
-  fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
+  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
     TODO("Not yet implemented")
   }
 
