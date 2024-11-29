@@ -6,8 +6,8 @@
                 "groupId": "org.jetbrains.kotlinx",
                 "artifactId": "kotlinx-coroutines-core",
                 "versions": {
-                    "2.1": "1.8.1",
-                    "2.0": "1.8.1",
+                    "2.1": "1.9.0",
+                    "2.0": "1.9.0",
                     "1.9": "1.8.1",
                     "1.8": "1.7.3",
                     "1.7": "1.6.4",
@@ -19,6 +19,7 @@
                 "groupId": "org.jetbrains.kotlinx",
                 "artifactId": "kotlinx-datetime",
                 "versions": {
+                    "2.1": "0.6.1",
                     "2.0": "0.6.1",
                     "1.9": "0.6.1",
                     "1.8": "0.4.1",
@@ -31,7 +32,8 @@
                 "groupId": "org.jetbrains.kotlinx",
                 "artifactId": "kotlinx-serialization-json",
                 "versions": {
-                    "2.0": "1.7.2",
+                    "2.1": "1.7.3",
+                    "2.0": "1.7.3",
                     "1.9": "1.6.3",
                     "1.8": "1.5.1",
                     "1.7": "1.4.1",
