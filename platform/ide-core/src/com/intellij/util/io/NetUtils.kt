@@ -7,6 +7,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.net.NoRouteToHostException
@@ -26,7 +27,7 @@ object NetUtils {
   }
 
   fun showNetworkErrorSolutionNotification(error: Throwable, project: Project?) {
-    if (SystemInfo.isMacOSSequoia && error is NoRouteToHostException) {
+    if (Registry.`is`("mac15.local.network.issue", true) && SystemInfo.isMacOSSequoia && error is NoRouteToHostException) {
       Notification("Mac15 Local Network",
                    IdeCoreBundle.message("mac15.local.network.issue.title"),
                    IdeCoreBundle.message("mac15.local.network.issue.notification.message"),
