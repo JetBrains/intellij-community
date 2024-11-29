@@ -375,7 +375,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     if (settings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
-      GradleInitScriptUtil.attachTargetPathMapperInitScript(settings);
+      var targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
+      settings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString());
     }
   }
 

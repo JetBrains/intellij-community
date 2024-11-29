@@ -15,7 +15,6 @@ import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
 import com.intellij.util.containers.ContainerUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -104,12 +103,6 @@ fun loadTaskInitScript(
 fun createTargetPathMapperInitScript(): Path {
   val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/MapperInit.gradle")
   return createInitScript(MAPPER_INIT_SCRIPT_NAME, initScript)
-}
-
-@ApiStatus.Internal
-fun attachTargetPathMapperInitScript(settings: GradleExecutionSettings) {
-  val file = createTargetPathMapperInitScript()
-  settings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, file.toString())
 }
 
 fun createWrapperInitScript(
