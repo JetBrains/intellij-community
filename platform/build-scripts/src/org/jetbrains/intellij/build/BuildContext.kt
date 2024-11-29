@@ -175,6 +175,8 @@ interface BuildContext : CompilationContext {
   )
 
   val pluginAutoPublishList: PluginAutoPublishList
+
+  val isNightlyBuild: Boolean
 }
 
 suspend inline fun <T> BuildContext.executeStep(

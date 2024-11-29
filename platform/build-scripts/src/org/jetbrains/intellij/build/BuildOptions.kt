@@ -478,7 +478,10 @@ data class BuildOptions(
 
   var randomSeedNumber: Long = 0
 
-  var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
+  /**
+   * Use [BuildContext.isNightlyBuild] to get the actual nightly flag in build scripts.
+   */
+  var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, false)
 
   /**
    * Specifies an additional list of compatible plugin names which should not be built, see [ProductModulesLayout.compatiblePluginsToIgnore]

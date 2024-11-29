@@ -929,7 +929,7 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFamily?, arc
   }
 
   if (context.options.useReleaseCycleRelatedBundlingRestrictionsForContentReport) {
-    val isNightly = context.options.isNightlyBuild
+    val isNightly = context.isNightlyBuild
     val isEap = context.applicationInfo.isEAP
 
     val distributionCondition = when (bundlingRestrictions.includeInDistribution) {

@@ -101,6 +101,8 @@ class BuildContextImpl internal constructor(
 
   override val bundledRuntime: BundledRuntime = BundledRuntimeImpl(this)
 
+  override val isNightlyBuild: Boolean = options.isNightlyBuild || buildNumber.count { it == '.' } <= 1
+
   init {
     @Suppress("DEPRECATION")
     if (productProperties.productCode == null) {
