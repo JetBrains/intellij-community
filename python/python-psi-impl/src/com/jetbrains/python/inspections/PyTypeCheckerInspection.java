@@ -290,14 +290,9 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Nullable
     private PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected) {
-      return tryPromotingType(value, expected, myTypeEvalContext);
-    }
-
-    @Nullable
-    public static PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected, @NotNull TypeEvalContext context) {
-      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, context, null);
+      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext, null);
       if (promotedToLiteral != null) return promotedToLiteral;
-      return context.getType(value);
+      return myTypeEvalContext.getType(value);
     }
 
     @Override
