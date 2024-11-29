@@ -6,8 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ThreeState;
-import com.jetbrains.jsonSchema.fus.JsonSchemaFusCountedFeature;
-import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest;
 import com.jetbrains.jsonSchema.impl.tree.Operation;
