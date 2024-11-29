@@ -24,6 +24,7 @@ import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -95,6 +96,7 @@ public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<IProperty> findPropertiesByKey(@NotNull @NonNls String key) {
     synchronized (myLock) {
       ensurePropertiesLoaded();

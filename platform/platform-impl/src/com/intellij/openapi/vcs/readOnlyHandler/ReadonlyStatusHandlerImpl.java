@@ -20,10 +20,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -128,6 +125,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     return createResultStatus(originalFiles, files);
   }
 
+  @Unmodifiable
   private List<PresentableFileInfo> createPresentableFileInfos(List<? extends FileInfo> fileInfos) {
     return ContainerUtil.map(fileInfos, fileInfo -> {
       TargetPresentationBuilder builder = TargetPresentation.builder(fileInfo.getFile().getPresentableName())

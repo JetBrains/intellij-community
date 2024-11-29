@@ -9,6 +9,7 @@ import com.intellij.util.text.Matcher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -31,6 +32,7 @@ public final class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     P provider = getProvider();
     return ContainerUtil.map(provider.getValues(dataContext, pattern), value -> provider.getMainListItem(dataContext, value));

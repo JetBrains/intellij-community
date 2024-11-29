@@ -11,10 +11,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -155,6 +152,7 @@ public abstract class WslDistributionManager implements Disposable {
     return d;
   }
 
+  @Unmodifiable
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
     if (!isWslExeSupported()) {
       //noinspection removal

@@ -7,12 +7,14 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public abstract class PathMappingProvider {
   public static final ExtensionPointName<PathMappingProvider> EP_NAME = ExtensionPointName.create("com.intellij.remote.pathMappingProvider");
 
+  @Unmodifiable
   public static List<PathMappingProvider> getSuitableMappingProviders(@Nullable RemoteSdkAdditionalData data) {
     return ContainerUtil.filter(EP_NAME.getExtensions(), provider -> provider.accepts(data));
   }

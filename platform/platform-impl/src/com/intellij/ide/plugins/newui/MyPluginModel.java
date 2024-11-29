@@ -39,10 +39,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1350,6 +1347,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
   }
 
+  @Unmodifiable
   public static @NotNull Set<String> getPluginNames(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     return ContainerUtil.map2Set(descriptors,
                                  IdeaPluginDescriptor::getName);
@@ -1407,6 +1405,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return icon;
   }
 
+  @Unmodifiable
   private static @NotNull List<String> getDependenciesOnPlugins(@NotNull Project project) {
     return ContainerUtil.map(ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin.class),
                              DependencyOnPlugin::getPluginId);

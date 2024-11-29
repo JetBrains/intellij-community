@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +46,7 @@ public interface VcsLogFilterCollection {
   Collection<VcsLogFilter> getFilters();
 
   @NotNull
+  @Unmodifiable
   default List<VcsLogDetailsFilter> getDetailsFilters() {
     return ContainerUtil.findAll(getFilters(), VcsLogDetailsFilter.class);
   }

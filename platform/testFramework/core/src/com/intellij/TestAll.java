@@ -22,6 +22,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runner.manipulation.Filter;
@@ -122,12 +123,14 @@ public class TestAll implements Test {
     return ourClassLoadingProblems;
   }
 
+  @Unmodifiable
   public static List<Path> getClassRoots() {
     return TeamCityLogger.block("Collecting tests from ...", () -> {
       return doGetClassRoots();
     });
   }
 
+  @Unmodifiable
   private static List<Path> doGetClassRoots() {
     String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
     if (jarsToRunTestsFrom != null) {

@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -870,6 +871,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       expression.replace(newExpression);
     }
 
+    @Unmodifiable
     private static @NotNull List<String> collectUnionTypes(@Nullable PyExpression expression) {
       if (expression == null) return Collections.emptyList();
       if (expression instanceof PyBinaryExpression) {

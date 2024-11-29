@@ -45,10 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.IoErrorText;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -546,6 +543,7 @@ public final class ConfigImportHelper {
       this.fromSameProduct = fromSameProduct;
     }
 
+    @Unmodifiable
     @NotNull List<Path> getPaths() {
       return ContainerUtil.map(directories, it -> it.first);
     }

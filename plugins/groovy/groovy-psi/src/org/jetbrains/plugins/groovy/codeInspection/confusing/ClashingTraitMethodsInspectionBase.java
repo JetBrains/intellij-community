@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -61,6 +62,7 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
   }
 
   @NotNull
+  @Unmodifiable
   private static List<PsiClass> collectImplementedTraits(@NotNull GrTypeDefinition typeDefinition) {
     return ContainerUtil.findAll(typeDefinition.getSupers(), aClass -> GrTraitUtil.isTrait(aClass));
   }

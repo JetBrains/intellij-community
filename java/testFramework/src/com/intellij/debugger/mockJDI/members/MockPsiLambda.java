@@ -38,6 +38,7 @@ public class MockPsiLambda extends MockMirror implements Method {
   }
 
   @Override
+  @Unmodifiable
   public List<String> argumentTypeNames() {
     // Captured values are not yet supported in mock
     return ContainerUtil.map(myPsiLambdaExpression.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());

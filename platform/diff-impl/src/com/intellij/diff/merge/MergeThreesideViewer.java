@@ -83,10 +83,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -813,6 +810,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<TextMergeChange> getChanges() {
     return ContainerUtil.filter(myAllMergeChanges, mergeChange -> !mergeChange.isResolved());
   }
@@ -1301,6 +1299,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @NotNull
     @RequiresEdt
+    @Unmodifiable
     protected List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
       BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -1410,6 +1409,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
+    @Unmodifiable
     protected @NotNull List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
       BitSet lines = DiffUtil.getSelectedLines(editor);

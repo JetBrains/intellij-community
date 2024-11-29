@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.FlavorMap;
@@ -72,11 +73,13 @@ public final class FileCopyPasteUtil {
     return ContainerUtil.exists(transferFlavors, f -> f != null && supported.contains(f));
   }
 
+  @Unmodifiable
   public static @Nullable List<File> getFileList(@NotNull Transferable transferable) {
     var files = getFiles(transferable);
     return files != null ? ContainerUtil.map(files, Path::toFile) : null;
   }
 
+  @Unmodifiable
   public static @Nullable List<Path> getFiles(@NotNull Transferable transferable) {
     try {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {

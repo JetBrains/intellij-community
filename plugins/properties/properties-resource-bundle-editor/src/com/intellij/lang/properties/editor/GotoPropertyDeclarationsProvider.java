@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -39,6 +40,7 @@ public class GotoPropertyDeclarationsProvider extends GotoRelatedProvider {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (!(editor instanceof ResourceBundleEditor resourceBundleEditor)) {

@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Calendar;
 import java.util.Collections;
@@ -36,6 +37,7 @@ public abstract class AbstractMessage {
   }
 
   /** Returns a list of attachments marked by a user to be included in the error report. */
+  @Unmodifiable
   public @NotNull List<Attachment> getIncludedAttachments() {
     return ContainerUtil.filter(getAllAttachments(), Attachment::isIncluded);
   }

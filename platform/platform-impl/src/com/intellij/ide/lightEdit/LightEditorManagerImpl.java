@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -212,6 +213,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<LightEditorInfo> getEditors(@NotNull VirtualFile virtualFile) {
     return ContainerUtil.filter(myEditors, editorInfo -> virtualFile.equals(editorInfo.getFile()));
   }
@@ -227,6 +229,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @NotNull
+  @Unmodifiable
   List<LightEditorInfo> getUnsavedEditors() {
     return ContainerUtil.filter(myEditors, editorInfo -> editorInfo.isSaveRequired());
   }

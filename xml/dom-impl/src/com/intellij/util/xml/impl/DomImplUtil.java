@@ -17,6 +17,7 @@ import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.*;
 import java.util.Collections;
@@ -123,10 +124,12 @@ public final class DomImplUtil {
   }
 
 
+  @Unmodifiable
   public static List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
     return findSubTags(tag, name, file, false);
   }
 
+  @Unmodifiable
   static List<XmlTag> findSubTags(final @NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file, boolean processIncludes) {
 
     if (!tag.isValid()) {
@@ -155,6 +158,7 @@ public final class DomImplUtil {
     });
   }
 
+  @Unmodifiable
   public static List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
     if (tags.length == 0) {
       return Collections.emptyList();
@@ -224,6 +228,7 @@ public final class DomImplUtil {
     return createXmlName(name, method.getGenericReturnType(), method);
   }
 
+  @Unmodifiable
   public static List<XmlTag> getCustomSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     if (subTags.length == 0) {
       return Collections.emptyList();

@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +35,7 @@ public final class DvcsBranchUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<Change> swapRevisions(@NotNull List<? extends Change> changes) {
     return ContainerUtil.map(changes, change -> {
       ContentRevision beforeRevision = change.getBeforeRevision();

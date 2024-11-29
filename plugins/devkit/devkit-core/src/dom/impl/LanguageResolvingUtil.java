@@ -156,6 +156,7 @@ public final class LanguageResolvingUtil {
     }, () -> language.getDisplayName());
   }
 
+  @Unmodifiable
   private static List<LanguageDefinition> mapToProjectDefinitions(Collection<? extends PsiClass> projectLanguages,
                                                                   List<? extends LanguageDefinition> libraryDefinitions) {
     return ContainerUtil.mapNotNull(projectLanguages, language -> getDefinition(language, libraryDefinitions));

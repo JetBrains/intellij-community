@@ -26,6 +26,7 @@ import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -54,6 +55,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       CachedValueProvider.Result.create(calcAcceptableModules(project), PsiModificationTracker.MODIFICATION_COUNT), false);
   }
 
+  @Unmodifiable
   protected @NotNull Collection<Module> calcAcceptableModules(@NotNull Project project) {
     return ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
   }

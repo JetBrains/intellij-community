@@ -25,10 +25,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import sun.font.CompositeFont;
 import sun.font.Font2D;
 import sun.font.FontSubstitution;
@@ -164,6 +161,7 @@ final class AccessingInternalJdkFontApi {
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 
   @SuppressWarnings("InstanceofIncompatibleInterface")
+  @Unmodifiable
   static List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
     throws Exception {
     if (GET_FONT_2D_METHOD != null) {

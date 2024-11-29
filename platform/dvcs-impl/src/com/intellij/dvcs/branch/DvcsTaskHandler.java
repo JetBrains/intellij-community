@@ -30,6 +30,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -144,6 +145,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   }
 
   @NotNull
+  @Unmodifiable
   private List<R> getRepositories(@NotNull Collection<String> urls) {
     final List<R> repositories = myRepositoryManager.getRepositories();
     return ContainerUtil.mapNotNull(urls, s -> ContainerUtil.find(repositories, repository -> s.equals(repository.getPresentableUrl())));

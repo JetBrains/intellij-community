@@ -6,14 +6,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -118,6 +114,7 @@ public final class PathEnvironmentVariableUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<String> getWindowsExecutableFileExtensions() {
     if (SystemInfo.isWindows) {
       String allExtensions = System.getenv("PATHEXT");

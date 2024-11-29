@@ -116,6 +116,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @NotNull
+  @Unmodifiable
   private List<String> getLocalParameters() {
     return ContainerUtil.map(myParameters, CompositeParameterTargetedValue::getLocalValue);
   }

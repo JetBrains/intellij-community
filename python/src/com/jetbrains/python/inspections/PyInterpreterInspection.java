@@ -54,6 +54,7 @@ import kotlin.Pair;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.time.Duration;
@@ -263,6 +264,7 @@ public final class PyInterpreterInspection extends PyInspection {
       return null;
     }
 
+    @Unmodifiable
     private static @NotNull List<Sdk> getExistingSdks() {
       final ProjectSdksModel model = new ProjectSdksModel();
       model.reset(null);

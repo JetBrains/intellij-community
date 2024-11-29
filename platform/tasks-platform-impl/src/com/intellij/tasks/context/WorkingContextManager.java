@@ -25,10 +25,7 @@ import com.intellij.util.io.zip.JBZipEntry;
 import com.intellij.util.io.zip.JBZipFile;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -200,6 +197,7 @@ public final class WorkingContextManager {
     return getContextHistory(CONTEXT_ZIP_POSTFIX);
   }
 
+  @Unmodifiable
   private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
     if (!ENABLED) return Collections.emptyList();
     try (JBZipFile archive = getTasksArchive(zipPostfix)) {

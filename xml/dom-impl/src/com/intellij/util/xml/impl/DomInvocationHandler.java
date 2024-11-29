@@ -34,6 +34,7 @@ import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.lang.annotation.Annotation;
@@ -754,6 +755,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return getCollectionChildren(description, XmlStubBasedTagBase.shouldProcessIncludesNow());
   }
 
+  @Unmodifiable
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, boolean processIncludes) {
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {

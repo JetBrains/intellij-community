@@ -2694,6 +2694,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return point == null ? null : new Rectangle(point, component.getSize());
   }
 
+  @Unmodifiable
   public static @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
     return ContainerUtil.filter(all.toStrongList(), popup -> {
       Component owner = popup.getOwner();

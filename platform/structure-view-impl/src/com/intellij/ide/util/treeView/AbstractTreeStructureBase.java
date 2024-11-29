@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -82,6 +83,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return (NodeDescriptor<?>)element;
   }
 
+  @Unmodifiable
   public abstract @Nullable List<TreeStructureProvider> getProviders();
 
   /** @deprecated Drop together with {@link TreeStructureProvider#getData(Collection, String)} */
@@ -91,6 +93,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return null;
   }
 
+  @Unmodifiable
   private @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
     if (myProject == null) {
       return Collections.emptyList();

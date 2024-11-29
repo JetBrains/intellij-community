@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +26,7 @@ public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<? extends GotoRelatedItem> getItems(@NotNull final DataContext context) {
     final FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(context);
     if (editor instanceof ResourceBundleEditor) {

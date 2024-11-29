@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -25,6 +26,7 @@ public interface HtmlCodeStylePanelExtension {
   @NotNull
   HtmlPanelCustomizer getCustomizer();
 
+  @Unmodifiable
   static @NotNull List<HtmlPanelCustomizer> getCustomizers() {
     List<HtmlCodeStylePanelExtension> extensions = EP_NAME.getExtensionList();
     if (extensions.isEmpty()) {

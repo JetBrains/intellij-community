@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -105,6 +106,7 @@ public class RunHotswapDialog extends OptionsDialog {
     return myPanel;
   }
 
+  @Unmodifiable
   public Collection<DebuggerSession> getSessionsToReload() {
     return ContainerUtil.map(myElementsChooser.getMarkedElements(), SessionItem::getSession);
   }

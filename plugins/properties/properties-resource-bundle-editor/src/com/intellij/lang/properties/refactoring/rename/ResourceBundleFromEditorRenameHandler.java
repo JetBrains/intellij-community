@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -71,6 +72,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
     invoke(project, null, null, dataContext);
   }
 
+  @Unmodifiable
   private static List<PsiElement> getPsiElementsFromGroup(final PropertiesPrefixGroup propertiesPrefixGroup) {
     return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), treeElement -> {
       if (treeElement instanceof PropertyStructureViewElement) {

@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -127,6 +128,7 @@ public final class LibrariesDownloadAssistant {
   }
 
   @NotNull
+  @Unmodifiable
   private static List<LibraryInfo> convert(final String urlPrefix, ArtifactItem @NotNull [] jars) {
     return ContainerUtil.mapNotNull(jars, artifactItem -> {
       String downloadUrl = artifactItem.getUrl();

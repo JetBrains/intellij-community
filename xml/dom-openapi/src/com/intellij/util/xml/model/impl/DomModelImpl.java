@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.model.DomModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +56,7 @@ public class DomModelImpl<T extends DomElement> implements DomModel<T> {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<DomFileElement<T>> getRoots() {
     if (myMergedModel == null) {
       return ContainerUtil.mapNotNull(myConfigFiles, (NullableFunction<XmlFile, DomFileElement<T>>)xmlFile -> DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, myClass));

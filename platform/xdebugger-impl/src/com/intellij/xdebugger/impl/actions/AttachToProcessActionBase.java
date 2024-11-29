@@ -230,6 +230,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
   }
 
   @NotNull
+  @Unmodifiable
   private List<XAttachDebuggerProvider> getProvidersApplicableForHost(@NotNull XAttachHost host) {
     return ContainerUtil.filter(myAttachProvidersSupplier.get(), provider -> provider.isAttachHostApplicable(host));
   }

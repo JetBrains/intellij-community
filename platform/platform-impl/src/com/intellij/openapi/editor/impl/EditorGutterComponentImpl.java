@@ -101,6 +101,7 @@ import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.accessibility.Accessible;
@@ -1528,6 +1529,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<TextAnnotationGutterProvider> getTextAnnotations() {
     return ContainerUtil.map(myTextAnnotationGutterProviders, i->i.provider());
   }

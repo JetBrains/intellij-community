@@ -9,12 +9,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
 
 final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
   @Override
+  @Unmodifiable
   public @NotNull Collection<OptionDescription> getOptions() {
     return ContainerUtil.concat(
       GeneralSettingsConfigurableKt.getAllOptionDescriptors(),

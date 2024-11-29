@@ -64,6 +64,7 @@ public interface PropertiesFile {
    * @return All properties found in this file with the name specified.
    */
   @NotNull
+  @Unmodifiable
   List<IProperty> findPropertiesByKey(@NotNull @NonNls String key);
 
   @NotNull

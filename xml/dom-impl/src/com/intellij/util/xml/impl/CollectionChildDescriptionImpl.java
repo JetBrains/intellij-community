@@ -13,6 +13,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -76,6 +77,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<? extends DomElement> getValues(final @NotNull DomElement element) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {

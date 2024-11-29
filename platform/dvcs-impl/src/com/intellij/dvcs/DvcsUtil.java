@@ -80,6 +80,7 @@ public final class DvcsUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<? extends File> files) {
     RefreshVFsSynchronously.refreshFiles(files);
     return ContainerUtil.mapNotNull(files, file -> VfsUtil.findFileByIoFile(file, false));

@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -229,6 +230,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return CodeInsightBundle.message("action.analyze.verb");
   }
 
+  @Unmodifiable
   public static @NotNull List<ModelScopeItem> standardItems(@NotNull Project project,
                                                             @NotNull AnalysisScope scope,
                                                             @Nullable Module module,

@@ -131,6 +131,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<V> values() {
     return ContainerUtil.map(getMap().values(), FactoryMap::nullize);
   }

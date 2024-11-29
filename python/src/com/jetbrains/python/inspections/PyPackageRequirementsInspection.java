@@ -55,6 +55,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -252,6 +253,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     return result;
   }
 
+  @Unmodifiable
   private static @Nullable List<PyRequirement> getListedRequirements(@NotNull PyPackageManager packageManager, @NotNull Module module) {
     final List<PyRequirement> requirements = packageManager.getRequirements(module);
     final List<PyRequirement> extrasRequirements = getExtrasRequirements(module);

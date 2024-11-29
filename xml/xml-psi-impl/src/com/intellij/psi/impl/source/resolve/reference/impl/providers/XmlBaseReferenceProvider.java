@@ -10,6 +10,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -33,6 +34,7 @@ public class XmlBaseReferenceProvider extends PsiReferenceProvider {
     return referenceSet.getAllReferences();
   }
 
+  @Unmodifiable
   private Collection<PsiFileSystemItem> getContext(PsiElement element, PsiFile file) {
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (!myAcceptSelf && tag != null) {

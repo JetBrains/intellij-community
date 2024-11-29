@@ -15,6 +15,7 @@ import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -132,6 +133,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
 
   private static final Pattern TAG_PATTERN = Pattern.compile("([cse])(\\d{1,3})");
 
+  @Unmodifiable
   private static List<CaretState> extractStates(String text) {
     int x = 0;
     int y = 0;
