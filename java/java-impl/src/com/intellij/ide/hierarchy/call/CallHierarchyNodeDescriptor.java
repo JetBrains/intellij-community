@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -46,6 +46,9 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
    */
   public PsiMember getEnclosingElement() {
     PsiElement element = getPsiElement();
+    if (element instanceof PsiClass aClass && aClass.isRecord()) {
+      return JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+    }
     return element == null ? null : getEnclosingElement(element);
   }
 
@@ -90,7 +93,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       mainTextAttributes = new TextAttributes(myColor, null, null, null, Font.PLAIN);
     }
     if (enclosingElement instanceof PsiMethod || enclosingElement instanceof PsiField) {
-      if (enclosingElement instanceof SyntheticElement) {
+      if (FileTypeUtils.isInServerPageFile(enclosingElement)) {
         PsiFile file = enclosingElement.getContainingFile();
         myHighlightedText.getEnding().addText(file != null ? file.getName() : JavaBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
       }

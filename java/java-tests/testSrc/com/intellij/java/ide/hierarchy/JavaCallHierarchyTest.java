@@ -27,7 +27,7 @@ import java.util.Arrays;
 public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   @Override
   protected @NotNull LanguageLevel getProjectLanguageLevel() {
-    return LanguageLevel.JDK_1_8; // method refs are needed
+    return LanguageLevel.JDK_16; // records are needed
   }
 
   @NotNull
@@ -93,6 +93,20 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
 
   public void testDefaultConstructor() throws Exception {
     doJavaCallerTypeHierarchyTest("A", "A", "A.java");
+  }
+
+  public void testRecordCanonicalConstructor() throws Exception {
+    doHierarchyTest(() -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("Person", ProjectScope.getProjectScope(getProject()));
+      return new CallerMethodsTreeStructure(getProject(), aClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(myProject), "Action.java");
+  }
+
+  public void testRecordCanonicalConstructorReverse() throws Exception {
+    doHierarchyTest(() -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("Person", ProjectScope.getProjectScope(getProject()));
+      return new CalleeMethodsTreeStructure(getProject(), aClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(myProject), "Action.java");
   }
 
   public void testMethodRef() throws Exception {

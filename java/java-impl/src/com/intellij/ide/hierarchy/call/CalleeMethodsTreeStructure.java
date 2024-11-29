@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -30,7 +30,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
-    if (!(enclosingElement instanceof PsiMethod method)) {
+    if (!(enclosingElement instanceof PsiMethod method) || enclosingElement instanceof SyntheticElement) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
