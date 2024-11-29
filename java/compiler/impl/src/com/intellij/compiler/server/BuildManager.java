@@ -1078,6 +1078,10 @@ public final class BuildManager implements Disposable {
     return _future;
   }
 
+  private static boolean canUseEel() {
+    return Registry.is("compiler.build.can.use.eel");
+  }
+
   private boolean isProcessPreloadingEnabled(Project project) {
     // automatically disable process preloading when debugging or testing
     if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || myBuildProcessDebuggingEnabled) {
@@ -1357,21 +1361,34 @@ public final class BuildManager implements Disposable {
     int buildProcessConnectPort = listenPort;
 
     BuildCommandLineBuilder cmdLine;
-    WslPath wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
-    if (wslPath != null) {
-      WSLDistribution sdkDistribution = wslPath.getDistribution();
-      if (!sdkDistribution.equals(projectWslDistribution)) {
-        throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match", sdkName + " (WSL " + sdkDistribution.getPresentableName() + ")", MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
-      }
-      cmdLine = new WslBuildCommandLineBuilder(project, sdkDistribution, wslPath.getLinuxPath(), progressIndicator);
-      buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on linux side
-      buildProcessConnectPort = getWslPort(sdkDistribution, listenPort);
+    WslPath wslPath;
+    if (canUseEel()) {
+      wslPath = null;
+      EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
+      cmdLine = eelBuilder;
+      buildProcessConnectHost = "127.0.0.1";
+      buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project);
     }
     else {
-      if (projectWslDistribution != null) {
-        throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match", sdkName, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
+      wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
+      if (wslPath != null) {
+        WSLDistribution sdkDistribution = wslPath.getDistribution();
+        if (!sdkDistribution.equals(projectWslDistribution)) {
+          throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match",
+                                                                  sdkName + " (WSL " + sdkDistribution.getPresentableName() + ")",
+                                                                  MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
+        }
+        cmdLine = new WslBuildCommandLineBuilder(project, sdkDistribution, wslPath.getLinuxPath(), progressIndicator);
+        buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on linux side
+        buildProcessConnectPort = getWslPort(sdkDistribution, listenPort);
       }
-      cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);
+      else {
+        if (projectWslDistribution != null) {
+          throw new ExecutionException(
+            JavaCompilerBundle.message("build.process.wsl.distribution.dont.match", sdkName, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
+        }
+        cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);
+      }
     }
 
     boolean profileWithYourKit = false;
@@ -1423,7 +1440,7 @@ public final class BuildManager implements Disposable {
     String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
     if (jnaBootLibraryPath != null && wslPath == null) {
       //noinspection SpellCheckingInspection
-      cmdLine.addParameter("-Djna.boot.library.path=" + jnaBootLibraryPath);
+      cmdLine.addParameter("-Djna.boot.library.path=" + cmdLine.copyPathToHostIfRequired(Path.of(jnaBootLibraryPath)));
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.nosys=true");
       //noinspection SpellCheckingInspection
@@ -1617,6 +1634,7 @@ public final class BuildManager implements Disposable {
 
     //noinspection SpellCheckingInspection
     cmdLine.addParameter("-Dide.propagate.context=false");
+    cmdLine.addParameter("-Dintellij.platform.log.sync=true");
 
     @SuppressWarnings("UnnecessaryFullyQualifiedName") final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
 
