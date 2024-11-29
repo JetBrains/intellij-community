@@ -292,9 +292,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
-    var targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
-    executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString());
-
     var mainInitScriptPath = GradleInitScriptUtil.createMainInitScript(resolverContext.isBuildSrcProject(), toolingExtensionClasses);
     executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScriptPath.toString());
 
@@ -302,6 +299,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       var ideaPluginConfiguratorInitScriptPath = GradleInitScriptUtil.createIdeaPluginConfiguratorInitScript();
       executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, ideaPluginConfiguratorInitScriptPath.toString());
     }
+
+    var targetPathMapperInitScript = GradleInitScriptUtil.createTargetPathMapperInitScript();
+    executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString());
 
     var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(executionSettings);
     var pathMapper = ObjectUtils.doIfNotNull(environmentConfigurationProvider, it -> it.getPathMapper());
