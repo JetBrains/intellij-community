@@ -2,7 +2,6 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.ide.IdeBundle;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.notification.Notification;
@@ -260,43 +259,18 @@ public final class PyPackageManagerUI {
     @Override
     protected @NotNull List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final List<ExecutionException> exceptions = new ArrayList<>();
-      final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      if (myRequirements == null) {
-        indicator.setText(PyBundle.message("python.packaging.installing.packages"));
-        indicator.setIndeterminate(true);
-        try {
-          manager.install(null, myExtraArgs);
-        }
-        catch (ExecutionException e) {
-          exceptions.add(e);
-        }
+
+      if (myProject == null) {
+        return exceptions;
       }
-      else {
-        final int size = myRequirements.size();
-        for (int i = 0; i < size; i++) {
-          final PyRequirement requirement = myRequirements.get(i);
-          indicator.setText(PyBundle.message("python.packaging.progress.text.installing.specific.package",
-                                             requirement.getPresentableText()));
-          if (i == 0) {
-            indicator.setIndeterminate(true);
-          }
-          else {
-            indicator.setIndeterminate(false);
-            indicator.setFraction((double)i / size);
-          }
-          try {
-            manager.install(Collections.singletonList(requirement), myExtraArgs);
-          }
-          catch (RunCanceledByUserException e) {
-            exceptions.add(e);
-            break;
-          }
-          catch (ExecutionException e) {
-            exceptions.add(e);
-          }
-        }
-      }
-      manager.refresh();
+
+      PythonPackagesInstallerAsync.Companion.installPackages(
+        myProject,
+        myRequirements,
+        myExtraArgs,
+        indicator
+      );
+
       return exceptions;
     }
 
