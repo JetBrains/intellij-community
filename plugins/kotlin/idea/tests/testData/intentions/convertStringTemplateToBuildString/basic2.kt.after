@@ -7,4 +7,4 @@ fun test(foo: String, bar: Int) {
         append(foo)
         append(bar)
     }
-} 
+}
