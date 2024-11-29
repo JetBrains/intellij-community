@@ -364,7 +364,7 @@ public class ExtensionPointImplTest {
     }
   }
 
-  static final class MyComponentManager implements ComponentManager {
+  public static final class MyComponentManager implements ComponentManager {
     @Override
     public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
       try {
