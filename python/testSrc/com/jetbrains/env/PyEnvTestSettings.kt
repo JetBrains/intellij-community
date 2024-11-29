@@ -3,6 +3,7 @@ package com.jetbrains.env
 
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
+import com.jetbrains.env.PyEnvTestSettings.Companion.PATH_TO_TEST_ENV_PYTHON_INTERPRETERS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -29,6 +30,7 @@ internal data class PyEnvTestSettings(
    * Paths to all existing python SDKs
    */
   @TestOnly
+  @get:JvmName("getPythons")
   internal val pythons: List<File> = foldersWithPythons
     .filter(File::exists)
     .flatMap { it.listFiles()?.toList() ?: emptyList() }

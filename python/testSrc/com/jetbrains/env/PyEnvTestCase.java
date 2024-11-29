@@ -228,7 +228,7 @@ public abstract class PyEnvTestCase {
   }
 
   public static List<String> getDefaultPythonRoots() {
-    return ContainerUtil.map(SETTINGS.getPythons$intellij_python_community_tests(), File::getAbsolutePath);
+    return ContainerUtil.map(SETTINGS.getPythons(), File::getAbsolutePath);
   }
 
   /**
