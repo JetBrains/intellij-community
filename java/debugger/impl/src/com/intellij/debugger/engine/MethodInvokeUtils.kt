@@ -100,6 +100,9 @@ internal fun tryInvokeWithHelper(
     if (helperExceptionStackTrace?.lineSequence()?.filterNot(::isHelperFrame)?.any { it.contains(methodCallString) } == true) {
       throw e
     }
+    if (e is EvaluateException && e.cause is IncompatibleThreadStateException) {
+      throw e
+    }
     if (ApplicationManager.getApplication().isInternal) {
       val attachments = listOfNotNull(helperExceptionStackTrace?.let { Attachment("helper_stack.txt", it).apply { isIncluded = true } }).toTypedArray()
       DebuggerUtilsImpl.logError("Exception from helper (while evaluating ${method.declaringType().name() + "." + method.name()}): ${e.message}",
