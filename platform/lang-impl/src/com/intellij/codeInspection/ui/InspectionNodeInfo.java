@@ -21,7 +21,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
-import com.intellij.ui.components.panels.StatelessCardLayout;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -76,7 +75,7 @@ public final class InspectionNodeInfo extends JPanel {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     pane.setAlignmentX(0);
 
-    add(StatelessCardLayout.wrap(pane),
+    add(pane,
         new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new JBInsets(0, 10, 0, 0), 0, 0));
 
