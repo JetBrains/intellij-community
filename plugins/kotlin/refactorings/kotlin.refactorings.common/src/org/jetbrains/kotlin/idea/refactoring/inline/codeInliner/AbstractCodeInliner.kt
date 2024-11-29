@@ -247,7 +247,7 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
                         usage, psiFactory.createExpression(typeClassifier + arguments)
                     )
                 } else if (parent is KtUserType) {
-                    parent.replace(typeElement)
+                    (((parent.parent as? KtTypeReference)?.parent as? KtIntersectionType) ?: parent).replace(typeElement)
                 } else {
                     //TODO: tests for this?
                     codeToInline.replaceExpression(usage, psiFactory.createExpression(typeElement.text))

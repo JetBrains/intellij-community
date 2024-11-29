@@ -2695,6 +2695,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/withImportAlias3.kt");
             }
 
+            @TestMetadata("withIntersectionTypes.kt")
+            public void testWithIntersectionTypes() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/withIntersectionTypes.kt");
+            }
+
             @TestMetadata("withoutUsage.kt")
             public void testWithoutUsage() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/withoutUsage.kt");

@@ -180,7 +180,8 @@ internal fun insertExplicitTypeArguments(codeToInline: MutableCodeToInline) {
                 codeToInline.addPreCommitAction(callExpression) { expr ->
                     expr.addAfter(KtPsiFactory(expr.project).createTypeArguments(arguments), expr.calleeExpression)
                     expr.typeArguments.forEach { typeArgument ->
-                        val reference = typeArgument.typeReference?.typeElement?.safeAs<KtUserType>()?.referenceExpression
+                        val typeElement = typeArgument.typeReference?.typeElement
+                        val reference = (((typeElement as? KtIntersectionType)?.getLeftTypeRef()?.typeElement ?: typeElement) as? KtUserType)?.referenceExpression
                         reference?.putCopyableUserData(CodeToInline.TYPE_PARAMETER_USAGE_KEY, Name.identifier(reference.text))
                     }
                 }
