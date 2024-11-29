@@ -55,7 +55,10 @@ c:com.intellij.diff.DiffDialogHints
 - getParent():java.awt.Component
 - getWindowConsumer():com.intellij.util.Consumer
 com.intellij.diff.DiffEditorTitleCustomizer
+- sf:Companion:com.intellij.diff.DiffEditorTitleCustomizer$Companion
+- sf:EMPTY:com.intellij.diff.DiffEditorTitleCustomizer
 - a:getLabel():javax.swing.JComponent
+f:com.intellij.diff.DiffEditorTitleCustomizer$Companion
 a:com.intellij.diff.DiffExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V

@@ -1,13 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffEditorTitleCustomizer;
-import com.intellij.diff.DiffManager;
+import com.intellij.diff.*;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.impl.DiffEditorTitleDetails;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
@@ -43,7 +41,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -57,7 +55,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -418,9 +415,9 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
           String leftTitle = DiffBundle.message("merge.version.title.current");
           String rightTitle = VcsBundle.message("shelve.shelved.version");
           DiffRequest request = new SimpleDiffRequest(getRequestTitle(), leftContent, rightContent, leftTitle, rightTitle);
-          return DiffUtil.addTitleCustomizers(request,
-                                              DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, myChange.getChange(), leftTitle,
-                                                                                              rightTitle));
+          List<DiffEditorTitleCustomizer> titleCustomizers =
+            DiffTitleWithDetailsCustomizers.getTitleCustomizers(myProject, myChange.getChange(), leftTitle, rightTitle);
+          return DiffUtil.addTitleCustomizers(request, titleCustomizers);
         }
         catch (VcsException e) {
           throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getFilePath()), e);
@@ -504,11 +501,11 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       String rightTitle = null;
 
       DiffRequest request = new SimpleDiffRequest(getRequestTitle(), leftContent, rightContent, leftTitle, rightTitle);
-      List<DiffEditorTitleCustomizer> titleCustomizers = Arrays.asList(
-        DiffTitleFilePathCustomizer.getTitleCustomizer(myProject, VcsUtil.getFilePath(myFile), leftTitle),
-        DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER
+      return DiffUtil.addTitleCustomizers(
+        request,
+        DiffEditorTitleDetails.create(myProject, VcsUtil.getFilePath(myFile), leftTitle).getCustomizer(),
+        DiffEditorTitleCustomizer.EMPTY
       );
-      return DiffUtil.addTitleCustomizers(request, titleCustomizers);
     }
 
     private @NotNull DiffRequest createDiffRequestUsingBase(@NotNull ApplyPatchForBaseRevisionTexts texts) {
@@ -530,11 +527,11 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       DiffRequest request =
         new SimpleDiffRequest(getRequestTitle(), leftContent, rightContent, leftTitle, VcsBundle.message("shelve.shelved.version"));
 
-      List<DiffEditorTitleCustomizer> titleCustomizers = Arrays.asList(
-        DiffTitleFilePathCustomizer.getTitleCustomizer(myProject, VcsUtil.getFilePath(myFile), leftTitle),
-        DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER
+      return DiffUtil.addTitleCustomizers(
+        request,
+        DiffEditorTitleDetails.create(myProject, VcsUtil.getFilePath(myFile), leftTitle).getCustomizer(),
+        DiffEditorTitleCustomizer.EMPTY
       );
-      return DiffUtil.addTitleCustomizers(request, titleCustomizers);
     }
 
     private DiffRequest createDiffRequestUsingLocal(@NotNull ApplyPatchForBaseRevisionTexts texts,

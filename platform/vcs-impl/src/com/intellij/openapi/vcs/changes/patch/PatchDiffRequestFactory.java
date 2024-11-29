@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffEditorTitleCustomizer;
-import com.intellij.diff.DiffRequestFactory;
-import com.intellij.diff.InvalidDiffRequestException;
+import com.intellij.diff.*;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.impl.DiffEditorTitleDetails;
 import com.intellij.diff.merge.MergeCallback;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
@@ -28,7 +26,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffRequest;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
@@ -129,11 +126,13 @@ public final class PatchDiffRequestFactory {
     return DiffUtil.addTitleCustomizers(request, get3WayDiffCustomizers(project, file, resultTitle));
   }
 
-  private static @NotNull List<DiffEditorTitleCustomizer> get3WayDiffCustomizers(Project project, VirtualFile file, String centerTitle) {
+  private static @NotNull List<DiffEditorTitleCustomizer> get3WayDiffCustomizers(Project project,
+                                                                                 VirtualFile file,
+                                                                                 @NlsContexts.Label String centerTitle) {
     return Arrays.asList(
-      DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER,
-      DiffTitleFilePathCustomizer.getTitleCustomizer(project, VcsUtil.getFilePath(file), centerTitle),
-      DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER
+      DiffEditorTitleCustomizer.EMPTY,
+      DiffEditorTitleDetails.create(project, VcsUtil.getFilePath(file), centerTitle).getCustomizer(),
+      DiffEditorTitleCustomizer.EMPTY
     );
   }
 

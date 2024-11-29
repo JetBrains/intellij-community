@@ -8,7 +8,7 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.FileContent
-import com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer
+import com.intellij.diff.impl.DiffEditorTitleDetails
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.util.DiffDataKeys
@@ -27,11 +27,10 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.JBLabel
 import javax.swing.JComponent
 import kotlin.collections.List
 import kotlin.collections.MutableMap
@@ -94,26 +93,19 @@ class MutableDiffRequestChain @JvmOverloads constructor(
       }
 
       return DiffUtil.addTitleCustomizers(request, buildList {
-        val guessedProjectDir = project?.guessProjectDir()
-
-        add(getTitleCustomizer(content1, title1, guessedProjectDir))
+        add(getTitleCustomizer(content1, title1))
         if (baseContent != null) {
-          add(getTitleCustomizer(baseContent, baseTitle, guessedProjectDir))
+          add(getTitleCustomizer(baseContent, baseTitle))
         }
-        add(getTitleCustomizer(content2, title2, guessedProjectDir))
+        add(getTitleCustomizer(content2, title2))
       })
     }
 
-    private fun getTitleCustomizer(content: DiffContent?, customTitle: @NlsSafe String?, guessedProjectDir: VirtualFile?): DiffEditorTitleCustomizer =
-      if (content is FileContent && customTitle == null) {
-        FilePathDiffTitleCustomizer(
-          displayedPath = getDisplayPath(guessedProjectDir, content.file),
-          fullPath = FileUtil.getLocationRelativeToUserHome(content.file.presentableUrl),
-        )
-      }
-      else {
-        DiffEditorTitleCustomizer { customTitle?.let { JBLabel(customTitle) } }
-      }
+    private fun getTitleCustomizer(content: DiffContent?, customTitle: @NlsSafe String?): DiffEditorTitleCustomizer = when {
+      customTitle != null -> DiffEditorTitleDetails.createFromTitle(customTitle)
+      content is FileContent -> DiffEditorTitleDetails.create(project, LocalFilePath(content.file.path, content.file.isDirectory), null)
+      else -> DiffEditorTitleDetails.EMPTY
+    }.getCustomizer()
   }
 
   companion object {

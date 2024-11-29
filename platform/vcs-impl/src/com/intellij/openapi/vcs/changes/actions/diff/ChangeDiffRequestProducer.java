@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeUtils;
@@ -265,9 +265,9 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   private @NotNull List<DiffEditorTitleCustomizer> createTitleCustomizers() {
-    return DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, myChange,
-                                                           (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE),
-                                                           (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE)
+    return DiffTitleWithDetailsCustomizers.getTitleCustomizers(myProject, myChange,
+                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE),
+                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE)
     );
   }
 

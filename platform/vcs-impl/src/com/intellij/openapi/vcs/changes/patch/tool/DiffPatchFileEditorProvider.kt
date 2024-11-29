@@ -37,7 +37,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromPr
 import com.intellij.openapi.vcs.changes.patch.PatchFileType
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer.getTitleCustomizers
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers.getTitleCustomizers
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.ui.update.MergingUpdateQueue

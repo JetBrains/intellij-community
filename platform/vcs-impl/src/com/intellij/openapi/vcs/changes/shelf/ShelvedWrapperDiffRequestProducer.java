@@ -29,7 +29,7 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -114,7 +114,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     DiffRequest request = createTextShelveRequest(title, patch, contextFilePath, leftTitle, rightTitle, commitContext);
 
     Change change = shelvedChange.getChange();
-    List<DiffEditorTitleCustomizer> titleCustomizers = DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, change, leftTitle, rightTitle);
+    List<DiffEditorTitleCustomizer> titleCustomizers = DiffTitleWithDetailsCustomizers.getTitleCustomizers(myProject, change, leftTitle, rightTitle);
     return DiffUtil.addTitleCustomizers(request, titleCustomizers);
   }
 

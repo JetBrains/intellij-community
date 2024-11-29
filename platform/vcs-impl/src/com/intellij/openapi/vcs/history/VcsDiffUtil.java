@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Key;
@@ -47,7 +48,7 @@ public final class VcsDiffUtil {
   }
 
   /**
-   * @deprecated - Consider using {@link DiffTitleFilePathCustomizer#getTitleCustomizers} and
+   * @deprecated - Consider using {@link DiffTitleWithDetailsCustomizers#getTitleCustomizers} and
    * {@link com.intellij.diff.util.DiffUtil#addTitleCustomizers(DiffRequest, List)} instead
    */
   @Deprecated

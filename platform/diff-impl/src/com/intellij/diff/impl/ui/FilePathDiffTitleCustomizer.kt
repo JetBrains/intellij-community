@@ -2,6 +2,7 @@
 package com.intellij.diff.impl.ui
 
 import com.intellij.diff.DiffEditorTitleCustomizer
+import com.intellij.diff.impl.DiffEditorTitleDetails.DetailsLabelProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FilePathSplittingPolicy
@@ -16,9 +17,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class FilePathDiffTitleCustomizer(
-  private val displayedPath: String,
-  private val fullPath: @NlsSafe String = displayedPath,
-  private val revisionLabel: RevisionLabel? = null,
+  private val path: DetailsLabelProvider,
+  private val revisionLabel: DetailsLabelProvider?,
 ) : DiffEditorTitleCustomizer {
   override fun getLabel(): JComponent {
     val revisionWithPath = JPanel(GridBagLayout())
@@ -31,17 +31,13 @@ class FilePathDiffTitleCustomizer(
         ipadx = scale(8)
       })
     }
-    val pathLabel = DiffFilePathLabelWrapper(displayedPath, fullPath)
+    val pathLabel = path.createComponent()
     revisionWithPath.add(pathLabel, GridBagConstraints().apply {
       fill = GridBagConstraints.BOTH
       weightx = 1.0;
       gridx = 1
     })
     return revisionWithPath
-  }
-
-  data class RevisionLabel(private val revision: @NlsSafe String, private val copiable: Boolean) {
-    fun createComponent() = JBLabel(revision).setCopyable(copiable)
   }
 }
 

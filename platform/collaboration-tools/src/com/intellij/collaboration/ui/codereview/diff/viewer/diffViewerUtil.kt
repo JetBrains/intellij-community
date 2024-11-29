@@ -282,7 +282,7 @@ private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation
 }
 
 /**
- * @see com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
+ * @see com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers
  * @see com.intellij.openapi.vcs.history.VcsDiffUtil.putFilePathsIntoChangeContext
  */
 @Deprecated("Path of changed files is shown via DiffTitleFilePathCustomizer")

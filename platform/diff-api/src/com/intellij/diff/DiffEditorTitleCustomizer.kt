@@ -8,4 +8,9 @@ fun interface DiffEditorTitleCustomizer {
    * @return component that will be used to replace an editor title or null if the title should not be displayed
    */
   fun getLabel(): JComponent?
+
+  companion object {
+    @JvmField
+    val EMPTY: DiffEditorTitleCustomizer = DiffEditorTitleCustomizer { null }
+  }
 }

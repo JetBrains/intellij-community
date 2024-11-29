@@ -2,10 +2,11 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.impl.DiffEditorTitleDetails;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
@@ -19,14 +20,11 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 public final class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
@@ -88,10 +86,9 @@ public final class UnversionedDiffRequestProducer implements ChangeDiffRequestCh
     SimpleDiffRequest request = new SimpleDiffRequest(DiffRequestFactory.getInstance().getTitle(file), content1, content2, null, title2);
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_UNVERSIONED, file);
-    List<DiffEditorTitleCustomizer> titleCustomizers =
-      Arrays.asList(DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER, DiffTitleFilePathCustomizer.getTitleCustomizer(project, VcsUtil.getFilePath(file), title2));
-    DiffUtil.addTitleCustomizers(request, titleCustomizers);
-
+    DiffUtil.addTitleCustomizers(request,
+                                 DiffEditorTitleCustomizer.EMPTY,
+                                 DiffEditorTitleDetails.create(project, VcsUtil.getFilePath(file), title2).getCustomizer());
     return request;
   }
 

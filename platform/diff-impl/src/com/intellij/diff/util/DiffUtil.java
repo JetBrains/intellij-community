@@ -1699,13 +1699,28 @@ public final class DiffUtil {
   }
 
   public static @NotNull <T extends DiffRequest> T addTitleCustomizers(@NotNull T request, @NotNull List<DiffEditorTitleCustomizer> customizers) {
+    tryTitleCustomizersNumber(request, customizers.size());
     request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, customizers);
+    return request;
+  }
+
+  public static @NotNull <T extends DiffRequest> T addTitleCustomizers(@NotNull T request, DiffEditorTitleCustomizer @NotNull... customizers) {
+    tryTitleCustomizersNumber(request, customizers.length);
+    request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, List.of(customizers));
     return request;
   }
 
   public static @NotNull <T extends MergeRequest> T addTitleCustomizers(@NotNull T request, @NotNull List<DiffEditorTitleCustomizer> customizers) {
     request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, customizers);
     return request;
+  }
+
+  private static void tryTitleCustomizersNumber(@NotNull DiffRequest request, int customizersNumber) {
+    assert customizersNumber != 0;
+
+    if (request instanceof ContentDiffRequest contentDiffRequest && contentDiffRequest.getContentTitles().size() != customizersNumber) {
+      LOG.error("Expected " + contentDiffRequest.getContentTitles().size() + " titles, but got " + customizersNumber);
+    }
   }
 
   //

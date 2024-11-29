@@ -352,6 +352,24 @@ a:com.intellij.diff.impl.CacheDiffRequestProcessor$Simple
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String):V
 - p:getRequestName(com.intellij.diff.chains.DiffRequestProducer):java.lang.String
 - p:loadRequest(com.intellij.diff.chains.DiffRequestProducer,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
+f:com.intellij.diff.impl.DiffEditorTitleDetails
+- sf:Companion:com.intellij.diff.impl.DiffEditorTitleDetails$Companion
+- sf:EMPTY:com.intellij.diff.impl.DiffEditorTitleDetails
+- <init>(com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider,com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider):V
+- sf:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath,java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- sf:createFromPath(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- sf:createFromTitle(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- f:getCustomizer():com.intellij.diff.DiffEditorTitleCustomizer
+- f:getPathLabel():com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider
+- f:getRevisionLabel():com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider
+f:com.intellij.diff.impl.DiffEditorTitleDetails$Companion
+- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath,java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- f:createFromPath(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- f:createFromTitle(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider
+- a:createComponent():javax.swing.JComponent
+f:com.intellij.diff.impl.DiffEditorTitleDetailsKt
+- sf:getCustomizers(java.util.List):java.util.List
 com.intellij.diff.impl.DiffEditorViewer
 - a:addListener(com.intellij.diff.impl.DiffEditorViewerListener,com.intellij.openapi.Disposable):V
 - a:fireProcessorActivated():V
@@ -1934,6 +1952,7 @@ f:com.intellij.diff.util.DiffUtil
 - s:addNotification(com.intellij.diff.util.DiffNotificationProvider,com.intellij.openapi.util.UserDataHolder):V
 - s:addTitleCustomizers(com.intellij.diff.merge.MergeRequest,java.util.List):com.intellij.diff.merge.MergeRequest
 - s:addTitleCustomizers(com.intellij.diff.requests.DiffRequest,java.util.List):com.intellij.diff.requests.DiffRequest
+- s:addTitleCustomizers(com.intellij.diff.requests.DiffRequest,com.intellij.diff.DiffEditorTitleCustomizer[]):com.intellij.diff.requests.DiffRequest
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,com.intellij.openapi.editor.Document,I,I):V
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,java.util.List):V
 - s:applyModification(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.util.List):java.lang.String
