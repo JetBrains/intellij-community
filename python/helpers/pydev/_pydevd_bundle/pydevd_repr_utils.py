@@ -158,7 +158,7 @@ if IS_PY3K:
                 if self.do_trim:
                     return super().repr_str(x, level)
                 else:
-                    return f"'{x}'"
+                    return "'{x}'".format(x=x)
 
 
 
