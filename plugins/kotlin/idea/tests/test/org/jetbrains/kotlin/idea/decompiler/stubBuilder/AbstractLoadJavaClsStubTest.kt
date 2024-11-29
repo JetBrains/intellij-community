@@ -41,68 +41,63 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
         val codegenFactory = JvmIrCodegenFactory(configuration, null)
         val state = GenerationState(project, analysisResult.moduleDescriptor, configuration)
 
-        try {
-            KotlinCodegenFacade.compileCorrectFiles(listOf(ktFile), state, analysisResult.bindingContext, codegenFactory)
-            val outputFiles = state.factory
+        KotlinCodegenFacade.compileCorrectFiles(listOf(ktFile), state, analysisResult.bindingContext, codegenFactory)
 
-            val lightFiles = HashMap<String, VirtualFile>()
+        val lightFiles = HashMap<String, VirtualFile>()
 
-            fun addDirectory(filePath: String) {
-                assert(filePath.startsWith('/'))
+        fun addDirectory(filePath: String) {
+            assert(filePath.startsWith('/'))
 
-                lightFiles.getOrPut(filePath) {
-                    object : LightVirtualFile(filePath) {
-                        override fun isDirectory() = true
-                        override fun getParent() = lightFiles[PathUtil.getParentPath(filePath)]
-                        override fun findChild(name: String) = lightFiles["$filePath/$name"]
-                    }
-                }
-            }
-
-            fun addFile(filePath: String, content: ByteArray) {
-                assert(filePath.startsWith('/'))
-
-                val pathSegments = filePath.drop(1).split('/')
-                repeat(pathSegments.size) { i ->
-                    addDirectory("/" + pathSegments.take(i).joinToString("/"))
-                }
-
-                lightFiles[filePath] = object : BinaryLightVirtualFile(filePath, content) {
+            lightFiles.getOrPut(filePath) {
+                object : LightVirtualFile(filePath) {
+                    override fun isDirectory() = true
                     override fun getParent() = lightFiles[PathUtil.getParentPath(filePath)]
+                    override fun findChild(name: String) = lightFiles["$filePath/$name"]
                 }
             }
+        }
 
-            addDirectory("/")
+        fun addFile(filePath: String, content: ByteArray) {
+            assert(filePath.startsWith('/'))
 
-            for (file in outputFiles.asList()) {
-                if (!file.relativePath.endsWith(".class")) {
-                    continue
-                }
-
-                addFile("/" + file.relativePath, file.asByteArray())
+            val pathSegments = filePath.drop(1).split('/')
+            repeat(pathSegments.size) { i ->
+                addDirectory("/" + pathSegments.take(i).joinToString("/"))
             }
 
-            val psiManager = PsiManager.getInstance(project)
-
-            for (lightFile in lightFiles.values) {
-                if (lightFile.isDirectory) {
-                    continue
-                }
-
-                val fileContent = FileContentImpl.createByFile(lightFile)
-                val stubTreeFromCls = KotlinClsStubBuilder().buildFileStub(fileContent) ?: continue
-
-                val decompiledProvider = KotlinDecompiledFileViewProvider(psiManager, lightFile, false, ::KtClsFile)
-                val stubsFromDeserializedDescriptors = KtFileStubBuilder().buildStubTree(KtClsFile(decompiledProvider))
-
-                Assert.assertEquals(
-                    "File: ${lightFile.name}",
-                    stubsFromDeserializedDescriptors.serializeToString(),
-                    stubTreeFromCls.serializeToString()
-                )
+            lightFiles[filePath] = object : BinaryLightVirtualFile(filePath, content) {
+                override fun getParent() = lightFiles[PathUtil.getParentPath(filePath)]
             }
-        } finally {
-            state.destroy()
+        }
+
+        addDirectory("/")
+
+        for (file in state.factory.asList()) {
+            if (!file.relativePath.endsWith(".class")) {
+                continue
+            }
+
+            addFile("/" + file.relativePath, file.asByteArray())
+        }
+
+        val psiManager = PsiManager.getInstance(project)
+
+        for (lightFile in lightFiles.values) {
+            if (lightFile.isDirectory) {
+                continue
+            }
+
+            val fileContent = FileContentImpl.createByFile(lightFile)
+            val stubTreeFromCls = KotlinClsStubBuilder().buildFileStub(fileContent) ?: continue
+
+            val decompiledProvider = KotlinDecompiledFileViewProvider(psiManager, lightFile, false, ::KtClsFile)
+            val stubsFromDeserializedDescriptors = KtFileStubBuilder().buildStubTree(KtClsFile(decompiledProvider))
+
+            Assert.assertEquals(
+                "File: ${lightFile.name}",
+                stubsFromDeserializedDescriptors.serializeToString(),
+                stubTreeFromCls.serializeToString()
+            )
         }
     }
 }

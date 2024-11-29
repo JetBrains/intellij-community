@@ -90,9 +90,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         try {
             KotlinCodegenFacade.compileCorrectFiles(filesToCompile, generationState, bindingContext, codegenFactory)
-            return fragmentCompilerBackend.extractResult(parameterInfo, generationState).also {
-                generationState.destroy()
-            }
+            return fragmentCompilerBackend.extractResult(parameterInfo, generationState)
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: Exception) {
