@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.impl.utils.getEelApiKey
 import com.intellij.platform.eel.provider.LocalEelKey
 import com.intellij.platform.eel.provider.getEelApiBlocking
@@ -104,7 +105,7 @@ internal class MavenWrapperSupport {
       throw IllegalStateException(SyncBundle.message("zip.is.not.correct", zipFile.toAbsolutePath()))
     }
     val mavenHome = dirs[0]
-    if (mavenHome.getEelApiBlocking() is EelPosixApi) {
+    if (mavenHome.getEelApiBlocking().fs is EelFileSystemPosixApi) {
       makeMavenBinRunnable(mavenHome)
     }
     return mavenHome
