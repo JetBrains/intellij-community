@@ -28,6 +28,7 @@ public final class ElementPatternCondition<T> {
     conditions.add(condition);
   }
 
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
     append(builder, "");

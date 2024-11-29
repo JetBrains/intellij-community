@@ -24,8 +24,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, Icon>>, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
@@ -126,6 +126,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, I
       super(pair.first, pair.second);
     }
 
+    @Override
     public String toString() {
       return StringUtil.notNullize(first);
     }

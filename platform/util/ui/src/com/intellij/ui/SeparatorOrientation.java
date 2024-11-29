@@ -12,6 +12,7 @@ public final class SeparatorOrientation {
     myName = name;
   }
 
+  @Override
   public String toString() {
     return myName;
   }

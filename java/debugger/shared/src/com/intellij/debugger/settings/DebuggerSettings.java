@@ -186,6 +186,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
     }
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof DebuggerSettings secondSettings)) return false;
 

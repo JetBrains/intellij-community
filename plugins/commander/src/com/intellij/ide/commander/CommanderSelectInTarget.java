@@ -16,6 +16,7 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
     super(project);
   }
 
+  @Override
   public String toString() {
     return IdeBundle.message("select.in.commander");
   }

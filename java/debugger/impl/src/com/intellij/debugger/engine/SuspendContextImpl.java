@@ -361,6 +361,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myEvaluationContext = evaluationContext;
   }
 
+  @Override
   public String toString() {
     return "{" + myDebugId + "} " + "SP=" + getSuspendPolicyString() + " " + oldToString();
   }

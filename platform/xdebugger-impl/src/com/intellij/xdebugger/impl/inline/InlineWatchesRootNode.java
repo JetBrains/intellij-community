@@ -211,6 +211,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     return inlinesRootNodeIsShown() ? 1 : 0;
   }
 
+  @Override
   public void moveUp(WatchNode node) {
     int index = getIndex(node);
     if (inlinesRootNodeIsShown()) {
@@ -224,6 +225,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     getTree().setSelectionRow(selectionRow);
   }
 
+  @Override
   public void moveDown(WatchNode node) {
     int index = getIndex(node);
     if (inlinesRootNodeIsShown()) {

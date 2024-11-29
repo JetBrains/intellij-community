@@ -26,6 +26,7 @@ class TestNode {
     return myMark;
   }
 
+  @Override
   public String toString() {
     return myMark;
   }

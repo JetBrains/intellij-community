@@ -78,6 +78,7 @@ final class LambdaIndy {
     return ContainerUtil.concat(captured, ContainerUtil.map(getFunctionalMethodType().getArgumentTypes(), valueSupplier));
   }
 
+  @Override
   public String toString() {
     return "Lambda [" + myMethod.methodName + "]: " + StringUtil.getShortName(myFunctionalInterfaceType.getClassName());
   }

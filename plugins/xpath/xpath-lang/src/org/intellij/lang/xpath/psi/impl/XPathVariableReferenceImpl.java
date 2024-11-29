@@ -172,6 +172,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return null;
     }
 
+    @Override
     public int hashCode() {
         return getReferencedName().hashCode();
     }

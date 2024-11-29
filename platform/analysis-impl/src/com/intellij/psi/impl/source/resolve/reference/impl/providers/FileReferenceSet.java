@@ -177,6 +177,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     reparse();
   }
 
+  @Override
   public @NotNull PsiElement getElement() {
     return myElement;
   }

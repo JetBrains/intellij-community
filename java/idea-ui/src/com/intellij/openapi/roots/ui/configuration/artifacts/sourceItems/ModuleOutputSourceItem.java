@@ -23,7 +23,10 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputPackagingElement;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -40,10 +43,12 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
     return myModule;
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof ModuleOutputSourceItem && myModule.equals(((ModuleOutputSourceItem)obj).myModule);
   }
 
+  @Override
   public int hashCode() {
     return myModule.hashCode();
   }

@@ -75,6 +75,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.USER);
   }
 
+  @Override
   public String toString() {
     return myColumn.getTitle();
   }

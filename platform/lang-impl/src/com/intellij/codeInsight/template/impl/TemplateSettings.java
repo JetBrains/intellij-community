@@ -149,6 +149,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       return new TemplateKey(template.getGroupName(), template.getKey());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -157,6 +158,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       return Objects.equals(groupName, that.groupName) && Objects.equals(key, that.key);
     }
 
+    @Override
     public int hashCode() {
       int result = groupName != null ? groupName.hashCode() : 0;
       result = 31 * result + (key != null ? key.hashCode() : 0);

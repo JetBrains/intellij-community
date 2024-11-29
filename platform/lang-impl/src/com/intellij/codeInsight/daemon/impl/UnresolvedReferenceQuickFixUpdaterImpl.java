@@ -51,6 +51,7 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     myProject = project;
   }
 
+  @Override
   public void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull List<? extends HighlightInfo> infos) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ThreadingAssertions.assertNoOwnReadAccess(); // have to be able to wait over the write action to finish, must not hold RA for that
@@ -87,6 +88,7 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     }
   }
 
+  @Override
   public void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo.Builder info) {
     ((HighlightInfoB)info).setUnresolvedReference(ref);
   }

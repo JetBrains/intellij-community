@@ -26,6 +26,7 @@ public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> impleme
     return myName;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiTypeParameter[" + myName + ']';

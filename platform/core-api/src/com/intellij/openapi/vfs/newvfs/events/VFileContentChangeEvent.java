@@ -87,6 +87,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
            myOldLength != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewLength != UNDEFINED_TIMESTAMP_OR_LENGTH;
   }
 
+  @Override
   public String toString() {
     return "VfsEvent[update: " + myFile.getPresentableUrl() +
            ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp +
@@ -110,6 +111,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
     return myFile.isValid() && myFile.getModificationStamp() == myOldModificationStamp;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -123,6 +125,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myFile.hashCode();
     result = 31 * result + Long.hashCode(myOldModificationStamp);

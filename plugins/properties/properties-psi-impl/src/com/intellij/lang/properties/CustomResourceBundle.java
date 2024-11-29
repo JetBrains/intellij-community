@@ -77,6 +77,7 @@ public final class CustomResourceBundle extends ResourceBundle {
     return true;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -86,6 +87,7 @@ public final class CustomResourceBundle extends ResourceBundle {
            resourceBundle.getBaseName().equals(getBaseName());
   }
 
+  @Override
   public int hashCode() {
     return myFiles.hashCode() * 31 + myBaseName.hashCode();
   }

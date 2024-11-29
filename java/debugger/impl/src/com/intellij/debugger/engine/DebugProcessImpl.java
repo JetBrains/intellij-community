@@ -1187,6 +1187,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       myEvaluationContext = evaluationContext;
     }
 
+    @Override
     public String toString() {
       return "INVOKE: " + super.toString();
     }

@@ -126,6 +126,7 @@ public class BindingFactory {
       }
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       return o instanceof BindingImpl binding && myBindings.equals(binding.myBindings);
@@ -200,6 +201,7 @@ public class BindingFactory {
       return b3;
     }
 
+    @Override
     public String toString() {
       final StringBuilder buffer = new StringBuilder();
 

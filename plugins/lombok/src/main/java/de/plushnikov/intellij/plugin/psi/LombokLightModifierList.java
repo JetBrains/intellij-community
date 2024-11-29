@@ -128,6 +128,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return myParent;
   }
 
+  @Override
   public String toString() {
     return "LombokLightModifierList";
   }

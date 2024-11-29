@@ -72,6 +72,7 @@ public class ConsoleViewContentType {
     return myName;
   }
 
+  @Override
   public String toString() {
     return myName;
   }

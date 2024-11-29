@@ -79,6 +79,7 @@ public class StringConcatInstruction extends EvalInstruction {
            constant instanceof Boolean ? constant.toString() : null;
   }
 
+  @Override
   public String toString() {
     return "STRING_CONCAT";
   }

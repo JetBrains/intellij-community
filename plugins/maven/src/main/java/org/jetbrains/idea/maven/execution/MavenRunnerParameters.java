@@ -289,6 +289,7 @@ public final class MavenRunnerParameters implements Cloneable {
     return new MavenRunnerParameters(this);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -307,6 +308,7 @@ public final class MavenRunnerParameters implements Cloneable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = isPomExecution ? 1 : 0;

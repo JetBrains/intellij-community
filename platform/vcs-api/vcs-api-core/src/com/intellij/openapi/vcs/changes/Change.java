@@ -130,6 +130,7 @@ public class Change {
     return myAfterRevision == null ? null : myAfterRevision.getFile().getVirtualFile();
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if ((!(o instanceof Change otherChange))) return false;
@@ -148,6 +149,7 @@ public class Change {
     return Comparing.equal(fbr1, fbr2) && Comparing.equal(far1, far2);
   }
 
+  @Override
   public int hashCode() {
     if (myHash == -1) {
       myHash = calculateHash();
@@ -215,6 +217,7 @@ public class Change {
     }
   }
 
+  @Override
   @NonNls
   public String toString() {
     final Type type = getType();

@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -30,6 +29,7 @@ public final class DfaControlTransferValue extends DfaValue {
     this.target = target;
   }
 
+  @Override
   public String toString() {
     return target + (traps.isEmpty() ? "" : " " + traps);
   }

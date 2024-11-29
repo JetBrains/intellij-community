@@ -83,6 +83,7 @@ public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifact
     myArtifactPointers.remove(pointer);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -96,6 +97,7 @@ public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifact
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myArtifactPointers.hashCode();

@@ -126,6 +126,7 @@ final class PageSizes {
     public String name;
     public String visualName;
 
+    @Override
     public String toString() {
       return visualName;
     }

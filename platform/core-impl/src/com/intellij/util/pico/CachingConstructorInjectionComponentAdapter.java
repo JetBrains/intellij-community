@@ -43,6 +43,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     return componentImplementation;
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + "[" + key + "]";
   }

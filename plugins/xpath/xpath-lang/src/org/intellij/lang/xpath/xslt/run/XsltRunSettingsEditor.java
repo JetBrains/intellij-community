@@ -511,6 +511,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           this.value = value;
         }
 
+        @Override
         public boolean equals(Object o) {
           if (this == o) return true;
           if (o == null || getClass() != o.getClass()) return false;
@@ -520,6 +521,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           return name.equals(param.name) && value.equals(param.value);
         }
 
+        @Override
         public int hashCode() {
           int result = name.hashCode();
           result = 29 * result + value.hashCode();

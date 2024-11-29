@@ -116,6 +116,7 @@ public enum AudioMediaType {
     this.contentType = contentType;
   }
 
+  @Override
   public String toString() {
     return contentType;
   }

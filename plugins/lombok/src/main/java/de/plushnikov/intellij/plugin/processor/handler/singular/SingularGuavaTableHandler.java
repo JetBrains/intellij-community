@@ -48,6 +48,7 @@ class SingularGuavaTableHandler extends SingularMapHandler {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 1);
   }
 
+  @Override
   @NotNull
   protected PsiType getValueType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, COM_GOOGLE_COMMON_COLLECT_TABLE, 2);

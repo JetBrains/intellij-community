@@ -23,6 +23,7 @@ public final class InvokeActionResult implements Result{
     return true; //no text result will be provided anyway
   }
 
+  @Override
   public String toString() {
     return "";
   }

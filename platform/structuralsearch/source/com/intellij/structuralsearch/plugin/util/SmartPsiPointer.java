@@ -38,6 +38,7 @@ public class SmartPsiPointer {
     return pointer.getElement();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof SmartPsiPointer ref)) {
       return false;
@@ -45,6 +46,7 @@ public class SmartPsiPointer {
     return ref.pointer.equals(pointer);
   }
 
+  @Override
   public int hashCode() {
     PsiElement element = getElement();
     return element == null ? 0 : element.hashCode();

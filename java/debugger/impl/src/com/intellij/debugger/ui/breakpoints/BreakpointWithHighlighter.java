@@ -418,6 +418,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     }
   }
 
+  @Override
   public String toString() {
     return ReadAction.compute(() -> CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
                                     + XmlStringUtil.escapeString(getDisplayName())

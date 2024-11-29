@@ -107,6 +107,7 @@ public class MetaTarget implements AntBuildTargetBase {
     return myBuildFile.getVirtualFile();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -127,6 +128,7 @@ public class MetaTarget implements AntBuildTargetBase {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int code = myBuildFile.hashCode();
     for (String name : myTargets) {

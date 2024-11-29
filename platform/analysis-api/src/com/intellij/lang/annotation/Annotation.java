@@ -471,6 +471,7 @@ public final class Annotation implements Segment {
     myProblemGroup = problemGroup;
   }
 
+  @Override
   public @NonNls String toString() {
     return "Annotation(" +
            "message='" + myMessage + "'" +

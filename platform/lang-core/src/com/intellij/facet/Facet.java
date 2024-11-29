@@ -88,10 +88,12 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     disposeFacet();
   }
 
+  @Override
   public final int hashCode() {
     return super.hashCode();
   }
 
+  @Override
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }

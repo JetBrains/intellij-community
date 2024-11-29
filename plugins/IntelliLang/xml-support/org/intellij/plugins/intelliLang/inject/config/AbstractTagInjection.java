@@ -164,6 +164,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
     }
   }
 
+  @Override
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -180,6 +181,7 @@ public abstract class AbstractTagInjection extends BaseInjection {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myTagName.hashCode();

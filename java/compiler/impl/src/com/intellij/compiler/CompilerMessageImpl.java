@@ -134,6 +134,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return myModuleNames;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof CompilerMessage)) return false;
@@ -149,6 +150,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myCategory.hashCode();
@@ -159,6 +161,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return result;
   }
 
+  @Override
   public String toString() {
     return myMessage;
   }

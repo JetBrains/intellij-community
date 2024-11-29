@@ -95,12 +95,14 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
       return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof UsageTypeGroup usageTypeGroup)) return false;
       return myUsageType.equals(usageTypeGroup.myUsageType);
     }
 
+    @Override
     public int hashCode() {
       return myUsageType.hashCode();
     }

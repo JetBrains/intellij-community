@@ -205,6 +205,7 @@ public final class GridConstraints implements Cloneable {
   /**
    * @return deep copy of the {@link GridConstraints}
    */
+  @Override
   public Object clone() {
     return new GridConstraints(
       myRow, myColumn, myRowSpan, myColSpan, myAnchor, myFill, myHSizePolicy, myVSizePolicy,
@@ -359,6 +360,7 @@ public final class GridConstraints implements Cloneable {
     myMaximumSize.setSize(constraints.myMaximumSize);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof GridConstraints)) return false;
@@ -382,6 +384,7 @@ public final class GridConstraints implements Cloneable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myRow;
@@ -433,6 +436,7 @@ public final class GridConstraints implements Cloneable {
     return cell >= myColumn && cell < myColumn + myColSpan;
   }
 
+  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "GridConstraints (row=" + myRow + ", col=" + myColumn + ", rowspan=" + myRowSpan + ", colspan=" + myColSpan + ")";

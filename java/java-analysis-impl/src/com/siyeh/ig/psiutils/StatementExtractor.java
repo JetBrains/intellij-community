@@ -133,6 +133,7 @@ public final class StatementExtractor {
 
     public abstract Node prepend(Node node);
 
+    @Override
     public abstract String toString();
   }
 
@@ -206,6 +207,7 @@ public final class StatementExtractor {
       return node.myAnchor == null ? this : new Cons(node, this);
     }
 
+    @Override
     public String toString() {
       if (myAnchor instanceof PsiInstanceOfExpression) {
         var patternVariableWrappers = JavaPsiPatternUtil.collectPatternVariableWrappers(myAnchor);

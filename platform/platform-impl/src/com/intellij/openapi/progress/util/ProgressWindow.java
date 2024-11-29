@@ -358,6 +358,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  @Override
   public @ProgressTitle String getTitle() {
     return myTitle;
   }

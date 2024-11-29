@@ -232,6 +232,7 @@ public final class TemplateResource implements Serializable {
    *
    * @return filename for UI.
    */
+  @Override
   public String toString() {
     return fileName != null ? fileName : template;
   }

@@ -26,6 +26,7 @@ final class SingleCharSequence implements CharSequence {
     throw new RuntimeException("Method subSequence not implemented");
   }
 
+  @Override
   public String toString() {
     return String.valueOf(myCh);
   }

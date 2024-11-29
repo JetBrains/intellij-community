@@ -60,10 +60,12 @@ public final class TestGrouper implements Grouper {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public String toString() {
       return "Group:" + myString;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Group)) return false;
@@ -75,6 +77,7 @@ public final class TestGrouper implements Grouper {
       return true;
     }
 
+    @Override
     public int hashCode() {
       return (myString != null ? myString.hashCode() : 0);
     }

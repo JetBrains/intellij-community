@@ -68,6 +68,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     INCLUDE = value;
   }
 
+  @Override
   public String toString() {
     return getPattern();
   }
@@ -86,6 +87,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ClassFilter)) return false;
@@ -93,6 +95,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     return isEnabled() == classFilter.isEnabled() && getPattern().equals(classFilter.getPattern());
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = PATTERN.hashCode();

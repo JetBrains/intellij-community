@@ -92,6 +92,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return copy;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof DfaMemoryStateImpl that)) return false;
@@ -120,6 +121,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private Integer myCachedHash;
+  @Override
   public int hashCode() {
     if (myCachedHash != null) return myCachedHash;
 
@@ -129,6 +131,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myCachedHash = hash;
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append('<');

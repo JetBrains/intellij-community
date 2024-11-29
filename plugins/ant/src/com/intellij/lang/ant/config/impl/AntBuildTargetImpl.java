@@ -65,10 +65,12 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     myDescription = (desc != null && desc.trim().length() > 0) ? desc : null;
   }
 
+  @Override
   public int hashCode() {
     return myHashCode;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof AntBuildTargetImpl that)) {
       return false;

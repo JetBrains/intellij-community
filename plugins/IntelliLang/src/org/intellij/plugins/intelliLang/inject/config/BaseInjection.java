@@ -38,7 +38,10 @@ import org.intellij.lang.annotations.RegExp;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jdom.CDATA;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -251,6 +254,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return new BaseInjection(mySupportId).copyFrom(this);
   }
 
+  @Override
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -269,6 +273,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myInjectedLanguageId.hashCode();

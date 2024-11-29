@@ -80,10 +80,12 @@ public final class TextWithImportsImpl implements TextWithImports {
     return myImports;
   }
 
+  @Override
   public boolean equals(Object object) {
     return object instanceof TextWithImportsImpl item && Objects.equals(item.myText, myText) && Objects.equals(item.myImports, myImports);
   }
 
+  @Override
   public String toString() {
     return getText();
   }
@@ -100,6 +102,7 @@ public final class TextWithImportsImpl implements TextWithImports {
     return result;
   }
 
+  @Override
   public int hashCode() {
     return myText.hashCode();
   }

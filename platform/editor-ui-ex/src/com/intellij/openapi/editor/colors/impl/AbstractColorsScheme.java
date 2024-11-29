@@ -338,6 +338,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return this;
   }
 
+  @Override
   public @NonNls String toString() {
     return getName();
   }

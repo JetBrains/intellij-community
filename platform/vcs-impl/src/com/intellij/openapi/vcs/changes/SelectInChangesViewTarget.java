@@ -23,6 +23,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
     myProject = project;
   }
 
+  @Override
   public String toString() {
     return ChangesViewManager.getLocalChangesToolWindowName(myProject);
   }

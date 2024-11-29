@@ -21,6 +21,7 @@ public final class IndentInside {
     this.tabs = tabs;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -31,6 +32,7 @@ public final class IndentInside {
     return whiteSpaces == indent.whiteSpaces;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = whiteSpaces;

@@ -30,11 +30,13 @@ public final class FavoriteTreeNodeDescriptor extends PresentableNodeDescriptor<
     return myElement;
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof FavoriteTreeNodeDescriptor)) return false;
     return ((FavoriteTreeNodeDescriptor)object).getElement().equals(myElement);
   }
 
+  @Override
   public int hashCode() {
     return myElement.hashCode();
   }

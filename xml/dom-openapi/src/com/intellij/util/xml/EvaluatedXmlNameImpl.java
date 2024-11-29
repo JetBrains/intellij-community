@@ -52,6 +52,7 @@ public final class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return createEvaluatedXmlName(name, namespaceKey, equalToParent);
   }
 
+  @Override
   public String toString() {
     return (myNamespaceKey == null ? "" : myNamespaceKey + " : ") + myXmlName.getLocalName();
   }

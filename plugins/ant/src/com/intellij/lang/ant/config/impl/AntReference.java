@@ -49,6 +49,7 @@ public abstract class AntReference {
 
   protected abstract void writeExternal(Element dataElement);
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -74,11 +75,13 @@ public abstract class AntReference {
       throw new UnsupportedOperationException("Should not call");
     }
 
+    @Override
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "PROJECT_DEFAULT";
     }
 
+    @Override
     public boolean equals(Object obj) {
       return obj == this;
     }
@@ -90,6 +93,7 @@ public abstract class AntReference {
       dataElement.setAttribute(BUNDLED_ANT_ATTR, Boolean.TRUE.toString());
     }
 
+    @Override
     public boolean equals(Object obj) {
       return obj == this;
     }
@@ -116,10 +120,12 @@ public abstract class AntReference {
 
   public abstract AntReference bind(GlobalAntConfiguration antConfiguration);
 
+  @Override
   public int hashCode() {
     return getName().hashCode();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == PROJECT_DEFAULT) return this == PROJECT_DEFAULT;
     if (obj == BUNDLED_ANT) return this == BUNDLED_ANT;

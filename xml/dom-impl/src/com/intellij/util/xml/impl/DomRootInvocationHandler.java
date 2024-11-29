@@ -59,12 +59,14 @@ public class DomRootInvocationHandler extends DomInvocationHandler {
     }
   }
 
+  @Override
   public boolean equals(final Object obj) {
     if (!(obj instanceof DomRootInvocationHandler handler)) return false;
 
     return myParent.equals(handler.myParent);
   }
 
+  @Override
   public int hashCode() {
     return myParent.hashCode();
   }

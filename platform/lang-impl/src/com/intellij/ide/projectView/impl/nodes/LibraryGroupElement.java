@@ -36,6 +36,7 @@ public final class LibraryGroupElement {
     return myModule;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LibraryGroupElement libraryGroupElement)) return false;
@@ -45,6 +46,7 @@ public final class LibraryGroupElement {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myModule.hashCode();
   }

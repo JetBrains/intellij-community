@@ -158,6 +158,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     }
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ReplaceOptions replaceOptions)) return false;
@@ -172,6 +173,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = replacement.hashCode();
     result = 29 * result + (toShortenFQN ? 1 : 0);

@@ -51,6 +51,7 @@ final class ModulePackageRepr extends Proto {
     RW.save(myModuleNames, INT_EXTERNALIZER, out);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -61,6 +62,7 @@ final class ModulePackageRepr extends Proto {
     return name == ((ModulePackageRepr)o).name;
   }
 
+  @Override
   public int hashCode() {
     return 31 * name;
   }

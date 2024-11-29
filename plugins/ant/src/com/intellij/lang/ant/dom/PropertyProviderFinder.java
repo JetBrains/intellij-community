@@ -290,6 +290,7 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
       myDisplayName = displayName;
     }
 
+    @Override
     public String toString() {
       return myDisplayName;
     }

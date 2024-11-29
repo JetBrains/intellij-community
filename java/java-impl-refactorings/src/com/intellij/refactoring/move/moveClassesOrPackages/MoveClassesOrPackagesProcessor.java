@@ -359,6 +359,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
 
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof ClassMemberWrapper wrapper)) return false;
@@ -371,6 +372,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       return Objects.equals(myElement.getName(), wrapper.myElement.getName());
     }
 
+    @Override
     public int hashCode() {
       final String name = myElement.getName();
       if (name != null) {

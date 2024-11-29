@@ -110,6 +110,7 @@ public abstract class InstructionSequence {
     this.pointer += diff;
   }
 
+  @Override
   public String toString() {
     return toString(0);
   }

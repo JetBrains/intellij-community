@@ -177,6 +177,7 @@ public class FeatureDescriptor {
     myLastTimeUsed = Math.max(myLastTimeUsed, newLastTimeUsed);
   }
 
+  @Override
   public String toString() {
 
     return "id = [" +

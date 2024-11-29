@@ -18,6 +18,7 @@ public final class TodoIndexEntry {
     this.caseSensitive = caseSensitive;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -27,6 +28,7 @@ public final class TodoIndexEntry {
     return caseSensitive == that.caseSensitive && pattern.equals(that.pattern);
   }
 
+  @Override
   public int hashCode() {
     int result = pattern.hashCode();
     result = 31 * result + (caseSensitive ? 1 : 0);

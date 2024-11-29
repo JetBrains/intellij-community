@@ -324,6 +324,7 @@ public class JBZipEntry {
    *
    * @return a hashcode.
    */
+  @Override
   public int hashCode() {
     // this method has severe consequences on performance. We cannot rely
     // on the super.hashCode() method since super.getName() always return

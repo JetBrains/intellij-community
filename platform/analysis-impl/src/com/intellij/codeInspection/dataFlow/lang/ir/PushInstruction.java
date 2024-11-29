@@ -41,6 +41,7 @@ public class PushInstruction extends EvalInstruction {
     return myValue;
   }
 
+  @Override
   public String toString() {
     return "PUSH " + myValue;
   }

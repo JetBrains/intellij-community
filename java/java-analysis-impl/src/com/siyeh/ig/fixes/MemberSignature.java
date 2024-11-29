@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -88,6 +91,7 @@ public class MemberSignature implements Comparable<MemberSignature> {
     return signature.compareTo(other.signature);
   }
 
+  @Override
   public boolean equals(Object object) {
     try {
       final MemberSignature other = (MemberSignature)object;
@@ -128,10 +132,12 @@ public class MemberSignature implements Comparable<MemberSignature> {
     return STATIC_INITIALIZER;
   }
 
+  @Override
   public int hashCode() {
     return name.hashCode() + signature.hashCode();
   }
 
+  @Override
   public String toString() {
     return name + signature;
   }

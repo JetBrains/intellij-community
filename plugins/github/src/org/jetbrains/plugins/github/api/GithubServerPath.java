@@ -174,6 +174,7 @@ public final class GithubServerPath implements ServerPath {
     return myHost.equalsIgnoreCase(DEFAULT_HOST);
   }
 
+  @Override
   public @NlsSafe @NotNull String toString() {
     String schema = myUseHttp != null ? getSchemaUrlPart() : "";
     return schema + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);

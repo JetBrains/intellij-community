@@ -39,6 +39,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     return nextStates(interpreter, stateBefore);
   }
 
+  @Override
   public String toString() {
     return "METHOD_REF: " + getDfaAnchor();
   }

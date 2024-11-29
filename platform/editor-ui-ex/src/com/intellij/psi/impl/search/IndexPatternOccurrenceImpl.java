@@ -47,10 +47,12 @@ final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
     return myPattern;
   }
 
+  @Override
   public int hashCode(){
     return myFile.hashCode()+myStartOffset+myEndOffset+myPattern.hashCode();
   }
 
+  @Override
   public boolean equals(Object obj){
     if(!(obj instanceof IndexPatternOccurrenceImpl todoItem)){
       return false;

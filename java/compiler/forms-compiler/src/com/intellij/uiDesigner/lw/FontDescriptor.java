@@ -100,6 +100,7 @@ public final class FontDescriptor {
     return UIManager.getFont(mySwingFont) != null;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof FontDescriptor)) {
       return false;

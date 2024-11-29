@@ -12,6 +12,7 @@ public class FieldNode extends MemberNode<PsiField> {
     super(field);
   }
 
+  @Override
   public String toString() {
     final PsiField field = (PsiField)getPsiElement();
     if (field == null || !field.isValid()) return "";

@@ -546,6 +546,7 @@ public final class DiffDividerDrawUtil {
       }
     }
 
+    @Override
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myFillColor + ", " + myBorderColor;
     }
@@ -573,6 +574,7 @@ public final class DiffDividerDrawUtil {
       DiffLineSeparatorRenderer.drawConnectorLine(g, 0, width, myStart1, myStart2, myEnd1 - myStart1, myIsHovered, myScheme);
     }
 
+    @Override
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> ";
     }

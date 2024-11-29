@@ -108,6 +108,7 @@ public class FieldElement extends AbstractElement implements Element {
     return name.matches(regexp);
   }
 
+  @Override
   public String toString() {
     return super.toString() + " ::: FieldElement{" +
            "isConstant=" + isConstant +

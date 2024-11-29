@@ -211,6 +211,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       return null;
     }
 
+    @Override
     public String toString() {
       return myTemplate.replace("{0}", "").replaceAll("\\b[a-z.]+\\.", "");
     }

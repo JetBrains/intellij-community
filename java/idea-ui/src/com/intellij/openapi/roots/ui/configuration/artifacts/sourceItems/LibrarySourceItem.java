@@ -50,10 +50,12 @@ public class LibrarySourceItem extends PackagingSourceItem {
     return new LibrarySourceItemPresentation(myLibrary, context);
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof LibrarySourceItem && myLibrary.equals(((LibrarySourceItem)obj).myLibrary);
   }
 
+  @Override
   public int hashCode() {
     return myLibrary.hashCode();
   }

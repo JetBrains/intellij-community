@@ -61,6 +61,7 @@ public final class ResourceBundleImpl extends ResourceBundle {
     myValid = false;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -70,6 +71,7 @@ public final class ResourceBundleImpl extends ResourceBundle {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myDefaultPropertiesFile.hashCode();
   }

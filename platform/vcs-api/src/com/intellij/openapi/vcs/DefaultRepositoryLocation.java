@@ -23,6 +23,7 @@ public class DefaultRepositoryLocation implements RepositoryLocation {
     return myURL;
   }
 
+  @Override
   public String toString() {
     return myLocation;
   }

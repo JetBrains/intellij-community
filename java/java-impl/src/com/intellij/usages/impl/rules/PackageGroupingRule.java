@@ -95,6 +95,7 @@ public final class PackageGroupingRule extends DirectoryGroupingRule {
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof PackageGroup)) return false;
@@ -102,6 +103,7 @@ public final class PackageGroupingRule extends DirectoryGroupingRule {
       return myPackage.equals(((PackageGroup)o).myPackage);
     }
 
+    @Override
     public int hashCode() {
       return myPackage.hashCode();
     }

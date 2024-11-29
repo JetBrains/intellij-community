@@ -328,6 +328,7 @@ public abstract class SourcePosition implements Navigatable {
     };
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof SourcePosition sourcePosition) {
       return Comparing.equal(sourcePosition.getFile(), getFile()) && sourcePosition.getOffset() == getOffset();

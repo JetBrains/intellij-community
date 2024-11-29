@@ -166,6 +166,7 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   @Override
   protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
+      @Override
       public String toString() {
         return getTitle() + " " + super.toString();
       }

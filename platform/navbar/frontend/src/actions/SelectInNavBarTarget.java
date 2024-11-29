@@ -95,6 +95,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
     return null;
   }
 
+  @Override
   public String toString() {
     return IdeBundle.message("navigation.bar");
   }

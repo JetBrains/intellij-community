@@ -45,6 +45,7 @@ abstract class AbstractLookup extends LookupElement {
         return myPresentation;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -54,6 +55,7 @@ abstract class AbstractLookup extends LookupElement {
         return myName.equals(that.myName);
     }
 
+    @Override
     public int hashCode() {
         return myName.hashCode();
     }

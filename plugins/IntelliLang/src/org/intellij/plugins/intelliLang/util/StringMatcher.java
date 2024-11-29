@@ -277,10 +277,12 @@ public abstract class StringMatcher<T> {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myTarget.hashCode();
   }
 
+  @Override
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean equals(Object obj) {
     if (obj == null) return false;

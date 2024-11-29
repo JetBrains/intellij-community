@@ -18,6 +18,7 @@ public class CurrentBinaryContentRevision extends CurrentContentRevision impleme
     return getContentAsBytes();
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "CurrentBinaryContentRevision:" + myFile;

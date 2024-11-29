@@ -38,6 +38,7 @@ public final class VcsRoot {
     return Objects.equals(myPath, root.myPath) && Objects.equals(myVcs, root.myVcs);
   }
 
+  @Override
   public int hashCode() {
     if (hashcode == 0) {
       hashcode = myVcs != null ? myVcs.hashCode() : 0;

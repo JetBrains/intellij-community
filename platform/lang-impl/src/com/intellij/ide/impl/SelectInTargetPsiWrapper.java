@@ -27,6 +27,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     myProject = project;
   }
 
+  @Override
   public abstract String toString();
 
   protected abstract boolean canSelect(PsiFileSystemItem file);

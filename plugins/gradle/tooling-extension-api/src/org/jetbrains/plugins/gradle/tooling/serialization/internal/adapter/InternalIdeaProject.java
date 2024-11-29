@@ -85,6 +85,7 @@ public final class InternalIdeaProject implements IdeaProject {
     this.javaLanguageSettings = javaLanguageSettings;
   }
 
+  @Override
   public String toString() {
     return String.format("IdeaProject{ name='%s', description='%s', children count=%d, languageLevel='%s', jdkName='%s'}",
                          this.name, this.description, this.children.size(), this.languageLevel, this.jdkName);

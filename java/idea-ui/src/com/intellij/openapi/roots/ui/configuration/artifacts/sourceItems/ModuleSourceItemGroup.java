@@ -35,10 +35,12 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     return new ModuleSourceItemPresentation(myModule, context);
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof ModuleSourceItemGroup && myModule.equals(((ModuleSourceItemGroup)obj).myModule);
   }
 
+  @Override
   public int hashCode() {
     return myModule.hashCode();
   }

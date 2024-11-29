@@ -478,6 +478,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       return new SdkListItem.NoneSdkItem();
     }
 
+    @Override
     public String toString() {
       return JavaUiBundle.message("jdk.combo.box.none.item");
     }

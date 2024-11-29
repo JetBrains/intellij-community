@@ -173,6 +173,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return myPsiElement.isValid();
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -185,6 +186,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result;
       result = myPsiElement.hashCode();

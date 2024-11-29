@@ -74,6 +74,7 @@ public final class HMember implements MemberDescriptor {
     return this;
   }
 
+  @Override
   public String toString() {
     return bytesToString(asBytes());
   }

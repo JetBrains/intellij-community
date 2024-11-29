@@ -120,6 +120,7 @@ public class RunHotswapDialog extends OptionsDialog {
       return mySession;
     }
 
+    @Override
     public String toString() {
       return mySession.getSessionName();
     }

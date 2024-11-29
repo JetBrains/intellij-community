@@ -196,6 +196,7 @@ public final class HighlightDisplayKey {
     }
   }
 
+  @Override
   public String toString() {
     return myShortName;
   }

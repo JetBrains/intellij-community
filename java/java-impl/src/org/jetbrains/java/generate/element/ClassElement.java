@@ -157,6 +157,7 @@ public class ClassElement {
         this._abstract = aAbstract;
     }
 
+    @Override
     public String toString() {
         return "ClassElement{" +
                 "name='" + name + "'" +

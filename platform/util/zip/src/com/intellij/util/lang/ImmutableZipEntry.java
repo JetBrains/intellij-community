@@ -61,6 +61,7 @@ public final class ImmutableZipEntry {
     return uncompressedSize == -2;
   }
 
+  @Override
   public int hashCode() {
     return name.hashCode();
   }

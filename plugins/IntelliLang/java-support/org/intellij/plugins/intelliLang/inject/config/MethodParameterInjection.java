@@ -128,6 +128,7 @@ public final class MethodParameterInjection extends BaseInjection {
     setInjectionPlaces(places);
   }
 
+  @Override
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -142,6 +143,7 @@ public final class MethodParameterInjection extends BaseInjection {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myClassName.hashCode();
@@ -360,6 +362,7 @@ public final class MethodParameterInjection extends BaseInjection {
       return new MethodInfo(methodSignature, paramFlags.clone(), returnFlag);
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -374,6 +377,7 @@ public final class MethodParameterInjection extends BaseInjection {
       return true;
     }
 
+    @Override
     public int hashCode() {
       int result;
       result = methodSignature.hashCode();

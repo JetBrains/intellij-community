@@ -189,6 +189,7 @@ public abstract class PsiFragment {
   }
 
   //debug only
+  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
 
@@ -203,6 +204,7 @@ public abstract class PsiFragment {
     return buffer.toString();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) return true;
     if (!(o instanceof PsiFragment other)) return false;
@@ -212,6 +214,7 @@ public abstract class PsiFragment {
            Comparing.equal(other.getFile(), getFile());
   }
 
+  @Override
   public int hashCode() {
     int result = getStartOffset();
     result += 31 * result + getEndOffset();

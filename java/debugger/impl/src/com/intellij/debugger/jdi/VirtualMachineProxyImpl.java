@@ -158,6 +158,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return allClasses;
   }
 
+  @Override
   public String toString() {
     return myVirtualMachine.toString();
   }
@@ -477,11 +478,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return proxy;
   }
 
+  @Override
   public boolean equals(Object obj) {
     LOG.assertTrue(obj instanceof VirtualMachineProxyImpl);
     return myVirtualMachine.equals(((VirtualMachineProxyImpl)obj).getVirtualMachine());
   }
 
+  @Override
   public int hashCode() {
     return myVirtualMachine.hashCode();
   }

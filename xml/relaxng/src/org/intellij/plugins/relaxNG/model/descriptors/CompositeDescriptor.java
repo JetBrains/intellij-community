@@ -22,7 +22,6 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.digested.DElementPattern;
-import org.kohsuke.rngom.digested.DPattern;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -78,6 +77,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
     return computeAttributeDescriptors(AttributeFinder.find(myPatterns));
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -90,6 +90,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + Arrays.hashCode(myPatterns);

@@ -76,6 +76,7 @@ public class ExcludedFiles {
     });
   }
 
+  @Override
   public boolean equals(@NotNull Object o) {
     return o instanceof ExcludedFiles && myDescriptors.equals(((ExcludedFiles)o).myDescriptors);
   }

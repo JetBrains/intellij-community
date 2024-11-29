@@ -251,6 +251,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     Disposer.register(editor.getDisposable(), myAlphaContext.getDisposable());
   }
 
+  @Override
   public @NotNull EditorImpl getEditor() {
     return myEditor;
   }

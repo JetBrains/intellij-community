@@ -66,11 +66,13 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     return toString();
   }
 
+  @Override
   public String toString() {
     final PsiClass superClass = getSuperClass();
     return superClass != null ? superClass.getName() : StructureViewBundle.message("node.structureview.invalid");
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     return o instanceof SuperTypeGroup superTypeGroup &&
@@ -78,6 +80,7 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
            Objects.equals(getSuperClass(), superTypeGroup.getSuperClass());
   }
 
+  @Override
   public int hashCode() {
     final PsiClass superClass = getSuperClass();
     return superClass  != null ? superClass .hashCode() : 0;

@@ -238,11 +238,13 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
         return true;
       }
 
+      @Override
       public int hashCode() {
         final String name = getName();
         return name != null ? name.hashCode() : 0;
       }
 
+      @Override
       public boolean equals(Object obj) {
         if (obj == null || obj.getClass() != getClass()) return false;
         final String name = ((FunctionImpl)obj).getName();

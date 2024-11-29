@@ -1267,6 +1267,7 @@ public class XMLOutputter implements Cloneable {
    *
    * @return a string listing the settings for this XMLOutputter instance
    */
+  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
     if (userFormat.lineSeparator != null) {

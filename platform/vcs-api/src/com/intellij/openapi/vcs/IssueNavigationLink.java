@@ -47,6 +47,7 @@ public class IssueNavigationLink {
     myLinkRegexp = linkRegexp;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -59,6 +60,7 @@ public class IssueNavigationLink {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myIssueRegexp.hashCode();

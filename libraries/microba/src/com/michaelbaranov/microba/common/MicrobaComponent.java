@@ -24,6 +24,7 @@ public class MicrobaComponent extends JComponent {
 
   protected Map<String, Color> colorOverrideMap;
 
+  @Override
   public ComponentUI getUI() {
     return ui;
   }
@@ -32,6 +33,7 @@ public class MicrobaComponent extends JComponent {
    * Sets the UI delegate of this component to the corresponding UI delegate
    * taken from UIManager.
    */
+  @Override
   public void updateUI() {
     ComponentUI delegate = UIManager.getUI(this);
     setUI(delegate);

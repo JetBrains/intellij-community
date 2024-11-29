@@ -53,6 +53,7 @@ public class LibraryInfo {
     return myDownloadInfo;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -66,6 +67,7 @@ public class LibraryInfo {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myDownloadInfo != null ? myDownloadInfo.hashCode() : 0);

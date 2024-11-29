@@ -29,7 +29,9 @@ public interface Symbol {
    * The platform will also check the equality when several concurrent computations
    * return different instances but only one instance should be cached.
    */
+  @Override
   boolean equals(Object obj);
 
+  @Override
   int hashCode();
 }

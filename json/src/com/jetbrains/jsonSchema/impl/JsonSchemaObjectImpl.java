@@ -283,6 +283,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     };
   }
 
+  @Override
   public @Nullable JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
                                              @Nullable JsonSchemaType otherType,
                                              @Nullable Set<JsonSchemaType> otherTypeVariants) {
@@ -314,6 +315,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     return subtypeOfBoth;
   }
 
+  @Override
   public Set<JsonSchemaType> mergeTypeVariantSets(@Nullable Set<JsonSchemaType> self, @Nullable Set<JsonSchemaType> other) {
     if (self == null) return other;
     if (other == null) return self;

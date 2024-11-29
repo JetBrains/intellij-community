@@ -124,6 +124,7 @@ public final class DfaVariableValue extends DfaValue {
     return newQualifier == myQualifier ? this : myFactory.getVarFactory().createVariableValue(myDescriptor, newQualifier);
   }
 
+  @Override
   public String toString() {
     return (myQualifier == null ? "" : myQualifier + ".") + myDescriptor;
   }

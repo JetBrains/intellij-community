@@ -124,6 +124,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     getThreadReference().suspend();
   }
 
+  @Override
   @NonNls
   public String toString() {
     try {

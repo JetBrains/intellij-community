@@ -218,6 +218,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   public abstract static class DfaProblemType {
+    @Override
     public abstract @Nls String toString();
 
     CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
@@ -432,6 +433,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return new CauseItem[0];
     }
 
+    @Override
     public String toString() {
       return JavaAnalysisBundle.message("dfa.find.cause.cast.may.fail");
     }
@@ -447,6 +449,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return new CauseItem[0];
     }
 
+    @Override
     public String toString() {
       return JavaAnalysisBundle.message("dfa.find.cause.may.be.null");
     }

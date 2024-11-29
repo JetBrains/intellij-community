@@ -123,6 +123,7 @@ public final class ProjectStructureSelectInTarget implements SelectInTarget, Dum
     return false;
   }
 
+  @Override
   public String toString() {
     return JavaUiBundle.message("select.in.project.settings");
   }

@@ -63,6 +63,7 @@ public class GithubUserDetailed extends GithubUser implements AccountDetails {
   private Date createdAt;
   private Date updatedAt;
 
+  @Override
   @Nullable
   public String getName() {
     return name;

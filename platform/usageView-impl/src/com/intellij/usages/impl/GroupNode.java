@@ -35,8 +35,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   private static final NodeComparator COMPARATOR = new NodeComparator();
@@ -62,6 +62,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
+  @Override
   public String toString() {
     String result = getGroup() == null ? "" : getGroup().getPresentableGroupText();
     synchronized (this) {
@@ -430,6 +431,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   static class Root extends GroupNode {
+    @Override
     @NonNls
     public String toString() {
       return "Root " + super.toString();

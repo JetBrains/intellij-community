@@ -53,6 +53,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return myType;
   }
 
+  @Override
   @NonNls
   public String toString() {
     final ObjectReference objectReference = getObjectReference();
@@ -107,6 +108,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     return getObjectReference().entryCount();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof ObjectReferenceProxyImpl)) {
       return false;
@@ -117,6 +119,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   }
 
 
+  @Override
   public int hashCode() {
     return myObjectReference.hashCode();
   }

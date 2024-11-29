@@ -973,6 +973,7 @@ public final class DuplicatesFinder {
       return myFolded;
     }
 
+    @Override
     public String toString() {
       return myVariable + ", " + myType + (myFolded ? ", folded" : "");
     }

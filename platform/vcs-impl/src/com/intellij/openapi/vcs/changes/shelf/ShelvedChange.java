@@ -265,6 +265,7 @@ public final class ShelvedChange {
     return myPatchPath;
   }
 
+  @Override
   public String toString() {
     return FileUtil.toSystemDependentName(myBeforePath);
   }

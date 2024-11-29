@@ -80,6 +80,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return result;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MethodSignature)) return false;
@@ -88,6 +89,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return MethodSignatureUtil.areSignaturesEqual(methodSignature, this);
   }
 
+  @Override
   public int hashCode() {
     int hash = myHash;
     if (hash == 0) {
@@ -104,6 +106,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return hash;
   }
 
+  @Override
   public String toString() {
     String s = getClass().getSimpleName() + ": ";
     final PsiTypeParameter[] typeParameters = getTypeParameters();

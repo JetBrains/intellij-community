@@ -264,6 +264,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     return myContext;
   }
 
+  @Override
   public String toString() {
     if (myContext instanceof PsiCall) {
       return "CALL_METHOD: " + myContext.getText();

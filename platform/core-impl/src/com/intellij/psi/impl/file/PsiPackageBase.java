@@ -41,12 +41,14 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     myQualifiedName = qualifiedName;
   }
 
+  @Override
   public boolean equals(Object o) {
     return o != null && getClass() == o.getClass()
            && myManager == ((PsiPackageBase)o).myManager
            && myQualifiedName.equals(((PsiPackageBase)o).myQualifiedName);
   }
 
+  @Override
   public int hashCode() {
     return myQualifiedName.hashCode();
   }

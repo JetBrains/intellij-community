@@ -102,6 +102,7 @@ public class GeneratedLocation implements Location {
     return Long.compare(codeIndex(), o.codeIndex());
   }
 
+  @Override
   public String toString() {
     return myReferenceType.name() + "." + myMethodName + ":" + myLineNumber;
   }

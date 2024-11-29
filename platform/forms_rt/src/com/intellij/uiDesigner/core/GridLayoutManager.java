@@ -129,6 +129,7 @@ public final class GridLayoutManager extends AbstractLayout {
     mySameSizeVertically = sameSizeVertically;
   }
 
+  @Override
   public void addLayoutComponent(final Component comp, final Object constraints) {
     final GridConstraints c = (GridConstraints)constraints;
     final int row = c.getRow();
@@ -205,10 +206,12 @@ public final class GridLayoutManager extends AbstractLayout {
     myColumnStretches[columnIndex] = stretch;
   }
 
+  @Override
   public Dimension maximumLayoutSize(final Container target) {
     return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
   }
 
+  @Override
   public Dimension minimumLayoutSize(final Container container) {
     validateInfos(container);
     
@@ -259,6 +262,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return widths;
   }
 
+  @Override
   public Dimension preferredLayoutSize(final Container container) {
     validateInfos(container);
 
@@ -385,6 +389,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return true;
   }
 
+  @Override
   public void layoutContainer(final Container container) {
     validateInfos(container);
 
@@ -568,6 +573,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return skipLayout;
   }
 
+  @Override
   public void invalidateLayout(final Container container) {
     myLayoutState = null;
     myHorizontalInfo = null;

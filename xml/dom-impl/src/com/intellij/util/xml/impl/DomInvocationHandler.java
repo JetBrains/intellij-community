@@ -663,6 +663,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return tag.getValue().getTrimmedText();
   }
 
+  @Override
   public final String toString() {
     if (ReflectionUtil.isAssignable(GenericValue.class, getRawType())) {
       return ((GenericValue<?>)getProxy()).getStringValue();
@@ -839,6 +840,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || !o.getClass().equals(getClass())) return false;
@@ -850,6 +852,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myChildDescription.hashCode();
   }

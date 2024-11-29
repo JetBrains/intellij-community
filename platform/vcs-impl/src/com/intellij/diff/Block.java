@@ -119,10 +119,12 @@ public class Block {
     return Arrays.asList(mySource).subList(myStart, myEnd);
   }
 
+  @Override
   public int hashCode() {
     return Arrays.hashCode(mySource) ^ myStart ^ myEnd;
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof Block other)) return false;
     return myStart == other.myStart
@@ -138,6 +140,7 @@ public class Block {
     return myEnd;
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
 

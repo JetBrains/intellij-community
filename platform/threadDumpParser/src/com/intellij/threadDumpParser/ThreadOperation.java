@@ -13,6 +13,7 @@ public enum ThreadOperation {
     myName = name;
   }
 
+  @Override
   public String toString() {
     return myName;
   }

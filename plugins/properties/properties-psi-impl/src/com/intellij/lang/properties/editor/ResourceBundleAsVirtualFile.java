@@ -51,6 +51,7 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
     return myResourceBundle.isValid() ? myResourceBundle.getBaseName() : "";
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -62,6 +63,7 @@ public final class ResourceBundleAsVirtualFile extends VirtualFile implements Vi
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myResourceBundle.hashCode();
   }

@@ -30,6 +30,7 @@ public abstract class MavenRepositoryService {
     throws IOException;
 
 
+  @Override
   public final String toString() {
     return getDisplayName();
   }

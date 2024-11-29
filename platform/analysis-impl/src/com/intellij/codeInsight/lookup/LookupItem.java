@@ -60,6 +60,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     myObject = o;
   }
 
+  @Override
   public boolean equals(Object o){
     if (o == this) return true;
     if (o instanceof LookupItem item){
@@ -71,12 +72,14 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
     return false;
   }
 
+  @Override
   public int hashCode() {
     final Object object = getObject();
     assert object != this: getClass().getName();
     return myAllLookupStrings.hashCode() * 239 + object.hashCode();
   }
 
+  @Override
   public String toString() {
     return getLookupString();
   }

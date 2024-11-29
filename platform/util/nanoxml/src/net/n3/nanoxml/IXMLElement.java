@@ -390,6 +390,7 @@ public interface IXMLElement {
    *
    * @param rawElement the element to compare to
    */
+  @Override
   boolean equals(Object rawElement);
 
 

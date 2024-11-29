@@ -115,6 +115,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return myAlternateCollectionRenderers[0].isEnabled();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof NodeRendererSettings)) return false;
 

@@ -46,6 +46,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return 0;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -57,6 +58,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return true;
     }
 
+    @Override
     public int hashCode() {
       return myValue;
     }
@@ -101,6 +103,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return myValue;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -112,10 +115,12 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return true;
     }
 
+    @Override
     public int hashCode() {
       return java.lang.Long.hashCode(myValue);
     }
 
+    @Override
     public String toString() {
       return asString();
     }

@@ -48,6 +48,7 @@ public class ValueContainerImplWithChecks<V> extends ValueContainerImpl<V> {
     }
   }
 
+  @Override
   protected void ensureInputIdAssociatedWithValue(int inputId, Object value) {
     Object normalizedValue = wrapValue(value);
     Object previousValue = presentInputIds.remove(inputId);

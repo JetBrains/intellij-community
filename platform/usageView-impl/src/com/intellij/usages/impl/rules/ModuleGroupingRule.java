@@ -102,11 +102,13 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       return myEntry.getPresentableName();
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       return o instanceof LibraryUsageGroup && myEntry.equals(((LibraryUsageGroup)o).myEntry);
     }
 
+    @Override
     public int hashCode() {
       return myEntry.hashCode();
     }
@@ -131,11 +133,13 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       return StringUtil.notNullize(myItemPresentation.getPresentableText(), UsageViewBundle.message("list.item.library"));
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       return o instanceof SyntheticLibraryUsageGroup && myItemPresentation.equals(((SyntheticLibraryUsageGroup)o).myItemPresentation);
     }
 
+    @Override
     public int hashCode() {
       return myItemPresentation.hashCode();
     }
@@ -151,6 +155,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       myGrouper = grouper;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof ModuleUsageGroup moduleUsageGroup)) return false;
@@ -158,6 +163,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       return myModule.equals(moduleUsageGroup.myModule);
     }
 
+    @Override
     public int hashCode() {
       return myModule.hashCode();
     }
@@ -178,6 +184,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       return !myModule.isDisposed();
     }
 
+    @Override
     public String toString() {
       return UsageViewBundle.message("node.group.module", getPresentableGroupText());
     }
@@ -201,11 +208,13 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       myGroupPath = groupPath;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       return o instanceof ModuleGroupUsageGroup && myGroupPath.equals(((ModuleGroupUsageGroup)o).myGroupPath);
     }
 
+    @Override
     public int hashCode() {
       return myGroupPath.hashCode();
     }
@@ -221,6 +230,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
       return myGroupPath.get(myGroupPath.size()-1);
     }
 
+    @Override
     public String toString() {
       return UsageViewBundle.message("node.group.module.group", getPresentableGroupText());
     }

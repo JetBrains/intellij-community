@@ -125,6 +125,7 @@ public final class ControlFlow {
     return new FromMapOffset(element, myElementToEndOffsetMap);
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
     final List<Instruction> instructions = myInstructions;

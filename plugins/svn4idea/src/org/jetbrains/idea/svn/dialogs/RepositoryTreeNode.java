@@ -101,6 +101,7 @@ public class RepositoryTreeNode implements TreeNode, Disposable {
     return searcher.getNextSelectedByKey();
   }
 
+  @Override
   public String toString() {
     if (myParentNode instanceof RepositoryTreeRootNode) {
       return myURL.toString();

@@ -136,6 +136,7 @@ public final class DtdFileTreeElement extends PsiTreeElementBase<XmlFile> {
      return super.getLocationString();
     }
 
+    @Override
     public String toString() {
       final String s = getLocationString();
       final String name = getElement().getName();

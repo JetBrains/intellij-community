@@ -29,6 +29,7 @@ class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements DualTreeEl
     return myRevision != VcsFileRevision.NULL;
   }
 
+  @Override
   public String toString() {
     return myRevision.getRevisionNumber().asString();
   }

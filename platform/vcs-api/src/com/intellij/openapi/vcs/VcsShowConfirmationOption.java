@@ -12,6 +12,7 @@ public interface VcsShowConfirmationOption {
     DO_NOTHING_SILENTLY,
     DO_ACTION_SILENTLY;
 
+    @Override
     public String toString() {
       // compatibility with the old implementation
       return String.valueOf(ordinal());

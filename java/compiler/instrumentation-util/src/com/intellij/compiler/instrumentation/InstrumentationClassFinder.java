@@ -329,6 +329,7 @@ public class InstrumentationClassFinder {
       return result;
     }
 
+    @Override
     public boolean equals (final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -593,6 +594,7 @@ public class InstrumentationClassFinder {
                 return new BufferedInputStream(new FileInputStream(file));
               }
 
+              @Override
               public String toString() {
                 return file.getAbsolutePath();
               }
@@ -604,6 +606,7 @@ public class InstrumentationClassFinder {
         return null;
       }
 
+      @Override
       public String toString() {
         return "FileLoader [" + myRootDir + "]";
       }
@@ -677,6 +680,7 @@ public class InstrumentationClassFinder {
                   return null;
                 }
 
+                @Override
                 public String toString() {
                   return "JarLoader [" + myURL + "!/" + entry.getName() + "]";
                 }

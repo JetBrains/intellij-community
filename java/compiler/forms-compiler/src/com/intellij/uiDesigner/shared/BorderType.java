@@ -63,6 +63,7 @@ public final class BorderType {
     return myBorderFactoryMethodName;
   }
 
+  @Override
   public boolean equals(final Object o){
     if (o instanceof BorderType){
       return myId.equals(((BorderType)o).myId);
@@ -70,6 +71,7 @@ public final class BorderType {
     return false;
   }
 
+  @Override
   public int hashCode(){
     return 0;
   }

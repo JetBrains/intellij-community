@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 
 /**
  * The indent setting for a formatting model block. Indicates how the block is indented
@@ -309,6 +309,7 @@ public abstract class Indent {
     @Experimental
     public static final Type OUTDENT_SPACES = new Type("OUTDENT_SPACES");
 
+    @Override
     public String toString() {
       return myName;
     }

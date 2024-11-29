@@ -33,6 +33,7 @@ public final class SvnRepositoryLocation implements RepositoryLocation {
     myRoot = root;
   }
 
+  @Override
   public String toString() {
     return myUrlValue;
   }

@@ -104,6 +104,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     return myCompositeName;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -121,6 +122,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myCompositeName.hashCode();
   }

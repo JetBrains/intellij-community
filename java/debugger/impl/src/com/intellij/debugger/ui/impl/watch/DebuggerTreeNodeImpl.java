@@ -55,6 +55,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     return myTree;
   }
 
+  @Override
   public String toString() {
     return myText != null ? myText.toString() : "";
   }

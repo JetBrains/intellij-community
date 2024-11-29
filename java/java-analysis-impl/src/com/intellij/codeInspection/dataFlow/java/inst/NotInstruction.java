@@ -40,6 +40,7 @@ public class NotInstruction extends ExpressionPushingInstruction {
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
+  @Override
   public String toString() {
     return "NOT";
   }

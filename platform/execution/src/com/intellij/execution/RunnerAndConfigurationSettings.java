@@ -279,5 +279,6 @@ public interface RunnerAndConfigurationSettings {
    */
   @Nullable String getFolderName();
 
+  @Override
   @NlsSafe String toString();
 }

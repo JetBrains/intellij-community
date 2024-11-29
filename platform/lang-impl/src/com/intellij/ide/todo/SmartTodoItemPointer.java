@@ -44,6 +44,7 @@ public final class SmartTodoItemPointer {
     return myAdditionalRangeMarkers;
   }
 
+  @Override
   public boolean equals(Object obj){
     if(!(obj instanceof SmartTodoItemPointer pointer)){
       return false;
@@ -65,6 +66,7 @@ public final class SmartTodoItemPointer {
     return true;
   }
 
+  @Override
   public int hashCode(){
     return myTodoItem.getFile().hashCode();
   }

@@ -218,6 +218,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private FileTypeOverrider[] fileTypeOverriderCache;
 
+  @Override
   public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
     fireBeforeFileTypesChanged();
     initializeMatchers(pluginDescriptor, fileTypeBean);

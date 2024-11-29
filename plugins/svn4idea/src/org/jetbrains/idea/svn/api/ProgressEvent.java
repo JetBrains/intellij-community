@@ -75,6 +75,7 @@ public class ProgressEvent {
     return myFile != null ? myFile.getName() : myURL != null ? myURL.toString() : null;
   }
 
+  @Override
   public String toString() {
     return getAction() + " " + getFile() + " " + getURL();
   }
