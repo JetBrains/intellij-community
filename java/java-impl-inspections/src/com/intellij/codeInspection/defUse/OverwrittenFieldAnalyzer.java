@@ -15,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.PsiAssignmentExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,13 +34,16 @@ import java.util.stream.Collectors;
  * Analyze overwritten fields based on DFA-CFG (unlike usual CFG, it includes method calls, so we can know when field value may leak)
  */
 final class OverwrittenFieldAnalyzer {
+  private static PsiElement getAssignedElement(Instruction instruction) {
+    DfaValue target = instruction instanceof AssignInstruction assign ? assign.getAssignedValue() :
+                      instruction instanceof SimpleAssignmentInstruction simple ? simple.getDestination() :
+                      null;
+    return target instanceof DfaVariableValue var ? var.getPsiVariable() : null;
+  }
+  
   static @NotNull Set<DfaAnchor> getOverwrittenFields(@Nullable ControlFlow flow) {
     if (flow == null) return Set.of();
-    if (!ContainerUtil.exists(flow.getInstructions(), i -> i instanceof AssignInstruction ai &&
-                                                           ai.getAssignedValue() instanceof DfaVariableValue var &&
-                                                           var.getPsiVariable() instanceof PsiField)) {
-      return Set.of();
-    }
+    if (!ContainerUtil.exists(flow.getInstructions(), i -> getAssignedElement(i) instanceof PsiField)) return Set.of();
     DfaValueFactory factory = flow.getFactory();
     FieldAnalysisListener listener = new FieldAnalysisListener(factory);
     new StandardDataFlowInterpreter(flow, listener) {
