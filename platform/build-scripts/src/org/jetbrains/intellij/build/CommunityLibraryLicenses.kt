@@ -604,7 +604,7 @@ object CommunityLibraryLicenses {
     LibraryLicense("JetBrains Annotations for Java 5", libraryName = "jetbrains-annotations-java5", url = "https://github.com/JetBrains/java-annotations")
       .apache("https://github.com/JetBrains/java-annotations/blob/master/LICENSE.txt"),
 
-    LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jetbrains.jewel.ide.laf.bridge.242")
+    LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-ide-laf-bridge")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
