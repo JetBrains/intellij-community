@@ -19,6 +19,5 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.restructuredtext.python" scope="RUNTIME" />
   </component>
 </module>
