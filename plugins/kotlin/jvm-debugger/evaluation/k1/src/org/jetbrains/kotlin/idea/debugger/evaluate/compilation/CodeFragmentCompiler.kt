@@ -82,8 +82,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         )
 
         val generationState = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper,
-            bindingContext, filesToCompile, compilerConfiguration
+            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper, filesToCompile, compilerConfiguration
         ).apply {
             codegenFactory(
                 fragmentCompilerBackend.codegenFactory(
@@ -94,7 +93,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         }.build()
 
         try {
-            KotlinCodegenFacade.compileCorrectFiles(generationState)
+            KotlinCodegenFacade.compileCorrectFiles(generationState, bindingContext)
             return fragmentCompilerBackend.extractResult(parameterInfo, generationState).also {
                 generationState.destroy()
             }

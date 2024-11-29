@@ -40,12 +40,11 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val state = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, analysisResult.moduleDescriptor,
-            analysisResult.bindingContext, listOf(ktFile), configuration
+            project, ClassBuilderFactories.BINARIES, analysisResult.moduleDescriptor, listOf(ktFile), configuration
         ).codegenFactory(JvmIrCodegenFactory(configuration, null)).build()
 
         try {
-            KotlinCodegenFacade.compileCorrectFiles(state)
+            KotlinCodegenFacade.compileCorrectFiles(state, analysisResult.bindingContext)
             val outputFiles = state.factory
 
             val lightFiles = HashMap<String, VirtualFile>()
