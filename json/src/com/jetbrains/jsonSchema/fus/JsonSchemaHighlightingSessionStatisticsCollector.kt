@@ -6,11 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import kotlinx.coroutines.CancellationException
-import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.APP)
-@ApiStatus.Internal
-class JsonSchemaHighlightingSessionStatisticsCollector {
+internal class JsonSchemaHighlightingSessionStatisticsCollector {
   companion object {
     @JvmStatic
     fun getInstance(): JsonSchemaHighlightingSessionStatisticsCollector {
