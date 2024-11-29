@@ -81,19 +81,16 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             parameterInfo, returnType, moduleDescriptorWrapper.packageFragmentForEvaluator
         )
 
+        val codegenFactory = fragmentCompilerBackend.codegenFactory(
+            bindingContext, compilerConfiguration, classDescriptor, methodDescriptor, parameterInfo,
+        )
         val generationState = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper, filesToCompile, compilerConfiguration
-        ).apply {
-            codegenFactory(
-                fragmentCompilerBackend.codegenFactory(
-                    bindingContext, compilerConfiguration, classDescriptor, methodDescriptor, parameterInfo,
-                )
-            )
-            generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
-        }.build()
+            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper, compilerConfiguration
+        ).generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
+            .build()
 
         try {
-            KotlinCodegenFacade.compileCorrectFiles(generationState, bindingContext)
+            KotlinCodegenFacade.compileCorrectFiles(filesToCompile, generationState, bindingContext, codegenFactory)
             return fragmentCompilerBackend.extractResult(parameterInfo, generationState).also {
                 generationState.destroy()
             }

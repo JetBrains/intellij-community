@@ -39,12 +39,13 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
             put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
         }
 
+        val codegenFactory = JvmIrCodegenFactory(configuration, null)
         val state = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, analysisResult.moduleDescriptor, listOf(ktFile), configuration
-        ).codegenFactory(JvmIrCodegenFactory(configuration, null)).build()
+            project, ClassBuilderFactories.BINARIES, analysisResult.moduleDescriptor, configuration
+        ).build()
 
         try {
-            KotlinCodegenFacade.compileCorrectFiles(state, analysisResult.bindingContext)
+            KotlinCodegenFacade.compileCorrectFiles(listOf(ktFile), state, analysisResult.bindingContext, codegenFactory)
             val outputFiles = state.factory
 
             val lightFiles = HashMap<String, VirtualFile>()
