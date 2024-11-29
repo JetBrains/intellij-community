@@ -146,6 +146,8 @@ final class OverwrittenFieldAnalyzer {
       return "@" + write + (wasRead ? " (wasRead)" : "");
     }
   }
+  
+  private record EntryPointAnchor() implements DfaAnchor {}
 
   private record WriteAnchorDescriptor(@NotNull DfaVariableValue var) implements VariableDescriptor {
     @Override
@@ -161,6 +163,11 @@ final class OverwrittenFieldAnalyzer {
     @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
       return DfWriteTopType.INSTANCE;
+    }
+
+    @Override
+    public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue, @Nullable PsiElement context) {
+      return new DfWriteAnchorType(new EntryPointAnchor(), false);
     }
 
     @Override
@@ -220,7 +227,7 @@ final class OverwrittenFieldAnalyzer {
         varsToFlush.forEach(state::flushVariable);
         if (var.getPsiVariable() instanceof PsiField && anchor != null) {
           DfaVariableValue wnr = myFactory.getVarFactory().createVariableValue(new WriteAnchorDescriptor(var));
-          state.meetDfType(wnr, new DfWriteAnchorType(anchor, false));
+          state.updateDfType(wnr, old -> new DfWriteAnchorType(anchor, false));
         }
       }
     }
