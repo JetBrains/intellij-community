@@ -25,7 +25,6 @@ object NetUtils {
     return null
   }
 
-  @Suppress("DialogTitleCapitalization")
   fun showNetworkErrorSolutionNotification(error: Throwable, project: Project?) {
     if (SystemInfo.isMacOSSequoia && error is NoRouteToHostException) {
       Notification("Mac15 Local Network",
