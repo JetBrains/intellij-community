@@ -3,8 +3,6 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.Entity
-import fleet.kernel.shared
-import kotlin.reflect.*
 
 inline fun <reified E : Entity> ChangeScope.update(entity: E, crossinline f: E.() -> Unit): E? =
   if (entity.exists()) {
@@ -70,7 +68,7 @@ fun ChangeScope.cascadeDelete(parent: Entity, child: Entity?) {
   }
 }
 
-internal fun ChangeScope.registerRectractionRelations() {
+internal fun ChangeScope.registerRetractionRelations() {
   register(RetractionRelation)
   register(SharedRetractionRelation)
 }

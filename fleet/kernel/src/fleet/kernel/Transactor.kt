@@ -280,7 +280,7 @@ suspend fun <T> withTransactor(
               // repeat some code from loadPluginLayer
               context.run {
                 registerMixin(Durable)
-                registerRectractionRelations()
+                registerRetractionRelations()
                 register(SagaScopeEntity)
                 register(OfferContributorEntity)
                 register(RemoteKernelConnectionEntity)
