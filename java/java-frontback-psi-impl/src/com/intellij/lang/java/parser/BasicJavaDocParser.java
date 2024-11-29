@@ -10,11 +10,13 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class BasicJavaDocParser {
@@ -36,7 +38,8 @@ public final class BasicJavaDocParser {
   private static final String PARAM_TAG = "@param";
   private static final String VALUE_TAG = "@value";
   private static final String SNIPPET_TAG = "@snippet";
-  private static final Set<String> REFERENCE_TAGS = ContainerUtil.immutableSet("@throws", "@exception", "@provides", "@uses");
+  private static final Set<String> REFERENCE_TAGS =
+    Collections.unmodifiableSet(new HashSet<>(Arrays.asList("@throws", "@exception", "@provides", "@uses")));
 
   private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 

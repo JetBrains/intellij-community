@@ -78,7 +78,7 @@ public class TypeMigrationLabeler {
                               Project project) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
-    myAllowedRoots = allowedRoots == null ? null : ContainerUtil.immutableSet(allowedRoots);
+    myAllowedRoots = allowedRoots == null ? null : Collections.unmodifiableSet(new HashSet<>(Arrays.asList(allowedRoots)));
 
     myConversions = new LinkedHashMap<>();
     myFailedConversions = new LinkedHashMap<>();
