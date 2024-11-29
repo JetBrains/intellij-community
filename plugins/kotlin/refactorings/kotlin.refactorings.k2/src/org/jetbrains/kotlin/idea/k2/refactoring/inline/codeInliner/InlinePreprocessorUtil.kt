@@ -249,7 +249,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                     }
                     else -> null
                 } ?: return@analyze false
-                if (resolvedSymbol is KaClassSymbol && resolvedSymbol.containingSymbol is KaClassSymbol) {
+                if (resolvedSymbol is KaEnumEntrySymbol || resolvedSymbol is KaClassSymbol && resolvedSymbol.containingSymbol is KaClassSymbol) {
                     return@analyze false
                 }
                 val containingSymbol = resolvedSymbol.containingDeclaration ?: return@analyze true
