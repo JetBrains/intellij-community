@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DetektPluginSettings">
+    <option name="configurationFilePaths">
+      <set>
+        <option value="$PROJECT_DIR$/detekt.yml" />
+      </set>
+    </option>
+    <option name="configurationFiles">
+      <list>
+        <option value="$PROJECT_DIR$/detekt.yml" />
+      </list>
+    </option>
+    <option name="enableDetekt" value="true" />
+    <option name="enableForProjectResult" value="Accepted" />
+  </component>
+</project>
