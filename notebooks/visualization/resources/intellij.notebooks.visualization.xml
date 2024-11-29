@@ -72,6 +72,15 @@
       dynamic="true"/>
   </extensionPoints>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true"
+                 description="Enables floating toolbar for markdown cells"
+                 key="jupyter.markdown.cells.floating.toolbar"
+                 restartRequired="false"/>
+
+    <textEditorCustomizer implementation="com.intellij.notebooks.visualization.ui.NotebookFloatingToolbarCustomizer"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.intellij.markdown">
     <markdownCompatibilityChecker implementation="com.intellij.notebooks.visualization.JupyterMarkdownCompatibilityChecker"/>
   </extensions>
