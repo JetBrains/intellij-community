@@ -2520,6 +2520,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/RecursiveFunctionOnDeclaration.kt");
             }
 
+            @TestMetadata("redundantImport.kt")
+            public void testRedundantImport() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/redundantImport.kt");
+            }
+
             @TestMetadata("Reference.kt")
             public void testReference() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/Reference.kt");

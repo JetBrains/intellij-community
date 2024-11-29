@@ -2520,6 +2520,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/RecursiveFunctionOnDeclaration.kt");
             }
 
+            @TestMetadata("redundantImport.kt")
+            public void testRedundantImport() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/redundantImport.kt");
+            }
+
             @TestMetadata("Reference.kt")
             public void testReference() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/Reference.kt");

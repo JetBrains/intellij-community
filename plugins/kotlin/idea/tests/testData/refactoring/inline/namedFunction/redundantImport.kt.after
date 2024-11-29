@@ -1,0 +1,7 @@
+package two
+
+import one.OuterClass
+
+fun test() {
+    OuterClass.InnerClass().getInstance()
+}
