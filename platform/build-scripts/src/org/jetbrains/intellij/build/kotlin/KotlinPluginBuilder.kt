@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
-import java.util.regex.Pattern
 
 object KotlinPluginBuilder {
   /**
@@ -331,23 +330,18 @@ object KotlinPluginBuilder {
         val sinceBuild = System.getProperty("kotlin.plugin.since")
         val untilBuild = System.getProperty("kotlin.plugin.until")
         val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
-
-        val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
-        if (ijBuildNumber.matches()) {
-          // IJ installer configurations.
-          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
-        }
-
         if (ideBuildVersion.contains("IJ")) {
           // TC configurations that are inherited from AbstractKotlinIdeArtifact.
           // In this environment, ideBuildVersion equals to build number.
           // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
           val version = ideBuildVersion.replace("IJ", kind.toString())
           Span.current().addEvent("Kotlin plugin IJ version: $version")
-          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
+          PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
         }
-
-        throw IllegalStateException("Can't parse build number: $ideBuildVersion")
+        else {
+          // IJ installer configurations.
+          PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
+        }
       })
 
       spec.withRawPluginXmlPatcher { text, _ ->
