@@ -12,7 +12,6 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
-import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -53,10 +52,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.frame.XFramesView;
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -172,8 +168,6 @@ public class JavaDebugProcess extends XDebugProcess {
       }
     };
     session.addSessionListener(new XDebugSessionListener() {
-      private boolean myAsyncEmptyText = false;
-
       @Override
       public void sessionPaused() {
         saveNodeHistory();
@@ -183,31 +177,12 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       public void stackFrameChanged() {
         XStackFrame frame = session.getCurrentStackFrame();
-        setEmptyTextIfNeeded(hasAsyncFrame(frame));
         if (frame instanceof JavaStackFrame) {
           showAlternativeNotification(frame);
           StackFrameProxyImpl frameProxy = ((JavaStackFrame)frame).getStackFrameProxy();
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), frameProxy);
           saveNodeHistory(frameProxy);
         }
-      }
-
-      private static boolean hasAsyncFrame(XStackFrame frame) {
-        return frame instanceof StackFrameItem.CapturedStackFrame ||
-               frame instanceof XFramesView.HiddenStackFramesItem hidden &&
-               ContainerUtil.exists(hidden.getHiddenFrames(), f -> hasAsyncFrame(f));
-      }
-
-      private void setEmptyTextIfNeeded(boolean isAsyncFrame) {
-        if (myAsyncEmptyText == isAsyncFrame) return;
-        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
-        if (tab == null) return;
-        var view = (XWatchesViewImpl)tab.getWatchesView();
-        if (view == null) return;
-        myAsyncEmptyText = isAsyncFrame;
-        String text = isAsyncFrame ? JavaDebuggerBundle.message("debugger.variables.not.available.in.async")
-                                   : XDebuggerBundle.message("debugger.variables.not.available");
-        view.getTree().getEmptyText().setText(text);
       }
 
       private void showAlternativeNotification(@Nullable XStackFrame frame) {

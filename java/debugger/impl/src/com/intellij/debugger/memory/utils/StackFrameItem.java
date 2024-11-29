@@ -331,6 +331,10 @@ public class StackFrameItem {
         children = new XValueChildrenList(myVariables.size());
         myVariables.forEach(children::add);
       }
+      else {
+        node.setMessage(JavaDebuggerBundle.message("debugger.variables.not.available.in.async"), AllIcons.General.Information,
+                        SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+      }
       node.addChildren(children, true);
     }
 
