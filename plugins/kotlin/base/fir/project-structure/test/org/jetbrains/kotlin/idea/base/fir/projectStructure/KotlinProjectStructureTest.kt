@@ -346,6 +346,158 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertEquals(libraryBModuleWithContext.librarySources, sharedLibrarySourceModuleWithBContext)
     }
 
+    fun `test project libraries with shared classes root search in context of transitively dependent module`() {
+        val sharedClassesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot
+
+        // Names are important – the unrelated library must be the first one to be met
+        val libraryUnrelated = projectLibrary(
+            "lib_for_a",
+            classesRoot = sharedClassesRoot,
+            sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
+        )
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("A.kt", "class A")
+                }
+            }
+        ).apply { addDependency(libraryUnrelated) }
+
+        val libraryForB = projectLibrary(
+            "lib_for_b",
+            classesRoot = sharedClassesRoot,
+            sourcesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
+        )
+        val moduleB = createModule(
+            moduleName = "b",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("B.kt", "class B")
+                }
+            }
+        )
+        val moduleC = createModule(
+            moduleName = "c",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("C.kt", "class C")
+                }
+            }
+        )
+        moduleB.addDependency(libraryForB, exported = true)
+        moduleC.addDependency(moduleB)
+
+        val kaModuleC = kaModuleWithAssertion<KaSourceModule>(getFile("C.kt"))
+        val foundLib = kaModuleWithAssertion<KaLibraryModule>(getFile("KotlinCompileDaemon.class"), contextualModule = kaModuleC)
+        assertEquals(libraryForB.name, foundLib.libraryName)
+    }
+
+    fun `test when searching transitive lib consider isExported flag on lib`() {
+        val sharedClassesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot
+
+        // Names are important – the unrelated library must be the first one to be met
+        val libraryUnrelated = projectLibrary(
+            "lib_for_a",
+            classesRoot = sharedClassesRoot,
+            sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
+        )
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("Unrelated.kt", "class Unrelated")
+                }
+            }
+        ).apply { addDependency(libraryUnrelated, exported = false) }
+
+        val libraryForB = projectLibrary(
+            "lib_for_b",
+            classesRoot = sharedClassesRoot,
+            sourcesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
+        )
+        val moduleB = createModule(
+            moduleName = "b",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("B.kt", "class B")
+                }
+            }
+        )
+        val moduleC = createModule(
+            moduleName = "c",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("C.kt", "class C")
+                }
+            }
+        )
+        moduleB.addDependency(libraryForB, exported = false)
+        moduleC.addDependency(moduleB)
+
+        val kaModuleC = kaModuleWithAssertion<KaSourceModule>(getFile("C.kt"))
+        val libraryModule = kaModuleWithAssertion<KaLibraryModule>(getFile("KotlinCompileDaemon.class"), contextualModule = kaModuleC)
+
+        assertEquals(libraryUnrelated.name, libraryModule.libraryName)
+    }
+
+    fun `test when searching transitive lib consider isExported flag on module`() {
+        val sharedClassesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot
+
+        // Names are important – the unrelated library must be the first one to be met
+        val libraryUnrelated = projectLibrary(
+            "lib_for_a",
+            classesRoot = sharedClassesRoot,
+            sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
+        )
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("Unrelated.kt", "class Unrelated")
+                }
+            }
+        ).apply { addDependency(libraryUnrelated, exported = false) }
+
+        val libraryForB = projectLibrary(
+            "lib_for_b",
+            classesRoot = sharedClassesRoot,
+            sourcesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
+        )
+        val moduleB = createModule(
+            moduleName = "b",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("B.kt", "class B")
+                }
+            }
+        )
+        val moduleC = createModule(
+            moduleName = "c",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("C.kt", "class C")
+                }
+            }
+        )
+        val moduleD = createModule(
+            moduleName = "d",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("D.kt", "class D")
+                }
+            }
+        )
+        moduleB.addDependency(libraryForB, exported = true)
+        moduleC.addDependency(moduleB, exported = false)
+        moduleD.addDependency(moduleC)
+
+        val kaModuleD = kaModuleWithAssertion<KaSourceModule>(getFile("D.kt"))
+        val libraryModule = kaModuleWithAssertion<KaLibraryModule>(getFile("KotlinCompileDaemon.class"), contextualModule = kaModuleD)
+
+        assertEquals(libraryUnrelated.name, libraryModule.libraryName)
+    }
+
     fun `test source module`() {
         createModule(
           moduleName = "a",
