@@ -140,7 +140,7 @@
     <externalSystemTaskProgressIndicatorUpdater
       implementation="org.jetbrains.plugins.gradle.service.execution.GradleExternalSystemTaskProgressIndicatorUpdater"/>
     <externalSystemTaskNotificationListener
-      implementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"/>
+      implementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager$TaskNotificationLayoutParametersCacheCleanupListener"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
@@ -238,9 +238,9 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$ProjectManagerLayoutParametersCacheCleanupListener"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$BuildLayoutParametersCacheCleanupListener"
+    <listener class="org.jetbrains.plugins.gradle.service.GradleInstallationManager$DynamicPluginLayoutParametersCacheCleanupListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 

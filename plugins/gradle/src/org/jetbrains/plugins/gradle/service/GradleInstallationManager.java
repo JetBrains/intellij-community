@@ -595,8 +595,25 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  private static final class BuildLayoutParametersCacheCleanupListener
-    implements ExternalSystemTaskNotificationListener, ProjectManagerListener, DynamicPluginListener {
+  @ApiStatus.Internal
+  static final class ProjectManagerLayoutParametersCacheCleanupListener implements ProjectManagerListener {
+    @Override
+    public void projectClosed(@NotNull Project project) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
+  }
+
+  @ApiStatus.Internal
+  static final class DynamicPluginLayoutParametersCacheCleanupListener implements DynamicPluginListener {
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      getInstance().myBuildLayoutParametersCache.clear();
+    }
+  }
+
+  @ApiStatus.Internal
+  static final class TaskNotificationLayoutParametersCacheCleanupListener implements ExternalSystemTaskNotificationListener {
+
     @Override
     public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
       getInstance().myBuildLayoutParametersCache.remove(projectPath);
@@ -621,16 +638,6 @@ public class GradleInstallationManager implements Disposable {
         String path = linkedSettings.getExternalProjectPath();
         installationManager.myBuildLayoutParametersCache.remove(path);
       }
-    }
-
-    @Override
-    public void projectClosed(@NotNull Project project) {
-      getInstance().myBuildLayoutParametersCache.clear();
-    }
-
-    @Override
-    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-      getInstance().myBuildLayoutParametersCache.clear();
     }
   }
 }
