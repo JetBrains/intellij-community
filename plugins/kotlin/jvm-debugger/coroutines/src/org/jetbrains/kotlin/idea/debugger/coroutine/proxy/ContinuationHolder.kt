@@ -9,6 +9,7 @@ import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
+import com.sun.jdi.Value
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -16,10 +17,8 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStacksInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackTraceData
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfBaseContinuationImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfStackFrame
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
+import java.lang.StackTraceElement
 
 private val LOG by lazy { fileLogger() }
 
@@ -69,8 +68,24 @@ private fun fetchContinuationStack(
     locationCache: LocationCache
 ): CoroutineStacksInfoData? {
     if (continuation == null) return null
-    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation))
+    val (coroutineStack, creationStack) = collectCoroutineAndCreationStack(continuation, context) ?: return null
+    val continuationStackFrames = coroutineStack.mapNotNull { it.toCoroutineStackFrameItem(context, locationCache) }
+    val creationStackFrames = creationStack?.mapIndexed { index, ste ->
+        CreationCoroutineStackFrameItem(locationCache.createLocation(ste), index == 0)
+    } ?: emptyList()
+    return CoroutineStacksInfoData(continuationStackFrames, creationStackFrames)
+}
 
+private fun collectCoroutineAndCreationStack(
+    continuation: ObjectReference,
+    context: DefaultExecutionContext
+): Pair<List<MirrorOfStackFrame>, List<StackTraceElement>?>? {
+    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation))
+        ?: return fallbackToOldFetchContinuationStack(continuation, context)
+    return parseResultFromHelper(array)
+}
+
+private fun parseResultFromHelper(array: Value): Pair<MutableList<MirrorOfStackFrame>, List<StackTraceElement>?>? {
     val values = (array as? ArrayReference)?.values ?: return null
     val json = (values[0] as StringReference).value()
     val continuations = (values[1] as ArrayReference).values.mapNotNull { it as? ObjectReference }
@@ -90,9 +105,16 @@ private fun fetchContinuationStack(
             )
         )
     }
-    val continuationStackFrames = coroutineStack.mapNotNull { it.toCoroutineStackFrameItem(context, locationCache) }
-    val creationStackFrames = coroutineStackTraceData.creationStack?.mapIndexed { index, ste ->
-        CreationCoroutineStackFrameItem(locationCache.createLocation(ste.stackTraceElement()), index == 0)
-    } ?: emptyList()
-    return CoroutineStacksInfoData(continuationStackFrames, creationStackFrames)
+    return coroutineStack to coroutineStackTraceData.creationStack?.map { it.stackTraceElement() }
+}
+
+private fun fallbackToOldFetchContinuationStack(
+    continuation: ObjectReference,
+    context: DefaultExecutionContext
+): Pair<List<MirrorOfStackFrame>, List<StackTraceElement>?>? {
+    val continuationStack = DebugMetadata.instance(context)?.fetchContinuationStack(continuation, context) ?: return null
+    val lastRestoredFrame = continuationStack.lastOrNull()
+    val coroutineOwner = lastRestoredFrame?.baseContinuationImpl?.coroutineOwner
+    val coroutineInfo = DebugProbesImpl.instance(context)?.getCoroutineInfo(coroutineOwner, context)
+    return continuationStack to coroutineInfo?.creationStackTraceProvider?.getStackTrace()?.map { it.stackTraceElement() }
 }

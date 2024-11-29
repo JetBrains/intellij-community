@@ -72,4 +72,6 @@ data class MirrorOfBaseContinuationImpl(
     val that: ObjectReference,
     val stackTraceElement: java.lang.StackTraceElement?,
     val fieldVariables: List<FieldVariable>,
+    internal val nextContinuation: ObjectReference? = null,
+    internal val coroutineOwner: ObjectReference? = null,
 )
