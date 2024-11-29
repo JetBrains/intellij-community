@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinDecompiledFileViewProv
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -40,9 +39,7 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val codegenFactory = JvmIrCodegenFactory(configuration, null)
-        val state = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, analysisResult.moduleDescriptor, configuration
-        ).build()
+        val state = GenerationState(project, analysisResult.moduleDescriptor, configuration)
 
         try {
             KotlinCodegenFacade.compileCorrectFiles(listOf(ktFile), state, analysisResult.bindingContext, codegenFactory)

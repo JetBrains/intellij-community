@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -84,10 +83,10 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         val codegenFactory = fragmentCompilerBackend.codegenFactory(
             bindingContext, compilerConfiguration, classDescriptor, methodDescriptor, parameterInfo,
         )
-        val generationState = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, moduleDescriptorWrapper, compilerConfiguration
-        ).generateDeclaredClassFilter(GeneratedClassFilterForCodeFragment(codeFragment))
-            .build()
+        val generationState = GenerationState(
+            project, moduleDescriptorWrapper, compilerConfiguration,
+            generateDeclaredClassFilter = GeneratedClassFilterForCodeFragment(codeFragment),
+        )
 
         try {
             KotlinCodegenFacade.compileCorrectFiles(filesToCompile, generationState, bindingContext, codegenFactory)
