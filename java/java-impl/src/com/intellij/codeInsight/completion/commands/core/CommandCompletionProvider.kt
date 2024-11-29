@@ -25,6 +25,7 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
@@ -190,6 +191,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     val adjustedText = originalDocument.getText(TextRange(0, adjustedOffset)) + originalDocument.getText(TextRange(offset, originalDocument.textLength))
 
     val file = PsiFileFactory.getInstance(parameters.editor.project).createFileFromText(originalFile.getName(), originalFile.getLanguage(), adjustedText, true, true)
+    if (file is PsiFileImpl) {
+      file.setOriginalFile(originalFile);
+    }
     return AdjustedCompletionParameters(file, adjustedOffset)
   }
 }
