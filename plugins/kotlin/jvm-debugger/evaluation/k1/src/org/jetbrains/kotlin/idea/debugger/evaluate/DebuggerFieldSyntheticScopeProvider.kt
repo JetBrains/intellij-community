@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
@@ -18,8 +17,6 @@ import org.jetbrains.kotlin.load.java.components.TypeUsage
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaClassDescriptor
 import org.jetbrains.kotlin.load.java.lazy.types.toAttributes
-import org.jetbrains.kotlin.load.java.structure.classId
-import org.jetbrains.kotlin.load.kotlin.internalName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -34,7 +31,6 @@ import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScope
 import org.jetbrains.kotlin.synthetic.SyntheticScopeProviderExtension
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithStarProjections
-import org.jetbrains.org.objectweb.asm.Type
 
 class DebuggerFieldSyntheticScopeProvider : SyntheticScopeProviderExtension {
     override fun getScopes(
@@ -129,9 +125,7 @@ class DebuggerFieldSyntheticScope(private val javaSyntheticPropertiesScope: Java
                 isVar,
                 KotlinDebuggerEvaluationBundle.message("backing.field"),
                 sourceElement
-            ) { state ->
-                state.typeMapper.mapType(clazz.defaultType)
-            }
+            )
         }
     }
 
@@ -140,13 +134,10 @@ class DebuggerFieldSyntheticScope(private val javaSyntheticPropertiesScope: Java
         syntheticNames: Set<Name>,
         consumer: MutableMap<Name, PropertyDescriptor>
     ) {
-        val javaClass = clazz.jClass
-
-        for (field in javaClass.fields) {
+        for (field in clazz.jClass.fields) {
             val fieldName = field.name
             if (field.isEnumEntry || field.isStatic || fieldName in consumer || fieldName !in syntheticNames) continue
 
-            val ownerClassName = javaClass.classId?.internalName ?: continue
             val typeResolver = clazz.outerContext.typeResolver
 
             val type = typeResolver.transformJavaType(field.type, TypeUsage.COMMON.toAttributes()).replaceArgumentsWithStarProjections()
@@ -160,9 +151,7 @@ class DebuggerFieldSyntheticScope(private val javaSyntheticPropertiesScope: Java
                 isVar,
                 KotlinDebuggerEvaluationBundle.message("java.field"),
                 sourceElement
-            ) {
-                Type.getObjectType(ownerClassName)
-            }
+            )
         }
     }
 
@@ -173,9 +162,8 @@ class DebuggerFieldSyntheticScope(private val javaSyntheticPropertiesScope: Java
         isVar: Boolean,
         description: String,
         sourceElement: SourceElement,
-        ownerType: (GenerationState) -> Type
     ): PropertyDescriptor {
-        val propertyDescriptor = DebuggerFieldPropertyDescriptor(clazz, fieldName.asString(), description, ownerType, isVar)
+        val propertyDescriptor = DebuggerFieldPropertyDescriptor(clazz, fieldName.asString(), description, isVar)
 
         val extensionReceiverParameter = DescriptorFactory.createExtensionReceiverParameterForCallable(
             propertyDescriptor,
@@ -216,7 +204,6 @@ internal class DebuggerFieldPropertyDescriptor(
     containingDeclaration: DeclarationDescriptor,
     val fieldName: String,
     val description: String,
-    val ownerType: (GenerationState) -> Type,
     isVar: Boolean
 ) : PropertyDescriptorImpl(
     containingDeclaration,
