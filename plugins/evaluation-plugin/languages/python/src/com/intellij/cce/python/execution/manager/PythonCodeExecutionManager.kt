@@ -100,6 +100,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       collectedInfo.put(AIA_TEST_BRANCH_COVERAGE, branchCoverage)
 
       File(coverageFilePath).delete()
+      File(project.basePath + "/.coverage").delete() // Remove cumulative coverage data for all the tests
 
       return executionLog
     }
