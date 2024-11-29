@@ -8,17 +8,18 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.PlatformUtils
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
@@ -132,12 +133,12 @@ class PyAddPipEnvPanel(
     update()
   }
 
-  @RequiresBackgroundThread
+  @RequiresEdt
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
     val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context).getOrLogException(LOGGER)?.homePath
 
-    return runBlockingCancellable {
+    return runWithModalProgressBlocking(ModalTaskOwner.guess(), PyBundle.message("python.sdk.setting.up.pipenv.title")) {
       setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
                                   baseSdk, installPackagesCheckBox.isSelected).onSuccess {
         PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk
