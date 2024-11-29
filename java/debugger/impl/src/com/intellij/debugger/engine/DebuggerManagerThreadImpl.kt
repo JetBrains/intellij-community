@@ -470,7 +470,9 @@ suspend fun <T> withDebugContext(
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
   suspendContext: SuspendContextImpl? = null,
   block: suspend () -> T,
-): T = suspendCancellableCoroutine { continuation ->
+): T = if (managerThread === InvokeThread.currentThread()) {
+  block()
+} else suspendCancellableCoroutine { continuation ->
   executeOnDMT(managerThread, priority, suspendContext,
                onCommandCancelled = { continuation.cancel() }
   ) {
