@@ -54,7 +54,7 @@ public final class InstallAndEnableTask extends Task.Modal {
       myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 
       List<IdeaPluginDescriptor> descriptors =
-        new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
+        new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, false));
 
       if (myShowDialog) {
         MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
