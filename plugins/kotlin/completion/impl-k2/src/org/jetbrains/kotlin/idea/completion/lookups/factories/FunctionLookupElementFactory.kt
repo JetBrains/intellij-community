@@ -82,9 +82,6 @@ internal object FunctionLookupElementFactory {
                 val functionClassSymbol = type.symbol as? KaNamedClassSymbol
                     ?: return null
 
-                val samSymbol = functionClassSymbol.samSymbol
-                    ?: return null
-
                 val samConstructor = functionClassSymbol.samConstructor
                     ?: return null
 
@@ -105,6 +102,9 @@ internal object FunctionLookupElementFactory {
 
                 val functionType = (@OptIn(KaExperimentalApi::class) createSubstitutor(mappings)
                     .substitute(samConstructorType)) as? KaFunctionType
+                    ?: return null
+
+                val samSymbol = functionClassSymbol.samSymbol
                     ?: return null
 
                 TrailingFunctionDescriptor(
