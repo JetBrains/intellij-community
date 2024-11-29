@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.jetbrains.extensions.failure
+import com.jetbrains.python.failure
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.VirtualEnvReader

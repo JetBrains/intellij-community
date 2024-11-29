@@ -9,8 +9,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.extensions.failure
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.failure
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
@@ -312,5 +311,5 @@ internal suspend fun PythonAddInterpreterModel.getBaseCondaOrError(): Result<PyC
   if (baseConda != null) return Result.success(baseConda)
   detectCondaEnvironments()?.let { return failure(it) }
   baseConda = state.baseCondaEnv.get()
-  return if (baseConda != null) Result.success(baseConda) else failure(PyBundle.message("python.sdk.conda.no.base.env.error"))
+  return if (baseConda != null) Result.success(baseConda) else failure(message("python.sdk.conda.no.base.env.error"))
 }

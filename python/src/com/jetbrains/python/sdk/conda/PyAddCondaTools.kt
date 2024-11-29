@@ -18,7 +18,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.jetbrains.extensions.failure
+import com.jetbrains.python.failure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.v1.PyAddCondaPanelModel

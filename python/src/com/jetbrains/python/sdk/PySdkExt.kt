@@ -46,7 +46,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
-import com.jetbrains.extensions.failure
+import com.jetbrains.python.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
