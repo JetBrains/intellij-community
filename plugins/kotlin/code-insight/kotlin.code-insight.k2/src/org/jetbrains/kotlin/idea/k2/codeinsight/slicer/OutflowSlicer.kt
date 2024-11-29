@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -57,7 +57,7 @@ class OutflowSlicer(
                 require(element == declaration.receiverTypeReference)
 
                 if (declaration.isExpectDeclaration()) {
-                    declaration.actualsForExpected().forEach {
+                    declaration.actualsForExpect().forEach {
                         (it as? KtCallableDeclaration)?.receiverTypeReference?.passToProcessor()
                     }
                 }
@@ -111,7 +111,7 @@ class OutflowSlicer(
 
             if (callable != null) {
                 if (callable.isExpectDeclaration()) {
-                    variable.actualsForExpected().forEach { it.passToProcessor() }
+                    variable.actualsForExpect().forEach { it.passToProcessor() }
                 }
 
                 val parameterIndex = variable.parameterIndex()

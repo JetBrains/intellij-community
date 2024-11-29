@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLooku
 import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
 import org.jetbrains.kotlin.idea.highlighter.markers.toDescriptor
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
@@ -87,7 +87,7 @@ internal class ActualDeclarationCompletion(
         val expectDeclarationPackageQualifiedName = expectDeclaration.packageDirective?.qualifiedName ?: return false
         if (expectDeclarationPackageQualifiedName != packageFqnForActual) return false
 
-        val actualsForExpected = expectDeclaration.actualsForExpected(targetModule)
+        val actualsForExpected = expectDeclaration.actualsForExpect(targetModule)
         return actualsForExpected.isEmpty()
     }
 

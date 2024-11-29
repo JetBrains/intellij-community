@@ -425,13 +425,13 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         private fun findAllRelatedActualsOrSelf(element: KtDeclaration): Set<KtDeclaration> {
             val expectActualSupport = ExpectActualSupport.getInstance(element.project)
             return when {
-                element.isExpectDeclaration() -> expectActualSupport.actualsForExpected(element)
+                element.isExpectDeclaration() -> expectActualSupport.actualsForExpect(element)
                 !kotlinOptions.searchForExpectedUsages -> setOf(element)
                 else -> {
-                    val expectDeclaration = expectActualSupport.expectedDeclarationIfAny(element)
+                    val expectDeclaration = expectActualSupport.expectDeclarationIfAny(element)
                     when (expectDeclaration) {
                         null -> setOf(element)
-                        else -> expectActualSupport.actualsForExpected(expectDeclaration)
+                        else -> expectActualSupport.actualsForExpect(expectDeclaration)
                     }
                 }
             }

@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Key
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -21,7 +20,6 @@ import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -73,7 +71,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         if (element is KtDeclaration) {
             val additionalElementsToDeleteArray = additionalElementsToDelete.toTypedArray()
             //group declarations into expected to receive conflicts once per expected/actuals group
-            val expected = ExpectActualUtils.liftToExpected(element) ?: element
+            val expected = ExpectActualUtils.liftToExpect(element) ?: element
             ReferencesSearch.search(element).forEach(Processor {
                 val e = it.element
                 if (!isInside(e) && !isInside(e, additionalElementsToDeleteArray)) {
