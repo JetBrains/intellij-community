@@ -1688,9 +1688,6 @@
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.headertoolbar.OpenProjectSelectionPredicateSupplier"
                         serviceImplementation="com.intellij.openapi.wm.impl.headertoolbar.DefaultOpenProjectSelectionPredicateSupplier"/>
 
-    <applicationService serviceInterface="com.intellij.ui.jcef.JBCefOSRHandlerFactory"
-                        serviceImplementation="com.intellij.ui.jcef.JBCefOSRHandlerFactoryImpl"/>
-
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 

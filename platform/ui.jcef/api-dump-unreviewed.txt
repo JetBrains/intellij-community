@@ -233,13 +233,11 @@ c:com.intellij.ui.jcef.JBCefJSQuery$Response
 - isSuccess():Z
 - response():java.lang.String
 com.intellij.ui.jcef.JBCefOSRHandlerFactory
+- sf:DEFAULT:com.intellij.ui.jcef.JBCefOSRHandlerFactory
 - createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
 - createComponent(Z):javax.swing.JComponent
 - createScreenBoundsProvider():com.intellij.util.Function
 - s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory
-c:com.intellij.ui.jcef.JBCefOSRHandlerFactoryImpl
-- com.intellij.ui.jcef.JBCefOSRHandlerFactory
-- <init>():V
 a:com.intellij.ui.jcef.JBCefOsrHandlerBrowser
 - com.intellij.ui.jcef.JBCefBrowserBase
 - p:<init>(com.intellij.ui.jcef.JBCefClient,java.lang.String,org.cef.handler.CefRenderHandler,Z):V

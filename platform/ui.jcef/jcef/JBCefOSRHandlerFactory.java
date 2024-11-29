@@ -18,8 +18,11 @@ import java.awt.*;
  * @author tav
  */
 public interface JBCefOSRHandlerFactory {
+  JBCefOSRHandlerFactory DEFAULT = new JBCefOSRHandlerFactory() {
+  };
+
   static JBCefOSRHandlerFactory getInstance() {
-    return ApplicationManager.getApplication().getService(JBCefOSRHandlerFactory.class);
+    return DEFAULT;
   }
 
   /**
