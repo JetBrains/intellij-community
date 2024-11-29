@@ -2,6 +2,7 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.util.ExceptionUtilRt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -96,7 +97,7 @@ fun <T> Result<T>.getOrLogException(logger: Logger): T? {
 inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? {
   return onFailure { e ->
     if (e is ProcessCanceledException || e is CancellationException) {
-      throw e
+      throw ExceptionUtilRt.addRethrownStackAsSuppressed(e)
     }
     else {
       log(e)

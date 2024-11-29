@@ -357,6 +357,7 @@ f:com.intellij.util.Base64
 - s:encode(B[]):java.lang.String
 - s:encode(B[],I,I):java.lang.String
 f:com.intellij.util.ExceptionUtilRt
+- s:addRethrownStackAsSuppressed(java.lang.Throwable):java.lang.Throwable
 - s:causedBy(java.lang.Throwable,java.lang.Class):Z
 - s:findCause(java.lang.Throwable,java.lang.Class):java.lang.Object
 - s:getThrowableText(java.lang.Throwable,java.lang.String):java.lang.String
