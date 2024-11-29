@@ -114,6 +114,11 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                  defaultValue="true"
                  restartRequired="false"
                  description="Use bare python instead of conda run for conda"/>
+    <registryKey key="python.packaging.conda.chain.installation"
+                 defaultValue="true"
+                 restartRequired="true"
+                 description="When enabled, package managers are tried in sequence until
+                              the package is successfully installed or all attempts fail."/>
     <iconMapper mappingFile="PythonIconMappings.json"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
