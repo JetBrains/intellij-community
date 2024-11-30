@@ -255,7 +255,7 @@ object CommunityLibraryLicenses {
     LibraryLicense("coverage.py", version = "4.2.0", attachedTo = "intellij.python", url = "https://coverage.readthedocs.io/")
       .apache("https://github.com/nedbat/coveragepy/blob/master/LICENSE.txt"),
 
-    LibraryLicense("Cucumber-Core", libraryName = "cucumber-core-1.2", url = "https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
+    LibraryLicense("cucumber-core", libraryName = "cucumber-core-1", url = "https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .suppliedByOrganizations("SmartBear Software"),
 

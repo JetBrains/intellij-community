@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="cucumber-core:2.0.1" type="repository">
+  <library name="cucumber-core-2" type="repository">
     <properties maven-id="io.cucumber:cucumber-core:2.4.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/2.4.0/cucumber-core-2.4.0.jar">
