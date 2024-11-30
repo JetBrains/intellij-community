@@ -399,7 +399,7 @@ public class Maven40ProjectResolver {
         String message = Maven40ServerEmbedderImpl.getRootMessage(exception);
         Artifact artifact = RepositoryUtils.toArtifact(unresolvedDependency.getArtifact());
         MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(artifact, myLocalRepositoryFile);
-        problems.add(MavenProjectProblem.createUnresolvedArtifactProblem(path, message, true, mavenArtifact));
+        problems.add(MavenProjectProblem.createUnresolvedArtifactProblem(path, message, false, mavenArtifact));
         break;
       }
     }

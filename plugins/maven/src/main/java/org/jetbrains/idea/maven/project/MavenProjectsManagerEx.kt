@@ -539,7 +539,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     val it = toResolve.iterator()
     while (it.hasNext()) {
       val each = it.next()
-      if (each.hasUnrecoverableReadingProblems()) {
+      if (each.hasReadingErrors()) {
         syncConsole.notifyReadingProblems(each.file)
         it.remove()
       }

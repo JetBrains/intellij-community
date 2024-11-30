@@ -59,6 +59,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.Throws
 
 abstract class MavenImportingTestCase : MavenTestCase() {
   private var myProjectsManager: MavenProjectsManager? = null
@@ -382,7 +383,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
@@ -402,7 +403,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.problems, each.hasUnrecoverableReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingErrors())
       }
     }
   }

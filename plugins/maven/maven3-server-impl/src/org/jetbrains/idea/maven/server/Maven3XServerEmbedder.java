@@ -715,7 +715,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage()));
       }
       else {
-        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
+        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), false));
       }
     }
     return problems;
@@ -764,11 +764,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
       String message = getRootMessage(ex);
       MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
-      result.add(MavenProjectProblem.createRepositoryProblem(path, message, true, mavenArtifact));
+      result.add(MavenProjectProblem.createRepositoryProblem(path, message, false, mavenArtifact));
     }
     else {
       myConsoleWrapper.error("Maven server structure problem", ex);
-      result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), true));
+      result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), false));
     }
     return result;
   }
@@ -822,7 +822,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         MavenProjectProblem problem;
         if (transferArtifact != null) {
           MavenArtifact mavenArtifact = Maven3ModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
-          problem = MavenProjectProblem.createRepositoryProblem("", message, true, mavenArtifact);
+          problem = MavenProjectProblem.createRepositoryProblem("", message, false, mavenArtifact);
         }
         else {
           problem = MavenProjectProblem.createStructureProblem("", message);

@@ -942,12 +942,4 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     }
     assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
   }
-
-  private fun assertContainsProblems(project: MavenProject, vararg expectedProblems: String) {
-    val actualProblems: MutableList<String?> = ArrayList()
-    for (each in project.problems) {
-      actualProblems.add(each.description)
-    }
-    UsefulTestCase.assertContainsElements(actualProblems, *expectedProblems)
-  }
 }

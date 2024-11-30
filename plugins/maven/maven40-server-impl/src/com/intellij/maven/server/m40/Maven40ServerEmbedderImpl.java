@@ -350,7 +350,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         }
       }
       else {
-        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
+        problems.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), false));
       }
     }
     return problems;
@@ -388,11 +388,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       myConsoleWrapper.error("[server] Maven transfer artifact problem: " + problemTransferArtifact);
       String message = getRootMessage(ex);
       MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
-      result.add(MavenProjectProblem.createRepositoryProblem(path, message, true, mavenArtifact));
+      result.add(MavenProjectProblem.createRepositoryProblem(path, message, false, mavenArtifact));
     }
     else {
       myConsoleWrapper.error("Maven server structure problem", ex);
-      result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), true));
+      result.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(ex), false));
     }
     return result;
   }
@@ -1163,7 +1163,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       MavenProjectProblem problem;
       if (transferArtifact != null) {
         MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(transferArtifact, getLocalRepositoryFile());
-        problem = MavenProjectProblem.createRepositoryProblem("", message, true, mavenArtifact);
+        problem = MavenProjectProblem.createRepositoryProblem("", message, false, mavenArtifact);
       }
       else {
         problem = MavenProjectProblem.createStructureProblem("", message);

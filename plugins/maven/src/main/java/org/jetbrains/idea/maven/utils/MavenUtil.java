@@ -1818,7 +1818,7 @@ public class MavenUtil {
   @ApiStatus.Internal
   public static boolean shouldResetDependenciesAndFolders(Collection<MavenProjectProblem> readingProblems) {
     if (Registry.is("maven.always.reset")) return true;
-    MavenProjectProblem unrecoverable = ContainerUtil.find(readingProblems, it -> !it.isRecoverable());
+    MavenProjectProblem unrecoverable = ContainerUtil.find(readingProblems, it -> it.isError());
     return unrecoverable == null;
   }
 
