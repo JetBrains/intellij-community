@@ -4,11 +4,11 @@ package com.intellij.xdebugger.impl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.frame.MixedModeFramesBuilder
+import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
-import com.intellij.xdebugger.frame.XMixedModeExecutionStack
-import com.intellij.xdebugger.frame.XMixedModeHighLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeExecutionStack
+import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged

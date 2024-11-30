@@ -54,6 +54,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
+import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessStarter;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
@@ -291,27 +292,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
                                          @NotNull XMixedModeDebugProcessStarter processStarter,
                                          @NotNull XDebugSessionImpl session) throws ExecutionException {
     var processes = processStarter.start(session);
-    var first = processes.getFirstToRun();
-    var second = processes.getSecondToRun();
-    myProject.getMessageBus().syncPublisher(TOPIC).processStarted(first);
-    myProject.getMessageBus().syncPublisher(TOPIC).processStarted(second);
+    myProject.getMessageBus().syncPublisher(TOPIC).processStarted(processes.getLowDebugProcess());
+    myProject.getMessageBus().syncPublisher(TOPIC).processStarted(processes.getHighDebugProcess());
 
-    session.initMixedMode(first, second, contentToReuse);
+    session.initMixedMode(processes.getLowDebugProcess(), processes.getHighDebugProcess(), contentToReuse);
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      session.addSessionListener(new XDebugSessionListener() {
-        @Override
-        public void sessionPaused() {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-            if (editor == null) {
-              return;
-            }
-            reshowInlayToolbar(editor);
-          });
-        }
-      });
-    }
+    addInlayToolbarReshowingIfNeeded(session);
 
     mySessions.put(session.getProcessHandler(), session);
 
@@ -337,6 +323,14 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       session.activateSession(false);
     }
 
+    addInlayToolbarReshowingIfNeeded(session);
+
+    mySessions.put(session.getProcessHandler(), session);
+
+    return session;
+  }
+
+  private void addInlayToolbarReshowingIfNeeded(XDebugSession session) {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       session.addSessionListener(new XDebugSessionListener() {
         @Override
@@ -351,10 +345,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         }
       });
     }
-
-    mySessions.put(session.getProcessHandler(), session);
-
-    return session;
   }
 
   void removeSession(final @NotNull XDebugSessionImpl session) {

@@ -1,14 +1,20 @@
-package com.intellij.xdebugger.frame
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.mixedMode
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.nativeThreadId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.time.measureTimedValue
 
-private val logger = com.intellij.openapi.diagnostic.logger<XMixedModeExecutionStack>()
+private val logger = logger<XMixedModeExecutionStack>()
 
 class XMixedModeExecutionStack(
   val session: XDebugSession,

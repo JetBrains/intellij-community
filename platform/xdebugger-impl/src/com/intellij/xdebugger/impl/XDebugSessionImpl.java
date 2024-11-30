@@ -38,6 +38,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess;
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
@@ -71,7 +73,6 @@ import javax.swing.event.HyperlinkListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import static com.intellij.xdebugger.impl.rhizome.XDebugSessionDbUtilsKt.storeXDebugSessionInDb;
 

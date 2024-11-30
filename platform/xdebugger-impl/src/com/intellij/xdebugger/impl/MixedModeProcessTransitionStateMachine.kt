@@ -5,6 +5,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.asXDebugProcess
 import kotlinx.coroutines.*
 
 private val logger = com.intellij.openapi.diagnostic.logger<MixedModeProcessTransitionStateMachine>()

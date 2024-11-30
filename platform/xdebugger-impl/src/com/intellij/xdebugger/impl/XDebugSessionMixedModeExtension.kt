@@ -3,6 +3,9 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.asXDebugProcess
 import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
