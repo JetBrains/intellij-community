@@ -109,7 +109,7 @@ object ChangeSignatureFixFactory {
             ChangeType.CHANGE_FUNCTIONAL -> KotlinBundle.message("fix.change.signature.lambda")
 
             ChangeType.ADD -> {
-                assert(newParametersCnt > 0)
+                if (newParametersCnt <= 0) return ""
                 KotlinBundle.message(
                     if (isConstructor) "fix.add.function.parameters.add.parameter.generic.constructor" else "fix.add.function.parameters.add.parameter.generic.function",
                     newParametersCnt,
