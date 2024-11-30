@@ -5451,6 +5451,16 @@ public abstract class K1JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/PrivateFieldNullabilityFromContext.java");
         }
 
+        @TestMetadata("returnNonNullableArray.java")
+        public void testReturnNonNullableArray() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/returnNonNullableArray.java");
+        }
+
+        @TestMetadata("returnNonNullableArrayElements.java")
+        public void testReturnNonNullableArrayElements() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/returnNonNullableArrayElements.java");
+        }
+
         @TestMetadata("synchronized.java")
         public void testSynchronized() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/synchronized.java");
