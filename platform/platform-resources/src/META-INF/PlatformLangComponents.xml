@@ -1,4 +1,4 @@
-<!--suppress PluginXmlDynamicPlugin -->
+<!--suppress PluginXmlDynamicPlugin, PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensionPoints>
     <!-- only bundled plugin can define extension -->

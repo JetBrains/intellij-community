@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <projectServiceInitializer.essential id="workspaceFileIndexInitializer"

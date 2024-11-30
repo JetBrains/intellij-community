@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
@@ -493,6 +494,7 @@
     <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                         serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
 
+    <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
                         serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
 

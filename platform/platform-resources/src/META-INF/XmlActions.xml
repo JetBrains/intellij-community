@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <actions>
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
