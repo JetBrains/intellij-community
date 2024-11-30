@@ -8,12 +8,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
@@ -42,6 +37,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
 
         sink.whenOptionEnabled(SHOW_RETURN_EXPRESSIONS.name) {
             val isUsedAsExpression = analyze(lambdaExpression) {
+                // TODO: KTIJ-16537 depends on KT-73473 : isUsedAsResultOfLambda should be used
                 expression.isUsedAsExpression
             }
             if (!isUsedAsExpression) return@whenOptionEnabled
