@@ -46,7 +46,7 @@ import kotlin.system.measureTimeMillis
 @ApiStatus.Internal
 open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelInternal {
   @Volatile
-  var loadedFromCache = false
+  var loadedFromCache: Boolean = false
     protected set
 
   private val reactive = WmReactive(this)
@@ -73,7 +73,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
 
-  var userWarningLoggingLevel = false
+  var userWarningLoggingLevel: Boolean = false
     @TestOnly set
 
   private val updateModelMethodName = WorkspaceModelImpl::updateProjectModel.name
@@ -139,7 +139,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
    * Used only in Rider IDE
    */
   @ApiStatus.Internal
-  open fun prepareModel(project: Project, storage: MutableEntityStorage) = Unit
+  open fun prepareModel(project: Project, storage: MutableEntityStorage): Unit = Unit
 
   fun ignoreCache() {
     loadedFromCache = false
