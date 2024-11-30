@@ -88,12 +88,12 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     }
   }
 
-  private static class UnqualifiedStaticAccessFix
+  public static class UnqualifiedStaticAccessFix
     extends PsiUpdateModCommandQuickFix {
 
-    private final boolean m_fixField;
+    protected final boolean m_fixField;
 
-    UnqualifiedStaticAccessFix(boolean fixField) {
+    public UnqualifiedStaticAccessFix(boolean fixField) {
       m_fixField = fixField;
     }
 
@@ -130,7 +130,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     }
   }
 
-  private class UnqualifiedStaticCallVisitor extends BaseInspectionVisitor {
+  public class UnqualifiedStaticCallVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(
@@ -168,7 +168,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
       registerError(expression, expression);
     }
 
-    private boolean isUnqualifiedStaticAccess(PsiReferenceExpression expression) {
+    protected boolean isUnqualifiedStaticAccess(PsiReferenceExpression expression) {
       if (m_ignoreStaticAccessFromStaticContext) {
         final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
         if (member != null && member.hasModifierProperty(PsiModifier.STATIC)) {
