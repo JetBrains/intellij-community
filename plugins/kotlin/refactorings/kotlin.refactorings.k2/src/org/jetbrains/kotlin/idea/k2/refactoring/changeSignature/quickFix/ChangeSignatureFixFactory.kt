@@ -77,10 +77,12 @@ object ChangeSignatureFixFactory {
     }
 
     val addParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.TooManyArguments ->
+        if (!isWritable(diagnostic.function)) return@IntentionBased emptyList()
         createAddParameterFix(diagnostic.function, diagnostic.psi)
     }
 
     val removeParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoValueForParameter ->
+        if (!isWritable(diagnostic.violatedParameter)) return@IntentionBased emptyList()
         createRemoveParameterFix(diagnostic.violatedParameter, diagnostic.psi)
     }
 
@@ -90,6 +92,10 @@ object ChangeSignatureFixFactory {
 
     val nullForNotNullFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
         createMismatchParameterTypeFix(diagnostic.psi, diagnostic.expectedType)
+    }
+
+    private fun isWritable(symbol: KaSymbol): Boolean {
+        return symbol.origin == KaSymbolOrigin.SOURCE || symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && symbol is KaConstructorSymbol
     }
 
     private fun getActionName(psi: PsiElement, input: Input): String {
@@ -377,6 +383,8 @@ object ChangeSignatureFixFactory {
         val functionLikeSymbol =
             ((callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionSymbol
                 ?: return emptyList()
+
+        if (!isWritable(functionLikeSymbol)) return emptyList()
 
         val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()
 

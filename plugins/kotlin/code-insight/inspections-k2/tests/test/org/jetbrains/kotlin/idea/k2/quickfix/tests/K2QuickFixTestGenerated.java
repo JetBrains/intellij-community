@@ -396,6 +396,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/complexHierarchyTail.kt");
         }
 
+        @TestMetadata("disabledAddParameterForEnum.kt")
+        public void testDisabledAddParameterForEnum() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/disabledAddParameterForEnum.kt");
+        }
+
+        @TestMetadata("disabledAddParameterForReadOnlyClass.kt")
+        public void testDisabledAddParameterForReadOnlyClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/disabledAddParameterForReadOnlyClass.kt");
+        }
+
         @TestMetadata("fixExtensionLambdaSignature.kt")
         public void testFixExtensionLambdaSignature() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/fixExtensionLambdaSignature.kt");
