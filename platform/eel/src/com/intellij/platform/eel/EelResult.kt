@@ -13,16 +13,16 @@ sealed interface EelResult<out P, out E> {
 
 /***
  * ```kotlin
- *  val data = someFun().getOr { return }
+ *  val data = someFun().getOr { return it }
  * ```
  */
-inline fun <T, E> EelResult<T, E>.getOr(action: (E) -> Nothing): T = when (this) {
+inline fun <T, E> EelResult<T, E>.getOr(action: (EelResult.Error<E>) -> Nothing): T = when (this) {
   is EelResult.Ok -> this.value
-  is EelResult.Error -> action(this.error)
+  is EelResult.Error -> action(this)
 }
 
 @JvmOverloads
-inline fun <T, E> EelResult<T, E>.getOrThrow(exception: (E) -> Throwable = { RuntimeException(it.toString()) }): T = getOr { throw exception(it) }
+inline fun <T, E> EelResult<T, E>.getOrThrow(exception: (E) -> Throwable = { if (it is Throwable) it else RuntimeException(it.toString()) }): T = getOr { throw exception(it.error) }
 
 fun <T, E> EelResult<T, E>.getOrNull(): T? = when (this) {
   is EelResult.Ok -> this.value
