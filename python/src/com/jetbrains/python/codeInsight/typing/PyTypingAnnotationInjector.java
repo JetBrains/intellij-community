@@ -139,11 +139,4 @@ public final class PyTypingAnnotationInjector extends PyInjectorBase {
   private static boolean isTypingAnnotation(@NotNull String s) {
     return RE_TYPING_ANNOTATION.matcher(s).matches();
   }
-
-  public static boolean isTypeIgnoreComment(@NotNull PsiElement comment) {
-    if (!(comment instanceof PsiComment)) return false;
-    String text = comment.getText();
-    if (text == null) return false;
-    return TYPE_IGNORE_PATTERN.matcher(text).matches();
-  }
 }

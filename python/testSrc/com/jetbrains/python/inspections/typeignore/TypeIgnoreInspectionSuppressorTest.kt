@@ -191,6 +191,22 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
     doTestByText("""#type: <warning descr="Unresolved reference 'ignore'">ignore</warning>#""")
   }
 
+  fun testTypeIgnoreAtFileLevel() {
+    doTestByText("""
+      # some comment
+      # type:  ignore
+      x: int = ""
+    """.trimIndent())
+    doTestByText("""
+      ""${'"'}
+      Non comment
+      ""${'"'}
+      
+      # type:  ignore
+      x: int = <warning>""</warning>
+    """.trimIndent())
+  }
+
   private fun doTestByText(notTrimmedText: String) {
     val text = notTrimmedText.trimIndent()
     myFixture.enableInspections(inspections)
