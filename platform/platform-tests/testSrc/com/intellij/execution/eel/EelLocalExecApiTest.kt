@@ -90,12 +90,12 @@ class EelLocalExecApiTest {
           }
         }
 
+        val text = ByteBuffer.allocate(8192)
         withContext(Dispatchers.Default) {
-          val text = ByteBuffer.allocate(1024)
           withTimeoutOrNull(10.seconds) {
             for (chunk in process.stderr) {
               text.put(chunk)
-              if (HELLO in chunk.decodeToString()) break
+              if (HELLO in text.slice(0, text.position()).decodeString()) break
             }
           }
           text.limit(text.position()).rewind()
@@ -104,16 +104,21 @@ class EelLocalExecApiTest {
 
 
         // Test tty api
-        // tty might insert "\r\n", we need to remove them. Hence, NEW_LINES.
-        val outputStr = process.stdout.receive().decodeToString().replace(NEW_LINES, "")
-        val pyOutputObj = TTYState.deserialize(outputStr)
+        var ttyState: TTYState? = null
+        text.clear()
+        while (ttyState == null) {
+          text.put(process.stdout.receive())
+          // tty might insert "\r\n", we need to remove them, hence, NEW_LINES.
+          // Schlemiel the Painter's Algorithm is OK in tests: do not use in production
+          ttyState = TTYState.deserializeIfValid(text.slice(0, text.position()).decodeString().replace(NEW_LINES, ""))
+        }
         when (ptyManagement) {
           PTYManagement.PTY_SIZE_FROM_START, PTYManagement.PTY_RESIZE_LATER -> {
-            Assertions.assertNotNull(pyOutputObj.size)
-            Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), pyOutputObj.size, "size must be set for tty")
+            Assertions.assertNotNull(ttyState.size)
+            Assertions.assertEquals(Size(PTY_COLS, PTY_ROWS), ttyState.size, "size must be set for tty")
           }
           PTYManagement.NO_PTY -> {
-            Assertions.assertNull(pyOutputObj.size, "size must not be set if no tty")
+            Assertions.assertNull(ttyState.size, "size must not be set if no tty")
           }
         }
 
