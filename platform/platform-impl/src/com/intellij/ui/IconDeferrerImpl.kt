@@ -43,7 +43,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
   // such as during PSI modifications.
   private val iconCache = ConcurrentHashMap<Any, Icon>()
   @Volatile
-  private var mightBePopulated = false // used to avoid multiple calls PHM#clear() which might be expensive, no need to be atomic or something else
+  private var mightBePopulated = false // used to avoid multiple calls CHM#clear() which might be expensive, no need to be atomic or something else
   private val lastClearTimestamp = LongAdder()
 
   init {
