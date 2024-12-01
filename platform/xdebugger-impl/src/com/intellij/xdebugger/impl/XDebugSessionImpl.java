@@ -84,6 +84,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   // TODO[eldar] needed to workaround nullable myAlternativeSourceHandler.
   private static final StateFlow<Boolean> ALWAYS_FALSE_STATE = FlowKt.asStateFlow(StateFlowKt.MutableStateFlow(false));
 
+  // for mixed mode high level debug process is always here
   private XDebugProcess myDebugProcess;
   private XDebugProcess myMixedModeLowLevelDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
@@ -336,10 +337,15 @@ public final class XDebugSessionImpl implements XDebugSession {
     myMixedModeExtension =
       /*TODO[merge blocker]: move to rider cpp plugin*/
       new MonoXDebugSessionMixedModeExtension(this.myCoroutineScope, (XMixedModeHighLevelDebugProcess)process, (XMixedModeLowLevelDebugProcess)mixedModeLowLevelProcess);
-    init(process, contentToReuse);
+      // add low level console since it more likely includes more information (since the low level process has started earlier)
+    init(process, contentToReuse, mixedModeLowLevelProcess.createConsole());
   }
 
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
+    init(process, contentToReuse, process.createConsole());
+  }
+
+  void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse, @NotNull ExecutionConsole console) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
     myAlternativeSourceHandler = myDebugProcess.getAlternativeSourceHandler();
@@ -362,7 +368,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     });
     //todo make 'createConsole()' method return ConsoleView
-    myConsoleView = (ConsoleView)myDebugProcess.createConsole();
+    myConsoleView = (ConsoleView)console;
     if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);
     }
