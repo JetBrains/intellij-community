@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
 import java.awt.Point
 import java.awt.Rectangle
@@ -92,8 +93,8 @@ interface LogicalPosition {
   fun getColumn(): Int
 }
 
-fun Driver.logicalPosition(line: Int, column: Int): LogicalPosition {
-  return new(LogicalPosition::class, line, column)
+fun Driver.logicalPosition(line: Int, column: Int, rdTarget: RdTarget = RdTarget.DEFAULT): LogicalPosition {
+  return new(LogicalPosition::class, line, column, rdTarget = rdTarget)
 }
 
 @Remote("com.intellij.openapi.fileEditor.FileEditor")
