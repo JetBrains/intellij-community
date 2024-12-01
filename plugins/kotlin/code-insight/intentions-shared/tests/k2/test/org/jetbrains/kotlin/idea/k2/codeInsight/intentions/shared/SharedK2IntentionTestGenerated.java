@@ -1316,6 +1316,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("disableOnPackageDirective.kt")
+        public void testDisableOnPackageDirective() throws Exception {
+            runTest("../testData/intentions/putCallsOnSeparateLines/disableOnPackageDirective.kt");
+        }
+
         @TestMetadata("doNotWrapFirstElement.kt")
         public void testDoNotWrapFirstElement() throws Exception {
             runTest("../testData/intentions/putCallsOnSeparateLines/doNotWrapFirstElement.kt");
