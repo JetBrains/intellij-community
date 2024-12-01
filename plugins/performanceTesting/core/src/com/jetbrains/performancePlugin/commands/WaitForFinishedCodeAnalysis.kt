@@ -37,6 +37,7 @@ import java.util.concurrent.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
+import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
 
 private val FileEditor.description: String
   get() = "${hashCode()} ${javaClass} ${toString()}"
@@ -289,7 +290,10 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         val highlightedEditor = highlightedEditors[editor]
 
         if (checkTrafficLightRenderer()) {
-          assert(isTrafficLightExists(editor.editor)) { "Highlighting traffic light should be shown in the top right corner of the editor, in case of $status" }
+          assert(isTrafficLightExists(editor.editor)) {
+            "Highlighting traffic light should be shown in the top right corner of the editor, in case of $status"
+            takeFullScreenshot("traffic-light-screenshot")
+          }
         }
 
         if (highlightedEditor == null) {
