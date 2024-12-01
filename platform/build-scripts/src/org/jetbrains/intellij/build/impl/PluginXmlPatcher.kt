@@ -137,28 +137,6 @@ fun doPatchPluginXml(
     }
   }
 
-  // patch Database plugin for WebStorm, see WEB-48278
-  if (toPublish && productDescriptor != null && productDescriptor.getAttributeValue("code") == "PDB") {
-    Span.current().addEvent("patch $pluginModuleName for WebStorm")
-    val pluginName = rootElement.getChild("name")
-    check(pluginName.text == "Database Tools and SQL") { "Plugin name for '$pluginModuleName' should be 'Database Tools and SQL'" }
-    pluginName.text = "Database Tools and SQL for WebStorm"
-    val description = rootElement.getChild("description")
-    val replaced1 = replaceInElementText(element = description, oldText = "IntelliJ-based IDEs", newText = "WebStorm")
-    check(replaced1) { "Could not find 'IntelliJ-based IDEs' in plugin description of $pluginModuleName" }
-
-    val oldText = "The plugin provides all the same features as <a href=\"https://www.jetbrains.com/datagrip/\">DataGrip</a>, the standalone JetBrains IDE for databases."
-    val replaced2 = replaceInElementText(
-      element = description,
-      oldText = oldText,
-      newText = """
-        The plugin provides all the same features as <a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, the standalone JetBrains IDE for databases.
-        Owners of an active DataGrip subscription can download the plugin for free.
-        The plugin is also included in <a href="https://www.jetbrains.com/all/">All Products Pack</a> and <a href="https://www.jetbrains.com/community/education/">Student Pack</a>.
-      """.trimIndent()
-    )
-    check(replaced2) { "Could not find '$oldText' in plugin description of $pluginModuleName" }
-  }
   return rootElement
 }
 
@@ -181,18 +159,6 @@ fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<S
     rootElement.addContent(anchorIndex + 1, newElement)
   }
   return newElement
-}
-
-@Suppress("SameParameterValue")
-private fun replaceInElementText(element: Element, oldText: String, newText: String): Boolean {
-  val textBefore = element.text
-  val text = textBefore.replace(oldText, newText)
-  if (textBefore == text) {
-    return false
-  }
-
-  element.text = text
-  return true
 }
 
 private fun setProductDescriptorEapAttribute(productDescriptor: Element, isEap: Boolean) {
