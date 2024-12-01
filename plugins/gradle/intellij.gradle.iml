@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.smRunner" exported="" />
     <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />

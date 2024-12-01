@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="rd-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
