@@ -30,6 +30,7 @@ class XMixedModeExecutionStack(
   }
 
   var computationCompleted: CompletableDeferred<Unit> = CompletableDeferred()
+  var computedFrames: CompletableDeferred<List<XStackFrame>> = CompletableDeferred()
 
   override fun getTopFrame(): XStackFrame? {
     // when we are stopped the top frame is always from a low-level debugger, so no need to look for a corresponding high level frame
@@ -48,6 +49,7 @@ class XMixedModeExecutionStack(
       if (highLevelExecutionStack == null) {
         logger.trace("No high level stack, adding low level frames")
         container.addStackFrames(lowLevelFrames, true)
+        computedFrames.complete(lowLevelFrames)
       }
       else {
         highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
@@ -68,9 +70,13 @@ class XMixedModeExecutionStack(
         }
 
         container.addStackFrames(framesToAdd, true)
+        computedFrames.complete(framesToAdd)
       }
     }.invokeOnCompletion {
       computationCompleted.complete(Unit)
+      if (!computedFrames.isCompleted) {
+        computedFrames.completeExceptionally(Exception("computedFrames hasn't been set, possibly due to an exception"))
+      }
     }
   }
 
