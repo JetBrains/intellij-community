@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonListeners
 import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.*
 import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.annotation.HighlightSeverity
@@ -168,6 +169,10 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         override fun getText(): String = QuickFixBundle.message("enable.optimize.imports.on.the.fly")
 
         override fun getFamilyName() = name
+
+        override fun startInWriteAction(): Boolean {
+            return false
+        }
 
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
             SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS)
