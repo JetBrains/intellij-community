@@ -34,6 +34,7 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -288,7 +290,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       attachViewToSession(session, view);
     }
 
-    XDebugTabLayouter layouter = session.getDebugProcess().createTabLayouter();
+    var debugProcesses = new ArrayList<XDebugProcess>();
+    debugProcesses.add(session.getDebugProcess());
+    if (session.isMixedMode()) {
+      debugProcesses.add(session.getDebugProcess(true));
+    }
+
+    for (XDebugProcess process : debugProcesses) {
+      XDebugTabLayouter layouter = process.createTabLayouter();
     Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
     attachNotificationTo(consoleContent);
 
@@ -296,10 +305,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
+        continue;
     }
 
     consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     initToolbars(session);
 
     if (myEnvironment != null) {
@@ -350,6 +365,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   protected void registerAdditionalActions(DefaultActionGroup leftToolbar, DefaultActionGroup topLeftToolbar, DefaultActionGroup settings) {
     if (mySession != null) {
       mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+      if (mySession.isMixedMode()) {
+        mySession.getDebugProcess(true).registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
+      }
     }
   }
 
