@@ -131,8 +131,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
-  public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("# *type: *ignore(\\[ *[^ ,\\]]+ *(, *[^ ,\\]]+ *)*\\])? *($|(#.*))",
-                                                                    Pattern.CASE_INSENSITIVE);
+  public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore\\s*(\\[[^]#]*])?($|(\\s.*))", Pattern.CASE_INSENSITIVE);
 
   public static final String ASSERT_TYPE = "typing.assert_type";
 

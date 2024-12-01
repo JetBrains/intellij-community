@@ -32,8 +32,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public final class PyTypingAnnotationInjector extends PyInjectorBase {
   public static final Pattern RE_TYPING_ANNOTATION = Pattern.compile("\\s*\\S+(\\[.*\\])?\\s*");
 
-  private static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore(\\[[^]#]*])?\\s*($|(#.*))", Pattern.CASE_INSENSITIVE);
-
   @Override
   protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     // Handles only string literals containing quoted types
