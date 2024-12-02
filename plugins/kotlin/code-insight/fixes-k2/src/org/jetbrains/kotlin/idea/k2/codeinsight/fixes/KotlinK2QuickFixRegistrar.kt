@@ -505,6 +505,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(DeprecationFixFactory.deprecatedAliasError)
         registerFactory(DeprecationFixFactory.deprecatedAliasWarning)
 
+        registerFactory(UnsupportedFeatureFixFactory.unsupportedFeature)
+
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
 
         registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
