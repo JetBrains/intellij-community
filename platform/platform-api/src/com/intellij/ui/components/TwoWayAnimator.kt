@@ -71,8 +71,10 @@ abstract class TwoWayAnimator(
 
     suspendAnimation()
     val animator = (if (forward) forwardAnimator else backwardAnimator).value
-    if (if (forward) frame < maxFrame else frame > 0) {
-      if (if (forward) frame > 0 else frame < maxFrame) {
+    val atStart = if (forward) frame == 0 else frame == maxFrame
+    val atEnd = if (forward) frame == maxFrame else frame == 0
+    if (!atEnd) {
+      if (!atStart) {
         animator.reset()
         animator.resume()
       }
