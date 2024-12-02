@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.siyeh.ig.fixes;
 
@@ -27,6 +25,12 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
   public void testNoBodySideEffect() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
   public void testPolyadic() { doTest(); }
   public void testBoxed() { doTest(); }
+  public void testBoxedTrue() { doTest(); }
+  public void testBoxedTrueEquals() { doTest(); }
+  public void testBoxedTrueEqualsCall() { doTest(); }
+  public void testBoxedTrueEqualsFQN() { doTest(); }
+  public void testBoxedTrueEqualsNegated() { doTest(); }
+  public void testBoxedTrueParenthesized() { doTest(); }
   public void testSideEffects() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
   public void testSideEffectsField() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
   public void testCompoundAssignment1() { doTest(InspectionGadgetsBundle.message("boolean.expression.remove.compound.assignment.quickfix")); }

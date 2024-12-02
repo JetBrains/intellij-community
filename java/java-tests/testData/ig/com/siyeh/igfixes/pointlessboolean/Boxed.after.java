@@ -1,6 +1,7 @@
-class Boxed {
+import org.jetbrains.annotations.NotNull;
 
-  void f(Boolean b) {
+class Boxed {
+  void f(@NotNull Boolean b) {
     if (!b) {}
   }
 }
