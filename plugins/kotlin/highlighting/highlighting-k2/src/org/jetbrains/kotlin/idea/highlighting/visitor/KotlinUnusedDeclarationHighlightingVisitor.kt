@@ -13,21 +13,26 @@ import org.jetbrains.kotlin.idea.highlighting.KotlinUnusedHighlightingProcessor
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class KotlinUnusedDeclarationHighlightingVisitor : HighlightVisitor {
-    override fun suitableForFile(file: PsiFile): Boolean = file is KtFile && !file.isCompiled
+    override fun suitableForFile(file: PsiFile): Boolean {
+        if (file !is KtFile || file.isCompiled) return false
+
+        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
+        if (!highlightingLevelManager.shouldInspect(file)) return false
+
+        val viewProvider = file.viewProvider
+        val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
+        if (isInjection && !viewProvider.isInjectedFileShouldBeAnalyzed) {
+            // do not highlight unused declarations in injected code
+            return false
+        }
+
+        return true
+    }
 
     override fun visit(element: PsiElement) {}
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         val ktFile = file as? KtFile ?: return true
-        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
-        if (!highlightingLevelManager.shouldInspect(ktFile)) return true
-
-        val viewProvider = file.viewProvider
-        val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
-        if (isInjection && viewProvider.isInjectedFileShouldBeAnalyzed) {
-            // do not highlight unused symbols in injected code
-            return true
-        }
 
         analyze(ktFile) {
             KotlinUnusedHighlightingProcessor(file).collectHighlights(holder)

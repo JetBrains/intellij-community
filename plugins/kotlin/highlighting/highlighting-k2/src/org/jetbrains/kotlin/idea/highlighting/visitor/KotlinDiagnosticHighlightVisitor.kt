@@ -68,22 +68,20 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
     private var holder: HighlightInfoHolder? = null
     private var coroutineScope: CoroutineScope? = null
     override fun suitableForFile(file: PsiFile): Boolean {
+        if (file !is KtFile) return false
+
         val viewProvider = file.viewProvider
         val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
-        if (isInjection && !viewProvider.isInjectedFileShouldBeAnalyzed) {
+        if (isInjection && (!viewProvider.isInjectedFileShouldBeAnalyzed || file.injectionRequiresOnlyEssentialHighlighting)) {
             // do not highlight errors in injected code
             return false
         }
 
-        return file is KtFile
+        val highlightingManager = HighlightingLevelManager.getInstance(file.project)
+        return !highlightingManager.runEssentialHighlightingOnly(file)
     }
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
-        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
-        if (highlightingLevelManager.runEssentialHighlightingOnly(file) || file.injectionRequiresOnlyEssentialHighlighting) {
-            return true
-        }
-
         this.holder = holder
         this.coroutineScope = KotlinPluginDisposable.getInstance(file.project)
             .coroutineScope

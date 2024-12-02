@@ -17,12 +17,15 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 internal abstract class KotlinAbstractSemanticHighlightingVisitor : HighlightVisitor {
     private var analyzer: KtVisitorVoid? = null
 
-    override fun suitableForFile(file: PsiFile): Boolean = file is KtFile && !file.isCompiled
+    override fun suitableForFile(file: PsiFile): Boolean {
+        if (file !is KtFile || file.isCompiled) return false
+
+        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
+        return highlightingLevelManager.shouldHighlight(file)
+    }
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         val ktFile = file as? KtFile ?: return true
-        val highlightingLevelManager = HighlightingLevelManager.getInstance(file.project)
-        if (!highlightingLevelManager.shouldHighlight(ktFile)) return true
 
         analyze(ktFile) {
             try {
