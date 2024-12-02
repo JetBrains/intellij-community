@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="expects-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:expects-compiler-plugin:2.1.0-0.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.0-0.3/expects-compiler-plugin-2.1.0-0.3.jar">
+          <sha256sum>52a71f161c981559787da5909ff7c3af43094cb8d199fc0a3eff42f4d44e170f</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.0-0.3/expects-compiler-plugin-2.1.0-0.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.0-0.3/expects-compiler-plugin-2.1.0-0.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -115,6 +115,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       "fleet.util.core",
       "fleet.util.logging.api",
       "fleet.util.os",
+      "fleet.util.multiplatform",
     )
   }
 
