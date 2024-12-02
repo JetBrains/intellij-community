@@ -5,6 +5,7 @@ import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
+import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCellHighlighterRenderer
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCodeCellBackgroundLineMarkerRenderer
 import com.intellij.notebooks.visualization.*
 import com.intellij.notebooks.visualization.NotebookCellInlayController.InputFactory
@@ -24,7 +25,6 @@ import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
-import java.awt.Graphics
 import java.awt.Rectangle
 import java.time.ZonedDateTime
 import javax.swing.JComponent
@@ -390,33 +390,5 @@ class EditorCellView(
 
   fun requestCaret() {
     input.requestCaret()
-  }
-}
-
-/**
- * Renders rectangle in the right part of the editor to make filled code cells look like rectangles with margins.
- * But mostly it's used as a token to filter notebook cell highlighters.
- */
-@Suppress("DuplicatedCode")
-private object NotebookCellHighlighterRenderer : CustomHighlighterRenderer {
-  override fun paint(editor: Editor, highlighter: RangeHighlighter, graphics: Graphics) {
-    editor as EditorImpl
-    graphics.create().use { g ->
-      val scrollbarWidth = editor.scrollPane.verticalScrollBar.width
-      val oldBounds = g.clipBounds
-      val visibleArea = editor.scrollingModel.visibleArea
-      g.setClip(
-        visibleArea.x + visibleArea.width - scrollbarWidth,
-        oldBounds.y,
-        scrollbarWidth,
-        oldBounds.height
-      )
-
-      g.color = editor.colorsScheme.defaultBackground
-      g.clipBounds.run {
-        val fillX = if (editor.editorKind == EditorKind.DIFF && editor.isMirrored) x + 20 else x
-        g.fillRect(fillX, y, width, height)
-      }
-    }
   }
 }
