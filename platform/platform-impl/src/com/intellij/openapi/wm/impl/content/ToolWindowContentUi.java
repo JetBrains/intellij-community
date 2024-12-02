@@ -730,7 +730,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     tabActionGroup.removeAll();
     tabActionGroup.addSeparator();
     tabActionGroup.addAll(actions);
-    tabToolbar.updateActionsImmediately();
+    if (tabComponent.isShowing()) {
+      tabToolbar.updateActionsAsync();
+    }
   }
 
   private @NotNull CloseAction.CloseTarget computeCloseTarget() {
