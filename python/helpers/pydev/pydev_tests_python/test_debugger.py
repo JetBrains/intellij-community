@@ -17,7 +17,12 @@ from pydev_tests_python.debugger_unittest import (CMD_SET_PROPERTY_TRACE, REASON
                                                   IS_APPVEYOR, wait_for_condition, CMD_GET_FRAME, CMD_GET_BREAKPOINT_EXCEPTION,
                                                   CMD_THREAD_SUSPEND, CMD_STEP_OVER, REASON_STEP_OVER, CMD_THREAD_SUSPEND_SINGLE_NOTIFICATION,
                                                   CMD_THREAD_RESUME_SINGLE_NOTIFICATION, IS_PY37_OR_GREATER, IS_PY38_OR_GREATER)
-from _pydevd_bundle.pydevd_constants import IS_WINDOWS, IS_PY38, GET_FRAME_RETURN_GROUP
+from _pydevd_bundle.pydevd_constants import IS_WINDOWS
+from _pydevd_bundle.pydevd_constants import GET_FRAME_RETURN_GROUP
+from _pydevd_bundle.pydevd_constants import IS_PY38
+from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
+
 
 try:
     from urllib import unquote
@@ -1955,6 +1960,7 @@ def test_case_dump_threads_to_stderr(case_setup):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-735")
 def test_stop_on_start_regular(case_setup):
 
     with case_setup.test_file('_debugger_case_simple_calls.py') as writer:
@@ -2010,7 +2016,7 @@ def test_generator_cases(case_setup, filename):
 
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-736")
 def test_stop_on_start_m_switch(case_setup_m_switch):
 
     with case_setup_m_switch.test_file() as writer:
@@ -2024,6 +2030,7 @@ def test_stop_on_start_m_switch(case_setup_m_switch):
         writer.finished_ok = True
 
 
+@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-737")
 def test_stop_on_start_entry_point(case_setup_m_switch_entry_point):
 
     with case_setup_m_switch_entry_point.test_file() as writer:

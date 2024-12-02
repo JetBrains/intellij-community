@@ -1,6 +1,8 @@
 from pydevd import PyDB
 import pytest
 from pydev_tests_python.debugger_unittest import IS_CPYTHON
+from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
 
 DEBUG = False
 
@@ -128,21 +130,19 @@ def trace_top_level_unhandled(trace_top_level):
     return trace_top_level
 
 
-_expected_functions_to_test = 0
+class Handle(object):
+    def __init__(self, is_handled=True):
+        self.is_handled = is_handled
+        self.count = 0
+
+    def __call__(self, func):
+        func.__handled__ = self.is_handled
+        self.count += 1
+        return func
 
 
-def mark_handled(func):
-    global _expected_functions_to_test
-    _expected_functions_to_test += 1
-    func.__handled__ = True
-    return func
-
-
-def mark_unhandled(func):
-    global _expected_functions_to_test
-    _expected_functions_to_test += 1
-    func.__handled__ = False
-    return func
+mark_handled = Handle()
+mark_unhandled = Handle(False)
 
 
 #------------------------------------------------------------------------------------------- Handled
@@ -454,19 +454,43 @@ def _replay_events(collected, trace_top_level_unhandled):
             raise AssertionError('Unexpected: %s' % (event,))
 
 
-def _collect_target_functions():
-#     return [raise_unhandled10]
-    ret = []
-    for _key, method in sorted(dict(globals()).items()):
-        if hasattr(method, '__handled__'):
-            ret.append(method)
+_expected_tested = (
+    # handled
+    raise_handled_exception,
+    raise_handled_exception2,
+    raise_handled_exception3,
+    raise_handled_exception3a,
+    raise_handled_exception4,
+    raise_handled,
+    raise_handled2,
+    pytest.param(raise_handled9, marks=pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-739")),
+    pytest.param(raise_handled10, marks=pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-738")),
 
-    assert len(ret) == _expected_functions_to_test
-    return ret
+    # unhandled
+    raise_unhandled_exception,
+    raise_unhandled_exception_not_in_except_clause,
+    raise_unhandled,
+    raise_unhandled2,
+    raise_unhandled3,
+    raise_unhandled4,
+    raise_unhandled5,
+    raise_unhandled6,
+    raise_unhandled7,
+    raise_unhandled8,
+    raise_unhandled9,
+    raise_unhandled10,
+    raise_unhandled11,
+    raise_unhandled12,
+    reraise_handled_exception,
+)
+
+
+def test_expected_number_tested():
+    assert len(_expected_tested) == mark_handled.count + mark_unhandled.count
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='try..except info only available on CPython')
-@pytest.mark.parametrize("func", _collect_target_functions())
+@pytest.mark.parametrize("func", _expected_tested)
 def test_tracing_on_top_level_unhandled(trace_top_level_unhandled, func):
     trace_top_level_unhandled.set_target_func(func)
 

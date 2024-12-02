@@ -8,6 +8,7 @@ import pytest
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code, \
     add_jump_instruction, IS_PY310_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY39
 from opcode import EXTENDED_ARG
 
 TRACE_MESSAGE = "Trace called"
@@ -817,6 +818,7 @@ class TestInsertCode(unittest.TestCase):
 
     @pytest.mark.skipif(
         IS_PY310_OR_GREATER, reason="Test is specific for Python versions < 3.10")
+    @pytest.mark.xfail(IS_PY39, reason="PCQA-732")
     def testing_add_extended_arg(self):
 
         def backtrack(move_list, board_p, number_p):

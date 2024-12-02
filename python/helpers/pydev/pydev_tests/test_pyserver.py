@@ -4,6 +4,7 @@
 import sys
 import pytest
 from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 
 start_new_thread = thread.start_new_thread
 
@@ -88,6 +89,7 @@ class TestCPython(unittest.TestCase):
 
         return msg
 
+    @pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-731")
     def test_completion_sockets_and_messages(self):
         t, socket = self.create_connections()
         self.socket = socket
