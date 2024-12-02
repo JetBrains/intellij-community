@@ -617,8 +617,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
-
-  // test is broken, type variable in TypeIs is invariant, so TypeIs[B] and TypeIs[D] are not consistent
   public void testCallableWithTypeGuards4() {
     doTestByText("""
                    from typing import Any, Callable
@@ -635,8 +633,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    def is_str(x: Any) -> TypeIs[D]:
                       ...
-                   # should be error here! 
-                   foo(is_str)
+                   foo(<warning descr="Expected type '(Any) -> TypeIs[B]', got '(x: Any) -> TypeIs[D]' instead">is_str</warning>)
                    """);
   }
 
