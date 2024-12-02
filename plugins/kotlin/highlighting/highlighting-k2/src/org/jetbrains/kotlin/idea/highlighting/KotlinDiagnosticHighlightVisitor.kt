@@ -148,7 +148,18 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
 
 
     /**
-     * This is required to now miss elements from [diagnosticsMap] during [visit]
+     * This is required to not miss reported elements from [diagnosticsMap] during [visit].
+     *
+     * Example:
+     * ```kotlin
+     * class MyClass {
+     *   fun member() {}
+     * }
+     * ```
+     * Let's imagine [KtClass] `MyClass` has a diagnostic.
+     * If [KtNamedFunction] `member` has a diagnostic as well, without [isForceHighlightParents]
+     * the class diagnostic won't be reported as whole first-child hierarchy above `member` function
+     * ([KtClassBody], [KtClass]) will be marked as broken.
      */
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is KtFile
 
