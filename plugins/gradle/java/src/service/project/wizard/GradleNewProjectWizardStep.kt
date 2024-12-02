@@ -473,7 +473,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
 
     builder.isCreatingNewProject = context.isCreatingNewProject
-    builder.isUsingDaemonToolchain = Registry.`is`("gradle.daemon.jvm.criteria.new.projects") && isDaemonJvmCriteriaSupported(gradleVersion)
+    builder.isUsingDaemonToolchain = context.isCreatingNewProject && Registry.`is`("gradle.daemon.jvm.criteria.new.projects") && isDaemonJvmCriteriaSupported(gradleVersion)
 
     builder.parentProject = parentData
     builder.projectId = ProjectId(groupId, artifactId, version)

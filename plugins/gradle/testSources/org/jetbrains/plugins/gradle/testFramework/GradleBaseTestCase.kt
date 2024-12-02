@@ -26,6 +26,7 @@ abstract class GradleBaseTestCase {
 
   val testRoot: VirtualFile get() = gradleTestFixture.testRoot
   val gradleJvm: String get() = gradleTestFixture.gradleJvm
+  val gradleJvmPath: String get() = gradleTestFixture.gradleJvmPath
   val gradleVersion: GradleVersion get() = gradleTestFixture.gradleVersion
 
   @BeforeEach

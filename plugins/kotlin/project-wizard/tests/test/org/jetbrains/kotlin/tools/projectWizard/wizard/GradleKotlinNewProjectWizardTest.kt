@@ -17,11 +17,13 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizardData.Companion.kotlinGradleData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
+import org.jetbrains.plugins.gradle.properties.GRADLE_FOLDER
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
 import org.jetbrains.plugins.gradle.setup.GradleCreateProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
@@ -52,7 +54,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
 
     @AfterEach
     fun tearDown() {
-        runAll({ KotlinSdkType.removeKotlinSdkInTests() })
+        runAll({ KotlinSdkType.removeKotlinSdkInTests() }, { Registry.getInstance().restoreDefaults() })
     }
 
     override fun getTestFolderName(): String {
@@ -75,10 +77,23 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         return kotlinVersionRegex.find(buildFile!!.readText())?.groupValues?.get(1)
     }
 
+    private fun Project.findDaemonJvmVersion(): Int? {
+        val projectPath = File(basePath.orEmpty())
+        val daemonJvmPropertiesFile = projectPath.resolve(File(GRADLE_FOLDER, "gradle-daemon-jvm.properties"))
+        val daemonJvmPropertiesText = daemonJvmPropertiesFile.readText()
+        val toolchainVersionRegex = Regex("""toolchainVersion=(\d+)""")
+
+        return toolchainVersionRegex.find(daemonJvmPropertiesText)?.groupValues?.get(1)?.toIntOrNull()
+    }
+
     private fun Project.assertKotlinVersion(expectedVersion: String, useKotlinDsl: Boolean, modulePath: String? = null) {
         val kotlinVersion = findKotlinVersion(useKotlinDsl, modulePath)
         Assertions.assertNotNull(kotlinVersion, "Could not find Kotlin version in build file")
         Assertions.assertEquals(expectedVersion, kotlinVersion)
+    }
+
+    private fun Project.assertDaemonJvmCriteria(expectedVersion: Int) {
+        Assertions.assertEquals(expectedVersion, findDaemonJvmVersion())
     }
 
     private val kotlinVersionRegex = Regex("""kotlin.*version.*["']([\w-.]*)["']""")
@@ -99,6 +114,11 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     private fun tomlVersionRegex(libraryName: String) = Regex("""$libraryName = "(\d+\.\d+\.\d+)"""")
     private fun substituteTomlLibraryVersion(str: String, libraryName: String, libraryReplacementName: String): String {
         return str.replaceFirstGroup(tomlVersionRegex(libraryName), libraryReplacementName)
+    }
+
+    private val daemonJvmCriteriaRegex = Regex("""toolchainVersion=(\d+)""")
+    private fun substituteDaemonJvmCriteriaVersions(str: String): String {
+        return str.replaceFirstGroup(daemonJvmCriteriaRegex, "TOOLCHAIN_VERSION")
     }
 
     // We replace dynamic values like the Kotlin version that is used with placeholders.
@@ -185,6 +205,15 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     @Test
     fun testSimpleProjectKts() {
         runNewProjectTestCase(useKotlinDsl = true)
+    }
+
+    @Test
+    fun testSimpleProjectUsingDaemonJvmCriteria() {
+        Registry.get("gradle.daemon.jvm.criteria.new.project").setValue(true)
+        val gradleJdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath)
+        runNewProjectTestCase(additionalAssertions = {
+            it.assertDaemonJvmCriteria(gradleJdkVersionInfo!!.version.feature)
+        })
     }
 
     @Test

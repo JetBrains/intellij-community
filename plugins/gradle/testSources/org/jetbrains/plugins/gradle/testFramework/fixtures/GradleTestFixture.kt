@@ -13,6 +13,8 @@ interface GradleTestFixture : IdeaTestFixture {
 
   val gradleJvm: String
 
+  val gradleJvmPath: String
+
   val gradleVersion: GradleVersion
 
   suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project

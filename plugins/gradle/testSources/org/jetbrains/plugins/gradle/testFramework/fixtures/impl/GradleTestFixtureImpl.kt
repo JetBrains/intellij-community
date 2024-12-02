@@ -47,6 +47,8 @@ class GradleTestFixtureImpl(
 
   override lateinit var gradleJvm: String
 
+  override lateinit var gradleJvmPath: String
+
   override fun setUp() {
     reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
@@ -57,6 +59,7 @@ class GradleTestFixtureImpl(
     gradleJvmFixture.setUp()
     gradleJvmFixture.installProjectSettingsConfigurator()
     gradleJvm = gradleJvmFixture.gradleJvm
+    gradleJvmPath = gradleJvmFixture.gradleJvmPath
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()

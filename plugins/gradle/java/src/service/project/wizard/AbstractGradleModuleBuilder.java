@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleSdkData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
@@ -57,6 +58,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper;
 import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
@@ -256,8 +258,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized(() -> {
       if (isUsingDaemonToolchain()) {
-        // TODO Start migration
-        reloadProject(project);
+        GradleDaemonJvmHelper.setUpProjectDaemonJvmCriteria(
+          project, getExternalProjectSettings().getExternalProjectPath(), null)
+          .whenComplete((result, exception) -> {
+            if (exception != null) {
+              LOG.warn(exception);
+            }
+            reloadProject(project);
+          });
       } else {
         reloadProject(project);
       }

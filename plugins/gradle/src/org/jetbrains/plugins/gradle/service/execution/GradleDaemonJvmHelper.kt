@@ -17,10 +17,14 @@ import com.intellij.openapi.util.text.StringUtil
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.toJvmVendor
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
@@ -80,14 +84,17 @@ object GradleDaemonJvmHelper {
   }
 
   @JvmStatic
+  @JvmOverloads
   fun updateProjectDaemonJvmCriteria(
     project: Project,
     externalProjectPath: String,
     daemonJvmCriteria: GradleDaemonJvmCriteria,
+    executionMode: ProgressExecutionMode = ProgressExecutionMode.START_IN_FOREGROUND_ASYNC,
   ): CompletableFuture<Boolean> {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
       this.externalProjectPath = externalProjectPath
       externalSystemIdString = GradleConstants.SYSTEM_ID.id
+      executionName = GradleBundle.message("gradle.execution.name.config.daemon.jvm.criteria")
       taskNames = buildList {
         add(DaemonJvmPropertiesConfigurator.TASK_NAME)
         val version = daemonJvmCriteria.version
@@ -120,8 +127,7 @@ object GradleDaemonJvmHelper {
     }
 
     val executionSpec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, taskSettings)
-      .withProgressExecutionMode(ProgressExecutionMode.START_IN_FOREGROUND_ASYNC)
-      .withActivateToolWindowBeforeRun(true)
+      .withProgressExecutionMode(executionMode)
       .withUserData(taskUserData)
       .withCallback(taskCallback)
       .build()
@@ -129,5 +135,28 @@ object GradleDaemonJvmHelper {
     ExternalSystemUtil.runTask(executionSpec)
 
     return taskResult
+  }
+
+  /**
+   * Set up project [Daemon JVM criteria](https://docs.gradle.org/current/userguide/gradle_daemon.html#daemon_jvm_criteria) based on
+   * existing Gradle JDK configuration.
+   */
+  @JvmStatic
+  fun setUpProjectDaemonJvmCriteria(
+    project: Project,
+    externalProjectPath: String,
+    onStartingSetUpCriteria: (() -> Unit)? = null,
+  ): CompletableFuture<Boolean> {
+    val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(project, externalProjectPath)
+                        ?: return CompletableFuture.failedFuture(RuntimeException("Unable to obtain current Gradle JDK configuration to set up Daemon JVM criteria"))
+    val gradleJvmInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath)
+                        ?: return CompletableFuture.failedFuture(RuntimeException("Unable to obtain current Gradle JDK configuration to set up Daemon JVM criteria"))
+    val gradleJvmCriteria = GradleDaemonJvmCriteria(
+      version = gradleJvmInfo.version.feature.toString(),
+      vendor = gradleJvmInfo.variant.toJvmVendor()
+    )
+
+    onStartingSetUpCriteria?.invoke()
+    return updateProjectDaemonJvmCriteria(project, externalProjectPath, gradleJvmCriteria, ProgressExecutionMode.IN_BACKGROUND_ASYNC)
   }
 }

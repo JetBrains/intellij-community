@@ -31,6 +31,9 @@ class GradleJvmTestFixture(
   val gradleJvm: String
     get() = sdk.name
 
+  val gradleJvmPath: String
+    get() = sdk.homePath.orEmpty()
+
   override fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
     sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable, javaVersionRestriction)
