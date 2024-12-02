@@ -46,8 +46,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
-import com.jetbrains.python.failure
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
@@ -372,6 +372,7 @@ var Module.pythonSdk: Sdk?
     runInEdt {
       DaemonCodeAnalyzer.getInstance(project).restart()
     }
+    ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, value)
   }
 
 var Project.pythonSdk: Sdk?
