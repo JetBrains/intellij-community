@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +29,6 @@ public class RepositoryUtilsTest extends LibraryTest {
     });
   }
 
-  @Test
   public void testLibraryReloadFixesCorruptedJar() throws IOException {
     var group = "test";
     var artifact = "test";
@@ -61,14 +59,12 @@ public class RepositoryUtilsTest extends LibraryTest {
     assertEquals(corruptedJar, fileContent(jarPath));
 
     // reload library
-    var result = getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
-    assertSize(1, result);
+    getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
 
     // verify jar became valid
     assertEquals(validJar, fileContent(jarPath));
   }
 
-  @Test
   public void testLibraryReloadDoesNotDeleteUnrelatedFiles() throws IOException {
     var group = "test";
     var artifact = "test";
@@ -100,8 +96,7 @@ public class RepositoryUtilsTest extends LibraryTest {
     WriteCommandAction.runWriteCommandAction(myProject, () -> modifiableModel.commit());
 
     // reload library
-    var result = getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
-    assertSize(1, result);
+    getResult(RepositoryUtils.deleteAndReloadDependencies(myProject, library));
 
     // verify file still exists
     assertTrue(Files.exists(anotherPath));

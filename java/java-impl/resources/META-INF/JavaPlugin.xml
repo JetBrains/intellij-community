@@ -2706,6 +2706,12 @@
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120"
                  description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
 
+    <registryKey key="jar.http.downloader.enabled" defaultValue="false"
+                 description="Enabled maven-less library roots resolver for JPS (for internal JetBrains use only)"/>
+
+    <jarRepositoryAuthenticationDataProvider implementation="com.intellij.jarRepository.MavenSettingsXmlRepositoryAuthenticationDataProvider"
+                                             order="last"/>
+
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
     <referenceInjector implementation="com.intellij.java.JvmFieldNameReferenceInjector"/>
     <referenceInjector implementation="com.intellij.java.JvmClassNameReferenceInjector"/>

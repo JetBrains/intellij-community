@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.jarRepository.JarHttpDownloaderJps;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -210,11 +211,38 @@ public final class RepositoryUtils {
     return true;
   }
 
-  public static Promise<List<OrderRoot>> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
-    return loadDependenciesToLibrary(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
+  public static Promise<?> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
+    if (JarHttpDownloaderJps.enabled()) {
+      Promise<?> promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(library);
+
+      // null means this library should be handled by standard resolver
+      if (promise != null) {
+        // callers of this function typically do not log, so do it for them
+        promise.onError(error -> {
+          LOG.warn("Failed to download repository library '" + library.getName() + "' with JarHttpDownloader", error);
+        });
+
+        if (LOG.isDebugEnabled()) {
+          promise.onSuccess(result -> {
+            LOG.debug("Downloaded repository library '" + library.getName() + "' with JarHttpDownloader");
+          });
+        }
+
+        return promise;
+      }
+    }
+
+    Promise<List<OrderRoot>> mavenResolverPromise = loadDependenciesToLibrary(
+      project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
+    // callers of this function typically do not log, so do it for them
+    mavenResolverPromise.onError(error -> {
+      LOG.warn("Failed to download repository library '" + library.getName() + "' with maven resolver", error);
+    });
+
+    return mavenResolverPromise;
   }
 
-  public static Promise<List<OrderRoot>> deleteAndReloadDependencies(@NotNull final Project project,
+  public static Promise<?> deleteAndReloadDependencies(@NotNull final Project project,
                                                                      @NotNull final LibraryEx library) throws IOException {
     LOG.debug("start deleting files in library " + library.getName());
     var filesToDelete = new ArrayList<VirtualFile>();

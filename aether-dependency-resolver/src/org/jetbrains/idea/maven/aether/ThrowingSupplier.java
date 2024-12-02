@@ -2,6 +2,6 @@
 package org.jetbrains.idea.maven.aether;
 
 @FunctionalInterface
-interface ThrowingSupplier<R> {
+public interface ThrowingSupplier<R> {
   R get() throws Exception;
 }
