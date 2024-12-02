@@ -235,7 +235,13 @@ public final class ThreadLeakTracker {
            || isKotlinCIOSelector(stackTrace)
            || isStarterTestFramework(stackTrace)
            || isJMXRemoteCall(stackTrace)
-           || isBuildLogCall(stackTrace);
+           || isBuildLogCall(stackTrace)
+           || isSwingAccessibilityThread(stackTrace);
+  }
+
+  private static boolean isSwingAccessibilityThread(StackTraceElement[] trace) {
+    return trace.length > 0 && trace[0].getClassName().equals("com.sun.java.accessibility.internal.AccessBridge") &&
+           trace[0].getMethodName().equals("runDLL");
   }
 
   private static boolean isWellKnownOffender(String threadName) {
