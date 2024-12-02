@@ -33,7 +33,7 @@ check the documentation for <a href="https://editorconfig.org/">EditorConfig</a>
   <extensions defaultExtensionNs="com.intellij">
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
-    <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
+    <codeStyleSettingsModifier id="org.editorconfig.EditorConfigCodeStyleSettingsModifier" implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" id="editorConfigTrailingSpacesOptionsProvider"/>
     <fileEditorProvider id="org.editorconfig.configmanagement.editor" implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider" fileType="EditorConfig"/>
