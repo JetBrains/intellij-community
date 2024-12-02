@@ -1,20 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.plugins.journey.editor;
 
+import com.intellij.codeInsight.documentation.render.DocRenderManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.EventListener;
 import java.util.Map;
@@ -46,7 +52,7 @@ public final class JourneyEditorManager implements Disposable {
   public final Map<PsiElement, Editor> OPENED_JOURNEY_EDITORS = new ConcurrentHashMap<>();
   public final Map<PsiElement, JourneyEditorWrapper> NODE_PANELS = new ConcurrentHashMap<>();
 
-  public static final float BASE_FONT_SIZE = 13.0f;
+  public static final float BASE_FONT_SIZE = 10.0f;
   public static final int BASE_WIDTH = 800;
   public static final int TITLE_OFFSET = 100;
 
@@ -68,12 +74,32 @@ public final class JourneyEditorManager implements Disposable {
   }
 
   @RequiresEdt
+  private static Editor createEditor(Project project, Document document, @NotNull VirtualFile file) {
+    EditorImpl editor = (EditorImpl)EditorFactory.getInstance().createEditor(document, project, file, false);
+    JScrollPane scrollPane = editor.getScrollPane();
+    editor.setBorder(JBUI.Borders.empty());
+    editor.getMarkupModel().removeAllHighlighters();
+    editor.getGutterComponentEx().setPaintBackground(false);
+    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setWheelScrollingEnabled(true);
+    scrollPane.setBorder(JBUI.Borders.empty());
+    /*
+     Rendered docs cannot be resized along with font size,
+     which leads to a small code text and giant Javadocs.
+     Can turn it back when rendered docs support font size change.
+    */
+    DocRenderManager.setDocRenderingEnabled(editor, false);
+    return editor;
+  }
+
+  @RequiresEdt
   public Editor openEditor(PsiMember psiElement) {
     PsiFile psiFile = ReadAction.nonBlocking(() -> psiElement.getContainingFile()).executeSynchronously();
     if (psiFile == null) {
       return null;
     }
-    Editor editor = JourneyEditorFactory.createEditor(psiFile.getProject(), psiFile.getFileDocument(),
+    Editor editor = createEditor(psiFile.getProject(), psiFile.getFileDocument(),
                                                       psiFile.getViewProvider().getVirtualFile());
     registerEditor(psiFile, editor);
 

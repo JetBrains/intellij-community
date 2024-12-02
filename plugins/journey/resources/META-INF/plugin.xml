@@ -66,6 +66,10 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.diagram.actions.DiagramToolbarActionsProvider"
+                        serviceImplementation="org.jetbrains.intellij.plugins.journey.diagram.JourneyToolbarActionsProviderImpl"
+                        overrides="true"/>
+
     <diagram.Provider implementation="org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramProvider"/>
 
     <intentionAction>

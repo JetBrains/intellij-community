@@ -21,9 +21,9 @@ import static com.intellij.ide.actions.QualifiedNameProviderUtil.getQualifiedNam
 
 public class JourneyEditorWrapper extends JPanel {
   private NodeRealizer realizer;
-  private final Editor editor;
+  public final Editor editor;
 
-  public JourneyEditorWrapper(Editor editor, JourneyNodeIdentity node, NodeRealizer realizer, PsiMember psiMember, Graph2DView view) {
+  public JourneyEditorWrapper(Editor editor, JourneyNode node, NodeRealizer realizer, PsiMember psiMember, Graph2DView view) {
     super(new BorderLayout());
     this.editor = editor;
     this.realizer = realizer;

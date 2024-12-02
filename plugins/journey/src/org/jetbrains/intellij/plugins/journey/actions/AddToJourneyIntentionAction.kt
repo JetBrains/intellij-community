@@ -27,7 +27,7 @@ class AddToJourneyIntentionAction: IntentionAction, Iconable, LowPriorityAction 
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     // TODO select active journey?
-    JourneyDiagramProvider.getInstance().models.lastOrNull()?.addElementWithLayout(requireNotNull(JourneyNavigationUtil.getPsiElement(editor, file)))
+    JourneyDiagramProvider.getInstance().models.lastOrNull()?.addElementUpdate(requireNotNull(JourneyNavigationUtil.getPsiElement(editor, file)))
     if (editor != null) {
       FileEditorManagerEx.getInstanceExIfCreated(project)?.openFile(getUmlVirtualFile(), null, FileEditorOpenOptions().withRequestFocus())
     }

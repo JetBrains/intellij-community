@@ -42,7 +42,7 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
     final var node = myBuilder.getNodeObject(realizer.getNode());
     if (node instanceof JourneyNode journeyNode) {
       JourneyNodeIdentity identity = journeyNode.getIdentifyingElement();
-      PsiMember psiMember = identity.getOriginalElement();
+      PsiMember psiMember = identity.getOriginalMember();
       PsiFile psiFile = identity.calculatePsiElement();
       JourneyEditorWrapper cached = myDataModel.myEditorManager.NODE_PANELS.get(psiFile);
       if (cached != null) {
@@ -57,7 +57,7 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
       }
       editor.putUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL, myDataModel);
 
-      JourneyEditorWrapper editorWrapper = new JourneyEditorWrapper(editor, identity, realizer, psiMember, view);
+      JourneyEditorWrapper editorWrapper = new JourneyEditorWrapper(editor, journeyNode, realizer, psiMember, view);
       myDataModel.myEditorManager.closeEditor.addListener(it -> {
         if (it == editor) {
           view.getCanvasComponent().remove(editorWrapper.getEditorComponent());
@@ -66,9 +66,9 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
       });
 
       view.getCanvasComponent().add(editorWrapper.getEditorComponent());
-      identity.setEditor(editor);
+      journeyNode.setEditor(editor);
       AsyncEditorLoader.Companion.performWhenLoaded(editor, () -> {
-        identity.addElement(psiMember);
+        journeyNode.addElement(psiMember);
       });
       myDataModel.myEditorManager.NODE_PANELS.put(psiFile, editorWrapper);
       return editorWrapper;
@@ -84,9 +84,15 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
     @Nullable Object object,
     boolean isSelected
   ) {
+    var bounds = ((JourneyEditorWrapper)(component)).getDrawableRect(view);
+    if (bounds.getWidth() >= view.getComponent().getWidth() && bounds.getHeight() >= view.getComponent().getHeight()) {
+      view.setZoom(view.getZoom() * 0.9);
+      view.updateView();
+      return;
+    }
     JComponent editorComponent = ((JourneyEditorWrapper)(component)).getEditorComponent();
     editorComponent.setVisible(true);
-    editorComponent.setBounds(((JourneyEditorWrapper)(component)).getDrawableRect(view));
+    editorComponent.setBounds(bounds);
     editorComponent.revalidate();
   }
 }

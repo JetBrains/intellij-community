@@ -2,19 +2,22 @@ package org.jetbrains.intellij.plugins.journey.diagram;// Copyright 2000-2024 Je
 
 import com.intellij.diagram.*;
 import com.intellij.diagram.extras.DiagramExtras;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.graph.builder.GraphBuilder;
 import com.intellij.openapi.graph.builder.event.GraphBuilderEvent;
 import com.intellij.openapi.graph.view.Graph2D;
+import com.intellij.openapi.graph.view.Graph2DView;
 import com.intellij.openapi.graph.view.NodeCellRenderer;
+import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
 import com.intellij.uml.presentation.DiagramPresentationModelImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
@@ -23,14 +26,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.intellij.plugins.journey.diagram.persistence.JourneyUmlFileSnapshotLoader;
+import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorWrapper;
 
 import javax.swing.*;
+import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager.updateEditorSize;
+import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramLayout.getRealizer;
+import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager.BASE_FONT_SIZE;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNodeIdentity> {
@@ -107,39 +114,6 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
     }
   }
 
-  public static void addEdge(PsiElement from, PsiElement to, JourneyDiagramDataModel model) {
-    var fromNode = Optional.ofNullable(findNodeForFile(model, from)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(from)));
-    var toNode = Optional.ofNullable(findNodeForFile(model, to)).orElseGet(() -> model.addElement(new JourneyNodeIdentity(to)));
-
-    model.createEdge(fromNode, toNode);
-    if (!model.isNodeExist(toNode) || !model.isNodeExist(fromNode)) {
-      boolean isLeftToRight = model.isNodeExist(fromNode);
-      model.addNewPairUpdate(fromNode, toNode, isLeftToRight, true);
-
-      if (isLeftToRight) {
-        fromNode.getIdentifyingElement().addElement((PsiMember)from);
-      }
-      else {
-        toNode.getIdentifyingElement().addElement((PsiMember)to);
-      }
-    } else {
-      model.addNewPairUpdate(fromNode, toNode, false, false);
-      fromNode.getIdentifyingElement().addElement((PsiMember)from);
-      toNode.getIdentifyingElement().addElement((PsiMember)to);
-    }
-  }
-
-  private static @Nullable JourneyNode findNodeForFile(JourneyDiagramDataModel model, PsiElement from) {
-    if (from == null) return null;
-    return ReadAction.compute(() -> {
-      PsiFile fromFile = ReadAction.nonBlocking(() -> from.getContainingFile()).executeSynchronously();
-      return ContainerUtil.find(model.getNodes(), node -> {
-        PsiFile toFile = node.getIdentifyingElement().calculatePsiElement();
-        return toFile.isEquivalentTo(fromFile);
-      });
-    });
-  }
-
   @Override
   public @NotNull DiagramElementManager<JourneyNodeIdentity> getElementManager() {
     return myElementManager;
@@ -180,7 +154,7 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
               Editor editor = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.get(psi);
               // TODO such revalidation cause to flickering
               SwingUtilities.invokeLater(() -> {
-                updateEditorSize(editor, psi, (float)builder.getZoom(), false);
+                editor.getColorsScheme().setEditorFontSize((float)(BASE_FONT_SIZE * builder.getZoom()));
                 editor.getComponent().revalidate();
               });
             }
