@@ -20,17 +20,17 @@ public final class PropertyUtil extends PropertyUtilBase {
   }
 
   @Nullable
-  public static PsiField getFieldOfGetter(PsiMethod method) {
+  public static PsiField getFieldOfGetter(@NotNull PsiMethod method) {
     return getFieldOfGetter(method, true);
   }
 
   @Nullable
-  private static PsiField getFieldOfGetter(PsiMethod method, boolean useIndex) {
+  private static PsiField getFieldOfGetter(@NotNull PsiMethod method, boolean useIndex) {
     return getFieldOfGetter(method, () -> getGetterReturnExpression(method), useIndex);
   }
 
   @Nullable
-  public static PsiField getFieldOfGetter(PsiMethod method, Supplier<? extends PsiExpression> returnExprSupplier, boolean useIndex) {
+  public static PsiField getFieldOfGetter(@NotNull PsiMethod method, Supplier<? extends PsiExpression> returnExprSupplier, boolean useIndex) {
     PsiField field = getFieldImpl(method, returnExprSupplier, useIndex);
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
