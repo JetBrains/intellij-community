@@ -919,5 +919,113 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
-  /* workers */
+  public void testConflictsForFieldRecord() {
+    try {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(1).withName("b").withType(pointType)
+        };
+      }, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testConflictsForGetRecord() {
+    try {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(1).withName("b").withType(pointType)
+        };
+      }, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testWithoutConflictsForGet() {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(1).withName("b").withType(pointType)
+        };
+      }, false);
+  }
+
+  public void testConflictsSwitchUsedDeconstruction() {
+    try {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(1).withName("b").withType(pointType)
+        };
+      }, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testWithoutConflictsSwitchUsedDeconstruction() {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("a").withType(pointType)
+        };
+      }, false);
+  }
+
+  public void testConflictsSwitchNarrowedDeconstruction() {
+    try {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("a").withType(pointType)
+        };
+      }, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testWithoutConflictsSwitchExtendedDeconstruction() {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("a").withType(pointType)
+        };
+      }, false);
+  }
+
+  public void testConflictsSwitchNestedDeconstruction() {
+    try {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("x").withType(pointType)
+        };
+      }, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
+  public void testWithoutConflictsSwitchNestedDeconstruction() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("x").withType(pointType)
+      };
+    }, false);
+  }
 }
