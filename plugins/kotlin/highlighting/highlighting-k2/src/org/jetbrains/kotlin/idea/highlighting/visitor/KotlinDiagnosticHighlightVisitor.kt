@@ -78,7 +78,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         }
 
         val highlightingManager = HighlightingLevelManager.getInstance(file.project)
-        return !highlightingManager.runEssentialHighlightingOnly(file)
+        return highlightingManager.shouldHighlight(file) && !highlightingManager.runEssentialHighlightingOnly(file)
     }
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
