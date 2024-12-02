@@ -3,10 +3,7 @@ package com.intellij.platform.searchEverywhere.impl
 
 import com.intellij.platform.searchEverywhere.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -15,11 +12,11 @@ open class SearchEverywhereBaseDispatcher(
   private val providers: List<SearchEverywhereItemDataProvider>,
   private val providersAndLimits: Map<SearchEverywhereProviderId, Int>,
 ): SearchEverywhereDispatcher {
-  private val session = SearchEverywhereSessionImpl()
 
   override fun getItems(params: SearchEverywhereParams,
                         alreadyFoundResults: List<SearchEverywhereItemData>): Flow<SearchEverywhereItemData> {
 
+    val session = SearchEverywhereSessionImpl()
     val accumulator = SearchEverywhereResultsAccumulator(providersAndLimits, alreadyFoundResults)
 
     return providers.asFlow().flatMapMerge { provider ->
@@ -30,6 +27,8 @@ open class SearchEverywhereBaseDispatcher(
           else -> null
         }
       }
+    }.onCompletion {
+      session.dispose()
     }
   }
 }

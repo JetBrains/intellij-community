@@ -5,6 +5,8 @@ import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemId
 import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
@@ -19,6 +21,7 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
     val isNone: Boolean get() = oldItemData == null && newItemData == null
   }
 
+  private val mutex = Mutex()
   private val alreadyFoundIds = alreadyFoundResults.map { idForItem(it) }.toSet()
   private val itemIdToItem = HashMap<SearchEverywhereItemId, SearchEverywhereItemData>()
   private val providerToCountDownLatch = HashMap<SearchEverywhereProviderId, SuspendableCountDownLatch>().apply {
@@ -30,7 +33,7 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
     val newCountDownLatch = providerToCountDownLatch[newItem.providerId]
     newCountDownLatch?.decrementOrAwait()
 
-    synchronized(this) {
+    mutex.withLock {
       val oldItem = itemIdToItem[newId]
 
       if (!alreadyFoundIds.contains(newId) && (oldItem == null || shouldReplace(oldItem, newItem))) {
@@ -73,16 +76,17 @@ class SearchEverywhereResultsAccumulator(providerIdsAndLimits: Map<SearchEverywh
 
 private class SuspendableCountDownLatch(initialCount: Int) {
   private var count = initialCount
+  private val mutex = Mutex()
 
-  fun increment() {
-    synchronized(this) {
+  suspend fun increment() {
+    mutex.withLock {
       count++
     }
   }
 
   suspend fun decrementOrAwait() {
     while (coroutineContext.isActive) {
-      synchronized(this) {
+      mutex.withLock {
         if (count > 0) {
           count--
           return
