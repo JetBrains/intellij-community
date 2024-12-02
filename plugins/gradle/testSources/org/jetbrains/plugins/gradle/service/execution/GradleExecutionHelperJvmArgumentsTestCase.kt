@@ -15,24 +15,30 @@
  */
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.intellij.testFramework.junit5.TestApplication
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.BuildIdentifier
 import org.gradle.tooling.model.build.BuildEnvironment
+import org.gradle.tooling.model.build.JavaEnvironment
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
-import java.util.ArrayList
-import kotlin.collections.addAll
 
+@TestApplication
 abstract class GradleExecutionHelperJvmArgumentsTestCase {
 
-  fun createBuildEnvironment(workingDirectory: Path): BuildEnvironment {
+  @TempDir
+  protected lateinit var tempDirectory: Path
+
+  fun createBuildEnvironment(workingDirectory: Path): MockBuildEnvironment {
     val buildIdentifier = MockBuildIdentifier(workingDirectory)
-    return MockBuildEnvironment(buildIdentifier)
+    val javaEnvironment = MockJavaEnvironment()
+    return MockBuildEnvironment(buildIdentifier, javaEnvironment)
   }
 
   fun createOperation(): MockLongRunningOperation {
@@ -45,12 +51,25 @@ abstract class GradleExecutionHelperJvmArgumentsTestCase {
     override fun getRootDir(): File = workingDirectory.toFile()
   }
 
-  private class MockBuildEnvironment(
+  class MockBuildEnvironment(
     private val buildIdentifier: BuildIdentifier,
+    private val javaEnvironment: MockJavaEnvironment,
   ) : BuildEnvironment {
+
     override fun getBuildIdentifier(): BuildIdentifier = buildIdentifier
+    override fun getJava(): MockJavaEnvironment = javaEnvironment
+
     override fun getGradle() = throw UnsupportedOperationException()
-    override fun getJava() = throw UnsupportedOperationException()
+  }
+
+  class MockJavaEnvironment : JavaEnvironment {
+
+    @get:JvmName("_jvmArguments")
+    var jvmArguments: List<String> = emptyList()
+
+    override fun getJvmArguments(): List<String> = jvmArguments
+
+    override fun getJavaHome() = throw UnsupportedOperationException()
   }
 
   class MockLongRunningOperation : LongRunningOperation {
