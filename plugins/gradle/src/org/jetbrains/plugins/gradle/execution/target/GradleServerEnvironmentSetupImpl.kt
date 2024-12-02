@@ -7,16 +7,12 @@ import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.*
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.execution.target.value.DeferredLocalTargetValue
-import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
-import com.intellij.lang.LangCoreBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PathMapper
@@ -26,8 +22,6 @@ import groovy.lang.MissingMethodException
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.collectInitScripts
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.computeToolingProxyClassPath
@@ -54,22 +48,49 @@ internal class GradleServerEnvironmentSetupImpl(
   private val project: Project,
   private val connection: TargetProjectConnection,
   private val prepareTaskState: Boolean,
-) : GradleServerEnvironmentSetup,
-    UserDataHolderBase() {
+) : GradleServerEnvironmentSetup {
 
-  override val javaParameters = getToolingProxyDefaultJavaParameters()
-  override lateinit var environmentConfiguration: TargetEnvironmentConfiguration
-  lateinit var targetEnvironment: TargetEnvironment
-  lateinit var targetIntermediateResultHandler: TargetIntermediateResultHandler
-  lateinit var targetBuildParameters: TargetBuildParameters
-  lateinit var projectUploadRoot: TargetEnvironment.UploadRoot
+  private val javaParameters = getToolingProxyDefaultJavaParameters()
+  private lateinit var environmentConfiguration: TargetEnvironmentConfiguration
+  private lateinit var targetEnvironment: TargetEnvironment
+  private lateinit var targetIntermediateResultHandler: TargetIntermediateResultHandler
+  private lateinit var targetBuildParameters: TargetBuildParameters
+  private lateinit var projectUploadRoot: TargetEnvironment.UploadRoot
   private val targetEnvironmentProvider = TargetEnvironmentProvider()
-  var serverBindingPort: TargetValue<Int>? = null
+  private var serverBindingPort: TargetValue<Int>? = null
 
-  fun prepareEnvironment(
+  override fun getJavaParameters(): SimpleJavaParameters {
+    return javaParameters
+  }
+
+  override fun getEnvironmentConfiguration(): TargetEnvironmentConfiguration {
+    return environmentConfiguration
+  }
+
+  override fun getTargetEnvironment(): TargetEnvironment {
+    return targetEnvironment
+  }
+
+  override fun getTargetIntermediateResultHandler(): TargetIntermediateResultHandler {
+    return targetIntermediateResultHandler
+  }
+
+  override fun getTargetBuildParameters(): TargetBuildParameters {
+    return targetBuildParameters
+  }
+
+  override fun getProjectUploadRoot(): TargetEnvironment.UploadRoot {
+    return projectUploadRoot
+  }
+
+  override fun getServerBindingPort(): TargetValue<Int>? {
+    return serverBindingPort
+  }
+
+  override fun prepareEnvironment(
     targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
     consumerOperationParameters: ConsumerOperationParameters,
-    progressIndicator: GradleServerRunner.GradleServerProgressIndicator,
+    progressIndicator: GradleServerProgressIndicator,
     buildActionClassPath: List<String>,
   ): TargetedCommandLine {
     progressIndicator.checkCanceled()
@@ -296,96 +317,6 @@ internal class GradleServerEnvironmentSetupImpl(
     }
     withArguments(resolvedBuildArguments)
   }
-
-  private class TargetEnvironmentProvider {
-    private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
-    private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
-    private val uploads = mutableListOf<Upload>()
-    val pathMappingSettings = PathMappingSettings()
-
-    fun supplyEnvironmentAndRunHandlers(targetEnvironment: TargetEnvironment,
-                                        progressIndicator: GradleServerRunner.GradleServerProgressIndicator) {
-      environmentPromise.setResult(targetEnvironment to progressIndicator)
-      for (promise in dependingOnEnvironmentPromise) {
-        progressIndicator.checkCanceled()
-        promise.blockingGet(0)  // Just rethrows errors.
-      }
-      dependingOnEnvironmentPromise.clear()
-      for (upload in uploads) {
-        progressIndicator.checkCanceled()
-        upload.volume.upload(upload.relativePath, progressIndicator)
-      }
-      uploads.clear()
-    }
-
-    fun upload(uploadRoot: TargetEnvironment.UploadRoot,
-               uploadPathString: String,
-               uploadRelativePath: String): TargetValue<String> {
-      val result = DeferredTargetValue(uploadPathString)
-      doWhenEnvironmentPrepared { environment, progress ->
-        val volume = environment.uploadVolumes.getValue(uploadRoot)
-        val resolvedTargetPath = volume.resolveTargetPath(uploadRelativePath)
-        volume.upload(uploadRelativePath, progress)
-        result.resolve(resolvedTargetPath)
-        pathMappingSettings.addMapping(uploadPathString, resolvedTargetPath)
-      }
-      return result
-    }
-
-    fun requestUploadIntoTarget(path: String,
-                                request: TargetEnvironmentRequest,
-                                environmentConfiguration: TargetEnvironmentConfiguration): TargetValue<String> {
-      val uploadPath = Paths.get(FileUtilRt.toSystemDependentName(path))
-      val localRootPath = uploadPath.parent
-
-      val languageRuntime = environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java)
-      val toolingFileOnTarget = LanguageRuntimeType.VolumeDescriptor(LanguageRuntimeType.VolumeType("gradleToolingFilesOnTarget"),
-                                                                     "", "", "", "")
-      val uploadRoot = languageRuntime?.createUploadRoot(toolingFileOnTarget, localRootPath) ?: TargetEnvironment.UploadRoot(localRootPath,
-                                                                                                                             TargetEnvironment.TargetPath.Temporary())
-      request.uploadVolumes += uploadRoot
-      val result = DeferredTargetValue(path)
-      doWhenEnvironmentPrepared(result::stopProceeding) { environment, targetProgressIndicator ->
-        val volume = environment.uploadVolumes.getValue(uploadRoot)
-        try {
-          val relativePath = uploadPath.fileName.toString()
-          val resolvedTargetPath = volume.resolveTargetPath(relativePath)
-          uploads.add(Upload(volume, relativePath))
-          result.resolve(resolvedTargetPath)
-        }
-        catch (t: Throwable) {
-          targetProgressIndicator.stopWithErrorMessage(
-            LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot, t.localizedMessage))
-          result.resolveFailure(t)
-        }
-      }
-      return result
-    }
-
-    fun requestPort(request: TargetEnvironmentRequest, targetPort: Int): TargetValue<Int> {
-      val binding = TargetEnvironment.TargetPortBinding(null, targetPort)
-      request.targetPortBindings.add(binding)
-      val result = DeferredLocalTargetValue(targetPort)
-      doWhenEnvironmentPrepared { environment, _ ->
-        val localPort = environment.targetPortBindings[binding]?.localEndpoint?.port
-        result.resolve(localPort)
-      }
-      return result
-    }
-
-    private fun doWhenEnvironmentPrepared(onCancel: () -> Unit = {}, block: (TargetEnvironment, TargetProgressIndicator) -> Unit) {
-      dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
-        if (progress.isCanceled || progress.isStopped) {
-          onCancel.invoke()
-        }
-        else {
-          block(environment, progress)
-        }
-      }
-    }
-  }
-
-  private class Upload(val volume: TargetEnvironment.UploadableVolume, val relativePath: String)
 
   companion object {
     private val log = logger<GradleServerEnvironmentSetupImpl>()
