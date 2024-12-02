@@ -11576,6 +11576,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/modifiers/infixModifier.kt");
             }
 
+            @TestMetadata("infixModifierFixAll.kt")
+            public void testInfixModifierFixAll() throws Exception {
+                runTest("testData/quickfix/modifiers/infixModifierFixAll.kt");
+            }
+
             @TestMetadata("kt10409.kt")
             public void testKt10409() throws Exception {
                 runTest("testData/quickfix/modifiers/kt10409.kt");
@@ -11714,6 +11719,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("operatorModifierComponent.kt")
             public void testOperatorModifierComponent() throws Exception {
                 runTest("testData/quickfix/modifiers/operatorModifierComponent.kt");
+            }
+
+            @TestMetadata("operatorModifierFixAll.kt")
+            public void testOperatorModifierFixAll() throws Exception {
+                runTest("testData/quickfix/modifiers/operatorModifierFixAll.kt");
             }
 
             @TestMetadata("operatorModifierGet.kt")

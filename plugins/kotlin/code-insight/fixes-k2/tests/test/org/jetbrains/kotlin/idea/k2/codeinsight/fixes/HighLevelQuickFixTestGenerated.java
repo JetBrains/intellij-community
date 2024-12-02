@@ -1717,6 +1717,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/modifiers/infixModifier.kt");
         }
 
+        @TestMetadata("infixModifierFixAll.kt")
+        public void testInfixModifierFixAll() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/infixModifierFixAll.kt");
+        }
+
         @TestMetadata("kt10409.kt")
         public void testKt10409() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/modifiers/kt10409.kt");
@@ -1855,6 +1860,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("operatorModifierComponent.kt")
         public void testOperatorModifierComponent() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/modifiers/operatorModifierComponent.kt");
+        }
+
+        @TestMetadata("operatorModifierFixAll.kt")
+        public void testOperatorModifierFixAll() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/modifiers/operatorModifierFixAll.kt");
         }
 
         @TestMetadata("operatorModifierGet.kt")
