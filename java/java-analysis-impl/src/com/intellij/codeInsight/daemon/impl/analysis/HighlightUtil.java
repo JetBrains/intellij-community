@@ -1867,7 +1867,10 @@ public final class HighlightUtil {
       List<IntentionAction> registrar = new ArrayList<>();
       HighlightFixUtil.registerFixesForExpressionStatement(statement, registrar);
       QuickFixAction.registerQuickFixActions(error, null, registrar);
-      if (expressionStatement.getParent() instanceof PsiCodeBlock) {
+      PsiElement parent = expressionStatement.getParent();
+      if (parent instanceof PsiCodeBlock ||
+          parent instanceof PsiIfStatement ||
+          parent instanceof PsiLoopStatement loop && loop.getBody() == expressionStatement) {
         IntentionAction action = PriorityIntentionActionWrapper
           .lowPriority(getFixFactory().createDeleteSideEffectAwareFix(expressionStatement));
         error.registerFix(action, null, null, null, null);
