@@ -914,6 +914,11 @@ com.intellij.codeInsight.lookup.LookupListener
 - lookupCanceled(com.intellij.codeInsight.lookup.LookupEvent):V
 - lookupShown(com.intellij.codeInsight.lookup.LookupEvent):V
 - uiRefreshed():V
+a:com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
+- com.intellij.codeInsight.lookup.LookupElementRenderer
+- <init>():V
+- f:renderElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.LookupElementPresentation):V
+- a:renderElementSuspending(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.LookupElementPresentation,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.codeInsight.lookup.TailTypeDecorator
 - com.intellij.codeInsight.lookup.LookupElementDecorator
 - <init>(com.intellij.codeInsight.lookup.LookupElement):V
