@@ -5957,7 +5957,7 @@ com.intellij.codeInspection.actions.CleanupInspectionUtil
 - a:applyFixesNoSort(com.intellij.openapi.project.Project,java.lang.String,java.util.List,java.lang.Class,Z):com.intellij.codeInspection.actions.AbstractPerformFixesTask
 - applyFixesNoSort(com.intellij.openapi.project.Project,java.lang.String,java.util.List,java.lang.Class,Z,Z):com.intellij.codeInspection.actions.AbstractPerformFixesTask
 - s:getInstance():com.intellij.codeInspection.actions.CleanupInspectionUtil
-- sortDescriptions(java.util.List):V
+- sortDescriptions(java.util.List):java.util.List
 c:com.intellij.codeInspection.actions.CodeInspectionAction
 - com.intellij.analysis.BaseAnalysisAction
 - p:myExternalProfile:com.intellij.codeInspection.ex.InspectionProfileImpl
