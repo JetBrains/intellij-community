@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 
-internal class TypeHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+internal class KotlinTypeSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         highlightSimpleNameExpression(expression)
     }

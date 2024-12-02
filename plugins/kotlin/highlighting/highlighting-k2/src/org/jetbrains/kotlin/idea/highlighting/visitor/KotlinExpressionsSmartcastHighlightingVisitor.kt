@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.highlighting.visitor
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.highlighting.analyzers.ExpressionsSmartcastHighlighter
+import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinExpressionsSmartcastSemanticAnalyzer
 import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinSemanticAnalyzer
 
 internal class KotlinExpressionsSmartcastHighlightingVisitor : KotlinAbstractSemanticHighlightingVisitor() {
     override fun clone(): KotlinExpressionsSmartcastHighlightingVisitor = KotlinExpressionsSmartcastHighlightingVisitor()
     override fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KotlinSemanticAnalyzer {
-        return ExpressionsSmartcastHighlighter(holder, session)
+        return KotlinExpressionsSmartcastSemanticAnalyzer(holder, session)
     }
 }

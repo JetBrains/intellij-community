@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-internal class FunctionCallHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+internal class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
         highlightBinaryExpression(expression)
     }

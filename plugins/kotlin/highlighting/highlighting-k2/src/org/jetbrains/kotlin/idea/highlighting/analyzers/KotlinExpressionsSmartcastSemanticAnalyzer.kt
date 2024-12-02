@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
-internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitExpression(expression: KtExpression) {
         highlightExpression(expression)
     }
