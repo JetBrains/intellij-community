@@ -61,6 +61,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testInlineLambda() = doTest()
     fun testInlineStandardCalls() = doTest()
     fun testIndices() = doTest()
+    fun testErrorTypes() = doTest()
     fun testJavaFields() {
         myFixture.addClass("""
             public class Point {

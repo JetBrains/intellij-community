@@ -1850,7 +1850,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun balanceType(left: KaType?, right: KaType?): KaType? {
         if (left == null || right == null) return null
-        if (left == right) return left
+        if (left is KaErrorType || right is KaErrorType) return null
+        if (left.semanticallyEquals(right)) return left
         if (left.canBeNull() && !right.canBeNull()) {
             return balanceType(left.withNullability(KaTypeNullability.NON_NULLABLE), right)
         }
