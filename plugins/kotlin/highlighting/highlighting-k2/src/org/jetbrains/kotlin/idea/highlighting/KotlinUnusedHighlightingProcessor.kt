@@ -64,9 +64,6 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         enabled = deadCodeInspection != null
                 && deadCodeInfoType != null
                 && profile.isToolEnabled(deadCodeKey, ktFile)
-                && HighlightingLevelManager.getInstance(project).shouldInspect(ktFile) &&
-                !InjectedLanguageManager.getInstance(project).isInjectedViewProvider(ktFile.viewProvider)
-
     }
 
     context(KaSession)
