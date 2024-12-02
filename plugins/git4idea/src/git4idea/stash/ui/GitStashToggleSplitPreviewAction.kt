@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.vcs.changes.shouldHaveSplitterDiffPreview
 import git4idea.config.GitVcsApplicationSettings
 
 internal class GitStashToggleSplitPreviewAction : DumbAwareToggleAction() {
@@ -15,7 +16,7 @@ internal class GitStashToggleSplitPreviewAction : DumbAwareToggleAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    e.presentation.isEnabledAndVisible = !isStashTabVertical(project)
+    e.presentation.isEnabledAndVisible = shouldHaveSplitterDiffPreview(project, isStashTabVertical(project))
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
