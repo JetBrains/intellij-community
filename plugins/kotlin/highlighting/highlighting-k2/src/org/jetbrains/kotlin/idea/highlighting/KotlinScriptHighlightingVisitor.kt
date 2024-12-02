@@ -20,7 +20,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.SourceCode
 
 class KotlinScriptHighlightingVisitor : HighlightVisitor {
-    private lateinit var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder>>
+    private var diagnosticRanges: MutableMap<TextRange, MutableList<HighlightInfo.Builder>>? = null
     private var holder: HighlightInfoHolder? = null
 
     override fun suitableForFile(file: PsiFile): Boolean {
@@ -32,7 +32,7 @@ class KotlinScriptHighlightingVisitor : HighlightVisitor {
         // show diagnostics with textRanges under this element range
         // assumption: highlight visitors call visit() method in the post-order (children first)
         // note that after this visitor finished, `diagnosticRanges` will be empty, because all diagnostics are inside the file range, by definition
-        val iterator = diagnosticRanges.iterator()
+        val iterator = diagnosticRanges?.iterator() ?: return
         for (entry in iterator) {
             if (entry.key in elementRange) {
                 val diagnostics = entry.value
@@ -51,39 +51,40 @@ class KotlinScriptHighlightingVisitor : HighlightVisitor {
         action: Runnable
     ): Boolean {
         this.holder = holder
-        val ktFile = file as KtFile
-        val reports = drainScriptReports(file)
-
-        diagnosticRanges = reports.mapNotNull { scriptDiagnostic ->
-            val (startOffset, endOffset) = scriptDiagnostic.location?.let<SourceCode.Location, Pair<Int, Int>> {
-                computeOffsets(
-                    ktFile.fileDocument,
-                    it
-                )
-            } ?: (0 to 0)
-            val exception = scriptDiagnostic.exception
-            val exceptionMessage = if (exception != null) " ($exception)" else ""
-
-            @Suppress("HardCodedStringLiteral")
-            val message = scriptDiagnostic.message + exceptionMessage
-            val severity = scriptDiagnostic.severity.convertSeverity() ?: return@mapNotNull null
-            val annotation = HighlightInfo.newHighlightInfo(HighlightInfo.convertSeverity(severity))
-                .range(startOffset, endOffset)
-                .descriptionAndTooltip(message)
-            if (startOffset == endOffset) {
-                // if range is empty, show notification panel in editor
-                annotation.fileLevelAnnotation()
-            }
-
-            for (provider in ScriptDiagnosticFixProvider.EP_NAME.extensionList) {
-                provider.provideFixes(scriptDiagnostic).forEach {
-                    annotation.registerFix(it, null, null, null, null)
-                }
-            }
-
-            TextRange(startOffset, endOffset) to mutableListOf(annotation)
-        }.toMap().toMutableMap()
         try {
+            val ktFile = file as KtFile
+            val reports = drainScriptReports(file)
+
+            diagnosticRanges = reports.mapNotNull { scriptDiagnostic ->
+                val (startOffset, endOffset) = scriptDiagnostic.location?.let<SourceCode.Location, Pair<Int, Int>> {
+                    computeOffsets(
+                        ktFile.fileDocument,
+                        it
+                    )
+                } ?: (0 to 0)
+                val exception = scriptDiagnostic.exception
+                val exceptionMessage = if (exception != null) " ($exception)" else ""
+
+                @Suppress("HardCodedStringLiteral")
+                val message = scriptDiagnostic.message + exceptionMessage
+                val severity = scriptDiagnostic.severity.convertSeverity() ?: return@mapNotNull null
+                val annotation = HighlightInfo.newHighlightInfo(HighlightInfo.convertSeverity(severity))
+                    .range(startOffset, endOffset)
+                    .descriptionAndTooltip(message)
+                if (startOffset == endOffset) {
+                    // if range is empty, show notification panel in editor
+                    annotation.fileLevelAnnotation()
+                }
+
+                for (provider in ScriptDiagnosticFixProvider.EP_NAME.extensionList) {
+                    provider.provideFixes(scriptDiagnostic).forEach {
+                        annotation.registerFix(it, null, null, null, null)
+                    }
+                }
+
+                TextRange(startOffset, endOffset) to mutableListOf(annotation)
+            }.toMap().toMutableMap()
+
             action.run()
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
@@ -91,9 +92,10 @@ class KotlinScriptHighlightingVisitor : HighlightVisitor {
             throw e
         } finally {
             // do not leak Editor, since KotlinDiagnosticHighlightVisitor is an app-level extension
+            diagnosticRanges = null
             this.holder = null
-            diagnosticRanges.clear()
         }
+
         return true
     }
 
