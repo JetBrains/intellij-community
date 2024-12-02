@@ -176,8 +176,8 @@ class MavenIndexerCMDState(
       classpath.add(File(PathUtil.getJarPathForClass(MavenId::class.java)))
       classpath.add(File(PathUtil.getJarPathForClass(MavenServer::class.java)))
       classpath.add(File(root, "maven-server-indexer.jar"))
-      addDir(classpath, File(root, "maven-server-indexer")) { f: File? -> true }
-      addDir(classpath, File(File(root, "intellij.maven.server.indexer"), "lib")) { f: File? -> true }
+      addDir(classpath, File(root, "maven-server-indexer"))
+      addDir(classpath, File(File(root, "intellij.maven.server.indexer"), "lib"))
     }
 
     private fun prepareClassPathForLocalRunAndUnitTests(mavenVersion: String, classpath: MutableList<File>, root: String) {
@@ -187,7 +187,7 @@ class MavenIndexerCMDState(
     }
 
     private fun addMavenLibs(classpath: MutableList<File>, mavenHome: File) {
-      addDir(classpath, File(mavenHome, "lib")) { f: File? -> true }
+      addDir(classpath, File(mavenHome, "lib"))
       val bootFolder = File(mavenHome, "boot")
       val classworldsJars = bootFolder.listFiles { dir: File?, name: String? ->
         StringUtil.contains(
@@ -198,12 +198,12 @@ class MavenIndexerCMDState(
       }
     }
 
-    private fun addDir(classpath: MutableList<File>, dir: File, filter: Predicate<File>) {
+    private fun addDir(classpath: MutableList<File>, dir: File) {
       val files = dir.listFiles()
       if (files == null) return
 
       for (jar in files) {
-        if (jar.isFile && jar.name.endsWith(".jar") && filter.test(jar)) {
+        if (jar.isFile && jar.name.endsWith(".jar")) {
           classpath.add(jar)
         }
       }

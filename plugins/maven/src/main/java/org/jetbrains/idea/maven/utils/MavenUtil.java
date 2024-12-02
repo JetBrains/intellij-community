@@ -1284,9 +1284,10 @@ public class MavenUtil {
 
   @Nullable
   private static VirtualFile doResolveSuperPomFile(@NotNull Path libDir, String superPomName) {
-    Path[] libraries;
-    try {
-      libraries = Files.list(libDir).toArray(Path[]::new);
+    List<Path> libraries;
+
+    try (Stream<Path> pathStream = Files.list(libDir)) {
+      libraries = pathStream.toList();
     }
     catch (IOException e) {
       return null;
