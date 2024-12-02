@@ -100,6 +100,10 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     return isOpaque(state.scrollBar) || state.animationBehavior.trackFrame > 0
   }
 
+  private fun isMousePressedOnVisiblePart(event: MouseEvent): Boolean {
+    return event.id == MouseEvent.MOUSE_PRESSED && isThumbContains(event.x, event.y)
+  }
+
   open val isTrackExpandable: Boolean
     get() = false
 
@@ -108,7 +112,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   }
 
   fun isThumbContains(x: Int, y: Int): Boolean {
-    return installedState!!.thumb.bounds.contains(x, y)
+    return installedState?.thumb?.bounds?.contains(x, y) == true
   }
 
   protected open fun paintTrack(g: Graphics2D, c: JComponent) {
@@ -430,7 +434,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     }
 
     fun passMouseEventThroughInvisibleScrollbar(event: MouseEvent): Boolean {
-      if (isTrackClickable()) {
+      if (isTrackClickable() || isMousePressedOnVisiblePart(event)) {
         return false
       }
 
