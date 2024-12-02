@@ -1042,6 +1042,10 @@ f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurabl
 - getDependencies():java.util.Collection
 - getId():java.lang.String
 f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable$Companion
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP
+- com.intellij.openapi.options.ConfigurableEP
+- sf:Companion:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
+f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurableEP$Companion
 f:com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.Disposable
@@ -2086,6 +2090,8 @@ c:com.intellij.ide.CopyPasteManagerEx
 - stopKillRings(com.intellij.openapi.editor.Document):V
 com.intellij.ide.FeedbackDescriptionProvider
 - a:getDescription(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ide.GeneralSettingsConfigurableEP
+- com.intellij.openapi.options.ConfigurableEP
 c:com.intellij.ide.IdeDependentActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - <init>():V
@@ -6081,6 +6087,7 @@ f:com.intellij.internal.statistic.collectors.fus.ui.GotItTooltipAllowlistEP
 - <init>():V
 - f:getPrefix():java.lang.String
 - f:setPrefix(java.lang.String):V
+f:com.intellij.jps.impl.JpsPluginBean
 f:com.intellij.notification.ActionCenter
 - sf:EVENT_REQUESTOR:java.lang.String
 - sf:MODEL_CHANGED:com.intellij.util.messages.Topic
@@ -6641,6 +6648,8 @@ a:com.intellij.openapi.application.ClipboardAnalyzeListener
 - applicationDeactivated(com.intellij.openapi.wm.IdeFrame):V
 - a:canHandle(java.lang.String):Z
 - pa:handle(com.intellij.openapi.project.Project,java.lang.String):V
+f:com.intellij.openapi.application.ExperimentalFeatureImpl
+- com.intellij.openapi.application.ExperimentalFeature
 a:com.intellij.openapi.application.JBProtocolCommand
 - sf:Companion:com.intellij.openapi.application.JBProtocolCommand$Companion
 - sf:FRAGMENT_PARAM_NAME:java.lang.String

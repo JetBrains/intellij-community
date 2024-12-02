@@ -19,7 +19,10 @@ import org.jetbrains.annotations.ApiStatus;
  * If you need to add a section of code completion options, your UnnamedConfigurable should implement
  * {@link CodeCompletionOptionsCustomSection}
  */
-@ApiStatus.Internal
 public final class CodeCompletionConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
   static final ExtensionPointName<CodeCompletionConfigurableEP> EP_NAME = new ExtensionPointName<>("com.intellij.codeCompletionConfigurable");
+
+  @ApiStatus.Internal
+  public CodeCompletionConfigurableEP() {
+  }
 }

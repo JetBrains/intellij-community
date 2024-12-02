@@ -352,6 +352,8 @@ f:com.intellij.application.options.CodeCompletionConfigurable
 - reset():V
 - f:setCaseSensitive(I):V
 f:com.intellij.application.options.CodeCompletionConfigurable$Companion
+f:com.intellij.application.options.CodeCompletionConfigurableEP
+- com.intellij.openapi.options.ConfigurableEP
 com.intellij.application.options.CodeCompletionOptionsCustomSection
 - com.intellij.openapi.options.UnnamedConfigurable
 a:com.intellij.application.options.CodeStyleAbstractConfigurable
@@ -469,6 +471,8 @@ com.intellij.application.options.GeneralCodeStyleOptionsProvider
 - a:apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - a:isModified(com.intellij.psi.codeStyle.CodeStyleSettings):Z
 - a:reset(com.intellij.psi.codeStyle.CodeStyleSettings):V
+f:com.intellij.application.options.GeneralCodeStyleOptionsProviderEP
+- com.intellij.openapi.options.ConfigurableEP
 f:com.intellij.application.options.GlobalOptionsApplicabilityFilter
 - com.intellij.application.options.OptionsApplicabilityFilter
 - <init>():V
@@ -3033,11 +3037,18 @@ c:com.intellij.codeInsight.editorActions.PasteHandler
 - <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
 - doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
 - execute(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext,com.intellij.util.Producer):V
+f:com.intellij.codeInsight.editorActions.PreserveIndentOnPasteBean
+- fileType:java.lang.String
 com.intellij.codeInsight.editorActions.QuoteHandler
 - a:hasNonClosedLiteral(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.highlighter.HighlighterIterator,I):Z
 - a:isClosingQuote(com.intellij.openapi.editor.highlighter.HighlighterIterator,I):Z
 - a:isInsideLiteral(com.intellij.openapi.editor.highlighter.HighlighterIterator):Z
 - a:isOpeningQuote(com.intellij.openapi.editor.highlighter.HighlighterIterator,I):Z
+f:com.intellij.codeInsight.editorActions.QuoteHandlerEP
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- com.intellij.util.KeyedLazyInstance
+- className:java.lang.String
+- fileType:java.lang.String
 f:com.intellij.codeInsight.editorActions.SelectWordHandler
 - com.intellij.openapi.editor.actionSystem.EditorActionHandler$ForEachCaret
 - <init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
@@ -6777,6 +6788,9 @@ c:com.intellij.execution.console.ConsoleViewWrapperBase
 - scrollTo(I):V
 - setHelpId(java.lang.String):V
 - setOutputPaused(Z):V
+f:com.intellij.execution.console.CustomizableConsoleFoldingBean
+- negate:Z
+- substring:java.lang.String
 com.intellij.execution.console.DuplexConsoleListener
 - a:consoleEnabled(Z):V
 c:com.intellij.execution.console.DuplexConsoleView
@@ -7142,6 +7156,11 @@ c:com.intellij.facet.impl.FacetUtil
 - s:isRegistered(com.intellij.facet.Facet):Z
 - s:loadFacetConfiguration(com.intellij.facet.FacetConfiguration,org.jdom.Element):V
 - s:saveFacetConfiguration(com.intellij.facet.FacetConfiguration):org.jdom.Element
+f:com.intellij.facet.impl.ProjectFacetListenerEP
+- com.intellij.serviceContainer.LazyExtensionInstance
+- com.intellij.openapi.extensions.PluginAware
+- myFacetTypeId:java.lang.String
+- myImplementationClass:java.lang.String
 f:com.intellij.facet.impl.invalid.InvalidFacet
 - com.intellij.facet.Facet
 - <init>(com.intellij.facet.impl.invalid.InvalidFacetType,com.intellij.openapi.module.Module,java.lang.String,com.intellij.facet.impl.invalid.InvalidFacetConfiguration,com.intellij.facet.Facet):V
@@ -15506,6 +15525,8 @@ f:com.intellij.profile.codeInspection.ui.DescriptionEditorPaneKt
 - sf:readHTMLWithCodeHighlighting(javax.swing.JEditorPane,java.lang.String,java.lang.String):V
 com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
+f:com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
+- com.intellij.openapi.options.ConfigurableEP
 com.intellij.profile.codeInspection.ui.ErrorsConfigurable
 - com.intellij.openapi.options.Configurable
 - a:getSelectedObject():java.lang.Object

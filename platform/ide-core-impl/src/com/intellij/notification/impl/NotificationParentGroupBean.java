@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * @author Alexander Lobas
  */
-@ApiStatus.Internal
 public final class NotificationParentGroupBean {
   @Attribute("id")
   public String id;
@@ -20,6 +19,10 @@ public final class NotificationParentGroupBean {
 
   @Attribute("titlePrefix")
   public String titlePrefix;
+
+  @ApiStatus.Internal
+  public NotificationParentGroupBean() {
+  }
 
   @Override
   public String toString() {

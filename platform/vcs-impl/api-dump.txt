@@ -2624,6 +2624,11 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:createGroupingPolicy(com.intellij.openapi.project.Project,javax.swing.tree.DefaultTreeModel):com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicy
+f:com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- implementationClass:java.lang.String
+- key:java.lang.String
+- weight:I
 c:com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport$Companion
 - sf:DIRECTORY_GROUPING:java.lang.String
@@ -2835,6 +2840,14 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl$VirtualFiles
 - <init>(com.intellij.openapi.project.Project,Z,Z):V
 - <init>(com.intellij.openapi.project.Project,Z,Z,java.util.List):V
 - p:buildTreeModel(java.util.List):javax.swing.tree.DefaultTreeModel
+f:com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP
+- com.intellij.openapi.extensions.PluginAware
+- className:java.lang.String
+- displayNameSupplierClassName:java.lang.String
+- isInCommitToolWindow:Z
+- predicateClassName:java.lang.String
+- preloaderClassName:java.lang.String
+- tabName:java.lang.String
 com.intellij.openapi.vcs.changes.ui.ChangesViewContentI
 - a:addContent(com.intellij.ui.content.Content):V
 - a:attachToolWindow(com.intellij.openapi.wm.ToolWindow):V
@@ -3991,6 +4004,13 @@ f:com.intellij.openapi.vcs.impl.VcsCacheManager
 - getContentRevisionCache():com.intellij.openapi.vcs.impl.ContentRevisionCache
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsCacheManager
 - getVcsHistoryCache():com.intellij.openapi.vcs.history.VcsHistoryCache
+f:com.intellij.openapi.vcs.impl.VcsEP
+- com.intellij.openapi.extensions.PluginAware
+- administrativeAreaName:java.lang.String
+- areChildrenValidMappings:Z
+- displayName:java.lang.String
+- name:java.lang.String
+- vcsClass:java.lang.String
 f:com.intellij.openapi.vcs.impl.VcsFileStatusProvider
 - getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsFileStatusProvider
