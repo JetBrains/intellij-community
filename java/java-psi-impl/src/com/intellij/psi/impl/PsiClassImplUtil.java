@@ -159,6 +159,7 @@ public final class PsiClassImplUtil {
            : ContainerUtil.filter(type.getMembers(aClass), member -> name.equals(member.getName()));
   }
 
+  @Unmodifiable
   public static @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
     return withSubstitutors(aClass, getMap(aClass).getAllMembers(type, null));
   }
@@ -923,6 +924,7 @@ public final class PsiClassImplUtil {
     return resolved;
   }
 
+  @Unmodifiable
   public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull PsiClass psiClass,
                                                                                                      @NotNull String name,
                                                                                                      boolean checkBases) {

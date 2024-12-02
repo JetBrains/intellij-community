@@ -289,6 +289,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<@NotNull StringOperation> prepareReplaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");

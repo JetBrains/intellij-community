@@ -8,6 +8,7 @@ import com.intellij.util.Functions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.WeakHashMap;
 import java.util.*;
@@ -258,6 +259,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     return myMeta.children(node);
   }
 
+  @Unmodifiable
   public final @NotNull List<T> toList() {
     return traverse().toList();
   }

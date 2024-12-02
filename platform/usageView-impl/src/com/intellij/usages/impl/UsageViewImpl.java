@@ -1877,6 +1877,7 @@ public class UsageViewImpl implements UsageViewEx {
     return new HashSet<>(allUsagesRecursive(selectedNodes()));
   }
 
+  @Unmodifiable
   private static @NotNull List<@NotNull Usage> allUsagesRecursive(@NotNull List<? extends TreeNode> selection) {
     return TreeUtil.treeNodeTraverser(null).withRoots(selection).traverse()
       .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() : null).toList();

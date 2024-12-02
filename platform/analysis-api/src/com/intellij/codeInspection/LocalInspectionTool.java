@@ -9,6 +9,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -214,6 +215,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
   public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
   }
 
+  @Unmodifiable
   public @NotNull List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     return manager.defaultProcessFile(this, file);
   }

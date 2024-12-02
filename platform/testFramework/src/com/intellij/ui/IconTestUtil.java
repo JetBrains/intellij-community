@@ -64,6 +64,7 @@ public final class IconTestUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<Icon> renderDeferredIcon(Icon icon) {
     icon.paintIcon(new JLabel(), createMockGraphics(), 0, 0);  // force to eval
     TimeoutUtil.sleep(1000); // give chance to evaluate

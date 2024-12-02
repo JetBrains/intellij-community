@@ -28,10 +28,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.SealedUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -351,6 +348,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     }
   }
 
+  @Unmodifiable
   public Iterable<CompletionElement> getResults() {
     if (mySecondRateResults.size() == myResults.size()) {
       return mySecondRateResults;

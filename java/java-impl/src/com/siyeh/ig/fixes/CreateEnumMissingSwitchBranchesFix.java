@@ -8,6 +8,7 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -29,7 +30,7 @@ public final class CreateEnumMissingSwitchBranchesFix extends CreateMissingSwitc
   }
 
   @Override
-  protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
+  protected @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor() {
     return label -> ContainerUtil.map(SwitchUtils.findEnumConstants(label), PsiEnumConstant::getName);
   }
 }

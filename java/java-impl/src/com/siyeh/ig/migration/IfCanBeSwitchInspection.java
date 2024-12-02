@@ -35,6 +35,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -242,6 +243,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
+  @Unmodifiable
   private static @NotNull List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
     return SyntaxTraverser.psiTraverser(expression)
       .filter(PsiTypeCastExpression.class)

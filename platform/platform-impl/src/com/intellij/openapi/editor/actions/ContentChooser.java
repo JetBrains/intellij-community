@@ -33,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -325,6 +326,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     updateViewerForSelection();
   }
 
+  @Unmodifiable
   public @NotNull List<Data> getSelectedContents() {
     return JBIterable.from(myList.getSelectedValuesList()).map(o -> myAllContents.get(o.index)).toList();
   }

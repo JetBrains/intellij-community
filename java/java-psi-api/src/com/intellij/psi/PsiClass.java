@@ -13,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -273,6 +274,7 @@ public interface PsiClass
    * @return the found methods and their substitutors, or an empty list if no methods are found.
    */
   @NotNull
+  @Unmodifiable
   List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases);
 
   /**
@@ -282,6 +284,7 @@ public interface PsiClass
    * @return the list of methods and their substitutors
    */
   @NotNull
+  @Unmodifiable
   List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors();
 
   /**

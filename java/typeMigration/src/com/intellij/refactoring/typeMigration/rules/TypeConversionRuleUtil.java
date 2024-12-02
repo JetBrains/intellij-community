@@ -6,11 +6,13 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
 
 final class TypeConversionRuleUtil {
+  @Unmodifiable
   static List<PsiVariable> getVariablesToMakeFinal(@NotNull PsiExpression expression) {
     final ControlFlow controlFlow;
     try {

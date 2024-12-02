@@ -349,6 +349,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return null;
   }
 
+  @Unmodifiable
   private List<CodeStyleSettingsModifier> getOverridingModifiers() {
     return
       ContainerUtil.filter(

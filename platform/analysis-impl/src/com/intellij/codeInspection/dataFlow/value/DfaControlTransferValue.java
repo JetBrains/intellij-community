@@ -60,10 +60,12 @@ public final class DfaControlTransferValue extends DfaValue {
     return indices.toIntArray();
   }
 
+  @Unmodifiable
   public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {
     return dispatch(state, interpreter, target, traps);
   }
 
+  @Unmodifiable
   public static @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                             @NotNull DataFlowInterpreter interpreter,
                                                             @NotNull TransferTarget target,

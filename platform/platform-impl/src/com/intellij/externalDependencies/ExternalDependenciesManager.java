@@ -3,6 +3,7 @@ package com.intellij.externalDependencies;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ public abstract class ExternalDependenciesManager {
     return project.getService(ExternalDependenciesManager.class);
   }
 
+  @Unmodifiable
   public abstract @NotNull <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass);
 
   public abstract @NotNull List<ProjectExternalDependency> getAllDependencies();

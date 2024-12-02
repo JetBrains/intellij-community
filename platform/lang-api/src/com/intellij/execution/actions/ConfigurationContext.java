@@ -30,6 +30,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -422,6 +423,7 @@ public class ConfigurationContext {
   /**
    * The same as {@link #getConfigurationsFromContext()} but this method doesn't search among existing run configurations
    */
+  @Unmodifiable
   public @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
     // At the moment of writing, caching is not needed here, the result is cached outside.
     return PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, false);

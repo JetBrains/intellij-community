@@ -17,6 +17,7 @@ import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -144,6 +145,7 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
     }
   }
 
+  @Unmodifiable
   private List<String> getConfiguredClasspath() {
     return StringUtil.split(myClasspathField.getText(), " ");
   }

@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.trace;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ public interface IntermediateState {
   List<TraceElement> getTrace();
 
   @NotNull
+  @Unmodifiable
   default List<Value> getRawValues() {
     return ContainerUtil.map(getTrace(), TraceElement::getValue);
   }

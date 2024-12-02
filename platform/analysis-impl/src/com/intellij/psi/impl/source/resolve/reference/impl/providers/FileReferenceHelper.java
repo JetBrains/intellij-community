@@ -65,6 +65,7 @@ public abstract class FileReferenceHelper {
    *
    * @return roots, which could be used as the start resolution context.
    */
+  @Unmodifiable
   public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
     return getRoots(module);
   }

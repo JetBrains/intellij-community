@@ -3,6 +3,7 @@ package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -21,6 +22,7 @@ public abstract class ValueListPropertyAccessor<T> extends CodeStyleFieldAccesso
   protected abstract @NotNull List<String> toExternal(@NotNull T value);
 
   @Override
+  @Unmodifiable
   protected @Nullable List<String> parseString(@NotNull String string) {
     return getValueList(string);
   }

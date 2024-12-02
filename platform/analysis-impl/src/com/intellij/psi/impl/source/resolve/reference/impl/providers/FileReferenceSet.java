@@ -400,6 +400,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
   /**
    * Finds file target contexts, locations where users can create a file. Includes only local file directory items.
    */
+  @Unmodifiable
   public Collection<FileTargetContext> getTargetContexts() {
     PsiFile file = getContainingFile();
     if (file == null) return emptyList();
@@ -462,6 +463,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return null;
   }
 
+  @Unmodifiable
   private @NotNull Collection<FileTargetContext> getTargetContextByFile(@NotNull PsiFile file) {
     boolean absolutePathReference = isAbsolutePathReference();
 
@@ -589,6 +591,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return new ArrayList<>(result);
   }
 
+  @Unmodifiable
   protected @NotNull Collection<PsiFileSystemItem> toFileSystemItems(VirtualFile... files) {
     return toFileSystemItems(Arrays.asList(files));
   }

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -174,6 +175,7 @@ public abstract class SourceScope {
 
     @NotNull
     @Override
+    @Unmodifiable
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return myMainScope.getUnloadedModulesBelongingToScope();
     }

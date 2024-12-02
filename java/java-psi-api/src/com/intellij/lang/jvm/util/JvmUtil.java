@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
@@ -21,6 +22,7 @@ public final class JvmUtil {
   private JvmUtil() {}
 
   @NotNull
+  @Unmodifiable
   static Iterable<JvmClass> resolveClasses(JvmReferenceType @NotNull [] types) {
     return mapNotNull(types, JvmUtil::resolveClass);
   }

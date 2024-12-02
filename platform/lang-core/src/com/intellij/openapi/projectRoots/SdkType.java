@@ -98,6 +98,7 @@ public abstract class SdkType implements SdkTypeId {
    * for possible interruption request. It is not recommended to call this method from a ETD thread. See
    * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
    */
+  @Unmodifiable
   public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
     return suggestHomePaths();
   }

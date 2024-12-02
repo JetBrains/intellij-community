@@ -25,6 +25,7 @@ import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -228,12 +229,14 @@ public final class SMTestRunnerConnectionUtil {
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       return getLocation(protocol, path, null, project, scope);
     }
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Location> getLocation(@NotNull String protocol,
                                       @NotNull String path,
                                       @Nullable String metainfo,
@@ -252,6 +255,7 @@ public final class SMTestRunnerConnectionUtil {
 
     @NotNull
     @Override
+    @Unmodifiable
     public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       return myLocator.getLocation(stacktraceLine, project, scope);
     }

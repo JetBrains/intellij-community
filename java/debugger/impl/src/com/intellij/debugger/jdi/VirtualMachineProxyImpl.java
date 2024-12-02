@@ -254,6 +254,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   /**
    * @return a list of threadGroupProxies
    */
+  @Unmodifiable
   public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
     return ContainerUtil.map(getVirtualMachine().topLevelThreadGroups(), this::getThreadGroupReferenceProxy);
   }

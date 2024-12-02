@@ -74,6 +74,7 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return RunAnythingChooseContextAction.Companion.allContexts(RunAnythingUtil.fetchProject(dataContext));
   }

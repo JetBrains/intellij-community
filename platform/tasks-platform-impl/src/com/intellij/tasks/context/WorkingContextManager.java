@@ -193,6 +193,7 @@ public final class WorkingContextManager {
     return false;
   }
 
+  @Unmodifiable
   public List<ContextInfo> getContextHistory() {
     return getContextHistory(CONTEXT_ZIP_POSTFIX);
   }

@@ -38,6 +38,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -824,6 +825,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     myData.setAllChildrenLoaded();
   }
 
+  @Unmodifiable
   public @NotNull List<String> getSuspiciousNames() {
     return myData.getAdoptedNames();
   }

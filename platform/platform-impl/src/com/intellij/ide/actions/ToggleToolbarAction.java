@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -247,6 +248,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
       return result.toArray(EMPTY_ARRAY);
     }
 
+    @Unmodifiable
     private @NotNull List<ActionGroup> collectActionGroups() {
       ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
       Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();

@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,6 +128,7 @@ public final class ActiveRules {
 
     @Override
     @NotNull
+    @Unmodifiable
     public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       return myGroupingRule.getParentGroupsFor(usage, targets);
     }

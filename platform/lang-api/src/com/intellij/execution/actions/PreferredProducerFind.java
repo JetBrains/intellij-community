@@ -87,6 +87,7 @@ final class PreferredProducerFind {
    * @param preferExisting if <code>true</code> then {@link RunConfigurationProducer#findOrCreateConfigurationFromContext(ConfigurationContext)} will be used;
    *                       if <code>false</code> then {@link RunConfigurationProducer#createConfigurationFromContext(ConfigurationContext)} will be used.
    */
+  @Unmodifiable
   public static @Nullable List<ConfigurationFromContext> getConfigurationsFromContext(Location location,
                                                                                       @NotNull ConfigurationContext context,
                                                                                       boolean strict,

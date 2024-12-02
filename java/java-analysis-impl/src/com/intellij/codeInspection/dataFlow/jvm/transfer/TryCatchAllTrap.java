@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class TryCatchAllTrap implements DfaControlTransferValue.Trap {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                      @NotNull DataFlowInterpreter interpreter,
                                                      DfaControlTransferValue.@NotNull TransferTarget target,

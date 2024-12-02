@@ -169,6 +169,7 @@ public interface RefMethod extends RefJavaElement, RefOverridable {
 
   @NotNull
   @Override
+  @Unmodifiable
   default Collection<? extends RefOverridable> getDerivedReferences() {
     return getDerivedMethods();
   }

@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -162,6 +163,7 @@ public final class ListTemplatesHandler implements CodeInsightActionHandler {
   private static LiveTemplateLookupElement createTemplateElement(final TemplateImpl template) {
     return new LiveTemplateLookupElementImpl(template, false) {
       @Override
+      @Unmodifiable
       public Set<String> getAllLookupStrings() {
         String description = template.getDescription();
         if (description == null) {

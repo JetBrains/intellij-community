@@ -39,6 +39,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -809,6 +810,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<DiffHyperlink> getDiffViewerProviders() {
     AbstractState state = myState;
     if (state instanceof CompoundTestFailedState) {

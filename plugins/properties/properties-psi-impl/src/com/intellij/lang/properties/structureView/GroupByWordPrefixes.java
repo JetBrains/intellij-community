@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -38,6 +39,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
 
   @Override
   @NotNull
+  @Unmodifiable
   public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     List<Key> keys = new ArrayList<>();
 

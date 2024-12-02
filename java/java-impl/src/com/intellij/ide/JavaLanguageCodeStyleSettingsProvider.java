@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -491,6 +492,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
     }
 
     @Override
+    @Unmodifiable
     protected List<String> parseString(@NotNull String string) {
       return CodeStylePropertiesUtil.getValueList(string);
     }

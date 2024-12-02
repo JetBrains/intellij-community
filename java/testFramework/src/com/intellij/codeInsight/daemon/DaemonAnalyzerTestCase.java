@@ -214,6 +214,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
+  @Unmodifiable
   protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
     return doDoTest(checkWarnings, checkInfos, false);
   }
@@ -282,16 +283,19 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
+  @Unmodifiable
   protected final List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
   @NotNull
+  @Unmodifiable
   protected final List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
     return filter(doHighlighting(), minSeverity);
   }
 
   @NotNull
+  @Unmodifiable
   protected final List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 

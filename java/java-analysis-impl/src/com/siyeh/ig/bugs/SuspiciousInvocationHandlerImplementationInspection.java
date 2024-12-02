@@ -34,6 +34,7 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -187,6 +188,7 @@ public final class SuspiciousInvocationHandlerImplementationInspection extends A
     }
 
     @Override
+    @Unmodifiable
     protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
                                                                                 @NotNull Collection<? extends DfaMemoryState> memStates,
                                                                                 @NotNull ControlFlow flow) {

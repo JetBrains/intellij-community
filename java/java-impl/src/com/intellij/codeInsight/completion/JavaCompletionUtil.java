@@ -567,6 +567,7 @@ public final class JavaCompletionUtil {
     return false;
   }
 
+  @Unmodifiable
   static @NotNull Iterable<? extends LookupElement> createLookupElements(@NotNull CompletionElement completionElement, @NotNull PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);

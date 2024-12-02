@@ -18,6 +18,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -49,6 +50,7 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
     return super.getAllClasses(position);

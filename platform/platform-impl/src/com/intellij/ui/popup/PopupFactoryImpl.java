@@ -44,6 +44,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -638,6 +639,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<JBPopup> getChildPopups(@NotNull Component component) {
     return AbstractPopup.getChildPopups(component);
   }

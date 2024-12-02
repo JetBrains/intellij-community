@@ -219,6 +219,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       super.invokeAfterReload(runnable);
     }
 
+    @Unmodifiable
     public List<BaseInjection> getOwnInjections(final String injectorId) {
       return super.getInjections(injectorId);
     }

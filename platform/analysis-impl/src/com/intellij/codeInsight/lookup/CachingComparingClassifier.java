@@ -10,6 +10,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -64,6 +65,7 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
     checkPrefixChanged(context);
     return super.getSortingWeights(items, context);

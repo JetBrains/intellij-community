@@ -160,6 +160,7 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
                                                () -> doMakeAnnotationExplicit(project, owner, annotations)), file);
   }
 
+  @Unmodifiable
   private @NotNull List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
     List<PsiAnnotation> allAnnotations = StreamEx.of(InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner))
       .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)

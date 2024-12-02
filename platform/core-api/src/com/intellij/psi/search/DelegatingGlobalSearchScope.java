@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -66,6 +67,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return getDelegate().getUnloadedModulesBelongingToScope();
   }

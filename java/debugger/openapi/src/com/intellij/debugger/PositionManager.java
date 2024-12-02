@@ -23,6 +23,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -54,6 +55,7 @@ public interface PositionManager {
    * @see com.intellij.debugger.engine.jdi.VirtualMachineProxy#classesByName
    */
   @NotNull
+  @Unmodifiable
   List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException;
 
   /**
