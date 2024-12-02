@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.SdkId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -56,6 +57,11 @@ interface ModuleDependencyIndex {
    * Return `true` if at least one module has dependency on [sdk]
    */
   fun hasDependencyOn(sdk: Sdk): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [sdk]
+   */
+  fun hasDependencyOn(sdk: SdkId): Boolean
 }
 
 /**

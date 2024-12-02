@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.*
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.asSafely
@@ -25,8 +24,7 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    if (entity.symbolicId.tableId is LibraryTableId.GlobalLibraryTableId) return
-    val projectLibraryId = entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
+    val projectLibraryId = entity.symbolicId
     val compiledRootsData = LibraryRootFileSetData(projectLibraryId, "")
     val sourceRootFileSetData = LibrarySourceRootFileSetData(projectLibraryId, "")
     for (root in entity.roots) {
