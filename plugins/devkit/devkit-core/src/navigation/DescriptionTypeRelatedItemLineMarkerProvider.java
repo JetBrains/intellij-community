@@ -7,22 +7,20 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
-import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
-import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
+import org.jetbrains.idea.devkit.inspections.DescriptionTypeResolver;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
@@ -62,40 +60,26 @@ final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedCl
     Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module == null) return;
 
-    for (DescriptionType type : DescriptionType.values()) {
+    for (DescriptionType type : DescriptionType.getEntries()) {
       if (!type.matches(psiClass)) {
         continue;
       }
 
-      String descriptionDirName = DescriptionCheckerUtil.getDescriptionDirName(psiClass);
-      if (StringUtil.isEmptyOrSpaces(descriptionDirName)) {
-        return;
-      }
-
-      if (type == DescriptionType.INSPECTION) {
-        if (!descriptionEnabled) return;
-        final InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
-        if (info.hasDescriptionFile()) {
-          addDescriptionFileGutterIcon(highlightingElement, info.getDescriptionFile(), result);
-        }
-        return;
-      }
-
-      for (PsiDirectory descriptionDir : DescriptionCheckerUtil.getDescriptionsDirs(module, type)) {
-        PsiDirectory dir = descriptionDir.findSubdirectory(descriptionDirName);
-        if (dir == null || !dir.getName().equals(descriptionDirName)) continue;
-        final PsiFile descriptionFile = dir.findFile("description.html");
+      DescriptionTypeResolver descriptionTypeResolver = type.createDescriptionTypeResolver(module, psiClass);
+      if (descriptionEnabled) {
+        PsiFile descriptionFile = descriptionTypeResolver.resolveDescriptionFile();
         if (descriptionFile != null) {
-          if (descriptionEnabled) {
-            addDescriptionFileGutterIcon(highlightingElement, descriptionFile, result);
-          }
-
-          if (beforeAfterEnabled) {
-            addBeforeAfterTemplateFilesGutterIcon(highlightingElement, dir, result);
-          }
-          return;
+          addDescriptionFileGutterIcon(highlightingElement, descriptionFile, result);
         }
       }
+
+      if (beforeAfterEnabled && type.hasBeforeAfterTemplateFiles()) {
+        List<PsiFile> files = descriptionTypeResolver.resolveBeforeAfterTemplateFiles();
+        if (!files.isEmpty()) {
+          addBeforeAfterTemplateFilesGutterIcon(highlightingElement, files, result);
+        }
+      }
+
       return;
     }
   }
@@ -113,20 +97,8 @@ final class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedCl
   }
 
   private static void addBeforeAfterTemplateFilesGutterIcon(PsiElement highlightingElement,
-                                                            PsiDirectory descriptionDirectory,
+                                                            List<PsiFile> templateFiles,
                                                             Collection<? super RelatedItemLineMarkerInfo<?>> result) {
-    final List<PsiFile> templateFiles = new SortedList<>(Comparator.comparing(PsiFileSystemItem::getName));
-    for (PsiFile file : descriptionDirectory.getFiles()) {
-      final String fileName = file.getName();
-      if (fileName.endsWith(".template")) {
-        if (fileName.startsWith("after.") ||
-            fileName.startsWith("before.")) {
-          templateFiles.add(file);
-        }
-      }
-    }
-    if (templateFiles.isEmpty()) return;
-
     //noinspection DialogTitleCapitalization
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(DevKitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
+import org.jetbrains.idea.devkit.inspections.DescriptionTypesKt;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
@@ -58,7 +59,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   private boolean isFixedDescriptionFilename() {
-    return myDescriptionType.isFixedDescriptionFilename();
+    return myDescriptionType.hasBeforeAfterTemplateFiles();
   }
 
   private static List<VirtualFile> getPotentialRoots(Module module, PsiDirectory[] dirs) {
@@ -76,7 +77,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   private String getNormalizedFileName(String filename) {
-    return myDescriptionType.isFixedDescriptionFilename() ? filename : filename + ".html";
+    return myDescriptionType.hasBeforeAfterTemplateFiles() ? filename : filename + ".html";
   }
 
   @Override
@@ -160,7 +161,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
   }
 
   private String getNewFileName() {
-    return isFixedDescriptionFilename() ? "description.html" : myFilename;
+    return isFixedDescriptionFilename() ? DescriptionTypesKt.DESCRIPTION_HTML : myFilename;
   }
 
   @Override

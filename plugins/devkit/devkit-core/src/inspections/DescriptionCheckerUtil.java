@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -20,17 +20,17 @@ public final class DescriptionCheckerUtil {
   public static StreamEx<GlobalSearchScope> searchScopes(Module module) {
     // Try search in narrow scopes first
     return StreamEx.<Supplier<GlobalSearchScope>>of(
-      () -> GlobalSearchScope.EMPTY_SCOPE,
-      () -> module.getModuleScope(false),
-      module::getModuleWithDependenciesScope,
-      () -> {
-        GlobalSearchScope[] scopes = ContainerUtil.map2Array(ModuleUtilCore.getAllDependentModules(module),
-                                                             GlobalSearchScope.EMPTY_ARRAY,
-                                                             Module::getModuleContentWithDependenciesScope);
-        return scopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(scopes);
-      },
-      () -> GlobalSearchScopesCore.projectProductionScope(module.getProject())
-    ).takeWhile(supplier -> !module.isDisposed())
+        () -> GlobalSearchScope.EMPTY_SCOPE,
+        () -> module.getModuleScope(false),
+        module::getModuleWithDependenciesScope,
+        () -> {
+          GlobalSearchScope[] scopes = ContainerUtil.map2Array(ModuleUtilCore.getAllDependentModules(module),
+                                                               GlobalSearchScope.EMPTY_ARRAY,
+                                                               Module::getModuleContentWithDependenciesScope);
+          return scopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(scopes);
+        },
+        () -> GlobalSearchScopesCore.projectProductionScope(module.getProject())
+      ).takeWhile(supplier -> !module.isDisposed())
       .map(Supplier::get)
       .pairMap((prev, next) -> next.intersectWith(GlobalSearchScope.notScope(prev)));
   }
@@ -40,7 +40,7 @@ public final class DescriptionCheckerUtil {
    * search scopes (first dirs in current module, then dirs in module dependencies, then dirs in
    * dependent modules, finally other project dirs).
    *
-   * @param module module to search description directories for
+   * @param module          module to search description directories for
    * @param descriptionType type of description directory to search
    * @return lazily populated stream of candidate directories
    */
@@ -62,7 +62,7 @@ public final class DescriptionCheckerUtil {
   }
 
   @Nullable
-  public static String getDescriptionDirName(PsiClass aClass) {
+  public static String getDefaultDescriptionDirName(PsiClass aClass) {
     String descriptionDir = "";
     PsiClass each = aClass;
     while (each != null) {
