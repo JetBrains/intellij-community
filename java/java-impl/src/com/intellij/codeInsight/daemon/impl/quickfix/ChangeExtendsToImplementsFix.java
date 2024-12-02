@@ -9,6 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,11 @@ public class ChangeExtendsToImplementsFix extends PsiUpdateModCommandAction<PsiC
     myToAdd = true;
     PsiClassType classType = aClass instanceof PsiTypeParameter ? classTypeToExtendFrom
                                                                 : (PsiClassType)GenericsUtil.eliminateWildcards(classTypeToExtendFrom);
-    myTypeToExtendFrom = classType.getCanonicalText(true);
+    PsiType typeToExtend = PsiTypesUtil.removeExternalAnnotations(classType);
+    if (typeToExtend.getAnnotations().length > 0) {
+      typeToExtend = typeToExtend.annotate(TypeAnnotationProvider.Static.create(PsiAnnotation.EMPTY_ARRAY));
+    }
+    myTypeToExtendFrom = typeToExtend.getCanonicalText(true);
   }
 
   @Override
