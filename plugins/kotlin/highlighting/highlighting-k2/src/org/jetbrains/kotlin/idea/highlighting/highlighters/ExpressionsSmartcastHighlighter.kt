@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
@@ -12,14 +12,13 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
-context(KaSession)
-internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitExpression(expression: KtExpression) {
         highlightExpression(expression)
     }
 
     @OptIn(KaExperimentalApi::class)
-    private fun highlightExpression(expression: KtExpression) {
+    private fun highlightExpression(expression: KtExpression): Unit = with(session) {
         expression.implicitReceiverSmartCasts.forEach {
             val receiverName = when (it.kind) {
                 KaImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
@@ -27,13 +26,13 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
             }
 
             val builder = HighlightingFactory.highlightName(
-              expression,
-              KotlinHighlightInfoTypeSemanticNames.SMART_CAST_RECEIVER,
-              KotlinBaseHighlightingBundle.message(
-                "0.smart.cast.to.1",
-                receiverName,
-                it.type.toString()
-              )
+                expression,
+                KotlinHighlightInfoTypeSemanticNames.SMART_CAST_RECEIVER,
+                KotlinBaseHighlightingBundle.message(
+                    "0.smart.cast.to.1",
+                    receiverName,
+                    it.type.toString()
+                )
             )
             if (builder != null) {
                 holder.add(builder.create())
@@ -41,12 +40,12 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
         }
         expression.smartCastInfo?.takeIf { it.isStable }?.let { info ->
             val builder = HighlightingFactory.highlightName(
-              getSmartCastTarget(expression),
-              KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
-              KotlinBaseHighlightingBundle.message(
-                "smart.cast.to.0",
-                info.smartCastType.render(position = Variance.INVARIANT)
-              )
+                getSmartCastTarget(expression),
+                KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
+                KotlinBaseHighlightingBundle.message(
+                    "smart.cast.to.0",
+                    info.smartCastType.render(position = Variance.INVARIANT)
+                )
             )
             if (builder != null) {
                 holder.add(builder.create())

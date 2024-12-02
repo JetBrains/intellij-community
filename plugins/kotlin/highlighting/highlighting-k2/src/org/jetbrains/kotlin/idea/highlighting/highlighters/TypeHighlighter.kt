@@ -11,13 +11,12 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 
-context(KaSession)
-internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+internal class TypeHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         highlightSimpleNameExpression(expression)
     }
 
-    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression) {
+    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): Unit = with(session) {
         if (expression.isCalleeExpression()) return
         val parent = expression.parent
 
@@ -48,10 +47,12 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
                         KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS
                     }
                 }
+
                 KaClassKind.ENUM_CLASS -> KotlinHighlightInfoTypeSemanticNames.ENUM
                 KaClassKind.ANNOTATION_CLASS -> KotlinHighlightInfoTypeSemanticNames.ANNOTATION
                 KaClassKind.OBJECT ->
                     if (symbol.isData) KotlinHighlightInfoTypeSemanticNames.DATA_OBJECT else KotlinHighlightInfoTypeSemanticNames.OBJECT
+
                 KaClassKind.COMPANION_OBJECT -> KotlinHighlightInfoTypeSemanticNames.OBJECT
                 KaClassKind.INTERFACE -> KotlinHighlightInfoTypeSemanticNames.TRAIT
                 KaClassKind.ANONYMOUS_OBJECT -> KotlinHighlightInfoTypeSemanticNames.CLASS
@@ -64,7 +65,7 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
         holder.add(HighlightingFactory.highlightName(expression, color)?.create())
     }
 
-    private fun isAnnotationCall(expression: KtSimpleNameExpression, target: KaSymbol): Boolean {
+    private fun KaSession.isAnnotationCall(expression: KtSimpleNameExpression, target: KaSymbol): Boolean {
         val isKotlinAnnotation = target is KaConstructorSymbol
                 && target.isPrimary
                 && (target.containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.ANNOTATION_CLASS

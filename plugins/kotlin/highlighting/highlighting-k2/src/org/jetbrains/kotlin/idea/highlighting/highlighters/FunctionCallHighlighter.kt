@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
@@ -19,8 +19,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-context(KaSession)
-internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+internal class FunctionCallHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
         highlightBinaryExpression(expression)
     }
@@ -32,12 +31,14 @@ internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSema
     private fun highlightBinaryExpression(expression: KtBinaryExpression) {
         val operationReference = expression.operationReference as? KtReferenceExpression ?: return
         if (operationReference.isAssignment()) return
-        val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return
-        if (call is KaSimpleFunctionCall && (call.symbol as? KaNamedFunctionSymbol)?.isOperator == true) return
-        val highlightInfoType = getDefaultHighlightInfoTypeForCall(call)
-        if (highlightInfoType != null) {
-            val builder = HighlightingFactory.highlightName(operationReference, highlightInfoType)
-            holder.add(builder?.create())
+        with(session) {
+            val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return
+            if (call is KaSimpleFunctionCall && (call.symbol as? KaNamedFunctionSymbol)?.isOperator == true) return
+            val highlightInfoType = getDefaultHighlightInfoTypeForCall(call)
+            if (highlightInfoType != null) {
+                val builder = HighlightingFactory.highlightName(operationReference, highlightInfoType)
+                holder.add(builder?.create())
+            }
         }
     }
 
@@ -46,15 +47,17 @@ internal class FunctionCallHighlighter(holder: HighlightInfoHolder) : KotlinSema
 
     private fun highlightCallExpression(expression: KtCallExpression) {
         val callee = expression.calleeExpression ?: return
-        val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
-        if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
-        val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
-            ?: getDefaultHighlightInfoTypeForCall(call)
-            ?: return
-        holder.add(HighlightingFactory.highlightName(callee, highlightInfoType)?.create())
+        with(session) {
+            val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
+            if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
+            val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
+                ?: getDefaultHighlightInfoTypeForCall(call)
+                ?: return
+            holder.add(HighlightingFactory.highlightName(callee, highlightInfoType)?.create())
+        }
     }
 
-    private fun getHighlightInfoTypeForCallFromExtension(callee: KtExpression, call: KaCall): HighlightInfoType? =
+    private fun KaSession.getHighlightInfoTypeForCallFromExtension(callee: KtExpression, call: KaCall): HighlightInfoType? =
         KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull { it.highlightCall(callee, call) }
 
     private fun getDefaultHighlightInfoTypeForCall(call: KaCall): HighlightInfoType? {

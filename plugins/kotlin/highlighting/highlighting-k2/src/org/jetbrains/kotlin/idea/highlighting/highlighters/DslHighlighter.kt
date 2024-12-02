@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
@@ -16,8 +16,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 
-context(KaSession)
-internal class DslHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+internal class DslHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitCallExpression(expression: KtCallExpression) {
         holder.add(highlightCall(expression)?.create())
     }
@@ -28,12 +27,13 @@ internal class DslHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnaly
      * 1) Its type specifier is marked with an annotation, that is marked by a dsl annotation
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
-    context(KaSession)
     private fun highlightCall(element: KtCallExpression): HighlightInfo.Builder? {
         val calleeExpression = element.calleeExpression ?: return null
         val lambdaExpression = element.lambdaArguments.singleOrNull()?.getLambdaExpression() ?: return null
-        val receiverType = (lambdaExpression.expressionType as? KaFunctionType)?.receiverType ?: return null
-        val dslAnnotation = getDslAnnotation(receiverType) ?: return null
+        val dslAnnotation = with(session) {
+            val receiverType = (lambdaExpression.expressionType as? KaFunctionType)?.receiverType ?: return null
+            getDslAnnotation(receiverType) ?: return null
+        }
 
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
         return HighlightingFactory.highlightName(
@@ -64,8 +64,7 @@ fun KtClass.getDslStyleId(): Int? {
  * Returns a dsl annotation for a given type (or for one of the supertypes), if there is one.
  * A Dsl annotation is an annotation that is itself marked by [DslMarker] annotation.
  */
-context(KaSession)
-private fun getDslAnnotation(type: KaType): ClassId? {
+private fun KaSession.getDslAnnotation(type: KaType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
         yieldAll(type.annotations.classIds)
         val symbol = type.expandedSymbol ?: return@sequence

@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.highlighting.visitor
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.highlighting.highlighters.KotlinSemanticAnalyzer
 import org.jetbrains.kotlin.idea.highlighting.highlighters.VariableReferenceHighlighter
-import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class KotlinVariableReferenceSemanticHighlightingVisitor : KotlinAbstractSemanticHighlightingVisitor() {
     override fun clone(): KotlinVariableReferenceSemanticHighlightingVisitor = KotlinVariableReferenceSemanticHighlightingVisitor()
-    override fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KtVisitorVoid {
-        return with(session) { VariableReferenceHighlighter(holder) }
+    override fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KotlinSemanticAnalyzer {
+        return VariableReferenceHighlighter(holder, session)
     }
 }

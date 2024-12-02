@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -16,13 +16,12 @@ import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 
-context(KaSession)
-internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
+internal class VariableReferenceHighlighter(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         highlightSimpleNameExpression(expression).forEach { holder.add(it.create()) }
     }
 
-    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): List<HighlightInfo.Builder> {
+    private fun highlightSimpleNameExpression(expression: KtSimpleNameExpression): List<HighlightInfo.Builder> = with(session) {
         if (expression.isAssignmentReference()) return emptyList()
         if (expression.isByNameArgumentReference()) return emptyList()
         if (expression.parent is KtInstanceExpressionWithLabel) return emptyList()

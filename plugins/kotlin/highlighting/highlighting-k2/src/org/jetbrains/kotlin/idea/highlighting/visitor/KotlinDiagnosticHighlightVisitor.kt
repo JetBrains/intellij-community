@@ -228,8 +228,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         }
     }
 
-    context(KaSession)
-    private fun convertToBuilder(file: KtFile, range: TextRange, diagnostic: KaDiagnosticWithPsi<*>): HighlightInfo.Builder {
+    private fun KaSession.convertToBuilder(file: KtFile, range: TextRange, diagnostic: KaDiagnosticWithPsi<*>): HighlightInfo.Builder {
         val isWarning = diagnostic.severity == KaSeverity.WARNING
         val psiElement = diagnostic.psi
         val factoryName = diagnostic.factoryName
@@ -289,8 +288,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         return infoBuilder
     }
 
-    context(KaSession)
-    private fun getHighlightInfoBuilder(
+    private fun KaSession.getHighlightInfoBuilder(
         diagnostic: KaDiagnosticWithPsi<*>,
         range: TextRange
     ): HighlightInfo.Builder {
@@ -306,7 +304,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         } else {
             val message = diagnostic.getMessageToRender()
             val htmlMessage = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message).replace("\n", "<br>"))
-            HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
+            HighlightInfo.newHighlightInfo(getHighlightInfoType(diagnostic))
                 .escapedToolTip(htmlMessage)
                 .description(message)
                 .range(range)
@@ -325,21 +323,17 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
     }
 
 
-    context(KaSession)
-    private fun KaDiagnosticWithPsi<*>.getHighlightInfoType(): HighlightInfoType {
-        return when {
-            isUnresolvedDiagnostic() -> HighlightInfoType.WRONG_REF
-            isDeprecatedDiagnostic() -> HighlightInfoType.DEPRECATED
-            else -> when (severity) {
-                KaSeverity.INFO -> HighlightInfoType.INFORMATION
-                KaSeverity.ERROR -> HighlightInfoType.ERROR
-                KaSeverity.WARNING -> HighlightInfoType.WARNING
-            }
+    private fun KaSession.getHighlightInfoType(psi: KaDiagnosticWithPsi<*>): HighlightInfoType = when {
+        isUnresolvedDiagnostic(psi) -> HighlightInfoType.WRONG_REF
+        isDeprecatedDiagnostic(psi) -> HighlightInfoType.DEPRECATED
+        else -> when (psi.severity) {
+            KaSeverity.INFO -> HighlightInfoType.INFORMATION
+            KaSeverity.ERROR -> HighlightInfoType.ERROR
+            KaSeverity.WARNING -> HighlightInfoType.WARNING
         }
     }
 
-    context(KaSession)
-    private fun KaDiagnosticWithPsi<*>.isUnresolvedDiagnostic() = when (this) {
+    private fun KaSession.isUnresolvedDiagnostic(psi: KaDiagnosticWithPsi<*>) = when (psi) {
         is KaFirDiagnostic.UnresolvedReference -> true
         is KaFirDiagnostic.UnresolvedLabel -> true
         is KaFirDiagnostic.UnresolvedReferenceWrongReceiver -> true
@@ -348,8 +342,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         else -> false
     }
 
-    context(KaSession)
-    private fun KaDiagnosticWithPsi<*>.isDeprecatedDiagnostic() = when (this) {
+    private fun KaSession.isDeprecatedDiagnostic(psi: KaDiagnosticWithPsi<*>) = when (psi) {
         is KaFirDiagnostic.Deprecation -> true
         else -> false
     }

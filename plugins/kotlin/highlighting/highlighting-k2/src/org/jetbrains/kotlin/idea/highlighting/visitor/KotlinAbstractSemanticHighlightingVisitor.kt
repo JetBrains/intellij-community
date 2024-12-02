@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.highlighting.highlighters.KotlinSemanticAnalyzer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
@@ -41,9 +42,9 @@ internal abstract class KotlinAbstractSemanticHighlightingVisitor : HighlightVis
     }
 
     /**
-     * The analyzer **must not** be recursive.
+     * @see KotlinSemanticAnalyzer
      */
-    protected abstract fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KtVisitorVoid
+    protected abstract fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KotlinSemanticAnalyzer
 
     override fun visit(element: PsiElement) {
         val visitor = analyzer ?: error("Analyzer for ${this::class.simpleName} is not initialized")
