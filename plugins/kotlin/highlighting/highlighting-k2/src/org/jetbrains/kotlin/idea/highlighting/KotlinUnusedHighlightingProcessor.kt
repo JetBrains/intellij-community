@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
+internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
     private val enabled: Boolean
     private val deadCodeKey: HighlightDisplayKey?
     private val deadCodeInspection: LocalInspectionTool?
@@ -211,7 +211,7 @@ class KotlinRefsHolder {
     }
 }
 
-class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntentionActionOnPsiElement(declaration) {
+internal class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntentionActionOnPsiElement(declaration) {
     @Nls
     private val name: String =
         KotlinBaseHighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)

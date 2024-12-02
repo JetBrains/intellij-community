@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.idea.highlighting.KotlinUnusedHighlightingVisitor
+import org.jetbrains.kotlin.idea.highlighting.KotlinUnusedHighlightingProcessor
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class KotlinUnusedDeclarationHighlightingVisitor : HighlightVisitor {
@@ -21,7 +21,7 @@ internal class KotlinUnusedDeclarationHighlightingVisitor : HighlightVisitor {
         if (!highlightingLevelManager.shouldHighlight(ktFile)) return true
 
         analyze(ktFile) {
-            KotlinUnusedHighlightingVisitor(file).collectHighlights(holder)
+            KotlinUnusedHighlightingProcessor(file).collectHighlights(holder)
         }
 
         return true
