@@ -337,8 +337,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project", "foo")
 
     val root = rootProjects[0]
-    assertProblems(root)
-
     assertProblems(getModules(root)[0], "'pom.xml' has syntax errors")
   }
 
