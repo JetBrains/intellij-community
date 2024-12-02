@@ -9575,6 +9575,8 @@ c:com.intellij.openapi.keymap.impl.ActionShortcutRestrictionsImpl
 - com.intellij.openapi.keymap.impl.ActionShortcutRestrictions
 - <init>():V
 - getForActionId(java.lang.String):com.intellij.openapi.keymap.impl.ShortcutRestrictions
+f:com.intellij.openapi.keymap.impl.BundledKeymapBean
+- file:java.lang.String
 c:com.intellij.openapi.keymap.impl.DefaultKeymap
 - sf:Companion:com.intellij.openapi.keymap.impl.DefaultKeymap$Companion
 - <init>():V
