@@ -13,10 +13,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -136,6 +135,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
 
       @Override
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
+        if (expression.getParent() instanceof PsiVariable) return;
         InstanceOfCandidateResult result = findInstanceOfCandidateResult(expression);
         if (result == null) return;
         if (result.instanceOf() != null) {
@@ -388,12 +388,53 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     PsiTypeElement typeElement = instanceOfType;
     if (instanceOfType != null && instanceOfType.getType() instanceof PsiClassType instanceOfClassType && instanceOfClassType.isRaw()) {
       if (originalTypeElement.getType() instanceof PsiClassType originalClassType && !originalClassType.isRaw()) {
-        PsiClass instanceOfClass = PsiUtil.resolveClassInClassTypeOnly(instanceOfClassType);
-        PsiClass originalClass = PsiUtil.resolveClassInClassTypeOnly(originalClassType);
+        PsiClassType.ClassResolveResult instanceOfClassResult = instanceOfClassType.resolveGenerics();
+        PsiClass instanceOfClass = instanceOfClassResult.getElement();
+        PsiClassType.ClassResolveResult originalClassResult = originalClassType.resolveGenerics();
+        PsiClass originalClass = originalClassResult.getElement();
         if (originalClass != null && originalClass.getQualifiedName() != null) {
           if (InheritanceUtil.isInheritor(instanceOfClass, false, originalClass.getQualifiedName())) {
-            PsiClassType genericType = GenericsUtil.getExpectedGenericType(instanceOfClass, instanceOfClass, originalClassType);
-            typeElement = JavaPsiFacade.getElementFactory(instanceOfClass.getProject()).createTypeElement(genericType);
+            PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfClass.getProject());
+            PsiSubstitutor classSubstitutor;
+            if (originalClass.getManager().areElementsEquivalent(originalClass, instanceOfClass)) {
+              classSubstitutor = PsiSubstitutor.EMPTY;
+              for (PsiTypeParameter parameter : originalClass.getTypeParameters()) {
+                classSubstitutor = classSubstitutor.put(parameter, factory.createType(parameter));
+              }
+            }
+            else {
+              classSubstitutor = JavaClassSupers.getInstance()
+                .getSuperClassSubstitutor(originalClass, instanceOfClass, instanceOfClass.getResolveScope(), PsiSubstitutor.EMPTY);
+            }
+            if (classSubstitutor == null) return typeElement;
+            PsiSubstitutor target = instanceOfClassResult.getSubstitutor();
+            for (Map.Entry<PsiTypeParameter, PsiType> originalTypeEntry : originalClassResult.getSubstitutor().getSubstitutionMap()
+              .entrySet()) {
+              PsiType keyType = classSubstitutor.getSubstitutionMap().get(originalTypeEntry.getKey());
+              if (keyType instanceof PsiClassType classType && classType.resolve() instanceof PsiTypeParameter targetTypeParameter) {
+                PsiType value = originalTypeEntry.getValue();
+                if (value != null && !(value instanceof PsiWildcardType valueWildCard && !valueWildCard.isBounded())) {
+                  PsiType previousValue = target.getSubstitutionMap().get(targetTypeParameter);
+                  if (previousValue != null && (!(previousValue instanceof PsiWildcardType wildcardType) || wildcardType.isBounded())) {
+                    continue;
+                  }
+                  target = target.put(targetTypeParameter, value);
+                }
+              }
+            }
+            for (Map.Entry<PsiTypeParameter, PsiType> entry : target.getSubstitutionMap().entrySet()) {
+              if (entry.getValue() == null) {
+                target = target.put(entry.getKey(), PsiWildcardType.createUnbounded(originalClass.getManager()));
+              }
+            }
+            for (PsiTypeParameter parameter : instanceOfClass.getTypeParameters()) {
+              if (target.getSubstitutionMap().containsKey(parameter)) {
+                continue;
+              }
+              target = target.put(parameter, PsiWildcardType.createUnbounded(originalClass.getManager()));
+            }
+            PsiType substituted = factory.createType(instanceOfClass, target);
+            typeElement = factory.createTypeElement(substituted);
           }
         }
       }
