@@ -367,6 +367,8 @@ com.intellij.application.options.editor.EditorOptionsListener
 - a:changesApplied():V
 com.intellij.application.options.editor.EditorOptionsProvider
 - com.intellij.openapi.options.SearchableConfigurable
+f:com.intellij.application.options.editor.EditorTabsConfigurableEP
+- com.intellij.openapi.options.ConfigurableEP
 com.intellij.application.options.editor.EditorTabsOptionsCustomSection
 - com.intellij.openapi.options.UnnamedConfigurable
 f:com.intellij.application.options.editor.fonts.AppEditorFontConfigurable
