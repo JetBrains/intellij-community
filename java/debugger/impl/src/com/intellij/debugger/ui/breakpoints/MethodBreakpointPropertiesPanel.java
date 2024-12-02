@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -53,7 +54,7 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
     DialogUtil.registerMnemonic(myWatchExitCheckBox);
 
 
-    Box watchBox = Box.createVerticalBox();
+    JBBox watchBox = JBBox.createVerticalBox();
     _panel = JBUI.Panels.simplePanel();
     _panel.add(myEmulatedCheckBox, BorderLayout.NORTH);
     watchBox.add(_panel);

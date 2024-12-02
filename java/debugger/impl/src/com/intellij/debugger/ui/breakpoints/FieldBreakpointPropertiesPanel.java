@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -50,7 +51,7 @@ public class FieldBreakpointPropertiesPanel extends XBreakpointCustomPropertiesP
     DialogUtil.registerMnemonic(myWatchModificationCheckBox);
 
 
-    Box watchBox = Box.createVerticalBox();
+    JBBox watchBox = JBBox.createVerticalBox();
     _panel = new JPanel(new BorderLayout());
     _panel.add(myWatchAccessCheckBox, BorderLayout.NORTH);
     watchBox.add(_panel);

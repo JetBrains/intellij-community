@@ -22,6 +22,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -56,7 +57,7 @@ public class ExceptionBreakpointPropertiesPanel extends XBreakpointCustomPropert
     DialogUtil.registerMnemonic(myNotifyUncaughtCheckBox);
 
 
-    Box notificationsBox = Box.createVerticalBox();
+    JBBox notificationsBox = JBBox.createVerticalBox();
     JPanel _panel = new JPanel(new BorderLayout());
     _panel.add(myNotifyCaughtCheckBox, BorderLayout.NORTH);
     notificationsBox.add(_panel);

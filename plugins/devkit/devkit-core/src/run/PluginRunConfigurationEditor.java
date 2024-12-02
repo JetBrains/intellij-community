@@ -23,6 +23,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -117,7 +118,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     wholePanel.add(myJrePathEditor, gc);
     gc.weighty = 1;
     gc.gridy = 5;
-    wholePanel.add(Box.createVerticalBox(), gc);
+    wholePanel.add(JBBox.createVerticalBox(), gc);
     return wholePanel;
   }
 

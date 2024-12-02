@@ -15,6 +15,7 @@ import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.RecentsManager;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   protected JComponent createActionComponent() {
-    Box box = Box.createHorizontalBox();
+    JBBox box = JBBox.createHorizontalBox();
     final String s = StringUtil.decapitalize(getEntityName());
     myRbExtractSuperclass = new JRadioButton();
     myRbExtractSuperclass.setText(RefactoringBundle.message("extractSuper.extract", s));
@@ -146,7 +147,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   @Override
   protected JComponent createNorthPanel() {
-      Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
 
       JPanel _panel = new JPanel(new BorderLayout());
       _panel.add(new JLabel(getTopLabelText()), BorderLayout.NORTH);

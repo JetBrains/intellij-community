@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.components.JBBox;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedViewSwingImpl;
 import org.jetbrains.annotations.Nls;
@@ -35,7 +36,7 @@ class PyExtractSuperclassViewSwingImpl
     setTitle(PyExtractSuperclassHandler.getRefactoringName());
 
 
-    final Box box = Box.createVerticalBox();
+    final JBBox box = JBBox.createVerticalBox();
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(RefactoringBundle.message("extract.superclass.from")), BorderLayout.NORTH);

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -475,7 +476,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   protected JComponent createIconBar() {
-    Box res = Box.createHorizontalBox();
+    JBBox res = JBBox.createHorizontalBox();
     res.add(myIconLabel);
 
     if (!ExperimentalUI.isNewUI()) {
