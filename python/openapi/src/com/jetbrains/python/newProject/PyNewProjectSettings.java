@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author catherine
  * @deprecated Use {@link com.jetbrains.python.newProjectWizard}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class PyNewProjectSettings {
   private Sdk mySdk;
   /**

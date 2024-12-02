@@ -48,7 +48,7 @@ import java.util.function.Consumer;
 /**
  * @deprecated Use {@link com.jetbrains.python.newProjectWizard}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
   public static final PyNewProjectSettings NO_SETTINGS = new PyNewProjectSettings();
   private static final Logger LOGGER = Logger.getInstance(PythonProjectGenerator.class);
