@@ -1,6 +1,8 @@
-package com.intellij.notebooks.ui.jupyterToolbar
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.notebooks.visualization.ui.jupyterToolbar
 
 import com.intellij.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
+import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -30,13 +32,16 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
 
   private val hideToolbarTimer = Timer(TOOLBAR_HIDE_DELAY) { conditionallyHideAllToolbars() }
   private val actionGroup: ActionGroup? = getActionGroup()
-  private val additionalActionGroup: ActionGroup? = getAdditionalActionGroup()
   private var editorComponentListener: ComponentAdapter? = null
   private var editorKeyListener: KeyAdapter? = null
   private var showToolbarJob: Job? = null
   private var isMouseInsidePanel = false
 
-  fun requestToolbarDisplay(panel: JComponent, editor: Editor) {
+  fun requestToolbarDisplay(
+    panel: JComponent,
+    editor: Editor,
+    interval: NotebookCellLines.Interval
+  ) {
     showToolbarJob?.cancel()
     isMouseInsidePanel = true
 
@@ -68,7 +73,7 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
             hideAdditionalToolbarUnconditionally()
             currentPanel = panel
             currentEditor = editor
-            createAndShowAdditionalToolbar(editor)
+            createAndShowAdditionalToolbar(editor, interval.type)
           }
         }
       }
@@ -104,11 +109,13 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
     editor.contentComponent.repaint()
   }
 
-  private fun createAndShowAdditionalToolbar(editor: Editor) {
-    additionalActionGroup ?: return
+  private fun createAndShowAdditionalToolbar(editor: Editor, cellType: NotebookCellLines.CellType) {
+    val additionalActionGroup = getAdditionalActionGroup(cellType) ?: return
+
     if (currentAdditionalToolbar == null) {
       currentAdditionalToolbar = JupyterAdditionalToolbar(additionalActionGroup, currentPanel!!)
     }
+
     editor.contentComponent.add(currentAdditionalToolbar, 0)
     hideToolbarTimer.stop()
     adjustAdditionalToolbarPosition()
@@ -170,7 +177,11 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
   }
 
   private fun getActionGroup(): ActionGroup? = ActionManager.getInstance().getAction(ACTION_GROUP_ID) as? ActionGroup
-  private fun getAdditionalActionGroup(): ActionGroup? = ActionManager.getInstance().getAction(ADDITIONAL_ACTION_GROUP_ID) as? ActionGroup
+  private fun getAdditionalActionGroup(cellType: NotebookCellLines.CellType): ActionGroup? = when(cellType) {
+    NotebookCellLines.CellType.CODE -> ActionManager.getInstance().getAction(ADDITIONAL_CODE_ACTION_GROUP_ID) as? ActionGroup
+    NotebookCellLines.CellType.MARKDOWN -> ActionManager.getInstance().getAction(ADDITIONAL_MARKDOWN_ACTION_GROUP_ID) as? ActionGroup
+    NotebookCellLines.CellType.RAW -> null
+  }
 
   override fun dispose() {
     showToolbarJob?.cancel()
@@ -203,7 +214,10 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope) : Dispos
     private const val ADDITIONAL_TOOLBAR_START_RATIO = ADD_CELL_TOOLBAR_END_RATIO
 
     private const val ACTION_GROUP_ID = "Jupyter.AboveCellPanelNew"
-    private const val ADDITIONAL_ACTION_GROUP_ID = "Jupyter.AboveCellAdditionalToolbar"
+
+    private const val ADDITIONAL_CODE_ACTION_GROUP_ID = "Jupyter.AboveCodeCellAdditionalToolbar"
+    private const val ADDITIONAL_MARKDOWN_ACTION_GROUP_ID = "Jupyter.AboveMarkdownCellAdditionalToolbar"
+
     private val DELIMITER_SIZE = DefaultNotebookEditorAppearanceSizes.distanceBetweenCells
 
     fun calculateToolbarBounds(

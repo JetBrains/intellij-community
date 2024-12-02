@@ -1,5 +1,7 @@
-package com.intellij.notebooks.ui.jupyterToolbar
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.notebooks.visualization.ui.jupyterToolbar
 
+import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -17,6 +19,7 @@ class JupyterAboveCellPanelListeners(
   private val panel: JComponent,
   project: Project,
   private val editor: EditorImpl,
+  private val interval: NotebookCellLines.Interval,
 ) : Disposable {
   private val toolbarService = JupyterAboveCellToolbarService.getInstance(project)
   private var panelMouseListener: MouseAdapter? = null
@@ -29,8 +32,8 @@ class JupyterAboveCellPanelListeners(
 
   private fun addPanelMouseListener() {
     panelMouseListener = object : MouseAdapter() {
-      override fun mouseEntered(e: MouseEvent) = toolbarService.requestToolbarDisplay(panel, editor)
-      override fun mouseMoved(e: MouseEvent) = toolbarService.requestToolbarDisplay(panel, editor)
+      override fun mouseEntered(e: MouseEvent) = toolbarService.requestToolbarDisplay(panel, editor, interval)
+      override fun mouseMoved(e: MouseEvent) = toolbarService.requestToolbarDisplay(panel, editor, interval)
       override fun mouseExited(e: MouseEvent) = toolbarService.requestToolbarHide()
       override fun mouseClicked(e: MouseEvent?) = toolbarService.hideAllToolbarsUnconditionally()
     }

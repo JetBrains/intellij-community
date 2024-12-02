@@ -1,4 +1,5 @@
-package com.intellij.notebooks.ui.jupyterToolbar
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.notebooks.visualization.ui.jupyterToolbar
 
 import com.intellij.notebooks.ui.SelectClickedCellEventHelper
 import com.intellij.openapi.actionSystem.ActionGroup
