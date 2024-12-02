@@ -5,8 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -20,8 +18,6 @@ import java.awt.event.MouseEvent;
 import static java.lang.Math.abs;
 
 public class Splitter extends JPanel implements Splittable {
-  private static final Icon SplitGlueH = EmptyIcon.create(6, 17);
-  private static final Icon SplitGlueV = EmptyIcon.create(17, 6);
   private static final Logger LOG = Logger.getInstance(Splitter.class);
   public static final @NonNls String PROP_PROPORTION = "proportion";
   public static final @NonNls String PROP_ORIENTATION = "orientation";
@@ -762,10 +758,6 @@ public class Splitter extends JPanel implements Splittable {
       if (!myShowDividerControls && !myShowDividerIcon) {
         return;
       }
-
-      Icon glueIcon = isVerticalSplit ? SplitGlueV : SplitGlueH;
-      add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                       JBInsets.emptyInsets(), 0, 0));
 
       revalidate();
       repaint();
