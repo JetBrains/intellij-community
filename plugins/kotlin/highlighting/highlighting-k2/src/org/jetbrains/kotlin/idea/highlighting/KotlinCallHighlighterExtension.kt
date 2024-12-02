@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.idea.highlighting.highlighters.FunctionCallHighlighter
+import org.jetbrains.kotlin.idea.highlighting.analyzers.FunctionCallHighlighter
 
 /**
  * An interface for an extension point that enables a user-defined call highlighter.

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.Divider
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.SuppressionUtil
@@ -14,7 +13,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.concurrency.JobLauncher
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -29,8 +27,8 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.highlighting.highlighters.isCalleeExpression
-import org.jetbrains.kotlin.idea.highlighting.highlighters.isConstructorCallReference
+import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
+import org.jetbrains.kotlin.idea.highlighting.analyzers.isConstructorCallReference
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens

@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.Unres
 import org.jetbrains.kotlin.idea.highlighter.clearAllKotlinUnresolvedReferenceKinds
 import org.jetbrains.kotlin.idea.highlighter.registerKotlinUnresolvedReferenceKind
 import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
-import org.jetbrains.kotlin.idea.highlighting.highlighters.ignoreIncompleteModeDiagnostics
+import org.jetbrains.kotlin.idea.highlighting.analyzers.ignoreIncompleteModeDiagnostics
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector

@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.highlighting.visitor
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.highlighting.highlighters.KotlinSemanticAnalyzer
-import org.jetbrains.kotlin.idea.highlighting.highlighters.TypeHighlighter
+import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinSemanticAnalyzer
+import org.jetbrains.kotlin.idea.highlighting.analyzers.TypeHighlighter
 
 internal class KotlinTypeSemanticHighlightingVisitor : KotlinAbstractSemanticHighlightingVisitor() {
     override fun clone(): KotlinTypeSemanticHighlightingVisitor = KotlinTypeSemanticHighlightingVisitor()
