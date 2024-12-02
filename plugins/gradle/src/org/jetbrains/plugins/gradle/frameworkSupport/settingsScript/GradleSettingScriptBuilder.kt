@@ -28,6 +28,12 @@ interface GradleSettingScriptBuilder<Self: GradleSettingScriptBuilder<Self>> : S
 
   fun addCode(configure: ScriptTreeBuilder.() -> Unit): Self
 
+  fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): Self
+
+  fun withPlugin(id: String, version: String?): Self
+
+  fun withFoojayPlugin()
+
   fun generateTree(): BlockElement
 
   fun generate(): String

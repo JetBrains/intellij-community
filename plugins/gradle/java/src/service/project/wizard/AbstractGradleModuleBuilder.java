@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -72,7 +73,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
@@ -105,6 +105,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private Path rootProjectPath;
   private boolean myUseKotlinDSL;
   private boolean isCreatingNewProject;
+  private boolean isUsingDaemonToolchain = false;
+  private boolean isUsingTasksToolchain = false;
   private boolean createEmptyContentRoots = true;
   private GradleVersion gradleVersion;
   private DistributionType gradleDistributionType;
@@ -115,8 +117,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private VirtualFile buildScriptFile;
   private VirtualFile settingsScriptFile;
   private GradleBuildScriptBuilder<?> buildScriptBuilder;
+  private GradleSettingScriptBuilder<?> settingsScriptBuilder;
   private final List<Consumer<GradleBuildScriptBuilder<?>>> buildScriptConfigurators = new ArrayList<>();
-  private final List<BiConsumer<VirtualFile, VirtualFile>> preImportConfigurators = new ArrayList<>();
+  private final List<Consumer<GradleSettingScriptBuilder<?>>> settingsScriptConfigurators = new ArrayList<>();
 
   public AbstractGradleModuleBuilder() {
     super(GradleConstants.SYSTEM_ID, GradleDefaultProjectSettings.createProjectSettings(""));
@@ -181,6 +184,15 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       var scriptDataBuilder = new BuildScriptDataBuilder(buildScriptFile, buildScriptBuilder);
       modifiableRootModel.getModule().putUserData(BUILD_SCRIPT_DATA, scriptDataBuilder);
     }
+
+    if (isCreatingSettingsScriptFile) {
+      settingsScriptBuilder = GradleSettingScriptBuilder.create(myUseKotlinDSL);
+      settingsScriptConfigurators.forEach(it -> it.accept(settingsScriptBuilder));
+
+      if (isUsingDaemonToolchain || isUsingTasksToolchain) {
+        settingsScriptBuilder.withFoojayPlugin();
+      }
+    }
   }
 
   @Override
@@ -189,6 +201,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     assert rootProjectPath != null;
 
     VirtualFile buildScriptFile = createAndConfigureBuildScriptFile();
+    createAndConfigureSettingsScriptFile();
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -236,24 +249,28 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     }
 
     if (isCreatingBuildScriptFile) {
-      preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
       openBuildScriptFile(project, buildScriptFile);
     }
     if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
       generateGradleWrapper(project);
     }
-    reloadProject(project);
+    ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized(() -> {
+      if (isUsingDaemonToolchain()) {
+        // TODO Start migration
+        reloadProject(project);
+      } else {
+        reloadProject(project);
+      }
+    });
   }
 
   private void reloadProject(@NotNull Project project) {
-    ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized(() -> {
-      ImportSpecBuilder importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
-      if (createEmptyContentRoots) {
-        importSpec.createDirectoriesForEmptyContentRoots();
-      }
-      importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
-      ExternalSystemUtil.refreshProject(PathKt.getSystemIndependentPath(rootProjectPath), importSpec);
-    });
+    ImportSpecBuilder importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
+    if (createEmptyContentRoots) {
+      importSpec.createDirectoriesForEmptyContentRoots();
+    }
+    importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
+    ExternalSystemUtil.refreshProject(PathKt.getSystemIndependentPath(rootProjectPath), importSpec);
   }
 
   private void generateGradleWrapper(@NotNull Project project) {
@@ -269,13 +286,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     buildScriptConfigurators.add(configure);
   }
 
-  /**
-   * Runs the configure callback just before the Gradle import starts.
-   * The first parameter to the callback is the buildScriptFile, the second parameter is the settingsScriptFile.
-   * Can be used to do more advanced modifications of the Gradle files.
-   */
-  public void configurePreImport(@NotNull BiConsumer<@NotNull VirtualFile, @NotNull VirtualFile> configure) {
-    preImportConfigurators.add(configure);
+  public void configureSettingsScript(@NotNull Consumer<GradleSettingScriptBuilder<?>> configure) {
+    settingsScriptConfigurators.add(configure);
   }
 
   private @Nullable VirtualFile createAndConfigureBuildScriptFile() {
@@ -288,6 +300,24 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
         String content = StringUtil.convertLineSeparators(buildScriptBuilder.generate(), lineSeparator(buildScriptFile));
         VfsUtil.saveText(buildScriptFile, content);
         return buildScriptFile;
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Unexpected exception on applying frameworks templates", e);
+    }
+    return null;
+  }
+
+  private @Nullable VirtualFile createAndConfigureSettingsScriptFile() {
+    if (!isCreatingSettingsScriptFile) {
+      return null;
+    }
+    try {
+      if (settingsScriptFile != null && settingsScriptBuilder != null) {
+        settingsScriptBuilder.addCode(StringUtil.trimTrailing(VfsUtilCore.loadText(settingsScriptFile)));
+        String content = StringUtil.convertLineSeparators(settingsScriptBuilder.generate(), lineSeparator(settingsScriptFile));
+        VfsUtil.saveText(settingsScriptFile, content);
+        return settingsScriptFile;
       }
     }
     catch (IOException e) {
@@ -512,6 +542,22 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void setCreatingNewProject(boolean creatingNewProject) {
     isCreatingNewProject = creatingNewProject;
+  }
+
+  public boolean isUsingDaemonToolchain() {
+    return isUsingDaemonToolchain;
+  }
+
+  public void setUsingDaemonToolchain(boolean usingDaemonToolchain) {
+    isUsingDaemonToolchain = usingDaemonToolchain;
+  }
+
+  public boolean isUsingTasksToolchain() {
+    return isUsingTasksToolchain;
+  }
+
+  public void setUsingTasksToolchain(boolean usingTasksToolchain) {
+    isUsingTasksToolchain = usingTasksToolchain;
   }
 
   public void setCreateEmptyContentRoots(boolean createEmptyContentRoots) {

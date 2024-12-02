@@ -13,9 +13,15 @@ abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingSc
 
   private var projectName: String? = null
   private val script = ScriptTreeBuilder()
+  private var plugins = ScriptTreeBuilder()
   private var pluginManagement: ScriptTreeBuilder.() -> Unit = {}
 
+  private val foojayResolverVersion = getFoojayResolverVersion()
+
   protected abstract fun apply(action: Self.() -> Unit): Self
+
+  private fun applyAndMerge(builder: ScriptTreeBuilder, configure: ScriptTreeBuilder.() -> Unit) =
+    apply { builder.addNonExistedElements(configure) }
 
   override fun setProjectName(projectName: String) = apply {
     this.projectName = projectName
@@ -53,7 +59,24 @@ abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingSc
     script.addElements(configure)
   }
 
+  override fun withPlugin(configure: ScriptTreeBuilder.() -> Unit) = apply {
+    applyAndMerge(plugins, configure)
+  }
+
+  override fun withPlugin(id: String, version: String?) =
+    withPlugin {
+      when (version) {
+        null -> call("id", id)
+        else -> infixCall(call("id", id), "version", string(version))
+      }
+    }
+
+  override fun withFoojayPlugin() {
+    withPlugin("org.gradle.toolchains.foojay-resolver-convention", foojayResolverVersion)
+  }
+
   override fun generateTree() = ScriptTreeBuilder.tree {
+    callIfNotEmpty("plugins", plugins)
     callIfNotEmpty("pluginManagement", pluginManagement)
     assignIfNotNull("rootProject.name", projectName)
     join(script)

@@ -16,8 +16,6 @@ import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRend
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.bindBooleanStorage
@@ -27,10 +25,6 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findDocument
-import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
@@ -40,7 +34,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
 import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
@@ -259,22 +252,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             checkCanUseFoojay()
         }
 
-        private fun configureSettingsFile(project: Project, settingsFile: VirtualFile) {
-            if (!canUseFoojay) return
-
-            CommandProcessor.getInstance().executeCommand(project, {
-                ApplicationManager.getApplication().runWriteAction {
-                    val psiFile = settingsFile.findPsiFile(project) ?: return@runWriteAction
-                    val document = settingsFile.findDocument() ?: return@runWriteAction
-                    val psiDocumentManager = PsiDocumentManager.getInstance(project)
-                    psiDocumentManager.commitDocument(document)
-
-                    val buildScriptSupport = GradleBuildScriptSupport.getManipulator(psiFile)
-                    buildScriptSupport.addFoojayPlugin(psiFile)
-                }
-            }, KotlinNewProjectWizardBundle.message("module.configurator.command"), null)
-        }
-
         private fun isCreatingNewRootModule(): Boolean {
             return context.isCreatingNewProject || parentData == null
         }
@@ -330,15 +307,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
             if (shouldGenerateMultipleModules) return
 
-            val moduleBuilder = GradleKotlinModuleBuilder()
-            moduleBuilder.configurePreImport { _, settingsScriptFile ->
-                configureSettingsFile(project, settingsScriptFile)
-            }
-
             val parentKotlinVersion = project.findParentModule()?.sourceRootModules?.firstNotNullOfOrNull {
                 it.kotlinGradlePluginVersion?.versionString
             }
             val pluginManagementVersion = getPluginManagementKotlinVersion(project)
+            val moduleBuilder = GradleKotlinModuleBuilder()
             setupBuilder(moduleBuilder)
             setupBuildScript(moduleBuilder) {
                 withKotlinJvmPlugin(kotlinVersionToUse.takeUnless {
@@ -350,6 +323,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
                 selectedJdkJvmTarget?.takeIf { canUseFoojay }?.let {
                     withKotlinJvmToolchain(it)
+                    moduleBuilder.isUsingTasksToolchain = true
                 }
             }
             setupProject(project, moduleBuilder)

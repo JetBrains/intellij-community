@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -49,9 +50,11 @@ import icons.GradleIcons
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.WRAPPER
@@ -456,12 +459,21 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     }
   }
 
+  private fun getGradleVersion(): GradleVersion = GradleVersion.version(
+      when (distributionType) {
+        WRAPPER -> gradleVersion
+        LOCAL -> GradleInstallationManager.getGradleVersion(gradleHome)!!
+      }
+    )
+
   fun setupBuilder(builder: AbstractGradleModuleBuilder) {
+    val gradleVersion = getGradleVersion()
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
 
     builder.isCreatingNewProject = context.isCreatingNewProject
+    builder.isUsingDaemonToolchain = Registry.`is`("gradle.daemon.jvm.criteria.new.projects") && isDaemonJvmCriteriaSupported(gradleVersion)
 
     builder.parentProject = parentData
     builder.projectId = ProjectId(groupId, artifactId, version)
@@ -471,20 +483,17 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.isUseKotlinDsl = gradleDsl == GradleDsl.KOTLIN
 
     builder.setCreateEmptyContentRoots(false)
-    builder.setGradleVersion(
-      GradleVersion.version(
-        when (distributionType) {
-          WRAPPER -> gradleVersion
-          LOCAL -> GradleInstallationManager.getGradleVersion(gradleHome)!!
-        }
-      )
-    )
+    builder.setGradleVersion(gradleVersion)
     builder.setGradleDistributionType(distributionType.value)
     builder.setGradleHome(gradleHome)
   }
 
   fun setupBuildScript(builder: AbstractGradleModuleBuilder, configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     builder.configureBuildScript(configure)
+  }
+
+  fun setupSettingsScript(builder: AbstractGradleModuleBuilder, configure: GradleSettingScriptBuilder<*>.() -> Unit) {
+    builder.configureSettingsScript(configure)
   }
 
   fun setupProject(project: Project, builder: AbstractGradleModuleBuilder) {
