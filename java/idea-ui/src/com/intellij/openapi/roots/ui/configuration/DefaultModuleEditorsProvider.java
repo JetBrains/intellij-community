@@ -28,7 +28,7 @@ public class DefaultModuleEditorsProvider implements ModuleConfigurationEditorPr
     Module module = state.getCurrentRootModel().getModule();
     ModuleType<?> moduleType = ModuleType.get(module);
     if (!(moduleType instanceof JavaModuleType) &&
-        (!GeneralModuleType.INSTANCE.equals(moduleType) || ProjectRootManager.getInstance(state.getProject()).getProjectSdk() == null)) {
+        (!GeneralModuleType.INSTANCE.equals(moduleType))) {
       return ModuleConfigurationEditor.EMPTY;
     }
 
