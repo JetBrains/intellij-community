@@ -218,6 +218,9 @@ public final class PyTypeChecker {
   private static @NotNull Optional<Boolean> match(PyNarrowedType expectedNarrowedType,
                                                   PyNarrowedType actualNarrowedType,
                                                   @NotNull MatchContext context) {
+    if (expectedNarrowedType.getTypeIs() != actualNarrowedType.getTypeIs()) {
+      return Optional.of(false);
+    }
     return match(expectedNarrowedType.getNarrowedType(), actualNarrowedType.getNarrowedType(), context);
   }
 
