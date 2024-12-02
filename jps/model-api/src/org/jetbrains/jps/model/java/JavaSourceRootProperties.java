@@ -8,7 +8,7 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import java.util.Objects;
 
 public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> {
-  private String myPackagePrefix = "";
+  private String myPackagePrefix;
   private boolean myForGeneratedSources;
 
   @ApiStatus.Internal

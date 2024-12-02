@@ -82,7 +82,7 @@ public class MavenIndices implements Disposable {
 
   @NotNull
   private static List<MavenIndexUtils.IndexPropertyHolder> readCurrentIndexFileProperty(@NotNull Path indicesDir) {
-    Path[] indices = null;
+    Path[] indices;
     try {
       indices = Files.list(indicesDir).toArray(Path[]::new);
     }

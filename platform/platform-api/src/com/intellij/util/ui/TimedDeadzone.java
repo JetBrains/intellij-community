@@ -9,7 +9,7 @@ public final class TimedDeadzone {
   public static final Length DEFAULT = new Length(150);
   public static final Length NULL = new Length(-1);
   
-  private Length myLength = NULL;
+  private Length myLength;
   private boolean myMouseWithin;
   private long myTimeEntered = -1;
 

@@ -343,7 +343,7 @@ public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K,
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     HardKey<K, V> oldKeyReference = createHardKey(key);
-    ValueReference<K, V> oldValueReference = null;
+    ValueReference<K, V> oldValueReference;
     try {
       oldValueReference = createValueReference(oldValue, myValueQueue);
       ValueReference<K, V> newValueReference = createValueReference(newValue, myValueQueue);

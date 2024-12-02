@@ -317,7 +317,7 @@ public class CompressedAppendableFile {
 
   private void saveNextChunkIfNeeded() throws IOException {
     if (myBufferPosition == myNextChunkBuffer.length) {
-      int dataWrittenCount = 0;
+      int dataWrittenCount;
       try (DataOutputStream stream = getChunkAppendStream()) {
         compress(stream, myNextChunkBuffer);
         dataWrittenCount = stream.getWrittenBytesCount();

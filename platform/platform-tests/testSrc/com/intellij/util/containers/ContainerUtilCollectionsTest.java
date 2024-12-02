@@ -212,6 +212,8 @@ public class ContainerUtilCollectionsTest extends Assert {
     Reference<Object> ref = new SoftReference<>(value);
     map.put(1, value);
     assertEquals(1, map.size());
+    //Help GC, even in interpreter mode
+    //noinspection UnusedAssignment
     value = null;
 
     do {
