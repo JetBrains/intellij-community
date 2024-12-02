@@ -263,7 +263,6 @@ public class FileChooserDescriptor implements Cloneable {
    */
   public FileChooserDescriptor withExtensionFilter(@NlsContexts.Label @NotNull String label, @NotNull String @NotNull ... extensions) {
     if (extensions.length == 0) throw new IllegalArgumentException("The list must not be empty");
-    if (ContainerUtil.find(extensions, String::isBlank) != null) throw new IllegalArgumentException("The list must not contain empty strings");
     myExtensionFilter = new Pair<>(label, List.of(extensions));
     return this;
   }
