@@ -8,6 +8,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHighlighting
 import org.jetbrains.kotlin.idea.base.analysis.isInjectedFileShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.highlighting.KotlinUnusedHighlightingProcessor
 import org.jetbrains.kotlin.psi.KtFile
@@ -21,12 +22,13 @@ internal class KotlinUnusedDeclarationHighlightingVisitor : HighlightVisitor {
 
         val viewProvider = file.viewProvider
         val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
-        if (isInjection && !viewProvider.isInjectedFileShouldBeAnalyzed) {
+        if (isInjection && (!viewProvider.isInjectedFileShouldBeAnalyzed || file.injectionRequiresOnlyEssentialHighlighting)) {
             // do not highlight unused declarations in injected code
             return false
         }
 
-        return true
+        val highlightingManager = HighlightingLevelManager.getInstance(file.project)
+        return !highlightingManager.runEssentialHighlightingOnly(file)
     }
 
     override fun visit(element: PsiElement) {}
