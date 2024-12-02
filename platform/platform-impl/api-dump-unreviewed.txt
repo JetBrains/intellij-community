@@ -10965,6 +10965,10 @@ f:com.intellij.openapi.util.RequestsMerger
 - isEmpty():Z
 - request():V
 - waitRefresh(java.lang.Runnable):V
+f:com.intellij.openapi.util.SystemPropertyBean
+- com.intellij.openapi.extensions.PluginAware
+- name:java.lang.String
+- value:java.lang.String
 f:com.intellij.openapi.util.ZipperUpdater
 - <init>(I,com.intellij.openapi.Disposable):V
 - <init>(I,com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
