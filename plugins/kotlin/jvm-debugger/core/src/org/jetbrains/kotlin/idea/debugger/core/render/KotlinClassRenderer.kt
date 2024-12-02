@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.FieldVisibilityProvider
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -54,7 +55,7 @@ class KotlinClassRenderer : ClassRenderer() {
         val gettersFuture = DebuggerUtilsAsync.allMethods(refType)
             .thenApply { methods -> methods.getters().createNodes(value, parentDescriptor.project, evaluationContext, nodeManager) }
         DebuggerUtilsAsync.allFields(refType).thenCombine(gettersFuture) { fields, getterNodes ->
-            if (fields.isEmpty() && getterNodes.isEmpty()) {
+            if (fields.none { FieldVisibilityProvider.shouldDisplayField(it) } && getterNodes.isEmpty()) {
                 builder.setChildren(listOf(nodeManager.createMessageNode(KotlinDebuggerCoreBundle.message("message.class.has.no.properties"))))
                 return@thenCombine
             }
