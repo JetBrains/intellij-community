@@ -3,15 +3,31 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.NoErrorEventsDuringImportFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/projectIsolation")
-public class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
+class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     @Test
     fun testJvmOnly() {
-        doTest{
-            onlyCheckers(NoErrorEventsDuringImportFeature)
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1.20-dev-10000+")
+    fun testSimpleMultiTargetProject() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
         }
     }
 
