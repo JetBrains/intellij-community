@@ -58,7 +58,7 @@ internal open class DefaultScrollBarAnimationBehavior(
 
   override fun onReset() {
     trackAnimator.rewind(false)
-    trackAnimator.rewind(false)
+    thumbAnimator.rewind(false)
   }
 }
 
