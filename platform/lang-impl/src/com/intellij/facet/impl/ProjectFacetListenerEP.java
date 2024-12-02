@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public final class ProjectFacetListenerEP extends LazyExtensionInstance<ProjectFacetListener<?>> implements PluginAware {
   @Attribute("facet-type")
   @RequiredElement
@@ -23,19 +22,27 @@ public final class ProjectFacetListenerEP extends LazyExtensionInstance<ProjectF
   public String myImplementationClass;
   private PluginDescriptor myPluginDescriptor;
 
+  @ApiStatus.Internal
+  public ProjectFacetListenerEP() {
+  }
+
+  @ApiStatus.Internal
   public String getFacetTypeId() {
     return myFacetTypeId;
   }
 
+  @ApiStatus.Internal
   @Override
   protected @Nullable String getImplementationClassName() {
     return myImplementationClass;
   }
 
+  @ApiStatus.Internal
   public ProjectFacetListener<?> getListenerInstance() {
     return getInstance(ApplicationManager.getApplication(), myPluginDescriptor);
   }
 
+  @ApiStatus.Internal
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;

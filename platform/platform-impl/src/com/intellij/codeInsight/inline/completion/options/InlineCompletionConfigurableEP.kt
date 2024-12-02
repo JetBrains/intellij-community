@@ -6,10 +6,11 @@ import com.intellij.openapi.options.ConfigurableEP
 import com.intellij.openapi.options.UnnamedConfigurable
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class InlineCompletionConfigurableEP : ConfigurableEP<UnnamedConfigurable>() {
+class InlineCompletionConfigurableEP @ApiStatus.Internal constructor(): ConfigurableEP<UnnamedConfigurable>() {
 
   companion object {
-    val EP_NAME = ExtensionPointName<InlineCompletionConfigurableEP>("com.intellij.inlineCompletionConfigurable")
+    @ApiStatus.Internal
+    @get:ApiStatus.Internal
+    val EP_NAME: ExtensionPointName<InlineCompletionConfigurableEP> = ExtensionPointName("com.intellij.inlineCompletionConfigurable")
   }
 }
