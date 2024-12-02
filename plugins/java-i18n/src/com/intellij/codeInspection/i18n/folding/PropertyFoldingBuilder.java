@@ -220,7 +220,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
   @NotNull
   private static String getI18nMessage(@NotNull UInjectionHost injectionHost) {
     final IProperty property = getI18nProperty(injectionHost);
-    return property == null ? UastLiteralUtils.getValueIfStringLiteral(injectionHost) : formatI18nProperty(injectionHost, property);
+    return property == null ? injectionHost.evaluateToString() : formatI18nProperty(injectionHost, property);
   }
 
   @Nullable
