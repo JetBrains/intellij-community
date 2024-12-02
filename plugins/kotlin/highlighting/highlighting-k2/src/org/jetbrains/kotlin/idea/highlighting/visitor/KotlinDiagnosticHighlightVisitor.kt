@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.highlighting
+package org.jetbrains.kotlin.idea.highlighting.visitor
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind
 import org.jetbrains.kotlin.idea.highlighter.KotlinUnresolvedReferenceKind.UnresolvedDelegateFunction
 import org.jetbrains.kotlin.idea.highlighter.clearAllKotlinUnresolvedReferenceKinds
 import org.jetbrains.kotlin.idea.highlighter.registerKotlinUnresolvedReferenceKind
+import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.highlighters.ignoreIncompleteModeDiagnostics
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
