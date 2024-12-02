@@ -26,6 +26,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -142,11 +143,11 @@ public class InvokeIntention extends ActionOnFile {
           return;
         }
         ActionContext context = ActionContext.from(editor, file);
-        Presentation presentation = action.getPresentation(context);
+        Presentation presentation = ActionUtil.underModalProgress(project, "", () -> action.getPresentation(context));
         if (presentation == null) {
           throw new IllegalStateException("Unexpectedly no presentation for " + action.getFamilyName());
         }
-        ModCommand command = action.perform(context);
+        ModCommand command = ActionUtil.underModalProgress(project, "", () -> action.perform(context));
         String validationMessage = validateCommand(command);
         if (validationMessage != null) {
           LOG.warn("Skip command: " + presentation.name() + " (" + validationMessage + ")");
