@@ -122,11 +122,12 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
 
     ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
     sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, ServiceViewDefaultDeleteProvider.getInstance());
-    if (contributor instanceof UiDataProvider uiDataProvider) {
+    ServiceViewDescriptor contributorDescriptor = contributor != null ? contributor.getViewDescriptor(myProject) : null;
+    if (contributorDescriptor instanceof UiDataProvider uiDataProvider) {
       sink.uiDataSnapshot(uiDataProvider);
     }
     else {
-      DataSink.uiDataSnapshot(sink, contributor != null ? contributor.getViewDescriptor(myProject).getDataProvider() : null);
+      DataSink.uiDataSnapshot(sink, contributorDescriptor != null ? contributorDescriptor.getDataProvider() : null);
     }
     sink.set(PlatformDataKeys.COPY_PROVIDER, new ServiceViewCopyProvider(this));
     sink.set(ServiceViewActionUtils.CONTRIBUTORS_KEY,
