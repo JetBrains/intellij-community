@@ -670,9 +670,6 @@ object CommunityRepositoryModules {
     return plugin(mainModuleName) { spec ->
       spec.directoryName = "vcs-gitlab-$kind"
       spec.mainJarName = "vcs-gitlab.jar"
-      spec.withModules(listOf(
-        "intellij.vcs.gitlab"
-      ))
       spec.withCustomVersion { _, version, _ ->
         PluginVersionEvaluatorResult(pluginVersion = "$version-$kind")
       }
