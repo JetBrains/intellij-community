@@ -4,7 +4,6 @@ package com.intellij.vcs.log.ui.table.column
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.text.DateTimeFormatManager
@@ -23,6 +22,7 @@ import com.intellij.vcs.log.ui.VcsLogBookmarksListener
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer
+import com.intellij.vcs.log.ui.render.RootCell
 import com.intellij.vcs.log.ui.table.*
 import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import com.intellij.vcs.log.util.VcsLogUtil
@@ -48,19 +48,20 @@ sealed class VcsLogDefaultColumn<T>(
     get() = id.lowercase(Locale.ROOT)
 }
 
-internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) {
-  override val isResizable = false
+@ApiStatus.Internal
+data object Root : VcsLogDefaultColumn<RootCell>("Default.Root", "", false) {
+  override val isResizable: Boolean = false
 
-  override fun getValue(model: GraphTableModel, row: VcsLogTableIndex): FilePath? {
+  override fun getValue(model: GraphTableModel, row: VcsLogTableIndex): RootCell? {
     val visiblePack = model.visiblePack
     if (visiblePack.hasPathsInformation()) {
       val commit = model.getId(row) ?: return null
       val path = visiblePack.filePathOrDefault(commit)
       if (path != null) {
-        return path
+        return RootCell.RealCommit(path)
       }
     }
-    return model.getRootAtRow(row)?.let(VcsUtil::getFilePath)
+    return RootCell.RealCommit(model.getRootAtRow(row)?.let(VcsUtil::getFilePath))
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
@@ -74,7 +75,7 @@ internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", fa
     return RootCellRenderer(table.properties, table.colorManager)
   }
 
-  override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(model.logData.roots.first())
+  override fun getStubValue(model: GraphTableModel): RootCell = RootCell.RealCommit(VcsUtil.getFilePath(model.logData.roots.first()))
 }
 
 @ApiStatus.Internal
