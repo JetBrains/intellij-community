@@ -147,14 +147,6 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
   }
 
-  public void clearSourceFolders() {
-    for (JpsSourceFolder folder : myJpsSourceFolders) {
-      Disposer.dispose(folder);
-    }
-    myJpsSourceFolders.clear();
-    isJpsSourceFoldersChanged = true;
-  }
-
   public <P extends JpsElement> void addSourceFolder(final @NotNull Url url,
                                                      final @NotNull JpsModuleSourceRootType<P> rootType,
                                                      final @NotNull P properties) {
@@ -172,31 +164,6 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     addJspSourceFolder(jpsModuleSourceRoot, url.getUrl());
 
     isJpsSourceFoldersChanged = true;
-  }
-
-  public boolean hasRegisteredSourceSubfolder(@NotNull String url) {
-    for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
-      if (VfsUtilCore.isEqualOrAncestor(url, eachFolder.getUrl())) return true;
-    }
-    return false;
-  }
-
-  @Nullable
-  public SourceFolder getSourceFolder(@NotNull String url) {
-    for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
-      if (eachFolder.getUrl().equals(url)) return eachFolder;
-    }
-    return null;
-  }
-
-  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
-    List<String> result = new SmartList<>();
-    for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
-      if (includingTests || !eachFolder.isTestSource()) {
-        result.add(eachFolder.getUrl());
-      }
-    }
-    return ArrayUtilRt.toStringArray(result);
   }
 
   @Nullable
