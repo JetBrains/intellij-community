@@ -36,10 +36,9 @@ abstract class TaskStorage {
     var taskInfoEntity: TaskInfoEntity? = null
     try {
       return withKernel {
-        val projectEntity = project.asEntity()
         taskInfoEntity = createTaskInfoEntity {
           TaskInfoEntity.new {
-            it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) projectEntity else null
+            it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) project.asEntity() else null
             it[TaskInfoEntity.Title] = title
             it[TaskInfoEntity.TaskCancellationType] = cancellation
             it[TaskInfoEntity.ProgressStateType] = null

@@ -3,12 +3,8 @@ package com.intellij.platform.project
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.platform.kernel.withKernel
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableEntityType
-import fleet.kernel.rete.filterNotNull
-import fleet.kernel.rete.first
-import fleet.kernel.rete.query
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,9 +21,8 @@ data class ProjectEntity(override val eid: EID) : Entity {
    */
   val projectId: ProjectId by ProjectIdValue
 
-  @ApiStatus.Internal
-  companion object : DurableEntityType<ProjectEntity>(ProjectEntity::class.java.name, "com.intellij", ::ProjectEntity) {
-    val ProjectIdValue: Attributes<ProjectEntity>.Required<ProjectId> = requiredValue("projectId", ProjectId.serializer(), Indexing.UNIQUE)
+  internal companion object : DurableEntityType<ProjectEntity>(ProjectEntity::class.java.name, "com.intellij", ::ProjectEntity) {
+    val ProjectIdValue = requiredValue("projectId", ProjectId.serializer(), Indexing.UNIQUE)
   }
 }
 
@@ -47,17 +42,14 @@ fun Project.asEntityOrNull(): ProjectEntity? {
 /**
  * Converts a given project to its corresponding [ProjectEntity].
  *
- * The method waits until [ProjectEntity] for the given [Project] is visible in the current coroutine scope.
- *
- * For non-suspend synchronous function see [asEntityOrNull].
+ * The method has to be called in a kernel context - see [com.intellij.platform.kernel.withKernel]
  *
  * @return The [ProjectEntity] instance associated with the provided project,
+ * @throws kotlin.IllegalStateException if no such entity is found
  */
 @ApiStatus.Internal
-suspend fun Project.asEntity(): ProjectEntity {
-  return withKernel {
-    query { entities(ProjectEntity.ProjectIdValue, projectId()).singleOrNull() }.filterNotNull().first()
-  }
+fun Project.asEntity(): ProjectEntity {
+  return asEntityOrNull() ?: error("ProjectEntity is not found for $this")
 }
 
 /**
