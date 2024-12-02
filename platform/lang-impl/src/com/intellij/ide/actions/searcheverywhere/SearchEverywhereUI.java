@@ -480,7 +480,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       myMlService.onDialogClose();
     }
 
-    Disposer.dispose(myPreviewGenerator);
+    if (myPreviewGenerator != null) {
+      Disposer.dispose(myPreviewGenerator);
+    }
   }
 
   @Override
