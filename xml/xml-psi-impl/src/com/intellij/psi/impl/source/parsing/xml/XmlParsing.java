@@ -9,7 +9,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.parsing.XmlParserBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,13 +65,13 @@ public class XmlParsing {
     }
 
     if (error != null) {
-      error.error(XmlPsiBundle.message("xml.parsing.top.level.element.is.not.completed"));
+      error.error(XmlParserBundle.message("xml.parsing.top.level.element.is.not.completed"));
     }
 
     if (rootTagCount == 0) {
       final PsiBuilder.Marker rootTag = mark();
       error = mark();
-      error.error(XmlPsiBundle.message("xml.parsing.absent.root.tag"));
+      error.error(XmlParserBundle.message("xml.parsing.absent.root.tag"));
       rootTag.done(XML_TAG);
     }
 
@@ -80,7 +80,7 @@ public class XmlParsing {
 
   private static @Nullable PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
-      error.error(XmlPsiBundle.message("xml.parsing.unexpected.tokens"));
+      error.error(XmlParserBundle.message("xml.parsing.unexpected.tokens"));
     }
     return null;
   }
@@ -92,7 +92,7 @@ public class XmlParsing {
 
     while (token() != XML_DOCTYPE_END && !eof()) advance();
     if (eof()) {
-      error(XmlPsiBundle.message("xml.parsing.unexpected.end.of.file"));
+      error(XmlParserBundle.message("xml.parsing.unexpected.end.of.file"));
     }
     else {
       advance();
@@ -120,7 +120,7 @@ public class XmlParsing {
         if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
           footer.rollbackTo();
           myTagNamesStack.pop();
-          tag.doneBefore(XML_TAG, content, XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tagName));
+          tag.doneBefore(XML_TAG, content, XmlParserBundle.message("xml.parsing.named.element.is.not.closed", tagName));
           content.drop();
           return;
         }
@@ -128,12 +128,12 @@ public class XmlParsing {
         advance();
       }
       else {
-        error(XmlPsiBundle.message("xml.parsing.closing.tag.name.missing"));
+        error(XmlParserBundle.message("xml.parsing.closing.tag.name.missing"));
       }
       footer.drop();
 
       while (token() != XmlTokenType.XML_TAG_END && token() != XmlTokenType.XML_START_TAG_START && token() != XmlTokenType.XML_END_TAG_START && !eof()) {
-        error(XmlPsiBundle.message("xml.parsing.unexpected.token"));
+        error(XmlParserBundle.message("xml.parsing.unexpected.token"));
         advance();
       }
 
@@ -141,11 +141,11 @@ public class XmlParsing {
         advance();
       }
       else {
-        error(XmlPsiBundle.message("xml.parsing.closing.tag.is.not.done"));
+        error(XmlParserBundle.message("xml.parsing.closing.tag.is.not.done"));
       }
     }
     else {
-      error(XmlPsiBundle.message("xml.parsing.unexpected.end.of.file"));
+      error(XmlParserBundle.message("xml.parsing.unexpected.end.of.file"));
     }
 
     content.drop();
@@ -157,7 +157,7 @@ public class XmlParsing {
     if (multipleRootTagError) {
       final PsiBuilder.Marker error = mark();
       advance();
-      error.error(XmlPsiBundle.message("xml.parsing.multiple.root.tags"));
+      error.error(XmlParserBundle.message("xml.parsing.multiple.root.tags"));
     }
     else {
       advance();
@@ -165,7 +165,7 @@ public class XmlParsing {
 
     final String tagName;
     if (token() != XML_NAME || myBuilder.rawLookup(-1) == TokenType.WHITE_SPACE) {
-      error(XmlPsiBundle.message("xml.parsing.tag.name.expected"));
+      error(XmlParserBundle.message("xml.parsing.tag.name.expected"));
       tagName = "";
     }
     else {
@@ -200,14 +200,14 @@ public class XmlParsing {
       advance();
     }
     else {
-      error(XmlPsiBundle.message("xml.parsing.tag.start.is.not.closed"));
+      error(XmlParserBundle.message("xml.parsing.tag.start.is.not.closed"));
       myTagNamesStack.pop();
       tag.done(XML_TAG);
       return null;
     }
 
     if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOLD) {
-      error(XmlPsiBundle.message("xml.parsing.way.too.unbalanced"));
+      error(XmlParserBundle.message("xml.parsing.way.too.unbalanced"));
       tag.done(XML_TAG);
       return null;
     }
@@ -251,7 +251,7 @@ public class XmlParsing {
         xmlText = startText(xmlText);
         final PsiBuilder.Marker error = mark();
         advance();
-        error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
+        error.error(XmlParserBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
       else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
@@ -316,7 +316,7 @@ public class XmlParsing {
       else if (tt == XML_BAD_CHARACTER) {
         final PsiBuilder.Marker error = mark();
         advance();
-        error.error(XmlPsiBundle.message("xml.parsing.bad.character"));
+        error.error(XmlParserBundle.message("xml.parsing.bad.character"));
         continue;
       }
       if (tt == XML_COMMENT_END) {
@@ -350,7 +350,7 @@ public class XmlParsing {
       parseAttributeValue();
     }
     else {
-      error(XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign"));
+      error(XmlParserBundle.message("xml.parsing.expected.attribute.eq.sign"));
     }
     att.done(XML_ATTRIBUTE);
   }
@@ -368,7 +368,7 @@ public class XmlParsing {
         if (tt == XML_BAD_CHARACTER) {
           final PsiBuilder.Marker error = mark();
           advance();
-          error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
+          error.error(XmlParserBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
         }
         else if (tt == XML_ENTITY_REF_TOKEN) {
           parseReference();
@@ -382,11 +382,11 @@ public class XmlParsing {
         advance();
       }
       else {
-        error(XmlPsiBundle.message("xml.parsing.unclosed.attribute.value"));
+        error(XmlParserBundle.message("xml.parsing.unclosed.attribute.value"));
       }
     }
     else {
-      error(XmlPsiBundle.message("xml.parsing.attribute.value.expected"));
+      error(XmlParserBundle.message("xml.parsing.attribute.value.expected"));
     }
 
     attValue.done(XML_ATTRIBUTE_VALUE);
@@ -420,7 +420,7 @@ public class XmlParsing {
     final PsiBuilder.Marker pi = mark();
     advance();
     if (token() != XML_NAME) {
-      error(XmlPsiBundle.message("xml.parsing.processing.instruction.name.expected"));
+      error(XmlParserBundle.message("xml.parsing.processing.instruction.name.expected"));
     }
     else {
       advance();
@@ -438,7 +438,7 @@ public class XmlParsing {
           advance();
         }
         else {
-          error(XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign"));
+          error(XmlParserBundle.message("xml.parsing.expected.attribute.eq.sign"));
         }
         parseAttributeValue();
       }
@@ -448,7 +448,7 @@ public class XmlParsing {
       advance();
     }
     else {
-      error(XmlPsiBundle.message("xml.parsing.unterminated.processing.instruction"));
+      error(XmlParserBundle.message("xml.parsing.unterminated.processing.instruction"));
     }
 
     pi.done(XML_PROCESSING_INSTRUCTION);

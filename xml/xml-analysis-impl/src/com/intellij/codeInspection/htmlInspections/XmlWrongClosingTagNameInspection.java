@@ -19,7 +19,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.parsing.XmlParserBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
           PsiFile psiFile = holder.getCurrentAnnotationSession().getFile();
 
           if (HTMLLanguage.INSTANCE == psiFile.getViewProvider().getBaseLanguage() || HTMLLanguage.INSTANCE == psiElement.getLanguage()) {
-            String message = XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing");
+            String message = XmlParserBundle.message("xml.parsing.closing.tag.matches.nothing");
 
             if (message.equals(((PsiErrorElement)psiElement).getErrorDescription()) && psiFile.getContext() == null) {
               holder.newAnnotation(HighlightSeverity.WARNING, message).range(psiElement).withFix(new RemoveExtraClosingTagIntentionAction()).create();
