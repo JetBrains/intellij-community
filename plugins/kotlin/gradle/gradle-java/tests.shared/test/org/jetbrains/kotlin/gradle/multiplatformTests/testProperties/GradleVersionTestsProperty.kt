@@ -8,7 +8,7 @@ object GradleVersionTestsProperty : org.jetbrains.kotlin.gradle.multiplatformTes
 
     enum class Value(val acronym: String, val version: String) {
         ForMinAgp("REQUIRED_FOR_MIN_AGP", "7.5.1"),
-        ForStableAgp("REQUIRED_FOR_STABLE_AGP", "8.8"),
+        ForStableAgp("REQUIRED_FOR_STABLE_AGP", "8.10.2"),
         ForBetaAgp("REQUIRED_FOR_BETA_AGP", "8.7"),
         ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "8.7")
     }
