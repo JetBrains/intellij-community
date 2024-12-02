@@ -429,7 +429,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
     }
 
-    fun redispatchIfTrackNotClickable(event: MouseEvent): Boolean {
+    fun passMouseEventThroughInvisibleScrollbar(event: MouseEvent): Boolean {
       if (isTrackClickable()) {
         return false
       }
@@ -448,13 +448,13 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     override fun mouseClicked(e: MouseEvent) {
       val scrollBar = installedState?.scrollBar ?: return
       if (scrollBar.isEnabled) {
-        redispatchIfTrackNotClickable(e)
+        passMouseEventThroughInvisibleScrollbar(e)
       }
     }
 
     override fun mousePressed(event: MouseEvent) {
       val scrollBar = installedState?.scrollBar ?: return
-      if (!scrollBar.isEnabled || redispatchIfTrackNotClickable(event) || SwingUtilities.isRightMouseButton(event)) {
+      if (!scrollBar.isEnabled || passMouseEventThroughInvisibleScrollbar(event) || SwingUtilities.isRightMouseButton(event)) {
         return
       }
 
@@ -511,7 +511,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
 
       scrollBar.valueIsAdjusting = false
-      if (redispatchIfTrackNotClickable(event)) {
+      if (passMouseEventThroughInvisibleScrollbar(event)) {
         return
       }
       if (SwingUtilities.isRightMouseButton(event)) {
