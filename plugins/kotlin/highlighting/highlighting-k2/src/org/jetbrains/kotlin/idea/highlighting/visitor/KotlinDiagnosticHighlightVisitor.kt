@@ -68,7 +68,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
     private var holder: HighlightInfoHolder? = null
     private var coroutineScope: CoroutineScope? = null
     override fun suitableForFile(file: PsiFile): Boolean {
-        if (file !is KtFile) return false
+        if (file !is KtFile || file.isCompiled) return false
 
         val viewProvider = file.viewProvider
         val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
