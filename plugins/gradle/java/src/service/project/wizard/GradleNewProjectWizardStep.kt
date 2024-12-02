@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -53,6 +54,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.isFoojayPluginSupported
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.WRAPPER
@@ -483,11 +485,19 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return isFoojayPluginSupported(gradleVersionToUse)
   }
 
+  val isCreatingDaemonToolchain: Boolean by lazy {
+    Registry.`is`("gradle.daemon.jvm.criteria.new.project") &&
+    isCreatingNewLinkedProject && isFoojayPluginSupported &&
+    GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(gradleVersionToUse)
+  }
+
   @ApiStatus.Internal
   fun setupProjectFromBuilder(project: Project) {
     val builder = object : AbstractGradleModuleBuilder() {}
 
     builder.moduleJdk = sdk
+    builder.sdkDownloadTask = sdkDownloadTask
+
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name
 
@@ -495,6 +505,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     builder.isCreatingBuildScriptFile = false
     builder.isCreatingSettingsScriptFile = false
     builder.isCreatingEmptyContentRoots = false
+    builder.isCreatingDaemonToolchain = isCreatingDaemonToolchain
     builder.isCreatingNewProject = context.isCreatingNewProject
 
     builder.parentProject = parentData

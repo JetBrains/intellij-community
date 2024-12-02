@@ -203,6 +203,8 @@
 
     <registryKey key="gradle.daemon.jvm.criteria" defaultValue="true"
                  description="Enable the Gradle Daemon JVM criteria allowing to detect provisioning required toolchain for the build"/>
+    <registryKey key="gradle.daemon.jvm.criteria.new.project" defaultValue="false"
+                 description="Enable to allow new projects to be created with the Gradle Daemon JVM criteria"/>
     <registryKey key="gradle.phased.sync.enabled" defaultValue="true"
                  description="Enable the phased Gradle sync execution"/>
     <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"

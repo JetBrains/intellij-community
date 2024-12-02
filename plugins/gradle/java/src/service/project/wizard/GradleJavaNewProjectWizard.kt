@@ -100,7 +100,11 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
       }
 
-      addOrConfigureSettingsScript()
+      addOrConfigureSettingsScript {
+        if (parent.isCreatingDaemonToolchain) {
+          withFoojayPlugin()
+        }
+      }
       addBuildScript {
 
         addGroup(parent.groupId)

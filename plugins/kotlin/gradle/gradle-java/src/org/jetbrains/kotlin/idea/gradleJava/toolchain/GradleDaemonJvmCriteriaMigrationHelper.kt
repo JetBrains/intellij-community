@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -42,30 +43,28 @@ object GradleDaemonJvmCriteriaMigrationHelper {
     }
 
     private suspend fun migrateToDaemonJvmCriteriaImpl(project: Project, externalProjectPath: String): Boolean {
-        val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(project, externalProjectPath)
-        if (gradleJvmPath == null) {
+        val daemonJvmCriteria = resolveDaemonJvmCriteria(project, externalProjectPath)
+        if (daemonJvmCriteria == null) {
             displayMigrationFailureMessage(project)
             return false
         }
-        val gradleJvmInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath)
-        if (gradleJvmInfo == null) {
-            displayMigrationFailureMessage(project)
-            return false
-        }
-        val gradleJvmCriteria = gradleJvmInfo.toJvmCriteria()
 
         applyDefaultToolchainResolverPlugin(project, externalProjectPath)
 
-        val isSuccess = GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, gradleJvmCriteria)
-            .await()
-
-        if (!isSuccess) {
+        if (!GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria).await()) {
             displayMigrationFailureMessage(project)
             return false
         }
 
         overrideGradleJvmReferenceWithDefault(project, externalProjectPath)
+
         return true
+    }
+
+    private fun resolveDaemonJvmCriteria(project: Project, externalProjectPath: String): GradleDaemonJvmCriteria? {
+        val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(project, externalProjectPath) ?: return null
+        val gradleJvmInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath) ?: return null
+        return gradleJvmInfo.toJvmCriteria()
     }
 
     suspend fun applyDefaultToolchainResolverPlugin(project: Project, externalProjectPath: String) {

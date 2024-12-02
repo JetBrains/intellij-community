@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
 import org.gradle.util.GradleVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
@@ -26,6 +27,7 @@ abstract class GradleBaseTestCase {
 
   val testRoot: VirtualFile get() = gradleTestFixture.testRoot
   val gradleJvm: String get() = gradleTestFixture.gradleJvm
+  val gradleJvmInfo: JdkVersionInfo get() = gradleTestFixture.gradleJvmInfo
   val gradleVersion: GradleVersion get() = gradleTestFixture.gradleVersion
 
   @BeforeEach

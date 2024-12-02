@@ -87,7 +87,11 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         addFilesToOpen(sourcePath)
       }
 
-      addOrConfigureSettingsScript()
+      addOrConfigureSettingsScript {
+        if (parent.isCreatingDaemonToolchain) {
+          withFoojayPlugin()
+        }
+      }
       addBuildScript {
 
         addGroup(parent.groupId)

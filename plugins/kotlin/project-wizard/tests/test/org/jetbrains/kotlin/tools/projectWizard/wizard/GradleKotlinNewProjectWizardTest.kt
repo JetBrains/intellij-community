@@ -13,9 +13,10 @@ import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.useProjectAsync
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -101,15 +102,29 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         return str.replaceFirstGroup(tomlVersionRegex(libraryName), libraryReplacementName)
     }
 
+    private val daemonJvmCriteriaRegex = Regex("""toolchainVersion=(\d+)""")
+    private fun substituteDaemonJvmCriteriaVersions(str: String): String {
+        return str.replaceFirstGroup(daemonJvmCriteriaRegex, "TOOLCHAIN_VERSION")
+    }
+
     // We replace dynamic values like the Kotlin version that is used with placeholders.
     // That way we do not have to update tests every time a new Kotlin version releases.
     override fun postprocessOutputFile(relativePath: String, fileContents: String): String {
-        return if (relativePath.contains("build.gradle")) {
-            substituteArtifactsVersions(substituteJvmToolchainVersion(fileContents))
-        } else if (relativePath.contains("settings.gradle")) {
-            substituteFoojayVersion(fileContents)
+        return if (relativePath.contains("build.gradle")) { // covers build.gradle and build.gradle.kts
+            var newContents = fileContents
+            newContents = substituteArtifactsVersions(newContents)
+            newContents = substituteJvmToolchainVersion(newContents)
+            newContents
+        } else if (relativePath.contains("settings.gradle")) { // covers settings.gradle and settings.gradle.kts
+            var newContents = fileContents
+            newContents = substituteFoojayVersion(newContents)
+            newContents = substituteDaemonJvmCriteriaVersions(newContents)
+            newContents
         } else if (relativePath.contains("gradle.kts")) { // convention plugin
-            substituteArtifactsVersions(substituteJvmToolchainVersion(fileContents))
+            var newContents = fileContents
+            newContents = substituteArtifactsVersions(newContents)
+            newContents = substituteJvmToolchainVersion(newContents)
+            newContents
         } else if (relativePath.contains("libs.versions.toml")) {
             var newContents = fileContents
             newContents = substituteTomlLibraryVersion(newContents, "kotlin", "KOTLIN_VERSION")
@@ -185,6 +200,14 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     @Test
     fun testSimpleProjectKts() {
         runNewProjectTestCase(useKotlinDsl = true)
+    }
+
+    @Test
+    @RegistryKey("gradle.daemon.jvm.criteria.new.project", "true")
+    fun testSimpleProjectUsingDaemonJvmCriteria() {
+        runNewProjectTestCase { project ->
+            assertDaemonJvmProperties(project)
+        }
     }
 
     @Test
