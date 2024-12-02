@@ -216,7 +216,7 @@ object CommunityRepositoryModules {
       )
     ),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
-    githubPlugin("intellij.vcs.github.community", kind = "community"),
+    githubPlugin("intellij.vcs.github.community", productCode = "IC"),
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
@@ -651,15 +651,15 @@ object CommunityRepositoryModules {
     }
   }
 
-  fun githubPlugin(mainModuleName: String, kind: String): PluginLayout {
+  fun githubPlugin(mainModuleName: String, productCode: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
-      spec.directoryName = "vcs-github-$kind"
+      spec.directoryName = "vcs-github-$productCode"
       spec.mainJarName = "vcs-github.jar"
       spec.withModules(listOf(
         "intellij.vcs.github"
       ))
       spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$version-$kind")
+        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
       }
     }
   }
