@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
@@ -17,7 +17,7 @@ import java.util.Objects;
 
 /**
  * Represents a non-linear operation which is executed before indexing process
- * is started {@link PushedFilePropertiesUpdater#pushAllPropertiesNow()}.
+ * is started.
  * <br />
  * During this process any pusher is allowed to set some properties to any of files being indexed.
  * <br />
