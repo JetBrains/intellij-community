@@ -9817,6 +9817,9 @@ c:com.intellij.openapi.options.SchemeConvertorEPBase
 - <init>():V
 - p:getImplementationClassName():java.lang.String
 - getLocalizedName():java.lang.String
+f:com.intellij.openapi.options.SchemeExporterEP
+- com.intellij.openapi.options.SchemeConvertorEPBase
+- schemeClass:java.lang.String
 f:com.intellij.openapi.options.SchemeImportUtil
 - <init>():V
 - s:loadSchemeDom(com.intellij.openapi.vfs.VirtualFile):org.jdom.Element
