@@ -109,7 +109,7 @@ public final class JavaMethodContractUtil {
 
   static class ContractInfo {
     static final ContractInfo EMPTY = new ContractInfo(Collections.emptyList(), false, false, MutationSignature.UNKNOWN);
-    static final ContractInfo PURE = new ContractInfo(Collections.emptyList(), true, false, MutationSignature.PURE);
+    static final ContractInfo PURE = new ContractInfo(Collections.emptyList(), true, false, MutationSignature.transparent());
 
     private final @NotNull List<StandardMethodContract> myContracts;
     private final boolean myPure;
@@ -154,7 +154,7 @@ public final class JavaMethodContractUtil {
         boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(contractAnno, "pure"));
         MutationSignature mutationSignature = MutationSignature.UNKNOWN;
         if (pure) {
-          mutationSignature = MutationSignature.PURE;
+          mutationSignature = MutationSignature.pure();
         } else {
           String mutationText = AnnotationUtil.getStringAttributeValue(contractAnno, MutationSignature.ATTR_MUTATES);
           if (mutationText != null) {
