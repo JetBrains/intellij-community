@@ -99,7 +99,12 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
   private void versionVariables(List<LocalVariable> vars) {
     for (LocalVariable var : vars) {
       Integer version = indexVersion.get(var.index);
-      version = version == null ? 1 : version++;
+      if (version == null) {
+        version = 1;
+      }
+      else {
+        version += 1;
+      }
       indexVersion.put(var.index, version);
       var.version = new VarVersion(var.index, version.intValue());
     }
