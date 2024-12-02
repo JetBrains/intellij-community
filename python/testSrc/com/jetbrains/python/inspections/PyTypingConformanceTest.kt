@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.InspectionEP
+import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.NlsContexts
@@ -26,13 +27,28 @@ import kotlin.io.path.name
 
 private const val CHECK_OPTIONAL_ERRORS = false
 private const val TESTS_DIR = "typing/conformance/tests"
+private const val RUN_ALL_INSPECTIONS = false
+
+private val inspections
+  get() = arrayOf(
+    PyArgumentListInspection(),
+    PyAssertTypeInspection(),
+    PyDataclassInspection(),
+    PyEnumInspection(),
+    //PyInitNewSignatureInspection(), // False negative constructors_consistency.py
+    PyNewStyleGenericSyntaxInspection(),
+    PyTypedDictInspection(),
+    PyTypeCheckerInspection(),
+    PyTypeHintsInspection(),
+  )
 
 private val IGNORED_INSPECTIONS = listOf(
-  PyPep8Inspection::class.java,
-  PyInterpreterInspection::class.java,
-  PyRedeclarationInspection::class.java,
-  PyStatementEffectInspection::class.java,
-).map { it.name }
+  PyInitNewSignatureInspection::class, // False negative constructors_consistency.py
+  PyInterpreterInspection::class,
+  PyPep8Inspection::class,
+  PyRedeclarationInspection::class,
+  PyStatementEffectInspection::class,
+).map { it.java.name }
 
 @Ignore
 @RunWith(Parameterized::class)
@@ -44,7 +60,7 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
     settings.HIGHLIGHT_UNUSED_IMPORTS = false
     try {
       myFixture.configureByFiles(*getFilePaths().toTypedArray())
-      enableInspections()
+      myFixture.enableInspections(*getInspections())
       checkHighlighting()
     }
     finally {
@@ -59,16 +75,15 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       .toList()
   }
 
-  private fun enableInspections() {
-    val inspections = sequenceOf(LocalInspectionEP.LOCAL_INSPECTION, LocalInspectionEP.GLOBAL_INSPECTION)
+  private fun getInspections(): Array<out InspectionProfileEntry> = if (RUN_ALL_INSPECTIONS)
+    sequenceOf(LocalInspectionEP.LOCAL_INSPECTION, LocalInspectionEP.GLOBAL_INSPECTION)
       .flatMap { it.extensionList }
       .filter { !IGNORED_INSPECTIONS.contains(it.implementationClass) && it.language == PythonLanguage.INSTANCE.id && it.enabledByDefault }
       .map(InspectionEP::instantiateTool)
       .toList()
-      .toTypedArray()
-
-    myFixture.enableInspections(*inspections)
-  }
+      .toTypedArray<InspectionProfileEntry>()
+  else
+    inspections
 
   private fun checkHighlighting() {
     val document = myFixture.getDocument(myFixture.file)
