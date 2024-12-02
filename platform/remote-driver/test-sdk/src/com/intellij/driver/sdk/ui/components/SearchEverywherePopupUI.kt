@@ -54,6 +54,8 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
   fun getSelectedTab(): SearchEverywhereTab = SearchEverywhereTab.entries.single { it.id == searchEverywhereUi.getSelectedTabID() }
 
   fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
+    searchField.text = ""
+    searchField.click()
     keyboard {
       backspace()
       keyboard { enterText(text) }
