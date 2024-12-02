@@ -51,9 +51,9 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
     consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)
-    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, connection, prepareTaskState)
+    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, connection, prepareTaskState)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
-                                                                progressIndicator)
+                                                                progressIndicator, classpathInferer.getClasspath())
     runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler, classpathInferer)
   }
 
