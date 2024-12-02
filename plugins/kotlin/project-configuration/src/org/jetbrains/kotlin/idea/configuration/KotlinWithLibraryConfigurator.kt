@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.facet.FacetManager
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryAddLibraryAction
 import com.intellij.jarRepository.RepositoryLibraryType
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.addCompilerArgumentToKotlinFacet
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
@@ -364,8 +366,10 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
         if (facetSettings != null) {
             ModuleRootModificationUtil.updateModel(module) {
-                facetSettings.apiLevel = feature.sinceVersion
-                facetSettings.languageLevel = feature.sinceVersion
+                feature.sinceVersion?.let { sinceVersion ->
+                    facetSettings.apiLevel = sinceVersion
+                    facetSettings.languageLevel = sinceVersion
+                }
                 facetSettings.compilerSettings?.apply {
                     additionalArguments = additionalArguments.replaceLanguageFeature(
                         feature,
@@ -374,6 +378,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
                         separator = " ",
                         quoted = false
                     )
+                }
+                KotlinFacet.get(module)?.let { kotlinFacet ->
+                    FacetManager.getInstance(module).facetConfigurationChanged(kotlinFacet)
                 }
             }
         }
