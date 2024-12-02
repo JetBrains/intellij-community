@@ -1028,4 +1028,18 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
+
+  public void testConflictsSwitchNestedDeconstructionDifTypes() {
+    try {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("x").withType(pointType)
+        };
+      }, false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
 }
