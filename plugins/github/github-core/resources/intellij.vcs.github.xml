@@ -3,7 +3,6 @@
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
     <module name="intellij.platform.collaborationTools"/>
-    <plugin id="com.intellij.modules.json"/>
   </dependencies>
 
   <resource-bundle>messages.GithubBundle</resource-bundle>
@@ -98,10 +97,6 @@
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$BranchPresenter"/>
     <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.github.notification.GHPushNotificationCustomizer"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="org.jetbrains.plugins.github.extensions.GHActionJsonSchemaProviderFactory"/>
   </extensions>
 
   <actions>
