@@ -7129,6 +7129,10 @@ c:com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction
 f:com.intellij.openapi.editor.actions.UnindentSelectionAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - <init>():V
+f:com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP
+- com.intellij.openapi.extensions.PluginAware
+- file:java.lang.String
+- scheme:java.lang.String
 a:com.intellij.openapi.editor.colors.impl.DelegateColorScheme
 - com.intellij.openapi.editor.colors.EditorColorsScheme
 - <init>(com.intellij.openapi.editor.colors.EditorColorsScheme):V
