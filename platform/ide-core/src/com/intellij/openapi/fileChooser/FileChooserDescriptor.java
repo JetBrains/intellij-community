@@ -29,6 +29,7 @@ import java.util.stream.Stream;
  * <p>
  * Please consider using common variants provided by {@link FileChooserDescriptorFactory}.
  */
+@SuppressWarnings("UnusedReturnValue")
 public class FileChooserDescriptor implements Cloneable {
   @ApiStatus.Internal
   public static final DataKey<String> FILTER_TYPE = DataKey.create("file.chooser.filter.kind");
