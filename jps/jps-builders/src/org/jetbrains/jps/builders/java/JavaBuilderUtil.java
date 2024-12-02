@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class JavaBuilderUtil {
 
@@ -57,6 +58,7 @@ public final class JavaBuilderUtil {
   private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
   private static final Key<BackendCallbackToGraphDeltaAdapter> GRAPH_DELTA_CALLBACK_KEY = Key.create("_graph_delta_");
+  private static final Key<Set<NodeSource>> ALL_AFFECTED_NODE_SOURCES_KEY = Key.create("_all_compiled_node_sources_");
 
   private static final String MODULE_INFO_FILE = "module-info.java";
 
@@ -435,6 +437,19 @@ public final class JavaBuilderUtil {
 
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
 
+    if (compilingIncrementally && !errorsDetected && differentiateParams.isCalculateAffected() && diffResult.isIncremental()) {
+      // some compilers (and compiler plugins) may produce different outputs for the same set of inputs.
+      // This might cause corresponding graph Nodes to be considered as always 'changed'. In some scenarios this may lead to endless build loops
+      // This fallback logic detects such loops and recompiles the whole module chunk instead.
+      Set<NodeSource> affectedForChunk = Iterators.collect(Iterators.filter(diffResult.getAffectedSources(), differentiateParams.belongsToCurrentCompilationChunk()::test), new HashSet<>());
+      if (!affectedForChunk.isEmpty() && !getOrCreate(context, ALL_AFFECTED_NODE_SOURCES_KEY, HashSet::new).addAll(affectedForChunk)) {
+        // all affected files in this round have already been affected in previous rounds. This might indicate a build cycle => recompiling whole chunk
+        LOG.info("Build cycle detected for " + chunk.getName() + "; recompiling whole module chunk");
+        FSOperations.markDirty(context, markDirtyRound, chunk, null);
+        return true;
+      }
+    }
+
     if (diffResult.isIncremental()) {
       final Set<File> affectedFiles = Iterators.collect(
         Iterators.filter(Iterators.map(diffResult.getAffectedSources(), src -> pathMapper.toPath(src).toFile()), f -> skipMarkDirtyFilter == null || !skipMarkDirtyFilter.accept(f)),
@@ -525,6 +540,10 @@ public final class JavaBuilderUtil {
       FSOperations.markDirtyRecursively(context, markDirtyRound, chunk, toBeMarkedFilter);
     }
 
+    if (!additionalPassRequired) {
+      ALL_AFFECTED_NODE_SOURCES_KEY.set(context, null); // cleanup
+    }
+
     if (errorsDetected) {
       return false;
     }
@@ -598,12 +617,15 @@ public final class JavaBuilderUtil {
   }
 
   private static @NotNull Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
-    Set<File> files = dataKey.get(context);
-    if (files == null) {
-      files = FileCollectionFactory.createCanonicalFileSet();
-      dataKey.set(context, files);
+    return getOrCreate(context, dataKey, FileCollectionFactory::createCanonicalFileSet);
+  }
+
+  private static @NotNull <T> T getOrCreate(CompileContext context, final Key<T> dataKey, Supplier<T> factory) {
+    T value = dataKey.get(context, null);
+    if (value == null) {
+      dataKey.set(context, value = factory.get());
     }
-    return files;
+    return value;
   }
 
   private static Set<String> getRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
