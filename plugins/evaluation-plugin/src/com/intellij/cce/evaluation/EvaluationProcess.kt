@@ -46,7 +46,6 @@ class EvaluationProcess private constructor (
     var shouldInterpretActions: Boolean = false
     var shouldGenerateReports: Boolean = false
     var shouldReorderElements: Boolean = false
-    var shouldExecuteCode: Boolean = false
 
     fun build(environment: EvaluationEnvironment, factory: StepFactory): EvaluationProcess {
       val steps = mutableListOf<EvaluationStep>()
