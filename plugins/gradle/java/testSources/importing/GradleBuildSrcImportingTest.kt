@@ -121,7 +121,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test",
                   "build-plugins", "build-plugins.main", "build-plugins.test")
 
-    assertModuleLibDep("project.buildSrc.main", depJar.presentableUrl, depJar.url)
+    assertModuleLibDep("project.buildSrc.main", convertToLibraryName(depJar), depJar.url)
   }
 
   /**
@@ -153,7 +153,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "build-plugins", "build-plugins.main", "build-plugins.test",
                   "another-build", "another-build.buildSrc", "another-build.buildSrc.main", "another-build.buildSrc.test")
 
-    assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
+    assertModuleLibDep("another-build.buildSrc.main", convertToLibraryName(depJar), depJar.url)
   }
 
 
@@ -188,7 +188,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "included-build",
                   "another-build", "another-build.buildSrc", "another-build.buildSrc.main", "another-build.buildSrc.test")
 
-    assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
+    assertModuleLibDep("another-build.buildSrc.main", convertToLibraryName(depJar), depJar.url)
   }
 
   @TargetVersions("6.7+")
