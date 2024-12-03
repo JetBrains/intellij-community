@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.diff
 
-import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.model.AsyncDiffViewModel
@@ -45,10 +44,8 @@ class CodeReviewAsyncDiffHandlerHelper(private val project: Project, parentCs: C
   ): DiffRequestProcessor
     where VM : CodeReviewDiffProcessorViewModel<C>,
           C : AsyncDiffViewModel {
-    val uiCs = cs.childScope("Code Review Diff UI")
-
     val processor = MutableDiffRequestProcessor(project)
-    uiCs.launchNow {
+    cs.launchNow(CoroutineName("Code Review Diff UI")) {
       diffVmFlow.collectScoped { vm ->
         if (vm != null) {
           val context = createContext(vm)
@@ -65,8 +62,7 @@ class CodeReviewAsyncDiffHandlerHelper(private val project: Project, parentCs: C
           }
         }
       }
-    }
-    uiCs.cancelledWith(processor)
+    }.cancelOnDispose(processor)
     return processor
   }
 
