@@ -1131,6 +1131,7 @@ a:com.intellij.openapi.externalSystem.util.AbstractCrcCalculator
 - com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator
 - <init>():V
 - calculateCrc(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.CharSequence):java.lang.Long
+- createLexer(com.intellij.openapi.project.Project,com.intellij.lang.ParserDefinition):com.intellij.lexer.Lexer
 - a:isIgnoredToken(com.intellij.psi.tree.IElementType,java.lang.CharSequence,com.intellij.lang.ParserDefinition):Z
 f:com.intellij.openapi.externalSystem.util.CrcUtils
 - sf:calculateCrc(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.vfs.VirtualFile):J
