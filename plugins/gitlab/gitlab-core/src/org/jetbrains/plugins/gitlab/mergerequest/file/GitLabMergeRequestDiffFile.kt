@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
-import com.intellij.collaboration.ui.codereview.diff.CodeReviewAsyncDiffHandlerHelper
+import com.intellij.collaboration.ui.codereview.diff.AsyncDiffRequestProcessorFactory
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.fileStatus
@@ -74,17 +74,15 @@ private fun isFileValid(project: Project, connectionId: String): Boolean =
   project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm?.value.takeIf { it?.connectionId == connectionId } != null
 
 @Service(Service.Level.PROJECT)
-private class GitLabMergeRequestDiffService(private val project: Project, parentCs: CoroutineScope) {
-  private val base = CodeReviewAsyncDiffHandlerHelper(project, parentCs)
-
+private class GitLabMergeRequestDiffService(private val project: Project, private val cs: CoroutineScope) {
   fun createDiffRequestProcessor(connectionId: String, mergeRequestIid: String): DiffRequestProcessor {
     val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
-    return base.createDiffRequestProcessor(vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
+    return AsyncDiffRequestProcessorFactory.createIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
   }
 
   fun createGitLabCombinedDiffProcessor(connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
     val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
-    return base.createCombinedDiffRequestProcessor(vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
+    return AsyncDiffRequestProcessorFactory.createCombinedIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
   }
 
   private fun createDiffContext(vm: GitLabMergeRequestDiffViewModel): List<KeyValuePair<*>> = buildList {

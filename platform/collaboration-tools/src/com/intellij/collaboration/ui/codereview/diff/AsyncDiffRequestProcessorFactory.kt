@@ -22,25 +22,21 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
-import org.jetbrains.annotations.ApiStatus
 
-/**
- * Can be used as a delegate for a service which is supposed to provide diff UI
- */
-@ApiStatus.Internal
-class CodeReviewAsyncDiffHandlerHelper(private val project: Project, parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main.immediate)
-
+object AsyncDiffRequestProcessorFactory {
   //region Classic Diff
-  fun <VM, C> createDiffRequestProcessor(
-    diffVmFlow: Flow<VM?>, createContext: (VM) -> List<KeyValuePair<*>>, changePresenter: (C) -> PresentableChange,
+  fun <VM, C> createIn(
+    cs: CoroutineScope, project: Project,
+    diffVmFlow: Flow<VM?>,
+    @RequiresEdt createContext: (VM) -> List<KeyValuePair<*>>,
+    @RequiresEdt changePresenter: (C) -> PresentableChange,
   ): DiffRequestProcessor
     where VM : CodeReviewDiffProcessorViewModel<C>,
           C : AsyncDiffViewModel {
@@ -48,17 +44,19 @@ class CodeReviewAsyncDiffHandlerHelper(private val project: Project, parentCs: C
     cs.launchNow(CoroutineName("Code Review Diff UI")) {
       diffVmFlow.collectScoped { vm ->
         if (vm != null) {
-          val context = createContext(vm)
-          try {
-            context.forEach { processor.putData(it) }
-            handleChanges(vm, processor, changePresenter)
-          }
-          finally {
-            // needs NCS because editor release happens on viewer disposal
-            withContext(NonCancellable) {
-              processor.applyRequest(NoDiffRequest.INSTANCE)
+          withContext(Dispatchers.Main.immediate) {
+            val context = createContext(vm)
+            try {
+              context.forEach { processor.putData(it) }
+              handleChanges(vm, processor, changePresenter)
             }
-            context.forEach(processor::clearData)
+            finally {
+              // needs NCS because editor release happens on viewer disposal
+              withContext(NonCancellable) {
+                processor.applyRequest(NoDiffRequest.INSTANCE)
+              }
+              context.forEach(processor::clearData)
+            }
           }
         }
       }
@@ -153,8 +151,11 @@ class CodeReviewAsyncDiffHandlerHelper(private val project: Project, parentCs: C
   //endregion
 
   //region Combined Diff
-  fun <VM, C> createCombinedDiffRequestProcessor(
-    reviewDiffVm: Flow<VM?>, createContext: (VM) -> List<KeyValuePair<*>>, changeVmPresenter: (C) -> PresentableChange,
+  fun <VM, C> createCombinedIn(
+    cs: CoroutineScope, project: Project,
+    reviewDiffVm: Flow<VM?>,
+    @RequiresEdt createContext: (VM) -> List<KeyValuePair<*>>,
+    @RequiresEdt changeVmPresenter: (C) -> PresentableChange,
   ): CombinedDiffComponentProcessor
     where VM : CodeReviewDiffProcessorViewModel<C>,
           C : AsyncDiffViewModel {
@@ -162,15 +163,17 @@ class CodeReviewAsyncDiffHandlerHelper(private val project: Project, parentCs: C
     cs.launchNow(CoroutineName("Code Review Combined Diff UI")) {
       reviewDiffVm.collectLatest { diffVm ->
         if (diffVm != null) {
-          val context = createContext(diffVm)
-          try {
-            context.forEach { processor.context.putData(it) }
-            handleChanges(diffVm, processor, changeVmPresenter)
-            awaitCancellation()
-          }
-          finally {
-            context.forEach(processor.context::clearData)
-            processor.cleanBlocks()
+          withContext(Dispatchers.Main.immediate) {
+            val context = createContext(diffVm)
+            try {
+              context.forEach { processor.context.putData(it) }
+              handleChanges(diffVm, processor, changeVmPresenter)
+              awaitCancellation()
+            }
+            finally {
+              context.forEach(processor.context::clearData)
+              processor.cleanBlocks()
+            }
           }
         }
       }

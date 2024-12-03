@@ -4,14 +4,11 @@ package com.intellij.collaboration.ui.codereview.diff.model
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
 interface DiffViewerScrollRequestProducer {
   val scrollRequests: Flow<DiffViewerScrollRequest>
 }
 
-@Internal
 sealed interface DiffViewerScrollRequest {
   companion object {
     fun toLine(location: DiffLineLocation): DiffViewerScrollRequest = DiffViewerLineScrollRequest(location)

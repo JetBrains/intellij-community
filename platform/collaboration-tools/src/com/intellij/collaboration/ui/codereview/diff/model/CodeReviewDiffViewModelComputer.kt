@@ -18,7 +18,9 @@ import org.jetbrains.annotations.ApiStatus
  * Helper for building [ComputedDiffViewModel]
  *
  * @param D data to build diff producers
+ * @see [com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate]
  */
+@ApiStatus.Obsolete
 class CodeReviewDiffViewModelComputer<D> @ApiStatus.Experimental constructor(
   dataLoadingFlow: Flow<ComputedResult<D>>,
   private val changesSorter: Flow<RefComparisonChangesSorter>,

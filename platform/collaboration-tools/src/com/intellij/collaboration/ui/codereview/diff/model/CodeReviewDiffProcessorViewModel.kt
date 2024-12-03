@@ -16,10 +16,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CopyOnWriteArrayList
 
-@Internal
+/**
+ * A viewmodel for a diff processor which can show multiple diffs and switch between them
+ */
 interface CodeReviewDiffProcessorViewModel<C : Any> {
   val changes: StateFlow<ComputedResult<State<C>>?>
 
@@ -38,7 +39,6 @@ interface CodeReviewDiffProcessorViewModel<C : Any> {
  * @param C change type
  * @param CVM change view model type
  */
-@Internal
 interface PreLoadingCodeReviewAsyncDiffViewModelDelegate<C : Any, CVM : AsyncDiffViewModel> {
   val changes: Flow<ComputedResult<CodeReviewDiffProcessorViewModel.State<CVM>>?>
 
