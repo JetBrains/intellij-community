@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBHtmlPane
@@ -50,14 +51,16 @@ import javax.swing.*
 import javax.swing.JLayeredPane.DEFAULT_LAYER
 import javax.swing.JLayeredPane.PALETTE_LAYER
 
+private val altModifier get() = if (SystemInfo.isMac) "⌥" else "Alt"
+
 private val promoHeight get() = 100
 private val promoWidth get() = 250
 private val startCursorPosition = JBPoint(100, 100)
 
-private val altShortcutText get() = "<shortcut raw=\"Alt\"/>"
+private val altShortcutText get() = "<shortcut raw=\"$altModifier\"/>"
 private val altShortcutWidth get() = 50
 
-private val altPlusClickShortcutText get() = "<shortcut raw=\"Alt + Click\"/>"
+private val altPlusClickShortcutText get() = "<shortcut raw=\"$altModifier + Click\"/>"
 private val altPlusClickShortcutWidth get() = 100
 
 private val evaluationPanelSize get() = JBDimension(45, 35)
@@ -72,9 +75,9 @@ private class ShowDemoAltClickPromoterAction : DumbAwareAction() {
     }
 
     if (evaluateUi != null) {
-      val builder = GotItComponentBuilder { FeatureSuggesterBundle.message("alt.click.promo.text") }
+      val builder = GotItComponentBuilder { FeatureSuggesterBundle.message("alt.click.promo.text", "$altModifier + Click") }
 
-      builder.withHeader(FeatureSuggesterBundle.message("alt.click.promo.header"))
+      builder.withHeader(FeatureSuggesterBundle.message("alt.click.promo.header", "$altModifier + Click"))
 
       val disposable: Disposable = Disposer.newDisposable()
       builder.onButtonClick {
@@ -333,7 +336,7 @@ data class ClickAnimationStatus(val clickPoint: Point, val radius: Int, val colo
 
 private class PanelWithAnimation() : NonOpaquePanel() {
   var cursorPosition: Point? = null
-  var cursorIcon = AllIcons.Ide.Rating
+  lateinit var cursorIcon: Icon
 
   var clickAnimationStatus: ClickAnimationStatus? = null
 
