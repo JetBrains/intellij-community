@@ -1,133 +1,112 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.commit.message;
+package com.intellij.vcs.commit.message
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.profile.codeInspection.ui.LevelChooserAction;
-import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.util.EventListener;
-
-import static com.intellij.ui.GuiUtils.enableChildren;
-import static java.util.Collections.singletonList;
+import com.intellij.codeHighlighting.HighlightDisplayLevel.Companion.find
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+import com.intellij.codeInspection.ex.Descriptor
+import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.ScopeToolState
+import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.profile.codeInspection.ui.LevelChooserAction
+import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable
+import com.intellij.ui.GuiUtils
+import com.intellij.util.EventDispatcher
+import com.intellij.util.ObjectUtils
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import javax.swing.JComponent
 
 @ApiStatus.Internal
-public class CommitMessageInspectionDetails implements UnnamedConfigurable, Disposable {
-  @NotNull private final Project myProject;
-  @NotNull private final InspectionProfileImpl myProfile;
-  @NotNull private final Descriptor myDefaultDescriptor;
-  @NotNull private final ScopeToolState myToolState;
-  private final LevelChooserAction mySeverityChooser;
-  private final ConfigurableUi<Project> myOptionsConfigurable;
-  private final CommitMessageInspectionDetailsPanel myMainPanel;
+class CommitMessageInspectionDetails(
+  private val myProject: Project,
+  private val myProfile: InspectionProfileImpl,
+  private val myDefaultDescriptor: Descriptor
+) : UnnamedConfigurable, Disposable {
+  private val myToolState: ScopeToolState
+  private val mySeverityChooser: LevelChooserAction
+  private val myOptionsConfigurable: ConfigurableUi<Project?>?
+  private val myMainPanel: CommitMessageInspectionDetailsPanel
 
-  @NotNull private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
+  private val myEventDispatcher = EventDispatcher.create<ChangeListener?>(ChangeListener::class.java)
 
-  public CommitMessageInspectionDetails(@NotNull Project project,
-                                        @NotNull InspectionProfileImpl profile,
-                                        @NotNull Descriptor defaultDescriptor) {
-    myProject = project;
-    myProfile = profile;
-    myDefaultDescriptor = defaultDescriptor;
-    myToolState = myDefaultDescriptor.getState();
+  init {
+    myToolState = myDefaultDescriptor.getState()
 
-    mySeverityChooser = new MySeverityChooser(myProfile.getProfileManager().getSeverityRegistrar());
-    JComponent severityPanel = mySeverityChooser.createCustomComponent(mySeverityChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN);
+    mySeverityChooser = MySeverityChooser(myProfile.getProfileManager().getSeverityRegistrar())
+    val severityPanel = mySeverityChooser.createCustomComponent(mySeverityChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN)
 
-    BaseCommitMessageInspection tool = ObjectUtils.tryCast(myToolState.getTool().getTool(), BaseCommitMessageInspection.class);
-    myOptionsConfigurable = tool != null ? tool.createOptionsConfigurable() : null;
-    JComponent options = myOptionsConfigurable != null ? myOptionsConfigurable.getComponent() : myToolState.getAdditionalConfigPanel(this, project);
+    val tool = ObjectUtils.tryCast<BaseCommitMessageInspection?>(myToolState.getTool().getTool(), BaseCommitMessageInspection::class.java)
+    myOptionsConfigurable = if (tool != null) tool.createOptionsConfigurable() else null
+    val options = if (myOptionsConfigurable != null) myOptionsConfigurable.getComponent()
+    else myToolState.getAdditionalConfigPanel(this,
+                                              myProject)
 
-    myMainPanel = new CommitMessageInspectionDetailsPanel(severityPanel, options);
+    myMainPanel = CommitMessageInspectionDetailsPanel(severityPanel, options)
 
-    reset();
+    reset()
   }
 
-  @NotNull
-  public HighlightDisplayKey getKey() {
-    return myDefaultDescriptor.getKey();
+  val key: HighlightDisplayKey get() = myDefaultDescriptor.key
+
+  fun update() {
+    mySeverityChooser.setChosen(ScopesAndSeveritiesTable.getSeverity(mutableListOf<ScopeToolState?>(myToolState)))
+    GuiUtils.enableChildren(myToolState.isEnabled, myMainPanel.component)
   }
 
-  public void update() {
-    mySeverityChooser.setChosen(ScopesAndSeveritiesTable.getSeverity(singletonList(myToolState)));
-    enableChildren(myToolState.isEnabled(), myMainPanel.getComponent());
+  fun addListener(listener: ChangeListener) {
+    myEventDispatcher.addListener(listener)
   }
 
-  public void addListener(@NotNull ChangeListener listener) {
-    myEventDispatcher.addListener(listener);
+  override fun createComponent(): JComponent {
+    return myMainPanel.component
   }
 
-  @NotNull
-  @Override
-  public JComponent createComponent() {
-    return myMainPanel.getComponent();
+  override fun isModified(): Boolean {
+    return myOptionsConfigurable != null && myOptionsConfigurable.isModified(myProject)
   }
 
-  @Override
-  public boolean isModified() {
-    return myOptionsConfigurable != null && myOptionsConfigurable.isModified(myProject);
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
+  @Throws(ConfigurationException::class)
+  override fun apply() {
     if (myOptionsConfigurable != null) {
-      myOptionsConfigurable.apply(myProject);
+      myOptionsConfigurable.apply(myProject)
     }
   }
 
-  @Override
-  public void reset() {
+  override fun reset() {
     if (myOptionsConfigurable != null) {
-      myOptionsConfigurable.reset(myProject);
+      myOptionsConfigurable.reset(myProject)
     }
   }
 
-  @Override
-  public void dispose() {
-    if (myOptionsConfigurable instanceof Disposable) {
-      Disposer.dispose((Disposable)myOptionsConfigurable);
+  override fun dispose() {
+    if (myOptionsConfigurable is Disposable) {
+      Disposer.dispose(myOptionsConfigurable as Disposable)
     }
   }
 
-  private class MySeverityChooser extends LevelChooserAction {
-    MySeverityChooser(@NotNull SeverityRegistrar registrar) {
-      super(registrar);
+  private inner class MySeverityChooser(registrar: SeverityRegistrar) : LevelChooserAction(registrar) {
+    override fun onChosen(severity: HighlightSeverity) {
+      val level = find(severity)
+
+      myProfile.setErrorLevel(myDefaultDescriptor.key, level!!, null, myProject)
+      myEventDispatcher.getMulticaster().onSeverityChanged(severity)
     }
 
-    @Override
-    protected void onChosen(@NotNull HighlightSeverity severity) {
-      HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-
-      myProfile.setErrorLevel(myDefaultDescriptor.getKey(), level, null, myProject);
-      myEventDispatcher.getMulticaster().onSeverityChanged(severity);
-    }
-
-    @NotNull
-    @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return createComboBoxButton(presentation);
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      return createComboBoxButton(presentation)
     }
   }
 
-  public interface ChangeListener extends EventListener {
-    void onSeverityChanged(@NotNull HighlightSeverity severity);
+  interface ChangeListener : EventListener {
+    fun onSeverityChanged(severity: HighlightSeverity)
   }
 }

@@ -1,107 +1,79 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.commit.message;
+package com.intellij.vcs.commit.message
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.formatting.LineWrappingUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.ui.CommitMessage;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.formatting.LineWrappingUtil
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Predicates
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.psi.PsiFile
+import com.intellij.util.DocumentUtil
+import org.jetbrains.annotations.Nls
+import java.util.function.IntFunction
+import java.util.stream.IntStream
 
-import java.util.List;
+class BodyLimitInspection : BaseCommitMessageInspection() {
+  var RIGHT_MARGIN: Int = 72
 
-import static com.intellij.openapi.util.Predicates.nonNull;
-import static com.intellij.openapi.util.TextRange.EMPTY_RANGE;
-import static com.intellij.util.DocumentUtil.getLineTextRange;
-import static java.util.Collections.singletonList;
-import static java.util.stream.IntStream.range;
-
-public class BodyLimitInspection extends BaseCommitMessageInspection {
-
-  public int RIGHT_MARGIN = 72;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return VcsBundle.message("inspection.BodyLimitInspection.display.name");
+  override fun getDisplayName(): @Nls String {
+    return VcsBundle.message("inspection.BodyLimitInspection.display.name")
   }
 
-  @NotNull
-  @Override
-  public ConfigurableUi<Project> createOptionsConfigurable() {
-    return new BodyLimitInspectionOptions(this);
+  override fun createOptionsConfigurable(): ConfigurableUi<Project?> {
+    return BodyLimitInspectionOptions(this)
   }
 
-  @Override
-  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
-                                                     @NotNull Document document,
-                                                     @NotNull InspectionManager manager,
-                                                     boolean isOnTheFly) {
-    return range(1, document.getLineCount())
-      .mapToObj(line -> {
-        String problemText = VcsBundle.message("commit.message.inspection.message.body.lines.should.not.exceed.characters", RIGHT_MARGIN);
-        return checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
-                                problemText, new WrapLineQuickFix(),
-                                new ReformatCommitMessageQuickFix());
-      })
-      .filter(nonNull())
-      .toArray(ProblemDescriptor[]::new);
+  override fun checkFile(file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+    val lines = 1 until document.getLineCount()
+    return lines.mapNotNull { line ->
+      val problemText = VcsBundle.message("commit.message.inspection.message.body.lines.should.not.exceed.characters", RIGHT_MARGIN)
+      checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN, problemText,
+                       WrapLineQuickFix(), ReformatCommitMessageQuickFix())
+    }.toTypedArray()
   }
 
-  @Override
-  public boolean canReformat(@NotNull Project project, @NotNull Document document) {
-    return hasProblems(project, document);
+  override fun canReformat(project: Project, document: Document): Boolean {
+    return hasProblems(project, document)
   }
 
-  @Override
-  public void reformat(@NotNull Project project, @NotNull Document document) {
-    new WrapLineQuickFix().doApplyFix(project, document, null);
+  override fun reformat(project: Project, document: Document) {
+    WrapLineQuickFix().doApplyFix(project, document, null)
   }
 
-  protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
-    @Override
-    public @IntentionFamilyName @NotNull String getFamilyName() {
-      return VcsBundle.message("commit.message.intention.family.name.wrap.line");
+  private inner class WrapLineQuickFix : BaseCommitMessageQuickFix() {
+    override fun getFamilyName(): @IntentionFamilyName String {
+      return VcsBundle.message("commit.message.intention.family.name.wrap.line")
     }
 
-    @Override
-    public void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor) {
-      Editor editor = CommitMessage.getEditor(document);
+    override fun doApplyFix(project: Project, document: Document, descriptor: ProblemDescriptor?) {
+      val editor = CommitMessage.getEditor(document) ?: return
 
-      if (editor != null) {
-        TextRange range = descriptor != null && descriptor.getLineNumber() >= 0
-                          ? getLineTextRange(document, descriptor.getLineNumber())
-                          : getBodyRange(document);
+      val range = if (descriptor != null && descriptor.getLineNumber() >= 0)
+        DocumentUtil.getLineTextRange(document, descriptor.getLineNumber())
+      else
+        getBodyRange(document)
 
-        if (!range.isEmpty()) {
-          wrapLines(project, editor, document, RIGHT_MARGIN, range);
-        }
+      if (!range.isEmpty) {
+        wrapLines(project, editor, document, RIGHT_MARGIN, range)
       }
     }
 
-    @NotNull
-    private static TextRange getBodyRange(@NotNull Document document) {
-      return document.getLineCount() > 1 ? TextRange.create(document.getLineStartOffset(1), document.getTextLength()) : EMPTY_RANGE;
+    private fun getBodyRange(document: Document): TextRange {
+      if (document.getLineCount() > 1) return TextRange.create(document.getLineStartOffset(1), document.getTextLength())
+      else return TextRange.EMPTY_RANGE
     }
 
-    private static void wrapLines(@NotNull Project project,
-                                  @NotNull Editor editor,
-                                  @NotNull Document document,
-                                  int rightMargin,
-                                  @NotNull TextRange range) {
-      List<TextRange> enabledRanges = singletonList(TextRange.create(0, document.getTextLength()));
+    private fun wrapLines(project: Project, editor: Editor, document: Document, rightMargin: Int, range: TextRange) {
+      val enabledRanges = listOf(TextRange.create(0, document.textLength))
       LineWrappingUtil.doWrapLongLinesIfNecessary(editor, project, document, range.getStartOffset(), range.getEndOffset(),
-                                                  enabledRanges, rightMargin);
+                                                  enabledRanges, rightMargin)
     }
   }
 }

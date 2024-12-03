@@ -1,46 +1,35 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.commit.message;
+package com.intellij.vcs.commit.message
 
-import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.JBIntSpinner;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.project.Project
+import com.intellij.ui.JBIntSpinner
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @ApiStatus.Internal
-public class SubjectLimitInspectionOptions implements ConfigurableUi<Project> {
-  @NotNull private final SubjectLimitInspection myInspection;
-  private JBIntSpinner myMarginSpinner;
-  private JPanel myMainPanel;
+class SubjectLimitInspectionOptions(private val myInspection: SubjectLimitInspection) : ConfigurableUi<Project?> {
+  private var myMarginSpinner: JBIntSpinner? = null
+  private val myMainPanel: JPanel? = null
 
-  public SubjectLimitInspectionOptions(@NotNull SubjectLimitInspection inspection) {
-    myInspection = inspection;
+  private fun createUIComponents() {
+    myMarginSpinner = JBIntSpinner(0, 0, 10000)
   }
 
-  private void createUIComponents() {
-    myMarginSpinner = new JBIntSpinner(0, 0, 10000);
+  override fun reset(project: Project) {
+    myMarginSpinner!!.setNumber(myInspection.RIGHT_MARGIN)
   }
 
-  @Override
-  public void reset(@NotNull Project project) {
-    myMarginSpinner.setNumber(myInspection.RIGHT_MARGIN);
+  override fun isModified(project: Project): Boolean {
+    return myMarginSpinner!!.getNumber() != myInspection.RIGHT_MARGIN
   }
 
-  @Override
-  public boolean isModified(@NotNull Project project) {
-    return myMarginSpinner.getNumber() != myInspection.RIGHT_MARGIN;
+  override fun apply(project: Project) {
+    myInspection.RIGHT_MARGIN = myMarginSpinner!!.getNumber()
   }
 
-  @Override
-  public void apply(@NotNull Project project) {
-    myInspection.RIGHT_MARGIN = myMarginSpinner.getNumber();
-  }
-
-  @NotNull
-  @Override
-  public JComponent getComponent() {
-    return myMainPanel;
+  override fun getComponent(): JComponent {
+    return myMainPanel!!
   }
 }

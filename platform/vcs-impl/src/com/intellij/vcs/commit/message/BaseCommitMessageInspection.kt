@@ -1,176 +1,134 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.commit.message;
+package com.intellij.vcs.commit.message
 
-import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.openapi.actionSystem.ShortcutProvider;
-import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.daemon.impl.IntentionActionFilter
+import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.openapi.actionSystem.ShortcutProvider
+import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.Nls
 
-import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.openapi.vcs.ui.CommitMessage.isCommitMessage;
-import static com.intellij.util.ArrayUtil.isEmpty;
-
-public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return VcsBundle.message("commit.message");
+abstract class BaseCommitMessageInspection : LocalInspectionTool() {
+  override fun getGroupDisplayName(): @Nls String {
+    return VcsBundle.message("commit.message")
   }
 
-  @Nullable
-  @Override
-  public String getStaticDescription() {
-    return "";
+  override fun getStaticDescription(): String? {
+    return ""
   }
 
-  @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element) {
-    return !isCommitMessage(element);
+  override fun isSuppressedFor(element: PsiElement): Boolean {
+    return !CommitMessage.isCommitMessage(element)
   }
 
-  @Nullable
-  public ConfigurableUi<Project> createOptionsConfigurable() {
-    return null;
+  open fun createOptionsConfigurable(): ConfigurableUi<Project?>? {
+    return null
   }
 
-  @Override
-  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    Document document = getDocument(file);
-
-    return document != null ? checkFile(file, document, manager, isOnTheFly) : null;
+  override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+    val document = getDocument(file) ?: return null
+    return checkFile(file, document, manager, isOnTheFly)
   }
 
-  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
-                                                     @NotNull Document document,
-                                                     @NotNull InspectionManager manager,
-                                                     boolean isOnTheFly) {
-    return null;
+  protected open fun checkFile(file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+    return null
   }
 
-  @Nullable
-  protected static ProblemDescriptor checkRightMargin(@NotNull PsiFile file,
-                                               @NotNull Document document,
-                                               @NotNull InspectionManager manager,
-                                               boolean isOnTheFly,
-                                               int line,
-                                               int rightMargin,
-                                               @NotNull @InspectionMessage String problemText,
-                                               LocalQuickFix @NotNull ... fixes) {
-    int start = document.getLineStartOffset(line);
-    int end = document.getLineEndOffset(line);
-
-    if (end > start + rightMargin) {
-      TextRange exceedingRange = new TextRange(start + rightMargin, end);
-      return manager.createProblemDescriptor(file, exceedingRange, problemText, GENERIC_ERROR_OR_WARNING, isOnTheFly, fixes);
-    }
-    return null;
+  open fun canReformat(project: Project, document: Document): Boolean {
+    return false
   }
 
-  public boolean canReformat(@NotNull Project project, @NotNull Document document) {
-    return false;
+  open fun reformat(project: Project, document: Document) {
   }
 
-  public void reformat(@NotNull Project project, @NotNull Document document) {
+  protected open fun hasProblems(project: Project, document: Document): Boolean {
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return false
+    val problems = checkFile(file, document, InspectionManager.getInstance(project), false)
+    return problems != null && !problems.isEmpty()
   }
 
-  protected boolean hasProblems(@NotNull Project project, @NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-
-    return file != null && !isEmpty(checkFile(file, document, InspectionManager.getInstance(project), false));
-  }
-
-  @Nullable
-  private static Document getDocument(@NotNull PsiElement element) {
-    return PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-  }
-
-  public static class EmptyIntentionActionFilter implements IntentionActionFilter {
-    @Override
-    public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
-      return file == null || !isCommitMessage(file) || !(intentionAction instanceof EmptyIntentionAction);
+  class EmptyIntentionActionFilter : IntentionActionFilter {
+    override fun accept(intentionAction: IntentionAction, file: PsiFile?): Boolean {
+      return file == null || !CommitMessage.isCommitMessage(file) || (intentionAction !is EmptyIntentionAction)
     }
   }
 
-  protected static abstract class BaseCommitMessageQuickFix implements LocalQuickFix {
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Document document = getDocument(descriptor.getPsiElement());
+  protected abstract class BaseCommitMessageQuickFix : LocalQuickFix {
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val document = getDocument(descriptor.getPsiElement()) ?: return
+      doApplyFix(project, document, descriptor)
+    }
 
-      if (document != null) {
-        doApplyFix(project, document, descriptor);
+    abstract fun doApplyFix(project: Project, document: Document, descriptor: ProblemDescriptor?)
+  }
+
+  protected open class ReformatCommitMessageQuickFix : BaseCommitMessageQuickFix(), LowPriorityAction, IntentionAction, ShortcutProvider {
+    override fun getFamilyName(): @IntentionFamilyName String {
+      return VcsBundle.message("commit.message.intention.family.name.reformat.commit.message")
+    }
+
+    override fun doApplyFix(project: Project, document: Document, descriptor: ProblemDescriptor?) {
+      ReformatCommitMessageAction.reformat(project, document)
+    }
+
+    override fun getShortcut(): ShortcutSet? {
+      return KeymapUtil.getActiveKeymapShortcuts("Vcs.ReformatCommitMessage")
+    }
+
+    override fun getText(): @Nls String {
+      return getName()
+    }
+
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+      return true
+    }
+
+    @Throws(IncorrectOperationException::class)
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
+      val document = getDocument(file) ?: return
+      doApplyFix(project, document, null)
+    }
+
+    override fun startInWriteAction(): Boolean {
+      return true
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    protected fun checkRightMargin(
+      file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean,
+      line: Int, rightMargin: Int, problemText: @InspectionMessage String, vararg fixes: LocalQuickFix,
+    ): ProblemDescriptor? {
+      val start = document.getLineStartOffset(line)
+      val end = document.getLineEndOffset(line)
+
+      if (end > start + rightMargin) {
+        val exceedingRange = TextRange(start + rightMargin, end)
+        return manager.createProblemDescriptor(file, exceedingRange, problemText, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly,
+                                               *fixes)
       }
+      return null
     }
 
-    public abstract void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor);
-  }
-
-  protected static class ReformatCommitMessageQuickFix extends BaseCommitMessageQuickFix
-    implements LowPriorityAction, IntentionAction, ShortcutProvider {
-
-    @Override
-    public @IntentionFamilyName @NotNull String getFamilyName() {
-      return VcsBundle.message("commit.message.intention.family.name.reformat.commit.message");
-    }
-
-    @Override
-    public void doApplyFix(@NotNull Project project, @NotNull Document document, @Nullable ProblemDescriptor descriptor) {
-      ReformatCommitMessageAction.reformat(project, document);
-    }
-
-    @Nullable
-    @Override
-    public ShortcutSet getShortcut() {
-      return getActiveKeymapShortcuts("Vcs.ReformatCommitMessage");
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getText() {
-      return getName();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-      Document document = getDocument(file);
-
-      if (document != null) {
-        doApplyFix(project, document, null);
-      }
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
+    private fun getDocument(element: PsiElement): Document? {
+      return PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile())
     }
   }
 }
