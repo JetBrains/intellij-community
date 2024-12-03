@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
@@ -34,7 +35,8 @@ import javax.swing.JPanel
 import javax.swing.ListModel
 import javax.swing.event.ListDataListener
 
-internal object GHPRListPanelFactory {
+@ApiStatus.Internal
+object GHPRListPanelFactory {
   fun create(project: Project, cs: CoroutineScope, dataContext: GHPRDataContext, listVm: GHPRListViewModel): JComponent {
     val ghostUser = dataContext.securityService.ghostUser
     val currentUser = dataContext.securityService.currentUser

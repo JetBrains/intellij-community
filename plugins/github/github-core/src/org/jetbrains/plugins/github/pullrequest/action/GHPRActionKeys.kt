@@ -2,12 +2,14 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListController
 
-internal object GHPRActionKeys {
+@ApiStatus.Internal
+object GHPRActionKeys {
   @JvmStatic
   val PULL_REQUEST_ID = DataKey.create<GHPRIdentifier>("org.jetbrains.plugins.github.pullrequest.id")
 

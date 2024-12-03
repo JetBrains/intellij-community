@@ -64,7 +64,7 @@ interface GHPRConnectedProjectViewModel {
 private val LOG = logger<GHPRConnectedProjectViewModelBase>()
 
 @ApiStatus.Internal
-abstract class GHPRConnectedProjectViewModelBase internal constructor(
+abstract class GHPRConnectedProjectViewModelBase(
   private val project: Project,
   parentCs: CoroutineScope,
   connection: GHRepositoryConnection,
