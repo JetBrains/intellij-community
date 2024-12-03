@@ -411,6 +411,7 @@
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
+      <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
