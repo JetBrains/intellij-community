@@ -73,6 +73,17 @@ object LogPacker {
     val archive = Files.createTempFile("${productName}-logs-${date}", ".zip")
     try {
       Compressor.Zip(archive).use { zip ->
+        if (project != null) {
+          val settings = StringBuilder()
+          settings.append(CompositeGeneralTroubleInfoCollector().collectInfo(project))
+          for (troubleInfoCollector in TroubleInfoCollector.EP_SETTINGS.extensionList) {
+            coroutineContext.ensureActive()
+            settings.append(troubleInfoCollector.collectInfo(project)).append('\n')
+          }
+          zip.addFile("troubleshooting.txt", settings.toString().toByteArray(StandardCharsets.UTF_8))
+          zip.addFile("dimension.txt", collectDimensionServiceDiagnosticsData(project).toByteArray(StandardCharsets.UTF_8))
+        }
+
         coroutineContext.ensureActive()
 
         LogProvider.EP.extensionList.firstOrNull()?.let { logProvider ->
@@ -87,16 +98,6 @@ object LogPacker {
         }
 
         coroutineContext.ensureActive()
-        if (project != null) {
-          val settings = StringBuilder()
-          settings.append(CompositeGeneralTroubleInfoCollector().collectInfo(project))
-          for (troubleInfoCollector in TroubleInfoCollector.EP_SETTINGS.extensionList) {
-            coroutineContext.ensureActive()
-            settings.append(troubleInfoCollector.collectInfo(project)).append('\n')
-          }
-          zip.addFile("troubleshooting.txt", settings.toString().toByteArray(StandardCharsets.UTF_8))
-          zip.addFile("dimension.txt", collectDimensionServiceDiagnosticsData(project).toByteArray(StandardCharsets.UTF_8))
-        }
 
         Path.of(SystemProperties.getUserHome()).forEachDirectoryEntry { path ->
           coroutineContext.ensureActive()
