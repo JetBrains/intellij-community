@@ -96,7 +96,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
 
     override fun getEelApiKey(path: Path): EelApiKey? =
       service<IjentWslNioFsToggler>().strategy?.enabledInDistros
-        ?.find { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }
+        ?.find { distro -> path.root != null && distro.getUNCRootPath().isSameFileAs(path.root) }
         ?.let { WslEelKey(it.id) }
 
     /**
