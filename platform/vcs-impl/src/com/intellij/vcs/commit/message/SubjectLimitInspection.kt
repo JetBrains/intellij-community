@@ -3,12 +3,13 @@ package com.intellij.vcs.commit.message
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.psi.PsiFile
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindIntValue
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -21,8 +22,12 @@ class SubjectLimitInspection : BaseCommitMessageInspection() {
     return VcsBundle.message("inspection.SubjectLimitInspection.display.name")
   }
 
-  override fun createOptionsConfigurable(): ConfigurableUi<Project?> {
-    return SubjectLimitInspectionOptions(this)
+  override fun Panel.createOptions(project: Project, disposable: Disposable): Boolean {
+    row(VcsBundle.message("settings.commit.message.right.margin.label")) {
+      spinner(0..10000)
+        .bindIntValue(::RIGHT_MARGIN)
+    }
+    return false
   }
 
   override fun checkFile(file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {

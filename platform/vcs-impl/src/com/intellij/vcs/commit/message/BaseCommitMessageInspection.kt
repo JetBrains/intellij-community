@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ShortcutProvider
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.editor.Document
@@ -15,13 +16,17 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 
 abstract class BaseCommitMessageInspection : LocalInspectionTool() {
@@ -37,7 +42,27 @@ abstract class BaseCommitMessageInspection : LocalInspectionTool() {
     return !CommitMessage.isCommitMessage(element)
   }
 
-  open fun createOptionsConfigurable(): ConfigurableUi<Project?>? {
+  /**
+   * @return whether the default options shall be used
+   */
+  @ApiStatus.OverrideOnly
+  open fun Panel.createOptions(project: Project, disposable: Disposable): Boolean {
+    val ui = createOptionsConfigurable() ?: return true
+    if (ui is Disposable) Disposer.register(disposable, ui)
+
+    row {
+      cell(ui.component)
+        .onApply { ui.apply(project) }
+        .onReset { ui.reset(project) }
+        .onIsModified { ui.isModified(project) }
+    }
+    return false
+  }
+
+  @ApiStatus.OverrideOnly
+  @Deprecated("Implement {@link #createOptions} instead")
+  @ScheduledForRemoval
+  open fun createOptionsConfigurable(): ConfigurableUi<Project>? {
     return null
   }
 

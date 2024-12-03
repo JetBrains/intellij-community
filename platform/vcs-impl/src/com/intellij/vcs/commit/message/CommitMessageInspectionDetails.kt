@@ -4,6 +4,7 @@ package com.intellij.vcs.commit.message
 import com.intellij.codeHighlighting.HighlightDisplayLevel.Companion.find
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ex.Descriptor
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.ScopeToolState
@@ -11,16 +12,13 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.profile.codeInspection.ui.LevelChooserAction
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable
 import com.intellij.ui.GuiUtils
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ObjectUtils
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.JComponent
@@ -29,68 +27,65 @@ import javax.swing.JComponent
 class CommitMessageInspectionDetails(
   private val myProject: Project,
   private val myProfile: InspectionProfileImpl,
-  private val myDefaultDescriptor: Descriptor
-) : UnnamedConfigurable, Disposable {
+  private val myDefaultDescriptor: Descriptor,
+) : Disposable {
   private val myToolState: ScopeToolState
   private val mySeverityChooser: LevelChooserAction
-  private val myOptionsConfigurable: ConfigurableUi<Project?>?
-  private val myMainPanel: CommitMessageInspectionDetailsPanel
+
+  val component: DialogPanel
 
   private val myEventDispatcher = EventDispatcher.create<ChangeListener?>(ChangeListener::class.java)
 
   init {
-    myToolState = myDefaultDescriptor.getState()
+    myToolState = myDefaultDescriptor.state
 
-    mySeverityChooser = MySeverityChooser(myProfile.getProfileManager().getSeverityRegistrar())
+    mySeverityChooser = MySeverityChooser(myProfile.profileManager.getSeverityRegistrar())
     val severityPanel = mySeverityChooser.createCustomComponent(mySeverityChooser.getTemplatePresentation(), ActionPlaces.UNKNOWN)
 
-    val tool = ObjectUtils.tryCast<BaseCommitMessageInspection?>(myToolState.getTool().getTool(), BaseCommitMessageInspection::class.java)
-    myOptionsConfigurable = if (tool != null) tool.createOptionsConfigurable() else null
-    val options = if (myOptionsConfigurable != null) myOptionsConfigurable.getComponent()
-    else myToolState.getAdditionalConfigPanel(this,
-                                              myProject)
+    val tool = myToolState.tool.getTool() as? BaseCommitMessageInspection
+    val disposable = this
 
-    myMainPanel = CommitMessageInspectionDetailsPanel(severityPanel, options)
+    component = panel {
+      row(InspectionsBundle.message("inspection.severity")) {
+        cell(severityPanel) // ComboBoxButton
+      }
 
-    reset()
+      val createDefault: Boolean
+      if (tool != null) {
+        val panel = this@panel
+        with(tool) {
+          createDefault = panel.createOptions(myProject, disposable)
+        }
+      }
+      else {
+        createDefault = true
+      }
+
+      if (createDefault) {
+        val defaultPanel = myToolState.getAdditionalConfigPanel(disposable, myProject)
+        if (defaultPanel != null) {
+          row {
+            cell(defaultPanel)
+          }
+        }
+      }
+    }
+
+    component.reset()
+  }
+
+  override fun dispose() {
   }
 
   val key: HighlightDisplayKey get() = myDefaultDescriptor.key
 
   fun update() {
     mySeverityChooser.setChosen(ScopesAndSeveritiesTable.getSeverity(mutableListOf<ScopeToolState?>(myToolState)))
-    GuiUtils.enableChildren(myToolState.isEnabled, myMainPanel.component)
+    GuiUtils.enableChildren(myToolState.isEnabled, component)
   }
 
   fun addListener(listener: ChangeListener) {
     myEventDispatcher.addListener(listener)
-  }
-
-  override fun createComponent(): JComponent {
-    return myMainPanel.component
-  }
-
-  override fun isModified(): Boolean {
-    return myOptionsConfigurable != null && myOptionsConfigurable.isModified(myProject)
-  }
-
-  @Throws(ConfigurationException::class)
-  override fun apply() {
-    if (myOptionsConfigurable != null) {
-      myOptionsConfigurable.apply(myProject)
-    }
-  }
-
-  override fun reset() {
-    if (myOptionsConfigurable != null) {
-      myOptionsConfigurable.reset(myProject)
-    }
-  }
-
-  override fun dispose() {
-    if (myOptionsConfigurable is Disposable) {
-      Disposer.dispose(myOptionsConfigurable as Disposable)
-    }
   }
 
   private inner class MySeverityChooser(registrar: SeverityRegistrar) : LevelChooserAction(registrar) {

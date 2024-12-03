@@ -10,10 +10,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
@@ -66,16 +66,17 @@ class CommitDialogConfigurable(private val project: Project)
           .bindSelected(settings::CLEAR_INITIAL_COMMIT_MESSAGE)
       }
 
-      group(VcsBundle.message("settings.commit.message.inspections")) {
-        row {
-          val panel = CommitMessageInspectionsPanel(project)
-          Disposer.register(disposable, panel)
-          cell(panel)
-            .align(AlignX.FILL)
-            .onApply { panel.apply() }
-            .onReset { panel.reset() }
-            .onIsModified { panel.isModified }
-        }.resizableRow()
+      row {
+        label(VcsBundle.message("settings.commit.message.inspections"))
+      }.topGap(TopGap.MEDIUM)
+      row {
+        val inspectionPanel = CommitMessageInspectionsPanel(project)
+        Disposer.register(disposable, inspectionPanel)
+        cell(inspectionPanel.component)
+          .align(AlignX.FILL)
+          .onApply { inspectionPanel.apply() }
+          .onReset { inspectionPanel.reset() }
+          .onIsModified { inspectionPanel.isModified() }
       }
 
       val actionName = UIUtil.removeMnemonic(getDefaultCommitActionName(emptyList()))

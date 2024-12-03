@@ -5,29 +5,46 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.formatting.LineWrappingUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.PsiFile
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindIntValue
+import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.DocumentUtil
 import org.jetbrains.annotations.Nls
-import java.util.function.IntFunction
-import java.util.stream.IntStream
 
 class BodyLimitInspection : BaseCommitMessageInspection() {
+  @JvmField
   var RIGHT_MARGIN: Int = 72
 
   override fun getDisplayName(): @Nls String {
     return VcsBundle.message("inspection.BodyLimitInspection.display.name")
   }
 
-  override fun createOptionsConfigurable(): ConfigurableUi<Project?> {
-    return BodyLimitInspectionOptions(this)
+  override fun Panel.createOptions(project: Project, disposable: Disposable): Boolean {
+    val settings = VcsConfiguration.getInstance(project)
+
+    row(VcsBundle.message("settings.commit.message.right.margin.label")) {
+      spinner(0..10000)
+        .bindIntValue(::RIGHT_MARGIN)
+    }
+    row {
+      checkBox(VcsBundle.message("settings.commit.message.show.right.margin.label"))
+        .bindSelected(settings::USE_COMMIT_MESSAGE_MARGIN)
+    }
+    row {
+      checkBox(ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"))
+        .bindSelected(settings::WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN)
+    }
+    return false
   }
 
   override fun checkFile(file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {

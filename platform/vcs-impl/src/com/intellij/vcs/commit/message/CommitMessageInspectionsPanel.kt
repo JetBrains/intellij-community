@@ -2,17 +2,13 @@
 package com.intellij.vcs.commit.message
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
-import com.intellij.codeInspection.ex.Descriptor
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel
-import com.intellij.codeInspection.ex.ScopeToolState
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel
 import com.intellij.profile.codeInspection.ui.ToolDescriptors
@@ -21,50 +17,53 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeRenderer
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBSplitter
-import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.ProfileListener
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
-import java.util.function.Consumer
+import java.awt.Dimension
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
-import javax.swing.event.TreeSelectionEvent
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeSelectionModel
 
 @ApiStatus.Internal
-class CommitMessageInspectionsPanel(private val myProject: Project) : BorderLayoutPanel(), Disposable, UnnamedConfigurable {
+class CommitMessageInspectionsPanel(private val myProject: Project) : Disposable {
   private val myInitialToolDescriptors: MutableList<ToolDescriptors> = ArrayList<ToolDescriptors>()
-  private val myToolDetails: MutableMap<HighlightDisplayKey?, CommitMessageInspectionDetails> = HashMap<HighlightDisplayKey?, CommitMessageInspectionDetails>()
+  private val myToolDetails: MutableMap<HighlightDisplayKey, CommitMessageInspectionDetails> = HashMap<HighlightDisplayKey, CommitMessageInspectionDetails>()
   private val myRoot: InspectionConfigTreeNode = InspectionConfigTreeNode.Group("")
   private var myModifiableModel: InspectionProfileModifiableModel
   private val myInspectionsTable: InspectionsConfigTreeTable
-  private val myDetailsPanel: Wrapper = object : Wrapper() {
-    override fun isNull(): Boolean {
-      // make inspections table not to occupy all available width if there is no current details
-      return false
-    }
-  }
-  private var myCurrentDetails: CommitMessageInspectionDetails? = null
+
+  private lateinit var myDetailsPanel: Placeholder
+  val component: JComponent
 
   init {
     myModifiableModel = createProfileModel()
     myInspectionsTable = createInspectionsTable()
+    val detailsPanel = panel { row { myDetailsPanel = placeholder() } }
 
     val splitter = JBSplitter("CommitMessageInspectionsPanelSplitter", 0.5f)
     splitter.setShowDividerIcon(false)
-    splitter.setFirstComponent(myInspectionsTable)
-    splitter.setSecondComponent(myDetailsPanel)
-    addToCenter(splitter)
-    setPreferredSize(JBUI.size(650, 120))
+    splitter.setHonorComponentsMinimumSize(false)
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myInspectionsTable, false))
+    splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(detailsPanel, true))
+
+    component = object : BorderLayoutPanel() {
+      override fun getPreferredSize(): Dimension? {
+        val size = super.getPreferredSize()
+        size.height = JBUI.scale(120)
+        return size
+      }
+    }.also {
+      it.addToCenter(splitter)
+    }
   }
 
   private fun createProfileModel(): InspectionProfileModifiableModel {
@@ -94,32 +93,15 @@ class CommitMessageInspectionsPanel(private val myProject: Project) : BorderLayo
     table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
     table.tree.getSelectionModel().selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
     table.tree.addTreeSelectionListener(TreeSelectionListener { updateDetailsPanel() })
-    table.setBorder(IdeBorderFactory.createBorder())
     return table
   }
 
   private fun updateDetailsPanel() {
-    val node = this.selectedNode
+    val node = getSelectedNode()
+    val currentDetails = if (node != null) myToolDetails.computeIfAbsent(node.key) { createDetails(node) } else null
 
-    if (node == null && myCurrentDetails != null ||
-        node != null && (myCurrentDetails == null || node.getKey() != myCurrentDetails!!.getKey())
-    ) {
-      setDetails(node)
-    }
-
-    if (myCurrentDetails != null) {
-      myCurrentDetails!!.update()
-    }
-  }
-
-  private fun setDetails(node: MyInspectionTreeNode?) {
-    myCurrentDetails = if (node != null) myToolDetails.computeIfAbsent(node.getKey()) { key: HighlightDisplayKey? ->
-      createDetails(node)
-    }
-    else null
-
-    myDetailsPanel.setContent(if (myCurrentDetails != null) myCurrentDetails!!.createComponent() else null)
-    myDetailsPanel.repaint()
+    myDetailsPanel.component = currentDetails?.component
+    currentDetails?.update()
   }
 
   private fun createDetails(node: MyInspectionTreeNode): CommitMessageInspectionDetails {
@@ -133,19 +115,15 @@ class CommitMessageInspectionsPanel(private val myProject: Project) : BorderLayo
   }
 
   private fun getSelectedNode(): MyInspectionTreeNode? {
-    val selectedPath = myInspectionsTable.tree.getPathForRow(myInspectionsTable.getSelectedRow()) ?: return null
-    return selectedPath.getLastPathComponent() as MyInspectionTreeNode
+    val selectedPath = myInspectionsTable.tree.selectionPath ?: return null
+    return selectedPath.lastPathComponent as MyInspectionTreeNode
   }
 
   override fun dispose() {
     clearToolDetails()
   }
 
-  override fun createComponent(): JComponent? {
-    return this
-  }
-
-  override fun reset() {
+  fun reset() {
     clearToolDetails()
 
     myModifiableModel.getAllTools().forEach { it.resetConfigPanel() }
@@ -157,6 +135,7 @@ class CommitMessageInspectionsPanel(private val myProject: Project) : BorderLayo
     buildInspectionsModel()
     (inspectionsTree.model as DefaultTreeModel).reload()
     treeState.applyTo(inspectionsTree, myRoot)
+    TreeUtil.ensureSelection(inspectionsTree)
   }
 
   private fun clearToolDetails() {
@@ -164,18 +143,18 @@ class CommitMessageInspectionsPanel(private val myProject: Project) : BorderLayo
       Disposer.dispose(details)
     }
     myToolDetails.clear()
-    setDetails(null)
+    myDetailsPanel.component = null
   }
 
-  override fun isModified(): Boolean {
+  fun isModified(): Boolean {
     return myInitialToolDescriptors.any { SingleInspectionProfilePanel.areToolDescriptorsChanged(myProject, myModifiableModel, it) } ||
-           myToolDetails.values.any { details -> details.isModified() }
+           myToolDetails.values.any { details -> details.component.isModified() }
   }
 
   @Throws(ConfigurationException::class)
-  override fun apply() {
+  fun apply() {
     for (details in myToolDetails.values) {
-      details.apply()
+      details.component.apply()
     }
     myModifiableModel.commit()
     myProject.getMessageBus().syncPublisher(CommitMessageInspectionProfile.TOPIC).profileChanged()
