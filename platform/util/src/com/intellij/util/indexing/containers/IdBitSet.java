@@ -162,8 +162,8 @@ public final class IdBitSet implements Cloneable, RandomAccessIntContainer {
     if (bitIndexBase < 0 || bitsSet <= 0) {
       throw new IllegalStateException();
     }
-   long word = bitSlots[maxNonZeroSlotIndex];
-   return (maxNonZeroSlotIndex * BITS_PER_WORD) + (BITS_PER_WORD - 1 - Long.numberOfLeadingZeros(word)) + bitIndexBase;
+    long word = bitSlots[maxNonZeroSlotIndex];
+    return (maxNonZeroSlotIndex * BITS_PER_WORD) + (BITS_PER_WORD - 1 - Long.numberOfLeadingZeros(word)) + bitIndexBase;
   }
 
   private int nextSetBit(int bitIndex) {
@@ -203,6 +203,9 @@ public final class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   private static long @NotNull [] allocateArrayForCapacity(int capacityInBits) {
+    if (capacityInBits < 0) {
+      throw new IllegalArgumentException("capacityInBits(=" + capacityInBits + ") must be >= 0");
+    }
     return new long[(capacityInBits >> SHIFT) + 1];
   }
 
