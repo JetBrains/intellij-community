@@ -493,8 +493,8 @@
                      language="kotlin"
                      key="inspection.array.in.data.class.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinOptionsToCompilerOptionsInGradleScriptInspection"
-                     shortName="KotlinOptionsToCompilerOptionsInGradleScript"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.scripts.KotlinOptionsToCompilerOptionsInspection"
+                     shortName="KotlinOptionsToCompilerOptions"
                      groupPathKey="group.path.kotlin.migration"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
                      enabledByDefault="true"

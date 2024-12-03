@@ -4,14 +4,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
-abstract class AbstractKotlinGradleScriptInspection : AbstractKotlinInspection() {
-
+abstract class AbstractKotlinGradleBuildScriptInspection : AbstractKotlinInspection() {
     override fun isAvailableForFile(file: PsiFile): Boolean {
-        return if (file.virtualFile.nameSequence.endsWith(".gradle.kts")) {
-            if (file.virtualFile.nameSequence == "settings.gradle.kts") return false
-            super.isAvailableForFile(file)
-        } else {
-            false
-        }
+        if (file.virtualFile.name == "settings.gradle.kts") return false
+        return file.virtualFile.name.endsWith(".gradle.kts")
     }
 }

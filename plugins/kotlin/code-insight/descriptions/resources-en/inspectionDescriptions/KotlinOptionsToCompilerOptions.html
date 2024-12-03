@@ -17,6 +17,14 @@ compileKotlin.kotlinOptions {
     freeCompilerArgs = listOf("-module-name", "my_module_name")
     apiVersion = "1.9"
 }
+
+//OR
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-module-name", "my_module_name")
+    }
+}
 </code></pre>
 
 <p>The inspection also adds imports for options with changed types:</p>
