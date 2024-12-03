@@ -30,6 +30,6 @@ sealed interface GHCommitStatusRollupContextDTO {
   data class StatusContext(val context: @NlsSafe String,
                            val description: @NlsSafe String,
                            val state: GHCommitStatusContextState,
-                           val targetUrl: String) : GHCommitStatusRollupContextDTO
+                           val targetUrl: String?) : GHCommitStatusRollupContextDTO
 
 }
