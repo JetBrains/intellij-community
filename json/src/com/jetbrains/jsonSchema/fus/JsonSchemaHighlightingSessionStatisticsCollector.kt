@@ -39,7 +39,7 @@ internal class JsonSchemaHighlightingSessionStatisticsCollector {
     }
   }
 
-  fun reportSchemaUsageFeature(featureKind: JsonSchemaFusFeature) {
+  fun reportSchemaUsageFeature(featureKind: JsonSchemaFusCountedFeature) {
     val currentSession = getCurrentSession() ?: return
     currentSession.featuresWithCount[featureKind] = currentSession.featuresWithCount.getOrDefault(featureKind, 0) + 1
   }
