@@ -164,7 +164,13 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
           checkCanceled() // this will re-throw cancellation
 
           // other exceptions: log and forget
-          logError("Unexpected exception during scanning (ignored)", t)
+          try {
+            logError("Unexpected exception during scanning (ignored)", t)
+          }
+          catch (_: Throwable) {
+            // If logError throws, we ignore this exception, because this will stop scanning service for the project.
+            // NOTE: logError throws AE in tests.
+          }
         }
         finally {
           // There is no race. When a task is submitted, the reference to scanningTask is updated first (hasQueuedTasks == true), then
