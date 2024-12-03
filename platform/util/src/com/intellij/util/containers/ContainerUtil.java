@@ -1941,22 +1941,20 @@ public final class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, TT extends T> List<T> sorted(@NotNull Collection<TT> list, @NotNull Comparator<? super TT> comparator) {
-    FreezableArrayList<TT> result = new FreezableArrayList<>(list);
+  public static @Unmodifiable @NotNull <T> List<T> sorted(@NotNull Collection<? extends T> list, @NotNull Comparator<? super T> comparator) {
+    FreezableArrayList<T> result = new FreezableArrayList<>(list);
     sort(result, comparator);
-    //noinspection unchecked
-    return (List<T>)result.emptyOrFrozen();
+    return result.emptyOrFrozen();
   }
 
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, TT extends T> List<T> sorted(@NotNull Iterable<TT> list, @NotNull Comparator<? super TT> comparator) {
-    FreezableArrayList<TT> result = new FreezableArrayList<>();
-    for (TT element : list) {
+  public static @Unmodifiable @NotNull <T> List<T> sorted(@NotNull Iterable<? extends T> list, @NotNull Comparator<? super T> comparator) {
+    FreezableArrayList<T> result = new FreezableArrayList<>();
+    for (T element : list) {
       result.add(element);
     }
     sort(result, comparator);
-    //noinspection unchecked
-    return (List<T>)result.emptyOrFrozen();
+    return result.emptyOrFrozen();
   }
 
   @Contract(pure = true)
