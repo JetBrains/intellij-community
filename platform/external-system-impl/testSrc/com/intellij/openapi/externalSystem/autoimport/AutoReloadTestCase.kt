@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.ide.file.BatchFileChangeListener
+import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.ComponentManager
@@ -10,6 +11,9 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.AbstractCrcCalculator
+import com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
@@ -18,6 +22,9 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.editor.saveToDisk
@@ -353,14 +360,24 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
         )
 
         val settingsFile = createSettingsVirtualFile(relativePath)
-        assertStateAndReset(numReload = 0, numSettingsAccess = 1, notified = true, event = "settings file is created")
-
-        scheduleProjectReload()
-        assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project is reloaded")
+        assertStateAndReset(numReload = 0, numSettingsAccess = 1, notified = false, event = "empty settings files registered")
 
         test(settingsFile)
       }
     }
+  }
+
+  protected fun createCustomCrcCalculator(additionalIsIgnoredTokenCheck: (CharSequence) -> Boolean) {
+    val crcCalculator = object: AbstractCrcCalculator() {
+      override fun isIgnoredToken(tokenType: IElementType, tokenText: CharSequence, parserDefinition: ParserDefinition): Boolean {
+        val ignoredTokens = TokenSet.orSet(parserDefinition.commentTokens, parserDefinition.whitespaceTokens)
+        return ignoredTokens.contains(tokenType) || additionalIsIgnoredTokenCheck(tokenText)
+      }
+
+      override fun isApplicable(systemId: ProjectSystemId, file: VirtualFile): Boolean =
+        systemId == TEST_EXTERNAL_SYSTEM_ID
+    }
+    ExtensionTestUtil.maskExtensions(ExternalSystemCrcCalculator.Companion.EP_NAME, listOf(crcCalculator), testDisposable)
   }
 
   protected fun mockProjectAware(projectId: ExternalSystemProjectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)) =
