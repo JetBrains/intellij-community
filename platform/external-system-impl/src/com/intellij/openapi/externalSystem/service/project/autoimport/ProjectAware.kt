@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RES
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -49,6 +50,9 @@ class ProjectAware(
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     progressManager.addNotificationListener(TaskNotificationListener(listener), parentDisposable)
+
+    val projectsManager = ExternalProjectsManager.getInstance(project)
+    projectsManager.runWhenInitialized { listener.onSettingsFilesListChange() }
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
