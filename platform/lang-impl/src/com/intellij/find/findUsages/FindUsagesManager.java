@@ -175,20 +175,22 @@ public final class FindUsagesManager {
     @NotNull PsiElement element,
     @NotNull Function<FindUsagesHandlerFactory, FindUsagesHandler> createHandler
   ) {
-    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
-        if (!factory.canFindUsages(element)) continue;
+    return ReadAction.compute(() -> {
+      for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
+          if (!factory.canFindUsages(element)) continue;
+        }
+        FindUsagesHandler handler;
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
+          handler = createHandler.apply(factory);
+        }
+        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
+        if (handler != null) {
+          return handler;
+        }
       }
-      FindUsagesHandler handler;
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
-        handler = createHandler.apply(factory);
-      }
-      if (handler == FindUsagesHandler.NULL_HANDLER) return null;
-      if (handler != null) {
-        return handler;
-      }
-    }
-    return null;
+      return null;
+    });
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
