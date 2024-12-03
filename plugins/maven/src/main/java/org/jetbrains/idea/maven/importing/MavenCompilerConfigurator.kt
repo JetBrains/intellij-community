@@ -140,6 +140,7 @@ class MavenCompilerConfigurator : MavenApplicableConfigurator("org.apache.maven.
                                    ideCompilerConfiguration: CompilerConfiguration,
                                    defaultCompilerExtension: MavenCompilerExtension?) {
     var targetLevel = defaultCompilerExtension?.getDefaultCompilerTargetLevel(mavenProject, module)
+    MavenLog.LOG.debug("Bytecode target level $targetLevel in module ${module.name}, compiler extension = ${defaultCompilerExtension?.mavenCompilerId}")
     if (targetLevel == null) {
       var level: LanguageLevel?
       if (MavenImportUtil.isTestModule(module.name)) {
