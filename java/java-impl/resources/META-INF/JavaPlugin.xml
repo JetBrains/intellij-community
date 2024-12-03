@@ -2524,35 +2524,30 @@
       <className>com.intellij.codeInsight.MakeAnnotationExternal</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
-      <descriptionDirectoryName>MakeAnnotationExternal</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
       <className>com.intellij.codeInsight.MakeExternalAnnotationExplicit</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
-      <descriptionDirectoryName>MakeExternalAnnotationExplicit</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
       <className>com.intellij.codeInsight.MakeInferredAnnotationExplicit</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
-      <descriptionDirectoryName>MakeInferredAnnotationExplicit</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <language>UAST</language>
       <className>com.intellij.codeInspection.dataFlow.EditContractIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
-      <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <language>UAST</language>
       <className>com.intellij.codeInspection.dataFlow.EditRangeIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.annotations</categoryKey>
-      <descriptionDirectoryName>EditRangeIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
