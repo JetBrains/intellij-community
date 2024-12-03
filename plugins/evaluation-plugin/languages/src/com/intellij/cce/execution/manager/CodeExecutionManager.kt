@@ -14,7 +14,7 @@ abstract class CodeExecutionManager {
   }
 
   abstract val language: Language
-  abstract var shouldSetup: Boolean
+  private var shouldSetup: Boolean = true
 
   val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 

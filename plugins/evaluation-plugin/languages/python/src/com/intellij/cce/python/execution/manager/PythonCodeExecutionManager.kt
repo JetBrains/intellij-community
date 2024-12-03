@@ -18,8 +18,6 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   private val defaultTestFilePath = "/tests/eval-plugin-test.py"
 
-  override var shouldSetup: Boolean = true
-
   override fun getGeneratedCodeFile(code: String): File {
     extractCodeDirectory(code)?.let {
       val detectedPath = if (!it.startsWith("/")) "/$it" else it
