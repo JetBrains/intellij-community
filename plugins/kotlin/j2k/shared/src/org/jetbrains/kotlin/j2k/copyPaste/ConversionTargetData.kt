@@ -9,10 +9,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.psi.KtFile
 
-internal data class ConversionTargetData(
-    val targetFile: KtFile,
-    val targetBounds: RangeMarker,
-    val targetDocument: Document,
+data class ConversionTargetData(
+    val file: KtFile,
+    val bounds: RangeMarker,
+    val document: Document,
 )
 
 /**
