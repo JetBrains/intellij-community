@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
@@ -62,7 +63,7 @@ public final class DescriptionCheckerUtil {
   }
 
   @Nullable
-  public static String getDefaultDescriptionDirName(PsiClass aClass) {
+  public static String getDefaultDescriptionDirName(@NotNull PsiClass aClass) {
     String descriptionDir = "";
     PsiClass each = aClass;
     while (each != null) {
