@@ -56,10 +56,16 @@ public final class DescriptionCheckerUtil {
                                                    DescriptionType descriptionType) {
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(module.getProject());
     final PsiPackage psiPackage = javaPsiFacade.findPackage(descriptionType.getDescriptionFolder());
-    if (psiPackage != null) {
-      return psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+    if (psiPackage == null) {
+      return PsiDirectory.EMPTY_ARRAY;
     }
-    return PsiDirectory.EMPTY_ARRAY;
+
+    PsiDirectory[] currentModuleDirectories = psiPackage.getDirectories(module.getModuleScope(false));
+    if (currentModuleDirectories.length != 0) {
+      return currentModuleDirectories;
+    }
+
+    return psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
   }
 
   @Nullable
