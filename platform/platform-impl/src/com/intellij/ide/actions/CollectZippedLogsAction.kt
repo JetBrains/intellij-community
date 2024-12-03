@@ -61,17 +61,22 @@ internal class CollectZippedLogsAction : AnAction(), DumbAware {
         RevealFileAction.openFile(logs)
       }
       else {
-        Notification(COLLECT_LOGS_NOTIFICATION_GROUP, IdeBundle.message(
-          "collect.logs.notification.success", logs),
-                     NotificationType.INFORMATION).notify(project)
+        val notification = Notification(
+          COLLECT_LOGS_NOTIFICATION_GROUP,
+          IdeBundle.message("collect.logs.notification.success", logs),
+          NotificationType.INFORMATION
+        )
+        notification.notify(project)
       }
     }
-    catch (x: IOException) {
-      Logger.getInstance(javaClass).warn(x)
-      val message = IdeBundle.message("collect.logs.notification.error",
-                                      IoErrorText.message(x))
-      Notification(COLLECT_LOGS_NOTIFICATION_GROUP, message,
-                   NotificationType.ERROR).notify(project)
+    catch (e: IOException) {
+      thisLogger().warn(e)
+      val notification = Notification(
+        COLLECT_LOGS_NOTIFICATION_GROUP,
+        IdeBundle.message("collect.logs.notification.error", IoErrorText.message(e)),
+        NotificationType.ERROR
+      )
+      notification.notify(project)
     }
   }
 
