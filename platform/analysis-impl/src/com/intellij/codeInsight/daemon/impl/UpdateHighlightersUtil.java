@@ -495,7 +495,7 @@ public final class UpdateHighlightersUtil {
   }
 
   /**
-   * Do not use. This method might break highlighting, left for binary compatibility only
+   * @deprecated Do not use. This method might break highlighting, left for binary compatibility only
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.Internal
