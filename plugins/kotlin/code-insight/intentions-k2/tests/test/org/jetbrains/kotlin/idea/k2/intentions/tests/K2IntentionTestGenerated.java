@@ -7120,7 +7120,99 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression")
+    public static class EvaluateCompileTimeExpression extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("boolean.kt")
+        public void testBoolean() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/boolean.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/char.kt");
+        }
+
+        @TestMetadata("char2.kt")
+        public void testChar2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/char2.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/double.kt");
+        }
+
+        @TestMetadata("doubleNaN.kt")
+        public void testDoubleNaN() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/doubleNaN.kt");
+        }
+
+        @TestMetadata("doubleNegativeInfinity.kt")
+        public void testDoubleNegativeInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/doubleNegativeInfinity.kt");
+        }
+
+        @TestMetadata("doublePositiveInfinity.kt")
+        public void testDoublePositiveInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/doublePositiveInfinity.kt");
+        }
+
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/float.kt");
+        }
+
+        @TestMetadata("floatNaN.kt")
+        public void testFloatNaN() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/floatNaN.kt");
+        }
+
+        @TestMetadata("floatNegativeInfinity.kt")
+        public void testFloatNegativeInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/floatNegativeInfinity.kt");
+        }
+
+        @TestMetadata("floatPositiveInfinity.kt")
+        public void testFloatPositiveInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/floatPositiveInfinity.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/int.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/long.kt");
+        }
+
+        @TestMetadata("parens.kt")
+        public void testParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/parens.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/string.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/variable.kt");
+        }
+    }
 
 
 
