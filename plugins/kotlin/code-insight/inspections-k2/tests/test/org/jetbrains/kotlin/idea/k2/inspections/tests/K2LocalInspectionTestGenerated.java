@@ -1447,6 +1447,80 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/cascadeIf")
+    public static class CascadeIf extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("cannotIntroduceSubject.kt")
+        public void testCannotIntroduceSubject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/cannotIntroduceSubject.kt");
+        }
+
+        @TestMetadata("complex.kt")
+        public void testComplex() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/complex.kt");
+        }
+
+        @TestMetadata("four.kt")
+        public void testFour() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/four.kt");
+        }
+
+        @TestMetadata("ifTree.kt")
+        public void testIfTree() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/ifTree.kt");
+        }
+
+        @TestMetadata("insideOtherIf.kt")
+        public void testInsideOtherIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/insideOtherIf.kt");
+        }
+
+        @TestMetadata("middleIf.kt")
+        public void testMiddleIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/middleIf.kt");
+        }
+
+        @TestMetadata("noSecondElse.kt")
+        public void testNoSecondElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/noSecondElse.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/normal.kt");
+        }
+
+        @TestMetadata("oneLiner.kt")
+        public void testOneLiner() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/oneLiner.kt");
+        }
+
+        @TestMetadata("shortIf.kt")
+        public void testShortIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/shortIf.kt");
+        }
+
+        @TestMetadata("withAnnotation.kt")
+        public void testWithAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/withAnnotation.kt");
+        }
+
+        @TestMetadata("withBreak.kt")
+        public void testWithBreak() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/cascadeIf/withBreak.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis")
     public static class NullableBooleanElvis extends AbstractK2LocalInspectionTest {
         @java.lang.Override
