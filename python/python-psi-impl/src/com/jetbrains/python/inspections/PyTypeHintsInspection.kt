@@ -246,11 +246,13 @@ class PyTypeHintsInspection : PyInspection() {
       val returnType = myTypeEvalContext.getReturnType(node);
       if (returnType is PyNarrowedType) {
         val parameters = node.getParameters(myTypeEvalContext)
-        if (parameters.size == 0) {
-          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.has.zero.arguments"))
+        val isInstanceOrClassMethod = node.asMethod() != null && node.modifier != PyAstFunction.Modifier.STATICMETHOD
+        val parameterIndex = if (isInstanceOrClassMethod) 1 else 0
+        if (parameterIndex >= parameters.size) {
+          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.has.zero.parameters"))
         }
         else if (returnType.typeIs) {
-          val parameter = parameters[0]
+          val parameter = parameters[parameterIndex]
           val parameterType = parameter.getType(myTypeEvalContext)
           if (!PyTypeChecker.match(parameterType, returnType.narrowedType, myTypeEvalContext)) {
             registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.does.not.match",
