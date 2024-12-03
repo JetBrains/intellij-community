@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.ConverterContext
-import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind
 import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.convertCodeToKotlin
@@ -23,7 +23,6 @@ internal class K2J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val dataForConversion: DataForConversion,
-    private val j2kKind: J2kConverterExtension.Kind,
     private val targetFile: KtFile,
     private val targetBounds: RangeMarker,
     private val targetDocument: Document
@@ -55,11 +54,11 @@ internal class K2J2KCopyPasteConverter(
 
         val newBounds = insertImports(boundsAfterReplace, importsToAdd)
         PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
-        runPostProcessing(project, targetFile, newBounds, converterContext, j2kKind)
+        runPostProcessing(project, targetFile, newBounds, converterContext, Kind.K2)
     }
 
     override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
-        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, j2kKind)
+        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, Kind.K2)
         val (text, _, importsToAdd, isTextChanged, converterContext) = conversionResult
         val changedText = if (isTextChanged) text else null
         result = Result(changedText, importsToAdd, converterContext)

@@ -59,7 +59,6 @@ abstract class J2kConverterExtension {
         project: Project,
         editor: Editor,
         dataForConversion: DataForConversion,
-        j2kKind: Kind,
         targetFile: KtFile,
         targetBounds: RangeMarker,
         targetDocument: Document

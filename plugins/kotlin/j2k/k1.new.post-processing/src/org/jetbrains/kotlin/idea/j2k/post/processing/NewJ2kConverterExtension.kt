@@ -54,11 +54,10 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
         project: Project,
         editor: Editor,
         dataForConversion: DataForConversion,
-        j2kKind: Kind,
         targetFile: KtFile,
         targetBounds: RangeMarker,
         targetDocument: Document
     ): J2KCopyPasteConverter {
-        return K1J2KCopyPasteConverter(project, editor, dataForConversion, j2kKind, targetFile, targetBounds, targetDocument)
+        return K1J2KCopyPasteConverter(project, editor, dataForConversion, kind, targetFile, targetBounds, targetDocument)
     }
 }
