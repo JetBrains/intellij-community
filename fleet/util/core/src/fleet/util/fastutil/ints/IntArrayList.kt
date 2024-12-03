@@ -64,7 +64,7 @@ class IntArrayList: MutableIntList, Comparable<IntList> {
    * @param offset the first element to use.
    * @param length the number of elements to use.
    **/
-  constructor(a: IntArray, offset: Int = 0, length: Int = a.size) : this(a.size) {
+  constructor(a: IntArray, offset: Int = 0, length: Int = a.size) : this(length) {
     a.copyInto(this.a, 0, offset, offset + length)
     size = length
   }
