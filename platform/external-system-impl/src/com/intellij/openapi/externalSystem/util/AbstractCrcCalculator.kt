@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.util
 
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.ParserDefinition
+import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.progress.ProgressManager
@@ -14,6 +15,10 @@ import java.util.zip.CRC32
 abstract class AbstractCrcCalculator : ExternalSystemCrcCalculator {
   abstract fun isIgnoredToken(tokenType: IElementType, tokenText: CharSequence, parserDefinition: ParserDefinition): Boolean
 
+  open fun createLexer(project: Project, parserDefinition: ParserDefinition): Lexer {
+    return parserDefinition.createLexer(project)
+  }
+
   override fun calculateCrc(project: Project, file: VirtualFile, fileText: CharSequence): Long? {
     val parserDefinition = getParserDefinition(file.fileType) ?: return null
     return calculateCrc(project, fileText, parserDefinition)
@@ -22,7 +27,7 @@ abstract class AbstractCrcCalculator : ExternalSystemCrcCalculator {
   private fun calculateCrc(project: Project,
                            charSequence: CharSequence,
                            parserDefinition: ParserDefinition): Long {
-    val lexer = parserDefinition.createLexer(project)
+    val lexer = createLexer(project, parserDefinition)
     val crc32 = CRC32()
     lexer.start(charSequence)
     ProgressManager.checkCanceled()
