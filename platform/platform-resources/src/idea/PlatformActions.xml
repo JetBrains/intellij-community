@@ -529,6 +529,7 @@
           <group id="PasteGroup" popup="true" class="com.intellij.ide.actions.PopupInMainMenuActionGroup">
             <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="AllIcons.Actions.MenuPaste"/>
             <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction"/>
+            <action id="CyclePaste" class="com.intellij.openapi.editor.actions.CyclePasteAction"/>
             <reference ref="EditorPasteSimple"/>
           </group>
         </group>
@@ -994,6 +995,7 @@
       <group id="Copy.Paste.Special" popup="true">
         <reference ref="EditorPasteSimple"/>
         <reference ref="PasteMultiple"/>
+        <reference ref="CyclePaste"/>
       </group>
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
