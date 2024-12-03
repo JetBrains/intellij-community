@@ -6,9 +6,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.kernel.withKernel
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableEntityType
-import fleet.kernel.rete.filterNotNull
+import fleet.kernel.rete.each
+import fleet.kernel.rete.filter
 import fleet.kernel.rete.first
-import fleet.kernel.rete.query
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -56,7 +56,7 @@ fun Project.asEntityOrNull(): ProjectEntity? {
 @ApiStatus.Internal
 suspend fun Project.asEntity(): ProjectEntity {
   return withKernel {
-    query { entities(ProjectEntity.ProjectIdValue, projectId()).singleOrNull() }.filterNotNull().first()
+    ProjectEntity.each().filter { it.projectId == projectId() }.first()
   }
 }
 
