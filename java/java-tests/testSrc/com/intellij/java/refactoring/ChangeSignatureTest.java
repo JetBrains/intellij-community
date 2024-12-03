@@ -930,7 +930,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       }, false);
       fail("Conflict expected");
     }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
+      assertEquals("Record component 'a' is used", exception.getMessage());
+    }
   }
 
   public void testConflictsForGetRecord() {
@@ -944,7 +946,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       }, false);
       fail("Conflict expected");
     }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
+      assertEquals("Record component 'a' is used", exception.getMessage());
+    }
   }
 
   public void testWithoutConflictsForGet() {
@@ -968,7 +972,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       }, false);
       fail("Conflict expected");
     }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
+      assertEquals("Record component 'a' is used", exception.getMessage());
+    }
   }
 
   public void testWithoutConflictsSwitchUsedDeconstruction() {
@@ -992,7 +998,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       }, false);
       fail("Conflict expected");
     }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
+      assertEquals("Record component 'b' is used", exception.getMessage());
+    }
   }
 
   public void testWithoutConflictsSwitchExtendedDeconstruction() {
@@ -1016,7 +1024,9 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       }, false);
       fail("Conflict expected");
     }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
+      assertEquals("Record component 'y' is used", exception.getMessage());
+    }
   }
 
   public void testWithoutConflictsSwitchNestedDeconstruction() {
@@ -1040,6 +1050,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       }, false);
       fail("Conflict expected");
     }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
+      assertEquals("Record component 'x' is used", exception.getMessage());
+    }
   }
 }

@@ -31,7 +31,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -1429,34 +1428,33 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
           }
         }
         //getter
-        PsiMethod explicitGetter = ContainerUtil
-          .find(aClass.findMethodsByName(component.getName(), false), m -> m.getParameterList().isEmpty());
+        PsiMethod explicitGetter = JavaPsiRecordUtil.getAccessorForRecordComponent(component);
         if (explicitGetter != null) {
           PsiManager manager = component.getManager();
-          GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-          for (PsiReference psiReference : ReferencesSearch.search(explicitGetter, projectScope, false)) {
+          for (PsiReference psiReference : ReferencesSearch.search(explicitGetter, explicitGetter.getUseScope(), false)) {
             PsiElement paramRef = psiReference.getElement();
             conflictDescriptions.putValue(paramRef, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", component.getName()));
           }
         }
       }
       //deconstruction. can be slow, because it is necessary to check a type of psiReference
-      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
-      for (PsiReference classReference : ReferencesSearch.search(aClass, projectScope)) {
+      for (PsiReference classReference : ReferencesSearch.search(aClass, aClass.getUseScope())) {
         PsiElement element = classReference.getElement();
         PsiElement parent = element.getParent();
         if (!(parent instanceof PsiTypeElement)) {
           continue;
         }
         PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiDeconstructionPattern deconstructionPattern &&
-            deconstructionPattern.getDeconstructionList().getDeconstructionComponents().length == components.length) {
+        if (grandParent instanceof PsiDeconstructionPattern deconstructionPattern) {
+          PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
+          if (deconstructionComponents.length != components.length) {
+            continue;
+          }
           for (int i = 0; i < toRemove.length; i++) {
             if (!toRemove[i]) continue;
             if (components.length <= i) {
               break;
             }
-            PsiPattern[] deconstructionComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
             PsiPattern deconstructionComponent = deconstructionComponents[i];
             PsiRecordComponent recordComponent = components[i];
             collectDeconstructionRecordToDeleteUsagesConflict(deconstructionComponent, aClass, conflictDescriptions, recordComponent);
@@ -1473,14 +1471,14 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
       if (!JavaPsiPatternUtil.isUnconditionalForType(pattern, recordComponent.getType(), true)) {
         conflictDescriptions.putValue(pattern, JavaRefactoringBundle.message("record.component.used.in.method.body.warning",
                                                                     recordComponent.getName()));
+        return;
       }
       if (pattern instanceof PsiTypeTestPattern typeTestPattern) {
         PsiPatternVariable variable = typeTestPattern.getPatternVariable();
         if (variable == null) return;
-        for (PsiReferenceExpression deconstructionReference : VariableAccessUtils.getVariableReferences(variable,
-                                                                                                        context.getContainingFile())) {
-          conflictDescriptions.putValue(deconstructionReference,
-                                        JavaRefactoringBundle.message("record.component.used.in.method.body.warning", recordComponent.getName()));
+        if(VariableAccessUtils.variableIsUsed(variable, context.getContainingFile())) {
+          conflictDescriptions.putValue(typeTestPattern, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", recordComponent.getName()));
+          return;
         }
       }
       if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
