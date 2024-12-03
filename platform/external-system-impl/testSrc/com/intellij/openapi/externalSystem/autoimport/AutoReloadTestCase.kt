@@ -2,7 +2,6 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.ide.file.BatchFileChangeListener
-import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.ComponentManager
@@ -11,9 +10,6 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.AbstractCrcCalculator
-import com.intellij.openapi.externalSystem.util.ExternalSystemCrcCalculator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
@@ -22,9 +18,6 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
-import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.editor.saveToDisk
@@ -66,20 +59,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   protected fun createFile(relativePath: String): VirtualFile =
     runWriteAction { projectRoot.createFile(relativePath) }
 
-  protected fun createFileWithSampleText(name: String, parentRelativePath: String = "."): VirtualFile =
-    runWriteAction {
-      val tmpFile = projectRoot.createFile("tmp")
-      tmpFile.appendString(SAMPLE_TEXT)
-      // Note: the workaround with copying a non-empty file to the settings file location is essential to ensure
-      // that the settings file CRC is not zero upon creation.
-      // When an empty file is created, it is immediately added to 'ProjectSettingsTracker.settingsFilesStatus'.
-      // Later, if a text is added to this file, it is treated as an update.
-      // This detail can cause issues in specific test scenarios, such as 'test settings files modification partition'.
-      val file = tmpFile.copy(name, parentRelativePath)
-      tmpFile.delete()
-      file
-    }
-
   protected fun findOrCreateFile(relativePath: String): VirtualFile =
     runWriteAction { projectRoot.findOrCreateFile(relativePath) }
 
@@ -92,10 +71,9 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   protected fun createIoFileUnsafe(relativePath: String): Path =
     projectNioPath.createFile(relativePath)
 
-  protected fun createIoFile(relativePath: String, withSampleText: Boolean = false): VirtualFile {
+  protected fun createIoFile(relativePath: String): VirtualFile {
     projectNioPath.refreshVfs(relativePath) // ensure that file is removed from VFS
-    val path = projectNioPath.createFile(relativePath)
-    if (withSampleText) path.appendText(SAMPLE_TEXT)
+    projectNioPath.createFile(relativePath)
     return projectNioPath.getResolvedPath(relativePath).refreshAndGetVirtualFile()
   }
 
@@ -357,7 +335,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     }
   }
 
-  protected fun test(relativePath: String = SETTINGS_FILE, withSampleText: Boolean = false, test: SimpleTestBench.(VirtualFile) -> Unit) {
+  protected fun test(relativePath: String = SETTINGS_FILE, test: SimpleTestBench.(VirtualFile) -> Unit) {
     withProjectTracker {
       val projectAware = mockProjectAware()
 
@@ -375,34 +353,14 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
         )
 
         val settingsFile = createSettingsVirtualFile(relativePath)
+        assertStateAndReset(numReload = 0, numSettingsAccess = 1, notified = true, event = "settings file is created")
 
-        if (withSampleText) {
-          settingsFile.appendString(SAMPLE_TEXT)
-          assertStateAndReset(numReload = 0, numSettingsAccess = 1, notified = true, event = "non empty settings file is created")
-          scheduleProjectReload()
-          assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project is reloaded")
-        } else {
-          assertStateAndReset(numReload = 0, numSettingsAccess = 1, notified = false, event = "settings file is created")
-        }
+        scheduleProjectReload()
+        assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project is reloaded")
 
         test(settingsFile)
       }
     }
-  }
-
-  protected fun createCustomCrcCalculator(additionalIsIgnoredTokenCheck: (CharSequence) -> Boolean) {
-    val crcCalculator = object: AbstractCrcCalculator() {
-      private val FORBIDDEN_TEXT = "forbidden_"
-
-      override fun isIgnoredToken(tokenType: IElementType, tokenText: CharSequence, parserDefinition: ParserDefinition): Boolean {
-        val ignoredTokens = TokenSet.orSet(parserDefinition.commentTokens, parserDefinition.whitespaceTokens)
-        return ignoredTokens.contains(tokenType) || additionalIsIgnoredTokenCheck(tokenText)
-      }
-
-      override fun isApplicable(systemId: ProjectSystemId, file: VirtualFile): Boolean =
-        systemId == TEST_EXTERNAL_SYSTEM_ID
-    }
-    ExtensionTestUtil.maskExtensions(ExternalSystemCrcCalculator.Companion.EP_NAME, listOf(crcCalculator), testDisposable)
   }
 
   protected fun mockProjectAware(projectId: ExternalSystemProjectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)) =
@@ -465,12 +423,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     fun createSettingsVirtualFile(relativePath: String): VirtualFile {
       registerSettingsFile(relativePath)
       return createFile(relativePath)
-    }
-
-    fun createSettingsVirtualFileWithSampleText(name: String, parentRelativePath: String = "."): VirtualFile {
-      val relativePath = if (parentRelativePath != ".") "$parentRelativePath/$name" else name
-      registerSettingsFile(relativePath)
-      return createFileWithSampleText(name, parentRelativePath)
     }
 
     fun withLinkedProject(name: String, relativePath: String, test: SimpleTestBench.(VirtualFile) -> Unit) {
