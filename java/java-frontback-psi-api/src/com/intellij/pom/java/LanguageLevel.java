@@ -63,7 +63,9 @@ public enum LanguageLevel {
   JDK_22_PREVIEW(JavaPsiBundle.messagePointer("jdk.22.preview.language.level.description"), 22),
   JDK_23(JavaPsiBundle.messagePointer("jdk.23.language.level.description"), 23),
   JDK_23_PREVIEW(JavaPsiBundle.messagePointer("jdk.23.preview.language.level.description"), 23),
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 24),
+  JDK_24(JavaPsiBundle.messagePointer("jdk.24.language.level.description"), 24),
+  JDK_24_PREVIEW(JavaPsiBundle.messagePointer("jdk.24.preview.language.level.description"), 24),
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 25),
   ;
 
   /**
