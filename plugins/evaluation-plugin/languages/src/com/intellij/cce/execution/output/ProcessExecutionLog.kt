@@ -1,9 +1,8 @@
 package com.intellij.cce.execution.output
 
-interface ProcessExecutionLog {
-  val out: String
-  val error: String
-  val exitCode: Int
-  val collectedInfo: MutableMap<String, Any>
-    get() = mutableMapOf()
-}
+data class ProcessExecutionLog(
+  val out: String,
+  val error: String,
+  val exitCode: Int,
+  val collectedInfo: Map<String, Any>,
+)

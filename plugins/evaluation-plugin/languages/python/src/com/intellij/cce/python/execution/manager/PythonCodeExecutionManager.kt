@@ -9,7 +9,6 @@ import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
 import com.intellij.cce.python.execution.output.PythonErrorLogProcessor
-import com.intellij.cce.python.execution.output.PythonProcessExecutionLog
 import com.jetbrains.python.sdk.pythonSdk
 import java.io.File
 
@@ -28,9 +27,9 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return File(project.basePath + defaultTestFilePath)
   }
 
-  override fun setupEnvironment(): PythonProcessExecutionLog {
+  override fun setupEnvironment(): ProcessExecutionLog {
     val setupFile = File("${project.basePath}/setup_tests.sh")
-    if (!setupFile.exists()) return PythonProcessExecutionLog("", "Bash script file not found", -1)
+    if (!setupFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1, collectedInfo.toMap())
     val executionLog =
       runPythonProcess(
         ProcessBuilder("/bin/bash", setupFile.path.toString())
@@ -62,14 +61,14 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   override fun compileGeneratedCode(): ProcessExecutionLog {
     // NA
-    return PythonProcessExecutionLog("", "", 0)
+    return ProcessExecutionLog("", "", 0, collectedInfo.toMap())
   }
 
   override fun executeGeneratedCode(target: String, codeFilePath: File): ProcessExecutionLog {
     val runFile = File("${project.basePath}/run_tests.sh")
 
-    if (!runFile.exists()) return PythonProcessExecutionLog("", "Bash script file not found", -1)
-    if (!codeFilePath.exists()) return PythonProcessExecutionLog("", "The Python test file does not exist", -1)
+    if (!runFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1, collectedInfo.toMap())
+    if (!codeFilePath.exists()) return ProcessExecutionLog("", "The Python test file does not exist", -1, collectedInfo.toMap())
 
     val testName = codeFilePath.path
       .removePrefix(project.basePath.toString())
@@ -79,7 +78,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
     val coverageFilePath = "${project.basePath}/$testName-coverage"
 
-    project.pythonSdk ?: return PythonProcessExecutionLog("", "Python SDK not found", -1)
+    project.pythonSdk ?: return ProcessExecutionLog("", "Python SDK not found", -1, collectedInfo.toMap())
 
     try {
       val executionLog = runPythonProcess(
@@ -104,12 +103,12 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     }
     catch (e: Exception) {
       e.printStackTrace()
-      return PythonProcessExecutionLog("", "", -1, collectedInfo)
+      return ProcessExecutionLog("", "", -1, collectedInfo.toMap())
     }
   }
 
   private fun runPythonProcess(processBuilder: ProcessBuilder):
-    PythonProcessExecutionLog {
+    ProcessExecutionLog {
     // Set the correct Python interpreter
     processBuilder.environment()["PYTHON"] =  project.pythonSdk!!.homePath
     // Move to project's root
@@ -122,6 +121,6 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     // Wait for the process to finish and get the exit code
     val exitCode = process.waitFor()
 
-    return PythonProcessExecutionLog(output, error, exitCode)
+    return ProcessExecutionLog(output, error, exitCode, collectedInfo.toMap())
   }
 }

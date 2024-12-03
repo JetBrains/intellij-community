@@ -2,7 +2,6 @@ package com.intellij.cce.execution.manager
 
 import com.intellij.cce.core.Language
 import com.intellij.cce.execution.output.ProcessExecutionLog
-import com.intellij.cce.execution.output.ProcessExecutionLogImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import java.io.File
@@ -16,7 +15,7 @@ abstract class CodeExecutionManager {
   abstract val language: Language
   private var shouldSetup: Boolean = true
 
-  val collectedInfo: MutableMap<String, Any> = mutableMapOf()
+  protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
   lateinit var project: Project
 
@@ -28,7 +27,7 @@ abstract class CodeExecutionManager {
 
   fun compileAndExecute(project: Project, code: String, target: String): ProcessExecutionLog {
     if (project.basePath == null)
-      return ProcessExecutionLogImpl("", "No project base path found", -1)
+      return ProcessExecutionLog("", "No project base path found", -1, collectedInfo.toMap())
     this.project = project
 
     // Get the path to the temp file that the generated code should be saved in
