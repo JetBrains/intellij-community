@@ -199,7 +199,7 @@ public final class HighlightFixUtil {
     if (place instanceof PsiReferenceExpression && place.getParent() instanceof PsiMethodCallExpression) {
       ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), info);
     }
-    if (refElement instanceof PsiJvmModifiersOwner) {
+    if (refElement instanceof PsiJvmModifiersOwner && !(refElement instanceof PsiParameter)) {
       List<IntentionAction> fixes =
         JvmElementActionFactories.createModifierActions((PsiJvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
       QuickFixAction.registerQuickFixActions(info, null, fixes);
