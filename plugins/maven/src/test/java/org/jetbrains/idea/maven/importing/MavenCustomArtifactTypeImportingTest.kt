@@ -7,7 +7,6 @@ import org.junit.Test
 
 class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase() {
 
-
   @Test
   fun `should import dependency with custom plugin type`() = runBlocking {
     importProjectAsync("""
@@ -41,12 +40,17 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
             </plugin>
         </plugins>
     </build>
+    
+    <repositories>
+      <repository>
+        <id>central</id>
+        <url>https://cache-redirector.jetbrains.com/repo1.maven.org/maven2</url>
+      </repository>
+    </repositories>
 """)
-
     assertModules("project")
     val project = projectsManager.findProject(projectPom)
     assertNotNull(project)
     assertEmpty(project!!.problems)
-
   }
 }
