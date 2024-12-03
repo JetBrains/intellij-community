@@ -17,9 +17,9 @@ internal class JsonSchemaHighlightingSessionStatisticsCollector {
   }
 
   private inner class JsonSchemaHighlightingSession {
-    val featuresWithCount = mutableMapOf<JsonSchemaFusFeature, Int>()
+    val featuresWithCount = HashMap<JsonSchemaFusFeature, Int>()
     var schemaType: String? = null
-    val requestedRemoteSchemas = mutableSetOf<String>()
+    val requestedRemoteSchemas = HashSet<String>()
   }
 
   private val currentHighlightingSession = ThreadLocal<JsonSchemaHighlightingSession?>()
