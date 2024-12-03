@@ -243,25 +243,25 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   }
 
   companion object {
-    private const val TEMP_API_DIR = "REPLACE_ME"
+    private const val TEMP_API_DIR = "C:\\Tmp"
 
     /**
      * Dir to API lists
      */
-    private const val API_DIR = "REPLACE_ME"
+    private const val API_DIR = "C:\\Lan\\projects\\intellij\\community\\java\\java-analysis-api\\src\\com\\intellij\\openapi\\module"
 
-    private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-20"
+    private const val PREVIEW_JDK_HOME = "C:\\Lan\\jdks\\jdk-24"
 
-    private const val JDK_HOME = "/home/me/.jdks/openjdk-20"
+    private const val JDK_HOME = "C:\\Lan\\jdks\\jdk-24"
 
     /**
      * The language level to check for.
      */
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_20
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_24
 
     /**
      * The @since tag value used should match [LANGUAGE_LEVEL].
      */
-    private const val SINCE_VERSION = "20"
+    private const val SINCE_VERSION = "24"
   }
 }
