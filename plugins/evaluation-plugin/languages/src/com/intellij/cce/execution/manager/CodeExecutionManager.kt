@@ -4,6 +4,8 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
 import java.io.File
 
 abstract class CodeExecutionManager {
@@ -17,17 +19,17 @@ abstract class CodeExecutionManager {
 
   protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
-  lateinit var project: Project
-
   protected abstract fun getGeneratedCodeFile(code: String): File
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
   protected abstract fun setupEnvironment(): ProcessExecutionLog
   protected abstract fun executeGeneratedCode(target: String, codeFilePath: File): ProcessExecutionLog
 
   fun compileAndExecute(project: Project, code: String, target: String): ProcessExecutionLog {
-    if (project.basePath == null)
-      return ProcessExecutionLog("", "No project base path found", -1, collectedInfo.toMap())
-    this.project = project
+    val basePath = project.basePath
+    val sdk: Sdk? = ProjectRootManager.getInstance(project).projectSdk
+
+    if (sdk == null && language.needSdk) return ProcessExecutionLog("", "No SDK found", -1, collectedInfo.toMap())
+    basePath ?: return ProcessExecutionLog("", "No project base path found", -1, collectedInfo.toMap())
 
     // Get the path to the temp file that the generated code should be saved in
     val codeFile = getGeneratedCodeFile(code)
@@ -42,7 +44,7 @@ abstract class CodeExecutionManager {
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
     // Execute
-    val executionLog = executeGeneratedCode(target, codeFile)
+    val executionLog = executeGeneratedCode(target, basePath, codeFile, sdk)
     // Clean the temp file containing the generated code
     codeFile.delete()
 

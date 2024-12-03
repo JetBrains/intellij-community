@@ -9,7 +9,8 @@ import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
 import com.intellij.cce.python.execution.output.PythonErrorLogProcessor
-import com.jetbrains.python.sdk.pythonSdk
+import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
 
 class PythonCodeExecutionManager() : CodeExecutionManager() {
@@ -21,10 +22,10 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     extractCodeDirectory(code)?.let {
       val detectedPath = if (!it.startsWith("/")) "/$it" else it
       collectedInfo.put(AIA_TEST_FILE_PROVIDED, true)
-      return File(project.basePath + detectedPath)
+      return File(basePath + detectedPath)
     }
     collectedInfo.put(AIA_TEST_FILE_PROVIDED, false)
-    return File(project.basePath + defaultTestFilePath)
+    return File(basePath + defaultTestFilePath)
   }
 
   override fun setupEnvironment(): ProcessExecutionLog {
@@ -57,22 +58,21 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog("", "", 0, collectedInfo.toMap())
   }
 
-  override fun executeGeneratedCode(target: String, codeFilePath: File): ProcessExecutionLog {
-    val runFile = File("${project.basePath}/run_tests.sh")
+  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?): ProcessExecutionLog {
+    if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1, collectedInfo.toMap())
+
+    val runFile = File("$basePath/run_tests.sh")
 
     if (!runFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1, collectedInfo.toMap())
     if (!codeFilePath.exists()) return ProcessExecutionLog("", "The Python test file does not exist", -1, collectedInfo.toMap())
 
     val testName = codeFilePath.path
-      .removePrefix(project.basePath.toString())
+      .removePrefix(basePath)
       .removePrefix("/")
       .removeSuffix(".py")
       .replace("/", ".")
 
-    val coverageFilePath = "${project.basePath}/$testName-coverage"
-
-    project.pythonSdk ?: return ProcessExecutionLog("", "Python SDK not found", -1, collectedInfo.toMap())
-
+    val coverageFilePath = "$basePath/$testName-coverage"
     try {
       val executionLog = runPythonProcess(
         ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target)
@@ -103,7 +103,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
   private fun runPythonProcess(processBuilder: ProcessBuilder):
     ProcessExecutionLog {
     // Set the correct Python interpreter
-    processBuilder.environment()["PYTHON"] =  project.pythonSdk!!.homePath
+    processBuilder.environment()["PYTHON"] = sdk.homePath
     // Move to project's root
     processBuilder.directory(File(project.basePath!!))
     // Start the process
