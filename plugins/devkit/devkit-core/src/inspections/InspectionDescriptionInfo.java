@@ -167,10 +167,6 @@ public final class InspectionDescriptionInfo {
     return myDescriptionFile;
   }
 
-  public boolean hasDescriptionFile() {
-    return getDescriptionFile() != null;
-  }
-
   public boolean isShortNameInXml() {
     return myShortNameInXml;
   }
