@@ -21,9 +21,8 @@ class LineCoverageMetric : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        val lineCoverage = it.additionalInfo.getOrDefault(AIA_TEST_LINE_COVERAGE, 0.0) as? Double ?: return Double.NaN
-
-        if (lineCoverage < 0) return Double.NaN
+        // If no metric value, return Nan, language is not supported
+        val lineCoverage = it.additionalInfo.get(AIA_TEST_LINE_COVERAGE) as? Double ?: return Double.NaN
 
         sample.add(lineCoverage)
         fileSample.add(lineCoverage)

@@ -21,9 +21,8 @@ class BranchCoverageMetric : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        val branchCoverage = it.additionalInfo.getOrDefault(AIA_TEST_BRANCH_COVERAGE, 0.0) as? Double ?: return Double.NaN
-
-        if (branchCoverage < 0) return Double.NaN
+        // If no metric value, return Nan, language is not supported
+        val branchCoverage = it.additionalInfo.get(AIA_TEST_BRANCH_COVERAGE) as? Double ?: return Double.NaN
 
         sample.add(branchCoverage)
         fileSample.add(branchCoverage)
