@@ -53,41 +53,35 @@ internal class K2J2KCopyPasteConverter(
             editor.caretModel.moveToOffset(endOffsetAfterReplace)
         }
 
-        val newBounds = restoreReferencesAndInsertImports(boundsAfterReplace, importsToAdd)
+        val newBounds = insertImports(boundsAfterReplace, importsToAdd)
         PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
         runPostProcessing(project, targetFile, newBounds, converterContext, j2kKind)
     }
 
     override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
-        fun runConversion() {
-            val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, j2kKind)
-            val (text, _, importsToAdd, isTextChanged, converterContext) = conversionResult
-            val changedText = if (isTextChanged) text else null
-            result = Result(changedText, importsToAdd, converterContext)
-        }
+        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, j2kKind)
+        val (text, _, importsToAdd, isTextChanged, converterContext) = conversionResult
+        val changedText = if (isTextChanged) text else null
+        result = Result(changedText, importsToAdd, converterContext)
 
-        runConversion() // initializes `result`
         if (result.changedText != null) return false
         val boundsTextRange = targetBounds.asTextRange ?: return true
-        restoreReferencesAndInsertImports(boundsTextRange, result.importsToAdd)
+        insertImports(boundsTextRange, result.importsToAdd)
         return true
     }
 
     /**
-     * Restores references and inserts necessary imports for converted code in [bounds].
+     * Inserts necessary imports for converted code in [bounds].
      * @return The updated TextRange of converted code
      */
-    private fun restoreReferencesAndInsertImports(
-        bounds: TextRange,
-        importsToAdd: Collection<FqName>
-    ): TextRange? {
+    private fun insertImports(bounds: TextRange, importsToAdd: Collection<FqName>): TextRange? {
         if (importsToAdd.isEmpty()) return bounds
+
         PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
-
-        val rangeMarker = targetDocument.createRangeMarker(bounds)
-        rangeMarker.isGreedyToLeft = true
-        rangeMarker.isGreedyToRight = true
-
+        val rangeMarker = targetDocument.createRangeMarker(bounds).apply {
+            isGreedyToLeft = true
+            isGreedyToRight = true
+        }
         runWriteAction {
             for (import in importsToAdd) {
                 targetFile.addImport(import)
