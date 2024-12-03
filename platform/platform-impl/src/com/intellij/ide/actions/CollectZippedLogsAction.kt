@@ -13,14 +13,20 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.ui.IoErrorText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
@@ -50,13 +56,31 @@ internal class CollectZippedLogsAction : AnAction(), DumbAware {
       }
     }
 
+    currentThreadCoroutineScope().launch {
+      collectLogs(project)
+    }
+  }
+
+  private suspend fun collectLogs(project: com.intellij.openapi.project.Project? = null) {
     try {
-      val logs = runWithModalProgressBlocking(
-        owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-        title = IdeBundle.message("collect.logs.progress.title"),
-      ) {
-        packLogs(project)
-      }
+      val logs =
+        if (project == null) {
+          withContext(Dispatchers.EDT) {
+            runWithModalProgressBlocking(
+              owner = ModalTaskOwner.guess(),
+              title = IdeBundle.message("collect.logs.progress.title"),
+              action = { -> packLogs(project) },
+            )
+          }
+        }
+        else {
+          withBackgroundProgress(
+            project = project,
+            title = IdeBundle.message("collect.logs.progress.title"),
+            action = { -> packLogs(project) },
+          )
+        }
+
       if (RevealFileAction.isSupported()) {
         RevealFileAction.openFile(logs)
       }
