@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.name.FqName
 internal class K2J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
-    private val dataForConversion: DataForConversion,
+    private val elementsAndTexts: ElementAndTextList,
     private val targetData: ConversionTargetData,
 ) : J2KCopyPasteConverter {
     /**
@@ -50,7 +50,7 @@ internal class K2J2KCopyPasteConverter(
     }
 
     override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
-        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetData.file, Kind.K2)
+        val conversionResult = elementsAndTexts.convertCodeToKotlin(project, targetData.file, Kind.K2)
         val (text, _, importsToAdd, isTextChanged, converterContext) = conversionResult
         val changedText = if (isTextChanged) text else null
         result = Result(changedText, importsToAdd, converterContext)
