@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.j2k.k2.copyPaste
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
@@ -12,6 +13,8 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind
 import org.jetbrains.kotlin.j2k.copyPaste.*
 import org.jetbrains.kotlin.name.FqName
+
+private val LOG = Logger.getInstance(K2J2KCopyPasteConverter::class.java)
 
 internal class K2J2KCopyPasteConverter(
     private val project: Project,
@@ -35,7 +38,13 @@ internal class K2J2KCopyPasteConverter(
         if (!::result.isInitialized && convertAndRestoreReferencesIfTextIsUnchanged()) return
 
         val (changedText, importsToAdd, converterContext) = result
-        checkNotNull(changedText) // the case with unchanged text has already been handled by `convertAndRestoreReferencesIfTextIsUnchanged`
+        if (changedText == null) {
+            LOG.error(
+                "'changedText' is null, this is a logical error: " +
+                        "the case with unchanged text should have been handled by `convertAndRestoreReferencesIfTextIsUnchanged`"
+            )
+            return
+        }
 
         val endOffsetAfterReplace = targetData.bounds.startOffset + changedText.length
         val boundsAfterReplace = TextRange(targetData.bounds.startOffset, endOffsetAfterReplace)
