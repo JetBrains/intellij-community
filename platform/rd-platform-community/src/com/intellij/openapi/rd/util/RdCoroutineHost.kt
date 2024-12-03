@@ -15,7 +15,7 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Internal
 class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   companion object {
-    val instance by lazy {
+    val instance: RdCoroutineHost by lazy {
       val scope = ApplicationManager.getApplication().service<ScopeHolder>()
       RdCoroutineHost(scope.scope).apply {
         override(this)
