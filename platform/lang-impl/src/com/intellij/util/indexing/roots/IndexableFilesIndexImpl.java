@@ -93,7 +93,7 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     settings.setCollectExplicitRootsForModules(false);
     settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
-      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
+      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings, project);
     WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots = builder.getIteratorsFromRoots(libraryOrigins, entityStorage);
     iterators.addAll(iteratorsFromRoots.getContentIterators());
     iterators.addAll(iteratorsFromRoots.getExternalIterators());

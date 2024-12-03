@@ -369,9 +369,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
     override fun jdkAdded(jdk: Sdk) {
       if (hasDependencyOn(jdk)) {
-        if (watchedSdks.isEmpty()) {
-          eventDispatcher.multicaster.firstDependencyOnSdkAdded()
-        }
         eventDispatcher.multicaster.referencedSdkAdded(jdk)
         if (hasProjectSdkDependency() && isProjectSdk(jdk)) {
           watchedProjectSdk = jdk
@@ -415,9 +412,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (hasDependencyOn(jdk)) {
         eventDispatcher.multicaster.referencedSdkRemoved(jdk)
       }
-      if (watchedSdks.isEmpty()) {
-        eventDispatcher.multicaster.lastDependencyOnSdkRemoved()
-      }
     }
 
     fun addTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
@@ -436,9 +430,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     private fun addTrackedJdk(sdk: Sdk) {
-      if (watchedSdks.isEmpty()) {
-        eventDispatcher.multicaster.firstDependencyOnSdkAdded()
-      }
       if (watchedSdks.add(sdk)) {
         eventDispatcher.multicaster.addedDependencyOn(sdk)
         sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
@@ -460,9 +451,6 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (!hasDependencyOn(sdk) && watchedSdks.remove(sdk)) {
         sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(sdk)
-        if (watchedSdks.isEmpty()) {
-          eventDispatcher.multicaster.lastDependencyOnSdkRemoved()
-        }
       }
     }
 

@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 
-class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity> {
+class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, PlatformInternalWorkspaceFileIndexContributor {
 
   override val entityClass: Class<SdkEntity>
     get() = SdkEntity::class.java
@@ -37,7 +37,7 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity> {
   ) : SdkRootFileSetData(sdkId, packagePrefix), ModuleOrLibrarySourceRootData
 
   internal open class SdkRootFileSetData(
-    private val sdkId: SdkId,
+    internal val sdkId: SdkId,
     override val packagePrefix: String,
   ) : UnloadableFileSetData, JvmPackageRootDataInternal {
     override fun isUnloaded(project: Project): Boolean {

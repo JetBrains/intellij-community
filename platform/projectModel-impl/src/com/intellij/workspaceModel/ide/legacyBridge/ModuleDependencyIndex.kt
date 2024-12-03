@@ -129,10 +129,4 @@ interface ModuleDependencyListener : EventListener {
    */
   fun referencedSdkRemoved(sdk: Sdk) {
   }
-
-  fun firstDependencyOnSdkAdded() {
-  }
-
-  fun lastDependencyOnSdkRemoved() {
-  }
 }
