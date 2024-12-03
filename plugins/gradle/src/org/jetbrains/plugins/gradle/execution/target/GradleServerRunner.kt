@@ -42,24 +42,25 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
                                   private val prepareTaskState: Boolean) {
 
   fun run(
-    classpathInferer: GradleServerClasspathInferer,
+    classloaderHolder: GradleToolingProxyClassloaderHolder,
     targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
-    resultHandler: ResultHandler<Any?>
+    resultHandler: ResultHandler<Any?>,
   ) {
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
     consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)
     val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, connection, prepareTaskState)
-    val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
-                                                                progressIndicator, classpathInferer.getClasspath())
-    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler, classpathInferer)
+    val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters, progressIndicator)
+    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler, classloaderHolder)
   }
 
-  private fun runTargetProcess(targetedCommandLine: TargetedCommandLine,
-                               serverEnvironmentSetup: GradleServerEnvironmentSetup,
-                               targetProgressIndicator: GradleServerProgressIndicator,
-                               resultHandler: ResultHandler<Any?>,
-                               classpathInferer: GradleServerClasspathInferer) {
+  private fun runTargetProcess(
+    targetedCommandLine: TargetedCommandLine,
+    serverEnvironmentSetup: GradleServerEnvironmentSetup,
+    targetProgressIndicator: GradleServerProgressIndicator,
+    resultHandler: ResultHandler<Any?>,
+    classloaderHolder: GradleToolingProxyClassloaderHolder,
+  ) {
     targetProgressIndicator.checkCanceled()
     val remoteEnvironment = serverEnvironmentSetup.getTargetEnvironment()
     val process = remoteEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
@@ -82,7 +83,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       val hostPort = if (targetPort == it.port && localPort != null) HostPort(it.host, localPort) else it
       serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.getEnvironmentConfiguration(), hostPort) ?: hostPort
     }
-    val gradleServerEventsListener = GradleServerEventsListener(serverEnvironmentSetup, connectionAddressResolver, classpathInferer) {
+    val gradleServerEventsListener = GradleServerEventsListener(serverEnvironmentSetup, connectionAddressResolver, classloaderHolder) {
       when (it) {
         is String -> {
           consumerOperationParameters.progressListener.run {
@@ -167,8 +168,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
   private class GradleServerEventsListener(
     private val serverEnvironmentSetup: GradleServerEnvironmentSetup,
     private val connectionAddressResolver: (HostPort) -> HostPort,
-    private val classpathInferer: GradleServerClasspathInferer,
-    private val buildEventConsumer: BuildEventConsumer
+    private val classloaderHolder: GradleToolingProxyClassloaderHolder,
+    private val buildEventConsumer: BuildEventConsumer,
   ) {
 
     private lateinit var listenerTask: Future<*>
@@ -236,7 +237,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
     private fun deserializeIfNeeded(value: Any?): Any? {
       val bytes = value as? ByteArray ?: return value
-      val deserialized = MultiLoaderObjectInputStream(ByteArrayInputStream(bytes), classpathInferer.getClassloaders()).use {
+      val deserialized = MultiLoaderObjectInputStream(ByteArrayInputStream(bytes), classloaderHolder.getClassloaders()).use {
         it.readObject()
       }
       return deserialized

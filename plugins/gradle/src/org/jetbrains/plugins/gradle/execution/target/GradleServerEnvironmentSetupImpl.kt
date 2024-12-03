@@ -18,26 +18,20 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
-import groovy.lang.MissingMethodException
-import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup.Companion.targetJavaExecutablePathMappingKey
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.collectInitScripts
-import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.computeToolingProxyClassPath
+import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.extractPathsFromInitScript
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.extractPathsToMapFromInitScripts
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetupImpl.Helper.getToolingProxyDefaultJavaParameters
-import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
-import org.jetbrains.plugins.gradle.service.execution.MAIN_INIT_SCRIPT_NAME
-import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
+import org.jetbrains.plugins.gradle.service.execution.*
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetIntermediateResultHandler
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
-import org.slf4j.LoggerFactory
-import org.slf4j.jul.JDK14LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -91,12 +85,24 @@ internal class GradleServerEnvironmentSetupImpl(
     targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
     consumerOperationParameters: ConsumerOperationParameters,
     progressIndicator: GradleServerProgressIndicator,
-    buildActionClassPath: List<String>,
   ): TargetedCommandLine {
     progressIndicator.checkCanceled()
     val initScripts = collectInitScripts(consumerOperationParameters)
-    val classpath = computeToolingProxyClassPath(initScripts, buildActionClassPath)
-    javaParameters.classPath.addAll(classpath)
+
+    val mainInitScript = initScripts.find { File(it).name.startsWith(MAIN_INIT_SCRIPT_NAME) }
+    if (mainInitScript != null) {
+      /**
+       * All necessary jars must be explicitly provided in the main init script as a result of the
+       * GradleProjectResolverExtension.getToolingExtensionsClasses().
+       * By extracting these paths from the init script, we can build the classpath needed for execution.
+       * These jars are needed on the tooling proxy side, because the tooling proxy converts the built models before sending
+       * them to the IDEA side.
+       */
+      val projectResolverExtensionProvidedClassPath = extractPathsFromInitScript(mainInitScript)
+      for (path in projectResolverExtensionProvidedClassPath) {
+        javaParameters.classPath.add(path)
+      }
+    }
 
     val environmentConfigurationProvider = connection.environmentConfigurationProvider
     this.environmentConfiguration = environmentConfigurationProvider.environmentConfiguration
@@ -326,11 +332,10 @@ internal class GradleServerEnvironmentSetupImpl(
   private object Helper {
     fun getToolingProxyDefaultJavaParameters(): SimpleJavaParameters {
       val javaParameters = SimpleJavaParameters()
-
-      val classpathInferer = GradleServerClasspathInferer()
-      addRuntimeTapiDependencies(classpathInferer)
-
-      javaParameters.classPath.addAll(classpathInferer.getClasspath())
+      val toolingExtensionJarPaths = getToolingExtensionsJarPaths(GRADLE_TOOLING_EXTENSION_PROXY_CLASSES)
+      for (path in toolingExtensionJarPaths) {
+        javaParameters.classPath.add(path)
+      }
       javaParameters.vmParametersList.add("-Djava.net.preferIPv4Stack=true")
       javaParameters.mainClass = Main::class.java.name
       if (log.isDebugEnabled) {
@@ -339,41 +344,13 @@ internal class GradleServerEnvironmentSetupImpl(
       return javaParameters
     }
 
-    fun computeToolingProxyClassPath(initScripts: List<String>, additionalClassPath: List<String>): List<String> {
-      val resultingClassPath = mutableListOf<String>()
-      val mainInitScriptPath = initScripts.find { File(it).name.startsWith(MAIN_INIT_SCRIPT_NAME) }
-      if (mainInitScriptPath != null) {
-        val toolingExtensionsJarPaths = extractPathsToMapFromInitScript(mainInitScriptPath)
-        if (!toolingExtensionsJarPaths.isEmpty()) {
-          log.warn("No tooling extensions jars in main init script")
-        }
-        resultingClassPath.addAll(toolingExtensionsJarPaths)
-      }
-      resultingClassPath.addAll(additionalClassPath)
-      return resultingClassPath
-    }
-
     fun extractPathsToMapFromInitScripts(initScriptPaths: List<String>): List<String> {
       val paths = mutableListOf<String>()
       for (initScriptPath in initScriptPaths) {
-        val pathsToMap = extractPathsToMapFromInitScript(initScriptPath)
+        val pathsToMap = extractPathsFromInitScript(initScriptPath)
         paths.addAll(pathsToMap)
       }
       return paths
-    }
-
-    private fun addRuntimeTapiDependencies(classpathInferer: GradleServerClasspathInferer) {
-      // kotlin-stdlib-jdk8
-      classpathInferer.add(KotlinVersion::class.java)
-      // gradle-api jar
-      classpathInferer.add(Gradle::class.java)
-      // logging jars
-      classpathInferer.add(LoggerFactory::class.java)
-      classpathInferer.add(JDK14LoggerFactory::class.java)
-      // gradle tooling proxy module
-      classpathInferer.add(Main::class.java)
-      // groovy runtime for serialization
-      classpathInferer.add(MissingMethodException::class.java)
     }
 
     fun collectInitScripts(parameters: ConsumerOperationParameters): List<String> {
@@ -389,7 +366,7 @@ internal class GradleServerEnvironmentSetupImpl(
       return initScriptPaths
     }
 
-    private fun extractPathsToMapFromInitScript(initScriptPath: String): List<String> {
+    fun extractPathsFromInitScript(initScriptPath: String): List<String> {
       val initScriptFile = File(initScriptPath)
       if (initScriptFile.extension == GradleConstants.EXTENSION) {
         val fileContent = initScriptFile.readText()

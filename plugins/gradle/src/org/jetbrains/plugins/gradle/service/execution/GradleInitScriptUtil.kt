@@ -13,10 +13,15 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
+import groovy.lang.MissingMethodException
+import org.gradle.api.invocation.Gradle
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init
+import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.slf4j.LoggerFactory
+import org.slf4j.jul.JDK14LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
@@ -43,6 +48,15 @@ val GRADLE_TOOLING_EXTENSION_CLASSES = setOf(
   ExternalSystemRtClass::class.java, // intellij.platform.externalSystem.rt
   GradleToolingExtensionClass::class.java, // intellij.gradle.toolingExtension
   GradleToolingExtensionImplClass::class.java, // intellij.gradle.toolingExtension.impl
+)
+
+@JvmField
+val GRADLE_TOOLING_EXTENSION_PROXY_CLASSES = GRADLE_TOOLING_EXTENSION_CLASSES + setOf(
+  KotlinVersion::class.java, // kotlin-stdlib-jdk8
+  Gradle::class.java, // gradle-api jar
+  LoggerFactory::class.java, JDK14LoggerFactory::class.java, // logging jars
+  Main::class.java, // gradle tooling proxy module
+  MissingMethodException::class.java // groovy runtime for serialization
 )
 
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): Path {
@@ -285,7 +299,7 @@ fun createInitScript(prefix: String, content: String): Path {
 }
 
 fun loadToolingExtensionProvidingInitScript(toolingExtensionClasses: Set<Class<*>>): String {
-  val tapiClasspath = toolingExtensionClasses.mapNotNullTo(LinkedHashSet(), ::getToolingExtensionsJarPath)
+  val tapiClasspath = getToolingExtensionsJarPaths(toolingExtensionClasses)
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/ClassPathExtensionInitScript.gradle", mapOf(
     "EXTENSIONS_JARS_PATH" to tapiClasspath.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" }
   ))
@@ -294,6 +308,11 @@ fun loadToolingExtensionProvidingInitScript(toolingExtensionClasses: Set<Class<*
 private fun isContentEquals(path: Path, content: ByteArray): Boolean {
   return content.size.toLong() == path.fileSize() &&
          content.contentEquals(path.readBytes())
+}
+
+@ApiStatus.Internal
+fun getToolingExtensionsJarPaths(toolingExtensionClasses: Iterable<Class<*>>): Set<String> {
+  return toolingExtensionClasses.mapNotNullTo(LinkedHashSet(), ::getToolingExtensionsJarPath)
 }
 
 private fun getToolingExtensionsJarPath(toolingExtensionClass: Class<*>): String? {

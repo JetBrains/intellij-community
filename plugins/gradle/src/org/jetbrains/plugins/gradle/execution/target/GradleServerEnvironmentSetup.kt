@@ -18,7 +18,6 @@ interface GradleServerEnvironmentSetup {
     targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
     consumerOperationParameters: ConsumerOperationParameters,
     progressIndicator: GradleServerProgressIndicator,
-    buildActionClassPath: List<String>,
   ): TargetedCommandLine
 
   fun getJavaParameters(): SimpleJavaParameters
