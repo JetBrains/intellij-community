@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
@@ -136,13 +137,19 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     });
   }
 
+  private static List<Path> listDir(Path dir) throws IOException {
+    try (Stream<Path> s = Files.list(dir)) {
+      return s.toList();
+    }
+  }
+
   private void cleanupBrokenData() throws IOException {
     close(true);
 
     //noinspection TestOnlyProblems
     final Path currentDataDir = getCurrentDataDir();
     final Path currentDataContextDir = getCurrentDataContextDir();
-    final Path[] files = Files.list(currentDataDir).toArray(Path[]::new);
+    var files = listDir(currentDataDir);
     for (Path file : files) {
       if (!file.equals(currentDataContextDir)) {
         FileUtil.delete(file);
@@ -343,7 +350,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
         myUpdateTimestamp = System.currentTimeMillis();
       }
 
-      for (Path each : Files.list(myDir).toList()) {
+      for (Path each : listDir(myDir)) {
         if (each.toString().startsWith(DATA_DIR_PREFIX) && !each.toString().equals(myDataDirName)) {
           FileUtil.delete(each);
         }
