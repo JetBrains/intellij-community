@@ -14,7 +14,7 @@ import javax.swing.JComponent
 import javax.swing.JTable
 
 @ApiStatus.Internal
-internal abstract class VcsLogNewUiCellWrapper(private val hasMultiplePaths: () -> Boolean) {
+abstract class VcsLogNewUiCellWrapper(private val hasMultiplePaths: () -> Boolean) {
   fun getWrappedCellComponent(table: JTable, value: Any, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): Component {
     val columnRenderer = getComponentToWrap(table, value, isSelected, hasFocus, row, column) as JComponent
 
@@ -78,7 +78,7 @@ internal abstract class VcsLogNewUiCellWrapper(private val hasMultiplePaths: () 
 
   private fun getSelectionColor(table: JTable, row: Int, column: Int, isSelected: Boolean, hasFocus: Boolean, isHovered: Boolean): Color? {
     return when {
-      isSelected -> VcsLogGraphTable.getSelectionBackground(table.hasFocus())
+      isSelected -> (table as VcsLogGraphTable).getSelectionBackground(hasFocus, row)
 
       isHovered -> (table as VcsLogGraphTable)
         .getStyle(row, column, hasFocus, false, true)

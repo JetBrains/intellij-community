@@ -53,6 +53,7 @@ import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
@@ -194,6 +195,17 @@ public class VcsLogGraphTable extends TableWithProgress
   }
 
   @Override
+  @ApiStatus.Internal
+  public void columnMoved(TableColumnModelEvent e) {
+    if (e.getToIndex() != e.getFromIndex()) {
+      super.columnMoved(e);
+    }
+    else {
+      repaint();
+    }
+  }
+
+  @Override
   public boolean getAutoCreateColumnsFromModel() {
     // otherwise sizes are recalculated after each TableColumn re-initialization
     return false;
@@ -232,6 +244,7 @@ public class VcsLogGraphTable extends TableWithProgress
 
     SelectionSnapshot previousSelection = getSelectionSnapshot();
     getModel().setVisiblePack(visiblePack);
+    removeEditor();
     previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
 
     for (VcsLogHighlighter highlighter : myHighlighters) {
@@ -509,15 +522,15 @@ public class VcsLogGraphTable extends TableWithProgress
   }
 
   @NotNull
-  Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn<?> vcsLogColumn) {
+  Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn<?> vcsLogColumn, int row) {
     int columnIndex = getColumnViewIndex(vcsLogColumn);
     int left = getColumnDataRectLeft(columnIndex);
-    int top = getCellRectTop(clickPoint.y);
+    int top = getCellRectTop(clickPoint.y, row);
     return new Point(clickPoint.x - left, clickPoint.y - top);
   }
 
-  private int getCellRectTop(int y) {
-    int rowHeight = getRowHeight();
+  private int getCellRectTop(int y, int row) {
+    int rowHeight = getRowHeight(row);
     int rowIndex = y / rowHeight;
     return rowIndex * rowHeight;
   }
@@ -820,17 +833,16 @@ public class VcsLogGraphTable extends TableWithProgress
   }
 
   private static class BaseStyleProvider {
-    private final @NotNull JTable myTable;
+    private final @NotNull VcsLogGraphTable myTable;
     private final @NotNull TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
 
-    BaseStyleProvider(@NotNull JTable table) {
+    BaseStyleProvider(@NotNull VcsLogGraphTable table) {
       myTable = table;
     }
 
     public @NotNull VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
       Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(myTable, "", selected, hasFocus, row, column);
-      Color background = selected ? getSelectionBackground(myTable.hasFocus()) : getTableBackground();
-
+      Color background = selected ? myTable.getSelectionBackground(hasFocus, row) : getTableBackground();
       return createStyle(dummyRendererComponent.getForeground(), background, VcsLogHighlighter.TextStyle.NORMAL);
     }
   }
@@ -983,9 +995,24 @@ public class VcsLogGraphTable extends TableWithProgress
 
   @Override
   public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
-    if (shouldChangeSelect(EventQueue.getCurrentEvent(), rowIndex, columnIndex )) {
+    if (shouldChangeSelect(EventQueue.getCurrentEvent(), rowIndex, columnIndex)) {
+      // Stop editing if the editing row should be unselected
+      if (isEditing() && editingRow == rowIndex && toggle) {
+        removeEditor();
+      }
+
       super.changeSelection(rowIndex, columnIndex, toggle, extend);
     }
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  Color getSelectionBackground(boolean forceFocus, int row) {
+    boolean hasFocus = forceFocus ||
+                       hasFocus() ||
+                       // Assume that the row being "edited" always has focus, as otherwise it shouldn't be in editing mode
+                       (isEditing() && editingRow == row);
+    return getSelectionBackground(hasFocus);
   }
 
   /**
@@ -1092,7 +1119,7 @@ public class VcsLogGraphTable extends TableWithProgress
     return ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.getListBackground();
   }
 
-  public static @NotNull Color getSelectionBackground(boolean hasFocus) {
+  private static @NotNull Color getSelectionBackground(boolean hasFocus) {
     return hasFocus ? SELECTION_BACKGROUND : SELECTION_BACKGROUND_INACTIVE;
   }
 

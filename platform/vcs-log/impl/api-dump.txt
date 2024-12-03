@@ -1185,7 +1185,6 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getRootColumn():javax.swing.table.TableColumn
 - getRowHeight():I
 - getSelection():com.intellij.vcs.log.VcsLogCommitSelection
-- s:getSelectionBackground(Z):java.awt.Color
 - s:getSelectionForeground(Z):java.awt.Color
 - s:getTableBackground():java.awt.Color
 - getTableColumn(com.intellij.vcs.log.ui.table.column.VcsLogColumn):javax.swing.table.TableColumn

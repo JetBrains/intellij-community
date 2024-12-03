@@ -328,7 +328,7 @@ class GraphCommitCellRenderer(
     }
 
     fun customize(value: GraphCommitCell.NewCommit, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-      commitTextField.text = value.text
+      commitTextField.text = value.text.takeIf { it.isNotEmpty() } ?: VcsLogBundle.message("vcs.log.wip.label")
       printElements = value.printElements
       graphTable.applyHighlighters(this, row, column, hasFocus, isSelected)
     }

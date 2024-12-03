@@ -26,6 +26,7 @@ sealed interface GraphCommitCell {
 
   class NewCommit(
     override val text: @NlsSafe String,
+    val message: @NlsSafe String,
     override val printElements: Collection<PrintElement>,
   ) : GraphCommitCell
 }

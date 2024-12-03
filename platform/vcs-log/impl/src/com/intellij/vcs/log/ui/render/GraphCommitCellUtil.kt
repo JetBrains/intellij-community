@@ -5,10 +5,12 @@ import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.paint.PaintParameters
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min
 
-internal object GraphCommitCellUtil {
+@ApiStatus.Internal
+object GraphCommitCellUtil {
   private const val MAX_GRAPH_WIDTH: Int = 6
 
   @JvmStatic

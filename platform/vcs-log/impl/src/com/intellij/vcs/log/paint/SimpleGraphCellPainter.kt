@@ -11,6 +11,7 @@ import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.NodePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Line2D
@@ -22,7 +23,8 @@ import kotlin.math.sqrt
 /**
  * @author erokhins
  */
-internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : GraphCellPainter {
+@ApiStatus.Internal
+open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : GraphCellPainter {
   protected open val rowHeight: Int get() = PaintParameters.ROW_HEIGHT
 
   override fun paint(g2: Graphics2D, printElements: Collection<PrintElement>) {

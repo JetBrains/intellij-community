@@ -121,13 +121,15 @@ open class GraphTableModel @ApiStatus.Internal constructor(
   protected open fun fromTableToGraphRow(tableRow: VcsLogTableIndex): VcsLogVisibleGraphIndex? = tableRow
   protected open fun fromTableToGraphRows(rows: IntArray): IntArray = rows
 
-  private companion object {
+  @ApiStatus.Internal
+  companion object {
     private const val UP_PRELOAD_COUNT = 20
     private const val DOWN_PRELOAD_COUNT = 40
 
     private val LOG = Logger.getInstance(GraphTableModel::class.java)
 
-    private fun getColumn(modelIndex: Int): VcsLogColumn<*> {
+    @JvmStatic
+    protected fun getColumn(modelIndex: Int): VcsLogColumn<*> {
       return VcsLogColumnManager.getInstance().getColumn(modelIndex)
     }
   }
