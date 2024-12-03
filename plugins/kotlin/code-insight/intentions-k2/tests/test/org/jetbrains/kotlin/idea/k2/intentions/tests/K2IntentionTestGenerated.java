@@ -11017,7 +11017,79 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/movePropertyToClassBody")
+    public static class MovePropertyToClassBody extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationClass.kt")
+        public void testAnnotationClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/annotationClass.kt");
+        }
+
+        @TestMetadata("annotationWithUseSite.kt")
+        public void testAnnotationWithUseSite() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/annotationWithUseSite.kt");
+        }
+
+        @TestMetadata("dataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/dataClass.kt");
+        }
+
+        @TestMetadata("inlineClass.kt")
+        public void testInlineClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/inlineClass.kt");
+        }
+
+        @TestMetadata("location1.kt")
+        public void testLocation1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/location1.kt");
+        }
+
+        @TestMetadata("location2.kt")
+        public void testLocation2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/location2.kt");
+        }
+
+        @TestMetadata("parameterAnnotation.kt")
+        public void testParameterAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/parameterAnnotation.kt");
+        }
+
+        @TestMetadata("propertyAnnotation.kt")
+        public void testPropertyAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/propertyAnnotation.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/simple.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/valueClass.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/vararg.kt");
+        }
+
+        @TestMetadata("varargWithAnnotation.kt")
+        public void testVarargWithAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/varargWithAnnotation.kt");
+        }
+    }
 
 
 
