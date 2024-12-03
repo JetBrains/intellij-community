@@ -26,7 +26,22 @@ import java.util.stream.Stream;
  */
 public final class MutationSignature {
   private enum Kind {
-    TRANSPARENT, PURE, MUTATES_ANYTHING, OTHER
+    /**
+     * Does not mutate anything, including private fields
+     */
+    TRANSPARENT,
+    /**
+     * Does not mutate publicly visible state, may mutate private fields (e.g., to cache something)
+     */
+    PURE,
+    /**
+     * Mutation signature is unknown: anything can be mutated
+     */
+    MUTATES_ANYTHING,
+    /**
+     * Any other specific case described by other fields (mutates either 'this', or parameters, or io) 
+     */
+    OTHER
   }
   
   public static final String ATTR_MUTATES = "mutates";
