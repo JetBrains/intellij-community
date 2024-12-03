@@ -650,8 +650,23 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public long getLength(@NotNull VirtualFile file) {
     int fileId = fileId(file);
-    NewVirtualFileSystem fileSystem = getFileSystem(file);
 
+    //speculate: read under read-lock assuming length is already cached:
+    long length = vfsPeer.readRecordFields(fileId, record -> {
+      int flags = record.getFlags();
+      boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
+      long cachedLength = record.getLength();
+      if (!mustReloadLength && cachedLength >= 0) {
+        return cachedLength;
+      }
+      return -1L;
+    });
+    if (length >= 0) {
+      return length;
+    }
+
+    //speculation failed: re-read, and update cache:
+    NewVirtualFileSystem fileSystem = getFileSystem(file);
     long[] lengthRef = new long[1];
     vfsPeer.updateRecordFields(fileId, record -> {
       int flags = record.getFlags();
