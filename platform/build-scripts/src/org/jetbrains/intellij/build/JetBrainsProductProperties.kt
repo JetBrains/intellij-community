@@ -82,7 +82,6 @@ abstract class JetBrainsProductProperties : ProductProperties() {
            * Plugin versions are parsed as [IdeVersion] upon uploading to plugins.jetbrains.com to be able to compare them
            *
            * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.withCustomVersion
-           * @see org.jetbrains.intellij.build.CommunityRepositoryModules.githubPlugin
            * @see org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder.kotlinPlugin
            */
           IdeVersion.createIdeVersionIfValid(version.substringBefore("-"))
