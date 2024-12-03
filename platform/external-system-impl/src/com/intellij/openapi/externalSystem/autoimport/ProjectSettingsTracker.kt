@@ -59,7 +59,11 @@ class ProjectSettingsTracker(
     val localFileSystem = LocalFileSystem.getInstance()
     return settingsFiles
       .mapNotNull { localFileSystem.findFileByPath(it) }
-      .associate { it.path to calculateCrc(it) }
+      .mapNotNull {
+        val crc = calculateCrc(it)
+        if (crc != 0L) it.path to crc else null
+      }
+      .toMap()
   }
 
   private fun calculateCrc(file: VirtualFile): Long {
