@@ -1430,7 +1430,6 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
         //getter
         PsiMethod explicitGetter = JavaPsiRecordUtil.getAccessorForRecordComponent(component);
         if (explicitGetter != null) {
-          PsiManager manager = component.getManager();
           for (PsiReference psiReference : ReferencesSearch.search(explicitGetter, explicitGetter.getUseScope(), false)) {
             PsiElement paramRef = psiReference.getElement();
             conflictDescriptions.putValue(paramRef, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", component.getName()));
@@ -1475,7 +1474,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
       }
       if (pattern instanceof PsiTypeTestPattern typeTestPattern) {
         PsiPatternVariable variable = typeTestPattern.getPatternVariable();
-        if (variable == null) return;
+        if (variable == null || variable.isUnnamed()) return;
         if(VariableAccessUtils.variableIsUsed(variable, context.getContainingFile())) {
           conflictDescriptions.putValue(typeTestPattern, JavaRefactoringBundle.message("record.component.used.in.method.body.warning", recordComponent.getName()));
           return;
