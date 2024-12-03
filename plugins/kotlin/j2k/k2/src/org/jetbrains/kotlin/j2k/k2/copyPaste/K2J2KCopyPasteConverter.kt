@@ -51,10 +51,10 @@ internal class K2J2KCopyPasteConverter(
         runWriteAction {
             targetData.document.replaceString(targetData.bounds.startOffset, targetData.bounds.endOffset, changedText)
             editor.caretModel.moveToOffset(endOffsetAfterReplace)
+            PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
         }
 
         val newBounds = insertImports(boundsAfterReplace, importsToAdd)
-        PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
         runPostProcessing(project, targetData.file, newBounds, converterContext, Kind.K2)
     }
 
@@ -77,7 +77,6 @@ internal class K2J2KCopyPasteConverter(
     private fun insertImports(bounds: TextRange, importsToAdd: Collection<FqName>): TextRange? {
         if (importsToAdd.isEmpty()) return bounds
 
-        PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
         val rangeMarker = targetData.document.createRangeMarker(bounds).apply {
             isGreedyToLeft = true
             isGreedyToRight = true

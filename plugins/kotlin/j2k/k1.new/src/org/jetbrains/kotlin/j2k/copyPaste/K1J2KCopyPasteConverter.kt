@@ -52,10 +52,10 @@ class K1J2KCopyPasteConverter(
         runWriteAction {
             targetData.document.replaceString(targetData.bounds.startOffset, targetData.bounds.endOffset, changedText)
             editor.caretModel.moveToOffset(endOffsetAfterReplace)
+            PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
         }
 
         val newBounds = restoreReferencesAndInsertImports(boundsAfterReplace, referenceData, importsToAdd)
-        PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
         runPostProcessing(project, targetData.file, newBounds, converterContext, j2kKind)
     }
 
@@ -131,7 +131,6 @@ class K1J2KCopyPasteConverter(
         importsToAdd: Collection<FqName>
     ): TextRange? {
         if (referenceData.isEmpty() && importsToAdd.isEmpty()) return bounds
-        PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
 
         val rangeMarker = targetData.document.createRangeMarker(bounds)
         rangeMarker.isGreedyToLeft = true
