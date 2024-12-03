@@ -27,7 +27,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSystemDependencyWithoutPath() = runBlocking {
-    needFixForMaven4()
+    runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

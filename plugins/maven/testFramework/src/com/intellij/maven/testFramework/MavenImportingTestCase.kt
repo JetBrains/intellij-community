@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -59,7 +60,6 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.Throws
 
 abstract class MavenImportingTestCase : MavenTestCase() {
   private var myProjectsManager: MavenProjectsManager? = null
@@ -685,5 +685,9 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       Messages.NO
     }
     return counter
+  }
+
+  protected fun runWithoutStaticSync() {
+    Registry.get("maven.preimport.project").setValue(false, testRootDisposable)
   }
 }

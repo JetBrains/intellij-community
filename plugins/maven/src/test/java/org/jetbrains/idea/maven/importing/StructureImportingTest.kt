@@ -523,6 +523,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentWithoutARelativePath() = runBlocking {
+    runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -561,6 +562,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModuleWithPropertiesWithParentWithoutARelativePath() = runBlocking {
+    runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -939,6 +941,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProjectWithMavenConfigCustomUserSettingsXml() = runBlocking {
+    runWithoutStaticSync()
     val configFile = createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
     val settingsFile = createProjectSubFile(".mvn/custom-settings.xml",
                          """
@@ -1004,6 +1007,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProjectWithActiveProfilesAndInactiveFromSettingsXml() = runBlocking {
+    runWithoutStaticSync()
     updateSettingsXml("""
                         <activeProfiles>
                           <activeProfile>one</activeProfile>
