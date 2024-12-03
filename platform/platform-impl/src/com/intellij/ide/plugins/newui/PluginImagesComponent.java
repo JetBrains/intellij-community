@@ -209,11 +209,13 @@ public final class PluginImagesComponent extends JPanel {
             }
           }
           catch (IOException e) {
-            throw new IOException("Unable to read image file " + imageFile.getAbsolutePath(), e);
+            throw new IOException("Unable to read image for plugin " + node.getExternalPluginIdForScreenShots()
+                                  + " file " + imageFile.getAbsolutePath(), e);
           }
         }
         catch (IOException e) {
-          Logger.getInstance(PluginImagesComponent.class).error(e);
+          // IO errors such as image decoding problems are expected and must not be treated as IDE errors
+          Logger.getInstance(PluginImagesComponent.class).warn(e);
         }
       }
 
