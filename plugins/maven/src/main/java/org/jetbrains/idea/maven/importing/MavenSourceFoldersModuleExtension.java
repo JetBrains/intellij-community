@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.project.model.impl.module.content.JpsContentEntry;
 import com.intellij.project.model.impl.module.content.JpsSourceFolder;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +47,15 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
   private JpsRootModel myDummyJpsRootModel;
   private final Set<JpsSourceFolder> myJpsSourceFolders = new TreeSet<>(ContentFolderComparator.INSTANCE);
   private boolean isJpsSourceFoldersChanged;
-  private final Module myModule;
+  private final Project myProject;
 
   MavenSourceFoldersModuleExtension(Module module) {
-    this.myModule = module;
+    this(module.getProject());
+  }
+
+  @NonInjectable
+  MavenSourceFoldersModuleExtension(Project project) {
+    this.myProject = project;
   }
 
   public void init(@NotNull Module module, @NotNull ModifiableRootModel modifiableRootModel) {
@@ -81,7 +88,7 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
   @NotNull
   @Override
   public ModuleExtension getModifiableModel(boolean writable) {
-    return new MavenSourceFoldersModuleExtension(myModule);
+    return new MavenSourceFoldersModuleExtension(myProject);
   }
 
   @Override
@@ -193,7 +200,7 @@ public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
     myJpsSourceFolders.add(jpsSourceFolder);
     // since dummyJpsContentEntry created for each source folder, we will dispose it on that source folder disposal
     Disposer.register(jpsSourceFolder, dummyJpsContentEntry);
-    Disposable parentDisposable = myModule.getProject().getService(ProjectLevelDisposableService.class);
+    Disposable parentDisposable = myProject.getService(ProjectLevelDisposableService.class);
     Disposer.register(parentDisposable, jpsSourceFolder);
   }
 
