@@ -34,7 +34,7 @@ internal fun KaSession.containingDeclarationPatched(symbol: KaSymbol): KaDeclara
  *
  * Returns a `FooAlias` typealias symbol if it is resolvable at this position, and `null` otherwise.
  *
- * This is a workaround function until KTIJ-26098 is fixed.
+ * This is a workaround function until KTIJ-26098 and KT-73546 are fixed.
  */
 internal fun KaSession.resolveTypeAliasedConstructorReference(
     reference: KtReference,
