@@ -97,11 +97,12 @@ abstract class VisualFormattingLayerService {
       editor.visualFormattingLayerCodeStyleSettings = null
     }
 
+    @Suppress("UNCHECKED_CAST")
     @JvmStatic
     fun getVisualFormattingInlineInlays(editor: Editor, startOffset: Int, endOffset: Int): List<Inlay<out InlayPresentation>> =
       editor.inlayModel
         .getInlineElementsInRange(startOffset, endOffset)
-        .filter { InlayPresentation::class.isInstance(it.renderer) && !(it.renderer as InlayPresentation).vertical }
+        .filter { it.renderer.let { it is InlayPresentation && !it.vertical } }
         as List<Inlay<out InlayPresentation>>
   }
 
