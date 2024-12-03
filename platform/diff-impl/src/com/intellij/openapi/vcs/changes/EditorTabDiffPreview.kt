@@ -48,7 +48,7 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
 
   override fun openPreview(requestFocus: Boolean): Boolean {
     if (!hasContent()) return false
-    DiffEditorTabFilesManager.Companion.getInstance(project).showDiffFile(previewFile, requestFocus)
+    DiffEditorTabFilesManager.getInstance(project).showDiffFile(previewFile, requestFocus)
     return true
   }
 
