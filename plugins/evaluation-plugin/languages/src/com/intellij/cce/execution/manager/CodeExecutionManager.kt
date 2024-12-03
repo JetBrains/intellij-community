@@ -19,10 +19,10 @@ abstract class CodeExecutionManager {
 
   protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
-  protected abstract fun getGeneratedCodeFile(code: String): File
+  protected abstract fun getGeneratedCodeFile(basePath: String, code: String): File
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
-  protected abstract fun setupEnvironment(): ProcessExecutionLog
-  protected abstract fun executeGeneratedCode(target: String, codeFilePath: File): ProcessExecutionLog
+  protected abstract fun setupEnvironment(basePath: String, sdk: Sdk?): ProcessExecutionLog
+  protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?): ProcessExecutionLog
 
   fun compileAndExecute(project: Project, code: String, target: String): ProcessExecutionLog {
     val basePath = project.basePath
@@ -32,13 +32,13 @@ abstract class CodeExecutionManager {
     basePath ?: return ProcessExecutionLog("", "No project base path found", -1, collectedInfo.toMap())
 
     // Get the path to the temp file that the generated code should be saved in
-    val codeFile = getGeneratedCodeFile(code)
+    val codeFile = getGeneratedCodeFile(basePath, code)
     // Save code in a temp file
     codeFile.writeText(code)
     // If this is the first execution, the plugin might need to set up the environment
     if (shouldSetup) {
-      setupEnvironment()
-      shouldSetup= false
+      setupEnvironment(basePath, sdk)
+      shouldSetup = false
     }
     // Compile
     val compilationExecutionLog = compileGeneratedCode()

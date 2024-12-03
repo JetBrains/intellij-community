@@ -18,7 +18,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   private val defaultTestFilePath = "/tests/eval-plugin-test.py"
 
-  override fun getGeneratedCodeFile(code: String): File {
+  override fun getGeneratedCodeFile(basePath: String, code: String): File {
     extractCodeDirectory(code)?.let {
       val detectedPath = if (!it.startsWith("/")) "/$it" else it
       collectedInfo.put(AIA_TEST_FILE_PROVIDED, true)
@@ -28,13 +28,12 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return File(basePath + defaultTestFilePath)
   }
 
-  override fun setupEnvironment(): ProcessExecutionLog {
-    val setupFile = File("${project.basePath}/setup_tests.sh")
+  override fun setupEnvironment(basePath: String, sdk: Sdk?): ProcessExecutionLog {
+    if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1, collectedInfo.toMap())
+
+    val setupFile = File("$basePath/setup_tests.sh")
     if (!setupFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1, collectedInfo.toMap())
-    val executionLog =
-      runPythonProcess(
-        ProcessBuilder("/bin/bash", setupFile.path.toString())
-      )
+    val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", setupFile.path.toString()), sdk)
 
     if (executionLog.exitCode != 0) throw IllegalStateException("Setup was not successful")
 
@@ -74,13 +73,9 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
     val coverageFilePath = "$basePath/$testName-coverage"
     try {
-      val executionLog = runPythonProcess(
-        ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target)
-      )
+      val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target), sdk)
       // Collect Test Success Ratio
-      val successRatio =
-        PythonErrorLogProcessor(executionLog.error).getTestExecutionSuccessRate()
-
+      val successRatio = PythonErrorLogProcessor(executionLog.error).getTestExecutionSuccessRate()
       collectedInfo.put(AIA_EXECUTION_SUCCESS_RATIO, successRatio)
       // Collect Coverage
       val coverageProcessor = PythonTestCoverageProcessor(coverageFilePath)
@@ -89,8 +84,9 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       val branchCoverage = coverageProcessor.getBranchCoverage()
       collectedInfo.put(AIA_TEST_BRANCH_COVERAGE, branchCoverage)
 
+      // Remove cumulative coverage data for all the tests
       File(coverageFilePath).delete()
-      File(project.basePath + "/.coverage").delete() // Remove cumulative coverage data for all the tests
+      File("$basePath/.coverage").delete()
 
       return executionLog
     }
@@ -100,12 +96,12 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     }
   }
 
-  private fun runPythonProcess(processBuilder: ProcessBuilder):
+  private fun runPythonProcess(basePath: String, processBuilder: ProcessBuilder, sdk: Sdk):
     ProcessExecutionLog {
     // Set the correct Python interpreter
     processBuilder.environment()["PYTHON"] = sdk.homePath
     // Move to project's root
-    processBuilder.directory(File(project.basePath!!))
+    processBuilder.directory(File(basePath))
     // Start the process
     val process = processBuilder.start()
     // Capture and print the output
