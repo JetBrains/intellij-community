@@ -6,7 +6,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 
-object UiComponentsUtil {
+object UiComponentsSearchUtil {
   inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
     val root = WindowManager.getInstance().getFrame(project) ?: return null
     findUiComponent(root, predicate)?.let { return it }

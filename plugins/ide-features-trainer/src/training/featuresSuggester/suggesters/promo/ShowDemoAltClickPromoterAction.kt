@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.UiComponentsUtil
+import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
@@ -67,7 +67,7 @@ private val shortcutOffset get() = 40
 private class ShowDemoAltClickPromoterAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val evaluateUi = UiComponentsUtil.findUiComponent(project) { ui: XDebuggerEmbeddedComboBox<*> ->
+    val evaluateUi = UiComponentsSearchUtil.findUiComponent(project) { ui: XDebuggerEmbeddedComboBox<*> ->
       ui.isShowing && ui.name == "Debugger.EvaluateExpression.combobox"
     }
 
