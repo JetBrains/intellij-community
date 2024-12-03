@@ -52,13 +52,6 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return match?.groups?.get(1)?.value?.trim()
   }
 
-  override fun saveGeneratedCodeFile(code: String, codeFilePath: File) {
-    if (!codeFilePath.exists()) {
-      codeFilePath.createNewFile()
-    }
-    codeFilePath.writeText(code)
-  }
-
   override fun compileGeneratedCode(): ProcessExecutionLog {
     // NA
     return ProcessExecutionLog("", "", 0, collectedInfo.toMap())

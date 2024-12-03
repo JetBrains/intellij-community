@@ -20,7 +20,6 @@ abstract class CodeExecutionManager {
   lateinit var project: Project
 
   protected abstract fun getGeneratedCodeFile(code: String): File
-  protected abstract fun saveGeneratedCodeFile(code: String, codeFilePath: File)
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
   protected abstract fun setupEnvironment(): ProcessExecutionLog
   protected abstract fun executeGeneratedCode(target: String, codeFilePath: File): ProcessExecutionLog
@@ -31,9 +30,9 @@ abstract class CodeExecutionManager {
     this.project = project
 
     // Get the path to the temp file that the generated code should be saved in
-    val codeFilePath = getGeneratedCodeFile(code)
+    val codeFile = getGeneratedCodeFile(code)
     // Save code in a temp file
-    saveGeneratedCodeFile(code, codeFilePath)
+    codeFile.writeText(code)
     // If this is the first execution, the plugin might need to set up the environment
     if (shouldSetup) {
       setupEnvironment()
@@ -43,9 +42,9 @@ abstract class CodeExecutionManager {
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
     // Execute
-    val executionLog = executeGeneratedCode(target,codeFilePath)
+    val executionLog = executeGeneratedCode(target, codeFile)
     // Clean the temp file containing the generated code
-    codeFilePath.delete()
+    codeFile.delete()
 
     return executionLog
   }
