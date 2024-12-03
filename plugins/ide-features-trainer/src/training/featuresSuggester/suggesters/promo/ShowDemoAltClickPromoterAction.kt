@@ -87,7 +87,7 @@ private class ShowDemoAltClickPromoterAction : DumbAwareAction() {
 
       val showTooltipAt = Point(evaluateUi.width - JBUIScale.scale(promoWidth + 100), 0)
 
-      val balloon = builder.build(AltClickServiceForAnimation.INSTANCE) {
+      val balloon = builder.build(project.service<AltClickServiceForAnimation>()) {
         setShowCallout(true)
       }
 
@@ -132,7 +132,7 @@ private class AltClickPromoContent(val project: Project, val disposable: Disposa
 
     var length = 500
 
-    val job = AltClickServiceForAnimation.INSTANCE.coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
+    val job = project.service<AltClickServiceForAnimation>().coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
       while (true) {
         panelWithAnimation.cursorIcon = AllIcons.Windows.Mouse.CursorText
         animateMouseCursorMove(length, startCursorPosition, target1)
@@ -353,14 +353,9 @@ private class PanelWithAnimation() : NonOpaquePanel() {
   }
 }
 
-@Service
+@Service(Service.Level.PROJECT)
 private class AltClickServiceForAnimation(val coroutineScope: CoroutineScope) : Disposable {
   override fun dispose() {
     // nothing to dispose by itself
-  }
-
-  companion object {
-    @JvmStatic
-    val INSTANCE: AltClickServiceForAnimation get() = service()
   }
 }
