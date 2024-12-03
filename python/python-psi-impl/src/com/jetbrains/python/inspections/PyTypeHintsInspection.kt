@@ -78,6 +78,11 @@ class PyTypeHintsInspection : PyInspection() {
         checkTypeVarTupleArguments(node, getTargetFromAssignment(node))
       }
 
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.CAST) in calleeQName ||
+          QualifiedName.fromDottedString(PyTypingTypeProvider.CAST_EXT) in calleeQName) {
+        checkCastArguments(node.arguments)
+      }
+
       checkInstanceAndClassChecks(node)
 
       checkParenthesesOnGenerics(node)
@@ -331,6 +336,14 @@ class PyTypeHintsInspection : PyInspection() {
           checkNameIsTheSameAsTarget(argument, target,
                                      PyPsiBundle.message("INSP.type.hints.typevar.tuple.expects.string.literal.as.first.argument"),
                                      PyPsiBundle.message("INSP.type.hints.argument.to.typevar.tuple.must.be.string.equal.to.variable.name"))
+        }
+      }
+    }
+
+    private fun checkCastArguments(arguments: Array<PyExpression>) {
+      if (arguments.size == 2) {
+        if (PyTypingTypeProvider.getType(arguments[0], myTypeEvalContext) == null) {
+          registerProblem(arguments[0], PyPsiBundle.message("INSP.type.hints.expected.a.type"))
         }
       }
     }

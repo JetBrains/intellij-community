@@ -1533,6 +1533,17 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testCastCall() {
+    doTestByText("""
+                   from typing import cast
+                   
+                   def f(val: object):
+                       v1 = cast(list[int], val) # ok
+                       v2 = cast('list[float]', val) # ok
+                       v3 = cast(<warning descr="Expected a type">1</warning>, val)
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
