@@ -2069,6 +2069,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/localFunctionsWithReceivers.kt");
             }
 
+            @TestMetadata("localInsideLambda.kt")
+            public void testLocalInsideLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localInsideLambda.kt");
+            }
+
             @TestMetadata("localVariables.kt")
             public void testLocalVariables() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/localVariables.kt");

@@ -19,4 +19,3 @@ fun foo() {
     <caret>Old()
 }
 
-/* IGNORE_K2 */
