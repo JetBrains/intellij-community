@@ -381,10 +381,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                             boolean async) {
     final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
     if (nextMethodCallType != null && !nextMethodCallType.isNull()) {
-      if (nextMethodCallType.get() instanceof PyCollectionType collectionType) {
-        if (async && "typing.Awaitable".equals(collectionType.getClassQName())) {
-          return collectionType.getIteratedItemType();
-        }
+      if (async) {
+        return Ref.deref(PyTypingTypeProvider.unwrapCoroutineReturnType(nextMethodCallType.get()));
       }
       return nextMethodCallType.get();
     }
