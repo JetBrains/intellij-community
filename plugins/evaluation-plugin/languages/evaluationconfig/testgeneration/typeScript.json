@@ -1,7 +1,7 @@
 {
   "language": "TypeScript",
-  "projectPath": "../../ml-eval/TypeScript-Test-Gen-Eval",
-  "outputDir": "ml-eval-test-generation-typescript-output",
+  "projectPath": "../ml-eval/TypeScript-Test-Gen-Eval",
+  "outputDir": "bin/ml-eval-test-generation-typescript-output",
   "strategy": {
     "collectContextOnly": false
   },
