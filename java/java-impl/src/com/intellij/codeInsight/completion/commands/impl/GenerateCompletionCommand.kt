@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.commands.api.OldCompletionCommand
+import com.intellij.codeInsight.completion.commands.impl.AbstractActionCompletionCommand.Companion.isApplicableToProject
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
 import com.intellij.ide.DataManager
 import com.intellij.java.JavaBundle
@@ -25,6 +26,9 @@ class GenerateCompletionCommand(private val action: BaseGenerateAction) : OldCom
     get() = null
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
+    if (!isApplicableToProject(offset, psiFile)) {
+      return false
+    }
     val context = psiFile.findElementAt(offset) ?: return false
     if (editor == null) return false
     val dataContext = SimpleDataContext.builder()

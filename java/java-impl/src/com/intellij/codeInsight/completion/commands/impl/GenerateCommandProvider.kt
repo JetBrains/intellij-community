@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.completion.commands.api.CommandProvider
+import com.intellij.codeInsight.completion.commands.api.CompletionCommand
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -39,6 +39,7 @@ class GenerateCommandProvider : CommandProvider {
       }
     }
     return generateActions.map { GenerateCompletionCommand(it) }
+      .filter { it.isApplicable(offset, psiFile, editor) }
   }
 
   override fun getId(): String {

@@ -1505,6 +1505,12 @@
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.RecentFilesCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.ProjectViewCompletionCommand" />
     <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.CommentCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.IntroduceVariableCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.ShowUsagesActionCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GenerateGetterSetterHandleCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GenerateSetterHandleCompletionCommand" />
+    <codeInsight.completion.command implementation="com.intellij.codeInsight.completion.commands.impl.GenerateGetterHandleCompletionCommand" />
+
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
