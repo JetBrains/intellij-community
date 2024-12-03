@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -12,6 +10,7 @@ import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.j2k.copyPaste.K1J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionTargetData
 import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.K1PlainTextPasteImportResolver
@@ -54,10 +53,8 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
         project: Project,
         editor: Editor,
         dataForConversion: DataForConversion,
-        targetFile: KtFile,
-        targetBounds: RangeMarker,
-        targetDocument: Document
+        targetData: ConversionTargetData,
     ): J2KCopyPasteConverter {
-        return K1J2KCopyPasteConverter(project, editor, dataForConversion, kind, targetFile, targetBounds, targetDocument)
+        return K1J2KCopyPasteConverter(project, editor, dataForConversion, targetData, kind)
     }
 }

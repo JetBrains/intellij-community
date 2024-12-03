@@ -2,9 +2,7 @@
 package org.jetbrains.kotlin.j2k.k2.copyPaste
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -12,20 +10,14 @@ import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind
-import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
-import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
-import org.jetbrains.kotlin.j2k.copyPaste.convertCodeToKotlin
-import org.jetbrains.kotlin.j2k.copyPaste.runPostProcessing
+import org.jetbrains.kotlin.j2k.copyPaste.*
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtFile
 
 internal class K2J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val dataForConversion: DataForConversion,
-    private val targetFile: KtFile,
-    private val targetBounds: RangeMarker,
-    private val targetDocument: Document
+    private val targetData: ConversionTargetData,
 ) : J2KCopyPasteConverter {
     /**
      * @property changedText The transformed Kotlin code, or `null` if no conversion occurred (the result is the same as original code).
@@ -45,26 +37,26 @@ internal class K2J2KCopyPasteConverter(
         val (changedText, importsToAdd, converterContext) = result
         checkNotNull(changedText) // the case with unchanged text has already been handled by `convertAndRestoreReferencesIfTextIsUnchanged`
 
-        val endOffsetAfterReplace = targetBounds.startOffset + changedText.length
-        val boundsAfterReplace = TextRange(targetBounds.startOffset, endOffsetAfterReplace)
+        val endOffsetAfterReplace = targetData.bounds.startOffset + changedText.length
+        val boundsAfterReplace = TextRange(targetData.bounds.startOffset, endOffsetAfterReplace)
         runWriteAction {
-            targetDocument.replaceString(targetBounds.startOffset, targetBounds.endOffset, changedText)
+            targetData.document.replaceString(targetData.bounds.startOffset, targetData.bounds.endOffset, changedText)
             editor.caretModel.moveToOffset(endOffsetAfterReplace)
         }
 
         val newBounds = insertImports(boundsAfterReplace, importsToAdd)
-        PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
-        runPostProcessing(project, targetFile, newBounds, converterContext, Kind.K2)
+        PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
+        runPostProcessing(project, targetData.file, newBounds, converterContext, Kind.K2)
     }
 
     override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
-        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetFile, Kind.K2)
+        val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetData.file, Kind.K2)
         val (text, _, importsToAdd, isTextChanged, converterContext) = conversionResult
         val changedText = if (isTextChanged) text else null
         result = Result(changedText, importsToAdd, converterContext)
 
         if (result.changedText != null) return false
-        val boundsTextRange = targetBounds.asTextRange ?: return true
+        val boundsTextRange = targetData.bounds.asTextRange ?: return true
         insertImports(boundsTextRange, result.importsToAdd)
         return true
     }
@@ -76,14 +68,14 @@ internal class K2J2KCopyPasteConverter(
     private fun insertImports(bounds: TextRange, importsToAdd: Collection<FqName>): TextRange? {
         if (importsToAdd.isEmpty()) return bounds
 
-        PsiDocumentManager.getInstance(project).commitDocument(targetDocument)
-        val rangeMarker = targetDocument.createRangeMarker(bounds).apply {
+        PsiDocumentManager.getInstance(project).commitDocument(targetData.document)
+        val rangeMarker = targetData.document.createRangeMarker(bounds).apply {
             isGreedyToLeft = true
             isGreedyToRight = true
         }
         runWriteAction {
             for (import in importsToAdd) {
-                targetFile.addImport(import)
+                targetData.file.addImport(import)
             }
         }
 
