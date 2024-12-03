@@ -169,6 +169,8 @@ public final class BuildOperations {
 
           boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
           List<String> deletedForThisSource = new ArrayList<>(outputs.size());
+          final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+          logger.logDeletedFiles(outputs);
           for (String output : outputs) {
             deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
           }

@@ -45,6 +45,7 @@ public final class JpsMetadataLoader {
     }
     finally {
       try {
+        LOG.info("IDEA-363401-loadMetadataForCommit : " + metadataFile, new Exception("Stacktrace"));
         Files.deleteIfExists(metadataFile);
       }
       catch (IOException ignore) {
@@ -70,6 +71,7 @@ public final class JpsMetadataLoader {
 
   void dropCurrentProjectMetadata() {
     try {
+      LOG.info("IDEA-363401-dropCurrentProjectMetadata : " + sourceStateFile, new Exception("Stacktrace"));
       Files.deleteIfExists(sourceStateFile);
     }
     catch (IOException ignore) {

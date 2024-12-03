@@ -144,6 +144,7 @@ public final class JpsServerConnectionUtil {
     }
     finally {
       if (deleteFile) {
+        LOG.info("IDEA-363401-saveToFile : " + file, new Exception("Stacktrace"));
         Files.deleteIfExists(file);
       }
     }

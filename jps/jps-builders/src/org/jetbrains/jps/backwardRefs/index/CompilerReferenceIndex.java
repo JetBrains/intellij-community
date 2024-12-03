@@ -273,6 +273,7 @@ public class CompilerReferenceIndex<Input> {
     Path indexDir = getIndexDir(buildDir.toPath());
     if (Files.exists(indexDir)) {
       try {
+        LOG.info("IDEA-363401-removeIndexFiles: " + buildDir, new Exception("Stacktrace"));
         FileUtilRt.deleteRecursively(indexDir);
         LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
       }

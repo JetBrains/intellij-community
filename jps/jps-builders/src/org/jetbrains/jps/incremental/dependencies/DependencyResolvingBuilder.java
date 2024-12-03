@@ -326,6 +326,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
             context.processMessage(
               new ProgressMessage(JpsBuildBundle.message("progress.message.removing.invalid.artifact", libraryName, artifact))
             );
+            LOG.info("IDEA-363401-verifyLibraryArtifact : " + compiledRootPath, new Exception("Stacktrace"));
             Files.deleteIfExists(compiledRootPath);
             return false;
           }

@@ -491,6 +491,7 @@ public final class IncProjectBuilder {
       }
 
       private void deleteFiles(String rootPath, FileSystem fs) {
+        LOG.info("IDEA-363401-runBuild : " + rootPath, new Exception("Stacktrace"));
         Path root = fs.getPath(rootPath);
         try {
           Files.deleteIfExists(root.resolve(CLASSPATH_INDEX_FILE_NAME));
@@ -960,6 +961,7 @@ public final class IncProjectBuilder {
           }
         }
         else { // the output root must be file
+          LOG.info("IDEA-363401-clearOutputs : " + outputRoot, new Exception("Stacktrace"));
           if (!outputRoot.delete()) {
             filesToDelete.add(outputRoot);
           }

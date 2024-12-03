@@ -178,6 +178,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     }
     if (Files.exists(targetStateStorage)) {
       try {
+        LOG.info("IDEA-363401-clearSourcesState: " + targetStateStorage, new Exception("Stacktrace"));
         if (Files.deleteIfExists(targetStateStorage)) {
           LOG.info("Clear build target sources report");
         }

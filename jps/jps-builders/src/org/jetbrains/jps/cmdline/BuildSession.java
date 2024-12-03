@@ -555,6 +555,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     catch (Throwable e) {
       LOG.error(e);
       try {
+        LOG.info("IDEA-363401-updateFsStateOnDisk: " + file, new Exception("Stacktrace"));
         Files.deleteIfExists(file);
       }
       catch (IOException ignore) {
@@ -579,6 +580,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     catch (Throwable e) {
       LOG.error(e);
       try {
+        LOG.info("IDEA-363401-updateFsStateOnDisk: " + file, new Exception("Stacktrace"));
         Files.deleteIfExists(file);
       }
       catch (IOException ignore) {

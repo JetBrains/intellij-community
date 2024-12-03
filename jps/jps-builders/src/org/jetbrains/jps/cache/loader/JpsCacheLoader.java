@@ -122,6 +122,7 @@ final class JpsCacheLoader implements JpsOutputLoader<File> {
 
       // Create new empty fsStateFile
       File fsStateFile = new File(myTmpCacheFolder, FS_STATE_FILE);
+      LOG.info("IDEA-363401-cacheloader.apply : " + fsStateFile, new Exception("Stacktrace"));
       fsStateFile.delete();
       try {
         fsStateFile.createNewFile();

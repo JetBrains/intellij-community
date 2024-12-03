@@ -155,6 +155,7 @@ public final class BuildTargetConfiguration {
 
     Path file = getNonexistentOutputsFile();
     if (nonexistentOutputRoots.isEmpty()) {
+      LOG.info("IDEA-363401-storeNonexistentOutputRoots: " + file, new Exception("Stacktrace"));
       Files.deleteIfExists(file);
     }
     else {

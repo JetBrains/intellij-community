@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -298,6 +299,7 @@ public class FileUtil {
   }
 
   public static @NotNull Future<Void> asyncDelete(@NotNull Collection<? extends File> files) {
+    LOG.info("IDEA-363401-asyncDelete: " + ContainerUtil.map(files, it -> it.getAbsoluteFile()), new Exception("Stacktrace"));
     List<File> tempFiles = new ArrayList<>();
     for (File file : files) {
       File tempFile = renameToTempFileOrDelete(file);

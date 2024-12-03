@@ -786,11 +786,8 @@ public final class FileUtilRt {
       deleteRecursively(file.toPath());
       return true;
     }
-    catch (IOException e) {
-      return false;
-    }
     catch (Exception e) {
-      logger().info(e);
+      logger().warn(e);
       return false;
     }
   }
@@ -804,6 +801,7 @@ public final class FileUtilRt {
   }
 
   static void deleteRecursively(@NotNull Path path, @Nullable final DeleteRecursivelyCallback callback) throws IOException {
+    logger().info("IDEA-363401-deleteRecursively" + path, new Exception("Stacktrace"));
     if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       return;
     }

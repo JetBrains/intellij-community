@@ -84,6 +84,7 @@ class StorageManager constructor(@JvmField val file: Path) {
   fun clean() {
     val store = storeValue.valueIfInitialized
     if (store == null) {
+      LOG.info("IDEA-363401-clean : $file", Exception("Stacktrace"))
       Files.deleteIfExists(file)
     }
     else {
@@ -143,7 +144,9 @@ private fun createOrResetMvStore(
 
   val markerFile = getInvalidateMarkerFile(file)
   if (Files.exists(markerFile)) {
+    LOG.info("IDEA-363401-createOrResetMvStore : $file", Exception("Stacktrace"))
     Files.deleteIfExists(file)
+    LOG.info("IDEA-363401-createOrResetMvStore : $markerFile", Exception("Stacktrace"))
     Files.deleteIfExists(markerFile)
   }
 

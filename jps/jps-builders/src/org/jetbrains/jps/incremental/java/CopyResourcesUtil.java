@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CopyResourcesUtil {
+  private static final Logger LOG = Logger.getInstance(CopyResourcesUtil.class);
   private CopyResourcesUtil() {
   }
 
@@ -21,7 +23,9 @@ public final class CopyResourcesUtil {
     final File file = new File(targetDir, className + ".class");
     FileUtil.createParentDirs(file);
     if (deleteOnExit) {
+      LOG.info("IDEA-363401-copyClass : " + file, new Exception("Stacktrace"));
       for (File f = file; f != null && !FileUtil.filesEqual(f, targetDir); f = FileUtilRt.getParentFile(f)) {
+        LOG.info("IDEA-363401-copyClass - deleteOnExit : " + f);
         f.deleteOnExit();
       }
     }
@@ -45,7 +49,9 @@ public final class CopyResourcesUtil {
     final File targetDir = new File(targetPath).getAbsoluteFile();
     final File file = new File(targetDir, fileName);
     FileUtil.createParentDirs(file);
+    LOG.info("IDEA-363401-copyProperties : " + file, new Exception("Stacktrace"));
     for (File f = file; f != null && !FileUtil.filesEqual(f, targetDir); f = FileUtilRt.getParentFile(f)) {
+      LOG.info("IDEA-363401-copyProperties - deleteOnExit : " + f);
       f.deleteOnExit();
     }
     final String resourceName = "/" + fileName;
