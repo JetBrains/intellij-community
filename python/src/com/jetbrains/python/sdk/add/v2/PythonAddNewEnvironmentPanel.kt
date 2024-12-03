@@ -20,6 +20,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindText
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -158,12 +159,12 @@ class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlows, onlyA
     }
     else {
       runBlockingCancellable { getSdk(moduleOrProject) }
-    }.getOrThrow()
+    }.getOrThrow().first
   }
 
-  override suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
+  override suspend fun getSdk(moduleOrProject: ModuleOrProject): Result<Pair<Sdk, InterpreterStatisticsInfo>> {
     model.navigator.saveLastState()
-    return when (selectedMode.get()) {
+    val sdk = when (selectedMode.get()) {
       PROJECT_VENV -> {
         val projectPath = projectPathFlows.projectPathWithDefault.first()
         // todo just keep venv path, all the rest is in the model
@@ -171,11 +172,13 @@ class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlows, onlyA
       }
       BASE_CONDA -> model.selectCondaEnvironment(base = true)
       CUSTOM -> custom.currentSdkManager.getOrCreateSdk(moduleOrProject)
-    }
+    }.getOrElse { return Result.failure(it) }
+    val statistics = withContext(Dispatchers.EDT) { createStatisticsInfo() }
+    return Result.success(Pair(sdk, statistics))
   }
 
-
-  override fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {
+  @RequiresEdt
+  fun createStatisticsInfo(): InterpreterStatisticsInfo = when (selectedMode.get()) {
     PROJECT_VENV -> InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
                                               InterpreterTarget.LOCAL,
                                               false,
