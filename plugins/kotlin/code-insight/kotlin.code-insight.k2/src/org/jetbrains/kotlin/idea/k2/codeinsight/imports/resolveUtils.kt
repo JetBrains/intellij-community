@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.KtReference
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -27,20 +26,6 @@ internal fun KaSession.containingDeclarationPatched(symbol: KaSymbol): KaDeclara
     }
 
     return null
-}
-
-/**
- * Finds the original SAM type by the [samConstructorSymbol].
- *
- * A workaround for the KT-70301.
- */
-internal fun KaSession.findSamClassFor(samConstructorSymbol: KaSamConstructorSymbol): KaClassLikeSymbol? {
-    val samCallableId = samConstructorSymbol.callableId ?: return null
-    if (samCallableId.isLocal) return null
-
-    val samClassId = ClassId.fromString(samCallableId.toString())
-
-    return findClass(samClassId) ?: findTypeAlias(samClassId)
 }
 
 /**

@@ -123,9 +123,9 @@ private fun KaSession.adjustSymbolIfNeeded(
     }
 
     target is KaSamConstructorSymbol -> {
-        val targetClass = findSamClassFor(target)
+        val samClass = target.constructedClass
 
-        targetClass?.let { resolveTypeAliasedConstructorReference(reference, it, containingFile) } ?: targetClass
+        resolveTypeAliasedConstructorReference(reference, samClass, containingFile) ?: samClass
     }
 
     else -> target

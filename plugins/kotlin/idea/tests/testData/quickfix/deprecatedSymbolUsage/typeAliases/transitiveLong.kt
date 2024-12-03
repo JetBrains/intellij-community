@@ -15,4 +15,3 @@ typealias Old2 = Old1
 class NewClass()
 
 fun foo() = <caret>Old2()
-/* IGNORE_K2 */
