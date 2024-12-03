@@ -1554,8 +1554,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
               if (calleeQNames.contains(TYPE_VAR_TUPLE) || calleeQNames.contains(TYPE_VAR_TUPLE_EXT)) {
+                PyType defaultType = Ref.deref(getTypeVarDefaultType(assignedCall, context));
                 return new PyTypeVarTupleTypeImpl(name)
-                  .withDefaultType(as(getTypeVarDefaultType(assignedCall, context), PyPositionalVariadicType.class));
+                  .withDefaultType(defaultType instanceof PyPositionalVariadicType positionalVariadicType
+                                   ? Ref.create(positionalVariadicType) : null);
               }
               else {
                 return new PyTypeVarTypeImpl(name, getGenericTypeBound(arguments, context), getTypeVarDefaultType(assignedCall, context));
@@ -1595,24 +1597,25 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         return switch (kind) {
           case TypeVar -> {
             PyType boundType = boundExpression != null ? getTypeParameterBoundType(boundExpression, context) : null;
-            PyType defaultType = defaultExpression != null ? getTypeParameterBoundType(defaultExpression, context) : null;
+            Ref<PyType> defaultType = defaultExpression != null ? Ref.create(getTypeParameterBoundType(defaultExpression, context)) : null;
             yield new PyTypeVarTypeImpl(name, boundType, defaultType)
               .withScopeOwner(scopeOwner)
               .withDeclarationElement(declarationElement);
           }
           case ParamSpec -> {
-            PyCallableParameterVariadicType defaultType =
-              defaultExpression != null ? createParamSpecDefaultTypeFromExpression(defaultExpression, context) : null;
+            Ref<PyCallableParameterVariadicType> defaultType =
+              defaultExpression != null ? Ref.create(createParamSpecDefaultTypeFromExpression(defaultExpression, context)) : null;
             yield new PyParamSpecType(name)
               .withScopeOwner(scopeOwner)
               .withDefaultType(defaultType)
               .withDeclarationElement(declarationElement);
           }
           case TypeVarTuple -> {
-            PyType defaultType = defaultExpression != null ? getTypeParameterBoundType(defaultExpression, context) : null;
+            Ref<PyPositionalVariadicType> defaultType =
+              defaultExpression != null ? Ref.create(getTypeVarTupleParameterBoundType(defaultExpression, context)) : null;
             yield new PyTypeVarTupleTypeImpl(name)
               .withScopeOwner(scopeOwner)
-              .withDefaultType(as(defaultType, PyPositionalVariadicType.class))
+              .withDefaultType(defaultType)
               .withDeclarationElement(declarationElement);
           }
         };
@@ -1768,19 +1771,19 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return PyUnionType.union(types);
   }
 
-  private static @Nullable PyType getTypeVarDefaultType(@NotNull PyCallExpression callExpression, @NotNull Context context) {
+  private static @Nullable Ref<PyType> getTypeVarDefaultType(@NotNull PyCallExpression callExpression, @NotNull Context context) {
     PyExpression defaultExpression = callExpression.getKeywordArgument("default");
     if (defaultExpression != null) {
-      return Ref.deref(getType(defaultExpression, context));
+      return getType(defaultExpression, context);
     }
     return null;
   }
 
-  private static @Nullable PyCallableParameterVariadicType getParamSpecDefaultType(@NotNull PyCallExpression callExpression,
+  private static @Nullable Ref<PyCallableParameterVariadicType> getParamSpecDefaultType(@NotNull PyCallExpression callExpression,
                                                                                    @NotNull Context context) {
     PyExpression defaultExpression = callExpression.getKeywordArgument("default");
     if (defaultExpression != null) {
-      return createParamSpecDefaultTypeFromExpression(defaultExpression, context);
+      return Ref.create(createParamSpecDefaultTypeFromExpression(defaultExpression, context));
     }
     return null;
   }
@@ -1803,6 +1806,10 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     return null;
+  }
+
+  private static @Nullable PyPositionalVariadicType getTypeVarTupleParameterBoundType(@NotNull PyExpression boundExpression, @NotNull Context context) {
+    return as(getTypeParameterBoundType(boundExpression, context), PyPositionalVariadicType.class);
   }
 
   private static @Nullable PyType getTypeParameterBoundType(@NotNull PyExpression boundExpression, @NotNull Context context) {

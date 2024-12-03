@@ -255,9 +255,13 @@ public final class PyTypeChecker {
     }
 
     PyType substituted = context.mySubstitutions.typeVars.get(expected);
-    if (expected.getDefaultType() != null && expected.getDefaultType().equals(substituted)) {
+    Ref<? extends PyType> defaultTypeRef = expected.getDefaultType();
+    if (defaultTypeRef != null) {
+      PyType defaultType = defaultTypeRef.get();
       // Skip default substitution
-      substituted = null;
+      if (defaultType != null && defaultType.equals(substituted)) {
+        substituted = null;
+      }
     }
     final PyType substitution = substituted;
     PyType bound = expected.getBound();
@@ -958,7 +962,7 @@ public final class PyTypeChecker {
       boolean isAlreadyBound = existingSubstitutions.typeVars.containsKey(returnTypeParam) ||
                                existingSubstitutions.typeVars.containsKey(invert(returnTypeParam));
       if (canGetBoundFromArguments && !isAlreadyBound) {
-        existingSubstitutions.typeVars.put(returnTypeParam, returnTypeParam.getDefaultType());
+        existingSubstitutions.typeVars.put(returnTypeParam, Ref.deref(returnTypeParam.getDefaultType()));
       }
     }
     for (PyParamSpecType paramSpecType : typeParamsFromReturnType.paramSpecs) {
@@ -966,8 +970,7 @@ public final class PyTypeChecker {
       boolean isAlreadyBound = existingSubstitutions.paramSpecs.containsKey(paramSpecType);
       if (canGetBoundFromArguments && !isAlreadyBound) {
         if (paramSpecType.getDefaultType() != null) {
-          PyCallableParameterVariadicType defaultType = paramSpecType.getDefaultType();
-          existingSubstitutions.paramSpecs.put(paramSpecType, defaultType);
+          existingSubstitutions.paramSpecs.put(paramSpecType, Ref.deref(paramSpecType.getDefaultType()));
         }
         else {
           existingSubstitutions.paramSpecs.put(paramSpecType, new PyCallableParameterListTypeImpl(

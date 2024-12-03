@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ import java.util.Objects;
 public final class PyParamSpecType implements PyTypeParameterType, PyCallableParameterVariadicType {
   private final @NotNull String myName;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
-  private final @Nullable PyCallableParameterVariadicType myDefaultType;
+  private final @Nullable Ref<PyCallableParameterVariadicType> myDefaultType;
   private final @Nullable PyQualifiedNameOwner myScopeOwner;
 
   public PyParamSpecType(@NotNull String name) {
@@ -28,7 +29,7 @@ public final class PyParamSpecType implements PyTypeParameterType, PyCallablePar
 
   private PyParamSpecType(@NotNull String name,
                           @Nullable PyQualifiedNameOwner declarationElement,
-                          @Nullable PyCallableParameterVariadicType defaultType,
+                          @Nullable Ref<PyCallableParameterVariadicType> defaultType,
                           @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
     myDeclarationElement = declarationElement;
@@ -44,7 +45,7 @@ public final class PyParamSpecType implements PyTypeParameterType, PyCallablePar
     return new PyParamSpecType(myName, myDeclarationElement, myDefaultType, scopeOwner);
   }
 
-  public @NotNull PyParamSpecType withDefaultType(@Nullable PyCallableParameterVariadicType defaultType) {
+  public @NotNull PyParamSpecType withDefaultType(@Nullable Ref<PyCallableParameterVariadicType> defaultType) {
     return new PyParamSpecType(myName, myDeclarationElement, defaultType, myScopeOwner);
   }
 
@@ -70,7 +71,7 @@ public final class PyParamSpecType implements PyTypeParameterType, PyCallablePar
   }
 
   @Override
-  public @Nullable PyCallableParameterVariadicType getDefaultType() {
+  public @Nullable Ref<PyCallableParameterVariadicType> getDefaultType() {
     return myDefaultType;
   }
 

@@ -204,7 +204,7 @@ public final class PyTypeParameterMapping {
                && expectedPositionalVariadic instanceof PyTypeVarTupleType typeVarTupleType
                && typeVarTupleType.getDefaultType() != null) {
         expectedTypesDeque.removeFirst();
-        centerMappedTypes.add(Couple.of(expectedPositionalVariadic, typeVarTupleType.getDefaultType()));
+        centerMappedTypes.add(Couple.of(expectedPositionalVariadic, Ref.deref(typeVarTupleType.getDefaultType())));
       }
       // [*Ts] <- [T1, *Ts[T2, ...], T2, ...]
       else {
@@ -247,7 +247,7 @@ public final class PyTypeParameterMapping {
     if (optionSet.contains(Option.USE_DEFAULTS) &&
         unmatchedExpectedType instanceof PyTypeParameterType typeParameterType &&
         typeParameterType.getDefaultType() != null) {
-      return Couple.of(unmatchedExpectedType, typeParameterType.getDefaultType());
+      return Couple.of(unmatchedExpectedType, Ref.deref(typeParameterType.getDefaultType()));
     }
     else if (optionSet.contains(Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY)) {
       return Couple.of(unmatchedExpectedType, null);

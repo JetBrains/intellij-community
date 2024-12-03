@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
@@ -25,7 +26,7 @@ import java.util.Objects;
 public class PyGenericType implements PyTypeVarType {
   private final @NotNull String myName;
   private final @Nullable PyType myBound;
-  private final @Nullable PyType myDefaultType;
+  private final @Nullable Ref<PyType> myDefaultType;
   private final boolean myIsDefinition;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
   private @Nullable PyQualifiedNameOwner myScopeOwner;
@@ -34,7 +35,7 @@ public class PyGenericType implements PyTypeVarType {
     this(name, bound, false);
   }
 
-  public PyGenericType(@NotNull String name, @Nullable PyType bound, @Nullable PyType defaultType) {
+  public PyGenericType(@NotNull String name, @Nullable PyType bound, @Nullable Ref<PyType> defaultType) {
     this(name, bound, defaultType, false, null, null);
   }
 
@@ -48,7 +49,7 @@ public class PyGenericType implements PyTypeVarType {
 
   private PyGenericType(@NotNull String name,
                        @Nullable PyType bound,
-                       @Nullable PyType defaultType,
+                       @Nullable Ref<PyType> defaultType,
                        boolean isDefinition,
                        @Nullable PyQualifiedNameOwner declarationElement,
                        @Nullable PyQualifiedNameOwner scopeOwner) {
@@ -139,7 +140,7 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   @Override
-  public PyType getDefaultType() {
+  public @Nullable Ref<PyType> getDefaultType() {
     return myDefaultType;
   }
 
