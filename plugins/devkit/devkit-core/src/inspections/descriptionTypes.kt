@@ -24,6 +24,12 @@ import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 @NonNls
 internal const val DESCRIPTION_HTML = "description.html"
 
+@NonNls
+internal const val INTENTION_DESCRIPTION_DIRECTORY_NAME = "descriptionDirectoryName"
+
+@NonNls
+internal const val INTENTION_ACTION_EP = "com.intellij.intentionAction"
+
 /**
  * @see DescriptionTypeResolver
  */
@@ -153,7 +159,8 @@ internal sealed class DescriptionTypeResolver(
   }
 }
 
-internal class IntentionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INTENTION, module, psiClass, "com.intellij.intentionAction") {
+
+internal class IntentionDescriptionTypeResolver(module: Module, psiClass: PsiClass) : DescriptionTypeResolver(DescriptionType.INTENTION, module, psiClass, INTENTION_ACTION_EP) {
 
   override fun skipIfNotRegisteredInPluginXml(): Boolean {
     val candidates = locateExtensionsByPsiClass(psiClass)
@@ -170,7 +177,7 @@ internal class IntentionDescriptionTypeResolver(module: Module, psiClass: PsiCla
   override fun getDescriptionDirName(): String? {
     val customDirectory = Ref.create<String?>()
     processExtensions { extension ->
-      val descriptionDirectoryName = DevKitDomUtil.getTag(extension, "descriptionDirectoryName")
+      val descriptionDirectoryName = DevKitDomUtil.getTag(extension, INTENTION_DESCRIPTION_DIRECTORY_NAME)
       if (descriptionDirectoryName != null && DomUtil.hasXml(descriptionDirectoryName)) {
         customDirectory.set(descriptionDirectoryName.getStringValue())
       }

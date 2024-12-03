@@ -75,6 +75,7 @@ public final class DvcsUtil {
   };
 
   @NotNull
+  @Unmodifiable
   public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<? extends VirtualFile> virtualFiles) {
     return ContainerUtil.sorted(virtualFiles, VIRTUAL_FILE_PRESENTATION_COMPARATOR);
   }

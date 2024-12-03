@@ -27,6 +27,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/branched/ifThenToElvis", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/branched/ifThenToSafeAccess", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
+            model("${idea}/inspectionsLocal/cascadeIf")
             model("${idea}/inspectionsLocal/nullableBooleanElvis")
             model("${idea}/inspectionsLocal/redundantElvisReturnNull")
             model("${idea}/inspectionsLocal/replaceCollectionCountWithSize")

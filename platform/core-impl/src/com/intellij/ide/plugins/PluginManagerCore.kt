@@ -315,6 +315,8 @@ object PluginManagerCore {
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       if (!isUnitTestMode) {
         logger.warn(logMessage)
+      }else{
+        logger.info(logMessage)
       }
       @Suppress("HardCodedStringLiteral")
       return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter(PluginLoadingError::isNotifyUser).map(PluginLoadingError::detailedMessageSupplier))

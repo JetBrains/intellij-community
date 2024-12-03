@@ -198,6 +198,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
+  @Unmodifiable
   public static @NotNull Collection<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) {

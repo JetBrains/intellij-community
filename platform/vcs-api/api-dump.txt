@@ -789,6 +789,7 @@ com.intellij.openapi.vcs.annotate.AnnotationProvider
 - a:annotate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.history.VcsFileRevision):com.intellij.openapi.vcs.annotate.FileAnnotation
 - getActionName():java.lang.String
 - getAnnotationWarnings(com.intellij.openapi.vcs.annotate.FileAnnotation):com.intellij.openapi.vcs.annotate.AnnotationWarning
+- getCustomActionName():java.lang.String
 - isAnnotationValid(com.intellij.openapi.vcs.history.VcsFileRevision):Z
 e:com.intellij.openapi.vcs.annotate.AnnotationSource
 - java.lang.Enum

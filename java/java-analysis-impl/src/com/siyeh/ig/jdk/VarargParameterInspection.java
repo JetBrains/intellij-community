@@ -34,6 +34,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,6 +92,7 @@ public final class VarargParameterInspection extends BaseInspection {
     }
 
     @NotNull
+    @Unmodifiable
     private static List<PsiElement> getReferences(@NotNull PsiMethod method) {
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
         return SyntaxTraverser.psiTraverser(method.getContainingFile())

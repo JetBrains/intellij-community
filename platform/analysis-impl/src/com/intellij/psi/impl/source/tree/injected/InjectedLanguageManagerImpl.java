@@ -30,10 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -367,6 +364,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
     return InjectedLanguageUtilBase.getCachedInjectedDocumentsInRange(hostPsiFile, range);
   }

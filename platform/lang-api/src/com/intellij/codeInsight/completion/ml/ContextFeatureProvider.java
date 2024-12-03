@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.Map;
 public interface ContextFeatureProvider {
   LanguageExtension<ContextFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.contextFeatures");
 
+  @Unmodifiable
   static @NotNull List<ContextFeatureProvider> forLanguage(@NotNull Language language) {
     return EP_NAME.allForLanguageOrAny(language);
   }

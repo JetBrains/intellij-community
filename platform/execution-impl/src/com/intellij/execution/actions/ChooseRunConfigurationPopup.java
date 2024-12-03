@@ -1133,11 +1133,11 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                  @NotNull DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
-    final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
+    List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
                                                                                                         context, false, true);
     if (producers == null) return;
 
-    producers.sort(ConfigurationFromContext.NAME_COMPARATOR);
+    producers = ContainerUtil.sorted(producers, ConfigurationFromContext.NAME_COMPARATOR);
 
     final RunnerAndConfigurationSettings[] preferred = {null};
 

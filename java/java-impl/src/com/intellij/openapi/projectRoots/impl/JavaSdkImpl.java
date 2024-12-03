@@ -46,6 +46,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
@@ -493,6 +494,7 @@ public final class JavaSdkImpl extends JavaSdk {
    * Tries to load the list of modules in the JDK from the 'release' file. Returns null if the 'release' file is not there
    * or doesn't contain the expected information.
    */
+  @Unmodifiable
   private static @Nullable List<String> readModulesFromReleaseFile(@NotNull Path jrtBaseDir) {
     try (InputStream stream = Files.newInputStream(jrtBaseDir.resolve("release"))) {
       Properties p = new Properties();

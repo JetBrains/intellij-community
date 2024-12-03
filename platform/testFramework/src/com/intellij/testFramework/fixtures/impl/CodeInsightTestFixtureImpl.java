@@ -234,6 +234,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     renderers.add(renderer);
   }
 
+  @Unmodifiable
   private static @NotNull List<HighlightInfo> removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
     infos = new ArrayList<>(infos);
     infos.sort((o1, o2) -> {
@@ -257,6 +258,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @TestOnly
+  @Unmodifiable
   public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file,
                                                       @NotNull Editor editor,
                                                       int @NotNull [] toIgnore,
@@ -351,6 +353,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @TestOnly
+  @Unmodifiable
   public static List<IntentionAction> getAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
     IdeaTestExecutionPolicy current = IdeaTestExecutionPolicy.current();
     if (current != null) {
@@ -1203,6 +1206,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   @NotNull
+  @Unmodifiable
   public List<GutterMark> findAllGutters(@NotNull String filePath) {
     configureByFilesInner(filePath);
     return findAllGutters();
@@ -2209,6 +2213,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<Crumb> getBreadcrumbsAtCaret() {
     return myEditorTestFixture.getBreadcrumbsAtCaret();
   }

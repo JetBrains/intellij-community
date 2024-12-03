@@ -114,7 +114,8 @@ class CommandCompletionService(
     if (highlightInfoContainer == null || actionContainers == null) return null
     if (document.immutableCharSequence.hashCode() != highlightInfoContainer.hashcode) return null
     if (highlightInfoContainer.offset != offset) return null
-    val actionContainer = actionContainers.firstOrNull { it.hashcode == highlightInfoContainer.hashcode } ?: return null
+    val actionContainer = actionContainers.firstOrNull { it.hashcode == highlightInfoContainer.hashcode && it.offset == offset }
+                          ?: return null
     val allActions = mutableListOf<IntentionActionWithTextCaching>()
     allActions.addAll(actionContainer.highlighters.allActions)
     val revertMap: MutableMap<IntentionAction, RangeHighlighterEx> = mutableMapOf()

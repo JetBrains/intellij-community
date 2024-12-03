@@ -72,15 +72,37 @@ suspend fun Project.forEachSessionSuspending(kind: ClientKind, action: suspend (
   }
 }
 
+/**
+ * Shortcut to [com.intellij.openapi.client.ClientSessionsManager.getAppSessionOrThrow] for [ClientId.current]
+ * @see com.intellij.openapi.client.ClientSessionsManager.getAppSessionOrThrow
+ */
 @get:Internal
 val Application.currentSession: ClientAppSession
-  get() = ClientSessionsManager.getAppSession() ?:
-  error("Application-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getAppSessionOrThrow(application = this, clientId = ClientId.current)
 
+/**
+ * Shortcut to [com.intellij.openapi.client.ClientSessionsManager.getAppSession] for [ClientId.current]
+ * @see com.intellij.openapi.client.ClientSessionsManager.getAppSession
+ */
+@get:Internal
+val Application.currentSessionOrNull: ClientAppSession?
+  get() = ClientSessionsManager.getAppSession(application = this, clientId = ClientId.current)
+
+/**
+ * Shortcut to [com.intellij.openapi.client.ClientSessionsManager.getProjectSessionOrThrow] for [ClientId.current]
+ * @see com.intellij.openapi.client.ClientSessionsManager.getProjectSessionOrThrow
+ */
 @get:Internal
 val Project.currentSession: ClientProjectSession
-  get() = ClientSessionsManager.getProjectSession(this) ?:
-  error("Project-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getProjectSessionOrThrow(project = this, clientId = ClientId.current)
+
+/**
+ * Shortcut to [com.intellij.openapi.client.ClientSessionsManager.getProjectSession] for [ClientId.current]
+ * @see com.intellij.openapi.client.ClientSessionsManager.getProjectSession
+ */
+@get:Internal
+val Project.currentSessionOrNull: ClientProjectSession?
+  get() = ClientSessionsManager.getProjectSession(project = this, clientId = ClientId.current)
 
 @Internal
 fun Application.sessions(kind: ClientKind): List<ClientAppSession> {
@@ -94,12 +116,10 @@ fun Project.sessions(kind: ClientKind): List<ClientProjectSession> {
 
 @Internal
 fun Application.session(clientId: ClientId): ClientAppSession {
-  return ClientSessionsManager.getAppSession(clientId) ?:
-  error("Application-level session is not found. $clientId")
+  return ClientSessionsManager.getAppSessionOrThrow(clientId)
 }
 
 @Internal
 fun Project.session(clientId: ClientId): ClientProjectSession {
-  return ClientSessionsManager.getProjectSession(this, clientId) ?:
-  error("Project-level session is not found. $clientId")
+  return ClientSessionsManager.getProjectSessionOrThrow(this, clientId)
 }

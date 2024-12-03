@@ -167,6 +167,7 @@ public class PropertyUtilBase {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<PsiMethod> getAccessors(@NotNull final PsiClass psiClass, final String propertyName) {
     return getAccessors(psiClass, propertyName, false, ONLY_PUBLIC);
   }

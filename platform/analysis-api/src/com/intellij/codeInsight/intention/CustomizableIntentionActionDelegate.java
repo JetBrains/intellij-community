@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -49,6 +50,7 @@ public interface CustomizableIntentionActionDelegate extends IntentionActionDele
   }
 
   @Override
+  @Unmodifiable
   default @NotNull List<RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
     if (action instanceof CustomizableIntentionAction) {

@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -81,6 +82,7 @@ public final class ObjectIntHashMap<K> implements ObjectIntMap<K> {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull Iterable<Entry<K>> entries() {
     return ContainerUtil.map(myMap.object2IntEntrySet(), e-> new IntEntry(e));
   }

@@ -401,6 +401,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
   }
 
+  @Unmodifiable
   private @NotNull List<AnAction> getRightActions(@NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
     for (SearchEverywhereContributor<?> contributor : contributors) {
       if (!Objects.equals(getSelectedTabID(), contributor.getSearchProviderId()) ||
@@ -536,6 +537,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       .collect(Collectors.toList());
   }
 
+  @Unmodifiable
   public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
     return myListModel.getFoundElementsInfo();
   }

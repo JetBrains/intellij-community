@@ -18,6 +18,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.SyntaxTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,7 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<JavaLambdaTreeElement> provideNodes(@NotNull TreeElement node) {
     if (!(node instanceof PsiTreeElementBase)) {
       return Collections.emptyList();

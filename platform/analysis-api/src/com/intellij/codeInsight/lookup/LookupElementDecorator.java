@@ -7,6 +7,7 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -42,6 +43,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
+  @Unmodifiable
   public Set<String> getAllLookupStrings() {
     return myDelegate.getAllLookupStrings();
   }

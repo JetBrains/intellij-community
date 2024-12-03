@@ -63,6 +63,7 @@ public abstract class RenamePsiElementProcessorBase {
   /** @deprecated use {@link RenamePsiElementProcessor#findReferences(PsiElement, SearchScope, boolean)} instead */
   @Deprecated
   @NotNull
+  @Unmodifiable
   public Collection<PsiReference> findReferences(@NotNull PsiElement element, boolean searchInCommentsAndStrings) {
     return findReferences(element, GlobalSearchScope.projectScope(element.getProject()), searchInCommentsAndStrings);
   }
@@ -70,6 +71,7 @@ public abstract class RenamePsiElementProcessorBase {
   /** @deprecated use {@link RenamePsiElementProcessor#findReferences(PsiElement, SearchScope, boolean)} instead */
   @Deprecated
   @NotNull
+  @Unmodifiable
   public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
     return findReferences(element, GlobalSearchScope.projectScope(element.getProject()), false);
   }

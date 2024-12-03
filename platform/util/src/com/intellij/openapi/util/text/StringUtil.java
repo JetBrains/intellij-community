@@ -8,6 +8,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FreezableArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
@@ -123,11 +125,11 @@ public class StringUtil {
   public static final java.util.function.Function<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> getWordsInStringLongestFirst(@NotNull String find) {
     List<String> words = getWordsIn(find);
     // hope long words are rare
-    words.sort((o1, o2) -> o2.length() - o1.length());
-    return words;
+    return ContainerUtil.sorted(words, (o1, o2) -> o2.length() - o1.length());
   }
 
   @Contract(pure = true)
@@ -1289,10 +1291,10 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    return StringUtilRt.splitHonorQuotes(s, separator);
+    return Collections.unmodifiableList(StringUtilRt.splitHonorQuotes(s, separator));
   }
-
 
   @Contract(pure = true)
   public static @Unmodifiable @NotNull List<String> split(@NotNull String s, @NotNull String separator) {
@@ -1319,7 +1321,7 @@ public class StringUtil {
     if (separator.length() == 0) {
       return Collections.singletonList(s);
     }
-    List<CharSequence> result = new ArrayList<>();
+    FreezableArrayList<CharSequence> result = new FreezableArrayList<>();
     int pos = 0;
     while (true) {
       int index = indexOf(s, separator, pos);
@@ -1334,7 +1336,7 @@ public class StringUtil {
     if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
       result.add(s.subSequence(pos, s.length()));
     }
-    return result;
+    return result.emptyOrFrozen();
   }
 
   @Contract(pure = true)
@@ -1351,7 +1353,7 @@ public class StringUtil {
                                                                 @NotNull CharFilter separator,
                                                                 boolean excludeSeparator,
                                                                 boolean excludeEmptyStrings) {
-    List<CharSequence> result = new ArrayList<>();
+    FreezableArrayList<CharSequence> result = new FreezableArrayList<>();
     int pos = 0;
     int index = 0;
     while (index < s.length()) {
@@ -1367,7 +1369,7 @@ public class StringUtil {
     if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
       result.add(s.subSequence(pos, s.length()));
     }
-    return result;
+    return result.emptyOrFrozen();
   }
 
   @Contract(pure = true)
@@ -1400,8 +1402,9 @@ public class StringUtil {
    * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are {@code Character.isJavaIdentifierPart(c)}.
    */
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> getWordsIn(@NotNull String text) {
-    List<String> result = null;
+    FreezableArrayList<String> result = null;
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -1411,13 +1414,13 @@ public class StringUtil {
       }
       if (isIdentifierPart && i == text.length() - 1) {
         if (result == null) {
-          result = new SmartList<>();
+          result = new FreezableArrayList<>();
         }
         result.add(text.substring(start, i + 1));
       }
       else if (!isIdentifierPart && start != -1) {
         if (result == null) {
-          result = new SmartList<>();
+          result = new FreezableArrayList<>();
         }
         result.add(text.substring(start, i));
         start = -1;
@@ -1426,10 +1429,11 @@ public class StringUtil {
     if (result == null) {
       return Collections.emptyList();
     }
-    return result;
+    return result.emptyOrFrozen();
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<TextRange> getWordIndicesIn(@NotNull String text) {
     return getWordIndicesIn(text, null);
   }
@@ -1441,8 +1445,9 @@ public class StringUtil {
    * @return ranges of words in passed text.
    */
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
-    List<TextRange> result = new SmartList<>();
+    FreezableArrayList<TextRange> result = new FreezableArrayList<>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -1458,7 +1463,7 @@ public class StringUtil {
         start = -1;
       }
     }
-    return result;
+    return result.emptyOrFrozen();
   }
 
   @Contract(pure = true)
@@ -1698,13 +1703,15 @@ public class StringUtil {
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> findMatches(@NotNull String s, @NotNull Pattern pattern) {
     return findMatches(s, pattern, 1);
   }
 
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<String> findMatches(@NotNull String s, @NotNull Pattern pattern, int groupIndex) {
-    List<String> result = new SmartList<>();
+    FreezableArrayList<String> result = new FreezableArrayList<>();
     Matcher m = pattern.matcher(s);
     while (m.find()) {
       String group = m.group(groupIndex);
@@ -1712,7 +1719,7 @@ public class StringUtil {
         result.add(group);
       }
     }
-    return result;
+    return result.emptyOrFrozen();
   }
 
   /**
@@ -2634,15 +2641,16 @@ public class StringUtil {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
   @Contract(pure = true)
+  @Unmodifiable
   public static @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
-    List<Pair<String, Integer>> res = new ArrayList<>();
+    FreezableArrayList<Pair<String, Integer>> result = new FreezableArrayList<>();
     s += " ";
     StringBuilder name = new StringBuilder();
     int startInd = -1;
     for (int i = 0; i < s.length(); i++) {
       if (Character.isWhitespace(s.charAt(i))) {
         if (name.length() > 0) {
-          res.add(Pair.create(name.toString(), startInd));
+          result.add(Pair.create(name.toString(), startInd));
           name.setLength(0);
           startInd = -1;
         }
@@ -2654,7 +2662,7 @@ public class StringUtil {
         name.append(s.charAt(i));
       }
     }
-    return res;
+    return result.emptyOrFrozen();
   }
 
   @Contract(pure = true)

@@ -134,6 +134,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("#\\s*type:\\s*ignore\\s*(\\[[^]#]*])?($|(\\s.*))", Pattern.CASE_INSENSITIVE);
 
   public static final String ASSERT_TYPE = "typing.assert_type";
+  public static final String CAST = "typing.cast";
+  public static final String CAST_EXT = "typing_extensions.cast";
 
   public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put(LIST, "list")
@@ -393,7 +395,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull Context context) {
     final String functionQName = function.getQualifiedName();
 
-    if ("typing.cast".equals(functionQName)) {
+    if (CAST.equals(functionQName) || CAST_EXT.equals(functionQName)) {
       return Optional
         .ofNullable(as(callSite, PyCallExpression.class))
         .map(PyCallExpression::getArguments)

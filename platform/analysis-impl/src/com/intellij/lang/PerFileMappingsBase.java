@@ -63,6 +63,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   protected @Nullable Project getProject() { return myProject; }
 
   @Override
+  @Unmodifiable
   public @NotNull Map<VirtualFile, T> getMappings() {
     synchronized (myMappings) {
       ensureStateLoaded();

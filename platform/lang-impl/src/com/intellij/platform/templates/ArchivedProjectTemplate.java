@@ -18,6 +18,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
@@ -113,6 +114,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     myInputFields = getFields(element);
   }
 
+  @Unmodifiable
   private static List<WizardInputField<?>> getFields(Element templateElement) {
     return ContainerUtil
       .mapNotNull(templateElement.getChildren(INPUT_FIELD), element -> {

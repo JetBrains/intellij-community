@@ -2,15 +2,12 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.table.TableView;
@@ -24,8 +21,8 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
   private CopyPasteProviderPanel myPanel;
@@ -287,39 +284,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
   @Override
   protected AnAction @NotNull [] createExtraToolbarActions() {
-    AnAction copyButton = new DumbAwareAction(ActionsBundle.message("action.EditorCopy.text"), null, AllIcons.Actions.Copy) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myPanel.performCopy(e.getDataContext());
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT));
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-    };
-    AnAction pasteButton = new DumbAwareAction(ActionsBundle.message("action.EditorPaste.text"), null, AllIcons.Actions.MenuPaste) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myPanel.performPaste(e.getDataContext());
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(myPanel.isPasteEnabled(DataContext.EMPTY_CONTEXT));
-        e.getPresentation().setVisible(myPanel.isPastePossible(DataContext.EMPTY_CONTEXT));
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-    };
+    AnAction copyButton = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
+    AnAction pasteButton = ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE);
     return new AnAction[]{copyButton, pasteButton};
   }
 

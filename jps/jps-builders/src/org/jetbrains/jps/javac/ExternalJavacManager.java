@@ -34,7 +34,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -599,7 +599,7 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private Channel lookupChannel(UUID processId) {
-    Channel channel = null;
+    Channel channel;
     synchronized (myConnections) {
       channel = myConnections.get(processId);
       debug(channel, ch-> "lookupChannel: channel for " + processId + " is " + ch);

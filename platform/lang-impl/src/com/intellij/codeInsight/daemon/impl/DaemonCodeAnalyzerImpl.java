@@ -919,7 +919,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private synchronized void scheduleUpdateRunnable(long delayNanos) {
     Future<?> oldFuture = myUpdateRunnableFuture;
     if (oldFuture.isDone()) {
-      ConcurrencyUtil.manifestExceptionsIn(oldFuture);
+      // schedule `manifest` into a separate call to avoid breaking the current stack with an exception from the previous execution
+      ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(oldFuture));
     }
     myUpdateRunnableFuture = EdtExecutorService.getScheduledExecutorInstance().schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
   }

@@ -303,13 +303,21 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         session.closeProjectIfOpened.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
-          leaveAllModals(throwErrorIfModal = true)
-          ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
-          withContext(Dispatchers.EDT + NonCancellable) {
-            writeIntentReadAction {
-              ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+          try {
+            leaveAllModals(throwErrorIfModal = true)
+
+            ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
+            withContext(Dispatchers.EDT + NonCancellable) {
+              writeIntentReadAction {
+                ProjectManagerEx.getInstanceEx().closeAndDisposeAllProjects(checkCanClose = false)
+              }
             }
           }
+          catch (ce: CancellationException) {
+            LOG.info("closeProjectIfOpened was cancelled", ce)
+            throw ce
+          }
+
         }
         /**
          * Includes closing the project

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -61,6 +62,7 @@ public final class Paths {
     return path.substring(1);
   }
 
+  @Unmodifiable
   public static Iterable<String> split(String path) {
     String root = FileUtil.extractRootPath(path);
     if (root == null) return splitInner(path);
@@ -72,6 +74,7 @@ public final class Paths {
     return ContainerUtil.concat(Collections.singletonList(root), tail);
   }
 
+  @Unmodifiable
   private static @NotNull List<String> splitInner(String path) {
     if (path.isEmpty()) return Collections.emptyList();
     int s = 0;

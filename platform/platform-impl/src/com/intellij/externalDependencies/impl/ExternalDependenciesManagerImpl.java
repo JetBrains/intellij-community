@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +41,7 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
   private final List<ProjectExternalDependency> myDependencies = new ArrayList<>();
 
   @Override
+  @Unmodifiable
   public @NotNull <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
     return ContainerUtil.filterIsInstance(myDependencies, aClass);
   }

@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObject
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<ReferringObject> getReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
                                                    @NotNull ObjectReference value,
                                                    long limit) throws EvaluateException {

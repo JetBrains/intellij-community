@@ -28,6 +28,7 @@ public final class StatisticsRecorderUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<String> getRecordersInTestMode() {
     if (isAnyTestModeEnabled()) {
       if (isFusInternalTestMode()) {

@@ -6,12 +6,13 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
 
 @Suppress("NonDefaultConstructor")
 @Internal
-open class ClientAppSessionsManager(application: Application) : ClientSessionsManager<ClientAppSession>() {
+open class ClientAppSessionsManager(application: Application, scope: CoroutineScope) : ClientSessionsManager<ClientAppSession>(scope) {
   init {
     @Suppress("LeakingThis")
     registerLocalSession(application)
@@ -28,7 +29,7 @@ open class ClientAppSessionsManager(application: Application) : ClientSessionsMa
 }
 
 @Internal
-open class ClientProjectSessionsManager(project: Project) : ClientSessionsManager<ClientProjectSession>() {
+open class ClientProjectSessionsManager(project: Project, scope: CoroutineScope) : ClientSessionsManager<ClientProjectSession>(scope) {
   init {
     @Suppress("LeakingThis")
     registerLocalSession(project)

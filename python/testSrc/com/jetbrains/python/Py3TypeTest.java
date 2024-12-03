@@ -568,7 +568,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              class AIter(object):
-                 def __anext__(self):
+                 async def __anext__(self):
                      return 5
              class A(object):
                  def __aiter__(self):
@@ -576,6 +576,21 @@ public class Py3TypeTest extends PyTestCase {
              a = A()
              async for expr in a:
                  print(expr)""");
+  }
+  
+  // PY-60714
+  public void testAsyncIteratorUnwrapsCoroutineFromAnext() {
+    doTest("bytes", """
+             class AIterator:
+                 def __aiter__(self):
+                     return self
+
+                 async def __anext__(self) -> bytes:
+                     return b"a"
+             
+             async for expr in AIterator():
+                 print(expt)
+             """);
   }
 
   // PY-21655

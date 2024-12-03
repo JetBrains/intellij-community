@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +19,7 @@ import static java.util.Collections.singletonList;
 @ApiStatus.Internal
 public final class IndexPatternOptimizerImpl implements IndexPatternOptimizer {
   @Override
+  @Unmodifiable
   public @NotNull List<String> extractStringsToFind(@NotNull String regexp) {
     // short circuit for known built-in patterns, no need to spin up RegExp parser and its elements
     if ("\\btodo\\b.*".equals(regexp)) return singletonList("todo");

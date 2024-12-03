@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
@@ -55,14 +56,20 @@ public final class DescriptionCheckerUtil {
                                                    DescriptionType descriptionType) {
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(module.getProject());
     final PsiPackage psiPackage = javaPsiFacade.findPackage(descriptionType.getDescriptionFolder());
-    if (psiPackage != null) {
-      return psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
+    if (psiPackage == null) {
+      return PsiDirectory.EMPTY_ARRAY;
     }
-    return PsiDirectory.EMPTY_ARRAY;
+
+    PsiDirectory[] currentModuleDirectories = psiPackage.getDirectories(module.getModuleScope(false));
+    if (currentModuleDirectories.length != 0) {
+      return currentModuleDirectories;
+    }
+
+    return psiPackage.getDirectories(GlobalSearchScope.moduleWithDependenciesScope(module));
   }
 
   @Nullable
-  public static String getDefaultDescriptionDirName(PsiClass aClass) {
+  public static String getDefaultDescriptionDirName(@NotNull PsiClass aClass) {
     String descriptionDir = "";
     PsiClass each = aClass;
     while (each != null) {

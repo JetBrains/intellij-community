@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -236,6 +237,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(@NotNull Editor editor, @NotNull PsiFile file) {
     return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }

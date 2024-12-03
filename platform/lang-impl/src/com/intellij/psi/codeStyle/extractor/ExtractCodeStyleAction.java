@@ -116,7 +116,6 @@ public final class ExtractCodeStyleAction extends AnAction implements DumbAware 
             public void hyperlinkUpdate(HyperlinkEvent e) {
               if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 boolean apply = "apply".equals(e.getDescription());
-                ExtractedSettingsDialog myDialog = null;
                 if (!apply) {
                   final List<Value> values = calculatedValues.getValues();
                   Language language = file.getLanguage();
@@ -126,7 +125,7 @@ public final class ExtractCodeStyleAction extends AnAction implements DumbAware 
                     if (target.equals(language)) {
                       //this is our language
                       nameProvider.addSettings(provider);
-                      myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
+                      ExtractedSettingsDialog myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
                       apply = myDialog.showAndGet();
                       break;
                     }

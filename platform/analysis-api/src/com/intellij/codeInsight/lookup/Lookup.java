@@ -92,5 +92,6 @@ public interface Lookup {
 
   boolean isSelectionTouched();
 
+  @Unmodifiable
   List<String> getAdvertisements();
 }

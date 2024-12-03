@@ -176,6 +176,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   /**
    * @return the names of all configurations, both user defined, from the project and built in.
    */
+  @Unmodifiable
   public List<String> getAllConfigurationNames() {
     return ContainerUtil.map(getAllConfigurations(), c -> c.getRefName());
   }

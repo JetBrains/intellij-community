@@ -21,6 +21,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -186,6 +187,7 @@ final class WslDistributionDescriptor {
     return pwdOutputLines.get(0).trim();
   }
 
+  @Unmodifiable
   private @Nullable List<String> readWslOutput(@NotNull WSLCommandLineOptions options,
                                                @NotNull GeneralCommandLine commandLine,
                                                @Nullable ProgressIndicator pi) {

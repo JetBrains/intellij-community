@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import java.util.Map;
 public interface ElementFeatureProvider {
   LanguageExtension<ElementFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.elementFeatures");
 
+  @Unmodifiable
   static @NotNull List<ElementFeatureProvider> forLanguage(Language language) {
     return EP_NAME.allForLanguageOrAny(language);
   }

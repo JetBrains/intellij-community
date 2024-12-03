@@ -45,6 +45,7 @@ import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
@@ -1184,6 +1185,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         reported.set(false);
       }
     }, app);
+    if (app.isInternal() || app.isUnitTestMode()) {
+      ContainerUtil.Options.RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE = true;
+    }
   }
 
   @Override

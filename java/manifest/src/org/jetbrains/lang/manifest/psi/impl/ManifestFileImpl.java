@@ -30,6 +30,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.lang.manifest.ManifestFileType;
 import org.jetbrains.lang.manifest.ManifestLanguage;
 import org.jetbrains.lang.manifest.psi.Header;
@@ -54,6 +55,7 @@ public class ManifestFileImpl extends PsiFileBase implements ManifestFile {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<Section> getSections() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, Section.class);
   }
@@ -66,6 +68,7 @@ public class ManifestFileImpl extends PsiFileBase implements ManifestFile {
 
   @NotNull
   @Override
+  @Unmodifiable
   public List<Header> getHeaders() {
     return PsiTreeUtil.getChildrenOfTypeAsList(getFirstChild(), Header.class);
   }

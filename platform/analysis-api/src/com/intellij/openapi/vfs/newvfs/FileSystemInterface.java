@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +35,7 @@ public interface FileSystemInterface {
    * Returns all virtual files under which the given path is known in the VFS, starting with virtual file for the passed path.
    * Please note, that it is guaranteed to find all aliases only if path is canonical.
    */
+  @Unmodifiable
   default @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
     return Collections.emptyList();
   }

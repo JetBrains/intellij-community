@@ -101,10 +101,12 @@ public final class ChangesUtil {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
   }
 
+  @Unmodifiable
   public static @NotNull List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
     return iteratePaths(changes).toList();
   }
 
+  @Unmodifiable
   public static @NotNull List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return iteratePaths(changes)
       .map(FilePath::getIOFile)

@@ -11,6 +11,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.*;
@@ -148,6 +149,7 @@ public final class PathsList  {
   /**
    * @return {@link VirtualFile}s on local file system (returns jars as files).
    */
+  @Unmodifiable
   public List<VirtualFile> getVirtualFiles() {
     return JBIterable.from(getPathList()).filterMap(PATH_TO_LOCAL_VFILE).toList();
   }
@@ -155,6 +157,7 @@ public final class PathsList  {
   /**
    * @return The same as {@link #getVirtualFiles()} but returns jars as {@code JarFileSystem} roots.
    */
+  @Unmodifiable
   public List<VirtualFile> getRootDirs() {
     return JBIterable.from(getPathList()).filterMap(PATH_TO_DIR).toList();
   }

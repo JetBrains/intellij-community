@@ -430,6 +430,7 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createNotIterableForEachLoopFix(@NotNull PsiExpression expression);
 
   @NotNull
+  @Unmodifiable
   public abstract List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair);
 
   @NotNull

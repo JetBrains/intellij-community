@@ -528,7 +528,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    //noinspection GroovyUnusedAssignment
+    //Let's help GC, even in interpreter mode
+    //noinspection UnusedAssignment
     psiFile = null;
     GCWatcher.tracking(getPsiManager().getFileManager().getCachedPsiFile(vFile))
       .ensureCollected(() -> UIUtil.dispatchAllInvocationEvents());

@@ -8,6 +8,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
@@ -522,6 +523,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testParentWithoutARelativePath() = runBlocking {
+    runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -560,6 +562,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModuleWithPropertiesWithParentWithoutARelativePath() = runBlocking {
+    runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -938,6 +941,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProjectWithMavenConfigCustomUserSettingsXml() = runBlocking {
+    runWithoutStaticSync()
     val configFile = createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
     val settingsFile = createProjectSubFile(".mvn/custom-settings.xml",
                          """
@@ -978,24 +982,32 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
     createProjectPom("""
                        <groupId>test</groupId>
-                       <artifactId>${'$'}{projectName}</artifactId>
+                       <artifactId>project</artifactId>
                        <version>1</version>
                        <profiles>
                          <profile>
                            <id>one</id>
                            <properties>
-                             <projectName>project-one</projectName>
+                               <myProp>1.2.3</myProp>
                            </properties>
                          </profile>
                        </profiles>
+                       <dependencies>
+                           <dependency>
+                               <groupId>group</groupId>
+                               <artifactId>artifact</artifactId>
+                               <version>${'$'}{myProp}</version>
+                           </dependency>
+                       </dependencies>
                        """.trimIndent())
 
     importProjectAsync()
-    assertModules("project-one")
+    assertModuleLibDeps("project", "Maven: group:artifact:1.2.3")
   }
 
   @Test
   fun testProjectWithActiveProfilesAndInactiveFromSettingsXml() = runBlocking {
+    runWithoutStaticSync()
     updateSettingsXml("""
                         <activeProfiles>
                           <activeProfile>one</activeProfile>

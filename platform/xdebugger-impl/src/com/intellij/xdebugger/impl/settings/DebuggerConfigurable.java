@@ -11,10 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -157,10 +154,12 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     return "project.propDebugger";
   }
 
+  @Unmodifiable
   static @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
     return getConfigurables(category, DebuggerConfigurableProvider.EXTENSION_POINT.getExtensionList());
   }
 
+  @Unmodifiable
   private static @NotNull List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category,
                                                               List<DebuggerConfigurableProvider> providers) {
     List<Configurable> configurables = null;

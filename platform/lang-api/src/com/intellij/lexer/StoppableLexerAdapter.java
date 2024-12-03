@@ -15,7 +15,7 @@ public class StoppableLexerAdapter extends DelegateLexer {
   }
 
   private final StoppingCondition myCondition;
-  private boolean myStopped = false;
+  private boolean myStopped;
 
   public StoppableLexerAdapter(final StoppingCondition condition, final Lexer original) {
     super(original);

@@ -16,8 +16,7 @@ internal abstract class DescriptionNotFoundInspectionBase(private val descriptio
     if (!isExtensionPointImplementationCandidate(psiClass)) return
     if (!descriptionType.matches(psiClass)) return
 
-    val module = ModuleUtilCore.findModuleForPsiElement(psiClass)
-    if (module == null) return
+    val module = ModuleUtilCore.findModuleForPsiElement(psiClass)?: return
 
     val descriptionTypeResolver = descriptionType.createDescriptionTypeResolver(module, psiClass)
     if (descriptionTypeResolver.skipIfNotRegisteredInPluginXml()) return

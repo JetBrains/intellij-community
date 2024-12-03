@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.annotate;
 
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,8 +23,19 @@ public interface AnnotationProvider {
     return null;
   }
 
+  /**
+   * Override this method to provide a different name for the 'Annotate' action.
+   */
+  default @Nls(capitalization = Nls.Capitalization.Title) @Nullable String getCustomActionName() {
+    return null;
+  }
+
+  /**
+   * @deprecated override {@link #getCustomActionName()} instead.
+   */
+  @Deprecated
   default @Nls(capitalization = Nls.Capitalization.Title) String getActionName() {
-    return ActionsBundle.message("action.Annotate.text");
+    return "";
   }
 
   /**

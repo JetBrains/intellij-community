@@ -20,6 +20,7 @@ interface Editor {
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
   fun visualPositionToXY(visualPosition: VisualPosition): Point
+  fun offsetToXY(offset: Int): Point
   fun getInlayModel(): InlayModel
   fun getColorsScheme(): EditorColorsScheme
   fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int

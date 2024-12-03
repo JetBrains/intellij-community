@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.plugins.github.json">
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.plugins.github.json.GHActionJsonSchemaProviderFactory"/>
+  </extensions>
+</idea-plugin>

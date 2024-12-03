@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -53,6 +54,7 @@ public interface SymbolDocumentationTargetProvider {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
+  @Unmodifiable
   default @NotNull List<? extends @NotNull DocumentationTarget> documentationTargets(@NotNull Project project, @NotNull Symbol symbol) {
     return createMaybeSingletonList(documentationTarget(project, symbol));
   }

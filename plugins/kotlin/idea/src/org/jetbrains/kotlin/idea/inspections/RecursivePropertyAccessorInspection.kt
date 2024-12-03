@@ -6,7 +6,6 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.codegen.kotlinType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -101,7 +100,7 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             if (target != bindingContext[DECLARATION_TO_DESCRIPTOR, propertyAccessor.property]) return false
             (element.parent as? KtQualifiedExpression)?.let {
                 val targetReceiverType = (target as? PropertyDescriptor)?.extensionReceiverParameter?.value?.type
-                val receiverKotlinType = it.receiverExpression.kotlinType(bindingContext)?.makeNotNullable()
+                val receiverKotlinType = bindingContext.getType(it.receiverExpression)?.makeNotNullable()
                 if (anyRecursionTypes) {
                     if (receiverKotlinType != null && targetReceiverType != null && !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
                         return false

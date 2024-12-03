@@ -30,6 +30,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
@@ -131,6 +132,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     });
   }
 
+  @Unmodifiable
   private static @NotNull List<PsiElement> getPsiElements(JBIterable<Object> selection) {
     return selection
       .filterMap(StructureViewComponent::unwrapWrapper)

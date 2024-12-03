@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -58,6 +59,7 @@ public final class ParamsGroup implements Cloneable {
     addParameters(ParametersList.parse(parametersString));
   }
 
+  @Unmodifiable
   public List<String> getParameters() {
     return myParamList.getList();
   }

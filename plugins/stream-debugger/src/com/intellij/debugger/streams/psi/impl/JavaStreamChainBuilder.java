@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -84,6 +85,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
   }
 
   @NotNull
+  @Unmodifiable
   private List<StreamChain> buildChains(@NotNull List<List<PsiMethodCallExpression>> chains, @NotNull PsiElement context) {
     return ContainerUtil.map(chains, x -> myChainTransformer.transform(x, context));
   }

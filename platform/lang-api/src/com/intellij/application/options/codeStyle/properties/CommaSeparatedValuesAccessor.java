@@ -3,6 +3,7 @@ package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -21,6 +22,7 @@ public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<Stri
   }
 
   @Override
+  @Unmodifiable
   protected @NotNull List<String> toExternal(@NotNull String value) {
     return getValueList(value);
   }

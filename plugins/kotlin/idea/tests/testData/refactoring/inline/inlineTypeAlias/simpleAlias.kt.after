@@ -3,4 +3,3 @@ class A
 fun foo() {
     val x: A = A()
 }
-// IGNORE_K2

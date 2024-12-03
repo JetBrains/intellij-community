@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiResourceList;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
   }
 
   @Override
+  @Unmodifiable
   public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                      @NotNull DataFlowInterpreter interpreter,
                                                      DfaControlTransferValue.@NotNull TransferTarget target,
@@ -68,6 +70,7 @@ public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
     }
 
     @Override
+    @Unmodifiable
     public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
                                                        @NotNull DataFlowInterpreter interpreter,
                                                        DfaControlTransferValue.@NotNull TransferTarget target,

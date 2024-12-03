@@ -42,6 +42,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     myNodeWrapper = setInternalValue(value);
   }
 
+  @Unmodifiable
   public abstract @NotNull Collection<? extends AbstractTreeNode<?>> getChildren();
 
   protected boolean hasProblemFileBeneath() {

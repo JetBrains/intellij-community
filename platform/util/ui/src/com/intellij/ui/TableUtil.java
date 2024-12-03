@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -21,6 +22,7 @@ public final class TableUtil {
     boolean isOperationApplyable(@NotNull TableModel model, int row);
   }
 
+  @Unmodifiable
   public static @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table) {
     return removeSelectedItems(table, null);
   }
@@ -53,6 +55,7 @@ public final class TableUtil {
     table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(minCellRect.width / 2,allHeight)));
   }
 
+  @Unmodifiable
   public static @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
     final TableModel model = table.getModel();
     if (!(model instanceof ItemRemovable itemRemovable)) {

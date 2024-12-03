@@ -23,9 +23,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.UiComponentsUtil
+import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBHtmlPane
@@ -50,14 +51,16 @@ import javax.swing.*
 import javax.swing.JLayeredPane.DEFAULT_LAYER
 import javax.swing.JLayeredPane.PALETTE_LAYER
 
+private val altModifier get() = if (SystemInfo.isMac) "⌥" else "Alt"
+
 private val promoHeight get() = 100
 private val promoWidth get() = 250
 private val startCursorPosition = JBPoint(100, 100)
 
-private val altShortcutText get() = "<shortcut raw=\"Alt\"/>"
+private val altShortcutText get() = "<shortcut raw=\"$altModifier\"/>"
 private val altShortcutWidth get() = 50
 
-private val altPlusClickShortcutText get() = "<shortcut raw=\"Alt + Click\"/>"
+private val altPlusClickShortcutText get() = "<shortcut raw=\"$altModifier + Click\"/>"
 private val altPlusClickShortcutWidth get() = 100
 
 private val evaluationPanelSize get() = JBDimension(45, 35)
@@ -67,14 +70,14 @@ private val shortcutOffset get() = 40
 private class ShowDemoAltClickPromoterAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val evaluateUi = UiComponentsUtil.findUiComponent(project) { ui: XDebuggerEmbeddedComboBox<*> ->
+    val evaluateUi = UiComponentsSearchUtil.findUiComponent(project) { ui: XDebuggerEmbeddedComboBox<*> ->
       ui.isShowing && ui.name == "Debugger.EvaluateExpression.combobox"
     }
 
     if (evaluateUi != null) {
-      val builder = GotItComponentBuilder { FeatureSuggesterBundle.message("alt.click.promo.text") }
+      val builder = GotItComponentBuilder { FeatureSuggesterBundle.message("alt.click.promo.text", "$altModifier + Click") }
 
-      builder.withHeader(FeatureSuggesterBundle.message("alt.click.promo.header"))
+      builder.withHeader(FeatureSuggesterBundle.message("alt.click.promo.header", "$altModifier + Click"))
 
       val disposable: Disposable = Disposer.newDisposable()
       builder.onButtonClick {
@@ -87,7 +90,7 @@ private class ShowDemoAltClickPromoterAction : DumbAwareAction() {
 
       val showTooltipAt = Point(evaluateUi.width - JBUIScale.scale(promoWidth + 100), 0)
 
-      val balloon = builder.build(AltClickServiceForAnimation.INSTANCE) {
+      val balloon = builder.build(project.service<AltClickServiceForAnimation>()) {
         setShowCallout(true)
       }
 
@@ -132,7 +135,7 @@ private class AltClickPromoContent(val project: Project, val disposable: Disposa
 
     var length = 500
 
-    val job = AltClickServiceForAnimation.INSTANCE.coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
+    val job = project.service<AltClickServiceForAnimation>().coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
       while (true) {
         panelWithAnimation.cursorIcon = AllIcons.Windows.Mouse.CursorText
         animateMouseCursorMove(length, startCursorPosition, target1)
@@ -333,7 +336,7 @@ data class ClickAnimationStatus(val clickPoint: Point, val radius: Int, val colo
 
 private class PanelWithAnimation() : NonOpaquePanel() {
   var cursorPosition: Point? = null
-  var cursorIcon = AllIcons.Ide.Rating
+  lateinit var cursorIcon: Icon
 
   var clickAnimationStatus: ClickAnimationStatus? = null
 
@@ -353,14 +356,9 @@ private class PanelWithAnimation() : NonOpaquePanel() {
   }
 }
 
-@Service
+@Service(Service.Level.PROJECT)
 private class AltClickServiceForAnimation(val coroutineScope: CoroutineScope) : Disposable {
   override fun dispose() {
     // nothing to dispose by itself
-  }
-
-  companion object {
-    @JvmStatic
-    val INSTANCE: AltClickServiceForAnimation get() = service()
   }
 }
