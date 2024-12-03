@@ -8,7 +8,6 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.impl.cache.RecordUtil
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.JavaLightTreeUtil
 import com.intellij.psi.impl.source.tree.ElementType
@@ -51,7 +50,7 @@ private fun resolveFieldFromIndexValue(method: PsiMethod, isGetter: Boolean): Ps
 }
 
 @VisibleForTesting
-val javaSimplePropertyGist: PsiFileGist<Int2ObjectMap<PropertyIndexValue>> = GistManager.getInstance().newPsiFileGist("java.simple.property", 2, SimplePropertiesExternalizer()) { file ->
+val javaSimplePropertyGist: PsiFileGist<Int2ObjectMap<PropertyIndexValue>> = GistManager.getInstance().newPsiFileGist("java.simple.property", 3, SimplePropertiesExternalizer()) { file ->
   findSimplePropertyCandidates(file.node.lighterAST)
 }
 
@@ -82,7 +81,6 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
       var isConstructor = true
       var isGetter = true
 
-      var isBooleanReturnType = false
       var isVoidReturnType = false
       var setterParameterName: String? = null
 
@@ -95,16 +93,16 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
             if (children.size != 1) return null
             val typeElement = children[0]
             if (typeElement.tokenType == JavaTokenType.VOID_KEYWORD) isVoidReturnType = true
-            if (typeElement.tokenType == JavaTokenType.BOOLEAN_KEYWORD) isBooleanReturnType = true
             isConstructor = false
           }
           JavaElementType.PARAMETER_LIST -> {
-            if (isGetter) {
-              if (LightTreeUtil.firstChildOfType(tree, child, JavaElementType.PARAMETER) != null) return null
-            }
-            else {
+            if (LightTreeUtil.firstChildOfType(tree, child, JavaElementType.PARAMETER) == null) {
+              isGetter = true
+              if (isVoidReturnType) return null
+            } else {
               val parameters = LightTreeUtil.getChildrenOfType(tree, child, JavaElementType.PARAMETER)
               if (parameters.size != 1) return null
+              isGetter = false
               setterParameterName = JavaLightTreeUtil.getNameIdentifierText(tree, parameters[0])
               if (setterParameterName == null) return null
             }
@@ -115,21 +113,6 @@ private fun findSimplePropertyCandidates(tree: LighterAST): Int2ObjectMap<Proper
           }
           JavaTokenType.IDENTIFIER -> {
             if (isConstructor) return null
-            val name = RecordUtil.intern(tree.charTable, child)
-            when (PropertyUtilBase.getMethodNameGetterFlavour(name)) {
-              PropertyUtilBase.GetterFlavour.NOT_A_GETTER -> {
-                if (PropertyUtilBase.isSetterName(name)) {
-                  isGetter = false
-                }
-                else {
-                  return null
-                }
-              }
-              PropertyUtilBase.GetterFlavour.BOOLEAN -> if (!isBooleanReturnType) return null
-              else -> {
-              }
-            }
-            if (isVoidReturnType && isGetter) return null
           }
         }
       }
