@@ -12,7 +12,7 @@ class SearchEverywhereItemDataLocalProvider(private val itemsProvider: SearchEve
   override fun getItems(params: SearchEverywhereParams, session: SearchEverywhereSession): Flow<SearchEverywhereItemData> {
     return itemsProvider.getItems(params).map {
       val itemId = session.saveItem(it)
-      return@map SearchEverywhereItemDataImpl(itemId, id, it.weight(), it.presentation())
+      return@map SearchEverywhereItemData(itemId, id, it.weight(), it.presentation())
     }
   }
 }

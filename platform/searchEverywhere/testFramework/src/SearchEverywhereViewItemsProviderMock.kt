@@ -40,14 +40,6 @@ class SearchEverywhereItemMock(val text: String) : SearchEverywhereItem {
 }
 
 @ApiStatus.Internal
-class SearchEverywhereItemDataMock(
-  override val itemId: SearchEverywhereItemId,
-  override val providerId: SearchEverywhereProviderId,
-  override val weight: Int,
-  override val presentation: SearchEverywhereItemPresentation,
-) : SearchEverywhereItemData
-
-@ApiStatus.Internal
 class SearchEverywhereSessionMock : SearchEverywhereSession {
   override val id: String = UUID.randomUUID().toString()
 

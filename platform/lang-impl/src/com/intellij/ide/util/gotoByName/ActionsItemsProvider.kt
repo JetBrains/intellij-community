@@ -81,9 +81,3 @@ class ActionSearchItem(private val weight: Int, private val matchedValue: Matche
   override fun weight(): Int = weight
   override fun presentation(): SearchEverywhereItemPresentation = ActionPresentationProvider.invoke(matchedValue)
 }
-
-@ApiStatus.Internal
-class ActionSearchItemData(override val itemId: SearchEverywhereItemId,
-                           override val providerId: SearchEverywhereProviderId,
-                           override val weight: Int,
-                           override val presentation: SearchEverywhereItemPresentation) : SearchEverywhereItemData

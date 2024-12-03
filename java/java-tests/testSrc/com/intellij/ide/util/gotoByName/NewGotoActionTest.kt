@@ -1,13 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
-import com.intellij.platform.searchEverywhere.ActionItemPresentation
-import com.intellij.platform.searchEverywhere.ActionSearchParams
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
-import com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereFrontendDispatcher
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereItemDataLocalProvider
-import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemDataMock
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemsProviderMock
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionMock
@@ -99,7 +95,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
                                  "bravo 5" to providers[1]).map { (itemText, provider) ->
       val item = SearchEverywhereItemMock(itemText)
       val itemId = runBlocking { session.saveItem(item) }
-      SearchEverywhereItemDataMock(itemId, provider.id, weight = 0, ActionItemPresentation(text = itemText))
+      SearchEverywhereItemData(itemId, provider.id, weight = 0, ActionItemPresentation(text = itemText))
     }
 
     runBlocking {
