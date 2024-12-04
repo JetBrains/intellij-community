@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -33,9 +33,9 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 /**
  * Tests: [org.jetbrains.kotlin.j2k.k2.K2TextJavaToKotlinCopyPasteConversionTestGenerated].
  */
-internal class K2PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
+internal class K2PlainTextPasteImportResolver(private val conversionData: ConversionData, private val targetKotlinFile: KtFile) :
     PlainTextPasteImportResolver {
-    private val sourceJavaFile: PsiJavaFile = dataForConversion.sourceJavaFile
+    private val sourceJavaFile: PsiJavaFile = conversionData.sourceJavaFile
     private val javaFileImportList: PsiImportList = sourceJavaFile.importList!!
     private val project = targetKotlinFile.project
     private val scope: GlobalSearchScope = targetKotlinFile.resolveScope
@@ -55,7 +55,7 @@ internal class K2PlainTextPasteImportResolver(private val dataForConversion: Dat
     // TODO removing this function doesn't affect existing tests
     //  investigate is this needed or not
     private fun addImportsToJavaFileFromKotlinFile() {
-        if (javaFileImportList in dataForConversion.elementsAndTexts.toList()) return
+        if (javaFileImportList in conversionData.elementsAndTexts.toList()) return
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             addImportsTask, KotlinNJ2KBundle.message("copy.text.adding.imports"), /* canBeCanceled = */ true, project

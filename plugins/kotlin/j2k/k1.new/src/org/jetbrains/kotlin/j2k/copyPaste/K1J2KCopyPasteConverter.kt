@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 class K1J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
-    private val dataForConversion: DataForConversion,
+    private val conversionData: ConversionData,
     private val targetData: TargetData,
     private val j2kKind: J2kConverterExtension.Kind,
 ) : J2KCopyPasteConverter {
@@ -66,9 +66,9 @@ class K1J2KCopyPasteConverter(
         ThreadingAssertions.assertEventDispatchThread()
 
         fun runConversion() {
-            val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetData.file, j2kKind)
+            val conversionResult = conversionData.elementsAndTexts.convertCodeToKotlin(project, targetData.file, j2kKind)
             val (text, parseContext, importsToAdd, isTextChanged, converterContext) = conversionResult
-            val referenceData = buildReferenceData(text, parseContext, dataForConversion.importsAndPackage, targetData.file)
+            val referenceData = buildReferenceData(text, parseContext, conversionData.importsAndPackage, targetData.file)
             val changedText = if (isTextChanged) text else null
             result = Result(changedText, referenceData, importsToAdd, converterContext)
         }
