@@ -33,7 +33,7 @@ class StartJourneyIntentionAction: IntentionAction, Iconable, LowPriorityAction 
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    JourneyShowDiagram().showDiagram(requireNotNull(JourneyNavigationUtil.getPsiElement(editor, file)))
+    JourneyShowDiagram().showDiagram(project, requireNotNull(JourneyNavigationUtil.getPsiElement(editor, file)))
   }
 
   override fun getIcon(flags: Int) = AllIcons.FileTypes.Diagram

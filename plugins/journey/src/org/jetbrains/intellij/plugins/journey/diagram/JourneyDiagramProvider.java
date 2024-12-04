@@ -2,41 +2,29 @@ package org.jetbrains.intellij.plugins.journey.diagram;// Copyright 2000-2024 Je
 
 import com.intellij.diagram.*;
 import com.intellij.diagram.extras.DiagramExtras;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.graph.builder.GraphBuilder;
 import com.intellij.openapi.graph.builder.event.GraphBuilderEvent;
 import com.intellij.openapi.graph.view.Graph2D;
-import com.intellij.openapi.graph.view.Graph2DView;
 import com.intellij.openapi.graph.view.NodeCellRenderer;
-import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.uml.presentation.DiagramPresentationModelImpl;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.intellij.plugins.journey.diagram.persistence.JourneyUmlFileSnapshotLoader;
-import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorWrapper;
 
 import javax.swing.*;
-import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramLayout.getRealizer;
 import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager.BASE_FONT_SIZE;
 
 @SuppressWarnings("HardCodedStringLiteral")

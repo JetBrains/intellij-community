@@ -6,10 +6,12 @@ import com.intellij.diagram.DiagramEdge;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -34,13 +36,21 @@ public class JourneyDiagramDataModelTest extends LightJavaCodeInsightFixtureTest
   @Test
   public void testCreateEdge() {
     JourneyDiagramDataModel model = myDataModel;
-    JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "a")));
+    PsiMethod methodA = createPsiMethod(myProject, "a");
+    PsiElement methodAIdentifier = PsiUtil.tryFindIdentifier(methodA);
+    JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(methodAIdentifier));
     assertNotNull(nodeA);
-    JourneyNode nodeB = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "b")));
+    PsiMethod methodB = createPsiMethod(myProject, "b");
+    PsiElement methodBIdentifier = PsiUtil.tryFindIdentifier(methodB);
+    JourneyNode nodeB = model.addElement(new JourneyNodeIdentity(methodBIdentifier));
     assertNotNull(nodeB);
     DiagramEdge<JourneyNodeIdentity> edgeAB = model.createEdge(nodeA, nodeB);
     assertNotNull(edgeAB);
     assertEquals(2, model.getNodes().size());
+    assertEquals(methodAIdentifier, model.getNodes().get(0).getIdentifyingElement().getOriginalElement());
+    assertEquals(methodA, model.getNodes().get(0).getIdentifyingElement().getMember());
+    assertEquals(methodBIdentifier, model.getNodes().get(1).getIdentifyingElement().getOriginalElement());
+    assertEquals(methodB, model.getNodes().get(1).getIdentifyingElement().getMember());
     assertEquals(1, model.getEdges().size());
   }
 

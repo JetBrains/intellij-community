@@ -55,7 +55,7 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
 
   @Override
   public @Nullable @Nls String getTooltip() {
-    return "Journey node tooltip " + identity.calculatePsiElement().getText();
+    return "Journey node tooltip " + identity.getOriginalElement().getText();
   }
 
   @Override
@@ -75,10 +75,8 @@ public class JourneyNode extends DiagramNodeBase<JourneyNodeIdentity> {
     if (obj == null || getClass() != obj.getClass()) return false;
 
     final var that = (JourneyNode)obj;
-    PsiElement psi1 = this.identity.calculatePsiElement();
-    PsiElement psi2 = that.identity.calculatePsiElement();
 
-    if (psi1.equals(psi2)) {
+    if (this.identity.equals(that.identity)) {
       return true;
     }
 

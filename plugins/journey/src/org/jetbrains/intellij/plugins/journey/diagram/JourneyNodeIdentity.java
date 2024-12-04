@@ -14,21 +14,38 @@ public class JourneyNodeIdentity implements LazyPsiElementHolder {
   private final PsiFile file;
   private final PsiElement original;
 
-  JourneyNodeIdentity(@NotNull PsiElement psiElement) {
+  public JourneyNodeIdentity(@NotNull PsiElement psiElement) {
     original = psiElement;
-    file = ReadAction.nonBlocking(() -> psiElement.getContainingFile()).executeSynchronously();
+    file = ReadAction.compute(() -> psiElement.getContainingFile());
+  }
+
+  public PsiFile getFile() {
+    return file;
   }
 
   @Override
   public @NotNull PsiFile calculatePsiElement() {
-    return file;
+    return getFile();
   }
 
   public @NotNull PsiElement getOriginalElement() {
     return original;
   }
 
-  public @NotNull PsiMember getOriginalMember() {
+  public @NotNull PsiMember getMember() {
     return (PsiMember)Objects.requireNonNull(PsiUtil.tryFindParentOrNull(original, it -> it instanceof PsiMember));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JourneyNodeIdentity identity = (JourneyNodeIdentity)o;
+    return Objects.equals(file, identity.file);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(file);
   }
 }

@@ -33,7 +33,7 @@ public final class JourneyNavigationUtil {
     return result != null ? result : psiFile;
   }
 
-  public static PsiElement editorToPsiMethod(Project project, Editor editor) {
+  public static PsiElement getPsiElementAtCaret(Project project, Editor editor) {
     // Get current caret offset
     CaretModel caretModel = editor.getCaretModel();
     int caretOffset = caretModel.getOffset();
@@ -54,7 +54,7 @@ public final class JourneyNavigationUtil {
     return ReadAction.nonBlocking(() -> {
       Object result = element;
       if (result instanceof UsageInfo usageInfo) result = usageInfo.getElement();
-      if (result instanceof Editor editor) result = editorToPsiMethod(project, editor);
+      if (result instanceof Editor editor) result = getPsiElementAtCaret(project, editor);
       if (result instanceof SourceNavigationRequest navigationRequest) result = getPsiElement(navigationRequest, project);
       if (result instanceof OpenFileDescriptor ofd) result = getPsiElement(ofd);
       if (result instanceof PsiIdentifier identifier) {

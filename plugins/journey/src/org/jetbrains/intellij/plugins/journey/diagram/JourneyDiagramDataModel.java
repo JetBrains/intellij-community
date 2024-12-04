@@ -89,6 +89,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     String title = myProvider.getVfsResolver().getQualifiedName(identity);
     JourneyNode node = new JourneyNode(myProvider, identity, title);
     myNodes.add(node);
+    myModificationTracker.incModificationCount();
     return node;
   }
 
@@ -106,8 +107,9 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     }
     myEdges.removeAll(edgesFromNode);
     myEdges.removeAll(edgesToNode);
-    myEditorManager.closeNode(node.getIdentifyingElement().calculatePsiElement());
+    myEditorManager.closeNode(node.getIdentifyingElement().getFile());
     myNodes.removeIf(it -> Objects.equals(it, node));
+    myModificationTracker.incModificationCount();
     queryUpdate(() -> {});
   }
 
@@ -119,12 +121,14 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     if (!myEdges.contains(edge)) {
       myEdges.add(edge);
     }
+    myModificationTracker.incModificationCount();
     return edge;
   }
 
   @Override
   public void removeEdge(@NotNull DiagramEdge<JourneyNodeIdentity> edge) {
     myEdges.removeIf(it -> it.equals(edge));
+    myModificationTracker.incModificationCount();
   }
 
   @Override
@@ -203,7 +207,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     return ReadAction.compute(() -> {
       PsiFile fromFile = ReadAction.nonBlocking(() -> from.getContainingFile()).executeSynchronously();
       return ContainerUtil.find(getNodes(), node -> {
-        PsiFile toFile = node.getIdentifyingElement().calculatePsiElement();
+        PsiFile toFile = node.getIdentifyingElement().getFile();
         return toFile.isEquivalentTo(fromFile);
       });
     });
@@ -232,7 +236,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     fromNode.addElement(fromPSI);
     if (!isNewNode) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        JourneyEditorWrapper editor = myEditorManager.NODE_PANELS.get(fromNode.getIdentifyingElement().calculatePsiElement());
+        JourneyEditorWrapper editor = myEditorManager.NODE_PANELS.get(fromNode.getIdentifyingElement().getFile());
         boolean isLeftToRight = (IdeFocusManager.getInstance(editor.editor.getProject()).
                                    getFocusedDescendantFor(editor.getEditorComponent()) != null);
         Optional<NodeRealizer> realizer = getRealizer(getBuilder(), isLeftToRight ? toNode : fromNode);

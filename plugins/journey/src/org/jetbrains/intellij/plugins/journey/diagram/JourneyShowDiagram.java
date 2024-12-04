@@ -2,6 +2,12 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 
 import com.intellij.diagnostic.Checks;
 import com.intellij.diagram.DiagramDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
@@ -12,12 +18,26 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.Objects;
+
+import static org.jetbrains.intellij.plugins.journey.diagram.JourneyShowDiagram.JourneyShowDiagramFromNewLocalFile.showDiagramFromFile;
 
 public class JourneyShowDiagram extends ShowDiagram {
-  public void showDiagram(PsiElement file) {
-    DiagramSeed seed = createSeed(file.getProject(), JourneyDiagramProvider.getInstance(), new JourneyNodeIdentity(file), Collections.emptyList());
-    showUnderProgress(seed, new RelativePoint(new Point()));
+
+  public static final boolean USE_LOCAL_FILE_STORAGE = true;
+
+  public void showDiagram(Project project, PsiElement file) {
+    if (USE_LOCAL_FILE_STORAGE) {
+      showDiagramFromFile(project, file);
+    }
+    else {
+      DiagramSeed seed =
+        createSeed(file.getProject(), JourneyDiagramProvider.getInstance(), new JourneyNodeIdentity(file), Collections.emptyList());
+      showUnderProgress(seed, new RelativePoint(new Point()));
+    }
   }
 
   public static VirtualFile getUmlVirtualFile() {
@@ -36,5 +56,60 @@ public class JourneyShowDiagram extends ShowDiagram {
     if (file.getProject() == null) file.setProject(seed.getProject());
     file.putUserData(DiagramDataKeys.ORIGINAL_ELEMENT, element);
     return file;
+  }
+
+  public static final class JourneyShowDiagramFromNewLocalFile {
+    private static final Logger LOG = Logger.getInstance(JourneyShowDiagram.class);
+
+    public static final String ORIGINAL_ELEMENT_PLACEHOLDER = "$$ORIGINAL_ELEMENT$$";
+
+    public static final String INITIAL = """
+      <?xml version="1.0" encoding="UTF-8"?>
+      <Diagram>
+        <ID>JOURNEY</ID>
+        <OriginalElement>$$ORIGINAL_ELEMENT$$</OriginalElement>
+        <nodes>
+          <node x="0.0" y="0.0">$$ORIGINAL_ELEMENT$$</node>
+        </nodes>
+        <notes />
+        <edges>
+        </edges>
+        <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="0.0" y="0.0" />
+        <SelectedNodes />
+        <Categories />
+      </Diagram>
+      
+      """;
+
+    public static void showDiagramFromFile(Project project, PsiElement file) {
+      File file1 = createLocalFile(project, System.currentTimeMillis() + ".uml", new JourneyNodeIdentity(file));
+      VirtualFile vf = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file1.toPath());
+
+      if (vf != null) {
+        DumbService.getInstance(project).runWhenSmart(() -> {});
+        FileEditorManager.getInstance(file.getProject()).openTextEditor(new OpenFileDescriptor(file.getProject(), vf), true);
+      }
+      else {
+        LOG.error("Failed to convert File to VirtualFile");
+      }
+    }
+
+    public static File createLocalFile(Project project, String name, JourneyNodeIdentity originalElement) {
+      try {
+        File journeyDir = new File(project.getBasePath() + "/.journey");
+        if (!journeyDir.exists()) {
+          journeyDir.mkdirs();
+        }
+        File localFile = new File(journeyDir, name);
+        String fqn = JourneyDiagramProvider.getInstance().getVfsResolver().getQualifiedName(originalElement);
+        Objects.requireNonNull(fqn);
+        FileUtil.writeToFile(localFile, INITIAL.replace(ORIGINAL_ELEMENT_PLACEHOLDER, fqn));
+        return localFile;
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

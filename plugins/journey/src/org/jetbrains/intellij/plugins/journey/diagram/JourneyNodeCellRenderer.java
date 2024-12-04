@@ -42,8 +42,8 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
     final var node = myBuilder.getNodeObject(realizer.getNode());
     if (node instanceof JourneyNode journeyNode) {
       JourneyNodeIdentity identity = journeyNode.getIdentifyingElement();
-      PsiMember psiMember = identity.getOriginalMember();
-      PsiFile psiFile = identity.calculatePsiElement();
+      PsiMember psiMember = identity.getMember();
+      PsiFile psiFile = identity.getFile();
       JourneyEditorWrapper cached = myDataModel.myEditorManager.NODE_PANELS.get(psiFile);
       if (cached != null) {
         cached.updateRealizer(realizer);
