@@ -133,6 +133,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/createFromUsage/createFunction/call/abstract", pattern = pattern)
             model("${idea}/quickfix/typeMismatch/convertCollection", pattern = pattern)
             model("${idea}/quickfix/typeMismatch/wrapWithCollectionLiteral", pattern = pattern)
+            model("${idea}/intentions/convertSecondaryConstructorToPrimary", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileQuickFixTest> {
