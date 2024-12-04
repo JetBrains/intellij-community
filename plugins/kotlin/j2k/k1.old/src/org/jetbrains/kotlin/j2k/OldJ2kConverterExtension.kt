@@ -46,7 +46,7 @@ class OldJ2kConverterExtension : J2kConverterExtension() {
         project: Project,
         editor: Editor,
         dataForConversion: DataForConversion,
-        targetData: ConversionTargetData
+        targetData: TargetData
     ): J2KCopyPasteConverter {
         return K1J2KCopyPasteConverter(project, editor, dataForConversion, targetData, kind)
     }

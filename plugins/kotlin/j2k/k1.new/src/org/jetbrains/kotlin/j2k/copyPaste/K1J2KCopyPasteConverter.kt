@@ -25,7 +25,7 @@ class K1J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val dataForConversion: DataForConversion,
-    private val targetData: ConversionTargetData,
+    private val targetData: TargetData,
     private val j2kKind: J2kConverterExtension.Kind,
 ) : J2KCopyPasteConverter {
     /**
