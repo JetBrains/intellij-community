@@ -154,7 +154,7 @@ public final class VfsRootAccess {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
       allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
-      Arrays.stream(System.getProperty("vfs.additional-allowed-roots", "").split(":"))
+      Arrays.stream(System.getProperty("vfs.additional-allowed-roots", "").split(File.pathSeparator))
         .filter(Predicate.not(String::isBlank))
         .map(FileUtil::toSystemIndependentName)
         .forEach(allowed::add);
