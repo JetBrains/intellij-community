@@ -1,24 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.find;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.find;
 
 import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindUtil;
 import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -29,6 +25,7 @@ import org.opentest4j.AssertionFailedError;
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
@@ -311,39 +308,12 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
 
   private void checkResults() {
     String name = getTestName(false);
-    assertSameLinesWithFile(getTestDataPath() + "/find/findInEditor/" + name + ".gold", myOutputStream.toString());
+    assertSameLinesWithFile(getTestDataPath() + "/editor/findInEditor/" + name + ".gold", myOutputStream.toString());
   }
 
-
-  public void testReplacePerformance() {
-    String aas = StringUtil.repeat("a", 100);
-    String text = StringUtil.repeat(aas + "\n" + StringUtil.repeat("aaaaasdbbbbbbbbbbbbbbbbb\n", 100), 1000);
-    String bbs = StringUtil.repeat("b", 100);
-    String repl = StringUtil.replace(text, aas, bbs);
-    Editor editor = configureFromFileTextWithoutPSI(text);
-    LivePreview.ourTestOutput = null;
-
-    try {
-      initFind(editor);
-      myFindModel.setReplaceState(true);
-      myFindModel.setPromptOnReplace(false);
-
-      Benchmark.newBenchmark("replace", ()->{
-        for (int i=0; i<25; i++) {
-          myFindModel.   setStringToFind(aas);
-          myFindModel.setStringToReplace(bbs);
-          FindUtil.replace(getProject(), editor, 0, myFindModel);
-          assertEquals(repl, editor.getDocument().getText());
-          myFindModel.   setStringToFind(bbs);
-          myFindModel.setStringToReplace(aas);
-          FindUtil.replace(getProject(), editor, 0, myFindModel);
-          assertEquals(text, editor.getDocument().getText());
-        }
-      }).start();
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
-    }
+  @Override
+  protected @NotNull String getTestDataPath() {
+    return Path.of(PathManager.getCommunityHomePath(), "platform/lang-impl/testData").toString();
   }
 
   public void testSearchAreaUnion() {
