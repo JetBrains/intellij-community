@@ -27,13 +27,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.*;
+import com.intellij.util.Processor;
+import com.intellij.util.Processors;
+import com.intellij.util.SmartList;
+import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.indexing.impl.IndexDebugProperties;
-import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
-import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.impl.UpdateData;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.ints.*;
@@ -45,18 +45,21 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
-  public static final boolean TRACE_STUB_INDEX_UPDATES = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false) ||
-                                                         SystemProperties.getBooleanProperty("trace.stub.index.update", false);
-  private static final boolean TRACE_INDEX_UPDATES = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
-  private static final boolean TRACE_SHARED_INDEX_UPDATES = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+  public static final boolean TRACE_STUB_INDEX_UPDATES = getBooleanProperty("idea.trace.stub.index.update", false) ||
+                                                         getBooleanProperty("trace.stub.index.update", false);
+  private static final boolean TRACE_INDEX_UPDATES = getBooleanProperty("trace.file.based.index.update", false);
+  private static final boolean TRACE_SHARED_INDEX_UPDATES = getBooleanProperty("trace.shared.index.update", false);
+
 
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
@@ -187,11 +190,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
       IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
       trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
-      return index.processAllKeys(processor, scope, idFilterAdjusted);
+      return index.processAllKeys(maybeWrapAsCancellable(processor), scope, idFilterAdjusted);
     }
     catch (StorageException e) {
       trace.lookupFailed();
       requestRebuild(indexId, e);
+    }
+    catch (CancellationException e) {
+      trace.lookupCancelled();
+      throw e;
     }
     catch (RuntimeException e) {
       trace.lookupFailed();
@@ -354,6 +361,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       TRACE_OF_ENTRIES_LOOKUP.get().lookupFailed();
       requestRebuild(indexId, e);
     }
+    catch (CancellationException e) {
+      TRACE_OF_ENTRIES_LOOKUP.get().lookupCancelled();
+      throw e;
+    }
     catch (RuntimeException e) {
       Throwable cause = extractCauseToRebuildIndex(e);
       if (cause != null) {
@@ -416,6 +427,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
             }
           }
 
+          //MAYBE RC: replace explicit .checkCanceled() with maybeWrapAsCancellable()?
           ProgressManager.checkCanceled();
         }
       }
@@ -622,13 +634,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntList sortedIds = new IntArrayList(ids);
     sortedIds.sort(null);
 
+    Processor<? super VirtualFile> enhancedProcessor = maybeWrapAsCancellable(processor);
     for (IntIterator iterator = sortedIds.iterator(); iterator.hasNext(); ) {
-      ProgressManager.checkCanceled();
       int id = iterator.nextInt();
       VirtualFile file = findFileById(id);
       if (file != null && filter.contains(file)) {
-        boolean processNext = processor.process(file);
-        ProgressManager.checkCanceled();
+        boolean processNext = enhancedProcessor.process(file);
         if (!processNext) {
           return false;
         }
@@ -843,5 +854,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         return next;
       }
     };
+  }
+
+  private static <K> @NotNull Processor<? super K> maybeWrapAsCancellable(@NotNull Processor<? super K> processor) {
+    if (IndexStorageLockingBase.MAKE_INDEX_LOOKUP_CANCELLABLE) {
+      return new ProcessorWithThrottledCancellationCheck<>(processor);
+    }
+    else {
+      return processor;
+    }
   }
 }

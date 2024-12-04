@@ -145,17 +145,18 @@ public final class IndexLookupTimingsReporting {
   /**
    * Individual lookups
    */
-  private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 1);
+  private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 2);
 
   /**
    * Averages/percentiles over lookups in a time window
    */
-  private static final EventLogGroup INDEX_USAGE_AGGREGATES_GROUP = new EventLogGroup("index.usage.aggregates", 2);
+  private static final EventLogGroup INDEX_USAGE_AGGREGATES_GROUP = new EventLogGroup("index.usage.aggregates", 3);
 
   /* ================== EVENTS FIELDS: ====================================================== */
 
   private static final StringEventField FIELD_INDEX_ID = EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator.class);
   private static final BooleanEventField FIELD_LOOKUP_FAILED = EventFields.Boolean("lookup_failed");
+  private static final BooleanEventField FIELD_LOOKUP_CANCELLED = EventFields.Boolean("lookup_cancelled");
   /**
    * Total lookup time, as it is seen by 'client' (i.e. including up-to-date/validation, and stubs deserializing, etc...)
    */
@@ -284,6 +285,7 @@ public final class IndexLookupTimingsReporting {
 
       protected long lookupStartedAtMs;
       protected boolean lookupFailed;
+      protected boolean lookupCancelled;
       protected int totalKeysIndexed;
       protected int lookupResultSize;
 
@@ -394,6 +396,13 @@ public final class IndexLookupTimingsReporting {
       public T lookupFailed() {
         if (traceWasStarted()) {
           this.lookupFailed = true;
+        }
+        return typeSafeThis();
+      }
+
+      public T lookupCancelled() {
+        if (traceWasStarted()) {
+          this.lookupCancelled = true;
         }
         return typeSafeThis();
       }
@@ -521,6 +530,7 @@ public final class IndexLookupTimingsReporting {
 
           FIELD_LOOKUP_DURATION_MS.with(lookupDurationMs),
 
+          FIELD_LOOKUP_CANCELLED.with(lookupCancelled),
           FIELD_LOOKUP_FAILED.with(lookupFailed),
 
           FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed)
@@ -785,6 +795,7 @@ public final class IndexLookupTimingsReporting {
 
     private static final IntEventField FIELD_LOOKUPS_TOTAL = EventFields.Int("lookups_total");
     private static final IntEventField FIELD_LOOKUPS_FAILED = EventFields.Int("lookups_failed");
+    private static final IntEventField FIELD_LOOKUPS_CANCELLED = EventFields.Int("lookups_cancelled");
     private static final DoubleEventField FIELD_LOOKUP_DURATION_MEAN = EventFields.Double("lookup_duration_mean_ms");
     private static final IntEventField FIELD_LOOKUP_DURATION_90P = EventFields.Int("lookup_duration_90ile_ms");
     private static final IntEventField FIELD_LOOKUP_DURATION_95P = EventFields.Int("lookup_duration_95ile_ms");
@@ -798,6 +809,7 @@ public final class IndexLookupTimingsReporting {
 
       FIELD_LOOKUPS_TOTAL,
       FIELD_LOOKUPS_FAILED,
+      FIELD_LOOKUPS_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MEAN,
       FIELD_LOOKUP_DURATION_90P,
@@ -812,6 +824,7 @@ public final class IndexLookupTimingsReporting {
 
       FIELD_LOOKUPS_TOTAL,
       FIELD_LOOKUPS_FAILED,
+      FIELD_LOOKUPS_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MEAN,
       FIELD_LOOKUP_DURATION_90P,
@@ -826,6 +839,7 @@ public final class IndexLookupTimingsReporting {
 
       FIELD_LOOKUPS_TOTAL,
       FIELD_LOOKUPS_FAILED,
+      FIELD_LOOKUPS_CANCELLED,
 
       FIELD_LOOKUP_DURATION_MEAN,
       FIELD_LOOKUP_DURATION_90P,
@@ -932,6 +946,7 @@ public final class IndexLookupTimingsReporting {
 
             FIELD_LOOKUPS_TOTAL.with((int)recordedValuesHistogram.getTotalCount()),
             //TODO FIELD_LOOKUPS_FAILED.with( -1 ),
+            //TODO FIELD_LOOKUPS_CANCELLED.with( -1 ),
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
@@ -951,6 +966,7 @@ public final class IndexLookupTimingsReporting {
 
             FIELD_LOOKUPS_TOTAL.with((int)recordedValuesHistogram.getTotalCount()),
             //TODO FIELD_LOOKUPS_FAILED.with( -1 ),
+            //TODO FIELD_LOOKUPS_CANCELLED.with( -1 ),
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
@@ -970,6 +986,7 @@ public final class IndexLookupTimingsReporting {
 
             FIELD_LOOKUPS_TOTAL.with((int)recordedValuesHistogram.getTotalCount()),
             //TODO FIELD_LOOKUPS_FAILED.with( -1 ),
+            //TODO FIELD_LOOKUPS_CANCELLED.with( -1 ),
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 

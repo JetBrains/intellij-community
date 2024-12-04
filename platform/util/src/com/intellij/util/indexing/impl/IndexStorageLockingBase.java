@@ -1,12 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
+import com.intellij.openapi.progress.Cancellation;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.intellij.util.ConcurrencyUtil.DEFAULT_TIMEOUT_MS;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Locking for {@link IndexStorage} implementations. To be extended by a specific storage implementation, if it needs locking.
@@ -20,15 +28,50 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 @ApiStatus.Internal
 public abstract class IndexStorageLockingBase {
+  /**
+   * If true, index lookups may throw {@linkplain ProcessCanceledException} if job/indicator is cancelled.
+   * Since not all code is ready for PCE from index lookup, this is currently under a feature-flag
+   */
+  public static final boolean MAKE_INDEX_LOOKUP_CANCELLABLE = getBooleanProperty("intellij.index.cancellable-lookup", false);
+
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
   protected IndexStorageLockingBase() {
   }
 
-  protected @NotNull LockStamp lockForRead() {
+  protected @NotNull LockStamp lockForRead() throws CancellationException {
     ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-    readLock.lock();
+    if (MAKE_INDEX_LOOKUP_CANCELLABLE) {
+      lockMaybeCancellable(readLock);
+    }
+    else {
+      readLock.lock();
+    }
+    
     return readLock::unlock;
+  }
+
+
+  private static void lockMaybeCancellable(@NotNull Lock lock) {
+    //FIXME RC: this method must be just CancellationUtil.lockMaybeCancellable(lock), but CancellationUtil
+    //          ('platform.core') is not available from 'platform.util'.
+    //          Why CancellationUtil is in the 'platform.core': because it depends on ProgressManager.checkCanceled().
+    //          According to Daniil, dependencies should go other way around: Cancellation.checkCancelled()
+    //          should be a central hub for cancellations, and ProgressManager should be installed in Cancellation
+    //          -- but this is the topic for a future. Currently Cancellation.checkCancelled() is all we could do
+    //          in 'platform.util'
+    while (true) {
+      //ProgressManager.checkCanceled();
+      Cancellation.checkCancelled();
+      try {
+        if (lock.tryLock(DEFAULT_TIMEOUT_MS, MILLISECONDS)) {
+          break;
+        }
+      }
+      catch (InterruptedException e) {
+        throw new ProcessCanceledException(e);
+      }
+    }
   }
 
   protected @NotNull LockStamp lockForWrite() {
