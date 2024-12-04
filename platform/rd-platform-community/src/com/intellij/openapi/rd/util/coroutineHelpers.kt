@@ -52,7 +52,7 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
   handler: suspend (Lifetime, TReq) -> TRes) {
   @OptIn(DelicateCoroutinesApi::class)
-  setSuspend(coroutineContext + ClientId.coroutineContext(), coroutineStart, handler)
+  setSuspend(coroutineContext, coroutineStart, handler)
 }
 
 // TODO: remove when the same is merged in rd
@@ -85,16 +85,8 @@ fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineC
  */
 @ApiStatus.Internal
 fun<T> ISource<T>.adviseSuspendPreserveClientId(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
-  val beforeAdviseClientId = currentThreadClientId
-  advise(lifetime) {
-    // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
-    beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)")
-    val inAdviseClientId = currentThreadClientId
-    lifetime.coroutineScope.launch(coroutineContext + ClientId.coroutineContext() + getSuitableDispatcher(coroutineContext), coroutineStart) {
-      inAdviseClientId.assertClientIdConsistency("Inside launch ($this)")
-      handler(it)
-    }
-  }
+  @OptIn(DelicateCoroutinesApi::class)
+  adviseSuspend(lifetime, coroutineContext, coroutineStart, handler)
 }
 
 private fun Any.getSuitableDispatcher(context: CoroutineContext): CoroutineDispatcher {
