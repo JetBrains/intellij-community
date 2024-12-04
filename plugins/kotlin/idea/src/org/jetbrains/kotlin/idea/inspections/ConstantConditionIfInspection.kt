@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.util.hasNoSideEffects
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
+internal fun KtExpression.replaceWithBranchAndMoveCaret(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
     val caretModel = findExistingEditor()?.caretModel
 
     val subjectVariable = (this as? KtWhenExpression)?.subjectVariable?.let(fun(property: KtProperty): KtProperty? {

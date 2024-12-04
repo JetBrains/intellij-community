@@ -116,7 +116,7 @@ class ReplaceGuardClauseWithFunctionCallInspection : AbstractApplicabilityBasedI
         return if (elseBranch != null) {
             val added = parent.addBefore(newExpression, this) as KtExpression
             parent.addBefore(psiFactory.createNewLine(), this)
-            replaceWithBranch(elseBranch, isUsedAsExpression = false, keepBraces = false)
+            replaceWithBranchAndMoveCaret(elseBranch, isUsedAsExpression = false, keepBraces = false)
             added
         } else {
             replaced(newExpression)

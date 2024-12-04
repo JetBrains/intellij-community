@@ -41,7 +41,7 @@ class WhenWithOnlyElseInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val whenExpression = descriptor.psiElement as? KtWhenExpression ?: return
-            whenExpression.replaceWithBranch(whenExpression.elseExpression ?: return, isUsedAsExpression)
+            whenExpression.replaceWithBranchAndMoveCaret(whenExpression.elseExpression ?: return, isUsedAsExpression)
         }
     }
 }
