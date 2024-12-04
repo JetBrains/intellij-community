@@ -122,3 +122,5 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - sf:withMatchedName(com.intellij.webSymbols.WebSymbol,java.lang.String):com.intellij.webSymbols.WebSymbol
 - sf:withNavigationTarget(com.intellij.webSymbols.WebSymbol,com.intellij.psi.PsiElement):com.intellij.webSymbols.WebSymbol
 - sf:withOffset(java.util.List,I):java.util.List
+- sf:withSegments(com.intellij.webSymbols.query.WebSymbolMatch,java.util.List):com.intellij.webSymbols.query.WebSymbolMatch
+- sf:withSymbols(com.intellij.webSymbols.WebSymbolNameSegment,java.util.List):com.intellij.webSymbols.WebSymbolNameSegment
