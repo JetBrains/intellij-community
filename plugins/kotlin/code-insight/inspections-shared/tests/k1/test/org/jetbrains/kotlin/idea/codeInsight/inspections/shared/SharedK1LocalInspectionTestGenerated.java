@@ -469,6 +469,95 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/constantConditionIf")
+    public static class ConstantConditionIf extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("constant.kt")
+        public void testConstant() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/constant.kt");
+        }
+
+        @TestMetadata("delete.kt")
+        public void testDelete() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/delete.kt");
+        }
+
+        @TestMetadata("endWithElseIf.kt")
+        public void testEndWithElseIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/endWithElseIf.kt");
+        }
+
+        @TestMetadata("endWithElseIf2.kt")
+        public void testEndWithElseIf2() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/endWithElseIf2.kt");
+        }
+
+        @TestMetadata("endWithElseIfNoBraces.kt")
+        public void testEndWithElseIfNoBraces() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/endWithElseIfNoBraces.kt");
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/expression.kt");
+        }
+
+        @TestMetadata("expressionElseIfBlock.kt")
+        public void testExpressionElseIfBlock() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/expressionElseIfBlock.kt");
+        }
+
+        @TestMetadata("expressionElseIfBlock2.kt")
+        public void testExpressionElseIfBlock2() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/expressionElseIfBlock2.kt");
+        }
+
+        @TestMetadata("noStatements.kt")
+        public void testNoStatements() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/noStatements.kt");
+        }
+
+        @TestMetadata("noStatementsElseIf.kt")
+        public void testNoStatementsElseIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/noStatementsElseIf.kt");
+        }
+
+        @TestMetadata("simpleBlock.kt")
+        public void testSimpleBlock() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/simpleBlock.kt");
+        }
+
+        @TestMetadata("simpleFalse.kt")
+        public void testSimpleFalse() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/simpleFalse.kt");
+        }
+
+        @TestMetadata("simpleTrue.kt")
+        public void testSimpleTrue() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/simpleTrue.kt");
+        }
+
+        @TestMetadata("statement.kt")
+        public void testStatement() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/statement.kt");
+        }
+
+        @TestMetadata("statementElseIf.kt")
+        public void testStatementElseIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/statementElseIf.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/controlFlowWithEmptyBody")
     public abstract static class ControlFlowWithEmptyBody extends AbstractSharedK1LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

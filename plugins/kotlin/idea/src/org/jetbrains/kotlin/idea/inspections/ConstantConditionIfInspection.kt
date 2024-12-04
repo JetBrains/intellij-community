@@ -2,50 +2,13 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.base.psi.textRangeIn
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConstantConditionIfFix
 import org.jetbrains.kotlin.idea.util.hasNoSideEffects
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
-class ConstantConditionIfInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return ifExpressionVisitor { expression ->
-            val constantValue = expression.getConditionConstantValueIfAny() ?: return@ifExpressionVisitor
-            val fixes = ConstantConditionIfFix.collectFixes(expression, constantValue)
-            holder.registerProblem(
-                expression,
-                expression.condition?.textRangeIn(expression),
-                KotlinBundle.message("condition.is.always.0", constantValue),
-                *fixes.toTypedArray()
-            )
-        }
-    }
-}
-
-private fun KtIfExpression.getConditionConstantValueIfAny(): Boolean? {
-    var expr = condition
-    while (expr is KtParenthesizedExpression) {
-        expr = expr.expression
-    }
-    if (expr !is KtConstantExpression) return null
-    val context = condition?.analyze(BodyResolveMode.PARTIAL_WITH_CFA) ?: return null
-    val type = expr.getType(context) ?: return null
-    val constant = ConstantExpressionEvaluator.getConstant(expr, context)?.toConstantValue(type) ?: return null
-    return constant.value as? Boolean
-}
 
 fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
     val caretModel = findExistingEditor()?.caretModel
