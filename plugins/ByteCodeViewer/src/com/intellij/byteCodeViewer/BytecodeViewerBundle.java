@@ -7,11 +7,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class JavaByteCodeViewerBundle {
-  private static final @NonNls String BUNDLE = "messages.JavaByteCodeViewerBundle";
-  private static final DynamicBundle INSTANCE = new DynamicBundle(JavaByteCodeViewerBundle.class, BUNDLE);
+public final class BytecodeViewerBundle {
+  private static final @NonNls String BUNDLE = "messages.BytecodeViewerBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BytecodeViewerBundle.class, BUNDLE);
 
-  private JavaByteCodeViewerBundle() {
+  private BytecodeViewerBundle() {
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

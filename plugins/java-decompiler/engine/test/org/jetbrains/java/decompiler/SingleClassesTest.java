@@ -33,6 +33,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
     );
   }
 
+  @Test public void testHelloWorld() { doTest("pkg/TestHelloWorld"); }
   @Test public void testGenerics() { doTest("pkg/TestGenerics"); }
   @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
   @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
