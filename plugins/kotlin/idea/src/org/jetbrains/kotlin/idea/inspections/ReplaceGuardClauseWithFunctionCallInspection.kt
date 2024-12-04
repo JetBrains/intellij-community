@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimpli
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.idea.util.replaceWithBranchAndMoveCaret
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull

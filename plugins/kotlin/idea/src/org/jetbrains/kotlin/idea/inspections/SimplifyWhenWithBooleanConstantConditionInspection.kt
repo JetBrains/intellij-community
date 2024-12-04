@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.util.replaceWithBranchAndMoveCaret
 
 class SimplifyWhenWithBooleanConstantConditionInspection : AbstractKotlinInspection() {
 
