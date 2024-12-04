@@ -12,8 +12,10 @@ import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import java.awt.Point
+import kotlin.time.Duration.Companion.seconds
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -209,6 +211,11 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     get() = gutter.getIconAreaOffset()
 
 
+  fun getGutterIcons(): List<GutterIcon> {
+    waitFor  { this.icons.isNotEmpty() }
+    return this.icons
+  }
+
   fun getIconName(line: Int) =
     icons.firstOrNull { it.line == line - 1 }?.mark?.getIcon().toString().substringAfterLast("/")
 
@@ -231,8 +238,32 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     fun click() {
       click(location)
     }
+    fun getIconPath(): String {
+      return mark
+        .getIcon()
+        .toString()
+        .split(',', '(', ')')
+        .findLast { it.trim().startsWith("path") }!!.split('=')[1]
+    }
   }
 }
+
+enum class GutterIcon(val path: String) {
+  RUN("expui/gutter/run.svg"),
+  RUNSUCCESS("expui/gutter/runSuccess.svg"),
+  RUNERROR("expui/gutter/runError.svg"),
+  RERUN("expui/gutter/rerun.svg"),
+  BREAKPOINT("expui/breakpoints/breakpointValid.svg"),
+  NEXT_STATEMENT("debugger/nextStatement.svg"),
+  GOTO("icons/expui/assocFile@14x14.svg"),
+  IMPLEMENT("expui/gutter/implementingMethod.svg")
+}
+
+data class GutterState(
+  val lineNumber: Int,
+  val iconPath: String = "",
+)
+
 
 class InlayHint(val offset: Int, val text: String)
 
