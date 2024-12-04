@@ -13,87 +13,83 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenTestCase;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import com.intellij.maven.testFramework.MavenTestCase
 
-public class MavenEmbeddersManagerTest extends MavenTestCase {
-  private MavenEmbeddersManager myManager;
+class MavenEmbeddersManagerTest : MavenTestCase() {
+  private var myManager: MavenEmbeddersManager? = null
 
-  @Override
-  protected void setUp() {
-    super.setUp();
-    myManager = new MavenEmbeddersManager(getProject());
+  override fun setUp() {
+    super.setUp()
+    myManager = MavenEmbeddersManager(project)
   }
 
-  @Override
-  protected void tearDownFixtures() {
-    super.tearDownFixtures();
+  override fun tearDownFixtures() {
+    super.tearDownFixtures()
   }
 
-  @Override
-  protected void tearDown() {
+  override fun tearDown() {
     try {
-      myManager.releaseForcefullyInTests();
+      myManager!!.releaseForcefullyInTests()
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
-  public void testBasics() {
-    MavenEmbedderWrapper one = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
-    MavenEmbedderWrapper two = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+  fun testBasics() {
+    val one = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val two = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
 
-    assertNotSame(one, two);
+    assertNotSame(one, two)
   }
 
-  public void testForSameId() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+  fun testForSameId() {
+    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
 
-    assertNotSame(one1, one2);
+    assertNotSame(one1, one2)
 
-    myManager.release(one1);
+    myManager!!.release(one1)
 
-    MavenEmbedderWrapper one3 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+    val one3 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
 
-    assertSame(one1, one3);
+    assertSame(one1, one3)
   }
 
-  public void testCachingOnlyOne() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+  fun testCachingOnlyOne() {
+    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
 
-    assertNotSame(one1, one2);
+    assertNotSame(one1, one2)
 
-    myManager.release(one1);
-    myManager.release(one2);
+    myManager!!.release(one1)
+    myManager!!.release(one2)
 
-    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
-    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
+    val one11 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one22 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
 
-    assertSame(one1, one11);
-    assertNotSame(one2, one22);
+    assertSame(one1, one11)
+    assertNotSame(one2, one22)
   }
 
-  public void testResettingAllCachedAndInUse() {
-    MavenEmbedderWrapper one1 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
-    MavenEmbedderWrapper one2 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
+  fun testResettingAllCachedAndInUse() {
+    val one1 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one2 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
 
-    myManager.release(one1);
-    myManager.reset();
+    myManager!!.release(one1)
+    myManager!!.reset()
 
-    myManager.release(one2);
+    myManager!!.release(one2)
 
-    MavenEmbedderWrapper one11 = myManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, getDir().getPath());
-    MavenEmbedderWrapper one22 = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
+    val one11 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, dir.path)
+    val one22 = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
 
-    assertNotSame(one1, one11);
-    assertNotSame(one2, one22);
+    assertNotSame(one1, one11)
+    assertNotSame(one2, one22)
   }
 }
