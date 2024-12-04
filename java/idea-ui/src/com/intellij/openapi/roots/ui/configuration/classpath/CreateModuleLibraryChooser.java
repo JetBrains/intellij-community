@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -122,16 +122,6 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
         public boolean isFileSelectable(@Nullable VirtualFile file) {
           for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
             if (pair.getSecond().isFileSelectable(file)) {
-              return true;
-            }
-          }
-          return false;
-        }
-
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          for (Pair<LibraryRootsComponentDescriptor, FileChooserDescriptor> pair : descriptors) {
-            if (pair.getSecond().isFileVisible(file, showHiddenFiles)) {
               return true;
             }
           }
