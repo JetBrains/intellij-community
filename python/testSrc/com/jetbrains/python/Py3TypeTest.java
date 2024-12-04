@@ -1276,7 +1276,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInAnnotations() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1289,7 +1289,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInTypeComments() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1306,7 +1306,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInFunctionTypeComment() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1320,7 +1320,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInImportedFile() {
-    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doMultiFileTest("(c: (**P) -> int, **P, **P) -> None", """
       from mod import func
             
       expr = func
