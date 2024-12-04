@@ -168,7 +168,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
 
     val module = getModule("project")
     readAction {
-      assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
+      assertEquals(defaultLanguageLevel, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.JDK_1_8)
     val tag = findTag("project.build.plugins.plugin")
@@ -191,7 +191,7 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                     """.trimIndent())
     val module = getModule("project")
     readAction {
-      assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
+      assertEquals(defaultLanguageLevel, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1])
     val tag = findTag("project.build.plugins.plugin")
