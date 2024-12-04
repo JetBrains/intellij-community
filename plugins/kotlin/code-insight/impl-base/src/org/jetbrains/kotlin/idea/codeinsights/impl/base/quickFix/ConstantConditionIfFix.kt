@@ -22,9 +22,25 @@ abstract class ConstantConditionIfFix : KotlinModCommandQuickFix<KtIfExpression>
     companion object {
         fun collectFixes(
             expression: KtIfExpression,
-            constantValue: Boolean? = expression.getConditionConstantValueIfAny()
+            constantValue: Boolean? = expression.getConditionConstantValueIfAny(),
         ): List<ConstantConditionIfFix> {
-            return org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.collectFixes(expression, constantValue)
+            if (constantValue == null) return emptyList()
+            val fixes = mutableListOf<ConstantConditionIfFix>()
+
+            if (expression.branch(constantValue) != null) {
+                val keepBraces = expression.isElseIf() && expression.branch(constantValue) is KtBlockExpression
+                fixes += SimplifyFix(
+                    constantValue,
+                    analyze(expression) { expression.isUsedAsExpression },
+                    keepBraces
+                )
+            }
+
+            if (!constantValue && expression.`else` == null) {
+                fixes += RemoveFix()
+            }
+
+            return fixes
         }
 
         fun applyFixIfSingle(ifExpression: KtIfExpression, updater: ModPsiUpdater? = null) {
@@ -36,11 +52,9 @@ abstract class ConstantConditionIfFix : KotlinModCommandQuickFix<KtIfExpression>
 private class SimplifyFix(
     private val conditionValue: Boolean,
     private val isUsedAsExpression: Boolean,
-    private val keepBraces: Boolean
+    private val keepBraces: Boolean,
 ) : ConstantConditionIfFix() {
-    override fun getFamilyName() = name
-
-    override fun getName() = KotlinBundle.message("simplify.fix.text")
+    override fun getFamilyName(): String = KotlinBundle.message("simplify.fix.text")
 
     override fun applyFix(project: Project, element: KtIfExpression, updater: ModPsiUpdater) {
         applyFix(element, updater)
@@ -60,9 +74,7 @@ private class SimplifyFix(
 }
 
 private class RemoveFix : ConstantConditionIfFix() {
-    override fun getFamilyName() = name
-
-    override fun getName() = KotlinBundle.message("remove.fix.text")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.fix.text")
 
     override fun applyFix(project: Project, element: KtIfExpression, updater: ModPsiUpdater) {
         applyFix(element, updater)
@@ -79,29 +91,6 @@ private class RemoveFix : ConstantConditionIfFix() {
     }
 }
 
-private fun collectFixes(
-    expression: KtIfExpression,
-    constantValue: Boolean?
-): List<ConstantConditionIfFix> {
-    if (constantValue == null) return emptyList()
-    val fixes = mutableListOf<ConstantConditionIfFix>()
-
-    if (expression.branch(constantValue) != null) {
-        val keepBraces = expression.isElseIf() && expression.branch(constantValue) is KtBlockExpression
-        fixes += SimplifyFix(
-            constantValue,
-            analyze(expression) { expression.isUsedAsExpression },
-            keepBraces
-        )
-    }
-
-    if (!constantValue && expression.`else` == null) {
-        fixes += RemoveFix()
-    }
-
-    return fixes
-}
-
-private fun KtIfExpression.branch(thenBranch: Boolean) = if (thenBranch) then else `else`
+private fun KtIfExpression.branch(thenBranch: Boolean): KtExpression? = if (thenBranch) then else `else`
 
 private fun KtExpression.isElseIf(): Boolean = parent.node.elementType == KtNodeTypes.ELSE
