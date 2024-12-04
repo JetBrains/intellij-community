@@ -362,7 +362,7 @@ open class ProjectRootManagerComponent(
     settings.retainCondition = Condition<WorkspaceFileIndexContributor<out WorkspaceEntity>> {
       it.storageKind == EntityStorageKind.MAIN && it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
     }
-    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(WorkspaceModel.getInstance(project).currentSnapshot, settings, project)
+    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(WorkspaceModel.getInstance(project).currentSnapshot, settings)
     fun register(rootFiles: Collection<VirtualFile>, name: String) {
       WATCH_ROOTS_LOG.trace { "  ${name} from workspace entities: ${rootFiles}" }
       rootFiles.forEach { recursivePaths.add(it.path) }

@@ -54,6 +54,9 @@ internal object IndexableIteratorBuilders {
     listOf(LibraryIdIteratorBuilder(libraryId, null, null, roots, dependencyChecked))
 
 
+  fun forSdkEntity(sdkId: SdkId,
+                   roots: IndexingUrlRootHolder): Collection<IndexableIteratorBuilder> = listOf(SdkIteratorBuilder(sdkId.name, sdkId.type, null, roots))
+
   @JvmOverloads
   fun forSdk(sdkName: String, sdkType: String, file: Collection<VirtualFile>? = null): IndexableIteratorBuilder = SdkIteratorBuilder(sdkName, sdkType, file)
 
@@ -119,7 +122,8 @@ internal data class LibraryIdIteratorBuilder(val libraryId: LibraryId,
 
 internal data class SdkIteratorBuilder(val sdkName: String,
                                        val sdkType: String,
-                                       val roots: Collection<VirtualFile>? = null) : IndexableIteratorBuilder {
+                                       val roots: Collection<VirtualFile>? = null,
+                                       val rootsUrls: IndexingUrlRootHolder? = null) : IndexableIteratorBuilder {
   constructor(sdk: Sdk, roots: Collection<VirtualFile>) : this(sdk.name, sdk.sdkType.name, roots)
 }
 

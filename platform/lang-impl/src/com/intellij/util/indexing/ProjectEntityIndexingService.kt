@@ -280,7 +280,7 @@ class ProjectEntityIndexingService(
       entityStorage: EntityStorage,
     ): List<IndexableIteratorBuilder> {
       val builders = SmartList<IndexableIteratorBuilder>()
-      val descriptionsBuilder = WorkspaceIndexingRootsBuilder(false, project)
+      val descriptionsBuilder = WorkspaceIndexingRootsBuilder(false)
       for (change in events) {
         collectIteratorBuildersOnChange(Change.fromEntityChange(change), change.oldEntity,
                                         change.newEntity, project, builders,
@@ -458,7 +458,7 @@ class ProjectEntityIndexingService(
       if (entities.isEmpty()) return mutableListOf<IndexableIteratorBuilder>()
       val builders = SmartList<IndexableIteratorBuilder>()
 
-      val descriptionsBuilder = WorkspaceIndexingRootsBuilder(false, project)
+      val descriptionsBuilder = WorkspaceIndexingRootsBuilder(false)
       for (entity in entities) {
         collectIteratorBuildersOnChange(Change.Added, null, entity, project, builders, descriptionsBuilder, entityStorage)
       }

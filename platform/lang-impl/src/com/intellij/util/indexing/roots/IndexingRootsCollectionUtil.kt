@@ -32,15 +32,17 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forGe
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLibraryEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleAwareCustomizedContentEntity
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
+import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forSdkEntity
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.*
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
+import com.intellij.workspaceModel.core.fileIndex.impl.SdkEntityFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
@@ -48,6 +50,18 @@ import java.util.function.Function
 
 internal sealed interface IndexingRootsDescription {
   fun createBuilders(): Collection<IndexableIteratorBuilder>
+}
+
+internal data class SdkRootsDescription(val sdk: SdkEntity,
+                                         val roots: IndexingUrlRootHolder) : IndexingRootsDescription {
+  override fun createBuilders(): Collection<IndexableIteratorBuilder> {
+    return forSdkEntity(sdk.symbolicId, roots)
+  }
+
+  fun createIterators(storage: EntityStorage): Collection<IndexableFilesIterator> {
+    val sdk = storage.sdkMap.getDataByEntity(sdk) ?: return emptyList()
+    return listOfNotNull(SdkIndexableFilesIteratorImpl.createIterator(sdk))
+  }
 }
 
 internal data class LibraryRootsDescription(val library: LibraryEntity,
@@ -163,7 +177,7 @@ private fun isIncluded(existingFiles: NavigableMap<String, *>, path: String): Bo
   return suggestedCoveringRoot != null && OSAgnosticPathUtil.startsWith(path, suggestedCoveringRoot)
 }
 
-internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Boolean, private val project: Project) {
+internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Boolean) {
   private val moduleRoots: MutableMap<Module, MutableIndexingUrlRootHolder> = mutableMapOf()
   private val descriptions: MutableCollection<IndexingRootsDescription> = mutableListOf()
   private val reincludedRoots: MutableCollection<VirtualFile> = HashSet()
@@ -172,31 +186,22 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
                                                 contributor: WorkspaceFileIndexContributor<E>,
                                                 storage: EntityStorage) {
     val rootData = rootData(contributor, entity, storage)
-    if (rootData != null) {
-      rootData.cleanExcludedRoots()
-      loadRegistrarData(rootData)
-    }
+    rootData.cleanExcludedRoots()
+    loadRegistrarData(rootData)
   }
 
   private fun <E : WorkspaceEntity> rootData(contributor: WorkspaceFileIndexContributor<E>,
                                              entity: E,
-                                             storage: EntityStorage): RootData<E>? {
+                                             storage: EntityStorage): RootData<E> {
     val registrar = MyWorkspaceFileSetRegistrar(contributor, ignoreModuleRoots)
-    if (entity is SdkEntity) {
-      // to avoid creating additional external iterators for sdk we need to ignore it here
-      // iterators for sdk will be created in com.intellij.util.indexing.roots.IndexableFilesIndexImpl.doGetIndexingIterators
-      if (ModuleDependencyIndex.getInstance(project).hasDependencyOn(entity.symbolicId)) return null
-    }
     contributor.registerFileSets(entity, registrar, storage)
     return registrar.rootData
   }
 
   fun <E : WorkspaceEntity> registerRemovedEntity(entity: E, contributor: WorkspaceFileIndexContributor<E>, storage: EntityStorage) {
     val rootData = rootData(contributor, entity, storage)
-    if (rootData != null) {
-      rootData.cleanIncludedRoots()
-      loadRegistrarData(rootData)
-    }
+    rootData.cleanIncludedRoots()
+    loadRegistrarData(rootData)
   }
 
   fun <E : WorkspaceEntity> registerChangedEntity(oldEntity: E,
@@ -206,20 +211,19 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     val oldRootData = rootData(contributor, oldEntity, storage)
     val newRootData = rootData(contributor, newEntity, storage)
 
-    if (newRootData != null && oldRootData != null) {
-      val data = RootData(contributor, ignoreModuleRoots)
-      addDiff(data.moduleContents, oldRootData.moduleContents, newRootData.moduleContents)
-      data.customizedModuleContentEntities.putAllValues(newRootData.customizedModuleContentEntities)
-      addDiff(data.customizedModuleContentRoots, oldRootData.customizedModuleContentRoots, newRootData.customizedModuleContentRoots)
-      addDiff(data.contentRoots, oldRootData.contentRoots, newRootData.contentRoots)
-      addUrlSourceDiff(data.libraryUrlRoots, oldRootData.libraryUrlRoots, newRootData.libraryUrlRoots)
-      addSourceDiff(data.libraryRoots, oldRootData.libraryRoots, newRootData.libraryRoots)
-      addUrlSourceDiff(data.externalRoots, oldRootData.externalRoots, newRootData.externalRoots)
-      data.excludedRoots.addAll(oldRootData.excludedRoots)
-      data.excludedRoots.removeAll(newRootData.excludedRoots)
-      data.customizationValues.putAll(newRootData.customizationValues)
-      loadRegistrarData(data)
-    }
+    val data = RootData(contributor, ignoreModuleRoots)
+    addDiff(data.moduleContents, oldRootData.moduleContents, newRootData.moduleContents)
+    data.customizedModuleContentEntities.putAllValues(newRootData.customizedModuleContentEntities)
+    addDiff(data.customizedModuleContentRoots, oldRootData.customizedModuleContentRoots, newRootData.customizedModuleContentRoots)
+    addDiff(data.contentRoots, oldRootData.contentRoots, newRootData.contentRoots)
+    addUrlSourceDiff(data.libraryUrlRoots, oldRootData.libraryUrlRoots, newRootData.libraryUrlRoots)
+    addDiff(data.sdkRoots, oldRootData.sdkRoots, newRootData.sdkRoots)
+    addSourceDiff(data.libraryRoots, oldRootData.libraryRoots, newRootData.libraryRoots)
+    addUrlSourceDiff(data.externalRoots, oldRootData.externalRoots, newRootData.externalRoots)
+    data.excludedRoots.addAll(oldRootData.excludedRoots)
+    data.excludedRoots.removeAll(newRootData.excludedRoots)
+    data.customizationValues.putAll(newRootData.customizationValues)
+    loadRegistrarData(data)
   }
 
   private fun <K> addDiff(base: MutableMap<K, MutableIndexingUrlRootHolder>,
@@ -282,6 +286,9 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     for ((entityReference, roots) in rootData.customKindRoots.entries) {
       descriptions.add(EntityCustomKindRootsDescription(entityReference, roots, rootData.customizationValues[entityReference]))
     }
+    for ((sdkEntity, roots) in rootData.sdkRoots.entries) {
+      descriptions.add(SdkRootsDescription(sdkEntity, roots))
+    }
     reincludedRoots.addAll(rootData.excludedRoots)
   }
 
@@ -304,6 +311,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
                        val customIterators: List<IndexableFilesIterator>)
 
   fun getIteratorsFromRoots(libraryOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
+                            sdkOriginsToFilterDuplicates: MutableSet<IndexableSetOrigin>,
                             storage: EntityStorage): Iterators {
     val contentIterators = mutableListOf<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entries) {
@@ -325,6 +333,13 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
         is LibraryUrlRootsDescription -> {
           description.createIterators(storage).forEach { iterator ->
             if (libraryOriginsToFilterDuplicates.add(iterator.origin)) {
+              externalIterators.add(iterator)
+            }
+          }
+        }
+        is SdkRootsDescription -> {
+          description.createIterators(storage).forEach { iterator ->
+            if (sdkOriginsToFilterDuplicates.add(iterator.origin)) {
               externalIterators.add(iterator)
             }
           }
@@ -368,9 +383,8 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
   companion object {
     @JvmOverloads
     fun registerEntitiesFromContributors(entityStorage: EntityStorage,
-                                         settings: Settings = Settings.DEFAULT,
-                                         project: Project): WorkspaceIndexingRootsBuilder {
-      val builder = WorkspaceIndexingRootsBuilder(!settings.collectExplicitRootsForModules, project)
+                                         settings: Settings = Settings.DEFAULT): WorkspaceIndexingRootsBuilder {
+      val builder = WorkspaceIndexingRootsBuilder(!settings.collectExplicitRootsForModules)
       for (contributor in WorkspaceFileIndexImpl.EP_NAME.extensionList) {
         ProgressManager.checkCanceled()
         if (settings.shouldIgnore(contributor)) {
@@ -408,6 +422,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
   val contentRoots = mutableMapOf<EntityPointer<E>, MutableIndexingUrlRootHolder>()
   val libraryUrlRoots = mutableMapOf<LibraryEntity, MutableIndexingUrlSourceRootHolder>()
   val libraryRoots = mutableMapOf<LibraryEntity, MutableIndexingSourceRootHolder>()
+  val sdkRoots = mutableMapOf<SdkEntity, MutableIndexingUrlRootHolder>()
   val externalRoots = mutableMapOf<EntityPointer<E>, MutableIndexingUrlSourceRootHolder>()
   val customKindRoots = mutableMapOf<EntityPointer<E>, MutableIndexingUrlRootHolder>()
   val excludedRoots = mutableListOf<VirtualFile>()
@@ -462,6 +477,9 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     else if (kind.isContent) {
       addRoot(contentRoots, entityReference)
     }
+    else if (contributor is SdkEntityFileIndexContributor) {
+      addRoot(sdkRoots, entity as SdkEntity)
+    }
     else if (contributor is LibraryRootFileIndexContributor) {
       addRoot(libraryUrlRoots, entity as LibraryEntity, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
@@ -502,6 +520,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     contentRoots.clear()
     libraryUrlRoots.clear()
     libraryRoots.clear()
+    sdkRoots.clear()
     externalRoots.clear()
     customKindRoots.clear()
     customizationValues.clear()
