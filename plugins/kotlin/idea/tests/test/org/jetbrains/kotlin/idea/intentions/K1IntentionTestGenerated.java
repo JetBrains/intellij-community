@@ -3664,6 +3664,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/unfolding/returnToIf/ifWithThrow.kt");
                 }
 
+                @TestMetadata("ifWithoutElse.kt")
+                public void testIfWithoutElse() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithoutElse.kt");
+                }
+
+                @TestMetadata("ifWithoutThen.kt")
+                public void testIfWithoutThen() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToIf/ifWithoutThen.kt");
+                }
+
                 @TestMetadata("innerIfTransformed.kt")
                 public void testInnerIfTransformed() throws Exception {
                     runTest("testData/intentions/branched/unfolding/returnToIf/innerIfTransformed.kt");

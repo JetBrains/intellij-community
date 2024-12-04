@@ -23,24 +23,27 @@ class UnfoldReturnToIfIntention : LowPriorityAction, SelfTargetingRangeIntention
 ) {
     override fun applicabilityRange(element: KtReturnExpression): TextRange? {
         val ifExpression = element.returnedExpression as? KtIfExpression ?: return null
+        if (ifExpression.then == null) return null
         return TextRange(element.startOffset, ifExpression.ifKeyword.endOffset)
     }
 
     override fun applyTo(element: KtReturnExpression, editor: Editor?) {
         val ifExpression = element.returnedExpression as KtIfExpression
-        val thenExpr = ifExpression.then!!.lastBlockStatementOrThis()
-        val elseExpr = ifExpression.`else`!!.lastBlockStatementOrThis()
+        val thenExpr = ifExpression.then?.lastBlockStatementOrThis() ?: return
+        val elseExpr = ifExpression.`else`?.lastBlockStatementOrThis()
 
         val newIfExpression = ifExpression.copied()
-        val newThenExpr = newIfExpression.then!!.lastBlockStatementOrThis()
-        val newElseExpr = newIfExpression.`else`!!.lastBlockStatementOrThis()
+        val newThenExpr = newIfExpression.then?.lastBlockStatementOrThis() ?: return
+        val newElseExpr = newIfExpression.`else`?.lastBlockStatementOrThis()
 
         val psiFactory = KtPsiFactory(element.project)
         val context = element.analyze()
 
         val labelName = element.getLabelName()
         newThenExpr.replace(createReturnExpression(thenExpr, labelName, psiFactory, context))
-        newElseExpr.replace(createReturnExpression(elseExpr, labelName, psiFactory, context))
+        if (elseExpr != null) {
+            newElseExpr?.replace(createReturnExpression(elseExpr, labelName, psiFactory, context))
+        }
         element.replace(newIfExpression)
     }
 
