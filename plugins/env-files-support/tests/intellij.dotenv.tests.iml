@@ -9,6 +9,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.dotenv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dotenv.php" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dotenv.go" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dotenv.kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dotenv.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dotenv.python" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dotenv.ruby" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.dotenv.docker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.go.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.modules" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />

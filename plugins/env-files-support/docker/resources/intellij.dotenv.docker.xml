@@ -1,6 +1,7 @@
 <idea-plugin package="ru.adelf.idea.dotenv.docker">
   <dependencies>
     <module name="intellij.clouds.docker.file"/>
+    <plugin id="ru.adelf.idea.dotenv"/>
     <plugin id="Docker"/>
   </dependencies>
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
