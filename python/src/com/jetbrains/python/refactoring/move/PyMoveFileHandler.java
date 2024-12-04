@@ -32,6 +32,7 @@ import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -213,7 +214,7 @@ public final class PyMoveFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+  public void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     final Set<PsiFile> updatedFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();

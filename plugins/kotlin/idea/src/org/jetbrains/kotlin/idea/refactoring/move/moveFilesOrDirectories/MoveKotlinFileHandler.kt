@@ -146,13 +146,13 @@ class MoveKotlinFileHandler : MoveFileHandler() {
 
     }
 
-    override fun retargetUsages(usageInfos: List<UsageInfo>?, oldToNewMap: Map<PsiElement, PsiElement>) {
-        val currentFile = (usageInfos?.firstOrNull() as? FileInfo)?.element
+    override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
+        val currentFile = (usageInfos.firstOrNull() as? FileInfo)?.element
         val moveContext = oldToNewMap.keys.firstOrNull { it is MoveContext && it.file == currentFile } as? MoveContext ?: return
         retargetUsages(usageInfos, moveContext.declarationMoveProcessor)
     }
 
-    fun retargetUsages(usageInfos: List<UsageInfo>?, moveDeclarationsProcessor: MoveKotlinDeclarationsProcessor) {
-        usageInfos?.let { moveDeclarationsProcessor.doPerformRefactoring(it) }
+    fun retargetUsages(usageInfos: List<UsageInfo>, moveDeclarationsProcessor: MoveKotlinDeclarationsProcessor) {
+        usageInfos.let { moveDeclarationsProcessor.doPerformRefactoring(it) }
     }
 }

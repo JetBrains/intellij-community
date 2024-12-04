@@ -22,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -126,7 +127,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   }
 
   @Override
-  public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+  public @NotNull @Unmodifiable List<UsageInfo> retargetUsages(@NotNull @Unmodifiable List<UsageInfo> usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     List<UsageInfo> usageInfosToProcess = ContainerUtil.filter(usages, usageInfo -> {
       if (usageInfo instanceof MoveRenameUsageInfo moveRenameUsageInfo) {
         final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
@@ -138,7 +139,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
       }
     });
     CommonMoveUtil.retargetUsages(usageInfosToProcess.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap);
-    usages.removeAll(usageInfosToProcess);
+    return ContainerUtil.filter(usages, u -> !usageInfosToProcess.contains(u));
   }
 
   @Override

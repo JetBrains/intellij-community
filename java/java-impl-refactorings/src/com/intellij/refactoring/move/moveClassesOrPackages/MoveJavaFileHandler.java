@@ -14,6 +14,8 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,7 +71,7 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) {
+  public void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usage : usageInfos) {
       if (usage instanceof MoveRenameUsageInfo moveRenameUsage) {
         final PsiElement oldElement = moveRenameUsage.getReferencedElement();

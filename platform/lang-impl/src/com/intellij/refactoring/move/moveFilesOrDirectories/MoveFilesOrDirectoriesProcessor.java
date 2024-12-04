@@ -232,12 +232,12 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
       for (Map.Entry<PsiFile, List<UsageInfo>> entry : myFoundUsages.entrySet()) {
         // Before retargeting sort usages by start offset to get consistent results
-        ContainerUtil.sort(entry.getValue(), Comparator.comparingInt(o -> {
+        List<UsageInfo> sorted = ContainerUtil.sorted(ContainerUtil.notNullize(entry.getValue()), Comparator.comparingInt(o -> {
           PsiElement element = o.getElement();
           if (element == null) return -1;
           return element.getTextRange().getStartOffset();
         }));
-        MoveFileHandler.forElement(entry.getKey()).retargetUsages(entry.getValue(), oldToNewMap);
+        MoveFileHandler.forElement(entry.getKey()).retargetUsages(sorted, oldToNewMap);
       }
 
       myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);

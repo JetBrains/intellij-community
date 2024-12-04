@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -77,7 +78,7 @@ public abstract class MoveFileHandler {
    * @param usageInfos  the list of references, as returned from {@link #findUsages}
    * @param oldToNewMap the map of all moved elements, filled by {@link #prepareMovedFile}
    */
-  public abstract void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) ;
+  public abstract void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) ;
 
   /**
    * Updates the contents of the file after it has been moved (e.g. updates the package statement to correspond to the
@@ -130,7 +131,7 @@ public abstract class MoveFileHandler {
     }
 
     @Override
-    public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) {
+    public void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
 
     }
   };
