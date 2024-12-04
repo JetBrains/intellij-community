@@ -1,74 +1,72 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import org.junit.Test;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import junit.framework.TestCase
+import org.jetbrains.idea.maven.model.MavenArchetype
+import org.jetbrains.idea.maven.model.MavenRemoteRepository
+import org.junit.Test
+import java.nio.file.Path
 
-import java.nio.file.Path;
-import java.util.List;
+class MavenArchetypeTest : MavenMultiVersionImportingTestCase() {
+  private var myManager: MavenEmbeddersManager? = null
 
-public class MavenArchetypeTest extends MavenMultiVersionImportingTestCase {
-  private MavenEmbeddersManager myManager;
-
-  @Override
-  protected void setUp() {
-    super.setUp();
-    myManager = new MavenEmbeddersManager(getProject());
+  override fun setUp() {
+    super.setUp()
+    myManager = MavenEmbeddersManager(project)
   }
 
-  @Override
-  protected void tearDownFixtures() {
-    super.tearDownFixtures();
+  override fun tearDownFixtures() {
+    super.tearDownFixtures()
   }
 
-  @Override
-  protected void tearDown() {
+  override fun tearDown() {
     try {
-      myManager.releaseForcefullyInTests();
+      myManager!!.releaseForcefullyInTests()
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
   @Test
-  public void testInnerArchetypes() {
-    assumeVersion("bundled");
+  fun testInnerArchetypes() {
+    assumeVersion("bundled")
 
-    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
-    var archetypes = embedder.getInnerArchetypes(Path.of("/non-existing-path"));
-    assertEquals(0, archetypes.size()); // at least, there were no errors
+    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val archetypes = embedder.getInnerArchetypes(Path.of("/non-existing-path"))
+    TestCase.assertEquals(0, archetypes.size) // at least, there were no errors
   }
 
   @Test
-  public void testRemoteArchetypes() {
-    assumeVersion("bundled");
+  fun testRemoteArchetypes() {
+    assumeVersion("bundled")
 
-    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
-    var archetypes = embedder.getRemoteArchetypes("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/");
-    var filtered = archetypes.stream()
-      .filter(archetype ->
-                "org.apache.maven.archetypes".equals(archetype.groupId) &&
-                "maven-archetype-archetype".equals(archetype.artifactId) &&
-                "1.0".equals(archetype.version)
-      ).toList();
-    assertEquals(1, filtered.size());
+    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val archetypes = embedder.getRemoteArchetypes("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/")
+    val filtered = archetypes
+      .filter { archetype: MavenArchetype? ->
+        "org.apache.maven.archetypes" == archetype!!.groupId &&
+        "maven-archetype-archetype" == archetype.artifactId &&
+        "1.0" == archetype.version
+      }.toList()
+    TestCase.assertEquals(1, filtered.size)
   }
 
   @Test
-  public void testResolveAndGetArchetypeDescriptor() {
-    assumeVersion("bundled");
+  fun testResolveAndGetArchetypeDescriptor() {
+    assumeVersion("bundled")
 
-    var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, getDir().getPath());
-    var descriptorMap = embedder.resolveAndGetArchetypeDescriptor(
+    val embedder = myManager!!.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, dir.path)
+    val descriptorMap = embedder.resolveAndGetArchetypeDescriptor(
       "org.apache.maven.archetypes",
       "maven-archetype-archetype",
       "1.0",
-      List.of(),
-      "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/");
-    assertNotNull(descriptorMap);
+      mutableListOf<MavenRemoteRepository>(),
+      "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/")
+    assertNotNull(descriptorMap)
   }
 }
