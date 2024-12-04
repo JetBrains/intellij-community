@@ -8,7 +8,7 @@ import kotlin.collections.get
 class PythonTestCoverageProcessor(
   coverageFilePath: String,
 ) {
-  private var coverageInfo: Map<String, Number> = emptyMap()
+  private val coverageInfo: Map<String, Number>
 
   init {
     val jsonString = File(coverageFilePath).readText(Charsets.UTF_8)
