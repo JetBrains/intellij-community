@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.k2.postProcessings.*
 import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -36,7 +35,7 @@ internal class K2J2KPostProcessor : PostProcessor {
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     ) {
-        if (converterContext !is NewJ2kConverterContext) error("Invalid converter context for K2 J2K")
+        if (converterContext !is ConverterContext) error("Invalid converter context for K2 J2K")
         val contextElement = target.files().firstOrNull() ?: return
 
         // Run analysis and apply the post-processings for each group separately

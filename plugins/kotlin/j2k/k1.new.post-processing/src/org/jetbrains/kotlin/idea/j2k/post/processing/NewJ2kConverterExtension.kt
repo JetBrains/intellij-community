@@ -39,7 +39,7 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
     ): WithProgressProcessor =
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
 
-    override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+    override fun getConversions(context: ConverterContext): List<Conversion> =
         getNewJ2KConversions(context)
 
     override fun createPlainTextPasteImportResolver(

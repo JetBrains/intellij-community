@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.copyPaste.TargetData
 import org.jetbrains.kotlin.nj2k.Conversion
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class J2kConverterExtension {
@@ -46,7 +45,7 @@ abstract class J2kConverterExtension {
         phasesCount: Int
     ): WithProgressProcessor
 
-    open fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+    open fun getConversions(context: ConverterContext): List<Conversion> =
         emptyList()
 
     abstract fun createPlainTextPasteImportResolver(

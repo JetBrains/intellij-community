@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ON
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
@@ -28,7 +28,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
     private val diagnosticToProcessing: Map<KClass<out KaDiagnosticWithPsi<*>>, K2DiagnosticBasedProcessing<KaDiagnosticWithPsi<*>>> =
         diagnosticBasedProcessings.associateBy({ it.diagnosticClass }, { it })
 
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
         error("Not supported in K2 J2K")
     }
 
@@ -36,7 +36,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): PostProcessingApplier = analyze(file) {
         // TODO: for copy-paste conversion, try to restrict the analysis range, like in K1 J2K
         //  (see org.jetbrains.kotlin.idea.j2k.post.processing.DiagnosticBasedPostProcessingGroup.analyzeFileRange)

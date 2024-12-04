@@ -86,7 +86,7 @@ internal class K1ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         )
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
         val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return }
         val psiFactory = KtPsiFactory(converterContext.project)
         val searcher = JKInMemoryFilesSearcher.create(ktElements)
@@ -121,7 +121,7 @@ internal class K1ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         }
     }
 
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }
 

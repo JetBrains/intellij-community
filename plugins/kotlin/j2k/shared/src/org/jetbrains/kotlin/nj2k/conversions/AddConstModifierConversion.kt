@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.isObjectOrCompanionObject
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.nj2k.tree.OtherModifier.CONST
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.fqName
 
-class AddConstModifierConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class AddConstModifierConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)

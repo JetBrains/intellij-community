@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiNewExpression
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
@@ -16,7 +17,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.SHIFT_OPERATORS
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class ImplicitCastsConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {

@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.Conversion
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
@@ -45,7 +44,7 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         // TODO: rename/refactor
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
 
-    override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+    override fun getConversions(context: ConverterContext): List<Conversion> =
         getK2J2KConversions(context)
 
     override fun createPlainTextPasteImportResolver(

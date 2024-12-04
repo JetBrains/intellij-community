@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.blockStatement
 import org.jetbrains.kotlin.nj2k.hasWritableUsages
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.nj2k.types.determineType
  * If a parameter is reassigned, we need to introduce a local mutable variable with the same name,
  * because in Kotlin parameters are not mutable.
  */
-class ParameterModificationConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class ParameterModificationConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {

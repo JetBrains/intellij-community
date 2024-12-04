@@ -12,7 +12,6 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.*
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -30,7 +29,7 @@ class InspectionLikeProcessingGroup(
     fun priority(processing: InspectionLikeProcessing): Int =
         processingsToPriorityMap.getValue(processing)
 
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
         do {
             var modificationStamp: Long? = runReadAction { file.modificationStamp }
             val elementToActions = runReadAction {
@@ -63,7 +62,7 @@ class InspectionLikeProcessingGroup(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): PostProcessingApplier {
         val processingDataList = collectAvailableActions(file, converterContext, rangeMarker)
         return Applier(processingDataList, file.project)
@@ -90,7 +89,7 @@ class InspectionLikeProcessingGroup(
 
     private fun collectAvailableActions(
         file: KtFile,
-        context: NewJ2kConverterContext,
+        context: ConverterContext,
         rangeMarker: RangeMarker?
     ): List<ProcessingData> {
         val availableActions = ArrayList<ProcessingData>()

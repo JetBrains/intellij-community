@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.toKotlinMutableTypesMap
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtClass
 
 class TypeMappingConversion(
-    context: NewJ2kConverterContext,
+    context: ConverterContext,
     inline val filter: (typeElement: JKTypeElement) -> Boolean = { true }
 ) : RecursiveConversion(context) {
     context(KaSession)

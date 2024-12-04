@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.psi.KtNullableType
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 class NullabilityContextCollector(
     resolutionFacade: ResolutionFacade,
-    private val converterContext: NewJ2kConverterContext
+    private val converterContext: ConverterContext
 ) : ContextCollector(resolutionFacade) {
     override fun ClassReference.getState(typeElement: KtTypeElement?): State = when {
         descriptor?.defaultType?.isUnit() == true -> State.LOWER
