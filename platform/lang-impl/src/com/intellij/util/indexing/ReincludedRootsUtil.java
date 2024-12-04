@@ -88,7 +88,7 @@ public final class ReincludedRootsUtil {
     private final List<ContentRootData<?>> filesFromContent = new ArrayList<>();
     private final List<ExternalRootData<?>> filesFromExternal = new ArrayList<>();
     private final List<CustomKindRootData<?>> filesFromCustomKind = new ArrayList<>();
-    private final MultiMap<SdkId, VirtualFile> filesFromSdk = MultiMap.createSet();
+    private final MultiMap<SdkId, VirtualFile> filesFromSdks = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> sourceFilesFromLibraries = MultiMap.createSet();
     private final MultiMap<LibraryId, VirtualFile> classFilesFromLibraries = MultiMap.createSet();
     private final List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
@@ -185,7 +185,7 @@ public final class ReincludedRootsUtil {
     }
 
     private void addSdkFile(SdkId sdkId, VirtualFile file) {
-      filesFromSdk.putValue(sdkId, file);
+      filesFromSdks.putValue(sdkId, file);
     }
 
     private void addLibraryFile(LibraryId id, VirtualFile file, boolean isSource) {
@@ -274,7 +274,7 @@ public final class ReincludedRootsUtil {
         result.addAll(IndexableIteratorBuilders.INSTANCE.
                         forLibraryEntity(entry.getKey(), true, entry.getValue(), Collections.emptyList()));
       }
-      for (Map.Entry<SdkId, Collection<VirtualFile>> entry : filesFromSdk.entrySet()) {
+      for (Map.Entry<SdkId, Collection<VirtualFile>> entry : filesFromSdks.entrySet()) {
         result.add(IndexableIteratorBuilders.INSTANCE.forSdk(entry.getKey(), entry.getValue()));
       }
       for (ExternalRootData<?> data : filesFromExternal) {
