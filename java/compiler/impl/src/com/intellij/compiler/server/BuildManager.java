@@ -1139,8 +1139,10 @@ public final class BuildManager implements Disposable {
     return startListening(inetAddress);
   }
 
-  private synchronized int getWslPort(WSLDistribution dist, int localPort) {
-    return myWslProxyCache.computeIfAbsent(dist.getId() + ":" + localPort, key -> new WslProxy(dist, localPort)).getWslIngressPort();
+  private synchronized int getWslPort(WSLDistribution dist, InetSocketAddress localAddress) {
+    return myWslProxyCache
+      .computeIfAbsent(dist.getId() + ":" + localAddress, key -> new WslProxy(dist, localAddress))
+      .getWslIngressPort();
   }
 
   private synchronized void cleanWslProxies(WSLDistribution dist) {
@@ -1356,9 +1358,9 @@ public final class BuildManager implements Disposable {
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
 
     InetAddress listenAddress = InetAddress.getLoopbackAddress();
-    int listenPort = ensureListening(listenAddress);
+    InetSocketAddress listenSocketAddress = new InetSocketAddress(listenAddress, ensureListening(listenAddress));
     String buildProcessConnectHost = listenAddress.getHostAddress();
-    int buildProcessConnectPort = listenPort;
+    int buildProcessConnectPort = listenSocketAddress.getPort();
 
     BuildCommandLineBuilder cmdLine;
     WslPath wslPath;
@@ -1367,7 +1369,8 @@ public final class BuildManager implements Disposable {
       EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
       buildProcessConnectHost = "127.0.0.1";
-      buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project);
+      int listenPort = listenSocketAddress.getPort();
+      buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project); // TODO maybeRunReverseTunnel must return InetSocketAddress
     }
     else {
       wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
@@ -1380,7 +1383,7 @@ public final class BuildManager implements Disposable {
         }
         cmdLine = new WslBuildCommandLineBuilder(project, sdkDistribution, wslPath.getLinuxPath(), progressIndicator);
         buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on linux side
-        buildProcessConnectPort = getWslPort(sdkDistribution, listenPort);
+        buildProcessConnectPort = getWslPort(sdkDistribution, listenSocketAddress);
       }
       else {
         if (projectWslDistribution != null) {
