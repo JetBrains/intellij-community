@@ -1,6 +1,7 @@
 <idea-plugin package="ru.adelf.idea.dotenv.php">
   <dependencies>
     <plugin id="com.jetbrains.php"/>
+    <plugin id="ru.adelf.idea.dotenv"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.php.PhpEnvCompletionContributor"/>
