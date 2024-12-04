@@ -199,6 +199,7 @@ c:com.intellij.execution.process.CapturingProcessRunner
 - <init>(com.intellij.execution.process.BaseProcessHandler,java.util.function.Function):V
 - <init>(com.intellij.execution.process.ProcessHandler):V
 - <init>(com.intellij.execution.process.ProcessHandler,java.util.function.Function):V
+- destroyProcess():V
 - f:runProcess():com.intellij.execution.process.ProcessOutput
 - runProcess(I):com.intellij.execution.process.ProcessOutput
 - runProcess(I,Z):com.intellij.execution.process.ProcessOutput

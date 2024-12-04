@@ -133,6 +133,15 @@ public class CapturingProcessRunner {
     return myOutput;
   }
 
+  public void destroyProcess() {
+    if (!myProcessHandler.isStartNotified()) {
+      myProcessHandler.startNotify();
+    }
+    if (!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated()) {
+      myProcessHandler.destroyProcess();
+    }
+  }
+
   private void setErrorCodeIfNotYetSet() {
     // if exit code was set on processTerminated, no need to rewrite it
     // WinPtyProcess returns -2 if pty is already closed

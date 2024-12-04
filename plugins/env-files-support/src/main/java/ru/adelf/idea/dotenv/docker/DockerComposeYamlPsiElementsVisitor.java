@@ -2,7 +2,6 @@ package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.*;
 import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
@@ -36,7 +35,7 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
                 if (el instanceof YAMLScalar) {
                     EnvironmentKeyValue keyValue = EnvironmentVariablesUtil.getKeyValueFromString(((YAMLScalar) el).getTextValue());
 
-                    if (StringUtils.isNotBlank(keyValue.getKey())) {
+                    if (!keyValue.getKey().isBlank()) {
                         collectedItems.add(new KeyValuePsiElement(keyValue.getKey(), keyValue.getValue(), el));
                     }
                 }

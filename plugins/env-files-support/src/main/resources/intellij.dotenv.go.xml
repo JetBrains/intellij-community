@@ -1,0 +1,13 @@
+<idea-plugin package="ru.adelf.idea.dotenv.go">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.go"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="go" implementationClass="ru.adelf.idea.dotenv.go.GoEnvCompletionProvider"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.go.GoEnvCompletionProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.go.GoEnvironmentVariablesUsagesProvider"/>
+  </extensions>
+</idea-plugin>

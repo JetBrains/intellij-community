@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionTargetData
 import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
@@ -59,10 +60,7 @@ abstract class J2kConverterExtension {
         project: Project,
         editor: Editor,
         dataForConversion: DataForConversion,
-        j2kKind: Kind,
-        targetFile: KtFile,
-        targetBounds: RangeMarker,
-        targetDocument: Document
+        targetData: ConversionTargetData,
     ): J2KCopyPasteConverter
 
     companion object {

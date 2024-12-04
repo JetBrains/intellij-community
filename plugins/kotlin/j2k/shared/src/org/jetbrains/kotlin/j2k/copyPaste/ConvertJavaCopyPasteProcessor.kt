@@ -65,15 +65,15 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         if (DumbService.getInstance(project).isDumb) return
         if (!KotlinEditorOptions.getInstance().isEnableJavaToKotlinConversion) return
 
-        val (targetFile, targetBounds, targetDocument) = getTargetData(project, editor.document, caretOffset, bounds) ?: return
-        if (!isConversionSupportedAtPosition(targetFile, targetBounds.startOffset)) return
+        val targetData = getTargetData(project, editor.document, caretOffset, bounds) ?: return
+        if (!isConversionSupportedAtPosition(targetData.file, targetData.bounds.startOffset)) return
 
         val copiedJavaCode = values.single() as CopiedJavaCode
         val dataForConversion = DataForConversion.prepare(copiedJavaCode, project)
-        val j2kKind = getJ2kKind(targetFile)
+        val j2kKind = getJ2kKind(targetData.file)
 
         val converter = J2kConverterExtension.extension(j2kKind)
-            .createCopyPasteConverter(project, editor, dataForConversion, j2kKind, targetFile, targetBounds, targetDocument)
+            .createCopyPasteConverter(project, editor, dataForConversion, targetData)
 
         val textLength = copiedJavaCode.startOffsets.indices.sumOf { copiedJavaCode.endOffsets[it] - copiedJavaCode.startOffsets[it] }
         if (textLength < MAX_TEXT_LENGTH_TO_CONVERT_WITHOUT_ASKING_USER && converter.convertAndRestoreReferencesIfTextIsUnchanged()) {

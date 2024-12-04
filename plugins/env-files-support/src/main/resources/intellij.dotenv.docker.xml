@@ -1,0 +1,13 @@
+<idea-plugin package="ru.adelf.idea.dotenv.docker">
+  <dependencies>
+    <module name="intellij.clouds.docker.file"/>
+    <plugin id="Docker"/>
+  </dependencies>
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.docker.DockerfileKeyGotoHandler"/>
+  </extensions>
+</idea-plugin>
