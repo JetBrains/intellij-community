@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationWarning;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -124,7 +123,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   public @NotNull FileAnnotation annotate(final @NotNull FilePath path, final @NotNull VcsRevisionNumber revision) throws VcsException {
     return logTime(() -> {
       GitFileRevision fileRevision = new GitFileRevision(myProject, path, (GitRevisionNumber)revision);
-      VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision, VcsFileSystem.getInstance());
+      VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision);
 
       return annotate(path, revision, file);
     });

@@ -37,7 +37,7 @@ public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   }
 
   private ContentRevisionVirtualFile(@NotNull ContentRevision contentRevision) {
-    super(contentRevision.getFile().getPath(), VcsFileSystem.getInstance());
+    super(contentRevision.getFile().getPath());
     myContentRevision = contentRevision;
     setCharset(StandardCharsets.UTF_8);
   }

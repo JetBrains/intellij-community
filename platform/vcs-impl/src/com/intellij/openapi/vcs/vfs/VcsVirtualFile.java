@@ -28,23 +28,50 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   private volatile Charset myCharset;
   private final Object LOCK = new Object();
 
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
   public VcsVirtualFile(@NotNull String path,
                         @Nullable VcsFileRevision revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    super(path, fileSystem);
+                        @NotNull VirtualFileSystem ignored) {
+    this(path, revision);
+  }
+
+  public VcsVirtualFile(@NotNull String path,
+                        @Nullable VcsFileRevision revision) {
+    super(path);
     myFileRevision = revision;
   }
 
-  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem fileSystem) {
-    super(parent, name, fileSystem);
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
+  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem ignored) {
+    this(parent, name, revision);
+  }
+
+  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision) {
+    super(parent, name);
     myFileRevision = revision;
+  }
+
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
+  public VcsVirtualFile(@NotNull String path,
+                        byte @NotNull [] content,
+                        @Nullable String revision,
+                        @NotNull VirtualFileSystem ignored) {
+    this(path, content, revision);
   }
 
   public VcsVirtualFile(@NotNull String path,
                         byte @NotNull [] content,
-                        @Nullable String revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    this(path, null, fileSystem);
+                        @Nullable String revision) {
+    this(path, null);
     myContent = content;
     setRevision(revision);
   }

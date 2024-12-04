@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -87,7 +86,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     @NotNull private final FileType myCurrentFileType;
 
     MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
-      super(filePath.getPath(), revision, VcsFileSystem.getInstance());
+      super(filePath.getPath(), revision);
       myCurrentFileType = currentFileType;
     }
 

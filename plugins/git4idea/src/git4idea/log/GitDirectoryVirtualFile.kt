@@ -2,7 +2,6 @@
 package git4idea.log
 
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
-import com.intellij.openapi.vcs.vfs.VcsFileSystem
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -15,8 +14,8 @@ class GitDirectoryVirtualFile(
   private val repo: GitRepository,
   parent: VirtualFile?,
   name: String,
-  private val commit: VcsCommitMetadata
-) : AbstractVcsVirtualFile(parent, name, VcsFileSystem.getInstance()) {
+  private val commit: VcsCommitMetadata,
+) : AbstractVcsVirtualFile(parent, name) {
   override fun isDirectory(): Boolean = true
 
   override fun contentsToByteArray(): ByteArray {
@@ -32,8 +31,7 @@ class GitDirectoryVirtualFile(
       when (it) {
         is GitIndexUtil.StagedDirectory -> GitDirectoryVirtualFile(repo, this, it.path.name, commit)
         else -> VcsVirtualFile(this, it.path.name,
-                               GitFileRevision(repo.project, repo.root, it.path, gitRevisionNumber),
-                               VcsFileSystem.getInstance())
+                               GitFileRevision(repo.project, repo.root, it.path, gitRevisionNumber))
 
       }
     }

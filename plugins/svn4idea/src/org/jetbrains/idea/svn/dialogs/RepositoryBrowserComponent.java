@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -243,7 +242,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
       SvnFileRevision revision =
         new SvnFileRevision(myVCS, Revision.UNDEFINED, Revision.HEAD, url, entry.getAuthor(), entry.getDate(), null, null);
 
-      return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision, VcsFileSystem.getInstance());
+      return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision);
     }
     else {
       return null;

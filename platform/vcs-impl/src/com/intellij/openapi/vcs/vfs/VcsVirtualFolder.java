@@ -10,8 +10,16 @@ import org.jetbrains.annotations.Nullable;
 public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   private final @Nullable VirtualFile myChild;
 
-  public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child, @NotNull VirtualFileSystem fileSystem) {
-    super(name, fileSystem);
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
+  public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child, @NotNull VirtualFileSystem ignored) {
+    this(name, child);
+  }
+
+  public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child) {
+    super(name);
     myChild = child;
   }
 

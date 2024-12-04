@@ -29,23 +29,36 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   protected @NlsSafe String myRevision;
   protected int myModificationStamp = 0;
 
-  private final VirtualFileSystem myFileSystem;
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
+  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path, @NotNull VirtualFileSystem ignored) {
+    this(path);
+  }
 
-  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path, @NotNull VirtualFileSystem fileSystem) {
-    myFileSystem = fileSystem;
+  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path) {
     myPath = path;
     File file = new File(myPath);
     myName = file.getName();
-    if (!isDirectory())
-      myParent = new VcsVirtualFolder(file.getParent(), this, myFileSystem);
+    if (!isDirectory()) {
+      myParent = new VcsVirtualFolder(file.getParent(), this);
+    }
     else
       myParent = null;
 
     OutsidersPsiFileSupport.markFile(this);
   }
 
-  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem fileSystem) {
-    myFileSystem = fileSystem;
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem ignored) {
+    this(parent, name);
+  }
+
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name) {
     myPath = parent != null && !StringUtil.isEmpty(parent.getPath()) ? parent.getPath() + "/" + name : name;
     myName = name;
     myParent = parent;
@@ -56,7 +69,7 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public VirtualFileSystem getFileSystem() {
-    return myFileSystem;
+    return VcsFileSystem.getInstance();
   }
 
   @Override

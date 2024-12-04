@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,8 +66,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -487,8 +486,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     if (!myRevisionToVirtualFile.containsKey(revision)) {
       FilePath filePath = (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : myFilePath);
       myRevisionToVirtualFile.put(revision, filePath.isDirectory()
-                                            ? new VcsVirtualFolder(filePath.getPath(), null, VcsFileSystem.getInstance())
-                                            : new VcsVirtualFile(filePath.getPath(), revision, VcsFileSystem.getInstance()));
+                                            ? new VcsVirtualFolder(filePath.getPath(), null)
+                                            : new VcsVirtualFile(filePath.getPath(), revision));
     }
     return myRevisionToVirtualFile.get(revision);
   }
