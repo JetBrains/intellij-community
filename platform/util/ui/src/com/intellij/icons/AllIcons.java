@@ -704,7 +704,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon HectorOff = load("ide/hectorOff.svg", 756397077, 2);
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 1387966645, 2);
     /** 16x16 */ public static final @NotNull Icon HectorSyntax = load("ide/hectorSyntax.svg", -415840178, 2);
-    /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("ide/incomingChangesOn.svg", -1613666636, 2);
+    /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("expui/vcs/shelve.svg", "ide/incomingChangesOn.svg", -1613666636, 2);
     /** 20x20 */ public static final @NotNull Icon Like = load("ide/like.svg", 1499648038, 2);
     /** 20x20 */ public static final @NotNull Icon LikeDimmed = load("ide/likeDimmed.svg", 449955239, 2);
     /** 20x20 */ public static final @NotNull Icon LikeSelected = load("ide/likeSelected.svg", 1058551001, 2);
