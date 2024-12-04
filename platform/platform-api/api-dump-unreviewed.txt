@@ -7617,12 +7617,15 @@ c:com.intellij.ui.components.Interpolator
 - <init>(java.util.function.Supplier,java.util.function.Consumer):V
 - getTarget():I
 - setTarget(I,I):V
-f:com.intellij.ui.components.JBBox
+c:com.intellij.ui.components.JBBox
 - javax.swing.Box
 - <init>(I):V
 - s:createHorizontalBox():com.intellij.ui.components.JBBox
 - s:createVerticalBox():com.intellij.ui.components.JBBox
 - getAccessibleContext():javax.accessibility.AccessibleContext
+pf:com.intellij.ui.components.JBBox$AccessibleJBBox
+- javax.swing.Box$AccessibleBox
+- getAccessibleRole():javax.accessibility.AccessibleRole
 c:com.intellij.ui.components.JBCheckBox
 - javax.swing.JCheckBox
 - com.intellij.ui.AnchorableComponent
@@ -8527,7 +8530,7 @@ a:com.intellij.ui.components.panels.ValidatingComponent
 - setErrorText(java.lang.String):V
 - setLabel(javax.swing.JLabel):V
 c:com.intellij.ui.components.panels.VerticalBox
-- javax.swing.Box
+- com.intellij.ui.components.JBBox
 - <init>():V
 - add(java.awt.Component):java.awt.Component
 f:com.intellij.ui.components.panels.VerticalLayout
