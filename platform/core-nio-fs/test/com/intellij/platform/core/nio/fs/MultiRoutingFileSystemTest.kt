@@ -11,6 +11,7 @@ import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS.WINDOWS
 import java.net.URI
 import java.nio.file.FileSystem
+import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 
 class MultiRoutingFileSystemTest {
@@ -89,6 +90,16 @@ class MultiRoutingFileSystemTest {
       fs.getBackend("C:") shouldBe defaultSunNioFs
       fs.getBackend("C:\\") shouldBe defaultSunNioFs
       fs.getBackend("C:\\Users") shouldBe defaultSunNioFs
+    }
+
+    @Test
+    fun `windows path is not routable`() {
+      fs.isRoutable(Path.of("C:\\")) shouldBe false
+    }
+
+    @Test
+    fun `wsl path is routable`() {
+      fs.isRoutable(Path.of("\\\\wsl.localhost\\Ubuntu-22.04\\")) shouldBe true
     }
   }
 }
