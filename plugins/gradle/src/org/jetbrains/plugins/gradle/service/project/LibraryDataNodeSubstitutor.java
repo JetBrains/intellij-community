@@ -66,7 +66,7 @@ public class LibraryDataNodeSubstitutor {
       return;
     }
 
-    boolean shouldKeepTransitiveDependencies = !libraryPaths.isEmpty() && !libraryDependencyDataNode.getChildren().isEmpty();
+    boolean shouldKeepTransitiveDependencies = !libraryDependencyDataNode.getChildren().isEmpty();
     Collection<AbstractDependencyData<?>> dependenciesToShift = collectDependenciesOrderedAfter(libraryNodeParent, libraryDependencyData.getOrder());
 
     int classpathOrderShift = -1;
