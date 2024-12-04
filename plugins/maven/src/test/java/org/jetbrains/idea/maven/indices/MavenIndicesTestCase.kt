@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.indices;
+package org.jetbrains.idea.maven.indices
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
-import org.jetbrains.idea.maven.server.MavenServerManager;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
 
-public abstract class MavenIndicesTestCase extends MavenMultiVersionImportingTestCase {
-  @Override
-  protected void tearDown() throws Exception {
+abstract class MavenIndicesTestCase : MavenMultiVersionImportingTestCase() {
+  override fun tearDown() {
     try {
-      MavenServerManager.getInstance().closeAllConnectorsAndWait();
+      getInstance().closeAllConnectorsAndWait()
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
+    catch (e: Throwable) {
+      addSuppressedException(e)
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 }

@@ -22,18 +22,18 @@ public class MavenEmbeddersManagerTest extends MavenTestCase {
   private MavenEmbeddersManager myManager;
 
   @Override
-  protected void setUp() throws Exception {
+  protected void setUp() {
     super.setUp();
     myManager = new MavenEmbeddersManager(getProject());
   }
 
   @Override
-  protected void tearDownFixtures() throws Exception {
+  protected void tearDownFixtures() {
     super.tearDownFixtures();
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     try {
       myManager.releaseForcefullyInTests();
     }
