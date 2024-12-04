@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.BinaryOperator
 import kotlin.script.experimental.api.ResultWithDiagnostics
 
 open class BaseScriptModel(
@@ -41,7 +40,7 @@ abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project:
 
     abstract fun getScriptDefinitionsSource(): ScriptDefinitionsSource?
 
-    open fun getScriptConfigurations(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? =
+    open fun getConfiguration(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? =
         data.get().configurations[virtualFile]
 
     protected abstract suspend fun updateConfigurations(scripts: Iterable<T>)

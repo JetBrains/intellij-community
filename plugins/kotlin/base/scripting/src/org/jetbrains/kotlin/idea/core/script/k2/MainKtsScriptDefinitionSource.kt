@@ -32,14 +32,12 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 ::loggingReporter
             ).definitions
 
-            val dependencyResolutionService = project.service<DependencyResolutionService>()
-
             return discoveredDefinitions.map {
                 ScriptDefinition.FromConfigurations(
                     it.compilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]
                         ?: baseHostConfiguration,
                     it.compilationConfiguration.withTransformedResolvers { resolver ->
-                        ReportingExternalDependenciesResolver(resolver, dependencyResolutionService)
+                        ReportingExternalDependenciesResolver(resolver, DependencyResolutionService.getInstance(project))
                     },
                     it.evaluationConfiguration ?: ScriptEvaluationConfiguration.Default
                 ).apply {
