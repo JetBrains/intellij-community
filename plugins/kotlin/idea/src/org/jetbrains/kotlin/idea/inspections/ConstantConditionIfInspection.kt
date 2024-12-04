@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -25,7 +26,8 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
             val constantValue = expression.getConditionConstantValueIfAny() ?: return@ifExpressionVisitor
             val fixes = ConstantConditionIfFix.collectFixes(expression, constantValue)
             holder.registerProblem(
-                expression.condition!!,
+                expression,
+                expression.condition?.textRangeIn(expression),
                 KotlinBundle.message("condition.is.always.0", constantValue),
                 *fixes.toTypedArray()
             )

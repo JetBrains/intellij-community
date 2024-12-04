@@ -1,8 +1,8 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.annotations.ApiStatus
@@ -16,14 +16,13 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 @ApiStatus.Internal
-interface ConstantConditionIfFix : LocalQuickFix {
-    fun applyFix(ifExpression: KtIfExpression)
+abstract class ConstantConditionIfFix : KotlinModCommandQuickFix<KtIfExpression>() {
+    protected abstract fun applyFix(ifExpression: KtIfExpression, updater: ModPsiUpdater?)
     
     companion object {
         fun collectFixes(
@@ -33,13 +32,8 @@ interface ConstantConditionIfFix : LocalQuickFix {
             return org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.collectFixes(expression, constantValue)
         }
 
-        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-        fun applyFixIfSingle(ifExpression: KtIfExpression) {
-            allowAnalysisOnEdt {
-                allowAnalysisFromWriteAction {
-                    collectFixes(ifExpression).singleOrNull()?.applyFix(ifExpression)
-                }
-            }
+        fun applyFixIfSingle(ifExpression: KtIfExpression, updater: ModPsiUpdater? = null) {
+            collectFixes(ifExpression).singleOrNull()?.applyFix(ifExpression, updater)
         }
     }
 }
@@ -48,35 +42,38 @@ private class SimplifyFix(
     private val conditionValue: Boolean,
     private val isUsedAsExpression: Boolean,
     private val keepBraces: Boolean
-) : ConstantConditionIfFix {
+) : ConstantConditionIfFix() {
     override fun getFamilyName() = name
 
     override fun getName() = KotlinBundle.message("simplify.fix.text")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
-        applyFix(ifExpression)
+    override fun applyFix(project: Project, element: KtIfExpression, updater: ModPsiUpdater) {
+        applyFix(element, updater)
     }
-
-    override fun applyFix(ifExpression: KtIfExpression) {
+    
+    override fun applyFix(ifExpression: KtIfExpression, updater: ModPsiUpdater?) {
         val branch = ifExpression.branch(conditionValue)?.let {
             if (keepBraces) it else it.getSingleUnwrappedStatementOrThis()
         } ?: return
-        ifExpression.replaceWithBranch(branch, isUsedAsExpression, keepBraces)
+        
+        val replacedBranch = ifExpression.replaceWithBranch(branch, isUsedAsExpression, keepBraces)
+        
+        if (replacedBranch != null) {
+            updater?.moveCaretTo(replacedBranch.startOffset)
+        }
     }
 }
 
-private class RemoveFix : ConstantConditionIfFix {
+private class RemoveFix : ConstantConditionIfFix() {
     override fun getFamilyName() = name
 
     override fun getName() = KotlinBundle.message("remove.fix.text")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
-        applyFix(ifExpression)
+    override fun applyFix(project: Project, element: KtIfExpression, updater: ModPsiUpdater) {
+        applyFix(element, updater)
     }
 
-    override fun applyFix(ifExpression: KtIfExpression) {
+    override fun applyFix(ifExpression: KtIfExpression, updater: ModPsiUpdater?) {
         val parent = ifExpression.parent
         if (parent.node.elementType == KtNodeTypes.ELSE) {
             (parent.parent as? KtIfExpression)?.elseKeyword?.delete()
@@ -122,9 +119,7 @@ private fun collectFixes(
 
 private fun KtIfExpression.branch(thenBranch: Boolean) = if (thenBranch) then else `else`
 
-private fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
-    val caretModel = findExistingEditor()?.caretModel
-
+private fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false): PsiElement? {
     val subjectVariable = (this as? KtWhenExpression)?.subjectVariable?.let(fun(property: KtProperty): KtProperty? {
         if (property.annotationEntries.isNotEmpty()) return property
         val initializer = property.initializer ?: return property
@@ -180,11 +175,8 @@ private fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpress
             replaced
         }
     }
-
-    // TODO get rid of caret manipulation
-    if (replaced != null) {
-        caretModel?.moveToOffset(replaced.startOffset)
-    }
+    
+    return replaced
 }
 
 private fun KtExpression.hasNoSideEffects(): Boolean = when (this) {
