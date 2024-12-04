@@ -8420,14 +8420,12 @@ c:com.intellij.ide.actions.NewElementAction
 - com.intellij.openapi.actionSystem.PopupAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:createPopup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.ui.popup.ListPopup
 - p:getActionSelectionAid():com.intellij.openapi.ui.popup.JBPopupFactory$ActionSelectionAid
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getDisposeCallback():java.lang.Runnable
 - p:getGroup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.ActionGroup
 - p:getMaxRowCount():I
 - p:getPlace():java.lang.String
-- p:getPopupTitle():java.lang.String
 - p:getPreselectActionCondition(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.util.Condition
 - p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - p:isShowDisabledActions():Z
@@ -8435,8 +8433,6 @@ c:com.intellij.ide.actions.NewElementAction
 c:com.intellij.ide.actions.NewElementSamePlaceAction
 - com.intellij.ide.actions.NewElementAction
 - <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- p:getPopupTitle():java.lang.String
 - p:isEnabled(com.intellij.openapi.actionSystem.AnActionEvent):Z
 com.intellij.ide.actions.SaveFileAsTemplateHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

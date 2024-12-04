@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,21 +28,12 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    createPopup(e.getDataContext())
-      .showInBestPositionFor(e.getDataContext());
+    createPopupHandler(e).showPopup();
   }
 
-  protected @NotNull ListPopup createPopup(@NotNull DataContext dataContext) {
-    return JBPopupFactory.getInstance().createActionGroupPopup(
-      getPopupTitle(),
-      getGroup(dataContext),
-      dataContext,
-      getActionSelectionAid(),
-      isShowDisabledActions(),
-      getDisposeCallback(),
-      getMaxRowCount(),
-      getPreselectActionCondition(dataContext),
-      getPlace());
+  @ApiStatus.Internal
+  protected @NotNull PopupHandler createPopupHandler(@NotNull AnActionEvent e) {
+    return new GenericPopupHandler(e);
   }
 
   protected @Nullable JBPopupFactory.ActionSelectionAid getActionSelectionAid() {
@@ -62,10 +54,6 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
 
   protected boolean isShowDisabledActions() {
     return false;
-  }
-
-  protected @NlsContexts.PopupTitle String getPopupTitle() {
-    return IdeBundle.message("title.popup.new.element");
   }
 
   @Override
@@ -130,5 +118,55 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
 
   protected @NotNull String getPlace() {
     return ActionPlaces.getActionGroupPopupPlace(IdeActions.GROUP_WEIGHING_NEW);
+  }
+
+  @ApiStatus.Internal
+  protected abstract class PopupHandler {
+    protected final @NotNull AnActionEvent event;
+
+    protected PopupHandler(@NotNull AnActionEvent e) {
+      event = e;
+    }
+
+    void showPopup() {
+      var popup = createPopup();
+      if (popup == null) return;
+      customize(popup);
+      show(popup);
+    }
+
+    protected @Nullable ListPopup createPopup() {
+      var dataContext = event.getDataContext();
+      return JBPopupFactory.getInstance().createActionGroupPopup(
+        getTitle(),
+        getGroup(dataContext),
+        dataContext,
+        getActionSelectionAid(),
+        isShowDisabledActions(),
+        getDisposeCallback(),
+        getMaxRowCount(),
+        getPreselectActionCondition(dataContext),
+        getPlace());
+    }
+
+
+    protected @Nullable @NlsContexts.PopupTitle String getTitle() {
+      return IdeBundle.message("title.popup.new.element");
+    }
+
+    protected void customize(@NotNull ListPopup popup) { }
+
+    protected abstract void show(@NotNull ListPopup popup);
+  }
+
+  private class GenericPopupHandler extends PopupHandler {
+    GenericPopupHandler(@NotNull AnActionEvent e) {
+      super(e);
+    }
+
+    @Override
+    protected void show(@NotNull ListPopup popup) {
+      popup.showInBestPositionFor(event.getDataContext());
+    }
   }
 }
