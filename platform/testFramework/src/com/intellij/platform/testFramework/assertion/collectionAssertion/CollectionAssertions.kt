@@ -11,16 +11,17 @@ object CollectionAssertions {
     actual: Array<T>?,
     messageSupplier: (() -> String)? = null,
   ) {
-    if (expected == null && actual == null) return
+    if (expected == null && actual == null) {
+      return
+    }
     if (expected == null || actual == null) {
-      val message = (messageSupplier?.invoke() ?: "") + """|
-                |Expecting:
-                |  ${actual?.contentToString()}
-                |to match:
-                |  $expected
-                |but one of them is null.
-            """.trimMargin()
-      throw AssertionError(message)
+      throwAssertionFailedError(expected, actual, messageSupplier, """
+        |Expecting actual:
+        |  $actual
+        |to match:
+        |  $expected
+        |but one of them is null.
+      """.trimMargin())
     }
     assertEqualsUnordered(expected, actual.toList(), messageSupplier)
   }
@@ -37,7 +38,7 @@ object CollectionAssertions {
     val notExpected = actualSet.minus(expectedSet)
 
     if (notExpected.isNotEmpty() && notFound.isNotEmpty()) {
-      val message = (messageSupplier?.invoke() ?: "") + """|
+      throwAssertionFailedError(expected, actual, messageSupplier, """
         |Expecting actual:
         |  $actual
         |to contain exactly in any order:
@@ -46,30 +47,27 @@ object CollectionAssertions {
         |  $notFound
         |and elements not expected:
         |  $notExpected
-      """.trimMargin()
-      throw AssertionFailedError(message, expected, actual)
+      """.trimMargin())
     }
     if (notFound.isNotEmpty()) {
-      val message = (messageSupplier?.invoke() ?: "") + """|
+      throwAssertionFailedError(expected, actual, messageSupplier, """
         |Expecting actual:
         |  $actual
         |to contain exactly in any order:
         |  $expected
         |but could not find the following elements:
         |  $notFound
-      """.trimMargin()
-      throw AssertionFailedError(message, expected, actual)
+      """.trimMargin())
     }
     if (notExpected.isNotEmpty()) {
-      val message = (messageSupplier?.invoke() ?: "") + """|
+      throwAssertionFailedError(expected, actual, messageSupplier, """
         |Expecting actual:
         |  $actual
         |to contain exactly in any order:
         |  $expected
         |but the following elements were unexpected:
         |  $notExpected
-      """.trimMargin()
-      throw AssertionFailedError(message, expected, actual)
+      """.trimMargin())
     }
   }
 
@@ -84,15 +82,14 @@ object CollectionAssertions {
     val notFound = expectedSet.minus(actualSet)
 
     if (notFound.isNotEmpty()) {
-      val message = (messageSupplier?.invoke() ?: "") + """|
+      throwAssertionFailedError(expected, actual, messageSupplier, """
         |Expecting actual:
         |  $actual
         |to contain in any order:
         |  $expected
         |but could not find the following elements:
         |  $notFound
-      """.trimMargin()
-      throw AssertionFailedError(message, expected, actual)
+      """.trimMargin())
     }
   }
 
@@ -102,11 +99,23 @@ object CollectionAssertions {
     messageSupplier: (() -> String)? = null,
   ) {
     if (actual.isNotEmpty()) {
-      val message = (messageSupplier?.invoke() ?: "") + """|
-      |Expecting empty but was:
-      |  $actual
-    """.trimMargin()
-      throw AssertionFailedError(message, emptyList<String>(), actual)
+      throwAssertionFailedError(emptyList(), actual, messageSupplier, """
+        |Expecting empty but was:
+        |  $actual
+      """.trimMargin())
     }
+  }
+
+  private fun <T> throwAssertionFailedError(
+    expected: T,
+    actual: T,
+    messageSupplier: (() -> String)?,
+    description: String,
+  ): Nothing {
+    val message = when (val message = messageSupplier?.invoke()) {
+      null -> description
+      else -> "$message\n$description"
+    }
+    throw AssertionFailedError(message, expected, actual)
   }
 }
