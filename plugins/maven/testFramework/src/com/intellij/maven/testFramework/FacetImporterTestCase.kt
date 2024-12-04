@@ -1,63 +1,54 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.testFramework;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.testFramework
 
-import com.intellij.facet.*;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.facet.*
+import com.intellij.openapi.vfs.VfsUtilCore
 
-import java.util.ArrayList;
-import java.util.List;
+abstract class FacetImporterTestCase<FACET, C : FacetConfiguration> : MavenMultiVersionImportingTestCase() where FACET : Facet<C> {
+  protected abstract fun getFacetTypeId(): FacetTypeId<FACET>
 
-public abstract class FacetImporterTestCase<FACET_TYPE extends Facet> extends MavenMultiVersionImportingTestCase {
+  protected fun doAssertSourceRoots(actualRoots: List<String>, vararg roots: String) {
+    val expectedRootUrls: MutableList<String> = ArrayList<String>()
 
-  protected abstract FacetTypeId<FACET_TYPE> getFacetTypeId();
-
-  protected void doAssertSourceRoots(List<String> actualRoots, String... roots) {
-    List<String> expectedRootUrls = new ArrayList<>();
-
-    for (String r : roots) {
-      String url = VfsUtilCore.pathToUrl(getProjectPath() + "/" + r);
-      expectedRootUrls.add(url);
+    for (r in roots) {
+      val url = VfsUtilCore.pathToUrl("$projectPath/$r")
+      expectedRootUrls.add(url)
     }
 
-    assertUnorderedPathsAreEqual(actualRoots, expectedRootUrls);
+    assertUnorderedPathsAreEqual(actualRoots, expectedRootUrls)
   }
 
-  protected FACET_TYPE getFacet(String module) {
-    return getFacet(module, getFacetType());
+  protected fun getFacet(module: String): FACET? {
+    return getFacet<FACET>(module, this.facetType)
   }
 
-  protected FACET_TYPE findFacet(String module) {
-    return findFacet(module, getFacetType());
+  protected fun findFacet(module: String): FACET? {
+    return findFacet<FACET>(module, this.facetType)
   }
 
-  protected <T extends Facet> T findFacet(String module, FacetType<T, ?> type) {
-    return findFacet(module, type, getDefaultFacetName());
+  protected fun <T : Facet<*>> findFacet(module: String, type: FacetType<T, *>): T? {
+    return findFacet<T>(module, type, this.getDefaultFacetName())
   }
 
-  protected <T extends Facet> T findFacet(String module, FacetType<T, ?> type, String facetName) {
-    FacetManager manager = FacetManager.getInstance(getModule(module));
-    return manager.findFacet(type.getId(), facetName);
+  protected fun <T : Facet<*>> findFacet(module: String, type: FacetType<T, *>, facetName: String): T? {
+    val manager = FacetManager.getInstance(getModule(module))
+    return manager.findFacet<T>(type.getId(), facetName)
   }
 
-  @NotNull
-  protected <T extends Facet> T getFacet(String module, FacetType<T, ?> type) {
-    T result = findFacet(module, type);
-    assertNotNull("facet '" + type + "' not found", result);
-    return result;
+  protected fun <T : Facet<*>> getFacet(module: String, type: FacetType<T, *>): T? {
+    val result = findFacet<T>(module, type)
+    assertNotNull("facet '$type' not found", result)
+    return result
   }
 
-  protected <T extends Facet> T getFacet(String module, FacetType<T, ?> type, String facetName) {
-    T result = findFacet(module, type, facetName);
-    assertNotNull("facet '" + type + ":" + facetName + "' not found", result);
-    return result;
+  protected fun <T : Facet<*>> getFacet(module: String, type: FacetType<T, *>, facetName: String): T? {
+    val result = findFacet<T>(module, type, facetName)
+    assertNotNull("facet '$type:$facetName' not found", result)
+    return result
   }
 
-  private FacetType<FACET_TYPE, ?> getFacetType() {
-    return FacetTypeRegistry.getInstance().findFacetType(getFacetTypeId());
-  }
+  private val facetType: FacetType<FACET, C>
+    get() = FacetTypeRegistry.getInstance().findFacetType(getFacetTypeId())
 
-  protected String getDefaultFacetName() {
-    return getFacetType().getDefaultFacetName();
-  }
+  protected open fun getDefaultFacetName(): String = this.facetType.defaultFacetName
 }
