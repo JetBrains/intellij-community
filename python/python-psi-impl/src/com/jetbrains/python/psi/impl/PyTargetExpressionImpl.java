@@ -127,16 +127,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     final PsiElement parent = PsiTreeUtil.skipParentsOfType(this, PyParenthesizedExpression.class);
     if (parent instanceof PyAssignmentStatement assignmentStatement) {
-      PyExpression assignedValue = assignmentStatement.getAssignedValue();
-      if (assignedValue instanceof PyParenthesizedExpression) {
-        assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
-      }
-      if (assignedValue != null) {
-        if (assignedValue instanceof PyYieldExpression assignedYield) {
-          return assignedYield.isDelegating() ? context.getType(assignedValue) : null;
-        }
-        return context.getType(assignedValue);
-      }
+      return context.getType(assignmentStatement.getAssignedValue());
     }
     if (parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression) {
       PsiElement nextParent =
