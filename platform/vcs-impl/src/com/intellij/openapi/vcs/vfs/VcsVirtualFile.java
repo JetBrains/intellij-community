@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -52,8 +53,18 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     this(parent, name, revision);
   }
 
-  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision) {
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision) {
     super(parent, name);
+    myFileRevision = revision;
+  }
+
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(parent, path);
+    myFileRevision = revision;
+  }
+
+  public VcsVirtualFile(@NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(path);
     myFileRevision = revision;
   }
 
@@ -72,7 +83,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
                         byte @NotNull [] content,
                         @Nullable String revision) {
     this(path, null);
-    myContent = content;
+    setContent(content);
     setRevision(revision);
   }
 
@@ -112,6 +123,10 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
       showLoadingContentFailedMessage(e);
     }
+  }
+
+  public void setContent(byte[] content) {
+    myContent = content;
   }
 
   @Nullable

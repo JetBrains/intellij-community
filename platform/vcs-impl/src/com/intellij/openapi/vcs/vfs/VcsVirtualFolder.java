@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.vfs;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -20,6 +21,11 @@ public class VcsVirtualFolder extends AbstractVcsVirtualFile {
 
   public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child) {
     super(name);
+    myChild = child;
+  }
+
+  public VcsVirtualFolder(@NotNull FilePath path, @Nullable VirtualFile child) {
+    super(path);
     myChild = child;
   }
 

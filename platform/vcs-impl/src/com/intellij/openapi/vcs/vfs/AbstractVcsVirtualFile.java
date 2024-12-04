@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -64,6 +65,24 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     myParent = parent;
 
     OutsidersPsiFileSupport.markFile(this);
+  }
+
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull FilePath path) {
+    myPath = path.getPath();
+    myName = path.getName();
+    myParent = parent;
+
+    OutsidersPsiFileSupport.markFile(this, path);
+  }
+
+  protected AbstractVcsVirtualFile(@NotNull FilePath path) {
+    myPath = path.getPath();
+    myName = path.getName();
+
+    FilePath parentPath = !isDirectory() ? path.getParentPath() : null;
+    myParent = parentPath != null ? new VcsVirtualFolder(parentPath, this) : null;
+
+    OutsidersPsiFileSupport.markFile(this, path);
   }
 
   @Override

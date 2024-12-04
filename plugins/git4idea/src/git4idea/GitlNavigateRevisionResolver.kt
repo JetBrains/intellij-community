@@ -17,7 +17,7 @@ class GitNavigateRevisionResolver: JBProtocolRevisionResolver {
       val root = GitUtil.getRootForFile(project, filePath)
       val revisionNumber = GitRevisionNumber.resolve(project, root, revision)
       val fileRevision = GitFileRevision(project, filePath, revisionNumber).also { it.loadContent() }
-      return VcsVirtualFile(absolutePath, fileRevision)
+      return VcsVirtualFile(filePath, fileRevision)
     } catch (e: VcsException) {
       thisLogger().info("File $absolutePath can't be found in revision $revision", e)
       return null

@@ -31,8 +31,8 @@ public final class FileHistoryUtil {
       if (revision instanceof VcsFileRevisionEx) {
         FilePath path = ((VcsFileRevisionEx)revision).getPath();
         return path.isDirectory()
-               ? new VcsVirtualFolder(path.getPath(), null)
-               : new VcsVirtualFile(path.getPath(), revision);
+               ? new VcsVirtualFolder(path, null)
+               : new VcsVirtualFile(path, revision);
       }
     }
     return null;

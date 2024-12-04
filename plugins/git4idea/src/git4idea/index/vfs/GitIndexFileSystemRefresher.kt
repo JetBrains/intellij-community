@@ -109,7 +109,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     val stagedFile = readMetadataFromGit(root, filePath) ?: return null
     val length = readLengthFromGit(root, stagedFile.blobHash)
     val indexFile = GitIndexVirtualFile(project, root, filePath, stagedFile.hash(), length, stagedFile.isExecutable)
-    OutsidersPsiFileSupport.markFile(indexFile, filePath.path)
+    OutsidersPsiFileSupport.markFile(indexFile, filePath)
     return indexFile
   }
 

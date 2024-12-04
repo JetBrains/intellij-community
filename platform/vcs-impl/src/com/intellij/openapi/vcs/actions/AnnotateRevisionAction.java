@@ -86,7 +86,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     @NotNull private final FileType myCurrentFileType;
 
     MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
-      super(filePath.getPath(), revision);
+      super(filePath, revision);
       myCurrentFileType = currentFileType;
     }
 

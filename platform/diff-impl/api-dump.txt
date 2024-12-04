@@ -5,6 +5,7 @@ f:com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 - s:isOutsiderFile(com.intellij.openapi.vfs.VirtualFile):Z
 - s:isOutsiderFile(com.intellij.psi.PsiFile):Z
 - s:markFile(com.intellij.openapi.vfs.VirtualFile):V
+- s:markFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):V
 - s:markFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - s:markFileWithUrl(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 a:com.intellij.diff.DiffContentFactoryEx

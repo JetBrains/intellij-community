@@ -123,7 +123,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   public @NotNull FileAnnotation annotate(final @NotNull FilePath path, final @NotNull VcsRevisionNumber revision) throws VcsException {
     return logTime(() -> {
       GitFileRevision fileRevision = new GitFileRevision(myProject, path, (GitRevisionNumber)revision);
-      VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision);
+      VcsVirtualFile file = new VcsVirtualFile(path, fileRevision);
 
       return annotate(path, revision, file);
     });

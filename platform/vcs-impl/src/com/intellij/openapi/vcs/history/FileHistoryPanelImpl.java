@@ -486,8 +486,8 @@ public final class FileHistoryPanelImpl extends JPanel implements UiDataProvider
     if (!myRevisionToVirtualFile.containsKey(revision)) {
       FilePath filePath = (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : myFilePath);
       myRevisionToVirtualFile.put(revision, filePath.isDirectory()
-                                            ? new VcsVirtualFolder(filePath.getPath(), null)
-                                            : new VcsVirtualFile(filePath.getPath(), revision));
+                                            ? new VcsVirtualFolder(filePath, null)
+                                            : new VcsVirtualFile(filePath, revision));
     }
     return myRevisionToVirtualFile.get(revision);
   }

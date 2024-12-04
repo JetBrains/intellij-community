@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -17,7 +18,7 @@ class GitBrowseRepoAtRevisionAction : VcsLogAction<GitRepository>() {
   override fun actionPerformed(project: Project, grouped: MultiMap<GitRepository, VcsFullCommitDetails>) {
     val repo = grouped.keySet().single()
     val commit = grouped.values().single()
-    val root = GitDirectoryVirtualFile(repo, null, "", commit)
+    val root = GitDirectoryVirtualFile(repo, null, VcsUtil.getFilePath(repo.root), commit)
     RepositoryBrowser.showRepositoryBrowser(project, root, repo.root,
                                             GitBundle.message("tab.title.repo.root.name.at.revision", repo.root.name,
                                                               commit.id.toShortString()))
