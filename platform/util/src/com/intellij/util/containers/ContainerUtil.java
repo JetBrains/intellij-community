@@ -985,12 +985,12 @@ public final class ContainerUtil {
     return result;
   }
 
-  @CheckReturnValue
+
   @Contract(mutates = "param2")
   public static <T, V> V @NotNull [] map2Array(@NotNull Collection<? extends T> collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
     return map(collection, mapper).toArray(to);
   }
-  @CheckReturnValue
+
   @Contract(mutates = "param2")
   public static <T, V> V @NotNull [] map2Array(T @NotNull [] collection, V @NotNull [] to, @NotNull Function<? super T, ? extends V> mapper) {
     return map(collection, mapper).toArray(to);
