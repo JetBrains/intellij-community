@@ -1475,7 +1475,7 @@ public class AllIcons {
 
     public static final class Mouse {
       /** 16x16 */ public static final @NotNull Icon CursorPointingHand = load("expui/windows/mouse/cursorPointingHand.svg", 1179133742, 0);
-      /** 16x16 */ public static final @NotNull Icon CursorText = load("expui/windows/mouse/cursorText.svg", 484468598, 0);
+      /** 16x16 */ public static final @NotNull Icon CursorText = load("expui/windows/mouse/cursorText.svg", 679255143, 0);
     }
 
     /** 16x16 */ public static final @NotNull Icon Restore = load("expui/windows/restore.svg", "windows/restore.svg", 11845937, 2);
