@@ -12,7 +12,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
@@ -231,7 +233,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
 
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
-        FUSEventSource.EDITOR.doIgnoreUltimateAndLog(project)
+        FUSEventSource.EDITOR.ignoreUltimateAndLog(project)
         updateAllNotifications(project)
       }
     }
@@ -361,6 +363,8 @@ private fun getSuggestedIdes(activeProductCode: String,
 private fun updateAllNotifications(project: Project) {
   EditorNotifications.getInstance(project).updateAllNotifications()
 }
+
+private val LOG: Logger = fileLogger()
 
 @Service(Service.Level.PROJECT)
 internal class AdvertiserInfoUpdateService(

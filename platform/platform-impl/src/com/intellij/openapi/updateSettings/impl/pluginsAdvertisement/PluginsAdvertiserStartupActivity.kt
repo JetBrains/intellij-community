@@ -17,7 +17,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.fileTypes.FileTypeFactory
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -56,7 +56,8 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
         coroutineContext.ensureActive()
 
         withContext(Dispatchers.EDT) {
-          notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+          getPluginSuggestionNotificationGroup()
+            .createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
             .setDisplayId("advertiser.no.plugins")
             .notify(project)
         }
@@ -70,7 +71,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           || includeIgnored) {
         @Suppress("DEPRECATION")
         extensionService.extensions.set(PluginFeatureMap(
-          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = FileTypeFactory.FILE_TYPE_FACTORY_EP.name),
+          featureMap = getFeatureMapFromMarketPlace(customPluginIds = customPluginIds, featureType = "com.intellij.fileTypeFactory"),
           lastUpdateTime = if (oldExtensions != null) System.currentTimeMillis() else 0L,
         ))
         coroutineContext.ensureActive()
@@ -103,7 +104,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
     }
     catch (e: Exception) {
       if (e !is ControlFlowException) {
-        LOG.info(e)
+        thisLogger().info(e)
       }
     }
   }
@@ -160,7 +161,7 @@ private suspend fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, f
     }
 }
 
-private fun notifyUnbundledPlugins(project: Project) {
+private fun notifyUnbundledPlugins(@Suppress("unused") project: Project) {
   // stub for future plugins
 }
 
