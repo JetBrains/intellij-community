@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
 import org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceData
@@ -42,6 +43,8 @@ class K1J2KCopyPasteConverter(
     private lateinit var result: Result
 
     override fun convert() {
+        ThreadingAssertions.assertEventDispatchThread()
+
         if (!::result.isInitialized && convertAndRestoreReferencesIfTextIsUnchanged()) return
 
         val (changedText, referenceData, importsToAdd, converterContext) = result
@@ -60,6 +63,8 @@ class K1J2KCopyPasteConverter(
     }
 
     override fun convertAndRestoreReferencesIfTextIsUnchanged(): Boolean {
+        ThreadingAssertions.assertEventDispatchThread()
+
         fun runConversion() {
             val conversionResult = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetData.file, j2kKind)
             val (text, parseContext, importsToAdd, isTextChanged, converterContext) = conversionResult
