@@ -51,3 +51,7 @@ def m(x) -> None:
     """Does not display warning about implicit return, because annotated '-> None' """
     if x:
         return
+
+def n() -> Generator[int, Any, str]:
+    yield 13
+    return 42
