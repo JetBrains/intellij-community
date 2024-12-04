@@ -1,5 +1,6 @@
 package ru.adelf.idea.dotenv.extension.symbols;
 
+import com.intellij.dotenv.icons.DotenvIcons;
 import com.intellij.model.Pointer;
 import com.intellij.navigation.NavigatableSymbol;
 import com.intellij.openapi.editor.Document;
@@ -13,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.adelf.idea.dotenv.DotEnvIcons;
 
 import java.util.Collection;
 import java.util.List;
@@ -67,7 +67,7 @@ class DotEnvKeyUsageSymbol implements Pointer<DotEnvKeyUsageSymbol>, Navigatable
 
         return TargetPresentation.builder(psiElement.getText())
                 .locationText(locationString, psiFile.getIcon(Iconable.ICON_FLAG_VISIBILITY))
-                .icon(DotEnvIcons.icon)
+                .icon(DotenvIcons.Env)
                 .presentation();
     }
 
