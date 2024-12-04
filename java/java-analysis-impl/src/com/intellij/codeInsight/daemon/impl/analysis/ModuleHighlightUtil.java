@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.impl.IncompleteModelUtil;
@@ -40,6 +41,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.psi.JavaTokenType.TRANSITIVE_KEYWORD;
 
 // generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
@@ -489,7 +492,11 @@ final class ModuleHighlightUtil {
   static void checkModifiers(@NotNull PsiRequiresStatement statement, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     PsiModifierList modList = statement.getModifierList();
     if (modList != null && PsiJavaModule.JAVA_BASE.equals(statement.getModuleName())) {
+      boolean transitiveAvailable = PsiUtil.isAvailable(JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE, statement);
       PsiTreeUtil.processElements(modList, PsiKeyword.class, keyword -> {
+        if (keyword.getTokenType() == TRANSITIVE_KEYWORD && transitiveAvailable) {
+          return true;
+        }
         @PsiModifier.ModifierConstant String modifier = keyword.getText();
         String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
         HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
