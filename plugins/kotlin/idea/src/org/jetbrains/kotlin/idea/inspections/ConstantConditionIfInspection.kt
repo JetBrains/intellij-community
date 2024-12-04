@@ -2,70 +2,26 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConstantConditionIfUtils.replaceWithBranch
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.util.hasNoSideEffects
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal fun KtExpression.replaceWithBranchAndMoveCaret(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
-    val caretModel = findExistingEditor()?.caretModel
+    val originalExpression = this
 
-    val subjectVariable = (this as? KtWhenExpression)?.subjectVariable?.let(fun(property: KtProperty): KtProperty? {
-        if (property.annotationEntries.isNotEmpty()) return property
-        val initializer = property.initializer ?: return property
-        val references = ReferencesSearch.search(property, LocalSearchScope(this)).toList()
-        return when (references.size) {
-            0 -> property.takeUnless { initializer.hasNoSideEffects() }
-            1 -> {
-                if (initializer.hasNoSideEffects()) {
-                    references.first().element.replace(initializer)
-                    null
-                } else
-                    property
-            }
-            else -> property
-        }
-    })
+    // TODO get rid of this caret model manipulation when all usages are migrated to Mod command - it doesn't work there 
+    val caretModel = originalExpression.findExistingEditor()?.caretModel
 
-    val psiFactory = KtPsiFactory(project)
-
-    val parent = this.parent
-    val replaced = when {
-        branch !is KtBlockExpression -> {
-            if (subjectVariable != null) {
-                replaced(psiFactory.createExpressionByPattern("run { $0\n$1 }", subjectVariable, branch))
-            } else {
-                replaced(branch)
-            }
-        }
-        isUsedAsExpression -> {
-            if (subjectVariable != null) {
-                branch.addAfter(psiFactory.createNewLine(), branch.addBefore(subjectVariable, branch.statements.firstOrNull()))
-            }
-            replaced(psiFactory.createExpressionByPattern("run $0", branch.text))
-        }
-        else -> {
-            val firstChildSibling = branch.firstChild.nextSibling
-            val lastChild = branch.lastChild
-            val replaced = if (firstChildSibling != lastChild) {
-                if (keepBraces) {
-                    parent.addAfter(branch, this)
-                } else {
-                    if (subjectVariable != null) {
-                        branch.addAfter(subjectVariable, branch.lBrace)
-                        parent.addAfter(psiFactory.createExpression("run ${branch.text}"), this)
-                    } else {
-                        parent.addRangeAfter(firstChildSibling, lastChild.prevSibling, this)
-                    }
-                }
-            } else {
-                null
-            }
-            delete()
-            replaced
+    // This code can be called non-Mod command usages, so we have to allow calling it from EDT and write action
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    val replaced = allowAnalysisOnEdt {
+        allowAnalysisFromWriteAction {
+            originalExpression.replaceWithBranch(branch, isUsedAsExpression, keepBraces)
         }
     }
 

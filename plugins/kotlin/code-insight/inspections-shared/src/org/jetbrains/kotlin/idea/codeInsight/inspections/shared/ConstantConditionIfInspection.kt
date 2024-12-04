@@ -4,14 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConstantConditionIfUtils.getConditionConstantValueIfAny
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConstantConditionIfFix
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.ifExpressionVisitor
 
 internal class ConstantConditionIfInspection : AbstractKotlinInspection() {
@@ -27,14 +23,4 @@ internal class ConstantConditionIfInspection : AbstractKotlinInspection() {
             )
         }
     }
-}
-
-private fun KtIfExpression.getConditionConstantValueIfAny(): Boolean? {
-    var expr = condition
-    while (expr is KtParenthesizedExpression) {
-        expr = expr.expression
-    }
-    if (expr !is KtConstantExpression) return null
-
-    return analyze(expr) { (expr.evaluate() as? KaConstantValue.BooleanValue)?.value }
 }

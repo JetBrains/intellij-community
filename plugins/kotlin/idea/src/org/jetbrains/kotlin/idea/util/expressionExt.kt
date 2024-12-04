@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -19,8 +18,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn as _textRangeIn
 
@@ -30,13 +27,6 @@ fun KtCallElement.replaceOrCreateTypeArgumentList(newTypeArgumentList: KtTypeArg
         newTypeArgumentList,
         calleeExpression,
     )
-}
-
-// TODO: add cases
-fun KtExpression.hasNoSideEffects(): Boolean = when (this) {
-    is KtStringTemplateExpression -> !hasInterpolation()
-    is KtConstantExpression -> true
-    else -> ConstantExpressionEvaluator.getConstant(this, analyze(BodyResolveMode.PARTIAL)) != null
 }
 
 @Deprecated(
