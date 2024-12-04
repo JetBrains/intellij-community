@@ -8,38 +8,35 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.formatting.service.AsyncDocumentFormattingService
 import com.intellij.formatting.service.AsyncFormattingRequest
 import com.intellij.formatting.service.FormattingService
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorLastActionTracker
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.ui.LightweightHint
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import org.jetbrains.annotations.Nls
-import java.awt.Container
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import kotlin.time.toKotlinDuration
 
 
+val NAME: String = PyBundle.message("black.formatting.service.name")
+val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
+val FEATURES: Set<FormattingService.Feature> = setOf()
+
 class BlackFormattingService : AsyncDocumentFormattingService() {
+
   companion object {
     private val LOG = Logger.getInstance(BlackFormattingService::class.java)
-    val NAME: String = PyBundle.message("black.formatting.service.name")
-    val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
-    const val NOTIFICATION_GROUP_ID = "Black Formatter Integration"
-    val FEATURES: Set<FormattingService.Feature> = setOf()
+    const val NOTIFICATION_GROUP_ID: String = "Black Formatter Integration"
   }
 
   override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
@@ -124,7 +121,8 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
               showFormattedLinesInfo(editor, message, false)
               if (formattedDocumentText == text) { // if text is unchanged, pass null, see .onTextReady(...) doc
                 formattingRequest.onTextReady(null)
-              } else {
+              }
+              else {
                 formattingRequest.onTextReady(formattedDocumentText)
               }
             }

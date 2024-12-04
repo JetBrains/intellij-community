@@ -34,7 +34,7 @@ class BlackFormatterExecutor(private val project: Project,
   private var targetEnvironmentRequest: TargetEnvironmentRequest
 
   companion object {
-    val BLACK_DEFAULT_TIMEOUT = 30000.milliseconds
+    val BLACK_DEFAULT_TIMEOUT: Duration = 30000.milliseconds
     private val LOG = thisLogger()
     private val minimalStdinFilenameCompatibleVersion = Version(21, 4, 0)
   }
@@ -126,7 +126,7 @@ class BlackFormatterExecutor(private val project: Project,
 
     val process = targetEnvironment.createProcess(targetCMD)
 
-    val processHandler = CapturingProcessHandler(process, BlackFormattingService.DEFAULT_CHARSET,
+    val processHandler = CapturingProcessHandler(process, DEFAULT_CHARSET,
                                                  targetCMD.getCommandPresentation(targetEnvironment))
 
     processHandler.addProcessListener(writeToStdinListener(formattingRequest.fragmentToFormat, vFile.charset))
