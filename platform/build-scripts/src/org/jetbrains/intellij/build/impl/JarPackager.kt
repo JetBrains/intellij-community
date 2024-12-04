@@ -91,8 +91,8 @@ private val predefinedMergeRules = java.util.List.of<Pair<String, (String, JetBr
   // separate file to use in Gradle Daemon classpath
   "opentelemetry.jar" to { it, _ -> it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") },
   "bouncy-castle.jar" to { it, _ -> it.startsWith("bouncy-castle-") },
-  PRODUCT_JAR to { name, filter -> name.startsWith("License") && !filter.isProjectLibraryIncluded(name) },
-  PRODUCT_CLIENT_JAR to { name, filter -> name.startsWith("License") && filter.isProjectLibraryIncluded(name) },
+  PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isProjectLibraryIncluded(name) },
+  PRODUCT_CLIENT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isProjectLibraryIncluded(name) },
   // see ClassPathUtil.getUtilClassPath
   UTIL_8_JAR to { it, _ ->
     libsThatUsedInJps.contains(it) ||
