@@ -1992,45 +1992,6 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
-  // PY-59795
-  public void testDictTypeFromValueModificationsConsidersOnlyRelevantAssignments() {
-    doTest("dict[str, int]",
-           """
-             d = {}
-             d['foo'] = 1
-             unrelated = {}
-             unrelated[2] = 'bar'
-             expr = d
-             """);
-  }
-
-  // PY-59795
-  public void testNestedTypedDictFromValueModifications() {
-    myFixture.configureByText(PythonFileType.INSTANCE,
-                              """
-                                d = {}
-                                d['foo'] = {'key': 'value'}
-                                d['bar'] = {'key': 'value'}
-                                expr = d
-                                """);
-    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    TypeEvalContext context = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-    PyTypedDictType topLevelTypedDict = assertInstanceOf(context.getType(expr), PyTypedDictType.class);
-    assertSize(2, topLevelTypedDict.getFields().entrySet());
-
-    PyTypedDictType.FieldTypeAndTotality fooField = topLevelTypedDict.getFields().get("foo");
-    assertNotNull(fooField);
-    PyTypedDictType fooFieldTypedDict = assertInstanceOf(fooField.getType(), PyTypedDictType.class);
-    assertEquals("key", assertOneElement(fooFieldTypedDict.getFields().keySet()));
-
-    PyTypedDictType.FieldTypeAndTotality barField = topLevelTypedDict.getFields().get("bar");
-    assertNotNull(barField);
-    PyTypedDictType barFieldTypedDict = assertInstanceOf(barField.getType(), PyTypedDictType.class);
-    assertEquals("key", assertOneElement(barFieldTypedDict.getFields().keySet()));
-
-    assertProjectFilesNotParsed(expr.getContainingFile());
-  }
-
   // PY-77796
   public void testTypedDictReadOnlyItemType() {
     doTest("str",
