@@ -9,7 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.psi.KtFile
 
-data class ConversionTargetData(
+data class TargetData(
     val file: KtFile,
     val bounds: RangeMarker,
     val document: Document,
@@ -25,7 +25,7 @@ internal fun getTargetData(
     topLevelDocument: Document,
     caretOffset: Int,
     topLevelBounds: RangeMarker
-): ConversionTargetData? {
+): TargetData? {
     val psiDocumentManager = PsiDocumentManager.getInstance(project)
     val topLevelPsiFile = psiDocumentManager.getPsiFile(topLevelDocument) ?: return null
     var targetBounds = topLevelBounds
@@ -50,5 +50,5 @@ internal fun getTargetData(
     }
 
     val targetFile = ktFile?.takeIf { it.virtualFile.isWritable } ?: return null
-    return ConversionTargetData(targetFile, targetBounds, targetDocument)
+    return TargetData(targetFile, targetBounds, targetDocument)
 }

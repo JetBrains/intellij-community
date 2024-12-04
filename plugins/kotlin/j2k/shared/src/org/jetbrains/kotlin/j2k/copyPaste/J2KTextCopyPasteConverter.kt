@@ -20,7 +20,7 @@ internal class J2KTextCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val dataForConversion: DataForConversion,
-    private val targetData: ConversionTargetData,
+    private val targetData: TargetData,
     private val j2kKind: J2kConverterExtension.Kind,
 ) {
     fun convert() {

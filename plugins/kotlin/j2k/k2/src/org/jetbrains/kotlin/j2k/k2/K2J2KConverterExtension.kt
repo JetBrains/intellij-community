@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
-import org.jetbrains.kotlin.j2k.copyPaste.ConversionTargetData
+import org.jetbrains.kotlin.j2k.copyPaste.TargetData
 import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
@@ -59,7 +59,7 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         project: Project,
         editor: Editor,
         dataForConversion: DataForConversion,
-        targetData: ConversionTargetData
+        targetData: TargetData
     ): J2KCopyPasteConverter {
         return K2J2KCopyPasteConverter(project, editor, dataForConversion.elementsAndTexts, targetData)
     }

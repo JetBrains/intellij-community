@@ -21,7 +21,7 @@ internal class K2J2KCopyPasteConverter(
     private val project: Project,
     private val editor: Editor,
     private val elementsAndTexts: ElementAndTextList,
-    private val targetData: ConversionTargetData,
+    private val targetData: TargetData,
 ) : J2KCopyPasteConverter {
     /**
      * @property changedText The transformed Kotlin code, or `null` if no conversion occurred (the result is the same as original code).
