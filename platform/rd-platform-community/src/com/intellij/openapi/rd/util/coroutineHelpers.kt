@@ -1,6 +1,8 @@
 package com.intellij.openapi.rd.util
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.assertClientIdConsistency
+import com.intellij.codeWithMe.currentThreadClientId
 import com.jetbrains.rd.framework.IRdDynamic
 import com.jetbrains.rd.framework.IRdEndpoint
 import com.jetbrains.rd.framework.util.toRdTask
@@ -29,8 +31,13 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
   coroutineStart: CoroutineStart = CoroutineStart.DEFAULT,
   handler: suspend (Lifetime, TReq) -> TRes
 ) {
+  val beforeAdviseClientId = currentThreadClientId
   set(null, SynchronousScheduler) { lt, req ->
+    // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
+    beforeAdviseClientId?.assertClientIdConsistency("Inside set ($this)")
+    val inAdviseClientId = currentThreadClientId
     lt.coroutineScope.async(coroutineContext + getSuitableDispatcher(coroutineContext), coroutineStart) {
+      inAdviseClientId.assertClientIdConsistency("Inside async ($this)")
       handler(lt, req)
     }.toRdTask()
   }
@@ -61,8 +68,13 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspendPreserveClientId(
 @ApiStatus.Internal
 @DelicateCoroutinesApi
 fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
+  val beforeAdviseClientId = currentThreadClientId
   advise(lifetime) {
+    // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
+    beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)")
+    val inAdviseClientId = currentThreadClientId
     lifetime.coroutineScope.launch(coroutineContext + getSuitableDispatcher(coroutineContext), coroutineStart) {
+      inAdviseClientId.assertClientIdConsistency("Inside launch ($this)")
       handler(it)
     }
   }
@@ -73,8 +85,13 @@ fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineC
  */
 @ApiStatus.Internal
 fun<T> ISource<T>.adviseSuspendPreserveClientId(lifetime: Lifetime, coroutineContext: CoroutineContext = EmptyCoroutineContext, coroutineStart: CoroutineStart = CoroutineStart.DEFAULT, handler: suspend (T) -> Unit) {
+  val beforeAdviseClientId = currentThreadClientId
   advise(lifetime) {
+    // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
+    beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)")
+    val inAdviseClientId = currentThreadClientId
     lifetime.coroutineScope.launch(coroutineContext + ClientId.coroutineContext() + getSuitableDispatcher(coroutineContext), coroutineStart) {
+      inAdviseClientId.assertClientIdConsistency("Inside launch ($this)")
       handler(it)
     }
   }
