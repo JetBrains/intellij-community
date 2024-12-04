@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.java.decompiler
+package com.intellij.java.decompiler
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -30,10 +30,11 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
-import com.intellij.util.lang.JavaVersion
+import org.jetbrains.java.decompiler.DecompilerPreset
+import org.jetbrains.java.decompiler.IDEA_DECOMPILER_BANNER
+import org.jetbrains.java.decompiler.IdeaDecompiler
+import org.jetbrains.java.decompiler.IdeaDecompilerSettings
 
 class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -72,7 +73,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val visitor = MyFileVisitor(psiManager)
     Registry.get("decompiler.dump.original.lines").withValue(true) {
       VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"), visitor)
+      VfsUtilCore.visitChildrenRecursively(getTestFile("${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/classes"),
+                                           visitor)
       VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
     }
   }
@@ -230,14 +232,6 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         file.removeUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)
       }
     }
-  }
-
-  fun testPerformance() {
-    val decompiler = IdeaDecompiler()
-    val jrt = JavaVersion.current().feature >= 9
-    val base = if (jrt) "jrt://${SystemProperties.getJavaHome()}!/java.desktop/" else "jar://${SystemProperties.getJavaHome()}/lib/rt.jar!/"
-    val file = VirtualFileManager.getInstance().findFileByUrl(base + "javax/swing/JTable.class")!!
-    Benchmark.newBenchmark("decompiling JTable.class") { decompiler.getText(file) }.start()
   }
 
   fun testStructureView() {
