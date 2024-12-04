@@ -243,30 +243,31 @@ private class AltClickPromoContent(val project: Project, val disposable: Disposa
     return Pair(indexOfFoo, target)
   }
 
-  private suspend fun animateMouseCursorMove(length: Int, start: Point, target: Point) {
-    val startMillis = System.currentTimeMillis()
-    for (i in 0 until length step 20) {
+  private suspend fun animateMouseCursorMove(duration: Int, start: Point, target: Point) {
+    val steps = duration*120/1000
+    animate(duration, steps) { s ->
       val initialX = start.x
       val initialY = start.y
-      val p = Point(initialX + (target.x - initialX) * i / length, initialY + (target.y - initialY) * i / length)
+      val p = Point(initialX + (target.x - initialX) * s / steps, initialY + (target.y - initialY) * s / steps)
       panelWithAnimation.cursorPosition = p
-      dialogPane.repaint()
-
-      val d = (startMillis + i) - System.currentTimeMillis()
-      if (d > 0) delay(d)
     }
   }
 
   private suspend fun animateMouseClick(clickPoint: Point) {
-    val startMillis = System.currentTimeMillis()
     val steps = 255
-    val duration = 300
-    val interval = duration.toDouble() / steps
-
-    for (i in 0 until steps) {
-      val r = i*20/steps
-      val alpha = 255 - i*255/steps
+    animate(300, steps) { s ->
+      val r = s*20/steps
+      val alpha = 255 - s*255/steps
       panelWithAnimation.clickAnimationStatus = ClickAnimationStatus(clickPoint, r, JBColor(Color.ORANGE, Color.WHITE), alpha)
+    }
+    panelWithAnimation.clickAnimationStatus = null
+  }
+
+  private suspend fun animate(duration: Int, steps: Int, action: suspend (Int) -> Unit) {
+    val startMillis = System.currentTimeMillis()
+    val interval = duration.toDouble() / steps
+    for (i in 0 until steps) {
+      action(i)
       dialogPane.repaint()
 
       val d = (startMillis + (i*interval).toLong()) - System.currentTimeMillis()
@@ -274,9 +275,7 @@ private class AltClickPromoContent(val project: Project, val disposable: Disposa
         delay(d)
       }
     }
-    panelWithAnimation.clickAnimationStatus = null
   }
-
 
   fun createContentComponent(): JComponent {
     val editorFactory = EditorFactory.getInstance()
