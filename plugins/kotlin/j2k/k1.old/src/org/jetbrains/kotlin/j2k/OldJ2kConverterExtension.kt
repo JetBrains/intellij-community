@@ -36,18 +36,18 @@ class OldJ2kConverterExtension : J2kConverterExtension() {
         true
 
     override fun createPlainTextPasteImportResolver(
-        dataForConversion: DataForConversion,
+        conversionData: ConversionData,
         targetKotlinFile: KtFile
     ): PlainTextPasteImportResolver {
-        return K1PlainTextPasteImportResolver(dataForConversion, targetKotlinFile)
+        return K1PlainTextPasteImportResolver(conversionData, targetKotlinFile)
     }
 
     override fun createCopyPasteConverter(
         project: Project,
         editor: Editor,
-        dataForConversion: DataForConversion,
+        conversionData: ConversionData,
         targetData: TargetData
     ): J2KCopyPasteConverter {
-        return K1J2KCopyPasteConverter(project, editor, dataForConversion, targetData, kind)
+        return K1J2KCopyPasteConverter(project, editor, conversionData, targetData, kind)
     }
 }

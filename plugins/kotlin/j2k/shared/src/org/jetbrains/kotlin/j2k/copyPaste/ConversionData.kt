@@ -18,13 +18,13 @@ import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
  * @property importsAndPackage Kotlin code of the package declaration and significant non-static import statements of the original Java file
  * @property sourceJavaFile a copy of the whole file containing the to-be-converted Java code fragment
  */
-class DataForConversion private constructor(
+class ConversionData private constructor(
     val elementsAndTexts: ElementAndTextList,
     val importsAndPackage: String,
     val sourceJavaFile: PsiJavaFile
 ) {
     companion object {
-        fun prepare(copiedCode: CopiedJavaCode, project: Project): DataForConversion {
+        fun prepare(copiedCode: CopiedJavaCode, project: Project): ConversionData {
             val startOffsets = copiedCode.startOffsets.clone()
             val endOffsets = copiedCode.endOffsets.clone()
             assert(startOffsets.size == endOffsets.size) { "Must have the same size" }
@@ -45,7 +45,7 @@ class DataForConversion private constructor(
                 elementsAndTexts.collectElementsToConvert(file, fileText, TextRange(startOffsets[i], endOffsets[i]))
             }
 
-            return DataForConversion(elementsAndTexts, importsAndPackage, file)
+            return ConversionData(elementsAndTexts, importsAndPackage, file)
         }
     }
 }

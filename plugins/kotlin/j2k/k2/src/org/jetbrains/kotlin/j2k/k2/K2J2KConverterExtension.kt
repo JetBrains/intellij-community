@@ -10,7 +10,7 @@ import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.copyPaste.TargetData
-import org.jetbrains.kotlin.j2k.copyPaste.DataForConversion
+import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
 import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2J2KCopyPasteConverter
@@ -49,18 +49,18 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         getK2J2KConversions(context)
 
     override fun createPlainTextPasteImportResolver(
-        dataForConversion: DataForConversion,
+        conversionData: ConversionData,
         targetKotlinFile: KtFile
     ): PlainTextPasteImportResolver {
-        return K2PlainTextPasteImportResolver(dataForConversion, targetKotlinFile)
+        return K2PlainTextPasteImportResolver(conversionData, targetKotlinFile)
     }
 
     override fun createCopyPasteConverter(
         project: Project,
         editor: Editor,
-        dataForConversion: DataForConversion,
+        conversionData: ConversionData,
         targetData: TargetData
     ): J2KCopyPasteConverter {
-        return K2J2KCopyPasteConverter(project, editor, dataForConversion.elementsAndTexts, targetData)
+        return K2J2KCopyPasteConverter(project, editor, conversionData.elementsAndTexts, targetData)
     }
 }

@@ -32,9 +32,9 @@ import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 /**
  * Tests: [org.jetbrains.kotlin.nj2k.K1JavaToKotlinCopyPasteConversionTestGenerated].
  */
-class K1PlainTextPasteImportResolver(private val dataForConversion: DataForConversion, private val targetKotlinFile: KtFile) :
+class K1PlainTextPasteImportResolver(private val conversionData: ConversionData, private val targetKotlinFile: KtFile) :
     PlainTextPasteImportResolver {
-    private val sourceJavaFile: PsiJavaFile = dataForConversion.sourceJavaFile
+    private val sourceJavaFile: PsiJavaFile = conversionData.sourceJavaFile
     private val javaFileImportList: PsiImportList = sourceJavaFile.importList!!
     private val project = targetKotlinFile.project
     private val scope: GlobalSearchScope = targetKotlinFile.resolveScope
@@ -56,7 +56,7 @@ class K1PlainTextPasteImportResolver(private val dataForConversion: DataForConve
     // TODO removing this function doesn't affect existing tests
     //  investigate is this needed or not
     private fun addImportsToJavaFileFromKotlinFile() {
-        if (javaFileImportList in dataForConversion.elementsAndTexts.toList()) return
+        if (javaFileImportList in conversionData.elementsAndTexts.toList()) return
 
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             addImportsTask, KotlinNJ2KBundle.message("copy.text.adding.imports"), /* canBeCanceled = */ true, project
