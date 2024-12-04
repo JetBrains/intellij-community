@@ -1,5 +1,5 @@
 fun foo(s: String) {}
 
-fun bar() {
+<caret>fun bar() {
 
 }

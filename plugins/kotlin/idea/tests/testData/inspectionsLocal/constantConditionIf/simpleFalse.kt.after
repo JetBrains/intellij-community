@@ -1,5 +1,5 @@
 fun foo(x: Int) {}
 
 fun bar() {
-    foo(2)
+    foo(<caret>2)
 }

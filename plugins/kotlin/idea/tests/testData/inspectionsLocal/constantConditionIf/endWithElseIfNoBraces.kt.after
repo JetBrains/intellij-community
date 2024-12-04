@@ -6,5 +6,5 @@ fun bar(s: String?) {
     if (s == null) {
         1
     }
-    else 2
+    else <caret>2
 }

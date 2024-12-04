@@ -6,7 +6,7 @@ fun bar(s: String?) {
     if (s == null) {
         1
     }
-    else {
+    else <caret>{
         2
     }
 }

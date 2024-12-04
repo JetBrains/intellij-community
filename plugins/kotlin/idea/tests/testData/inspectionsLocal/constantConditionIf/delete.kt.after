@@ -1,4 +1,4 @@
 fun foo(x: Int) {}
 
 fun bar() {
-}
+<caret>}
