@@ -242,18 +242,18 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.isResponding.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.isResponding.setSuspendPreserveClientId { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
 
-        session.visibleFrameNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.visibleFrameNames.setSuspendPreserveClientId { _, _ ->
           Window.getWindows().filter { it.isShowing }.filterIsInstance<Frame>().map { it.title }.also {
             LOG.info("Visible frame names: ${it.joinToString(", ", "[", "]")}")
           }
         }
 
-        session.projectsNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.projectsNames.setSuspendPreserveClientId { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.name }.also {
             LOG.info("Projects: ${it.joinToString(", ", "[", "]")}")
           }
@@ -289,11 +289,11 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.forceLeaveAllModals.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, throwErrorIfModal ->
+        session.forceLeaveAllModals.setSuspendPreserveClientId { _, throwErrorIfModal ->
           leaveAllModals(throwErrorIfModal)
         }
 
-        session.closeProjectIfOpened.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           try {
             leaveAllModals(throwErrorIfModal = true)
 
@@ -322,17 +322,17 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, silent ->
+        session.requestFocus.setSuspendPreserveClientId { _, silent ->
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             requestFocus(silent)
           }
         }
 
-        session.makeScreenshot.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
+        session.makeScreenshot.setSuspendPreserveClientId { _, fileName ->
           makeScreenshot(fileName)
         }
 
-        session.projectsAreInitialised.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+        session.projectsAreInitialised.setSuspendPreserveClientId { _, _ ->
           ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }
 
