@@ -52,7 +52,8 @@ class EelRemotePathTransformFactory : RemotePathTransformerFactory {
 
       override fun toIdePath(remotePath: String): String {
         if (remotePath.isEmpty()) return remotePath
-        return runCatching { eel.mapper.toNioPath(eel.fs.getPath(remotePath)).toString() }.getOrNull() ?: remotePath
+        val remotePathWithFixedSeparators = remotePath.replace('\\', '/')
+        return runCatching { eel.mapper.toNioPath(eel.fs.getPath(remotePathWithFixedSeparators)).toString() }.getOrNull() ?: remotePath
       }
 
       override fun canBeRemotePath(s: String?): Boolean {
