@@ -1147,6 +1147,7 @@ f:com.intellij.execution.runners.ExecutionUtil
 - s:runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.Executor,J):V
 - s:runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.Executor,com.intellij.execution.ExecutionTarget):V
 - s:runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.Executor,com.intellij.execution.ExecutionTarget,J):V
+- s:withLiveIndicator(javax.swing.Icon):javax.swing.Icon
 a:com.intellij.execution.runners.GenericProgramRunner
 - com.intellij.execution.runners.ProgramRunner
 - <init>():V
