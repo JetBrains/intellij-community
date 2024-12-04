@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gradle.util.cmd.jvmArgs
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.util.cmd.GradleCommandLineTokenizer
+import org.jetbrains.plugins.gradle.util.cmd.jvmArgs.GradleJvmArgument.OptionNotation
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineNode
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption.PropertyNotation
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption.ShortNotation
 
 @ApiStatus.Experimental
 class GradleJvmArguments(val arguments: List<GradleJvmArgument>) : GradleCommandLineNode {
@@ -11,6 +14,26 @@ class GradleJvmArguments(val arguments: List<GradleJvmArgument>) : GradleCommand
   override val tokens: List<String> = arguments.flatMap { it.tokens }
 
   override val text: String = tokens.joinToString(" ")
+
+  operator fun plus(other: GradleJvmArguments): GradleJvmArguments {
+    val otherTexts = other.arguments.map { it.text }
+    val otherPropertyNames = other.arguments.asSequence()
+      .filterIsInstance<OptionNotation>().map { it.option }
+      .filterIsInstance<PropertyNotation>().map { it.propertyName }
+      .toSet()
+    val otherShortNames = other.arguments.asSequence()
+      .filterIsInstance<OptionNotation>().map { it.option }
+      .filterIsInstance<ShortNotation>().map { it.name }
+      .toSet()
+      .intersect(setOf("-Xmx", "-Xms"))
+
+    val nonOverridenArguments = arguments
+      .filterNot { it.text in otherTexts }
+      .filterNot { it is OptionNotation && it.option is PropertyNotation && it.option.propertyName in otherPropertyNames }
+      .filterNot { it is OptionNotation && it.option is ShortNotation && it.option.name in otherShortNames }
+
+    return GradleJvmArguments(nonOverridenArguments + other.arguments)
+  }
 
   companion object {
 

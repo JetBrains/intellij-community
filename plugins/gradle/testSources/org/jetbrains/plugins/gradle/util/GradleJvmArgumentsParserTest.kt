@@ -88,4 +88,47 @@ class GradleJvmArgumentsParserTest : GradleJvmArgumentsParserTestCase() {
                        ValueNotation("-XX:+HeapDumpOnOutOfMemoryError"))
       .assertText("-XX:MaxMetaspaceSize=384m -XX:+HeapDumpOnOutOfMemoryError")
   }
+
+  @Test
+  fun `test merge -X arguments`() {
+    (GradleJvmArguments.parse("-Xms256m") + GradleJvmArguments.parse("-Xms512m"))
+      .assertTokens("-Xms512m")
+      .assertArguments(OptionNotation(ShortNotation("-Xms", "512m")))
+      .assertText("-Xms512m")
+    (GradleJvmArguments.parse("-Xmx512m") + GradleJvmArguments.parse("-Xmx1g"))
+      .assertTokens("-Xmx1g")
+      .assertArguments(OptionNotation(ShortNotation("-Xmx", "1g")))
+      .assertText("-Xmx1g")
+    (GradleJvmArguments.parse("-Xms256m -Xmx512m") + GradleJvmArguments.parse("-Xms512m -Xmx1g"))
+      .assertTokens("-Xms512m", "-Xmx1g")
+      .assertArguments(OptionNotation(ShortNotation("-Xms", "512m")),
+                       OptionNotation(ShortNotation("-Xmx", "1g")))
+      .assertText("-Xms512m -Xmx1g")
+  }
+
+  @Test
+  fun `test merge -D arguments`() {
+    (GradleJvmArguments.parse("-Dname=value1") + GradleJvmArguments.parse("-Dname=value2"))
+      .assertTokens("-Dname=value2")
+      .assertArguments(OptionNotation(PropertyNotation("-D", "name", "value2")))
+      .assertText("-Dname=value2")
+    (GradleJvmArguments.parse("-Dname1=value") + GradleJvmArguments.parse("-Dname2=value"))
+      .assertTokens("-Dname1=value", "-Dname2=value")
+      .assertArguments(OptionNotation(PropertyNotation("-D", "name1", "value")),
+                       OptionNotation(PropertyNotation("-D", "name2", "value")))
+      .assertText("-Dname1=value -Dname2=value")
+  }
+
+  @Test
+  fun `test merge undefined arguments`() {
+    (GradleJvmArguments.parse("asd-asd") + GradleJvmArguments.parse("asd-asd"))
+      .assertTokens("asd-asd")
+      .assertArguments(ValueNotation("asd-asd"))
+      .assertText("asd-asd")
+    (GradleJvmArguments.parse("asd-asd-1") + GradleJvmArguments.parse("asd-asd-2"))
+      .assertTokens("asd-asd-1", "asd-asd-2")
+      .assertArguments(ValueNotation("asd-asd-1"),
+                       ValueNotation("asd-asd-2"))
+      .assertText("asd-asd-1 asd-asd-2")
+  }
 }
