@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.coroutines.coroutineContext
@@ -33,7 +34,11 @@ import kotlin.coroutines.coroutineContext
  *
  */
 @ApiStatus.Internal
-class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int) : Disposable {
+class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: InetSocketAddress) : Disposable {
+  @Deprecated("Use the construction with the application address." +
+              " This constructor can lead to sporadic 'connection refused' errors in case of IPv4/IPv6 confusion.")
+  constructor(distro: AbstractWslDistribution, applicationPort: Int) : this(distro, InetSocketAddress("127.0.0.1", applicationPort))
+
   private companion object {
     private val LOG = logger<WslProxy>()
 
@@ -163,8 +168,9 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
       socket
     }
     val winToWin = scope.async {
-      LOG.info("Connecting to app: $127.0.0.1:$applicationPort")
-      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().tryConnect("127.0.0.1", applicationPort)
+      LOG.info("Connecting to app: $applicationAddress")
+      val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp()
+        .tryConnect(applicationAddress.hostString, applicationAddress.port)
       LOG.info("Connected to app")
       socket
     }
@@ -178,7 +184,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
       launch(CoroutineName("WinWin->WinLin $linuxEgressPort")) {
         connectChannels(winToWinSocket.openReadChannel(), winToLinSocket.openWriteChannel(true))
       }.invokeOnCompletion { closeSockets() }
-      launch(CoroutineName("WinLin->WinWin $applicationPort")) {
+      launch(CoroutineName("WinLin->WinWin $applicationAddress")) {
         connectChannels(winToLinSocket.openReadChannel(), winToWinSocket.openWriteChannel(true))
       }.invokeOnCompletion { closeSockets() }
     }
