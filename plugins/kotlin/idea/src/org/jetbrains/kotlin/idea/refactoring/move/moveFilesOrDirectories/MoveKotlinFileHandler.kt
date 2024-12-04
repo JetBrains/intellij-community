@@ -100,7 +100,7 @@ class MoveKotlinFileHandler : MoveFileHandler() {
 
     override fun findUsages(
         psiFile: PsiFile,
-        newParent: PsiDirectory?,
+        newParent: PsiDirectory,
         searchInComments: Boolean,
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {

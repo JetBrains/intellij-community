@@ -189,19 +189,16 @@ public final class PyMoveFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public @Nullable @Unmodifiable List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
-    if (file != null) {
-      file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
-      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(file, false);
-      return ContainerUtil.map(usages, usage -> {
-        final PsiElement element = usage.getElement();
-        if (element != null) {
-          return new PyUsageInfo(element, file);
-        }
-        return usage;
-      });
-    }
-    return null;
+  public @Unmodifiable @NotNull List<UsageInfo> findUsages(@NotNull PsiFile file, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+    file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
+    final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(file, false);
+    return ContainerUtil.map(usages, usage -> {
+      final PsiElement element = usage.getElement();
+      if (element != null) {
+        return new PyUsageInfo(element, file);
+      }
+      return usage;
+    });
   }
 
   static final class PyUsageInfo extends UsageInfo {

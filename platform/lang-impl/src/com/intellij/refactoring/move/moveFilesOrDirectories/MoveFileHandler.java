@@ -55,7 +55,7 @@ public abstract class MoveFileHandler {
    * @param searchInNonJavaFiles if true, search for references in non-code files (such as .xml) has been requested.
    * @return the list of usages that need to be updated, or null if nothing needs to be updated.
    */
-  public abstract @Nullable @Unmodifiable List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
+  public abstract @Nullable @Unmodifiable List<UsageInfo> findUsages(@NotNull PsiFile psiFile, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
 
   /**
    * Finds conflicts which may arise when file is moved, 
@@ -125,7 +125,7 @@ public abstract class MoveFileHandler {
     }
 
     @Override
-    public @Nullable @Unmodifiable List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+    public @Nullable @Unmodifiable List<UsageInfo> findUsages(@NotNull PsiFile psiFile, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
       return null;
     }
 
