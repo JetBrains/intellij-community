@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.popup.AbstractPopup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +35,13 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
 
   @ApiStatus.Internal
   protected @NotNull PopupHandler createPopupHandler(@NotNull AnActionEvent e) {
-    return new GenericPopupHandler(e);
+    return isProjectView(e) ? new ProjectViewPopupHandler(e) : new GenericPopupHandler(e);
+  }
+
+  private static boolean isProjectView(@NotNull AnActionEvent e) {
+    var toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW);
+    if (toolWindow == null) return false;
+    return ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId());
   }
 
   protected @Nullable JBPopupFactory.ActionSelectionAid getActionSelectionAid() {
@@ -162,6 +170,30 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
   private class GenericPopupHandler extends PopupHandler {
     GenericPopupHandler(@NotNull AnActionEvent e) {
       super(e);
+    }
+
+    @Override
+    protected void show(@NotNull ListPopup popup) {
+      popup.showInBestPositionFor(event.getDataContext());
+    }
+  }
+
+  private class ProjectViewPopupHandler extends PopupHandler {
+    ProjectViewPopupHandler(@NotNull AnActionEvent e) {
+      super(e);
+    }
+
+    @Override
+    protected @Nullable @NlsContexts.PopupTitle String getTitle() {
+      return null;
+    }
+
+    @Override
+    protected void customize(@NotNull ListPopup popup) {
+      if (popup instanceof AbstractPopup abstractPopup) {
+        abstractPopup.setSpeedSearchAlwaysShown();
+        abstractPopup.setSpeedSearchEmptyText(IdeBundle.message("new.file.popup.search.hint"));
+      }
     }
 
     @Override
