@@ -8588,6 +8588,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/implicitGrandParent.kt");
         }
 
+        @TestMetadata("implicitNotFromClosestLambda.kt")
+        public void testImplicitNotFromClosestLambda() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/implicitNotFromClosestLambda.kt");
+        }
+
+        @TestMetadata("implicitNotFromClosestLambda2.kt")
+        public void testImplicitNotFromClosestLambda2() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/implicitNotFromClosestLambda2.kt");
+        }
+
         @TestMetadata("notUseParameter.kt")
         public void testNotUseParameter() throws Exception {
             runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/notUseParameter.kt");

@@ -74,6 +74,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/replaceIsEmptyWithIfEmpty")
             model("${idea}/inspectionsLocal/booleanLiteralArgument")
             model("${idea}/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals")
+            model("${idea}/inspectionsLocal/nestedLambdaShadowedImplicitParameter")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,
