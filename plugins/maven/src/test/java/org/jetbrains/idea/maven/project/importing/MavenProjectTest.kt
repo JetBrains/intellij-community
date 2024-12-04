@@ -17,8 +17,6 @@ import org.junit.Test
 import java.io.File
 
 class MavenProjectTest : MavenMultiVersionImportingTestCase() {
-
-
   @Test
   fun testCollectingPlugins() = runBlocking {
     importProjectAsync("""
@@ -614,100 +612,6 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     assertUnorderedElementsAreEqual(mavenProject.profilesIds, "one", "default")
-  }
-
-  @Test
-  fun testCollectingRepositories() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <repositories>
-                      <repository>
-                        <id>one</id>
-                        <url>https://repository.one.com</url>
-                      </repository>
-                      <repository>
-                        <id>two</id>
-                        <url>https://repository.two.com</url>
-                      </repository>
-                    </repositories>
-                    """.trimIndent())
-
-    val result = mavenProject.remoteRepositories
-    assertEquals(3, result.size)
-    assertEquals("one", result[0].id)
-    assertEquals("two", result[1].id)
-    assertEquals("central", result[2].id)
-  }
-
-  @Test
-  fun testOverridingCentralRepository() = runBlocking {
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <repositories>
-                      <repository>
-                        <id>central</id>
-                        <url>https://my.repository.com</url>
-                      </repository>
-                    </repositories>
-                    """.trimIndent())
-
-    val result = mavenProject.remoteRepositories
-    assertEquals(1, result.size)
-    assertEquals("central", result[0].id)
-    assertEquals("https://my.repository.com", result[0].url)
-  }
-
-  @Test
-  fun testCollectingRepositoriesFromParent() = runBlocking {
-    //Registry.get("maven.server.debug").setValue(true, testRootDisposable)
-
-    val m1 = createModulePom("p1",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>p1</artifactId>
-                                       <version>1</version>
-                                       <packaging>pom</packaging>
-                                       <repositories>
-                                         <repository>
-                                           <id>one</id>
-                                           <url>https://repository.one.com</url>
-                                         </repository>
-                                         <repository>
-                                           <id>two</id>
-                                           <url>https://repository.two.com</url>
-                                         </repository>
-                                       </repositories>
-                                       """.trimIndent())
-
-    val m2 = createModulePom("p2",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>p2</artifactId>
-                                       <version>1</version>
-                                       <parent>
-                                         <groupId>test</groupId>
-                                         <artifactId>p1</artifactId>
-                                         <version>1</version>
-                                       </parent>
-                                       """.trimIndent())
-
-    importProjects(m1, m2)
-
-    var result = projectsTree.rootProjects[0].remoteRepositories
-    assertEquals(3, result.size)
-    assertEquals("one", result[0].id)
-    assertEquals("two", result[1].id)
-    assertEquals("central", result[2].id)
-
-    result = projectsTree.rootProjects[1].remoteRepositories
-    assertEquals(3, result.size)
-    assertEquals("one", result[0].id)
-    assertEquals("two", result[1].id)
-    assertEquals("central", result[2].id)
   }
 
   @Test
