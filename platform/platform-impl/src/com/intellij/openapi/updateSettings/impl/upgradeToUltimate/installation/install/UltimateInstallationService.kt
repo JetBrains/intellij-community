@@ -61,16 +61,19 @@ class UltimateInstallationService(
     }
   }
 
-  fun install(pluginId: PluginId? = null, suggestedIde: SuggestedIde) {
+  fun install(pluginId: PluginId? = null, suggestedIde: SuggestedIde, eventSource: FUSEventSource) {
+    if (!canBeAutoInstalled(suggestedIde)) {
+      eventSource.openDownloadPageAndLog(project = project,
+                                         url = suggestedIde.defaultDownloadUrl,
+                                         suggestedIde = suggestedIde,
+                                         pluginId = pluginId)
+      return
+    }
+
     coroutineScope.launch {
       try {
         installerLock.withLock {
           withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade", suggestedIde.name), true) {
-            if (!canBeAutoInstalled(suggestedIde)) {
-              useFallback(pluginId, suggestedIde.defaultDownloadUrl)
-              return@withBackgroundProgress
-            }
-
             val productData = UpdateChecker.loadProductData(null)
             val status = if (Registry.`is`("ide.try.ultimate.use.eap")) ChannelStatus.EAP else ChannelStatus.RELEASE
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
