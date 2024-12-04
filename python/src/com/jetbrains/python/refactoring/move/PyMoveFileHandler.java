@@ -189,7 +189,7 @@ public final class PyMoveFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+  public @Nullable @Unmodifiable List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
     if (file != null) {
       file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
       final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(file, false);

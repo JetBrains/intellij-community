@@ -49,19 +49,18 @@ public abstract class MoveFileHandler {
   /**
    * Finds the list of references to the file being moved that will need to be updated during the move refactoring.
    *
-   * @param psiFile the file being moved.
-   * @param newParent the directory to which the file is being moved.
-   * @param searchInComments if true, search for references in comments has been requested.
+   * @param psiFile              the file being moved.
+   * @param newParent            the directory to which the file is being moved.
+   * @param searchInComments     if true, search for references in comments has been requested.
    * @param searchInNonJavaFiles if true, search for references in non-code files (such as .xml) has been requested.
    * @return the list of usages that need to be updated, or null if nothing needs to be updated.
    */
-  public abstract @Nullable List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
+  public abstract @Nullable @Unmodifiable List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
 
   /**
    * Finds conflicts which may arise when file is moved, 
    * e.g. missing module dependency or visibility which makes moved element not accessible
-   * 
-   * {@link #detectConflicts(PsiElement[], UsageInfo[], PsiDirectory, MultiMap)} passes all elements which were moved 
+   * {@link #detectConflicts(PsiElement[], UsageInfo[], PsiDirectory, MultiMap)} passes all elements which were moved
    * as well as all found usages for each handler. It's the responsibility of handler to ignore inappropriate elements/usages.
    * 
    * @param elementsToMove all elements which were moved during refactoring, including those which won't be normally processed by the handler
@@ -126,7 +125,7 @@ public abstract class MoveFileHandler {
     }
 
     @Override
-    public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+    public @Nullable @Unmodifiable List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
       return null;
     }
 

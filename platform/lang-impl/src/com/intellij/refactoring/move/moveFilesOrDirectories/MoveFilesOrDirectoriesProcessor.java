@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.lang.ref.Reference;
@@ -49,10 +50,11 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchForReferences;
   protected final boolean mySearchInComments;
   protected final boolean mySearchInNonJavaFiles;
+  @NotNull
   private final PsiDirectory myNewParent;
   private final MoveCallback myMoveCallback;
   private NonCodeUsageInfo[] myNonCodeUsages;
-  protected final Map<PsiFile, List<UsageInfo>> myFoundUsages = new HashMap<>();
+  protected final Map<PsiFile, @Unmodifiable List<UsageInfo>> myFoundUsages = new HashMap<>();
 
   public MoveFilesOrDirectoriesProcessor(@NotNull Project project,
                                          PsiElement @NotNull [] elements,
@@ -232,7 +234,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
       for (Map.Entry<PsiFile, List<UsageInfo>> entry : myFoundUsages.entrySet()) {
         // Before retargeting sort usages by start offset to get consistent results
-        List<UsageInfo> sorted = ContainerUtil.sorted(ContainerUtil.notNullize(entry.getValue()), Comparator.comparingInt(o -> {
+        List<UsageInfo> sorted = ContainerUtil.sorted(entry.getValue(), Comparator.comparingInt(o -> {
           PsiElement element = o.getElement();
           if (element == null) return -1;
           return element.getTextRange().getStartOffset();
