@@ -678,7 +678,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           }
         }
       } else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
-        return PyDefUseUtil.isDefinedBefore(e, element);
+        return PyResolveUtil.allowForwardReferences(element) || PyDefUseUtil.isDefinedBefore(e, element);
       }
       return true;
     }, null);
