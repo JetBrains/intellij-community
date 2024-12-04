@@ -151,9 +151,6 @@ f:com.intellij.codeWithMe.ClientId$Companion
 - f:getOwnerId():com.intellij.codeWithMe.ClientId
 - f:isCurrentlyUnderLocalId():Z
 - f:isLocal(com.intellij.codeWithMe.ClientId):Z
-f:com.intellij.codeWithMe.ClientIdExKt
-- sf:assertClientIdConsistency(com.intellij.codeWithMe.ClientId,java.lang.String):V
-- sf:isCurrent(com.intellij.codeWithMe.ClientId):Z
 f:com.intellij.codeWithMe.ClientIdKt
 - sf:asContextElement(com.intellij.codeWithMe.ClientId):kotlin.coroutines.CoroutineContext$Element
 - sf:isForeignClientOnServer():Z
