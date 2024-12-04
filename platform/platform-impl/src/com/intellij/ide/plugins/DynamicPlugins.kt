@@ -880,6 +880,15 @@ object DynamicPlugins {
 
   private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
     var result = false
+
+    val isVetoed = VETOER_EP_NAME.findFirstSafe {
+      it.vetoPluginLoad(pluginDescriptor)
+    } != null
+
+    if (isVetoed) {
+      return false
+    }
+
     val indicator = PotemkinProgress(IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name),
                                      project,
                                      null,
