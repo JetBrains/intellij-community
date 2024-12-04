@@ -75,7 +75,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
@@ -169,7 +168,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     /**
      * Setting this [client property][JComponent.putClientProperty] allows specifying 'effective' parent for a component which will be used
      * to find a tool window to which component belongs (if any). This can prevent tool windows in non-default view modes (e.g. 'Undock')
-     * to close when focus is transferred to a component not in tool window hierarchy, but logically belonging to it (e.g. when component
+     * to close when focus is transferred to a component not in tool window hierarchy, but logically belonging to it (e.g., when component
      * is added to the window's layered pane).
      *
      * @see ComponentUtil.putClientProperty
@@ -533,7 +532,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     )
   }
 
-  @Internal
+  @ApiStatus.Internal
   @VisibleForTesting
   suspend fun doInit(
     pane: ToolWindowPane,
@@ -552,7 +551,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
         // This will be the tool window pane for the default frame, which is not automatically added by the ToolWindowPane constructor.
         // If we're reopening other frames, their tool window panes will be added,
-        // but we still need to initialise the tool windows themselves.
+        // but we still need to initialize the tool windows themselves.
         toolWindowPanes.put(pane.paneId, pane)
       }
       connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
@@ -668,7 +667,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
                        source = source)
 
     coroutineScope.launch(Dispatchers.EDT) {
-      //maybe readaction
+      //maybe readAction
       writeIntentReadAction {
         runnable?.run()
         UiActivityMonitor.getInstance().removeActivity(project, activity)
@@ -736,16 +735,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
-  private fun visibleToolWindow(anchor: ToolWindowAnchor): ToolWindowEntry? {
-    return idToEntry.values.firstOrNull { it.isVisibleAndDockedTo(anchor) }
-  }
-
-  private fun ToolWindowEntry.isVisibleAndDockedTo(anchor: ToolWindowAnchor): Boolean {
-    return toolWindow.isVisible && readOnlyWindowInfo.isDocked && readOnlyWindowInfo.anchor == anchor
-  }
-
-  private val ToolWindowEntry.weight get() = readOnlyWindowInfo.weight
-
   fun getRecentToolWindows(): List<String> = java.util.List.copyOf(recentToolWindowsState)
 
   internal fun updateToolWindow(toolWindow: ToolWindowImpl, component: Component) {
@@ -799,6 +788,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   override val toolWindows: List<ToolWindow>
     get() = idToEntry.values.map { it.toolWindow }
 
+  @Suppress("RemoveRedundantQualifierName")
   override val toolWindowIdSet: Set<String>
     get() = java.util.Set.copyOf(idToEntry.keys)
 
@@ -1033,7 +1023,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       addWindowedDecorator(entry, info)
     }
     else {
-      // docked and sliding windows
+      // Docked and sliding windows
       // If there is a tool window on the same side, then we have to hide it, i.e.,
       // clear place for a tool window to be shown.
       //
@@ -1792,6 +1782,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       borderColor = HintHint.Status.Info.border
     }
 
+    @Suppress("HardCodedStringLiteral")
     val content = options.htmlBody.replace("\n", "<br>")
     val balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(content, options.icon, foreground, background, listenerWrapper)
