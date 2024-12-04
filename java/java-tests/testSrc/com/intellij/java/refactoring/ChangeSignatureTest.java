@@ -34,35 +34,30 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testWarnAboutContract() {
     assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1)}, false);
-      fail("Conflict expected");
     }, "@Contract annotation cannot be updated automatically: Parameter 'i' was deleted, but contract clause 'null, _ -> fail' depends on it");
   }
 
   public void testWarnAboutAssigningWeakerAccessPrivileges() {
     assertConflict(() -> {
       doTest(PsiModifier.PRIVATE, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
-      fail("Conflict expected");
     }, "method <b><code>f()</code></b> will have incompatible access privileges with super method <b><code>X.f()</code></b>");
   }
 
   public void testDelegateWithoutChangesWarnAboutSameMethodInClass() {
     assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[0], true);
-      fail("Conflict expected");
     }, "Method m() is already defined in the class <b><code>A</code></b>");
   }
 
   public void testDuplicatedSignatureInInheritor() {
     assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())}, true);
-      fail("Conflict expected");
     }, "Method foo(int) is already defined in the class <b><code>B</code></b>");
   }
 
   public void testConflictForUsedParametersInMethodBody() {
     assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[0], true);
-      fail("Conflict expected");
     }, "Parameter <b><code>i</code></b> is used in method body");
   }
 
@@ -943,7 +938,6 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
           ParameterInfoImpl.create(1).withName("b").withType(pointType)
         };
       }, false);
-      fail("Conflict expected");
     }, "Record component 'a' is used");
   }
 
@@ -956,7 +950,6 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
           ParameterInfoImpl.create(1).withName("b").withType(pointType)
         };
       }, false);
-      fail("Conflict expected");
     }, "Record component 'a' is used");
   }
 
@@ -979,7 +972,6 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
           ParameterInfoImpl.create(1).withName("b").withType(pointType)
         };
       }, false);
-      fail("Conflict expected");
     }, "Record component 'a' is used");
   }
 
@@ -1002,7 +994,6 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
           ParameterInfoImpl.create(0).withName("a").withType(pointType)
         };
       }, false);
-      fail("Conflict expected");
     }, "Record component 'b' is used");
   }
 
@@ -1025,7 +1016,6 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
           ParameterInfoImpl.create(0).withName("x").withType(pointType)
         };
       }, false);
-      fail("Conflict expected");
     }, "Record component 'y' is used");
   }
 
@@ -1048,7 +1038,6 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
           ParameterInfoImpl.create(0).withName("x").withType(pointType)
         };
       }, false);
-      fail("Conflict expected");
     }, "Record component 'x' is used");
   }
 
@@ -1057,6 +1046,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
                                      @NotNull String expectedMessage) {
     try {
       runnable.run();
+      fail("Conflict expected");
     }
     catch (RuntimeException e) {
       Assertions.assertThat(e).isInstanceOf(BaseRefactoringProcessor.ConflictsInTestsException.class);
