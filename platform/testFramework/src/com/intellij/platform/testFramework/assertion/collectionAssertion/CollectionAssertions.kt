@@ -8,7 +8,7 @@ object CollectionAssertions {
   @JvmStatic
   fun <T> assertEqualsUnordered(
     expected: Collection<T>?,
-    actual: Array<T>?,
+    actual: Collection<T>?,
     messageSupplier: (() -> String)? = null,
   ) {
     if (expected == null && actual == null) {
@@ -23,11 +23,10 @@ object CollectionAssertions {
         |but one of them is null.
       """.trimMargin())
     }
-    assertEqualsUnordered(expected, actual.toList(), messageSupplier)
+    doAssertEqualsUnordered(expected, actual, messageSupplier)
   }
 
-  @JvmStatic
-  fun <T> assertEqualsUnordered(
+  private fun <T> doAssertEqualsUnordered(
     expected: Collection<T>,
     actual: Collection<T>,
     messageSupplier: (() -> String)? = null,

@@ -27,6 +27,13 @@ class CollectionAssertionTest {
     Assertions.assertThrows(AssertionError::class.java) {
       assertEqualsUnordered(setOf(1, 2), setOf(1, 2, 3))
     }
+    assertEqualsUnordered<Nothing?>(null, null)
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEqualsUnordered(listOf(1, 2, 3), null)
+    }
+    Assertions.assertThrows(AssertionError::class.java) {
+      assertEqualsUnordered(null, listOf(1, 2, 3))
+    }
   }
 
   @Test
