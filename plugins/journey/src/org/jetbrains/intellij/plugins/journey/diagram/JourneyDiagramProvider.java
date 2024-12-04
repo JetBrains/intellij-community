@@ -137,15 +137,7 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
           if (builder.getGraphDataModel() instanceof DiagramDataModelWrapper ddmw
               && ddmw.getModel() instanceof JourneyDiagramDataModel journeyDiagramDataModel
           ) {
-            Collection<PsiElement> elements = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.keySet();
-            for (PsiElement psi : elements) {
-              Editor editor = journeyDiagramDataModel.myEditorManager.OPENED_JOURNEY_EDITORS.get(psi);
-              // TODO such revalidation cause to flickering
-              SwingUtilities.invokeLater(() -> {
-                editor.getColorsScheme().setEditorFontSize((float)(BASE_FONT_SIZE * builder.getZoom()));
-                editor.getComponent().revalidate();
-              });
-            }
+            journeyDiagramDataModel.myEditorManager.revalidateEditors((float)builder.getZoom());
           }
         }
       }

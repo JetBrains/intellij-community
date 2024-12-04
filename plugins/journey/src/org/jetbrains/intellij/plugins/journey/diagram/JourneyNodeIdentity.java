@@ -12,6 +12,11 @@ import java.util.Objects;
 
 public class JourneyNodeIdentity implements LazyPsiElementHolder {
   private final PsiFile file;
+
+  public PsiElement getOriginalElement() {
+    return original;
+  }
+
   private final PsiElement original;
 
   public JourneyNodeIdentity(@NotNull PsiElement psiElement) {
@@ -28,12 +33,10 @@ public class JourneyNodeIdentity implements LazyPsiElementHolder {
     return getFile();
   }
 
-  public @NotNull PsiElement getOriginalElement() {
-    return original;
-  }
-
   public @NotNull PsiMember getMember() {
-    return (PsiMember)Objects.requireNonNull(PsiUtil.tryFindParentOrNull(original, it -> it instanceof PsiMember));
+    PsiMember member = (PsiMember)PsiUtil.tryFindParentOrNull(original, it -> it instanceof PsiMember);
+    // TODO handle member is null
+    return member;
   }
 
   @Override

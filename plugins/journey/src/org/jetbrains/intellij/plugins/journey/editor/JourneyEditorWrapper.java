@@ -6,9 +6,7 @@ import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.psi.PsiMember;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyNode;
-import org.jetbrains.intellij.plugins.journey.diagram.JourneyNodeIdentity;
 import org.jetbrains.intellij.plugins.journey.diagram.ui.JourneyLineBorder;
 import org.jetbrains.intellij.plugins.journey.diagram.ui.JourneyTitleBar;
 
@@ -31,10 +29,10 @@ public class JourneyEditorWrapper extends JPanel {
     setPreferredSize(new Dimension(editor.getComponent().getWidth(), editor.getComponent().getHeight()));
 
     Runnable runnable1 = () -> {
-      node.setFoldingState(false);
+      node.setFullViewState(false);
     };
     Runnable runnable2 = () -> {
-      node.setFoldingState(true);
+      node.setFullViewState(true);
     };
 
     editor.getComponent().add(new JourneyTitleBar(ObjectUtils.notNull(getQualifiedName(psiMember), () -> "No title"), editor, List.of(runnable1, runnable2)), BorderLayout.NORTH);

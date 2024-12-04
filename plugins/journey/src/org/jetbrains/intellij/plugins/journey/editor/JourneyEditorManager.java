@@ -133,4 +133,15 @@ public final class JourneyEditorManager implements Disposable {
     OPENED_JOURNEY_EDITORS.clear();
     NODE_PANELS.clear();
   }
+
+  public void revalidateEditors(float zoom) {
+    for (Editor editor : OPENED_JOURNEY_EDITORS.values()) {
+      // TODO such revalidation cause to flickering
+      SwingUtilities.invokeLater(() -> {
+        editor.getColorsScheme().setEditorFontSize(BASE_FONT_SIZE * zoom);
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
+        editor.getComponent().revalidate();
+      });
+    }
+  }
 }

@@ -3,26 +3,25 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 import com.intellij.diagram.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.graph.view.Graph2DView;
-import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager;
 import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorWrapper;
 import org.jetbrains.intellij.plugins.journey.util.JourneyNavigationUtil;
+import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
-import javax.swing.Timer;
-import java.awt.geom.Point2D;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
+import static com.intellij.openapi.editor.ScrollType.CENTER_UP;
 import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramLayout.getRealizer;
 
 public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeIdentity> {
@@ -186,22 +185,6 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     return ContainerUtil.find(myNodes, it -> it.getIdentifyingElement().equals(nodeIdentity));
   }
 
-  private static void animateTransition(Graph2DView view, Point2D target) {
-    AtomicInteger iteration = new AtomicInteger(100);
-    Point2D offset = new Point2D.Double(
-      (target.getX() - view.getCenter().getX()) / iteration.get(), (target.getY() - view.getCenter().getY()) / iteration.get());
-    javax.swing.Timer timer = new javax.swing.Timer(500 / iteration.get(), e -> {
-      view.setCenter(view.getCenter().getX() + offset.getX(), view.getCenter().getY() + offset.getY());
-      view.updateView();
-      if (iteration.getAndDecrement() < 0) {
-        ((Timer)e.getSource()).stop();
-
-      }
-    });
-    timer.setRepeats(true);
-    timer.start();
-  }
-
   private @Nullable JourneyNode findNodeForFile(PsiElement from) {
     if (from == null) return null;
     return ReadAction.compute(() -> {
@@ -212,7 +195,6 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
       });
     });
   }
-
 
   private void addEdge(Object from, Object to) {
     PsiElement fromPSI = JourneyNavigationUtil.findPsiElement(getProject(), from);
@@ -232,17 +214,31 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     } else {
       queryUpdate(() -> {});
     }
-    toNode.addElement(toPSI);
-    fromNode.addElement(fromPSI);
-    if (!isNewNode) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        JourneyEditorWrapper editor = myEditorManager.NODE_PANELS.get(fromNode.getIdentifyingElement().getFile());
-        boolean isLeftToRight = (IdeFocusManager.getInstance(editor.editor.getProject()).
-                                   getFocusedDescendantFor(editor.getEditorComponent()) != null);
-        Optional<NodeRealizer> realizer = getRealizer(getBuilder(), isLeftToRight ? toNode : fromNode);
-        realizer.ifPresent(nodeRealizer -> animateTransition(getBuilder().getView(),
-                           new Point2D.Double(nodeRealizer.getCenterX(), nodeRealizer.getCenterY())));
-      });
+
+    if (!(fromNode.equals(toNode) && toNode.isFullViewState())) {
+      toNode.addElement(toPSI);
+      fromNode.addElement(fromPSI);
     }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      JourneyEditorWrapper editor = myEditorManager.NODE_PANELS.get(fromNode.getIdentifyingElement().getFile());
+      var navigateNode = toNode;
+      var navigatePSI = toPSI;
+      if (!(editor != null && IdeFocusManager.getInstance(editor.editor.getProject()).getFocusedDescendantFor(editor.getEditorComponent()) != null &&
+           fromPSI.getTextRange().contains(editor.editor.getCaretModel().getOffset()))) {
+        navigateNode = fromNode;
+        navigatePSI = fromPSI;
+      }
+      editor = myEditorManager.NODE_PANELS.get(navigateNode.getIdentifyingElement().calculatePsiElement());
+      if (editor != null && editor.editor != null) {
+        editor.editor.getCaretModel().moveToOffset(navigatePSI.getTextRange().getStartOffset());
+        editor.editor.getScrollingModel().scrollToCaret(CENTER_UP);
+      }
+      if (!fromNode.equals(toNode)) {
+        navigateNode.navigate(true);
+      }
+      PsiMember member = (PsiMember)PsiUtil.tryFindParentOrNull(navigatePSI, it -> it instanceof PsiMember);
+      navigateNode.highlightNode(member, getEdges());
+    });
   }
 }
