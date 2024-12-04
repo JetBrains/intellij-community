@@ -49,7 +49,6 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.junit.AssumptionViolatedException
 import java.awt.HeadlessException
 import java.io.File
 import java.io.IOException
@@ -370,7 +369,15 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun restoreSettingsFile() {
-    updateSettingsXml("")
+    updateSettingsXml("""
+      <mirrors>
+        <mirror>
+          <id>central-mirror</id>
+          <url>https://cache-redirector.jetbrains.com/repo1.maven.org/maven2</url>
+          <mirrorOf>central</mirrorOf>
+        </mirror>
+      </mirrors>
+    """.trimIndent())
   }
 
   protected fun createModule(name: String, type: ModuleType<*>): Module {
