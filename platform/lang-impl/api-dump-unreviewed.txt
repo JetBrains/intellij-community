@@ -7298,6 +7298,7 @@ f:com.intellij.find.SearchReplaceComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
 - sf:RIGHT_PANEL_WEST_OFFSET:I
 - addListener(com.intellij.find.SearchReplaceComponent$Listener):V
+- addNotify():V
 - addTextToRecent(javax.swing.text.JTextComponent):V
 - s:buildFor(com.intellij.openapi.project.Project,javax.swing.JComponent):com.intellij.find.SearchReplaceComponent$Builder
 - s:buildFor(com.intellij.openapi.project.Project,javax.swing.JComponent,com.intellij.find.SearchSession):com.intellij.find.SearchReplaceComponent$Builder
