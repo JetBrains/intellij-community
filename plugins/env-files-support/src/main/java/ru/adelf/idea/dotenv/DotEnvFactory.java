@@ -15,6 +15,7 @@ public class DotEnvFactory {
         final Ref<PsiElement> ret = new Ref<>();
         PsiFile dummyFile = createDummyFile(project, text);
         dummyFile.accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
             public void visitElement(@NotNull PsiElement element) {
                 ASTNode node = element.getNode();
                 if (node != null && node.getElementType() == type) {

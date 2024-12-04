@@ -71,6 +71,7 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
             return "Remove trailing whitespace";
         }
 
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
                 PsiElement psiElement = descriptor.getPsiElement();
@@ -89,6 +90,7 @@ public class TrailingWhitespaceInspection extends LocalInspectionTool {
             }
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
             return getName();

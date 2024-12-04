@@ -57,6 +57,7 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
             return "Change to uppercase";
         }
 
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
                 PsiElement psiElement = descriptor.getPsiElement();
@@ -70,6 +71,7 @@ public class LowercaseKeyInspection extends LocalInspectionTool {
             }
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
             return getName();
