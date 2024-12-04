@@ -6,6 +6,20 @@ import org.opentest4j.AssertionFailedError
 object CollectionAssertions {
 
   @JvmStatic
+  fun <T> assertEquals(
+    expected: Collection<T>?,
+    actual: Collection<T>?,
+    messageSupplier: (() -> String)? = null,
+  ) {
+    if (expected != actual) {
+      assertEqualsUnordered(expected, actual, messageSupplier)
+      throwAssertionFailedError(expected, actual, messageSupplier, """
+        |Incorrect actual elements order.
+      """.trimMargin())
+    }
+  }
+
+  @JvmStatic
   fun <T> assertEqualsUnordered(
     expected: Collection<T>?,
     actual: Collection<T>?,
