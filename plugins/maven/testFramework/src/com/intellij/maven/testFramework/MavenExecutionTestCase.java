@@ -20,7 +20,7 @@ public abstract class MavenExecutionTestCase extends MavenMultiVersionImportingT
   private String myJdkHome;
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     edt(() -> {
       myJdkHome = IdeaTestUtil.requireRealJdkHome();
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), myJdkHome);
@@ -44,7 +44,7 @@ public abstract class MavenExecutionTestCase extends MavenMultiVersionImportingT
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     edt(() -> {
       if (myJdkHome == null) {
         //super.setUp() wasn't called

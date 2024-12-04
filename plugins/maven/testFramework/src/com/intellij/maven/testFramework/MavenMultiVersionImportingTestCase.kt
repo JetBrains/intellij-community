@@ -1,353 +1,351 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.maven.testFramework;
+package com.intellij.maven.testFramework
 
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ContentFolder;
-import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.RunAll;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.VersionComparatorUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.server.MavenDistributionsCache;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-import org.junit.Assume;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ContentFolder
+import com.intellij.openapi.roots.ExcludeFolder
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.RunAll
+import com.intellij.util.ArrayUtil
+import com.intellij.util.Function
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.text.VersionComparatorUtil
+import junit.framework.TestCase
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.Assume
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.util.*
+import kotlin.math.min
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+@RunWith(Parameterized::class)
+abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
+  override fun runInDispatchThread(): Boolean {
+    return false
+  }
 
-@RunWith(Parameterized.class)
-public abstract class MavenMultiVersionImportingTestCase extends MavenImportingTestCase {
-  @Override
-  public boolean runInDispatchThread() { return false; }
-
-  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-rc-1"};
   @Parameterized.Parameter(0)
-  public String myMavenVersion;
-  @Nullable
-  protected MavenWrapperTestFixture myWrapperTestFixture;
+  @JvmField
+  var myMavenVersion: String? = null
+  protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
 
-  protected void assumeVersionMoreThan(String version) {
-    Assume.assumeTrue("Version should be more than " + version,
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) > 0);
+  protected fun assumeVersionMoreThan(version: String) {
+    Assume.assumeTrue("Version should be more than $version",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion!!), getActualVersion(version)) > 0)
   }
 
 
-  protected void forMaven3(Runnable r) {
-    String version = getActualVersion(myMavenVersion);
-    if(version.startsWith("3.")) r.run();
+  protected fun forMaven3(r: Runnable) {
+    val version: String = getActualVersion(myMavenVersion!!)
+    if (version.startsWith("3.")) r.run()
   }
 
-  protected void forMaven4(Runnable r) {
-    String version = getActualVersion(myMavenVersion);
-    if(version.startsWith("4.")) r.run();
+  protected fun forMaven4(r: Runnable) {
+    val version: String = getActualVersion(myMavenVersion!!)
+    if (version.startsWith("4.")) r.run()
   }
 
-  protected void needFixForMaven4() {
-    String version = getActualVersion(myMavenVersion);
-    Assume.assumeTrue(version.startsWith("3."));
+  protected fun needFixForMaven4() {
+    val version: String = getActualVersion(myMavenVersion!!)
+    Assume.assumeTrue(version.startsWith("3."))
   }
 
-  protected void assumeMaven3() {
-    String version = getActualVersion(myMavenVersion);
-    Assume.assumeTrue(version.startsWith("3."));
+  protected fun assumeMaven3() {
+    val version: String = getActualVersion(myMavenVersion!!)
+    Assume.assumeTrue(version.startsWith("3."))
   }
 
-  protected void assumeMaven4() {
-    String version = getActualVersion(myMavenVersion);
-    Assume.assumeTrue(version.startsWith("4."));
+  protected fun assumeMaven4() {
+    val version: String = getActualVersion(myMavenVersion!!)
+    Assume.assumeTrue(version.startsWith("4."))
   }
 
-  protected void assumeVersionAtLeast(String version) {
-    Assume.assumeTrue("Version should be " + version + " or more",
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) >= 0);
+  protected fun assumeVersionAtLeast(version: String) {
+    Assume.assumeTrue("Version should be $version or more",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion!!), getActualVersion(version)) >= 0)
   }
 
-  protected void assumeVersionLessThan(String version) {
-    Assume.assumeTrue("Version should be less than " + version,
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) < 0);
+  protected fun assumeVersionLessThan(version: String) {
+    Assume.assumeTrue("Version should be less than $version",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion!!), getActualVersion(version)) < 0)
   }
 
-  protected void assumeVersionNot(String version) {
-    Assume.assumeTrue("Version " + version + " skipped",
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) != 0);
+  protected fun assumeVersionNot(version: String) {
+    Assume.assumeTrue("Version $version skipped",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion!!), getActualVersion(version)) != 0)
   }
 
-  protected void assumeVersion(String version) {
-    Assume.assumeTrue("Version " + myMavenVersion + " is not " + version + ", therefore skipped",
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) == 0);
+  protected fun assumeVersion(version: String) {
+    Assume.assumeTrue("Version $myMavenVersion is not $version, therefore skipped",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion!!), getActualVersion(version)) == 0)
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    if ("bundled".equals(myMavenVersion)) {
-      MavenDistributionsCache.resolveEmbeddedMavenHome();
-      return;
+  override fun setUp() {
+    super.setUp()
+    if ("bundled" == myMavenVersion) {
+      MavenDistributionsCache.resolveEmbeddedMavenHome()
+      return
     }
-    myWrapperTestFixture = new MavenWrapperTestFixture(getProject(), myMavenVersion);
-    myWrapperTestFixture.setUp();
+    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion)
+    myWrapperTestFixture!!.setUp()
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    new RunAll(
-      () -> {
+  override fun tearDown() {
+    RunAll(
+      ThrowableRunnable {
         if (myWrapperTestFixture != null) {
-          myWrapperTestFixture.tearDown();
+          myWrapperTestFixture!!.tearDown()
         }
       },
-      () -> super.tearDown()).run();
+      ThrowableRunnable { super.tearDown() }).run()
   }
 
-  protected LanguageLevel getDefaultLanguageLevel() {
-    var version = getActualVersion(myMavenVersion);
-    if (VersionComparatorUtil.compare("3.9.3", version) <= 0) {
-      return LanguageLevel.JDK_1_8;
+  protected val defaultLanguageLevel: LanguageLevel
+    get() {
+      val version: String = getActualVersion(myMavenVersion!!)
+      if (VersionComparatorUtil.compare("3.9.3", version) <= 0) {
+        return LanguageLevel.JDK_1_8
+      }
+      if (VersionComparatorUtil.compare("3.9.0", version) <= 0) {
+        return LanguageLevel.JDK_1_7
+      }
+      return LanguageLevel.JDK_1_5
     }
-    if (VersionComparatorUtil.compare("3.9.0", version) <= 0) {
-      return LanguageLevel.JDK_1_7;
-    }
-    return LanguageLevel.JDK_1_5;
-  }
 
-  @NotNull
-  protected String getDefaultPluginVersion(String pluginId) {
-    if (pluginId.equals("org.apache.maven:maven-compiler-plugin")) {
+  protected fun getDefaultPluginVersion(pluginId: String): String {
+    if (pluginId == "org.apache.maven:maven-compiler-plugin") {
       if (mavenVersionIsOrMoreThan("3.9.7")) {
-        return "3.13.0";
+        return "3.13.0"
       }
       if (mavenVersionIsOrMoreThan("3.9.3")) {
-        return "3.11.0";
+        return "3.11.0"
       }
       if (mavenVersionIsOrMoreThan("3.9.0")) {
-        return "3.10.1";
+        return "3.10.1"
       }
-      return "3.1";
+      return "3.1"
     }
-    throw new IllegalArgumentException(
-      "this plugin is not configured yet, consider https://youtrack.jetbrains.com/issue/IDEA-313733/create-matrix-of-plugin-levels-for-different-java-versions");
+    throw IllegalArgumentException(
+      "this plugin is not configured yet, consider https://youtrack.jetbrains.com/issue/IDEA-313733/create-matrix-of-plugin-levels-for-different-java-versions")
   }
 
-  protected boolean mavenVersionIsOrMoreThan(String version) {
-    return StringUtil.compareVersionNumbers(version, getActualVersion(myMavenVersion)) <= 0;
+  protected fun mavenVersionIsOrMoreThan(version: String?): Boolean {
+    return StringUtil.compareVersionNumbers(version, getActualVersion(myMavenVersion!!)) <= 0
   }
 
-  protected boolean isMaven4() {
-    return StringUtil.compareVersionNumbers(getActualVersion(myMavenVersion), "4.0") >= 0;
+  protected val isMaven4: Boolean
+    get() = StringUtil.compareVersionNumbers(
+      getActualVersion(myMavenVersion!!), "4.0") >= 0
+
+  protected fun maven4orNull(value: String?): String? {
+    return if (this.isMaven4) value else null
   }
 
-  protected String maven4orNull(String value) {
-    return isMaven4() ? value : null;
+  protected fun defaultResources(): Array<String> {
+    return arrayOfNotNull("src/main/resources", maven4orNull("src/main/resources-filtered"))
   }
 
-  protected String[] defaultResources() {
-    return arrayOfNotNull("src/main/resources", maven4orNull("src/main/resources-filtered"));
+  protected fun defaultTestResources(): Array<String> {
+    return arrayOfNotNull("src/test/resources", maven4orNull("src/test/resources-filtered"))
   }
 
-  protected String[] defaultTestResources() {
-    return arrayOfNotNull("src/test/resources", maven4orNull("src/test/resources-filtered"));
+  protected fun allDefaultResources(): Array<String> {
+    return ArrayUtil.mergeArrays(defaultResources(), *defaultTestResources())
   }
 
-  protected String[] allDefaultResources() {
-    return ArrayUtil.mergeArrays(defaultResources(), defaultTestResources());
+  protected fun assertDefaultResources(moduleName: String, vararg additionalSources: String?) {
+    val expectedSources = ArrayUtil.mergeArrays(defaultResources(), *additionalSources)
+    assertResources(moduleName, *expectedSources)
   }
 
-  protected void assertDefaultResources(String moduleName, String... additionalSources) {
-    var expectedSources = ArrayUtil.mergeArrays(defaultResources(), additionalSources);
-    assertResources(moduleName, expectedSources);
+  protected fun assertDefaultTestResources(moduleName: String, vararg additionalSources: String?) {
+    val expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), *additionalSources)
+    assertTestResources(moduleName, *expectedSources)
   }
 
-  protected void assertDefaultTestResources(String moduleName, String... additionalSources) {
-    var expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), additionalSources);
-    assertTestResources(moduleName, expectedSources);
+  protected fun assertDefaultResources(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg additionalSources: String?) {
+    val expectedSources = ArrayUtil.mergeArrays(defaultResources(), *additionalSources)
+    val contentRoot = getContentRoot(moduleName)
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), *expectedSources)
   }
 
-  protected void assertDefaultResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
-    var expectedSources = ArrayUtil.mergeArrays(defaultResources(), additionalSources);
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
+  protected fun assertDefaultTestResources(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg additionalSources: String?) {
+    val expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), *additionalSources)
+    val contentRoot = getContentRoot(moduleName)
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), *expectedSources)
   }
 
-  protected void assertDefaultTestResources(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... additionalSources) {
-    var expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), additionalSources);
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expectedSources);
+  protected fun arrayOfNotNull(vararg values: String?): Array<String> {
+    return values.filterNotNull().toTypedArray()
   }
 
-  protected String[] arrayOfNotNull(String... values) {
-    if (null == values) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return Arrays.stream(values).filter(v -> null != v).toArray(String[]::new);
-  }
+  protected fun createStdProjectFolders(subdir: String = "") {
+    var subdir = subdir
+    if (!subdir.isEmpty()) subdir += "/"
 
-  protected void createStdProjectFolders() {
-    createStdProjectFolders("");
-  }
-
-  protected void createStdProjectFolders(String subdir) {
-    if (!subdir.isEmpty()) subdir += "/";
-
-    var folders = ArrayUtil.mergeArrays(allDefaultResources(),
+    val folders = ArrayUtil.mergeArrays(allDefaultResources(),
                                         "src/main/java",
                                         "src/test/java"
-    );
+    )
 
-    createProjectSubDirs(subdir, folders);
+    createProjectSubDirs(subdir, *folders)
   }
 
-  private void createProjectSubDirs(String subdir, String... relativePaths) {
-    for (String path : relativePaths) {
-      createProjectSubDir(subdir + path);
+  private fun createProjectSubDirs(subdir: String?, vararg relativePaths: String?) {
+    for (path in relativePaths) {
+      createProjectSubDir(subdir + path)
     }
   }
 
-  protected void assertRelativeContentRoots(String moduleName, String... expectedRelativeRoots) {
-    var expectedRoots = Arrays.stream(expectedRelativeRoots)
-      .map(root -> getProjectPath() + ("".equals(root) ? "" : "/" + root))
-      .toArray(String[]::new);
-    assertContentRoots(moduleName, expectedRoots);
+  protected fun assertRelativeContentRoots(moduleName: String, vararg expectedRelativeRoots: String?) {
+    val expectedRoots = expectedRelativeRoots
+      .map{ root -> projectPath + (if ("" == root) "" else "/$root") }
+      .toTypedArray<String>()
+    assertContentRoots(moduleName, *expectedRoots)
   }
 
-  protected void assertContentRoots(String moduleName, String... expectedRoots) {
-    List<String> actual = new ArrayList<>();
-    for (ContentEntry e : getContentRoots(moduleName)) {
-      actual.add(e.getUrl());
+  protected fun assertContentRoots(moduleName: String, vararg expectedRoots: String) {
+    val actual: MutableList<String> = ArrayList<String>()
+    for (e in getContentRoots(moduleName)) {
+      actual.add(e.getUrl())
     }
-    assertUnorderedPathsAreEqual(actual, ContainerUtil.map(expectedRoots, root -> VfsUtilCore.pathToUrl(root)));
+    assertUnorderedPathsAreEqual(actual, expectedRoots.map { VfsUtilCore.pathToUrl(it) })
   }
 
-  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    List<ContentFolder> folders = new ArrayList<>();
-    for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
-      JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaSourceRootType.SOURCE);
-      assertNotNull(properties);
-      if (properties.isForGeneratedSources()) {
-        folders.add(folder);
+  protected fun assertGeneratedSources(moduleName: String, vararg expectedSources: String) {
+    val contentRoot = getContentRoot(moduleName)
+    val folders: MutableList<ContentFolder> = ArrayList<ContentFolder>()
+    for (folder in contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
+      val properties = folder.getJpsElement().getProperties<JavaSourceRootProperties?>(JavaSourceRootType.SOURCE)
+      assertNotNull(properties)
+      if (properties!!.isForGeneratedSources) {
+        folders.add(folder)
       }
     }
-    doAssertContentFolders(contentRoot, folders, expectedSources);
+    doAssertContentFolders(contentRoot, folders, *expectedSources)
   }
 
-  protected void assertSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
+  protected fun assertSources(moduleName: String, vararg expectedSources: String) {
+    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, *expectedSources)
   }
 
-  protected void assertContentRootSources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.SOURCE), expectedSources);
+  protected fun assertContentRootSources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
+    val root = getContentRoot(moduleName, contentRoot)
+    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.SOURCE), *expectedSources)
   }
 
-  protected void assertResources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
+  protected fun assertResources(moduleName: String, vararg expectedSources: String) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, *expectedSources)
   }
 
-  protected void assertContentRootResources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.RESOURCE), expectedSources);
+  protected fun assertContentRootResources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
+    val root = getContentRoot(moduleName, contentRoot)
+    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.RESOURCE), *expectedSources)
   }
 
-  protected void assertTestSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
+  protected fun assertTestSources(moduleName: String, vararg expectedSources: String) {
+    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, *expectedSources)
   }
 
-  protected void assertContentRootTestSources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.TEST_SOURCE), expectedSources);
+  protected fun assertContentRootTestSources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
+    val root = getContentRoot(moduleName, contentRoot)
+    doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.TEST_SOURCE), *expectedSources)
   }
 
-  protected void assertTestResources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, expectedSources);
+  protected fun assertTestResources(moduleName: String, vararg expectedSources: String) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, *expectedSources)
   }
 
-  protected void assertContentRootTestResources(String moduleName, String contentRoot, String... expectedSources) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.TEST_RESOURCE), expectedSources);
+  protected fun assertContentRootTestResources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
+    val root = getContentRoot(moduleName, contentRoot)
+    doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.TEST_RESOURCE), *expectedSources)
   }
 
-  protected void assertExcludes(String moduleName, String... expectedExcludes) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
+  protected fun assertExcludes(moduleName: String, vararg expectedExcludes: String) {
+    val contentRoot = getContentRoot(moduleName)
+    doAssertContentFolders(contentRoot, Arrays.asList<ExcludeFolder?>(*contentRoot.getExcludeFolders()), *expectedExcludes)
   }
 
-  protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
-    ContentEntry root = getContentRoot(moduleName, contentRoot);
-    doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);
+  protected fun assertContentRootExcludes(moduleName: String, contentRoot: String, vararg expectedExcludes: String) {
+    val root = getContentRoot(moduleName, contentRoot)
+    doAssertContentFolders(root, listOf<ExcludeFolder>(*root.getExcludeFolders()), *expectedExcludes)
   }
 
-  protected void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
+  protected fun doAssertContentFolders(moduleName: String, rootType: JpsModuleSourceRootType<*>, vararg expected: String) {
+    val contentRoot = getContentRoot(moduleName)
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), *expected)
   }
 
-  private ContentEntry getContentRoot(String moduleName) {
-    ContentEntry[] ee = getContentRoots(moduleName);
-    List<String> roots = new ArrayList<>();
-    for (ContentEntry e : ee) {
-      roots.add(e.getUrl());
-    }
-
-    String message = "Several content roots found: [" + StringUtil.join(roots, ", ") + "]";
-    assertEquals(message, 1, ee.length);
-
-    return ee[0];
-  }
-
-  private ContentEntry getContentRoot(String moduleName, String path) {
-    ContentEntry[] roots = getContentRoots(moduleName);
-    for (ContentEntry e : roots) {
-      if (e.getUrl().equals(VfsUtilCore.pathToUrl(path))) return e;
-    }
-    throw new AssertionError("content root not found in module " + moduleName + ":" +
-                             "\nExpected root: " + path +
-                             "\nExisting roots:" +
-                             "\n" + StringUtil.join(roots, it -> " * " + it.getUrl(), "\n"));
-  }
-
-  @Parameterized.Parameters(name = "with Maven-{0}")
-  public static List<String[]> getMavenVersions() {
-    String mavenVersionsString = System.getProperty("maven.versions.to.run");
-    String[] mavenVersionsToRun = MAVEN_VERSIONS;
-    if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
-      mavenVersionsToRun = mavenVersionsString.split(",");
-    }
-    return ContainerUtil.map(mavenVersionsToRun, it -> new String[]{it});
-  }
-
-  protected static String getActualVersion(String version) {
-    if (version.equals("bundled")) {
-      return MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion();
-    }
-    return version;
-  }
-
-  private static void doAssertContentFolders(ContentEntry e,
-                                             final List<? extends ContentFolder> folders,
-                                             String... expected) {
-    List<String> actual = new ArrayList<>();
-    for (ContentFolder f : folders) {
-      String rootUrl = e.getUrl();
-      String folderUrl = f.getUrl();
+  private fun doAssertContentFolders(
+    e: ContentEntry,
+    folders: List<ContentFolder>,
+    vararg expected: String,
+  ) {
+    val actual: MutableList<String?> = ArrayList<String?>()
+    for (f in folders) {
+      val rootUrl = e.getUrl()
+      var folderUrl = f.getUrl()
 
       if (folderUrl.startsWith(rootUrl)) {
-        int length = rootUrl.length() + 1;
-        folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
+        val length = rootUrl.length + 1
+        folderUrl = folderUrl.substring(min(length.toDouble(), folderUrl.length.toDouble()).toInt())
       }
 
-      actual.add(folderUrl);
+      actual.add(folderUrl)
     }
 
-    assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
-                       actual, Arrays.asList(expected));
+    assertSameElements<String>("Unexpected list of folders in content root " + e.getUrl(), actual, listOf<String>(*expected))
+  }
+
+  private fun getContentRoot(moduleName: String): ContentEntry {
+    val ee = getContentRoots(moduleName)
+    val roots: MutableList<String?> = ArrayList<String?>()
+    for (e in ee) {
+      roots.add(e.getUrl())
+    }
+
+    val message = "Several content roots found: [" + StringUtil.join(roots, ", ") + "]"
+    TestCase.assertEquals(message, 1, ee.size)
+
+    return ee[0]
+  }
+
+  private fun getContentRoot(moduleName: String, path: String): ContentEntry {
+    val roots = getContentRoots(moduleName)
+    for (e in roots) {
+      if (e.getUrl() == VfsUtilCore.pathToUrl(path)) return e
+    }
+    throw AssertionError("content root not found in module " + moduleName + ":" +
+                         "\nExpected root: " + path +
+                         "\nExisting roots:" +
+                         "\n" + StringUtil.join<ContentEntry?>(roots, Function { it: ContentEntry? -> " * " + it!!.getUrl() }, "\n"))
+  }
+
+  companion object {
+    val MAVEN_VERSIONS: Array<String> = arrayOf<String>("bundled", "4.0.0-rc-1")
+
+    @Parameterized.Parameters(name = "with Maven-{0}")
+    @JvmStatic
+    fun getMavenVersions(): List<Array<String>> {
+        val mavenVersionsString = System.getProperty("maven.versions.to.run")
+        var mavenVersionsToRun: Array<String> = MAVEN_VERSIONS
+        if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
+          mavenVersionsToRun = mavenVersionsString.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        }
+        return mavenVersionsToRun.map { arrayOf<String>(it) }
+      }
+
+    protected fun getActualVersion(version: String): String {
+      if (version == "bundled") {
+        return MavenDistributionsCache.resolveEmbeddedMavenHome().version!!
+      }
+      return version
+    }
   }
 }
