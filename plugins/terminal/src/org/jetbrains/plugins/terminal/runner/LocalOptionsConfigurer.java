@@ -32,7 +32,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isDirectory;
-import static org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand;
 
 @ApiStatus.Internal
 public final class LocalOptionsConfigurer {
@@ -111,7 +110,7 @@ public final class LocalOptionsConfigurer {
 
   private static @NotNull List<String> getInitialCommand(@NotNull ShellStartupOptions options, @NotNull Project project) {
     List<String> shellCommand = options.getShellCommand();
-    return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath(project));
+    return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath(project));
   }
 
   private static @NotNull String getShellPath(@NotNull Project project) {

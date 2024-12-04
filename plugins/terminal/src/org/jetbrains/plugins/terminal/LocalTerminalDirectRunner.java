@@ -22,6 +22,7 @@ import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector;
+import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.*;
-import static org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder.convertShellPathToCommand;
 import static org.jetbrains.plugins.terminal.util.ShellNameUtil.*;
 
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
@@ -212,7 +212,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
     ShellStartupOptions startupOptions = myStartupOptionsThreadLocal.get(); // It looks like always empty
     List<String> shellCommand = startupOptions != null ? startupOptions.getShellCommand() : null;
-    return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
+    return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath());
   }
 
   @ApiStatus.Internal
@@ -230,7 +230,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public @NotNull List<String> getCommand(@NotNull String shellPath,
                                                  @NotNull Map<String, String> envs,
                                                  boolean shellIntegration) {
-    List<String> command = convertShellPathToCommand(shellPath);
+    List<String> command = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
     if (shellIntegration) {
       ShellStartupOptions options = injectShellIntegration(command, envs);
       return Objects.requireNonNull(options.getShellCommand());
