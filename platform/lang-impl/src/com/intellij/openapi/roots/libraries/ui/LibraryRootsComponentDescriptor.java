@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Allows to customize a library editor
+ * Allows customizing a library editor
  *
  * @see com.intellij.openapi.roots.libraries.LibraryType#createLibraryRootsComponentDescriptor
  */

@@ -81,7 +81,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * {@code NONE} means a child process will receive an empty environment. <br/>
    * {@code SYSTEM} will provide it with the same environment as an IDE. <br/>
    * {@code CONSOLE} provides the child with a similar environment as if it was launched from, well, a console.
-   * On OS X, a console environment is simulated (see {@link EnvironmentUtil#getEnvironmentMap()} for reasons it's needed
+   * On macOS, a console environment is simulated (see {@link EnvironmentUtil#getEnvironmentMap()} for reasons it's needed
    * and details on how it works). On Windows and Unix hosts, this option is no different from {@code SYSTEM}
    * since there is no drastic distinction in environment between GUI and console apps.
    */
@@ -509,7 +509,7 @@ public class GeneralCommandLine implements UserDataHolder {
    * @implNote for subclasses:
    * <p>On Windows, the parameters in the {@code builder} argument must never be modified or augmented in any way.
    * Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
-   * depending on values of the preceding arguments.
+   * depending on the values of the preceding arguments.
    * <pre>
    *   [foo] [^] -> [foo] [^^]
    * </pre>
