@@ -50,7 +50,9 @@ public final class LocalShellIntegrationInjector {
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
 
   // todo: it would be great to extract block terminal configuration from here
-  public static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options, boolean blockTerminalEnabled) {
+  public static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options,
+                                                                    boolean blockTerminalEnabled,
+                                                                    boolean reworkedBlockTerminalEnabled) {
     List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellCommand == null || shellExe == null) return options;
@@ -98,8 +100,11 @@ public final class LocalShellIntegrationInjector {
       }
     }
 
-    if (blockTerminalEnabled && integration != null && integration.getCommandBlockIntegration() != null) {
-      envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
+    if ((blockTerminalEnabled || reworkedBlockTerminalEnabled) && integration != null && integration.getCommandBlockIntegration() != null) {
+      var commandBlocksOption = reworkedBlockTerminalEnabled
+                                ? "INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED"
+                                : "INTELLIJ_TERMINAL_COMMAND_BLOCKS";
+      envs.put(commandBlocksOption, "1");
       // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
       // at startup it runs a sub-shell without IntelliJ shell integration
       envs.put("FIG_TERM", "1");

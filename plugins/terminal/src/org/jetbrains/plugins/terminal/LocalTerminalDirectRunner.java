@@ -60,7 +60,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
     if (enableShellIntegration()) {
-      updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions, isBlockTerminalEnabled());
+      updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions,
+                                                                            isBlockTerminalEnabled(),
+                                                                            isReworkedBlockTerminalEnabled());
     }
     return applyTerminalCustomizers(updatedOptions);
   }
@@ -94,7 +96,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     var shellIntegration = options.getShellIntegration();
-    boolean isBlockTerminal = isBlockTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null;
+    boolean isBlockTerminal = (isBlockTerminalEnabled() || isReworkedBlockTerminalEnabled()) &&
+                              shellIntegration != null &&
+                              shellIntegration.getCommandBlockIntegration() != null;
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
 
     if (isBlockTerminal) {
@@ -217,6 +221,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return false;
   }
 
+  @ApiStatus.Internal
+  protected boolean isReworkedBlockTerminalEnabled() {
+    return false;
+  }
+
   private @NotNull String getShellPath() {
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }
@@ -238,7 +247,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
-    return LocalShellIntegrationInjector.injectShellIntegration(options, isBlockTerminalEnabled());
+    return LocalShellIntegrationInjector.injectShellIntegration(options, isBlockTerminalEnabled(), isReworkedBlockTerminalEnabled());
   }
 
   /**

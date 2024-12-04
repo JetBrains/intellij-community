@@ -31,7 +31,8 @@ import javax.swing.JPanel
 internal class TerminalWidgetImpl(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProvider,
-  parent: Disposable
+  private val isReworked: Boolean,
+  parent: Disposable,
 ) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
 
@@ -65,6 +66,7 @@ internal class TerminalWidgetImpl(
     view = if (options.shellIntegration?.commandBlockIntegration != null) {
       val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration)
       Disposer.register(this, session)
+      // Todo: create reworked terminal view if isReworked is true
       BlockTerminalView(project, session, settings, terminalTitle).also {
         installStartupResponsivenessReporter(project, checkNotNull(options.startupMoment), session)
         project.messageBus.syncPublisher(BlockTerminalInitializationListener.TOPIC).modelsInitialized(

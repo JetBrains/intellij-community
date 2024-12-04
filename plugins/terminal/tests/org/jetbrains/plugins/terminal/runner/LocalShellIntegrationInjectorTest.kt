@@ -22,7 +22,8 @@ internal class LocalShellIntegrationInjectorTest {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
         .build(),
-      true
+      true,
+      false
     )
 
     assertEquals(listOf("/bin/zsh"), actual.shellCommand)
@@ -45,7 +46,8 @@ internal class LocalShellIntegrationInjectorTest {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
         .build(),
-      true
+      true,
+      false
     )
 
     assertEquals(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash")), actual.shellCommand)

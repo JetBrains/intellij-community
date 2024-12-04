@@ -25,9 +25,14 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
            && Registry.`is`(BLOCK_TERMINAL_REGISTRY, false)
   }
 
+  override fun isReworkedBlockTerminalEnabled(): Boolean {
+    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode)
+           && Registry.`is`(REWORKED_BLOCK_TERMINAL_REGISTRY, false)
+  }
+
   override fun createShellTerminalWidget(parent: Disposable, startupOptions: ShellStartupOptions): TerminalWidget {
-    if (isBlockTerminalEnabled) {
-      return TerminalWidgetImpl(myProject, settingsProvider, parent)
+    if (isBlockTerminalEnabled || isReworkedBlockTerminalEnabled) {
+      return TerminalWidgetImpl(myProject, settingsProvider, isReworkedBlockTerminalEnabled, parent)
     }
     return super.createShellTerminalWidget(parent, startupOptions)
   }
@@ -40,6 +45,7 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
 
   companion object {
     const val BLOCK_TERMINAL_REGISTRY: String = "terminal.new.ui"
+    const val REWORKED_BLOCK_TERMINAL_REGISTRY: String = "terminal.new.ui.reworked"
     const val BLOCK_TERMINAL_FISH_REGISTRY: String = "terminal.new.ui.fish"
     const val BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY: String = "terminal.new.ui.powershell.win11"
     const val BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY: String = "terminal.new.ui.powershell.win10"
