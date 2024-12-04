@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl.quickfix;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeInsight.actions;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 @SkipSlowTestLocally
 public class CreateMethodFromUsagePerformanceTest extends LightQuickFixTestCase {
