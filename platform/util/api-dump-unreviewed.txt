@@ -3896,7 +3896,6 @@ f:com.intellij.util.containers.UnmodifiableHashMap
 - without(java.lang.Object):com.intellij.util.containers.UnmodifiableHashMap
 c:com.intellij.util.containers.UnsafeWeakList
 - java.util.AbstractCollection
-- pf:myList:java.util.List
 - <init>():V
 - <init>(I):V
 - add(java.lang.Object):Z
