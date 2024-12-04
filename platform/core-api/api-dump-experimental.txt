@@ -230,6 +230,7 @@ f:com.intellij.openapi.editor.markup.AttributesFlyweight
 - *:withAdditionalEffects(java.util.Map):com.intellij.openapi.editor.markup.AttributesFlyweight
 e:com.intellij.openapi.editor.markup.EffectType
 - java.lang.Enum
+- *sf:FADED:com.intellij.openapi.editor.markup.EffectType
 - *sf:SLIGHTLY_WIDER_BOX:com.intellij.openapi.editor.markup.EffectType
 c:com.intellij.openapi.editor.markup.TextAttributes
 - java.lang.Cloneable

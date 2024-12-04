@@ -1807,6 +1807,7 @@ f:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder$EffectDescript
 - f:effectType:com.intellij.openapi.editor.markup.EffectType
 e:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder$EffectSlot
 - java.lang.Enum
+- sf:FOREGROUND_SLOT:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder$EffectSlot
 - sf:FRAME_SLOT:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder$EffectSlot
 - sf:STRIKE_SLOT:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder$EffectSlot
 - sf:UNDERLINE_SLOT:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder$EffectSlot

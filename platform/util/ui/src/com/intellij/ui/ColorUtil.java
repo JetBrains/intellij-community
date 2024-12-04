@@ -334,4 +334,8 @@ public final class ColorUtil {
     double weightB = 2 + (255 - rmean) / 256;
     return Math.sqrt(weightR * r * r + weightG * g * g + weightB * b * b);
   }
+
+  public static @NotNull Color faded(@NotNull Color color) {
+    return withAlpha(color, 0.45f);
+  }
 }

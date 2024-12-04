@@ -1770,6 +1770,7 @@ f:com.intellij.ui.ColorUtil
 - s:darker(java.awt.Color,I):java.awt.Color
 - s:desaturate(java.awt.Color,I):java.awt.Color
 - s:dimmer(java.awt.Color):java.awt.Color
+- s:faded(java.awt.Color):java.awt.Color
 - s:fromHex(java.lang.String):java.awt.Color
 - s:fromHex(java.lang.String,java.awt.Color):java.awt.Color
 - s:getColorDistance(java.awt.Color,java.awt.Color):D

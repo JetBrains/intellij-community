@@ -79,7 +79,8 @@ class TextAttributesReader extends ValueElementReader {
     WAVE(EffectType.WAVE_UNDERSCORE),
     STRIKEOUT(EffectType.STRIKEOUT),
     BOLD_LINE(EffectType.BOLD_LINE_UNDERSCORE),
-    BOLD_DOTTED_LINE(EffectType.BOLD_DOTTED_LINE);
+    BOLD_DOTTED_LINE(EffectType.BOLD_DOTTED_LINE),
+    FADED(EffectType.FADED);
 
     private final EffectType myType;
 

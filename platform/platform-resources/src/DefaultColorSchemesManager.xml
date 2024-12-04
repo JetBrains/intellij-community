@@ -1511,8 +1511,8 @@
       </option>
       <option name="BEAN.INACTIVE">
         <value>
-          <option name="FOREGROUND" value="616161" />
-          <option name="FONT_TYPE" value="2"/>
+          <option name="EFFECT_TYPE" value="6"/>
+          <option name="EFFECT_COLOR" value="616161"/>
         </value>
       </option>
     </attributes>
@@ -2965,8 +2965,8 @@
       </option>
       <option name="BEAN.INACTIVE">
         <value>
-          <option name="FOREGROUND" value="6c6c6c" />
-          <option name="FONT_TYPE" value="2"/>
+          <option name="EFFECT_TYPE" value="6"/>
+          <option name="EFFECT_COLOR" value="6c6c6c"/>
         </value>
       </option>
     </attributes>
