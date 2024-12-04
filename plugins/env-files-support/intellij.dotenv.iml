@@ -11,26 +11,11 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
-    <orderEntry type="module" module-name="intellij.yaml.editing" />
-    <orderEntry type="module" module-name="intellij.xml.psi" />
-    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
-    <orderEntry type="module" module-name="intellij.php" />
-    <orderEntry type="module" module-name="intellij.php.frontback" />
-    <orderEntry type="module" module-name="intellij.php.impl" />
-    <orderEntry type="module" module-name="intellij.python.psi" />
-    <orderEntry type="module" module-name="intellij.python.parser" />
-    <orderEntry type="module" module-name="intellij.clouds.docker.file" />
-    <orderEntry type="module" module-name="intellij.ruby.psi" />
-    <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />
-    <orderEntry type="module" module-name="intellij.go.impl" />
-    <orderEntry type="module" module-name="intellij.go.frontback" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
   </component>
 </module>

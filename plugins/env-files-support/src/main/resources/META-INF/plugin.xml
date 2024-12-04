@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="ru.adelf.idea.dotenv">
     <id>ru.adelf.idea.dotenv</id>
     <name>.env files support</name>
     <vendor>JetBrains</vendor>
@@ -34,19 +34,18 @@
     </extensionPoints>
 
     <dependencies>
-      <plugin id="com.intellij.modules.platform" />
       <plugin id="org.jetbrains.plugins.yaml"/>
     </dependencies>
 
     <content>
-      <module name="intellij.dotenv/php"/>
-      <module name="intellij.dotenv/go"/>
-      <module name="intellij.dotenv/kotlin"/>
-      <module name="intellij.dotenv/python"/>
-      <module name="intellij.dotenv/ruby"/>
-      <module name="intellij.dotenv/java"/>
-      <module name="intellij.dotenv/docker"/>
+      <module name="intellij.dotenv.kotlin"/>
+      <module name="intellij.dotenv.python"/>
+      <module name="intellij.dotenv.java"/>
     </content>
+
+    <xi:include href="/META-INF/dotenv-ultimate.xml">
+        <xi:fallback/>
+    </xi:include>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>
