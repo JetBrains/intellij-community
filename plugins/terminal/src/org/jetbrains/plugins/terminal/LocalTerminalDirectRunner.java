@@ -45,7 +45,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public static final List<String> LOGIN_CLI_OPTIONS = List.of(LOGIN_CLI_OPTION, "-l");
 
   protected final Charset myDefaultCharset;
-  private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
@@ -205,14 +204,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
    * @param envs environment variables
    * @return initial command. The result command to execute is calculated by applying
    *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
-   * @deprecated Use {@link #configureStartupOptions}
+   * @deprecated Use {@link LocalTerminalStartCommandBuilder#convertShellPathToCommand(String)}
    */
   @Deprecated(since = "2024.3", forRemoval = true)
   @SuppressWarnings("unused") // Has external usages
   public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-    ShellStartupOptions startupOptions = myStartupOptionsThreadLocal.get(); // It looks like always empty
-    List<String> shellCommand = startupOptions != null ? startupOptions.getShellCommand() : null;
-    return shellCommand != null ? shellCommand : LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath());
+    return LocalTerminalStartCommandBuilder.convertShellPathToCommand(getShellPath());
   }
 
   @ApiStatus.Internal
