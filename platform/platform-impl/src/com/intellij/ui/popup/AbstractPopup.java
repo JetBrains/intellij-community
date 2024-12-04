@@ -225,6 +225,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
+  private @NlsContexts.StatusText String mySpeedSearchEmptyText;
   protected SearchTextField mySpeedSearchPatternField;
   private PopupComponentFactory.PopupType myPopupType;
   private boolean myNativePopup;
@@ -1722,6 +1723,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
+    if (mySpeedSearchEmptyText != null) {
+      mySpeedSearchPatternField.getTextEditor().getEmptyText().setText(mySpeedSearchEmptyText);
+    }
     customizeSearchFieldLook(mySpeedSearchPatternField, mySpeedSearchAlwaysShown);
 
     if (mySpeedSearchAlwaysShown) {
@@ -2375,9 +2379,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
-  protected void setSpeedSearchAlwaysShown() {
-    assert myState == State.INIT;
+  public void setSpeedSearchAlwaysShown() {
+    assert myState.ordinal() <= State.INIT.ordinal();
     mySpeedSearchAlwaysShown = true;
+  }
+
+  public void setSpeedSearchEmptyText(@Nullable @NlsContexts.StatusText String text) {
+    mySpeedSearchEmptyText = text;
   }
 
   private final class MyWindowListener extends WindowAdapter {

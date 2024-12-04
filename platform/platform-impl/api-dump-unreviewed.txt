@@ -16244,7 +16244,8 @@ c:com.intellij.ui.popup.AbstractPopup
 - setShowHints(Z):V
 - setSize(java.awt.Dimension):V
 - setSize(java.awt.Point,java.awt.Dimension):V
-- p:setSpeedSearchAlwaysShown():V
+- setSpeedSearchAlwaysShown():V
+- setSpeedSearchEmptyText(java.lang.String):V
 - setStretchToOwnerHeight(Z):V
 - setStretchToOwnerWidth(Z):V
 - setUiVisible(Z):V
