@@ -328,8 +328,8 @@ data class ClientId(val value: String) {
     }
 
     private fun withClientIdImpl(clientIdValue: String, errorOnMismatch: Boolean): AccessToken {
-      val oldClientId = currentThreadClientId ?: localId
-      if (clientIdValue == oldClientId.value) {
+      val oldClientId = currentThreadClientId
+      if (clientIdValue == oldClientId?.value) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
 
