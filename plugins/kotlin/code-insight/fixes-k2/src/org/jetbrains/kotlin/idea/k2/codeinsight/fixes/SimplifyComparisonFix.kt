@@ -11,9 +11,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.performSimplification
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.removeRedundantAssertion
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConstantConditionIfFix
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -53,9 +55,8 @@ object SimplifyComparisonFixFactory {
                 removeRedundantAssertion(result)
             }
 
-            // TODO: after implementing KTIJ-29044 ConstantConditionIfInspection
-            //val ifExpression = result.getStrictParentOfType<KtIfExpression>()?.takeIf { it.condition == result }
-            //if (ifExpression != null) ConstantConditionIfInspection.Util.applyFixIfSingle(ifExpression)
+            val ifExpression = result.getStrictParentOfType<KtIfExpression>()?.takeIf { it.condition == result }
+            if (ifExpression != null) ConstantConditionIfFix.applyFixIfSingle(ifExpression, updater)
         }
 
         override fun getFamilyName(): String = KotlinBundle.message("simplify.comparison")
