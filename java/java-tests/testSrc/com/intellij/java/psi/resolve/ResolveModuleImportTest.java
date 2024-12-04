@@ -9,9 +9,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -296,6 +298,86 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
     PsiClass psiClass = getPsiClass();
     assertNotNull(psiClass);
     assertEquals("my.source.moduleC.SourceTestC", psiClass.getQualifiedName());
+  }
+
+  public void testAmbiguousModuleImport() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+      prepareAmbiguousModuleTests();
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    });
+  }
+
+  public void testModuleImportWithPackageImport() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+      prepareAmbiguousModuleTests();
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+      PsiClass psiClass = getPsiClass();
+      assertNotNull(psiClass);
+      assertEquals("my.source.moduleA.Imported", psiClass.getQualifiedName());
+    });
+  }
+
+  public void testModuleImportWithDefaultPackageImport() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+      addCode("module-info.java", """
+      module my.source.moduleB {
+        exports my.source.moduleB;
+      }
+      """, M2);
+        addCode("my/source/moduleB/String.java", """
+      package my.source.moduleB;
+      public class String {}
+      """, M2);
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+      PsiClass psiClass = getPsiClass();
+      assertNotNull(psiClass);
+      assertEquals("java.lang.String", psiClass.getQualifiedName());
+    });
+  }
+
+  public void testAmbiguousModuleImportWithPackageImport() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.MODULE_IMPORT_DECLARATIONS.getMinimumLevel(), ()->{
+      prepareAmbiguousModuleTests();
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+    });
+  }
+
+    public void testModuleImportWithSingleImport() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), ()->{
+      prepareAmbiguousModuleTests();
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.checkHighlighting();
+      PsiClass psiClass = getPsiClass();
+      assertNotNull(psiClass);
+      assertEquals("my.source.moduleA.Imported", psiClass.getQualifiedName());
+    });
+  }
+
+  private void prepareAmbiguousModuleTests() {
+    addCode("module-info.java", """
+    module my.source.moduleB {
+      exports my.source.moduleB;
+    }
+    """, M2);
+    addCode("my/source/moduleB/Imported.java", """
+    package my.source.moduleB;
+    public class Imported {}
+    """, M2);
+    addCode("module-info.java", """
+    module my.source.moduleA {
+      exports my.source.moduleA;
+    }
+    """, M4);
+    addCode("my/source/moduleA/Imported.java", """
+    package my.source.moduleA;
+    public class Imported {}
+    """, M4);
+    addCode("Test.java", """
+    """);
   }
 
   @Nullable
