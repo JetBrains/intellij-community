@@ -25,6 +25,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -34,6 +35,7 @@ import java.util.*;
 
 import static java.util.Collections.emptyList;
 
+@ApiStatus.Internal
 public final class VcsFacadeImpl extends VcsFacade {
 
   @NotNull

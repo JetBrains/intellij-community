@@ -64,6 +64,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import kotlin.reflect.KMutableProperty0
 
+@ApiStatus.Internal
 class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     CodeAnalysisBeforeCheckinHandler(panel.project)

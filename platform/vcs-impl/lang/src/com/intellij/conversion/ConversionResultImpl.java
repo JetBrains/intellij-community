@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.impl;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.conversion;
 
-import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.impl.ConversionRunner;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;

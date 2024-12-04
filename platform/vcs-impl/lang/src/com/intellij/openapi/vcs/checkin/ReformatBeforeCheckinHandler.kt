@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
+import com.intellij.CodeStyleBundle
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.openapi.project.Project
@@ -11,9 +12,9 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.formatter.FormatterUtil.getReformatBeforeCommitCommandName
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     ReformatBeforeCheckinHandler(panel.project)
@@ -31,5 +32,5 @@ class ReformatBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandl
   override fun getProgressMessage(): String = message("progress.text.reformatting.code")
 
   override fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor =
-    ReformatCodeProcessor(project, getPsiFiles(project, files), getReformatBeforeCommitCommandName(), null, true)
+    ReformatCodeProcessor(project, getPsiFiles(project, files), CodeStyleBundle.message("process.reformat.code.before.commit"), null, true)
 }

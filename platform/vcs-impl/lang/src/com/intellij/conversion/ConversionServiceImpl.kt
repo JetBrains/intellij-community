@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
-package com.intellij.impl
+package com.intellij.conversion
 
-import com.intellij.conversion.*
 import com.intellij.conversion.impl.CachedConversionResult
 import com.intellij.conversion.impl.ConversionContextImpl
 import com.intellij.conversion.impl.ConversionRunner
