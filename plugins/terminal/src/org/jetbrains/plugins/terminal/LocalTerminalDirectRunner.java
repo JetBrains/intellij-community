@@ -46,12 +46,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
-  private final LocalShellIntegrationInjector shellIntegrationInjector;
 
   public LocalTerminalDirectRunner(Project project) {
     super(project);
     myDefaultCharset = StandardCharsets.UTF_8;
-    shellIntegrationInjector = new LocalShellIntegrationInjector(() -> isBlockTerminalEnabled());
   }
 
   @NotNull
@@ -63,7 +61,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions) {
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
     if (enableShellIntegration()) {
-      updatedOptions = shellIntegrationInjector.configureStartupOptions(updatedOptions);
+      updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions, isBlockTerminalEnabled());
     }
     return applyTerminalCustomizers(updatedOptions);
   }
@@ -243,7 +241,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
-    return shellIntegrationInjector.configureStartupOptions(options);
+    return LocalShellIntegrationInjector.injectShellIntegration(options, isBlockTerminalEnabled());
   }
 
   /**

@@ -8,30 +8,21 @@ import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector.findA
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.function.Supplier
 
 @TestFor(classes = [LocalShellIntegrationInjector::class])
 internal class LocalShellIntegrationInjectorTest {
-  private lateinit var myTarget: LocalShellIntegrationInjector
-
-  @BeforeEach
-  fun setUp() {
-    myTarget = LocalShellIntegrationInjector(Supplier { true })
-  }
-
   @Test
   fun testZsh() {
-    val actual = myTarget.configureStartupOptions(
+    val actual = LocalShellIntegrationInjector.injectShellIntegration(
       ShellStartupOptions.Builder()
         .shellCommand(mutableListOf<String>("/bin/zsh"))
         .envVariables(buildMap {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
-        .build()
+        .build(),
+      true
     )
 
     assertEquals(listOf("/bin/zsh"), actual.shellCommand)
@@ -47,13 +38,14 @@ internal class LocalShellIntegrationInjectorTest {
 
   @Test
   fun testBash() {
-    val actual = myTarget.configureStartupOptions(
+    val actual = LocalShellIntegrationInjector.injectShellIntegration(
       ShellStartupOptions.Builder()
         .shellCommand(listOf("/bin/bash"))
         .envVariables(buildMap {
           put("MY_CUSTOM_ENV1", "MY_CUSTOM_ENV_VALUE1")
         })
-        .build()
+        .build(),
+      true
     )
 
     assertEquals(listOf("/bin/bash", "--rcfile", findAbsolutePath("shell-integrations/bash/bash-integration.bash")), actual.shellCommand)
