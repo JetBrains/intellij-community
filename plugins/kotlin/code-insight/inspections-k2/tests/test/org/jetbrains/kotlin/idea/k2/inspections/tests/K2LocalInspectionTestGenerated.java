@@ -4059,6 +4059,170 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/explicitThis")
+    public static class ExplicitThis extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentReceiverInstance.kt")
+        public void testDifferentReceiverInstance() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/differentReceiverInstance.kt");
+        }
+
+        @TestMetadata("differentReceiverInstanceExtension.kt")
+        public void testDifferentReceiverInstanceExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/differentReceiverInstanceExtension.kt");
+        }
+
+        @TestMetadata("differentReceiverInstanceExtension2.kt")
+        public void testDifferentReceiverInstanceExtension2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/differentReceiverInstanceExtension2.kt");
+        }
+
+        @TestMetadata("differentReceiverInstanceExtension3.kt")
+        public void testDifferentReceiverInstanceExtension3() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/differentReceiverInstanceExtension3.kt");
+        }
+
+        @TestMetadata("differentReceiverInstanceExtension4.kt")
+        public void testDifferentReceiverInstanceExtension4() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/differentReceiverInstanceExtension4.kt");
+        }
+
+        @TestMetadata("differentReceiverType.kt")
+        public void testDifferentReceiverType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/differentReceiverType.kt");
+        }
+
+        @TestMetadata("differentReceiverTypeExtension.kt")
+        public void testDifferentReceiverTypeExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/differentReceiverTypeExtension.kt");
+        }
+
+        @TestMetadata("extension.kt")
+        public void testExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/extension.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/function.kt");
+        }
+
+        @TestMetadata("functionReference.kt")
+        public void testFunctionReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/functionReference.kt");
+        }
+
+        @TestMetadata("functionWithSameNameInvocableVariable.kt")
+        public void testFunctionWithSameNameInvocableVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/functionWithSameNameInvocableVariable.kt");
+        }
+
+        @TestMetadata("functionWithSameNameVariable.kt")
+        public void testFunctionWithSameNameVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/functionWithSameNameVariable.kt");
+        }
+
+        @TestMetadata("multipleReceivers.kt")
+        public void testMultipleReceivers() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/multipleReceivers.kt");
+        }
+
+        @TestMetadata("multipleReceiversExtension.kt")
+        public void testMultipleReceiversExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/multipleReceiversExtension.kt");
+        }
+
+        @TestMetadata("nestedReceivers.kt")
+        public void testNestedReceivers() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/nestedReceivers.kt");
+        }
+
+        @TestMetadata("nestedReceiversDifferentParameters.kt")
+        public void testNestedReceiversDifferentParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/nestedReceiversDifferentParameters.kt");
+        }
+
+        @TestMetadata("nestedReceiversExtension.kt")
+        public void testNestedReceiversExtension() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/nestedReceiversExtension.kt");
+        }
+
+        @TestMetadata("nestedReceiversExtensionDifferentParameters.kt")
+        public void testNestedReceiversExtensionDifferentParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/nestedReceiversExtensionDifferentParameters.kt");
+        }
+
+        @TestMetadata("overloadedIntFunction.kt")
+        public void testOverloadedIntFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/overloadedIntFunction.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/property.kt");
+        }
+
+        @TestMetadata("propertyNamedCode.kt")
+        public void testPropertyNamedCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/propertyNamedCode.kt");
+        }
+
+        @TestMetadata("propertyReference.kt")
+        public void testPropertyReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/propertyReference.kt");
+        }
+
+        @TestMetadata("syntheticJavaProperty.kt")
+        public void testSyntheticJavaProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/syntheticJavaProperty.kt");
+        }
+
+        @TestMetadata("syntheticJavaProperty_nestedReceiver.kt")
+        public void testSyntheticJavaProperty_nestedReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/syntheticJavaProperty_nestedReceiver.kt");
+        }
+
+        @TestMetadata("syntheticJavaProperty_sameClassNestedReceiver.kt")
+        public void testSyntheticJavaProperty_sameClassNestedReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/syntheticJavaProperty_sameClassNestedReceiver.kt");
+        }
+
+        @TestMetadata("syntheticJavaProperty_sameNameJavaProperty.kt")
+        public void testSyntheticJavaProperty_sameNameJavaProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/syntheticJavaProperty_sameNameJavaProperty.kt");
+        }
+
+        @TestMetadata("syntheticJavaProperty_sameNameVariable.kt")
+        public void testSyntheticJavaProperty_sameNameVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/syntheticJavaProperty_sameNameVariable.kt");
+        }
+
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/unresolvedReference.kt");
+        }
+
+        @TestMetadata("variableWithSameName.kt")
+        public void testVariableWithSameName() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/variableWithSameName.kt");
+        }
+
+        @TestMetadata("variableWithSameNameFunction.kt")
+        public void testVariableWithSameNameFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/explicitThis/variableWithSameNameFunction.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/redundantIf")
     public abstract static class RedundantIf extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
