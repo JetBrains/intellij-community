@@ -2630,7 +2630,7 @@ c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilePathsNode
 - p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
 c:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificFilesNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
-- p:<init>(java.lang.Object,java.util.Collection,I,java.lang.Runnable):V
+- p:<init>(java.lang.Object,java.util.Collection,java.lang.Runnable):V
 a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserSpecificNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - pf:myDialogShower:java.lang.Runnable

@@ -10,7 +10,6 @@ internal class ModifiedWithoutEditingNode(
   private val project: Project,
   files: List<VirtualFile>,
 ) : ChangesBrowserSpecificFilesNode<ChangesBrowserNode.Tag>(MODIFIED_WITHOUT_EDITING_TAG, files,
-                                                            files.count { it.isDirectory },
                                                             { if (!project.isDisposed) ModifiedWithoutEditingViewDialog(project).show() }) {
 
   @Nls
