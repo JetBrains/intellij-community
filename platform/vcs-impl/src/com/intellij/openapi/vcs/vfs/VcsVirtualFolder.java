@@ -5,17 +5,19 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VcsVirtualFolder extends AbstractVcsVirtualFile {
-  private final VirtualFile myChild;
-  public VcsVirtualFolder(String name, VirtualFile child, @NotNull VirtualFileSystem fileSystem) {
-    super(name == null ? "" : name, fileSystem);
+  private final @Nullable VirtualFile myChild;
+
+  public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child, @NotNull VirtualFileSystem fileSystem) {
+    super(name, fileSystem);
     myChild = child;
   }
 
   @Override
   public VirtualFile[] getChildren() {
-    return new VirtualFile[]{myChild};
+    return myChild != null ? new VirtualFile[]{myChild} : EMPTY_ARRAY;
   }
 
   @Override

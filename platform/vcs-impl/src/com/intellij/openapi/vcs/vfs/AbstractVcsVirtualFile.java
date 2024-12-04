@@ -21,18 +21,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public abstract class AbstractVcsVirtualFile extends VirtualFile {
-  @NlsSafe
-  protected final String myName;
-  @NlsSafe
-  protected final String myPath;
-  @NlsSafe
-  protected String myRevision;
-  private final VirtualFile myParent;
+
+  protected final @NotNull @NlsSafe String myName;
+  protected final @NotNull @NlsSafe String myPath;
+  private final @Nullable VirtualFile myParent;
+
+  protected @NlsSafe String myRevision;
   protected int myModificationStamp = 0;
-  @NotNull
+
   private final VirtualFileSystem myFileSystem;
 
-  protected AbstractVcsVirtualFile(String path, @NotNull VirtualFileSystem fileSystem) {
+  protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path, @NotNull VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
     myPath = path;
     File file = new File(myPath);
