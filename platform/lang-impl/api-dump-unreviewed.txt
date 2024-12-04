@@ -17344,7 +17344,7 @@ a:com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHe
 - a:postProcessUsages(com.intellij.usageView.UsageInfo[],com.intellij.util.Function):V
 - preprocessUsages(com.intellij.openapi.project.Project,java.util.Set,com.intellij.openapi.util.Ref,com.intellij.psi.PsiDirectory,com.intellij.util.containers.MultiMap):V
 - preprocessUsages(com.intellij.openapi.project.Project,java.util.Set,com.intellij.usageView.UsageInfo[],com.intellij.psi.PsiDirectory,com.intellij.util.containers.MultiMap):V
-- retargetUsages(java.util.List,java.util.Map):V
+- retargetUsages(java.util.List,java.util.Map):java.util.List
 c:com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper$Default
 - com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper
 - <init>():V
@@ -17353,7 +17353,7 @@ c:com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHe
 - findUsages(java.util.Collection,com.intellij.psi.PsiDirectory[],java.util.Collection,Z,Z,com.intellij.openapi.project.Project):V
 - move(com.intellij.psi.PsiFile,com.intellij.psi.PsiDirectory,java.util.Map,java.util.List,com.intellij.refactoring.listeners.RefactoringElementListener):Z
 - postProcessUsages(com.intellij.usageView.UsageInfo[],com.intellij.util.Function):V
-- retargetUsages(java.util.List,java.util.Map):V
+- retargetUsages(java.util.List,java.util.Map):java.util.List
 c:com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory[],com.intellij.psi.PsiDirectory,Z,Z,Z,com.intellij.refactoring.move.MoveCallback):V
