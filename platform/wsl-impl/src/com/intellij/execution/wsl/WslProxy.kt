@@ -3,7 +3,7 @@ package com.intellij.execution.wsl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
@@ -35,6 +35,8 @@ import kotlin.coroutines.coroutineContext
 @ApiStatus.Internal
 class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int) : Disposable {
   private companion object {
+    private val LOG = logger<WslProxy>()
+
     /**
      * Server might not be opened yet. Since non-blocking Ktor API doesn't wait for it but throws exception instead, we retry
      */
@@ -44,7 +46,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
       }
       catch (e: IOException) {
         if (attemptRemains <= 0) throw e
-        thisLogger().warn("Can't connect to $host $port , will retry", e)
+        LOG.warn("Can't connect to $host $port , will retry", e)
         delay(100)
       }
       return tryConnect(host, port, attemptRemains - 1)
@@ -155,15 +157,15 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
   private suspend fun clientConnected(linuxEgressPort: Int) {
     val selector = ActorSelectorManager(scope.coroutineContext)
     val winToLin = scope.async {
-      thisLogger().info("Connecting to WSL: $wslLinuxIp:$linuxEgressPort")
+      LOG.info("Connecting to WSL: $wslLinuxIp:$linuxEgressPort")
       val socket = aSocket(selector).tcp().tryConnect(wslLinuxIp, linuxEgressPort)
-      thisLogger().info("Connected to WSL")
+      LOG.info("Connected to WSL")
       socket
     }
     val winToWin = scope.async {
-      thisLogger().info("Connecting to app: $127.0.0.1:$applicationPort")
+      LOG.info("Connecting to app: $127.0.0.1:$applicationPort")
       val socket = aSocket(ActorSelectorManager(scope.coroutineContext)).tcp().tryConnect("127.0.0.1", applicationPort)
-      thisLogger().info("Connected to app")
+      LOG.info("Connected to app")
       socket
     }
     scope.launch {
