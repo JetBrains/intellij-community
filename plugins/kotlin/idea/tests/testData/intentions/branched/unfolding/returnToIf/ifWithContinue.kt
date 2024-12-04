@@ -1,7 +1,7 @@
 fun test(b: Boolean): Int {
     var i = 0
     while (i == 0) {
-        <caret>return if (b) {
+        return if<caret> (b) {
             1
         } else {
             i++
@@ -10,3 +10,6 @@ fun test(b: Boolean): Int {
     }
     return 0
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToIfIntention
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.UnfoldReturnToIfIntention

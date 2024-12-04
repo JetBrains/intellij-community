@@ -3684,6 +3684,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/unfolding/returnToIf/labeledReturn.kt");
                 }
 
+                @TestMetadata("notInApplicableRange.kt")
+                public void testNotInApplicableRange() throws Exception {
+                    runTest("testData/intentions/branched/unfolding/returnToIf/notInApplicableRange.kt");
+                }
+
                 @TestMetadata("simpleIf.kt")
                 public void testSimpleIf() throws Exception {
                     runTest("testData/intentions/branched/unfolding/returnToIf/simpleIf.kt");
