@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.EelApiKey
+import com.intellij.platform.eel.provider.EelDescriptor
 import com.intellij.platform.eel.provider.EelProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,20 +84,25 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   // TODO Move to ijent.impl?
   internal class WslEelProvider : EelProvider {
     override suspend fun getEelApi(path: Path): EelApi? {
-      val enabledDistros = serviceAsync<IjentWslNioFsToggler>().strategy?.enabledInDistros
-
-      return enabledDistros?.firstOrNull { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }?.let { distro ->
-        EelApiWithPathsMapping(
-          ephemeralRoot = path.root,
-          original = WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
-        )
+      val distribution = WslDistributionManager.getInstance().installedDistributions.firstOrNull { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }
+      if (distribution == null) {
+        return null
       }
+      return getApiByDistribution(distribution)
     }
 
-    override fun getEelApiKey(path: Path): EelApiKey? =
+    suspend fun getApiByDistribution(distro: WSLDistribution): EelApi {
+      val enabledDistros = serviceAsync<IjentWslNioFsToggler>().strategy?.enabledInDistros
+      if (enabledDistros == null || distro !in enabledDistros) {
+        throw IllegalStateException("IJent is not enabled in $distro")
+      }
+      return EelApiWithPathsMapping(ephemeralRoot = distro.getUNCRootPath(), WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false))
+    }
+
+    override fun getEelDescriptor(path: Path): EelDescriptor? =
       service<IjentWslNioFsToggler>().strategy?.enabledInDistros
         ?.find { distro -> path.root != null && distro.getUNCRootPath().isSameFileAs(path.root) }
-        ?.let { WslEelKey(it.id) }
+        ?.let { WslEelDescriptor(it, this@WslEelProvider) }
 
     /**
      * Starts the IJent if a project on WSL is opened.
@@ -108,7 +113,19 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
      */
     override suspend fun tryInitialize(project: Project) = tryInitializeEelOnWsl(project)
 
-    private data class WslEelKey(val key: String) : EelApiKey()
+    private data class WslEelDescriptor(val distribution: WSLDistribution, val provider: WslEelProvider) : EelDescriptor {
+      override suspend fun upgrade(): EelApi {
+        return provider.getApiByDistribution(distribution)
+      }
+
+      override fun equals(other: Any?): Boolean {
+        return other is WslEelDescriptor && other.distribution.id == distribution.id
+      }
+
+      override fun hashCode(): Int {
+        return distribution.id.hashCode()
+      }
+    }
   }
 
   private val strategy = run {

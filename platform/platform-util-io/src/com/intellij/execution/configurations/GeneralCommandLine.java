@@ -12,7 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.platform.eel.EelApi;
-import com.intellij.platform.eel.provider.LocalEelKey;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentRestorer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -35,8 +35,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.execution.util.ExecUtil.startProcessBlockingUsingEel;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiBlocking;
-import static com.intellij.platform.eel.provider.EelProviderUtil.getEelApiKey;
+import static com.intellij.platform.eel.provider.EelProviderUtil.*;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -444,11 +443,11 @@ public class GeneralCommandLine implements UserDataHolder {
 
     final var exePath = Path.of(exe);
 
-    if (getEelApiKey(exePath) != LocalEelKey.INSTANCE) { // fast check
+    if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
       eelApi = getEelApiBlocking(exePath);
     }
     else if (workingDirectory != null) {
-      if (getEelApiKey(workingDirectory) != LocalEelKey.INSTANCE) { // also try to compute non-local EelApi from working dir
+      if (getEelDescriptor(workingDirectory) != LocalEelDescriptor.INSTANCE) { // also try to compute non-local EelApi from working dir
         eelApi = getEelApiBlocking(workingDirectory);
       }
       else {

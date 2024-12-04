@@ -9,10 +9,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
-import com.intellij.platform.eel.impl.utils.getEelApiKey
-import com.intellij.platform.eel.provider.LocalEelKey
+import com.intellij.platform.eel.impl.utils.getEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.zip.JBZipFile
@@ -32,7 +31,6 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.Throws
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -233,8 +231,8 @@ internal class MavenWrapperSupport {
     }
 
     private fun createDistributionKey(project: Project, urlString: String): String {
-      val eelKey = project.getEelApiKey()
-      return if (eelKey == LocalEelKey) urlString else "$eelKey:$urlString"
+      val eelDescriptor = project.getEelDescriptor()
+      return if (eelDescriptor == LocalEelDescriptor) urlString else "$eelDescriptor:$urlString"
     }
 
     fun setDistributionPath(project: Project, urlString: String, path: Path) {

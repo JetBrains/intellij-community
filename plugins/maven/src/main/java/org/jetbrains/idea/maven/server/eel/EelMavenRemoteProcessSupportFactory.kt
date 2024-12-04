@@ -6,8 +6,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.impl.utils.getEelApiBlocking
-import com.intellij.platform.eel.impl.utils.getEelApiKey
-import com.intellij.platform.eel.provider.LocalEelKey
+import com.intellij.platform.eel.impl.utils.getEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
@@ -31,14 +31,14 @@ class EelMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
 
   override fun isApplicable(project: Project): Boolean {
     // TODO: should we use eel also for local environments?
-    return project.getEelApiKey() != LocalEelKey
+    return project.getEelDescriptor() != LocalEelDescriptor
   }
 }
 
 class EelRemotePathTransformFactory : RemotePathTransformerFactory {
   override fun isApplicable(project: Project): Boolean {
     // TODO: should we use eel also for local environments?
-    return project.getEelApiKey() != LocalEelKey
+    return project.getEelDescriptor() != LocalEelDescriptor
   }
 
   override fun createTransformer(project: Project): RemotePathTransformerFactory.Transformer {

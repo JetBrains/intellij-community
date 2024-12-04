@@ -24,9 +24,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.platform.eel.provider.EelApiKey;
+import com.intellij.platform.eel.provider.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
-import com.intellij.platform.eel.provider.LocalEelKey;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsActions.ActionText;
-import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelApiKey;
+import static com.intellij.platform.eel.impl.utils.EelProviderUtilsKt.getEelDescriptor;
 
 /**
  * @author anna
@@ -91,19 +91,19 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void syncSdks() {
-    syncSdks(LocalEelKey.INSTANCE);
+    syncSdks(LocalEelDescriptor.INSTANCE);
   }
 
   /**
    * @param eel can be null only if the corresponding feature flag is disabled.
    */
   @ApiStatus.Internal
-  public void syncSdks(@Nullable EelApiKey eelApiKey) {
+  public void syncSdks(@Nullable EelDescriptor eelDescriptor) {
     final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : projectSdks) {
       if (myProjectSdks.containsKey(sdk) || myProjectSdks.containsValue(sdk)) continue;
 
-      if (eelApiKey != null && !sdkMatchesEel(eelApiKey, sdk)) continue;
+      if (eelDescriptor != null && !sdkMatchesEel(eelDescriptor, sdk)) continue;
 
       Sdk editableCopy;
       try {
@@ -121,17 +121,17 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   @ApiStatus.Internal
-  public static boolean sdkMatchesEel(@NotNull EelApiKey eelApiKey, Sdk sdk) {
+  public static boolean sdkMatchesEel(@NotNull EelDescriptor eelDescriptor, Sdk sdk) {
     String sdkHomePath = sdk.getHomePath();
-    return sdkMatchesEel(eelApiKey, sdkHomePath);
+    return sdkMatchesEel(eelDescriptor, sdkHomePath);
   }
 
   @ApiStatus.Internal
-  public static boolean sdkMatchesEel(@NotNull EelApiKey eelApiKey, String sdkHomePath) {
+  public static boolean sdkMatchesEel(@NotNull EelDescriptor eelDescriptor, String sdkHomePath) {
     if (sdkHomePath != null) {
       try {
         Path path = Path.of(sdkHomePath);
-        if (EelProviderUtil.getEelApiKey(path).equals(eelApiKey)) {
+        if (EelProviderUtil.getEelDescriptor(path).equals(eelDescriptor)) {
           return true;
         }
       }
@@ -143,15 +143,15 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void reset(@Nullable Project project) {
-    EelApiKey eelApiKey;
+    EelDescriptor eelDescriptor;
     if (!Registry.is("java.home.finder.use.eel")) {
-      eelApiKey = null;
+      eelDescriptor = null;
     }
     else if (project != null) {
-      eelApiKey = getEelApiKey(project);
+      eelDescriptor = getEelDescriptor(project);
     }
     else {
-      eelApiKey = LocalEelKey.INSTANCE;
+      eelDescriptor = LocalEelDescriptor.INSTANCE;
     }
 
     myProjectSdks.clear();
@@ -159,7 +159,7 @@ public class ProjectSdksModel implements SdkModel {
     jdkTable.preconfigure();
     final Sdk[] projectSdks = jdkTable.getAllJdks();
     for (Sdk sdk : projectSdks) {
-      if (eelApiKey != null && !sdkMatchesEel(eelApiKey, sdk)) continue;
+      if (eelDescriptor != null && !sdkMatchesEel(eelDescriptor, sdk)) continue;
 
       try {
         Sdk editable = sdk.clone();

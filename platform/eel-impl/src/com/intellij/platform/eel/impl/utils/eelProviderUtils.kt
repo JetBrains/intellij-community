@@ -11,11 +11,11 @@ import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.EelApiKey
+import com.intellij.platform.eel.provider.EelDescriptor
 import com.intellij.platform.eel.provider.EelProvider
-import com.intellij.platform.eel.provider.LocalEelKey
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelApi
-import com.intellij.platform.eel.provider.getEelApiKey
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import java.nio.file.Path
@@ -66,8 +66,8 @@ fun Project?.getEelApiBlocking(): EelApi {
   return runBlockingMaybeCancellable { getEelApi() }
 }
 
-fun Project?.getEelApiKey(): EelApiKey {
-  return computeProjectPath("Project?.getEelApiKey")?.getEelApiKey() ?: LocalEelKey
+fun Project?.getEelDescriptor(): EelDescriptor {
+  return computeProjectPath("Project?.getEelDescriptor")?.getEelDescriptor() ?: LocalEelDescriptor
 }
 
 private val LOG by lazy { logger<EelProvider>() }
