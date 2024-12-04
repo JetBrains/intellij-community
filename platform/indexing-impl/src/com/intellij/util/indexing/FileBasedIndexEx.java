@@ -107,13 +107,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * false if no need to process it because, for example, scope is empty or index is going to rebuild.
    */
   @ApiStatus.Internal
-  public abstract <K> boolean ensureUpToDate(final @NotNull ID<K, ?> indexId,
+  public abstract <K> boolean ensureUpToDate(@NotNull ID<K, ?> indexId,
                                              @Nullable Project project,
                                              @Nullable GlobalSearchScope filter,
                                              @Nullable VirtualFile restrictedFile);
 
   @Override
-  public @NotNull <K, V> List<V> getValues(final @NotNull ID<K, V> indexId, @NotNull K dataKey, final @NotNull GlobalSearchScope scope) {
+  public @NotNull <K, V> List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope scope) {
     Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
 
     List<V> values = new SmartList<>();
@@ -157,7 +157,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public @NotNull <K> Collection<K> getAllKeys(final @NotNull ID<K, ?> indexId, @NotNull Project project) {
+  public @NotNull <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project) {
     Set<K> allKeys = new HashSet<>();
     processAllKeys(indexId, Processors.cancelableCollectProcessor(allKeys), project);
     return allKeys;
@@ -195,7 +195,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
     catch (RuntimeException e) {
       trace.lookupFailed();
-      final Throwable cause = e.getCause();
+      Throwable cause = e.getCause();
       if (cause instanceof StorageException || cause instanceof IOException) {
         requestRebuild(indexId, cause);
       }
@@ -296,8 +296,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public <K, V> boolean processValues(final @NotNull ID<K, V> indexId, final @NotNull K dataKey, final @Nullable VirtualFile inFile,
-                                      @NotNull ValueProcessor<? super V> processor, final @NotNull GlobalSearchScope filter) {
+  public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
+                                      @NotNull K dataKey,
+                                      @Nullable VirtualFile inFile,
+                                      @NotNull ValueProcessor<? super V> processor,
+                                      @NotNull GlobalSearchScope filter) {
     return processValues(indexId, dataKey, inFile, processor, filter, null);
   }
 
@@ -402,9 +405,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
     return processValueIterator(indexId, dataKey, null, scope, valueIt -> {
       while (valueIt.hasNext()) {
-        final V value = valueIt.next();
-        for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
-          final int id = inputIdsIterator.next();
+        V value = valueIt.next();
+        for (ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
+          int id = inputIdsIterator.next();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
           VirtualFile file = findFileById(id);
           if (file != null && scope.contains(file)) {
@@ -504,8 +507,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public <K, V> boolean getFilesWithKey(final @NotNull ID<K, V> indexId,
-                                        final @NotNull Set<? extends K> dataKeys,
+  public <K, V> boolean getFilesWithKey(@NotNull ID<K, V> indexId,
+                                        @NotNull Set<? extends K> dataKeys,
                                         @NotNull Processor<? super VirtualFile> processor,
                                         @NotNull GlobalSearchScope filter) {
     return processFilesContainingAllKeys(indexId, dataKeys, filter, null, processor);
@@ -513,7 +516,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
 
   @Override
-  public <K> void scheduleRebuild(final @NotNull ID<K, ?> indexId, final @NotNull Throwable e) {
+  public <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e) {
     requestRebuild(indexId, e);
   }
 
@@ -522,7 +525,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
   @Override
-  public <K> void ensureUpToDate(final @NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+  public <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
     waitUntilIndicesAreInitialized();
     ensureUpToDate(indexId, project, filter, null);
   }
