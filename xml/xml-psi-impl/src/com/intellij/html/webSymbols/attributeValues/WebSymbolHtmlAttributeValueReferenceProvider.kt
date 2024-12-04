@@ -1,7 +1,6 @@
 package com.intellij.html.webSymbols.attributeValues
 
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
-import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttribute
@@ -10,11 +9,9 @@ import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolOrigin
-import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
 import com.intellij.webSymbols.query.WebSymbolMatch
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.references.WebSymbolReferenceProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
@@ -55,12 +52,7 @@ class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<
           && !it.hasOnlyExtensions()
         }
         ?.asSingleSymbol()
-      ?: WebSymbolMatch.create(
-        name,
-        listOf(WebSymbolNameSegment.create(0, name.length, problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)),
-        WebSymbol.NAMESPACE_HTML,
-        WebSymbol.KIND_HTML_ATTRIBUTE_VALUES,
-        WebSymbolOrigin.empty()
-      )
+      ?: WebSymbolMatch.create(name, WebSymbol.HTML_ATTRIBUTE_VALUES, WebSymbolOrigin.empty(),
+                               WebSymbolNameSegment.create(0, name.length, problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL))
   }
 }
