@@ -18,7 +18,7 @@ suspend fun <T> withTimeoutDumping(title: String,
                                    action: suspend () -> T): T = coroutineScope {
   val outerScope = childScope(title)
 
-  val deferred = outerScope.async { action() }
+  val deferred = outerScope.async(CoroutineName("withTimeoutDumping#$title")) { action() }
   @OptIn(DelicateCoroutinesApi::class)
   withContext(blockingDispatcher) {
     try {
