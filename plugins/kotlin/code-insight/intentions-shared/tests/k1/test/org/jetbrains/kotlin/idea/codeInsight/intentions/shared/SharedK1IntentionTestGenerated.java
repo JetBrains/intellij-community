@@ -2801,6 +2801,55 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     @TestMetadata("../testData/intentions/unfolding")
     public abstract static class Unfolding extends AbstractSharedK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/assignmentToIf")
+        public static class AssignmentToIf extends AbstractSharedK1IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("innerIfTransformed.kt")
+            public void testInnerIfTransformed() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/innerIfTransformed.kt");
+            }
+
+            @TestMetadata("nestedIfs.kt")
+            public void testNestedIfs() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/nestedIfs.kt");
+            }
+
+            @TestMetadata("simpleIf.kt")
+            public void testSimpleIf() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIf.kt");
+            }
+
+            @TestMetadata("simpleIfWithAugmentedAssignment.kt")
+            public void testSimpleIfWithAugmentedAssignment() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithAugmentedAssignment.kt");
+            }
+
+            @TestMetadata("simpleIfWithBlocks.kt")
+            public void testSimpleIfWithBlocks() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithBlocks.kt");
+            }
+
+            @TestMetadata("simpleIfWithComplexAssignmentLHS.kt")
+            public void testSimpleIfWithComplexAssignmentLHS() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithComplexAssignmentLHS.kt");
+            }
+
+            @TestMetadata("simpleIfWithoutAssignment.kt")
+            public void testSimpleIfWithoutAssignment() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToIf/simpleIfWithoutAssignment.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/intentions/unfolding/functionCallToIf")
         public static class FunctionCallToIf extends AbstractSharedK1IntentionTest {
             @java.lang.Override
