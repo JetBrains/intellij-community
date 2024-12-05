@@ -14,6 +14,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.block.reworked.ReworkedTerminalView
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -64,16 +65,10 @@ internal class TerminalWidgetImpl(
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
     view = if (options.shellIntegration?.commandBlockIntegration != null) {
-      val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration)
-      Disposer.register(this, session)
-      // Todo: create reworked terminal view if isReworked is true
-      BlockTerminalView(project, session, settings, terminalTitle).also {
-        installStartupResponsivenessReporter(project, checkNotNull(options.startupMoment), session)
-        project.messageBus.syncPublisher(BlockTerminalInitializationListener.TOPIC).modelsInitialized(
-          it.promptView.controller.model,
-          it.outputView.controller.outputModel
-        )
+      if (isReworked) {
+        ReworkedTerminalView(project, settings)
       }
+      else createBlockTerminalView(options)
     }
     else {
       OldPlainTerminalView(project, settings, terminalTitle)
@@ -93,6 +88,18 @@ internal class TerminalWidgetImpl(
     TerminalUiUtils.cancelFutureByTimeout(future, 2000, parentDisposable = view)
     return future.thenApply {
       view.getTerminalSize()
+    }
+  }
+
+  private fun createBlockTerminalView(options: ShellStartupOptions): TerminalContentView {
+    val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration!!)
+    Disposer.register(this, session)
+    return BlockTerminalView(project, session, settings, terminalTitle).also {
+      installStartupResponsivenessReporter(project, checkNotNull(options.startupMoment), session)
+      project.messageBus.syncPublisher(BlockTerminalInitializationListener.TOPIC).modelsInitialized(
+        it.promptView.controller.model,
+        it.outputView.controller.outputModel
+      )
     }
   }
 
