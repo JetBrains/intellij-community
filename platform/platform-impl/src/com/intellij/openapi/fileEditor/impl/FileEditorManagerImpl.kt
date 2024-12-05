@@ -2385,7 +2385,8 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val isSingletonEditor = isSingletonDockWindow(window) && window.isFileOpen(oldFile)
   if (isSingletonEditor) {
     window.closeFile(oldFile)
-    editorManager.openFile(newFile, window, newOptions.copy(openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW))
+    editorManager.openFile(newFile, window, newOptions.copy(openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW,
+                                                            isSingletonEditorInWindow = true))
   }
   else if (oldFile == newFile) {
     val index = window.files().indexOf(oldFile)
