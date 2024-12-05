@@ -59,11 +59,10 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
           type == JavaElementType.MODULE_REFERENCE) {
         refText = JavaSourceUtil.getReferenceText(tree, child);
       }
-      else if (type == JavaTokenType.DOT) {
+      else if (type == JavaTokenType.DOT || type == JavaTokenType.MODULE_KEYWORD) {
         isOnDemand = true;
       }
     }
-
     byte flags = PsiImportStatementStubImpl.packFlags(isOnDemand, node.getTokenType() == JavaElementType.IMPORT_STATIC_STATEMENT,
                                                       node.getTokenType() == JavaElementType.IMPORT_MODULE_STATEMENT);
     return new PsiImportStatementStubImpl(parentStub, refText, flags);

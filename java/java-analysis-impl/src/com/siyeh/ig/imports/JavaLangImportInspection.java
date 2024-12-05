@@ -25,7 +25,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,7 @@ public final class JavaLangImportInspection extends BaseInspection implements Cl
         if (!HardcodedMethodConstants.JAVA_LANG.equals(parentName)) {
           return;
         }
-        if (ImportUtils.hasOnDemandImportConflict(text, statement)) {
+        if (ImportUtils.findOnDemandImportConflict(text, statement).conflictForOnDemand()) {
           return;
         }
         registerError(statement);

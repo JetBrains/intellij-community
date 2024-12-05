@@ -29,9 +29,9 @@ public class JavaLangImportInspectionTest extends LightJavaInspectionTestCase {
                         "class String {}");
     doTest("package a;" +
            "import java.lang.String;" +
-           "class X {{" +
+           "class X {" +
            "  String s;" +
-           "}}");
+           "}");
   }
 
   public void testSimple() {
@@ -40,6 +40,20 @@ public class JavaLangImportInspectionTest extends LightJavaInspectionTestCase {
            "class X {{" +
            "  String s;" +
            "}}");
+  }
+
+  public void testPackageOnDemandConflict() {
+    myFixture.addClass("""
+                                package b;
+                                class String {
+                                }""");
+    doTest("""
+             package a;
+             import java.lang.String;
+             import b.*;
+             class X {
+               String s;
+             }""");
   }
 
   @Nullable

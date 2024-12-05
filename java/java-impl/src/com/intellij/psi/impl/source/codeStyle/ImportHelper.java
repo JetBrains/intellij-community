@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -341,7 +342,7 @@ public final class ImportHelper {
     if (implicitModuleImports.isEmpty() && conflicts.isEmpty()) return Collections.emptySet();
 
     Set<String> result = new HashSet<>();
-    String packageName = file.getPackageName();
+    String filePackageName = file.getPackageName();
     ImportUtils.ImplicitImportChecker checker = ImportUtils.createImplicitImportChecker(file);
     for (PsiClass aClass : file.getClasses()) {
       // do not visit imports
@@ -354,20 +355,30 @@ public final class ImportHelper {
           if (!(resolveResult.getElement() instanceof PsiClass psiClass)) return;
           String qualifiedName = psiClass.getQualifiedName();
           if (qualifiedName == null) return;
+          String referencePackageName = StringUtil.getPackageName(qualifiedName);
+          String referenceShortName = StringUtil.getShortName(qualifiedName);
           //conflict with packages
           boolean hasConflict = conflicts.contains(psiClass.getName());
           if (!hasConflict) {
-            //conflict with implicit module imports
-            hasConflict = !implicitModuleImports.isEmpty() &&
-                          ImportUtils.hasOnDemandImportConflictWithImports(file, implicitModuleImports, qualifiedName);
+
+            //check conflict only with implicit module imports
+            //explicit module imports should be checked separately, right now it is not supported
+            //if it is already imported by on demands, there is no conflict with modules
+            if (!(PsiUtil.isAvailable(JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS, file) &&
+                  classNames.getOrDefault(referencePackageName, Collections.emptySet()).contains(referenceShortName))) {
+              hasConflict = !implicitModuleImports.isEmpty() &&
+                            ImportUtils.hasOnDemandImportConflictWithImports(file, implicitModuleImports, qualifiedName, false, true);
+            }
           }
           if (!hasConflict) return;
+          //can be visible by inheritance
           if (!(resolveResult.getCurrentFileResolveScope() instanceof PsiImportStatementBase) &&
               !isImplicitlyImported(psiClass, checker)) {
             return;
           }
+          //in the same package or in the same class
           if (PsiTreeUtil.isAncestor(file, psiClass, true) ||
-              packageName.equals(StringUtil.getPackageName(qualifiedName))) {
+              filePackageName.equals(referencePackageName)) {
             return;
           }
           result.add(qualifiedName);
@@ -455,6 +466,8 @@ public final class ImportHelper {
 
     boolean useOnDemand = !packageName.isEmpty();
 
+    //right now supports import on demand only for packages
+    //it doesn't support add imports on module
     if (hasImportOnDemand(file, packageName)) {
       useOnDemand = false;
     }
@@ -606,12 +619,12 @@ public final class ImportHelper {
         if (importedPackages.contains(packageNameToReimport)) {
           hasConflict = true;
         }
-        else {
-          for (PsiImportModuleStatement module : importedModules) {
-            if (module.findImportedPackage(packageNameToReimport) != null) {
-              hasConflict = true;
-              break;
-            }
+        //shouldn't filter for demand over module, because it is necessary to check,
+        //that class which is imported by module will not be shadowed by new on-demand package import
+        for (PsiImportModuleStatement module : importedModules) {
+          if (module.findImportedPackage(packageNameToReimport) != null) {
+            hasConflict = true;
+            break;
           }
         }
         if (hasConflict) {
@@ -906,7 +919,7 @@ public final class ImportHelper {
                                        @NotNull String thisPackageName,
                                        @Nullable PsiFile context) {
     if (scope instanceof PsiImportList) return;
-    ImportUtils.ImplicitImportChecker checker = 
+    ImportUtils.ImplicitImportChecker checker =
       scope.getContainingFile() instanceof PsiJavaFile javaFile ? ImportUtils.createImplicitImportChecker(javaFile) : null;
 
     Queue<PsiElement> queue = new ArrayDeque<>();
@@ -952,6 +965,7 @@ public final class ImportHelper {
 
         PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
         if (!(currentFileResolveScope instanceof PsiImportStatementBase) && refElement != null) {
+          //imported not with imports (implicit or explicit)
           if (!(refElement instanceof PsiClass psiClass && checker != null && isImplicitlyImported(psiClass, checker))) {
             continue;
           }
@@ -1075,7 +1089,7 @@ public final class ImportHelper {
   }
 
   /**
-   * An imported element, e.g. a fully qualified class name. 
+   * An imported element, e.g. a fully qualified class name.
    * This is an implementation detail, unfortunately public because of JavaFX, don't expose it in public API.
    *
    * @param name     the fully qualified name of the element that should be imported.

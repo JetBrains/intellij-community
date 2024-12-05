@@ -20,16 +20,20 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -67,12 +71,26 @@ public final class ImportUtils {
     if (containingPackageName.equals(packageName) || importList.findSingleClassImportStatement(qualifiedName) != null) {
       return;
     }
-    if ((createImplicitImportChecker(javaFile).isImplicitlyImported(qualifiedName, false) ||
-         importList.findOnDemandImportStatement(packageName) != null ||
-         ContainerUtil.exists(importList.getImportModuleStatements(),
-                              moduleStatement -> moduleStatement.findImportedPackage(packageName) != null))
-        && !hasOnDemandImportConflict(qualifiedName, javaFile)) {
-      return;
+    OnDemandImportConflicts conflict = null;
+    ImplicitImportChecker implicitImportChecker = createImplicitImportChecker(javaFile);
+    if (implicitImportChecker.isImplicitlyImported(qualifiedName, false)) {
+      conflict = findOnDemandImportConflict(qualifiedName, javaFile);
+      if (implicitImportChecker.isImplicitlyImported(qualifiedName, false, conflict)) {
+        return;
+      }
+    }
+    if (importList.findOnDemandImportStatement(packageName) != null) {
+      if (conflict == null) {
+        conflict = findOnDemandImportConflict(qualifiedName, javaFile);
+      }
+      if (!conflict.conflictForOnDemand()) return;
+    }
+    if (ContainerUtil.exists(importList.getImportModuleStatements(),
+                             moduleStatement -> moduleStatement.findImportedPackage(packageName) != null)) {
+      if (conflict == null) {
+        conflict = findOnDemandImportConflict(qualifiedName, javaFile);
+      }
+      if (!conflict.conflictForModules() && !conflict.conflictForOnDemand()) return;
     }
     if (hasExactImportConflict(qualifiedName, javaFile)) {
       return;
@@ -131,7 +149,8 @@ public final class ImportUtils {
     if (hasExactImportConflict(fqName, file)) {
       return false;
     }
-    if (hasOnDemandImportConflict(fqName, file, true) && !isAlreadyImported(file, fqName)
+    if (findOnDemandImportConflict(fqName, file, true, true, true) &&
+        !isAlreadyImported(file, fqName)
     ) {
       return false;
     }
@@ -222,17 +241,59 @@ public final class ImportUtils {
     return false;
   }
 
-  public static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context) {
-    return hasOnDemandImportConflict(fqName, context, false);
+  /**
+   * Represents the conflicts that can occur with on-demand imports in a Java file.
+   * This record captures whether there is a conflict with on-demand imports involving
+   * class names and module imports.
+   * The `conflictForOnDemand` indicates if there is a conflict when importing classes
+   * using on-demand imports, such as `import package.*;`.
+   * The `conflictForModules` indicates if there is a conflict when considering module-related
+   * imports.
+   *
+   * @param conflictForOnDemand true if there is a conflict with on-demand imports, false otherwise
+   * @param conflictForModules true if there is a conflict related to modules, false otherwise
+   */
+  public record OnDemandImportConflicts(boolean conflictForOnDemand, boolean conflictForModules) {}
+
+  /**
+   * Finds conflicts related to on-demand imports in the context of a given fully qualified name.
+   * This method checks for potential conflicts with existing imports in the specified context,
+   * considering both class-level on-demand imports and module-related imports.
+   *
+   * @param fqName the fully qualified name of the class or package to check for import conflicts
+   * @param context the PSI element representing the context within which to check for import conflicts
+   * @return an OnDemandImportConflicts object that contains information about whether there are
+   *         conflicts for on-demand imports and module imports
+   */
+  public static OnDemandImportConflicts findOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context) {
+    if(PsiUtil.isAvailable(JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS, context)) {
+      boolean onDemandConflict = findOnDemandImportConflict(fqName, context, false, true, false);
+      boolean moduleConflict = findOnDemandImportConflict(fqName, context, false, false, true);
+      return new OnDemandImportConflicts(onDemandConflict, moduleConflict);
+    }
+    boolean demandImportConflict = findOnDemandImportConflict(fqName, context, false, true, true);
+    return new OnDemandImportConflicts(demandImportConflict, demandImportConflict) ;
   }
 
+  /**
+   * @deprecated use {@link ImportUtils#findOnDemandImportConflict(String, PsiElement)}
+   */
+  @Deprecated(forRemoval = true)
+  public static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context) {
+    OnDemandImportConflicts conflict = findOnDemandImportConflict(fqName, context);
+    return conflict.conflictForOnDemand() || conflict.conflictForModules();
+  }
   /**
    * @param strict if strict is true this method checks if the conflicting
    *               class which is imported is actually used in the file. If it isn't the
    *               on demand import can be overridden with an exact import for the fqName
    *               without breaking stuff.
    */
-  private static boolean hasOnDemandImportConflict(@NotNull String fqName, @NotNull PsiElement context, boolean strict) {
+  private static boolean findOnDemandImportConflict(@NotNull String fqName,
+                                                    @NotNull PsiElement context,
+                                                    boolean strict,
+                                                    boolean considerOnDemand,
+                                                    boolean considerModules) {
     final PsiFile containingFile = context.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile javaFile)) {
       return false;
@@ -243,9 +304,9 @@ public final class ImportUtils {
     }
     final List<PsiImportStatementBase> importStatements =
       ContainerUtil.append(getAllImplicitImports(javaFile), imports.getAllImportStatements());
-    ThreeState state = hasOnDemandImportConflictWithImports(javaFile, importStatements, fqName, strict);
+    ThreeState state = hasOnDemandImportConflictWithImports(javaFile, importStatements, fqName, strict, considerOnDemand, considerModules);
     if (state != ThreeState.UNSURE) return state.toBoolean();
-    return hasDefaultImportConflict(fqName, javaFile);
+    return considerOnDemand && hasDefaultImportConflict(fqName, javaFile);
   }
 
   /**
@@ -255,25 +316,31 @@ public final class ImportUtils {
    * @param javaFile the Java file to check for import conflicts.
    * @param importStatements the list of import statements to check against.
    * @param fqName the fully qualified name to check for conflicts.
+   * @param checkOnDemand check conflicts for all on-demand statements, excluding module import statements.
+   * @param checkModules check conflicts for module imports.
    * @return true if there is an on-demand import conflict, false otherwise.
    */
   public static boolean hasOnDemandImportConflictWithImports(@NotNull PsiJavaFile javaFile,
                                                              @NotNull List<? extends PsiImportStatementBase> importStatements,
-                                                             @NotNull String fqName) {
-    return hasOnDemandImportConflictWithImports(javaFile, importStatements, fqName, false) == ThreeState.YES;
+                                                             @NotNull String fqName,
+                                                             boolean checkOnDemand,
+                                                             boolean checkModules) {
+    return hasOnDemandImportConflictWithImports(javaFile, importStatements, fqName, false, checkOnDemand, checkModules) == ThreeState.YES;
   }
 
   private static ThreeState hasOnDemandImportConflictWithImports(@NotNull PsiJavaFile javaFile,
                                                                  @NotNull List<? extends PsiImportStatementBase> importStatements,
                                                                  @NotNull String fqName,
-                                                                 boolean strict) {
+                                                                 boolean strict,
+                                                                 boolean checkOnDemand,
+                                                                 boolean checkModules) {
     final String shortName = ClassUtil.extractClassName(fqName);
     final String packageName = ClassUtil.extractPackageName(fqName);
     for (final PsiImportStatementBase importStatement : importStatements) {
       if (!importStatement.isOnDemand()) {
         continue;
       }
-      if (importStatement instanceof PsiImportModuleStatement moduleStatement) {
+      if (checkModules && importStatement instanceof PsiImportModuleStatement moduleStatement) {
         //can't process, let's assume that we have conflict because it is safe
         if (DumbService.isDumb(javaFile.getProject())) return ThreeState.YES;
         Ref<Boolean> result = new Ref<>(null);
@@ -303,6 +370,7 @@ public final class ImportUtils {
         }, scope, null);
         if (result.get() != null) return ThreeState.fromBoolean(result.get());
       }
+      if (!checkOnDemand) continue;
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
       if (importReference == null) {
         continue;
@@ -434,7 +502,9 @@ public final class ImportUtils {
       return false;
     }
     final PsiImportStaticStatement onDemandImportStatement = findOnDemandImportStaticStatement(importList, qualifierClass);
-    if (onDemandImportStatement != null && !hasOnDemandImportConflict(qualifierClass + '.' + memberName, javaFile)) {
+    if (onDemandImportStatement != null &&
+        //check only on demands
+        !findOnDemandImportConflict(qualifierClass + '.' + memberName, javaFile, false, true, false)) {
       return true;
     }
     final Project project = context.getProject();
@@ -542,7 +612,7 @@ public final class ImportUtils {
     }
     final PsiImportStaticStatement onDemandImportStatement = findOnDemandImportStaticStatement(importList, memberClassName);
     if (onDemandImportStatement != null) {
-      if (!hasOnDemandImportConflict(memberClassName + '.' + memberName, javaFile)) {
+      if (!findOnDemandImportConflict(memberClassName + '.' + memberName, javaFile, false, true, false)) {
         return true;
       }
     }
@@ -593,29 +663,38 @@ public final class ImportUtils {
     }
 
     public boolean isImplicitlyImported(String qName, boolean isStatic) {
+      return isImplicitlyImported(qName, isStatic, null);
+    }
+
+    public boolean isImplicitlyImported(String qName, boolean isStatic,
+                                        @Nullable ImportUtils.OnDemandImportConflicts conflicts) {
       String packageOrClassName = StringUtil.getPackageName(qName);
       String className = ClassUtil.extractClassName(qName);
       if (!isStatic) {
-        for (PsiImportModuleStatement psiImportModuleStatement : myModulesStatements) {
-          PsiPackageAccessibilityStatement importedPackage = psiImportModuleStatement.findImportedPackage(packageOrClassName);
-          if (importedPackage == null) continue;
-          PsiJavaCodeReferenceElement reference = importedPackage.getPackageReference();
-          if (reference == null) continue;
-          PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiPackage psiPackage) {
-            if (psiPackage.containsClassNamed(className)) return true;
+        if(conflicts==null || (!conflicts.conflictForModules() && !conflicts.conflictForOnDemand())){
+          for (PsiImportModuleStatement psiImportModuleStatement : myModulesStatements) {
+            PsiPackageAccessibilityStatement importedPackage = psiImportModuleStatement.findImportedPackage(packageOrClassName);
+            if (importedPackage == null) continue;
+            PsiJavaCodeReferenceElement reference = importedPackage.getPackageReference();
+            if (reference == null) continue;
+            PsiElement resolved = reference.resolve();
+            if (resolved instanceof PsiPackage psiPackage) {
+              if (psiPackage.containsClassNamed(className)) return true;
+            }
           }
         }
-        if (myPackageStatements.containsKey(packageOrClassName)) return true;
+        if ((conflicts == null || !conflicts.conflictForOnDemand()) && myPackageStatements.containsKey(packageOrClassName)) return true;
       }
       else {
-        PsiImportStaticStatement psiImportStaticStatement = myStaticImportStatements.get(packageOrClassName);
-        if (psiImportStaticStatement != null) {
-          if (psiImportStaticStatement.isOnDemand()) return true;
-          PsiJavaCodeReferenceElement reference = psiImportStaticStatement.getImportReference();
-          if (reference == null) return false;
-          String qualifiedName = reference.getQualifiedName();
-          return qName.equals(qualifiedName);
+        if (conflicts == null || !conflicts.conflictForOnDemand()) {
+          PsiImportStaticStatement psiImportStaticStatement = myStaticImportStatements.get(packageOrClassName);
+          if (psiImportStaticStatement != null) {
+            if (psiImportStaticStatement.isOnDemand()) return true;
+            PsiJavaCodeReferenceElement reference = psiImportStaticStatement.getImportReference();
+            if (reference == null) return false;
+            String qualifiedName = reference.getQualifiedName();
+            return qName.equals(qualifiedName);
+          }
         }
       }
       return false;

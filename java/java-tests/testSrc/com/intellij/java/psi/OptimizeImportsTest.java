@@ -182,6 +182,30 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testConflictModuleImportImplicitClassDemandOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package p1; public class List {}");
+      myFixture.addClass("package p1; public class A1 {}");
+      myFixture.addClass("package p1; public class A2 {}");
+      myFixture.addClass("package p1; public class A3 {}");
+      myFixture.addClass("package p1; public class A4 {}");
+      myFixture.addClass("package p1; public class A5 {}");
+      doTest();
+    });
+  }
+
+  public void testConflictModuleImportImplicitClassDemandOverModule2() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package p1; public class List {}");
+      myFixture.addClass("package p1; public class A1 {}");
+      myFixture.addClass("package p1; public class A2 {}");
+      myFixture.addClass("package p1; public class A3 {}");
+      myFixture.addClass("package p1; public class A4 {}");
+      myFixture.addClass("package p1; public class A5 {}");
+      doTest();
+    });
+  }
+
   public void testConflictStaticImport(){
     myFixture.addClass(
       """
@@ -204,6 +228,34 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
         }
         """);
     doTest();
+  }
+
+  public void testConflictStaticImportWithImplicitClassDemandOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass(
+        """
+          package p1;
+          public class A1 {
+            public static void print(Object obj) {}
+            public static void foo() {}
+            public static void foo1() {}
+            public static void foo2() {}
+            public static void foo3() {}
+            public static void foo4() {}
+            public static void foo5() {}
+          }
+          """);
+      myFixture.addClass("""
+                         package java.io;
+                         
+                         public final class IO {
+                           public static void print(Object obj) {}
+                         }
+                         """);
+      doTest();
+
+    });
   }
 
   public void testConflictStaticImportWithImplicitClass(){

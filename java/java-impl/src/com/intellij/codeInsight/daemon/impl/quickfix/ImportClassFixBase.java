@@ -203,7 +203,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       classList = new ArrayList<>(filtered);
     }
 
-    filerByPackageName(classList, psiFile);
+    filterByPackageName(classList, psiFile);
 
     filterAlreadyImportedButUnresolved(classList, psiFile);
 
@@ -232,7 +232,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return false;
   }
 
-  private void filerByPackageName(@NotNull Collection<PsiClass> classList, @NotNull PsiFile file) {
+  private void filterByPackageName(@NotNull Collection<PsiClass> classList, @NotNull PsiFile file) {
     String qualifiedName = getQualifiedName(myReferenceElement);
     String packageName = StringUtil.getPackageName(qualifiedName);
     if (!packageName.isEmpty() &&

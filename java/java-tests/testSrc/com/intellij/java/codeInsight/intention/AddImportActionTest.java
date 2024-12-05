@@ -841,9 +841,7 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         }
       }
       """);
-    myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection());
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary qualification"));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    removeUnnecessaryQualification();
     myFixture.checkResult("""
 
                             class Test {
@@ -855,6 +853,12 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                               }
                             }
                             """);
+  }
+
+  private void removeUnnecessaryQualification() {
+    myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection());
+    myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary qualification"));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   public void testDoNotAllowToAddImportInPackageInfoFile() {
@@ -1095,6 +1099,266 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
       }
       """);
       assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
+    });
+  }
+
+  public void testModuleImportClassUnnecessaryQualifier() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package a; public class List {}");
+
+      myFixture.configureByText("Test.java", """
+        import a.*;
+        import module java.base;
+        class Test{
+          void main(){
+            java.util.L<caret>ist x;
+          }
+        }
+        """);
+
+      reimportClass();
+      myFixture.checkResult("""
+                              import a.*;
+                              import module java.base;
+                              
+                              import java.util.List;
+                              
+                              class Test{
+                                void main(){
+                                  List x;
+                                }
+                              }
+                              """);
+    });
+  }
+
+  public void testModuleImportClassUnnecessaryQualifierAlreadyUsed() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package a; public class List {}");
+
+      myFixture.configureByText("Test.java", """
+        import a.*;
+        import module java.base;
+        class Test{
+          void main(){
+            java.util.L<caret>ist x;
+            List y;
+          }
+        }
+        """);
+
+      myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection());
+      assertTrue(myFixture.filterAvailableIntentions("Replace qualified name with import").isEmpty());
+    });
+  }
+
+  public void testModuleImportClassUnnecessaryQualifierImportFromDemand() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package a; public class List {}");
+
+      myFixture.configureByText("Test.java", """
+        import a.*;
+        import module java.base;
+        class Test{
+          void main(){
+            a.L<caret>ist x;
+          }
+        }
+        """);
+
+      removeUnnecessaryQualification();
+      myFixture.checkResult("""
+          import a.*;
+          import module java.base;
+          class Test{
+            void main(){
+              List x;
+            }
+          }
+          """);
+    });
+  }
+
+  public void testModuleImportUnnecessaryQualifierAlreadyImported() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.configureByText("Test.java", """
+        import module java.base;
+        class Test{
+          void main(){
+            java.util.L<caret>ist x;
+          }
+        }
+        """);
+
+      removeUnnecessaryQualification();
+      myFixture.checkResult("""
+                              import module java.base;
+                              class Test{
+                                void main(){
+                                  List x;
+                                }
+                              }
+                              """);
+    });
+  }
+
+  public void testImplicitClassUnnecessaryQualifier() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package a; public class List {}");
+
+      myFixture.configureByText("Test.java", """
+        import a.*;
+        
+        void main(){
+          java.util.L<caret>ist x;
+        }
+        """);
+
+      reimportClass();
+      myFixture.checkResult("""
+                              import a.*;
+                              
+                              import java.util.List;
+                              
+                              void main(){
+                                List x;
+                              }
+                              """);
+    });
+  }
+
+  public void testImplicitClassUnnecessaryQualifierAlreadyImported() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+
+      myFixture.configureByText("Test.java", """
+        void main(){
+          java.util.L<caret>ist x;
+        }
+        """);
+
+      removeUnnecessaryQualification();
+      myFixture.checkResult("""
+                              void main(){
+                                List x;
+                              }
+                              """);
+    });
+  }
+
+  public void testImportFoldingWithConflictsToJavaBaseModuleImplicitClassDemandsOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package p1; public class List {}");
+      myFixture.addClass("package p1; public class A1 {}");
+      myFixture.addClass("package p1; public class A2 {}");
+      myFixture.addClass("package p1; public class A3 {}");
+      myFixture.addClass("package p1; public class A4 {}");
+      myFixture.addClass("package p1; public class A5 {}");
+
+      myFixture.configureByText("C.java",
+                                """
+                                  
+                                  import module java.base;
+                                  import p1.A1;
+                                  import p1.A2;
+                                  import p1.A3;
+                                  import p1.A4;
+                                  
+                                  
+                                  A1 a1;
+                                  A2 a2;
+                                  A3 a3;
+                                  A4 a4;
+                                  A<caret>5 a5;
+                              
+                                  List myName;
+
+                                  void main(){
+                                  }
+                                  """);
+      importClass();
+
+      myFixture.checkResult(
+        """
+          
+          import module java.base;
+          import p1.*;
+          
+          import java.util.List;
+          
+          
+          A1 a1;
+          A2 a2;
+          A3 a3;
+          A4 a4;
+          A5 a5;
+          
+          List myName;
+          
+          void main(){
+          }
+          """);
+    });
+  }
+
+  public void testImportFoldingWithConflictsToJavaBaseModuleImplicitClassFromPackageDemandsOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package p1; public class List {}");
+      myFixture.addClass("package p1; public class A1 {}");
+      myFixture.addClass("package p1; public class A2 {}");
+      myFixture.addClass("package p1; public class A3 {}");
+      myFixture.addClass("package p1; public class A4 {}");
+      myFixture.addClass("package p1; public class A5 {}");
+
+      myFixture.configureByText("C.java",
+                                """
+                                  
+                                  import module java.base;
+                                  import p1.A1;
+                                  import p1.A2;
+                                  import p1.A3;
+                                  import p1.A4;
+                                  import p1.List;
+                                  
+                                  
+                                  A1 a1;
+                                  A2 a2;
+                                  A3 a3;
+                                  A4 a4;
+                                  A<caret>5 a5;
+                              
+                                  List myName;
+
+                                  void main(){
+                                  }
+                                  """);
+      importClass();
+
+      myFixture.checkResult(
+        """
+          
+          import module java.base;
+          import p1.*;
+          
+          
+          A1 a1;
+          A2 a2;
+          A3 a3;
+          A4 a4;
+          A5 a5;
+          
+          List myName;
+          
+          void main(){
+          }
+          """);
     });
   }
 }
