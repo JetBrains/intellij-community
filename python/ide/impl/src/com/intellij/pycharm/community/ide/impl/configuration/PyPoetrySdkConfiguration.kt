@@ -14,6 +14,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
@@ -39,19 +40,21 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }
 
+
   override fun getIntention(module: Module): @IntentionName String? {
-    return runBlockingCancellable {
-      val toml = findAmongRoots(module, PY_PROJECT_TOML)
-      if (toml == null) {
-        return@runBlockingCancellable null
-      }
+    return runWithModalProgressBlocking(module.project, PyCharmCommunityCustomizationBundle.message("sdk.dialog.title.setting.up.poetry.environment")) {
+      val msg: String? = null
+        val toml = findAmongRoots(module, PY_PROJECT_TOML)
+        if (toml == null) {
+          return@runWithModalProgressBlocking null
+        }
 
-      val isPoetry = getPyProjectTomlForPoetry(toml) != null
-      if (!isPoetry) {
-        return@runBlockingCancellable null
-      }
+        val isPoetry = getPyProjectTomlForPoetry(toml) != null
+        if (!isPoetry) {
+          return@runWithModalProgressBlocking null
+        }
 
-      PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", toml.name)
+        return@runWithModalProgressBlocking PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment", toml.name)
     }
   }
 
