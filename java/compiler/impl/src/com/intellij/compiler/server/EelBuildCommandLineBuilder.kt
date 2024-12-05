@@ -22,7 +22,6 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
-import kotlin.time.measureTime
 
 class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
   private val eel: EelApi = exePath.getEelApiBlocking()
@@ -65,6 +64,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
 
   override fun copyPathToTargetIfRequired(path: Path): Path {
     if (eel is LocalEelApi) return path
+    if (path.getEelApiBlocking() !is LocalEelApi) return path
     // todo: intergrate checksums here so that files could be refreshed in case of changes
     val newPath = workingDirectory.resolve("build-cache").resolve(path.name)
     if (!Files.exists(newPath)) {
@@ -93,6 +93,10 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
 
   override fun setUnixProcessPriority(priority: Int) {
     // todo
+  }
+
+  fun pathPrefix(): String {
+    return eel.mapper.pathPrefix()
   }
 
   /**

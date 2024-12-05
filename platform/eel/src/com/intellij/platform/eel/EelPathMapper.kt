@@ -43,4 +43,9 @@ interface EelPathMapper {
   ): EelPath.Absolute
 
   fun toNioPath(path: EelPath.Absolute): Path
+
+  /**
+   * @return empty string for local eel
+   */
+  fun pathPrefix(): String
 }

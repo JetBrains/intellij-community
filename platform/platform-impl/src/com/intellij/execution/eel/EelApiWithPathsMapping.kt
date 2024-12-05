@@ -79,6 +79,10 @@ private class EelEphemeralRootAwareMapper(
   override fun toNioPath(path: EelPath.Absolute): Path {
     return ephemeralRoot.resolve(path.toString())
   }
+
+  override fun pathPrefix(): String {
+    return ephemeralRoot.pathString.trimEnd('/', '\\')
+  }
 }
 
 private class EelProcessBuilderWithPathsNormalization(

@@ -46,6 +46,11 @@ public class JpsGlobalLoader {
   public static void configurePathMapper(JpsGlobal global) {
     if (System.getProperty("jps.in.wsl") != null) {
       global.setPathMapper(new JpsWslPathMapper());
+      return;
+    }
+    String pathPrefix = System.getProperty("ide.jps.remote.path.prefix");
+    if (pathPrefix != null && !pathPrefix.isEmpty()) {
+      global.setPathMapper(new JpsPrefixCuttingPathMapper(pathPrefix));
     }
   }
 
