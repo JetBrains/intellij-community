@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
@@ -11,18 +12,21 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.types.PyLiteralType
-import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 class PyEnumInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     return object : PyInspectionVisitor(holder, getContext(session)) {
       override fun visitPyClass(node: PyClass) {
-        val enumSuperClassWithMembers = node.getSuperClasses(myTypeEvalContext).find { isEnumClassWithMembers(it, myTypeEvalContext) }
-        if (enumSuperClassWithMembers != null) {
-          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", enumSuperClassWithMembers.name))
+        for (superClassExpression in node.superClassExpressions) {
+          val superClassType = myTypeEvalContext.getType(superClassExpression)
+          if (superClassType is PyClassType) {
+            if (isEnumClassWithMembers(superClassType.pyClass, myTypeEvalContext)) {
+              registerProblem(superClassExpression,
+                              PyPsiBundle.message("INSP.enum.enum.class.is.final.and.cannot.be.subclassed", superClassType.pyClass.name),
+                              ProblemHighlightType.GENERIC_ERROR)
+            }
+          }
         }
         validateEnumMembers(node)
       }
