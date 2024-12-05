@@ -32,7 +32,7 @@ import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 
 @Composable
-fun ComponentsView() {
+internal fun ComponentsView() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         ComponentsToolBar()
         Divider(Orientation.Vertical, Modifier.fillMaxHeight())
@@ -41,7 +41,7 @@ fun ComponentsView() {
 }
 
 @Composable
-fun ComponentsToolBar() {
+internal fun ComponentsToolBar() {
     Column(Modifier.fillMaxHeight().width(40.dp).verticalScroll(rememberScrollState())) {
         ComponentsViewModel.views.forEach {
             SelectableIconActionButton(
@@ -61,7 +61,7 @@ fun ComponentsToolBar() {
 }
 
 @Composable
-fun ComponentView(view: ViewInfo) {
+internal fun ComponentView(view: ViewInfo) {
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         Text(view.title, style = Typography.h1TextStyle())
         view.content()

@@ -49,6 +49,8 @@ include(
     ":ui-test",
 )
 
+project(":ide-laf-bridge-tests").projectDir = file("ide-laf-bridge/ide-laf-bridge-tests")
+
 gradleEnterprise {
     buildScan {
         publishAlwaysIf(System.getenv("CI") == "true")

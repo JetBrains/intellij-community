@@ -26,7 +26,7 @@ import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
 
 @Composable
-fun DecoratedWindowScope.TitleBarView() {
+internal fun DecoratedWindowScope.TitleBarView() {
     TitleBar(Modifier.newFullscreenControls(), gradientStartColor = MainViewModel.projectColor) {
         Row(Modifier.align(Alignment.Start)) {
             Dropdown(

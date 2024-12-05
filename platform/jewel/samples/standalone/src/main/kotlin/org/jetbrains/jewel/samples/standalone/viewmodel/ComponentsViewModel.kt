@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.samples.standalone.viewmodel
 
-import SplitLayouts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,13 +19,14 @@ import org.jetbrains.jewel.samples.standalone.view.component.RadioButtons
 import org.jetbrains.jewel.samples.standalone.view.component.Scrollbars
 import org.jetbrains.jewel.samples.standalone.view.component.SegmentedControls
 import org.jetbrains.jewel.samples.standalone.view.component.Sliders
+import org.jetbrains.jewel.samples.standalone.view.component.SplitLayouts
 import org.jetbrains.jewel.samples.standalone.view.component.Tabs
 import org.jetbrains.jewel.samples.standalone.view.component.TextAreas
 import org.jetbrains.jewel.samples.standalone.view.component.TextFields
 import org.jetbrains.jewel.samples.standalone.view.component.Tooltips
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 
-object ComponentsViewModel {
+internal object ComponentsViewModel {
     private var outerSplitState by mutableStateOf(SplitLayoutState(0.5f))
     private var verticalSplitState by mutableStateOf(SplitLayoutState(0.5f))
     private var innerSplitState by mutableStateOf(SplitLayoutState(0.5f))

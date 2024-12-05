@@ -92,7 +92,7 @@ import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
-fun ReleasesSampleCompose(project: Project) {
+internal fun ReleasesSampleCompose(project: Project) {
     var selectedItem: ContentItem? by remember { mutableStateOf(null) }
     HorizontalSplitLayout(
         first = {
@@ -300,7 +300,7 @@ private fun OverflowMenu(currentContentSource: ContentSource<*>, onContentSource
 
     var menuVisible by remember { mutableStateOf(false) }
 
-    // Emulates Swing actions that pop up menus — they stay pressed while the menu is open
+    // Emulates Swing actions that pop up menus ï¿½ they stay pressed while the menu is open
     IconButton(
         modifier =
             Modifier.fillMaxHeight().thenIf(menuVisible) {
