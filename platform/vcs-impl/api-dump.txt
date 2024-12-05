@@ -926,12 +926,9 @@ com.intellij.openapi.vcs.changes.ChangesViewModifier
 com.intellij.openapi.vcs.changes.ChangesViewModifier$ChangesViewModifierListener
 - java.util.EventListener
 - a:updated():V
-f:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
-- com.intellij.openapi.Disposable
+Fa:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 - sf:TOPIC:com.intellij.util.messages.Topic
-- <init>(com.intellij.openapi.project.Project):V
-- dispose():V
-- getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+- f:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$ChangesViewWorkflowListener
 - java.util.EventListener

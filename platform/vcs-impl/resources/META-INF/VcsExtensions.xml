@@ -56,6 +56,9 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewWorkflowManagerImpl"/>
+
     <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangeManagerProjectActivity"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
                     headlessImplementation=""/>
