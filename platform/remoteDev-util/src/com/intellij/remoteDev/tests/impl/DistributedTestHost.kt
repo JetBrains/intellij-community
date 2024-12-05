@@ -196,7 +196,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               val providedContext = contextGetter.invoke()
               val clientId = providedContext.clientId() ?: ClientId.current
 
-              return withContext(providedContext + clientId.asContextElement()) {
+              return withContext(providedContext) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(silent = false)
