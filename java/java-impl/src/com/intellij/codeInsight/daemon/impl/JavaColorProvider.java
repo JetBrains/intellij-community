@@ -60,6 +60,8 @@ public final class JavaColorProvider implements ElementColorProvider {
     return null;
   }
 
+  private static final @NotNull List<@NotNull String> colorNames = List.of("Color", "ColorUIResource");
+
   public static boolean isColorType(@Nullable PsiType type) {
     if (type != null && type.isValid()) {
       final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
@@ -108,13 +110,19 @@ public final class JavaColorProvider implements ElementColorProvider {
   }
 
   private static boolean isNewJBColorExpression(UElement element) {
-    if (element instanceof UCallExpression callExpression && callExpression.getValueArgumentCount() == 2 && callExpression.hasKind(UastCallKind.CONSTRUCTOR_CALL)) {
+    if (element instanceof UCallExpression callExpression &&
+        callExpression.getValueArgumentCount() == 2 &&
+        callExpression.isClassConstructorNameOneOf(jbColorNames) &&
+        callExpression.hasKind(UastCallKind.CONSTRUCTOR_CALL)
+    ) {
       final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
       return psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName());
     }
 
     return false;
   }
+
+  private static final @NotNull List<@NotNull String> jbColorNames = List.of("JBColor");
 
   private static @Nullable Color getColor(List<? extends UExpression> args) {
     try {
@@ -139,6 +147,7 @@ public final class JavaColorProvider implements ElementColorProvider {
     int argumentCount = callExpression.getValueArgumentCount();
     return argumentCount > 0 &&
            argumentCount < 5 &&
+           callExpression.isClassConstructorNameOneOf(colorNames) &&
            callExpression.hasKind(UastCallKind.CONSTRUCTOR_CALL) &&
            isColorType(callExpression.getReturnType());
   }

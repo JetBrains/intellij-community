@@ -421,6 +421,14 @@ class KotlinUFunctionCallExpression(
         return false
     }
 
+    override fun isClassConstructorNameOneOf(names: Collection<String>): Boolean {
+        if (methodNameCanBeOneOf(sourcePsi, names)) {
+            return super.isClassConstructorNameOneOf(names)
+        }
+
+        return false
+    }
+
     companion object {
         /**
          * Can return false-positive results, additional resolve is needed
