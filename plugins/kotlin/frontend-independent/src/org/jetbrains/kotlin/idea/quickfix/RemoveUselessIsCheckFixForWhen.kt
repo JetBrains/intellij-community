@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPs
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern) : KotlinPsiOnlyQuickFixAction<KtWhenConditionIsPattern>(element) {
+class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern, val compileTimeCheckResult: Boolean? = null) : KotlinPsiOnlyQuickFixAction<KtWhenConditionIsPattern>(element) {
     override fun getFamilyName(): String = KotlinBundle.message("remove.useless.is.check")
 
     override fun getText(): String = familyName
@@ -23,7 +23,7 @@ class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern) : Kotlin
         val whenEntry = condition.parent as? KtWhenEntry ?: return
         val whenExpression = whenEntry.parent as? KtWhenExpression ?: return
 
-        if (condition.isNegated) {
+        if (compileTimeCheckResult?.not() ?: condition.isNegated) {
             condition.parent.delete()
         } else {
             whenExpression.entries.dropWhile { it != whenEntry }.forEach { it.delete() }
