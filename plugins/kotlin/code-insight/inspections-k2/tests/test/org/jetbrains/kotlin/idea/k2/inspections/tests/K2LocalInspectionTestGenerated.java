@@ -1548,6 +1548,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIf3.kt");
         }
 
+        @TestMetadata("inIfCompoundElvis.kt")
+        public void testInIfCompoundElvis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfCompoundElvis.kt");
+        }
+
+        @TestMetadata("inIfCompoundElvis2.kt")
+        public void testInIfCompoundElvis2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfCompoundElvis2.kt");
+        }
+
         @TestMetadata("inIfWithBinaryExpression.kt")
         public void testInIfWithBinaryExpression() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfWithBinaryExpression.kt");
@@ -1566,6 +1576,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("inIfWithNullableCallExpression.kt")
         public void testInIfWithNullableCallExpression() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inIfWithNullableCallExpression.kt");
+        }
+
+        @TestMetadata("inWhenCondition.kt")
+        public void testInWhenCondition() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/nullableBooleanElvis/inWhenCondition.kt");
         }
 
         @TestMetadata("notInIf.kt")
