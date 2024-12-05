@@ -89,7 +89,12 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
   }
 
   private fun getNextVisibleCellInDirection(ordinal: Int, direction: Int): EditorCell? {
-    for (i in ordinal + direction until _cells.size) {
+    val range = if (direction > 0) {
+      ordinal + direction until _cells.size
+    } else {
+      (0 .. ordinal + direction).reversed()
+    }
+    for (i in range) {
       val cell = _cells[i]
       if (cell.visible.get()) {
         return cell
