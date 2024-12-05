@@ -66,6 +66,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingTextTrimmer
+import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -209,7 +210,9 @@ object Switcher : BaseSwitcherAction(null) {
       }
       if (cbShowOnlyEditedFiles != null) {
         cbShowOnlyEditedFiles.isOpaque = false
-        cbShowOnlyEditedFiles.isFocusable = false
+        if (!ScreenReader.isActive()) {
+          cbShowOnlyEditedFiles.isFocusable = false
+        }
         cbShowOnlyEditedFiles.isSelected = onlyEdited
         cbShowOnlyEditedFiles.addItemListener(ItemListener(::updateFilesByCheckBox))
         header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles)
@@ -345,7 +348,12 @@ object Switcher : BaseSwitcherAction(null) {
         popup.setMinimumSize(JBDimension(if (windows.isEmpty()) 300 else 500, 200))
       }
       isFocusCycleRoot = true
-      focusTraversalPolicy = LayoutFocusTraversalPolicy()
+      if (ScreenReader.isActive()) {
+        focusTraversalPolicy = ListFocusTraversalPolicy(listOf(files, toolWindows, cbShowOnlyEditedFiles))
+      }
+      else {
+        focusTraversalPolicy = LayoutFocusTraversalPolicy()
+      }
       SwitcherListFocusAction(files, toolWindows, ListActions.Left.ID)
       SwitcherListFocusAction(toolWindows, files, ListActions.Right.ID)
       IdeEventQueue.getInstance().popupManager.closeAllPopups(false)
