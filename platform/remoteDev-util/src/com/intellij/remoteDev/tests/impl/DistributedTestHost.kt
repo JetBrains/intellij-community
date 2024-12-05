@@ -2,7 +2,6 @@ package com.intellij.remoteDev.tests.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.enableCoroutineDump
@@ -221,7 +220,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
           // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId(Dispatchers.Default + ModalityState.any().asContextElement()) { _, parameters ->
+          session.runNextAction.setSuspendPreserveClientId(Dispatchers.Default) { _, parameters ->
             val actionTitle = parameters.title
             val queue = actionsMap[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
@@ -232,14 +231,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
 
-          session.runNextActionGetComponentData.setSuspendPreserveClientId(Dispatchers.Default + ModalityState.any().asContextElement()) { _, parameters ->
+          session.runNextActionGetComponentData.setSuspendPreserveClientId(Dispatchers.Default) { _, parameters ->
             val actionTitle = parameters.title
-            val queue = dimensionRequests[actionTitle]
-                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val queue = dimensionRequests[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
-            val timeout = action.timeout
 
-            return@setSuspendPreserveClientId runNext(actionTitle, timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
+            return@setSuspendPreserveClientId runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
               action.action(agentContext, parameters.parameters)
             }
           }
