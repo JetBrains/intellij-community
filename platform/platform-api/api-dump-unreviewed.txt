@@ -2214,8 +2214,6 @@ c:com.intellij.openapi.fileChooser.FileSaverDescriptor
 - com.intellij.openapi.fileChooser.FileChooserDescriptor
 - java.lang.Cloneable
 - <init>(java.lang.String,java.lang.String,java.lang.String[]):V
-- getFileExtensions():java.lang.String[]
-- isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
 com.intellij.openapi.fileChooser.FileSaverDialog
 - a:save(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper
 - save(java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper

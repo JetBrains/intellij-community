@@ -414,7 +414,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   @ApiStatus.Internal
-  public @Nullable Pair<@Nls String, List<String>> getExtensionFilter() {
+  public @Nullable Pair<@Nls String, List<@NlsSafe String>> getExtensionFilter() {
     return myExtensionFilter;
   }
 
