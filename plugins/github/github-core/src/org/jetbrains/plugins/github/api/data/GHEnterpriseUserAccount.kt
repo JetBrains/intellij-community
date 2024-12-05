@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
 
-@GraphQLFragment("/graphql/fragment/organizationInfo.graphql")
-class GHOrganization(
+@GraphQLFragment("/graphql/fragment/enterpriseUserAccountInfo.graphql")
+class GHEnterpriseUserAccount(
   id: String,
   override val login: String,
   override val url: String,

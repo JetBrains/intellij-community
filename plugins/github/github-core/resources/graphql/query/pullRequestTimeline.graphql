@@ -15,34 +15,34 @@ fragment prCommitInfo on PullRequestCommit {
 
 fragment reviewDismissedEvent on ReviewDismissedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   dismissalMessageHTML
   review {
     author {
-      ...actorInfo
+      ...actor
     }
   }
 }
 
 fragment readyForReviewEvent on ReadyForReviewEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
 }
 
 fragment convertToDraftEvent on ConvertToDraftEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
 }
 
 fragment renamedEvent on RenamedTitleEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   previousTitle
   currentTitle
@@ -51,21 +51,21 @@ fragment renamedEvent on RenamedTitleEvent {
 
 fragment closedEvent on ClosedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
 }
 
 fragment reopenedEvent on ReopenedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
 }
 
 fragment mergedEvent on MergedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   commit {
@@ -76,7 +76,7 @@ fragment mergedEvent on MergedEvent {
 
 fragment assignedEvent on AssignedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   user {
@@ -86,7 +86,7 @@ fragment assignedEvent on AssignedEvent {
 
 fragment unassignedEvent on UnassignedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   user {
@@ -96,7 +96,7 @@ fragment unassignedEvent on UnassignedEvent {
 
 fragment labeledEvent on LabeledEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   label {
@@ -106,7 +106,7 @@ fragment labeledEvent on LabeledEvent {
 
 fragment unlabeledEvent on UnlabeledEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   label {
@@ -116,7 +116,7 @@ fragment unlabeledEvent on UnlabeledEvent {
 
 fragment reviewRequestedEvent on ReviewRequestedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   requestedReviewer {
@@ -126,7 +126,7 @@ fragment reviewRequestedEvent on ReviewRequestedEvent {
 
 fragment reviewRequestRemovedEvent on ReviewRequestRemovedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   requestedReviewer {
@@ -140,7 +140,7 @@ fragment gitRefName on Ref {
 
 fragment baseRefForcePushedEvent on BaseRefForcePushedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   ref {
@@ -150,7 +150,7 @@ fragment baseRefForcePushedEvent on BaseRefForcePushedEvent {
 
 fragment headRefForcePushedEvent on HeadRefForcePushedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   ref {
@@ -166,7 +166,7 @@ fragment headRefForcePushedEvent on HeadRefForcePushedEvent {
 
 fragment headRefDeletedEvent on HeadRefDeletedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   headRefName
@@ -174,14 +174,14 @@ fragment headRefDeletedEvent on HeadRefDeletedEvent {
 
 fragment headRefRestoredEvent on HeadRefRestoredEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
 }
 
 fragment baseRefChangedEvent on BaseRefChangedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
 }
@@ -205,7 +205,7 @@ fragment referenceSubject on ReferencedSubject {
 
 fragment crossReferencedEvent on CrossReferencedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   source {
@@ -215,7 +215,7 @@ fragment crossReferencedEvent on CrossReferencedEvent {
 
 fragment connectedEvent on ConnectedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   subject {
@@ -225,7 +225,7 @@ fragment connectedEvent on ConnectedEvent {
 
 fragment disconnectedEvent on DisconnectedEvent {
   actor {
-    ...actorInfo
+    ...actor
   }
   createdAt
   subject {
