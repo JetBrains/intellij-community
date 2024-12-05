@@ -2285,6 +2285,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     public void contextAction(@NotNull SuspendContextImpl context) {
       // handle unfreeze through the regular context resume
+      //noinspection PointlessBooleanExpression
       if (false && getSuspendManager().isFrozen(myThread)) {
         getSuspendManager().unfreezeThread(myThread);
         return;

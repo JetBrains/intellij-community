@@ -379,7 +379,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     if (other.myPattern != null) myPattern = other.myPattern;
     if (other.myAdditionalPropertiesAllowed != null) {
       myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
-      if (other.myAdditionalPropertiesAllowed == Boolean.FALSE) {
+      if (!other.myAdditionalPropertiesAllowed) {
         addAdditionalPropsNotAllowedFor(other.myFileUrl, other.myPointer);
       }
     }
@@ -609,7 +609,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   // or if it inherits this prohibition flag from the merge result, as the behavior differs in these cases
   @Override
   public boolean hasOwnExtraPropertyProhibition() {
-    return getAdditionalPropertiesAllowed() == Boolean.FALSE &&
+    return !getAdditionalPropertiesAllowed() &&
            (myAdditionalPropertiesNotAllowedFor == null ||
             myAdditionalPropertiesNotAllowedFor.contains(myFileUrl + myPointer));
   }
