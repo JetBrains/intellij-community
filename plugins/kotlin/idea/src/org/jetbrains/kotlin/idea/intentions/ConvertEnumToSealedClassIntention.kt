@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
@@ -28,9 +27,12 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 /**
  * Tests:
- * [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.ConvertEnumToSealedClass]
+ *
+ * - [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.ConvertEnumToSealedClass]
+ * - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertActualEnumToSealedClass]
+ * - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertExpectEnumToSealedClass]
  */
-class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
+internal class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
     KotlinBundle.lazyMessage("convert.to.sealed.class")
 ) {
@@ -44,79 +46,91 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
     override fun applyTo(element: KtClass, editor: Editor?) {
         val name = element.name ?: return
         if (name.isEmpty()) return
-        val doesSupportDataObjects = element.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)
 
-        for (klass in element.withExpectedActuals()) {
-            if (klass !is KtClass) continue
+        val supportsDataObjects = element.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)
+        val isJvmPlatform = element.platform.isJvm()
+        val expectActualClasses = element.withExpectedActuals()
 
-            val classDescriptor = klass.resolveToDescriptorIfAny() ?: continue
-            val isExpect = classDescriptor.isExpect
-            val isActual = classDescriptor.isActual
+        for (klass in expectActualClasses) {
+            convertClass(klass, name, supportsDataObjects, isJvmPlatform)
+        }
+    }
 
-            klass.removeModifier(KtTokens.ENUM_KEYWORD)
-            klass.addModifier(KtTokens.SEALED_KEYWORD)
+    private fun convertClass(klass: KtDeclaration, name: String, supportsDataObjects: Boolean, isJvmPlatform: Boolean) {
+        if (klass !is KtClass) return
 
-            val psiFactory = KtPsiFactory(klass.project)
+        val classDescriptor = klass.resolveToDescriptorIfAny() ?: return
+        val isExpect = classDescriptor.isExpect
+        val isActual = classDescriptor.isActual
+        val classFqName = classDescriptor.fqNameSafe.asString()
 
-            val objects = mutableListOf<KtObjectDeclaration>()
-            for (member in klass.declarations) {
-                if (member !is KtEnumEntry) continue
+        klass.removeModifier(KtTokens.ENUM_KEYWORD)
+        klass.addModifier(KtTokens.SEALED_KEYWORD)
 
-                val obj = psiFactory.createDeclaration<KtObjectDeclaration>(
-                    listOfNotNull(
-                        "data".takeIf { doesSupportDataObjects },
-                        "object",
-                        member.name,
-                    ).joinToString(" ")
-                )
+        val psiFactory = KtPsiFactory(klass.project)
 
-                val initializers = member.initializerList?.initializers ?: emptyList()
-                if (initializers.isNotEmpty()) {
-                    initializers.forEach { obj.addSuperTypeListEntry(psiFactory.createSuperTypeCallEntry("${klass.name}${it.text}")) }
+        val objects = mutableListOf<KtObjectDeclaration>()
+        for (member in klass.declarations) {
+            if (member !is KtEnumEntry) continue
+
+            val obj = psiFactory.createDeclaration<KtObjectDeclaration>(
+                listOfNotNull(
+                    "data".takeIf { supportsDataObjects },
+                    "object",
+                    member.name,
+                ).joinToString(" ")
+            )
+
+            val initializers = member.initializerList?.initializers ?: emptyList()
+            if (initializers.isNotEmpty()) {
+                for (initializer in initializers) {
+                    val superTypeListEntry = psiFactory.createSuperTypeCallEntry("${klass.name}${initializer.text}")
+                    obj.addSuperTypeListEntry(superTypeListEntry)
+                }
+            } else {
+                val defaultEntry = if (isExpect) {
+                    psiFactory.createSuperTypeEntry(name)
                 } else {
-                    val defaultEntry = if (isExpect)
-                        psiFactory.createSuperTypeEntry(name)
-                    else
-                        psiFactory.createSuperTypeCallEntry("$name()")
-                    obj.addSuperTypeListEntry(defaultEntry)
+                    psiFactory.createSuperTypeCallEntry("$name()")
                 }
-
-                if (isActual) {
-                    obj.addModifier(KtTokens.ACTUAL_KEYWORD)
-                }
-
-                member.body?.let { body -> obj.add(body) }
-
-                obj.addComments(member)
-
-                member.delete()
-                klass.addDeclaration(obj)
-
-                objects.add(obj)
+                obj.addSuperTypeListEntry(defaultEntry)
             }
 
-            if (element.platform.isJvm()) {
-                val enumEntryNames = objects.map { it.nameAsSafeName.asString() }
-                val targetClassName = klass.name
-                if (enumEntryNames.isNotEmpty() && targetClassName != null) {
-                    val companionObject = klass.getOrCreateCompanionObject()
-                    companionObject.addValuesFunction(targetClassName, enumEntryNames, psiFactory)
-                    companionObject.addValueOfFunction(targetClassName, classDescriptor, enumEntryNames, psiFactory)
-                }
+            if (isActual) {
+                obj.addModifier(KtTokens.ACTUAL_KEYWORD)
             }
 
-            klass.body?.let { body ->
-                body.allChildren
-                    .takeWhile { it !is KtDeclaration }
-                    .firstOrNull { it.node.elementType == KtTokens.SEMICOLON }
-                    ?.let { semicolon ->
-                        val nonWhiteSibling = semicolon.siblings(forward = true, withItself = false).firstOrNull { it !is PsiWhiteSpace }
-                        body.deleteChildRange(semicolon, nonWhiteSibling?.prevSibling ?: semicolon)
-                        if (nonWhiteSibling != null) {
-                            CodeStyleManager.getInstance(klass.project).reformat(nonWhiteSibling.firstChild ?: nonWhiteSibling)
-                        }
+            member.body?.let { obj.add(it) }
+
+            obj.addComments(member)
+
+            member.delete()
+            klass.addDeclaration(obj)
+
+            objects.add(obj)
+        }
+
+        if (isJvmPlatform) {
+            val enumEntryNames = objects.map { it.nameAsSafeName.asString() }
+            val targetClassName = klass.name
+            if (enumEntryNames.isNotEmpty() && targetClassName != null) {
+                val companionObject = klass.getOrCreateCompanionObject()
+                companionObject.addValuesFunction(targetClassName, enumEntryNames, psiFactory)
+                companionObject.addValueOfFunction(targetClassName, classFqName, enumEntryNames, psiFactory)
+            }
+        }
+
+        klass.body?.let { body ->
+            body.allChildren
+                .takeWhile { it !is KtDeclaration }
+                .firstOrNull { it.node.elementType == KtTokens.SEMICOLON }
+                ?.let { semicolon ->
+                    val nonWhiteSibling = semicolon.siblings(forward = true, withItself = false).firstOrNull { it !is PsiWhiteSpace }
+                    body.deleteChildRange(semicolon, nonWhiteSibling?.prevSibling ?: semicolon)
+                    if (nonWhiteSibling != null) {
+                        CodeStyleManager.getInstance(klass.project).reformat(nonWhiteSibling.firstChild ?: nonWhiteSibling)
                     }
-            }
+                }
         }
     }
 
@@ -127,11 +141,10 @@ class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
 
     private fun KtObjectDeclaration.addValueOfFunction(
         targetClassName: String,
-        classDescriptor: ClassDescriptor,
+        classFqName: String,
         enumEntryNames: List<String>,
         psiFactory: KtPsiFactory
     ) {
-        val classFqName = classDescriptor.fqNameSafe.asString()
         val functionText = buildString {
             append("fun valueOf(value: String): $targetClassName {")
             append("return when(value) {")
