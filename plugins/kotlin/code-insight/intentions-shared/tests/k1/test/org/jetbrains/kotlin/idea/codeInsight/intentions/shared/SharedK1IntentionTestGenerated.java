@@ -2850,6 +2850,40 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/unfolding/assignmentToWhen")
+        public static class AssignmentToWhen extends AbstractSharedK1IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("innerWhenTransformed.kt")
+            public void testInnerWhenTransformed() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/innerWhenTransformed.kt");
+            }
+
+            @TestMetadata("simpleWhen.kt")
+            public void testSimpleWhen() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/simpleWhen.kt");
+            }
+
+            @TestMetadata("simpleWhenWithBlocks.kt")
+            public void testSimpleWhenWithBlocks() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/simpleWhenWithBlocks.kt");
+            }
+
+            @TestMetadata("simpleWhenWithComplexAssignmentLHS.kt")
+            public void testSimpleWhenWithComplexAssignmentLHS() throws Exception {
+                runTest("../testData/intentions/unfolding/assignmentToWhen/simpleWhenWithComplexAssignmentLHS.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/intentions/unfolding/functionCallToIf")
         public static class FunctionCallToIf extends AbstractSharedK1IntentionTest {
             @java.lang.Override

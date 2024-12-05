@@ -3436,40 +3436,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("testData/intentions/branched/unfolding")
         public abstract static class Unfolding extends AbstractK1IntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/intentions/branched/unfolding/assignmentToWhen")
-            public static class AssignmentToWhen extends AbstractK1IntentionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
-                }
-
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("innerWhenTransformed.kt")
-                public void testInnerWhenTransformed() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/innerWhenTransformed.kt");
-                }
-
-                @TestMetadata("simpleWhen.kt")
-                public void testSimpleWhen() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/simpleWhen.kt");
-                }
-
-                @TestMetadata("simpleWhenWithBlocks.kt")
-                public void testSimpleWhenWithBlocks() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/simpleWhenWithBlocks.kt");
-                }
-
-                @TestMetadata("simpleWhenWithComplexAssignmentLHS.kt")
-                public void testSimpleWhenWithComplexAssignmentLHS() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/assignmentToWhen/simpleWhenWithComplexAssignmentLHS.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/unfolding/propertyToIf")
             public static class PropertyToIf extends AbstractK1IntentionTest {
                 @java.lang.Override
