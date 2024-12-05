@@ -27,4 +27,15 @@ public final class ReturnsKt {
             })
         })
     }
+    public static final fun lambdaInConstructor() : void {
+        CustomAccessibilityAction({
+            return
+        })
+    }
+}
+
+public final class CustomAccessibilityAction {
+    @org.jetbrains.annotations.NotNull private final var action: kotlin.jvm.functions.Function0<java.lang.Boolean>
+    public final fun getAction() : kotlin.jvm.functions.Function0<java.lang.Boolean> = UastEmptyExpression
+    public fun CustomAccessibilityAction(@org.jetbrains.annotations.NotNull action: kotlin.jvm.functions.Function0<java.lang.Boolean>) = UastEmptyExpression
 }
