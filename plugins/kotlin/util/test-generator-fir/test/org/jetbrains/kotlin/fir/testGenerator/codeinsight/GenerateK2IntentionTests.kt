@@ -122,7 +122,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertPrimaryConstructorToSecondary", pattern = pattern)
             model("${idea}intentions/convertArgumentToSet", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addAnnotationUseSiteTarget", pattern = pattern)
-            model("${idea}intentions/convertEnumToSealedClass", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertEnumToSealedClass", pattern = pattern)
             model("${idea}intentions/convertToIndexedFunctionCall", pattern = pattern, isIgnored = true)
             model("${idea}intentions/samConversionToAnonymousObject", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertFunctionTypeReceiverToParameter", pattern = pattern, isIgnored = true)

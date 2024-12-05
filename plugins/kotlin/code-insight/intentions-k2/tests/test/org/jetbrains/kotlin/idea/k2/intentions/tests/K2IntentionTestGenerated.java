@@ -8980,7 +8980,64 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertEnumToSealedClass")
+    public static class ConvertEnumToSealedClass extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("entriesAndMembers.kt")
+        public void testEntriesAndMembers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/entriesAndMembers.kt");
+        }
+
+        @TestMetadata("entriesOnly.kt")
+        public void testEntriesOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/entriesOnly.kt");
+        }
+
+        @TestMetadata("hasComments.kt")
+        public void testHasComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/hasComments.kt");
+        }
+
+        @TestMetadata("hasCompanion.kt")
+        public void testHasCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/hasCompanion.kt");
+        }
+
+        @TestMetadata("membersOnly.kt")
+        public void testMembersOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/membersOnly.kt");
+        }
+
+        @TestMetadata("noClassKeyword.kt")
+        public void testNoClassKeyword() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/noClassKeyword.kt");
+        }
+
+        @TestMetadata("notEnum.kt")
+        public void testNotEnum() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/notEnum.kt");
+        }
+
+        @TestMetadata("outOfRange.kt")
+        public void testOutOfRange() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/outOfRange.kt");
+        }
+
+        @TestMetadata("useDataObjectSince18.kt")
+        public void testUseDataObjectSince18() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/useDataObjectSince18.kt");
+        }
+    }
 
 
 
