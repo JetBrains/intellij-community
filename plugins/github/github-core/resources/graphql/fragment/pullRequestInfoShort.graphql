@@ -29,7 +29,7 @@ fragment pullRequestInfoShort on PullRequest {
     nodes {
       ... on ReviewRequest {
         requestedReviewer {
-          ...pullRequestReviewerInfo
+          ...pullRequestReviewer
         }
       }
     }

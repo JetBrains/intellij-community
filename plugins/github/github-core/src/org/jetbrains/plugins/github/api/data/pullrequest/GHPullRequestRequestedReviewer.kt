@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.api.data.GHBot
 import org.jetbrains.plugins.github.api.data.GHMannequin
 import org.jetbrains.plugins.github.api.data.GHUser
 
-@GraphQLFragment("/graphql/fragment/pullRequestReviewerInfo.graphql")
+@GraphQLFragment("/graphql/fragment/pullRequestReviewer.graphql")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false,
               defaultImpl = GHPullRequestRequestedReviewer.Unknown::class)
 @JsonSubTypes(

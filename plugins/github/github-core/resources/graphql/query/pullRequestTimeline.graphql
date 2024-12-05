@@ -120,7 +120,7 @@ fragment reviewRequestedEvent on ReviewRequestedEvent {
   }
   createdAt
   requestedReviewer {
-    ...pullRequestReviewerInfo
+    ...pullRequestReviewer
   }
 }
 
@@ -130,7 +130,7 @@ fragment reviewRequestRemovedEvent on ReviewRequestRemovedEvent {
   }
   createdAt
   requestedReviewer {
-    ...pullRequestReviewerInfo
+    ...pullRequestReviewer
   }
 }
 
