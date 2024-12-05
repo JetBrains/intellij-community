@@ -809,6 +809,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     doHighlightingTest("redundantComponentInterfaceClass.xml");
   }
 
+  public void testDeprecatedImplementationDetailAttribute() {
+    doHighlightingTest("deprecatedImplementationDetail.xml");
+  }
+
   private void doHighlightingTest(String... filePaths) {
     myFixture.testHighlighting(true, false, false, filePaths);
   }

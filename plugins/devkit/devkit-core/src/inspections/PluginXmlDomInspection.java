@@ -327,8 +327,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     //noinspection deprecation
     if (DomUtil.hasXml(ideaPlugin.getUseIdeaClassloader())) {
       //noinspection deprecation
-      highlightDeprecated(ideaPlugin.getUseIdeaClassloader(), DevKitBundle.message("inspections.plugin.xml.deprecated"), holder, true,
-                          true);
+      highlightDeprecated(ideaPlugin.getUseIdeaClassloader(), DevKitBundle.message("inspections.plugin.xml.deprecated"), holder, true, true);
+    }
+
+    //noinspection deprecation
+    if (DomUtil.hasXml(ideaPlugin.getImplementationDetail())) {
+      //noinspection deprecation
+      highlightDeprecated(ideaPlugin.getImplementationDetail(), DevKitBundle.message("inspections.plugin.xml.deprecated.implementation.detail"),
+                          holder, true, true);
     }
 
     checkMaxLength(ideaPlugin.getUrl(), 255, holder);
@@ -545,7 +551,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     @NonNls String name = nameAttrValue.getValue();
 
-    // skip some known offenders in IJ project
+    // skip some known offenders in the IJ project
     if (name != null
         && (StringUtil.startsWith(name, "Pythonid.") ||
             StringUtil.startsWith(name, "DevKit.") ||
@@ -569,9 +575,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     String epName = fragments.get(fragments.size() - 1);
-    List<String> butlast = fragments.subList(0, fragments.size() - 1);
+    List<String> butLast = fragments.subList(0, fragments.size() - 1);
     List<String> words = StringUtil.getWordsIn(epName);
-    return !ContainerUtil.exists(words, w -> ContainerUtil.exists(butlast, f -> StringUtil.equalsIgnoreCase(w, f)));
+    return !ContainerUtil.exists(words, w -> ContainerUtil.exists(butLast, f -> StringUtil.equalsIgnoreCase(w, f)));
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
@@ -616,7 +622,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       holder.createProblem(unresolvedExtension, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, message, null);
       return;
     }
-
 
     final IdeaPlugin ideaPlugin = extensionPoint.getParentOfType(IdeaPlugin.class, true);
     assert ideaPlugin != null;
