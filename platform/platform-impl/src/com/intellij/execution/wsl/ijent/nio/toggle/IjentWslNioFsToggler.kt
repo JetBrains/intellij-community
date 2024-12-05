@@ -88,7 +88,12 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       if (distribution == null) {
         return null
       }
-      return getApiByDistribution(distribution)
+      return try {
+        getApiByDistribution(distribution)
+      }
+      catch (_: IllegalStateException) {
+        return null
+      }
     }
 
     suspend fun getApiByDistribution(distro: WSLDistribution): EelApi {
