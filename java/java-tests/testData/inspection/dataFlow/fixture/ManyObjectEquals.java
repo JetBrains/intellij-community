@@ -305,7 +305,7 @@ public class ManyObjectEquals {
            Objects.equals(test107, test.test107) &&
            Objects.equals(test108, test.test108) &&
            Objects.equals(test109, test.test109) &&
-           Objects.equals(test101, test.test101) &&
+           <warning descr="Condition 'Objects.equals(test101, test.test101)' is always 'true'">Objects.equals(test101, test.test101)</warning> &&
            Objects.equals(test111, test.test111) &&
            Objects.equals(test112, test.test112) &&
            Objects.equals(test113, test.test113) &&

@@ -178,13 +178,16 @@ public final class HardcodedContracts {
               (call, paramCount) -> equalsContracts(call))
     .register(anyOf(
       staticCall(JAVA_UTIL_OBJECTS, "equals").parameterCount(2),
-      staticCall(JAVA_UTIL_ARRAYS, "equals", "deepEquals").parameterCount(2),
       staticCall("com.google.common.base.Objects", "equal").parameterCount(2)),
+              (call, paramCount) -> objectEqualsContracts(call))
+    .register(staticCall(JAVA_UTIL_ARRAYS, "equals", "deepEquals").parameterCount(2),
               ContractProvider.of(
                 singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.argument(1),
                                         returnTrue()),
                 StandardMethodContract.fromText("null,!null->false"),
-                StandardMethodContract.fromText("!null,null->false")
+                StandardMethodContract.fromText("!null,null->false"),
+                singleConditionContract(ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH), RelationType.NE, 
+                                        ContractValue.argument(1).specialField(SpecialField.ARRAY_LENGTH), returnFalse())
               ))
     .register(enumValues(), ContractProvider.of(StandardMethodContract.fromText("->new")))
     .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract())
@@ -404,6 +407,26 @@ public final class HardcodedContracts {
     return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
                          singleConditionContract(ContractValue.qualifier(), RelationType.EQ,
                                                  ContractValue.argument(0), returnTrue()));
+  }
+
+  private static List<MethodContract> objectEqualsContracts(PsiMethodCallExpression call) {
+    if (call != null) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      PsiType type = args[0].getType();
+      if (type != null) {
+        if (knownAsEqualByReference(type) || TypeConstraints.exact(type).isComparedByEquals()) {
+          return Arrays.asList(
+            singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.argument(1), returnTrue()),
+            trivialContract(returnFalse())
+          );
+        }
+      }
+    }
+    return List.of(
+      singleConditionContract(ContractValue.argument(0), RelationType.EQ, ContractValue.argument(1), returnTrue()),
+      StandardMethodContract.fromText("null,!null->false"),
+      StandardMethodContract.fromText("!null,null->false")
+    );
   }
 
   private static boolean knownAsEqualByReference(PsiType type) {
