@@ -24,6 +24,9 @@
     <extensionPoint name="duplicatePropertyKeyAnnotationSuppressor"
                     interface="com.intellij.lang.properties.DuplicatePropertyKeyAnnotationSuppressor"
                     dynamic="true"/>
+    <extensionPoint name="extendedUseScopeProvider"
+                    interface="com.intellij.lang.properties.codeInspection.unused.ExtendedUseScopeProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

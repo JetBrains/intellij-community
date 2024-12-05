@@ -29,11 +29,12 @@ import java.util.function.Function;
 
 public final class UnusedPropertyUtil {
   private static final Logger LOG = Logger.getInstance(UnusedPropertyUtil.class);
+
   @NotNull
   public static Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> buildPropertyGroupVisitor(@NotNull ResourceBundle resourceBundle) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(resourceBundle.getDefaultPropertiesFile().getContainingFile());
     if (module == null) return x -> null;
-    final UnusedPropertyInspection.UnusedPropertiesSearchHelper helper = new UnusedPropertyInspection.UnusedPropertiesSearchHelper(module);
+    UnusedPropertyInspection.UnusedPropertiesSearchHelper helper = new UnusedPropertyInspection.UnusedPropertiesSearchHelper(module, null);
 
     return properties -> !UnusedPropertyInspection.isPropertyUsed((Property)properties[0], helper, true) ? new ResourceBundleEditorProblemDescriptor[]{
       new ResourceBundleEditorProblemDescriptor(ProblemHighlightType.LIKE_UNUSED_SYMBOL,
