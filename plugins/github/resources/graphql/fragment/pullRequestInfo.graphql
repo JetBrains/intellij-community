@@ -4,7 +4,7 @@ fragment pullRequestInfo on PullRequest {
   body
 
   author {
-    ...actorInfo
+    ...actor
   }
   createdAt
 

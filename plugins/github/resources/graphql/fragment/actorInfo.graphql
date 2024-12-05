@@ -1,10 +1,8 @@
+# Just the data that should be present for any type of Actor.
 fragment actorInfo on Actor {
-  ...nodeInfo
   __typename
+  ...nodeInfo
   login
   url
   avatarUrl
-  ... on User {
-    name
-  }
 }

@@ -1,0 +1,4 @@
+fragment enterpriseUserAccountInfo on EnterpriseUserAccount {
+  ...actorInfo
+  name
+}

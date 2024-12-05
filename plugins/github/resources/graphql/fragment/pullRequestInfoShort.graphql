@@ -8,7 +8,7 @@ fragment pullRequestInfoShort on PullRequest {
   isDraft
 
   author {
-    ...actorInfo
+    ...actor
   }
   createdAt
   updatedAt
