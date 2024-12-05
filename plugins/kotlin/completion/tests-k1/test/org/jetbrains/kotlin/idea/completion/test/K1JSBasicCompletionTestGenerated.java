@@ -2228,6 +2228,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/primaryConstructor/KTIJ-26747.kt");
             }
 
+            @TestMetadata("KTIJ-30490.kt")
+            public void testKTIJ_30490() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/KTIJ-30490.kt");
+            }
+
             @TestMetadata("parameterDefaultValue.kt")
             public void testParameterDefaultValue() throws Exception {
                 runTest("../testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
