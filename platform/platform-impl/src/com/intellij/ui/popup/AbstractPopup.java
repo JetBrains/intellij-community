@@ -1269,10 +1269,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       // targetBounds are "screen" coordinates, which in Wayland means that they
       // are relative to the nearest toplevel (Window).
       // But popups in Wayland are expected to be relative to popup's "owner";
-      // let's re-set the owner to be that window.
+      // let's re-set the owner to be that window and adjust targetBounds to be relative to it.
       popupOwner = popupOwner instanceof Window
                    ? popupOwner
                    : SwingUtilities.getWindowAncestor(popupOwner);
+
+      Point ownerLocation = popupOwner.getLocationOnScreen();
+      targetBounds.x -= ownerLocation.x;
+      targetBounds.y -= ownerLocation.y;
       // The Wayland server may refuse to show a popup whose top-left corner
       // is located outside of parent window's bounds
       Rectangle okBounds = new Rectangle();
