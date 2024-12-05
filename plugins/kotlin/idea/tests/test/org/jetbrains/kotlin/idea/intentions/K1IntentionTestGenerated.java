@@ -5675,6 +5675,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                         runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/array.kt");
                     }
 
+                    @TestMetadata("floatComparison.kt")
+                    public void testFloatComparison() throws Exception {
+                        runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/floatComparison.kt");
+                    }
+
                     @TestMetadata("lambdaInParentheses.kt")
                     public void testLambdaInParentheses() throws Exception {
                         runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/lambdaInParentheses.kt");

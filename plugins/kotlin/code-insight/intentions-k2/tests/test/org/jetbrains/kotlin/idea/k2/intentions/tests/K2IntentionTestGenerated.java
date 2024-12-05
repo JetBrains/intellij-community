@@ -2609,6 +2609,460 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw")
+    public abstract static class ConvertFilteringFunctionWithDemorgansLaw extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
+        public abstract static class AnyToAll extends AbstractK2IntentionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAll")
+            public static class ToAll extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAll/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAny")
+            public static class ToAny extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAny/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
+            public static class Uncategorized extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn2.kt");
+                }
+
+                @TestMetadata("labeledReturn3.kt")
+                public void testLabeledReturn3() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn3.kt");
+                }
+
+                @TestMetadata("labeledReturn4.kt")
+                public void testLabeledReturn4() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn4.kt");
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/nullable.kt");
+                }
+
+                @TestMetadata("nullable2.kt")
+                public void testNullable2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/nullable2.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
+        public abstract static class AnyToNone extends AbstractK2IntentionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toAny")
+            public static class ToAny extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toAny/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone")
+            public static class ToNone extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inReceiver.kt")
+                public void testInReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/inReceiver.kt");
+                }
+
+                @TestMetadata("KTIJ-21370.kt")
+                public void testKTIJ_21370() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/KTIJ-21370.kt");
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
+            public static class Uncategorized extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn2.kt");
+                }
+
+                @TestMetadata("labeledReturn3.kt")
+                public void testLabeledReturn3() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn3.kt");
+                }
+
+                @TestMetadata("labeledReturn4.kt")
+                public void testLabeledReturn4() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn4.kt");
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/nullable.kt");
+                }
+
+                @TestMetadata("nullable2.kt")
+                public void testNullable2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/nullable2.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite")
+        public abstract static class CallToOpposite extends AbstractK2IntentionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone")
+            public abstract static class AllToNone extends AbstractK2IntentionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate")
+                public static class Predicate extends AbstractK2IntentionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("isNotEmpty.kt")
+                    public void testIsNotEmpty() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/isNotEmpty.kt");
+                    }
+
+                    @TestMetadata("not.kt")
+                    public void testNot() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/not.kt");
+                    }
+
+                    @TestMetadata("notOr.kt")
+                    public void testNotOr() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/notOr.kt");
+                    }
+
+                    @TestMetadata("or.kt")
+                    public void testOr() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/or.kt");
+                    }
+
+                    @TestMetadata("simple.kt")
+                    public void testSimple() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/simple.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone")
+                public static class Uncategorized extends AbstractK2IntentionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("array.kt")
+                    public void testArray() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/array.kt");
+                    }
+
+                    @TestMetadata("floatComparison.kt")
+                    public void testFloatComparison() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/floatComparison.kt");
+                    }
+
+                    @TestMetadata("lambdaInParentheses.kt")
+                    public void testLambdaInParentheses() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/lambdaInParentheses.kt");
+                    }
+
+                    @TestMetadata("sequence.kt")
+                    public void testSequence() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/sequence.kt");
+                    }
+
+                    @TestMetadata("simple.kt")
+                    public void testSimple() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/simple.kt");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToFilter")
+            public static class FilterNotToFilter extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToFilter/simple.kt");
+                }
+
+                @TestMetadata("simple2.kt")
+                public void testSimple2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToFilter/simple2.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToToFilterTo")
+            public static class FilterNotToToFilterTo extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToToFilterTo/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToFilterNot")
+            public static class FilterToFilterNot extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToFilterNot/simple.kt");
+                }
+
+                @TestMetadata("simple2.kt")
+                public void testSimple2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToFilterNot/simple2.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToToFilterNotTo")
+            public static class FilterToToFilterNotTo extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToToFilterNotTo/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/noneToAll")
+            public static class NoneToAll extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/noneToAll/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeIfToTakeUnless")
+            public static class TakeIfToTakeUnless extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeIfToTakeUnless/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeUnlessToTakeIf")
+            public static class TakeUnlessToTakeIf extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeUnlessToTakeIf/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite")
+            public static class Uncategorized extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn2.kt");
+                }
+
+                @TestMetadata("labeledReturn3.kt")
+                public void testLabeledReturn3() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn3.kt");
+                }
+
+                @TestMetadata("labeledReturn4.kt")
+                public void testLabeledReturn4() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn4.kt");
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/nullable.kt");
+                }
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertToBlockBody")
     public static class ConvertToBlockBody extends AbstractK2IntentionTest {
         @java.lang.Override
