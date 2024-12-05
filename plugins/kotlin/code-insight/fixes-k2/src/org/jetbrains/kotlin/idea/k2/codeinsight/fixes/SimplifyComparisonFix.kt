@@ -22,30 +22,30 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 object SimplifyComparisonFixFactory {
 
-    val simplifyComparisonFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: SenselessComparison ->
+    val simplifyComparisonFixFactory: KotlinQuickFixFactory.ModCommandBased<SenselessComparison> = KotlinQuickFixFactory.ModCommandBased { diagnostic: SenselessComparison ->
         val expression = diagnostic.psi.takeIf { it.getStrictParentOfType<KtDeclarationWithBody>() != null }
             ?: return@ModCommandBased emptyList()
         val compareResult = diagnostic.compareResult
 
-        listOf(SimplifyComparisonFix(expression, ElementContext(compareResult)))
+        listOf(SimplifyComparisonFix(expression, compareResult))
     }
-
-    private data class ElementContext(
-        val compareResult: Boolean,
-    )
-
+    
     private class SimplifyComparisonFix(
         psiElement: KtExpression,
-        context: ElementContext,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, ElementContext>(psiElement, context) {
+        compareResult: Boolean,
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, SimplifyComparisonFix.Context>(psiElement, Context(compareResult)) {
+
+        private class Context(
+            val compareResult: Boolean,
+        )
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtExpression,
-            elementContext: ElementContext,
+            context: Context,
             updater: ModPsiUpdater,
         ) {
-            val replacement = KtPsiFactory(element.project).createExpression("${elementContext.compareResult}")
+            val replacement = KtPsiFactory(element.project).createExpression("${context.compareResult}")
             val result = element.replaced(replacement)
 
             val booleanExpression = result.getNonStrictParentOfType<KtBinaryExpression>()
