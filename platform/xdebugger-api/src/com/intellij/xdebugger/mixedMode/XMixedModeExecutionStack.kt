@@ -40,10 +40,12 @@ class XMixedModeExecutionStack(
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     coroutineScope.launch(Dispatchers.Default) {
       prepareThreadBeforeFrameComputation()
+      logger.info("Preparation for frame computation completed")
 
       val lowLevelAcc = MyAccumulatingContainer()
       lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
       val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
+      logger.info("Low level frames obtained")
 
       val highLevelAcc = MyAccumulatingContainer()
       if (highLevelExecutionStack == null) {
@@ -54,6 +56,7 @@ class XMixedModeExecutionStack(
       else {
         highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
         val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
+        logger.info("High level frames obtained")
 
         val combinedFrames = logger.runCatching {
           measureTimedValue {

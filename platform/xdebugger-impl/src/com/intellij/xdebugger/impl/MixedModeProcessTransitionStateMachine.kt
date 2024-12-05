@@ -66,6 +66,7 @@ class MixedModeProcessTransitionStateMachine(
     return suspendContext.javaClass.name.contains("Cidr")
   }
 
+  private var suspendContextCoroutine: CoroutineScope = coroutineScope.childScope("suspendContextCoroutine")
   suspend fun onPositionReached(suspendContext: XSuspendContext): XSuspendContext? {
     val currentState = state
     val isHighSuspendContext = !isLowSuspendContext(suspendContext)
@@ -84,7 +85,7 @@ class MixedModeProcessTransitionStateMachine(
     }
 
     if (newState is BothStopped) {
-      return XMixedModeSuspendContext(high.asXDebugProcess.session, newState.low, newState.high, high, coroutineScope)
+      return XMixedModeSuspendContext(high.asXDebugProcess.session, newState.low, newState.high, high, suspendContextCoroutine)
     }
     return null
   }
@@ -120,7 +121,8 @@ class MixedModeProcessTransitionStateMachine(
             runBlocking(stateMachineHelperScope.coroutineContext) {
               high.pauseMixedModeSession()
             }
-            state = WaitingForHighProcessPositionReached
+
+            changeState(WaitingForHighProcessPositionReached)
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -144,7 +146,7 @@ class MixedModeProcessTransitionStateMachine(
             }
 
             logger.info("Low level process has been stopped")
-            state = HighStoppedWaitingForLowProcessToStop(event.suspendContext)
+            changeState(HighStoppedWaitingForLowProcessToStop(event.suspendContext))
           }
           is HighLevelDebuggerResumedForStepOnlyLowStopped -> {
             val stopThreadId = high.getStoppedThreadId(event.suspendContext)
@@ -154,7 +156,7 @@ class MixedModeProcessTransitionStateMachine(
               }
             }
 
-            state = BothStopped(currentState.low, event.suspendContext)
+            changeState(BothStopped(currentState.low, event.suspendContext))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -165,11 +167,7 @@ class MixedModeProcessTransitionStateMachine(
           is HighStoppedWaitingForLowProcessToStop -> {
             val highLevelSuspendContext = currentState.highSuspendContext!!
             val lowLevelContext = event.suspendContext
-            state = BothStopped(lowLevelContext, highLevelSuspendContext)
-          }
-          is MixedStepIntoStartedWaitingForHighDebuggerToBeResumed -> {
-            error("TODO: low breakpoint was hit before the high session was resumed. We need to finish high session resuming " +
-                  "and only after deal with this breakpoint ")
+            changeState(BothStopped(lowLevelContext, highLevelSuspendContext))
           }
           is BothRunning, is MixedStepIntoStartedHighDebuggerResumed -> {
             runBlocking(stateMachineHelperScope.coroutineContext) {
@@ -182,7 +180,7 @@ class MixedModeProcessTransitionStateMachine(
               // please keep don't await it, it will break the status change logic
               high.pauseMixedModeSession()
             }
-            state = WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread()
+            changeState(WaitForHighProcessPositionReachLowProcessOnStopEventAndResumedExceptStoppedThread())
           }
           is OnlyHighStopped, is OnlyHighStoppedWaitingForLowStepToComplete -> {
             if (currentState is OnlyHighStoppedWaitingForLowStepToComplete)
@@ -191,7 +189,7 @@ class MixedModeProcessTransitionStateMachine(
             val highSuspendCtx = if (currentState is OnlyHighStopped) currentState.highSuspendContext!! else (currentState as OnlyHighStoppedWaitingForLowStepToComplete).highSuspendContext
 
             val lowSuspendCtx = event.suspendContext
-            state = BothStopped(lowSuspendCtx, highSuspendCtx)
+            changeState(BothStopped(lowSuspendCtx, highSuspendCtx))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -200,7 +198,7 @@ class MixedModeProcessTransitionStateMachine(
       is ResumeRequested -> {
         when (currentState) {
           is BothStopped -> {
-            state = ResumeStarted(currentState.low, currentState.high)
+            changeState(ResumeStarted(currentState.low, currentState.high))
             runBlocking(stateMachineHelperScope.coroutineContext) {
               low.resumeAndWait()
               high.resumeAndWait()
@@ -213,13 +211,13 @@ class MixedModeProcessTransitionStateMachine(
       is LowRun -> {
         when (currentState) {
           is ResumeStarted -> {
-            state = OnlyHighStopped(currentState.high)
+            changeState(OnlyHighStopped(currentState.high))
           }
           is BothStopped -> {
-            state = OnlyHighStopped(currentState.high)
+            changeState(OnlyHighStopped(currentState.high))
           }
           is LowLevelStepStarted -> {
-            state = OnlyHighStoppedWaitingForLowStepToComplete(currentState.high)
+            changeState(OnlyHighStoppedWaitingForLowStepToComplete(currentState.high))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
@@ -228,7 +226,7 @@ class MixedModeProcessTransitionStateMachine(
       is HighLevelDebuggerStepRequested -> {
         when (currentState) {
           is BothStopped -> {
-            state = ManagedStepStarted(currentState.low)
+            changeState(ManagedStepStarted(currentState.low))
             runBlocking(stateMachineHelperScope.coroutineContext) {
               low.continueAllThreads(exceptEventThread = false)
               when (event.stepType) {
@@ -257,20 +255,23 @@ class MixedModeProcessTransitionStateMachine(
                 val breakpointId = runBlocking(stateMachineHelperScope.coroutineContext) {
 
                   // after this call, the native breakpoint is set, but the managed thread is stopped in suspend_current method
-                  val breakpointId = low.findAndSetBreakpointInNativeFunction(steppingThread) {
-                    withContext(Dispatchers.EDT) {
-                      high.triggerMonoMethodCommandsInternalMethodCallForExternMethodWeStepIn(event.highSuspendContext)
+                  val breakpointId = checkNotNull(suspendContextCoroutine).async {
+                    return@async low.findAndSetBreakpointInNativeFunction(steppingThread) {
+                      withContext(Dispatchers.EDT) {
+                        high.triggerMonoMethodCommandsInternalMethodCallForExternMethodWeStepIn(event.highSuspendContext)
+                      }
                     }
-                  }
+                  }.await()
 
-                  low.continueAllThreads(exceptEventThread = false)
                   breakpointId
                 }
 
-                state = MixedStepIntoStartedWaitingForHighDebuggerToBeResumed(breakpointId)
+                changeState(MixedStepIntoStartedWaitingForHighDebuggerToBeResumed(breakpointId))
 
                 runBlocking(stateMachineHelperScope.coroutineContext) {
+                  // at first resume high level process, note that even though its state become resumed, it's not actually run. It will run once we continue all threads
                   high.resumeAndWait()
+                  low.continueAllThreads(exceptEventThread = false)
                 }
               }
             }
@@ -291,25 +292,36 @@ class MixedModeProcessTransitionStateMachine(
                 this.low.asXDebugProcess.startStepOut(event.lowSuspendContext)
               }
             }
-            state = LowLevelStepStarted(currentState.high)
+            changeState(LowLevelStepStarted(currentState.high))
+            logger.info("Low level step has been started")
           }
         }
       }
       is HighRun -> {
         when (currentState) {
           is OnlyHighStopped -> {
-            state = BothRunning
+            changeState(BothRunning)
           }
           is ManagedStepStarted -> {
-            state = HighLevelDebuggerResumedForStepOnlyLowStopped(currentState.low)
+            changeState(HighLevelDebuggerResumedForStepOnlyLowStopped(currentState.low))
           }
           is MixedStepIntoStartedWaitingForHighDebuggerToBeResumed -> {
-            state = MixedStepIntoStartedHighDebuggerResumed(currentState.nativeBreakpointId)
+            changeState(MixedStepIntoStartedHighDebuggerResumed(currentState.nativeBreakpointId))
           }
           else -> throwTransitionIsNotImplemented(event)
         }
       }
     }
+  }
+
+  private fun changeState(newState: State) {
+    if (state is BothStopped) {
+      suspendContextCoroutine.cancel()
+      suspendContextCoroutine = coroutineScope.childScope("suspendContextCoroutine")
+    }
+    val oldState = state
+    state = newState
+    logger.info("state change : (${oldState::class.simpleName} -> ${newState::class.simpleName})")
   }
 
   suspend fun waitFor(c: kotlin.reflect.KClass<*>) {
