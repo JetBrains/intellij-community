@@ -18,12 +18,32 @@ public class FileSaverDescriptor extends FileChooserDescriptor implements Clonea
    *
    * @param title save dialog text title (not window title)
    * @param description description
-   * @param extensions accepted file extensions: "txt", "jpg", etc. Accepts all if empty
    */
-  public FileSaverDescriptor(@DialogTitle @NotNull String title, @Label @NotNull String description, String... extensions) {
+  public FileSaverDescriptor(@DialogTitle @NotNull String title, @Label @NotNull String description) {
     super(true, true, true, true, false, false);
     setTitle(title);
     setDescription(description);
+  }
+
+  /**
+   * Constructs save dialog properties.
+   *
+   * @param title save dialog text title (not window title)
+   * @param description description
+   * @param extension accepted file extension ("txt", "jpg", etc.)
+   */
+  public FileSaverDescriptor(@DialogTitle @NotNull String title, @Label @NotNull String description, String extension) {
+    this(title, description);
+    withExtensionFilter(extension);
+  }
+
+  /**
+   * @deprecated this constructor variant doesn't show the correct label in the Windows native dialog;
+   * use {@link #FileSaverDescriptor(String, String)} with {@link #withExtensionFilter(String, String...)} instead
+   */
+  @Deprecated
+  public FileSaverDescriptor(@DialogTitle @NotNull String title, @Label @NotNull String description, String... extensions) {
+    this(title, description);
     if (extensions.length == 1) {
       withExtensionFilter(extensions[0]);
     }
