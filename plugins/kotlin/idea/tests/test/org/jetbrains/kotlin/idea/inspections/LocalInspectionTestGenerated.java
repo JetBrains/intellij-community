@@ -15929,6 +15929,41 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/selfAssignment/assignToProperty.kt");
         }
 
+        @TestMetadata("constructorCallReceiver.kt")
+        public void testConstructorCallReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/constructorCallReceiver.kt");
+        }
+
+        @TestMetadata("differentInstanceApplyLabeledThis.kt")
+        public void testDifferentInstanceApplyLabeledThis() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/differentInstanceApplyLabeledThis.kt");
+        }
+
+        @TestMetadata("differentInstanceCast.kt")
+        public void testDifferentInstanceCast() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/differentInstanceCast.kt");
+        }
+
+        @TestMetadata("differentInstanceThisCallReceiver.kt")
+        public void testDifferentInstanceThisCallReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/differentInstanceThisCallReceiver.kt");
+        }
+
+        @TestMetadata("differentInstanceThisCast.kt")
+        public void testDifferentInstanceThisCast() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/differentInstanceThisCast.kt");
+        }
+
+        @TestMetadata("differentInstanceThisNameReference.kt")
+        public void testDifferentInstanceThisNameReference() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/differentInstanceThisNameReference.kt");
+        }
+
+        @TestMetadata("differentReceiversSameClass.kt")
+        public void testDifferentReceiversSameClass() throws Exception {
+            runTest("testData/inspectionsLocal/selfAssignment/differentReceiversSameClass.kt");
+        }
+
         @TestMetadata("differentThese.kt")
         public void testDifferentThese() throws Exception {
             runTest("testData/inspectionsLocal/selfAssignment/differentThese.kt");

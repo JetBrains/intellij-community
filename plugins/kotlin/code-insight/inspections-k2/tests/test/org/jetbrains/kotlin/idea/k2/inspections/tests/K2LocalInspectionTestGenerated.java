@@ -5649,6 +5649,41 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/assignToProperty.kt");
         }
 
+        @TestMetadata("constructorCallReceiver.kt")
+        public void testConstructorCallReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/constructorCallReceiver.kt");
+        }
+
+        @TestMetadata("differentInstanceApplyLabeledThis.kt")
+        public void testDifferentInstanceApplyLabeledThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentInstanceApplyLabeledThis.kt");
+        }
+
+        @TestMetadata("differentInstanceCast.kt")
+        public void testDifferentInstanceCast() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentInstanceCast.kt");
+        }
+
+        @TestMetadata("differentInstanceThisCallReceiver.kt")
+        public void testDifferentInstanceThisCallReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentInstanceThisCallReceiver.kt");
+        }
+
+        @TestMetadata("differentInstanceThisCast.kt")
+        public void testDifferentInstanceThisCast() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentInstanceThisCast.kt");
+        }
+
+        @TestMetadata("differentInstanceThisNameReference.kt")
+        public void testDifferentInstanceThisNameReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentInstanceThisNameReference.kt");
+        }
+
+        @TestMetadata("differentReceiversSameClass.kt")
+        public void testDifferentReceiversSameClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentReceiversSameClass.kt");
+        }
+
         @TestMetadata("differentThese.kt")
         public void testDifferentThese() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThese.kt");
@@ -5657,11 +5692,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("differentThis.kt")
         public void testDifferentThis() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThis.kt");
-        }
-
-        @TestMetadata("differentThis.k2.kt")
-        public void testDifferentThis_k2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/differentThis.k2.kt");
         }
 
         @TestMetadata("list.kt")
@@ -5752,11 +5782,6 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("sameThis.kt")
         public void testSameThis() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/sameThis.kt");
-        }
-
-        @TestMetadata("sameThis.k2.kt")
-        public void testSameThis_k2() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/selfAssignment/sameThis.k2.kt");
         }
 
         @TestMetadata("shadow.kt")
