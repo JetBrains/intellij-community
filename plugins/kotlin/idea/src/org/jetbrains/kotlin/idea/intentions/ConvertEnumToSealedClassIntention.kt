@@ -2,28 +2,31 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.util.withExpectedActuals
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.intentions.ConvertEnumToSealedClassIntention.Context
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 /**
  * Tests:
@@ -32,37 +35,66 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
  * - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertActualEnumToSealedClass]
  * - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertExpectEnumToSealedClass]
  */
-internal class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<KtClass>(
-    KtClass::class.java,
-    KotlinBundle.lazyMessage("convert.to.sealed.class")
-) {
-    override fun applicabilityRange(element: KtClass): TextRange? {
-        if (element.getClassKeyword() == null) return null
-        val nameIdentifier = element.nameIdentifier ?: return null
-        val enumKeyword = element.modifierList?.getModifier(KtTokens.ENUM_KEYWORD) ?: return null
-        return TextRange(enumKeyword.startOffset, nameIdentifier.endOffset)
+internal class ConvertEnumToSealedClassIntention : KotlinApplicableModCommandAction<KtClass, Context>(KtClass::class) {
+    data class Context(
+        val enumClassName: String,
+        val supportsDataObjects: Boolean,
+        val isJvmPlatform: Boolean,
+        val classesInfo: Map<SmartPsiElementPointer<KtClass>, ClassInfo>,
+    )
+
+    data class ClassInfo(val isExpect: Boolean, val isActual: Boolean, val classFqName: String?)
+
+    override fun getFamilyName(): @IntentionFamilyName String {
+        return KotlinBundle.message("convert.to.sealed.class")
     }
 
-    override fun applyTo(element: KtClass, editor: Editor?) {
-        val name = element.name ?: return
-        if (name.isEmpty()) return
+    override fun getApplicableRanges(element: KtClass): List<TextRange> {
+        if (element.getClassKeyword() == null) return emptyList()
+        val nameIdentifier = element.nameIdentifier ?: return emptyList()
+        val enumKeyword = element.modifierList?.getModifier(KtTokens.ENUM_KEYWORD) ?: return emptyList()
+        return listOf(TextRange(enumKeyword.startOffset, nameIdentifier.endOffset).relativeTo(element))
+    }
+
+    context(KaSession)
+    override fun prepareContext(element: KtClass): Context? {
+        val enumClassName = element.name ?: return null
+        if (enumClassName.isEmpty()) return null
 
         val supportsDataObjects = element.languageVersionSettings.supportsFeature(LanguageFeature.DataObjects)
         val isJvmPlatform = element.platform.isJvm()
-        val expectActualClasses = element.withExpectedActuals()
+        val expectActualClasses = ExpectActualUtils.withExpectedActuals(element)
+        val classesData: Map<SmartPsiElementPointer<KtClass>, ClassInfo> = buildMap {
+            for (klass in expectActualClasses) {
+                if (klass !is KtClass) continue
 
-        for (klass in expectActualClasses) {
-            convertClass(klass, name, supportsDataObjects, isJvmPlatform)
+                // Separate `analyze` call for every class, because they may be actuals from non-dependency modules
+                analyze(klass) {
+                    val symbol = klass.symbol as? KaClassSymbol ?: return@analyze
+                    val classInfo = ClassInfo(symbol.isExpect, symbol.isActual, symbol.classId?.asFqNameString())
+                    this@buildMap[klass.createSmartPointer()] = classInfo
+                }
+            }
+        }
+
+        return Context(enumClassName, supportsDataObjects, isJvmPlatform, classesData)
+    }
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtClass,
+        elementContext: Context,
+        updater: ModPsiUpdater
+    ) {
+        for ((classPointer, classInfo) in elementContext.classesInfo) {
+            val klass = classPointer.element ?: continue
+            convertClass(updater.getWritable(klass), classInfo, elementContext)
         }
     }
 
-    private fun convertClass(klass: KtDeclaration, name: String, supportsDataObjects: Boolean, isJvmPlatform: Boolean) {
-        if (klass !is KtClass) return
-
-        val classDescriptor = klass.resolveToDescriptorIfAny() ?: return
-        val isExpect = classDescriptor.isExpect
-        val isActual = classDescriptor.isActual
-        val classFqName = classDescriptor.fqNameSafe.asString()
+    private fun convertClass(klass: KtClass, classInfo: ClassInfo, elementContext: Context) {
+        val (enumClassName, supportsDataObjects, isJvmPlatform, _) = elementContext
+        val (isExpect, isActual, classFqName) = classInfo
 
         klass.removeModifier(KtTokens.ENUM_KEYWORD)
         klass.addModifier(KtTokens.SEALED_KEYWORD)
@@ -89,9 +121,9 @@ internal class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<K
                 }
             } else {
                 val defaultEntry = if (isExpect) {
-                    psiFactory.createSuperTypeEntry(name)
+                    psiFactory.createSuperTypeEntry(enumClassName)
                 } else {
-                    psiFactory.createSuperTypeCallEntry("$name()")
+                    psiFactory.createSuperTypeCallEntry("$enumClassName()")
                 }
                 obj.addSuperTypeListEntry(defaultEntry)
             }
@@ -141,7 +173,7 @@ internal class ConvertEnumToSealedClassIntention : SelfTargetingRangeIntention<K
 
     private fun KtObjectDeclaration.addValueOfFunction(
         targetClassName: String,
-        classFqName: String,
+        classFqName: String?,
         enumEntryNames: List<String>,
         psiFactory: KtPsiFactory
     ) {
