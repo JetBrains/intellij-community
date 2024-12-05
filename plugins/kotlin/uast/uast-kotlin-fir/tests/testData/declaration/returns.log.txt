@@ -87,3 +87,18 @@ UFile (package = )
                                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                                             UIdentifier (Identifier (print))
                                                             USimpleNameReferenceExpression (identifier = it)
+        UMethod (name = lambdaInConstructor)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                    UIdentifier (Identifier (CustomAccessibilityAction))
+                    USimpleNameReferenceExpression (identifier = CustomAccessibilityAction, resolvesTo = PsiClass: CustomAccessibilityAction)
+                    ULambdaExpression
+                        UBlockExpression
+                            UReturnExpression
+    UClass (name = CustomAccessibilityAction)
+        UField (name = action)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+        UMethod (name = getAction)
+        UMethod (name = CustomAccessibilityAction)
+            UParameter (name = action)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
