@@ -206,10 +206,11 @@ public final class JarRepositoryManager {
         }
         catch (IOException ignored) {
         }
-        ourLocalRepositoryPath = repoPath;
-        return repoPath;
       }
+      ourLocalRepositoryPath = repoPath;
+      return repoPath;
     }
+
     final String userHome = System.getProperty("user.home", null);
     repoPath = userHome != null ? new File(userHome, DEFAULT_REPOSITORY_PATH) : new File(DEFAULT_REPOSITORY_PATH);
     ourLocalRepositoryPath = repoPath;
