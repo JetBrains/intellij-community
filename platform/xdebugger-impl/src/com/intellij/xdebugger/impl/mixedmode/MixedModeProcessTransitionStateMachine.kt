@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl
+package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.frame.*
@@ -9,8 +10,9 @@ import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.asXDebugProcess
 import kotlinx.coroutines.*
+import kotlin.reflect.KClass
 
-private val logger = com.intellij.openapi.diagnostic.logger<MixedModeProcessTransitionStateMachine>()
+private val logger = logger<MixedModeProcessTransitionStateMachine>()
 
 @Suppress("SSBasedInspection")
 class MixedModeProcessTransitionStateMachine(
@@ -324,7 +326,7 @@ class MixedModeProcessTransitionStateMachine(
     logger.info("state change : (${oldState::class.simpleName} -> ${newState::class.simpleName})")
   }
 
-  suspend fun waitFor(c: kotlin.reflect.KClass<*>) {
+  suspend fun waitFor(c: KClass<*>) {
     waitFor { it::class == c }
   }
 

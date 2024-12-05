@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.mixedMode
+package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
@@ -8,6 +8,9 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.nativeThreadId
+import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
+import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -1,18 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl
+package com.intellij.xdebugger.impl.mixedmode
 
-import com.intellij.xdebugger.XDebugProcessDebuggeeInForeground
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.asXDebugProcess
-import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.*
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.*
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
-private val logger = com.intellij.openapi.diagnostic.logger<XDebugProcessDebuggeeInForeground>()
+private val logger = logger<XDebugSessionMixedModeExtension>()
 
 abstract class XDebugSessionMixedModeExtension(
   private val coroutineScope: CoroutineScope,
