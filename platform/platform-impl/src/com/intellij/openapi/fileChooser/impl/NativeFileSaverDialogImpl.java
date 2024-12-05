@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Objects;
+
+import static java.util.Objects.requireNonNullElseGet;
 
 final class NativeFileSaverDialogImpl implements FileSaverDialog {
   private final FileSaverDescriptor myDescriptor;
@@ -33,7 +34,7 @@ final class NativeFileSaverDialogImpl implements FileSaverDialog {
     myHelper = new FileChooserDialogHelper(descriptor);
     myHelper.setNativeDialogProperties();
 
-    var title = Objects.requireNonNullElseGet(descriptor.getTitle(), () -> UIBundle.message("file.chooser.default.title"));
+    var title = requireNonNullElseGet(descriptor.getTitle(), () -> UIBundle.message("file.chooser.default.title"));
     myFileDialog = OwnerOptional.create(
       parent,
       dialog -> new FileDialog(dialog, title, FileDialog.SAVE),

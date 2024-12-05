@@ -281,6 +281,7 @@ public class FileChooserDescriptor implements Cloneable {
    */
   @Deprecated
   @ApiStatus.NonExtendable
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
     if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
       return false;
