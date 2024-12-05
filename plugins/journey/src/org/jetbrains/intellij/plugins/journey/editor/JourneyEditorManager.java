@@ -3,7 +3,8 @@ package org.jetbrains.intellij.plugins.journey.editor;
 
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -14,16 +15,17 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.intellij.plugins.journey.diagram.JourneyNodeIdentity;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.EventListener;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -36,20 +38,34 @@ public final class JourneyEditorManager implements Disposable {
   public interface GenericCallback<T> extends Consumer<T>, EventListener {
   }
 
-  public final EventDispatcher<GenericCallback<Editor>> closeEditor =
-    (EventDispatcher<GenericCallback<Editor>>)(EventDispatcher<?>)EventDispatcher.create(GenericCallback.class);
+  @SuppressWarnings("unchecked")
+  private final EventDispatcher<GenericCallback<PsiFile>> closeNode =
+    (EventDispatcher<GenericCallback<PsiFile>>)(EventDispatcher<?>)EventDispatcher.create(GenericCallback.class);
 
-  public void closeNode(PsiElement psiElement) {
-    Editor editor = OPENED_JOURNEY_EDITORS.get(psiElement.getContainingFile());
+  public void closeNode(PsiFile psiFile) {
+    Editor editor = OPENED_JOURNEY_EDITORS.get(psiFile);
     if (editor != null && editor.getProject() != null && editor.getVirtualFile() != null) {
       FileEditorManager.getInstance(editor.getProject()).closeFile(editor.getVirtualFile());
     }
-    OPENED_JOURNEY_EDITORS.remove(psiElement);
-    NODE_PANELS.remove(psiElement);
-    if (editor != null) closeEditor.getMulticaster().accept(editor);
+    if (psiFile != null) closeNode.getMulticaster().accept(psiFile);
+    OPENED_JOURNEY_EDITORS.remove(psiFile);
+    NODE_PANELS.remove(psiFile);
   }
 
-  public final Map<PsiElement, Editor> OPENED_JOURNEY_EDITORS = new ConcurrentHashMap<>();
+  public void closeNode(JourneyNodeIdentity nodeIdentity) {
+    closeNode(nodeIdentity.getFile());
+  }
+
+  public void onNodeClosed(JourneyNodeIdentity nodeIdentity, Runnable callback) {
+    closeNode.addListener(it -> {
+      if (Objects.equals(it, nodeIdentity.getFile())) {
+        callback.run();
+      }
+    });
+  }
+
+  private static final Logger LOG = Logger.getInstance(JourneyEditorManager.class);
+  private final Map<PsiFile, Editor> OPENED_JOURNEY_EDITORS = new ConcurrentHashMap<>();
   public final Map<PsiElement, JourneyEditorWrapper> NODE_PANELS = new ConcurrentHashMap<>();
 
   public static final float BASE_FONT_SIZE = 10.0f;
@@ -94,8 +110,7 @@ public final class JourneyEditorManager implements Disposable {
   }
 
   @RequiresEdt
-  public Editor openEditor(PsiMember psiElement) {
-    PsiFile psiFile = ReadAction.nonBlocking(() -> psiElement.getContainingFile()).executeSynchronously();
+  public Editor openEditor(PsiFile psiFile) {
     if (psiFile == null) {
       return null;
     }
@@ -127,7 +142,7 @@ public final class JourneyEditorManager implements Disposable {
           FileEditorManager.getInstance(it.getProject()).closeFile(it.getVirtualFile());
         }
       } catch (Throwable e) {
-        e.printStackTrace();
+        LOG.error("Could not dispose journey node", e);
       }
     });
     OPENED_JOURNEY_EDITORS.clear();
@@ -137,7 +152,7 @@ public final class JourneyEditorManager implements Disposable {
   public void revalidateEditors(float zoom) {
     for (Editor editor : OPENED_JOURNEY_EDITORS.values()) {
       // TODO such revalidation cause to flickering
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         editor.getColorsScheme().setEditorFontSize(BASE_FONT_SIZE * zoom);
         editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_UP);
         editor.getComponent().revalidate();

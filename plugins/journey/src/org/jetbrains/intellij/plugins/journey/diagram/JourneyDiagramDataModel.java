@@ -86,10 +86,16 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   @Override
   public @NotNull JourneyNode addElement(@NotNull JourneyNodeIdentity identity) {
     String title = myProvider.getVfsResolver().getQualifiedName(identity);
-    JourneyNode node = new JourneyNode(myProvider, identity, title);
-    myNodes.add(node);
+    JourneyNode existingNode = getNode(identity);
+    if (existingNode != null) {
+      return existingNode;
+    }
+
+    JourneyNode newNode = new JourneyNode(myProvider, identity, title);
+    myNodes.add(newNode);
     myModificationTracker.incModificationCount();
-    return node;
+    queryUpdate(() -> {});
+    return newNode;
   }
 
   @Override
@@ -106,7 +112,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     }
     myEdges.removeAll(edgesFromNode);
     myEdges.removeAll(edgesToNode);
-    myEditorManager.closeNode(node.getIdentifyingElement().getFile());
+    myEditorManager.closeNode(node.getIdentifyingElement());
     myNodes.removeIf(it -> Objects.equals(it, node));
     myModificationTracker.incModificationCount();
     queryUpdate(() -> {});
@@ -119,15 +125,19 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     JourneyEdge edge = new JourneyEdge(from, to);
     if (!myEdges.contains(edge)) {
       myEdges.add(edge);
+      myModificationTracker.incModificationCount();
+      queryUpdate(() -> {});
     }
-    myModificationTracker.incModificationCount();
     return edge;
   }
 
   @Override
   public void removeEdge(@NotNull DiagramEdge<JourneyNodeIdentity> edge) {
-    myEdges.removeIf(it -> it.equals(edge));
-    myModificationTracker.incModificationCount();
+    boolean removed = myEdges.removeIf(it -> it.equals(edge));
+    if (removed) {
+      myModificationTracker.incModificationCount();
+      queryUpdate(() -> {});
+    }
   }
 
   @Override
@@ -229,7 +239,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
         navigateNode = fromNode;
         navigatePSI = fromPSI;
       }
-      editor = myEditorManager.NODE_PANELS.get(navigateNode.getIdentifyingElement().calculatePsiElement());
+      editor = myEditorManager.NODE_PANELS.get(navigateNode.getIdentifyingElement().getFile());
       if (editor != null && editor.editor != null) {
         editor.editor.getCaretModel().moveToOffset(navigatePSI.getTextRange().getStartOffset());
         editor.editor.getScrollingModel().scrollToCaret(CENTER_UP);

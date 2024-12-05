@@ -9,13 +9,12 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyNode;
 import org.jetbrains.intellij.plugins.journey.diagram.ui.JourneyLineBorder;
 import org.jetbrains.intellij.plugins.journey.diagram.ui.JourneyTitleBar;
+import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
-
-import static com.intellij.ide.actions.QualifiedNameProviderUtil.getQualifiedName;
 
 public class JourneyEditorWrapper extends JPanel {
   private NodeRealizer realizer;
@@ -35,7 +34,7 @@ public class JourneyEditorWrapper extends JPanel {
       node.setFullViewState(true);
     };
 
-    editor.getComponent().add(new JourneyTitleBar(ObjectUtils.notNull(getQualifiedName(psiMember), () -> "No title"), editor, List.of(runnable1, runnable2)), BorderLayout.NORTH);
+    editor.getComponent().add(new JourneyTitleBar(ObjectUtils.notNull(PsiUtil.tryGetPresentableTitle(psiMember), () -> "No title"), editor, List.of(runnable1, runnable2)), BorderLayout.NORTH);
     Border border = new JourneyLineBorder(JBColor.LIGHT_GRAY, 1, this, view);
     editor.getComponent().setBorder(border);
   }

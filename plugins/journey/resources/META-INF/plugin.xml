@@ -63,6 +63,17 @@
       <keyboard-shortcut first-keystroke="meta B" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta B" keymap="Mac OS X 10.5+"/>
     </action>
+
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyCreateEdgesFromSelectionAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyCreateEdgesFromSelectionAction"
+    >
+      <add-to-group group-id="Diagram.DefaultGraphToolbar" anchor="last"/>
+    </action>
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyReverseSelectedEdgesAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyReverseSelectedEdgesAction"
+    >
+      <add-to-group group-id="Diagram.DefaultGraphToolbar" anchor="last"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -86,6 +97,11 @@
 
     <registryKey key="ide.journey.enabled" defaultValue="false"
                  description="Enable Journey plugin features"/>
+    <registryKey key="ide.slow.operations.assertion.journey" defaultValue="false"
+                 description="Disable slow operations warning for journey"/>
+
+    <selectInTarget implementation="org.jetbrains.intellij.plugins.journey.actions.SelectInJourneyAction"/>
+
   </extensions>
 
 </idea-plugin>

@@ -50,7 +50,7 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
         return cached;
       }
 
-      Editor editor = myDataModel.myEditorManager.openEditor(psiMember);
+      Editor editor = myDataModel.myEditorManager.openEditor(psiFile);
       updateEditorSize(editor, psiMember, (float)view.getZoom(), true);
       if (editor == null) {
         throw new IllegalStateException("Can't open " + psiFile);
@@ -58,11 +58,8 @@ public class JourneyNodeCellRenderer extends DefaultUmlRenderer {
       editor.putUserData(JourneyDataKeys.JOURNEY_DIAGRAM_DATA_MODEL, myDataModel);
 
       JourneyEditorWrapper editorWrapper = new JourneyEditorWrapper(editor, journeyNode, realizer, psiMember, view);
-      myDataModel.myEditorManager.closeEditor.addListener(it -> {
-        if (it == editor) {
-          view.getCanvasComponent().remove(editorWrapper.getEditorComponent());
-          myDataModel.myEditorManager.NODE_PANELS.remove(psiFile);
-        }
+      myDataModel.myEditorManager.onNodeClosed(identity, () -> {
+        view.getCanvasComponent().remove(editorWrapper.getEditorComponent());
       });
 
       view.getCanvasComponent().add(editorWrapper.getEditorComponent());

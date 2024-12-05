@@ -25,6 +25,7 @@ import com.intellij.ui.list.createTargetPopup
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.plugins.journey.JourneyBundle
 import org.jetbrains.intellij.plugins.journey.JourneyDataKeys
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel
 
@@ -95,8 +96,7 @@ internal class JourneyGotoDeclarationOnlyHandler() : CodeInsightActionHandler {
 
     fun navigateRequestLazy(project: Project, editor: Editor, diagramDataModel: JourneyDiagramDataModel, requestor: NavigationRequestor) {
       EDT.assertIsEdt()
-      @Suppress("DialogTitleCapitalization")
-      val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
+      val request = underModalProgress(project, JourneyBundle.message("journey.go.to.declaration.progress.title")) {
         requestor.navigationRequest()
       }
       if (request != null) {

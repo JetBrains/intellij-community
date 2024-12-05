@@ -8,9 +8,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.intellij.plugins.journey.JourneyDataKeys;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -46,12 +48,19 @@ public class JourneyDiagramVfsResolver implements DiagramVfsResolver<JourneyNode
       return null;
     }
     PsiElement element = identity.getOriginalElement();
-    return ReadAction.compute(() -> myPsiVfsResolver.getQualifiedName(element));
+    // PSI calculations are "slow operations", but we need to do it in to satisfy the diagram framework.
+    try (var ignored = SlowOperations.startSection(JourneyDataKeys.JOURNEY_SLOW_OPERATIONS)) {
+      return ReadAction.compute(() -> myPsiVfsResolver.getQualifiedName(element));
+    }
   }
 
   @Override
   public @Nullable JourneyNodeIdentity resolveElementByFQN(@NotNull String fqn, @NotNull Project project) {
-    PsiElement element = ReadAction.compute(() -> myPsiVfsResolver.resolveElementByFQN(fqn, project));
+    PsiElement element;
+    // PSI calculations are "slow operations", but we need to do it in to satisfy the diagram framework.
+    try (var ignored = SlowOperations.startSection(JourneyDataKeys.JOURNEY_SLOW_OPERATIONS)) {
+      element = ReadAction.compute(() -> myPsiVfsResolver.resolveElementByFQN(fqn, project));
+    }
     if (element == null) return null;
     return new JourneyNodeIdentity(element);
   }

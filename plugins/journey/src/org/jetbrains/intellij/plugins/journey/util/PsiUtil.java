@@ -1,13 +1,18 @@
 package org.jetbrains.intellij.plugins.journey.util;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
+
+import static com.intellij.ide.actions.QualifiedNameProviderUtil.getQualifiedName;
 
 public final class PsiUtil {
 
@@ -33,6 +38,23 @@ public final class PsiUtil {
       return ReadAction.compute(() -> nameIdentifierOwner.getNameIdentifier());
     }
     return null;
+  }
+
+  public static @Nullable @NlsSafe String tryGetPresentableTitle(PsiElement element) {
+    if (element instanceof PsiClass psiClass) {
+      return ReadAction.compute(() -> psiClass.getName());
+    }
+    if (element instanceof PsiMember psiMember) {
+      return ReadAction.compute(() -> {
+        String name = psiMember.getName();
+        PsiClass containingClass = psiMember.getContainingClass();
+        if (containingClass == null) {
+          return name;
+        }
+        else return containingClass.getName() + "." + name;
+      });
+    }
+    return getQualifiedName(element);
   }
 
 }

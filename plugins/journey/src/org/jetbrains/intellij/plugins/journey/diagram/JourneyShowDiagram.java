@@ -5,7 +5,6 @@ import com.intellij.diagram.DiagramDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.uml.UmlVirtualFileSystem;
 import com.intellij.uml.core.actions.ShowDiagram;
+import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,13 +81,15 @@ public class JourneyShowDiagram extends ShowDiagram {
       
       """;
 
-    public static void showDiagramFromFile(Project project, PsiElement file) {
-      File file1 = createLocalFile(project, System.currentTimeMillis() + ".uml", new JourneyNodeIdentity(file));
-      VirtualFile vf = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file1.toPath());
+    public static void showDiagramFromFile(Project project, PsiElement originalElement) {
+      File file = createLocalFile(project, System.currentTimeMillis() + ".uml", new JourneyNodeIdentity(originalElement));
+      VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file.toPath());
 
-      if (vf != null) {
-        DumbService.getInstance(project).runWhenSmart(() -> {});
-        FileEditorManager.getInstance(file.getProject()).openTextEditor(new OpenFileDescriptor(file.getProject(), vf), true);
+      if (virtualFile != null) {
+        // For some reason file is not being opened right after the creation.
+        new Alarm().addRequest(() -> {
+          FileEditorManager.getInstance(project).openFileEditor(new OpenFileDescriptor(project, virtualFile), true);
+        }, 500);
       }
       else {
         LOG.error("Failed to convert File to VirtualFile");
