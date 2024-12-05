@@ -686,18 +686,18 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
             pass
 
         def foo(d):
-          if isinstance(d, <error descr="TypedDict type objects cannot be used with instance and class checks">Movie</error>):
+          if isinstance(d, <error descr="TypedDict type cannot be used with instance and class checks">Movie</error>):
               pass
 
-          if isinstance(d, <error descr="TypedDict type objects cannot be used with instance and class checks">Movie2</error>):
+          if isinstance(d, <error descr="TypedDict type cannot be used with instance and class checks">Movie2</error>):
               pass
 
         M = Movie
-        if issubclass(A, <error descr="TypedDict type objects cannot be used with instance and class checks">M</error>):
+        if issubclass(A, <error descr="TypedDict type cannot be used with instance and class checks">M</error>):
             pass
 
         M2 = Movie2
-        if issubclass(A, <error descr="TypedDict type objects cannot be used with instance and class checks">M2</error>):
+        if issubclass(A, <error descr="TypedDict type cannot be used with instance and class checks">M2</error>):
             pass
         """
     );
@@ -1541,6 +1541,18 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        v1 = cast(list[int], val) # ok
                        v2 = cast('list[float]', val) # ok
                        v3 = cast(<warning descr="Expected a type">1</warning>, val)
+                   """);
+  }
+
+  public void testIsInstanceAndClassChecksOnNewType() {
+    doTestByText("""
+                   from typing import NewType
+                   
+                   UserId = NewType("UserId", int)
+
+                   def f(val):
+                       isinstance(val, <error descr="NewType type cannot be used with instance and class checks">UserId</error>)
+                       issubclass(int, <error descr="NewType type cannot be used with instance and class checks">UserId</error>)
                    """);
   }
 
