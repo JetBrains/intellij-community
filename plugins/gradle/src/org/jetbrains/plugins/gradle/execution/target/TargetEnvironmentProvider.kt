@@ -32,6 +32,9 @@ internal class TargetEnvironmentProvider {
       promise.blockingGet(0)  // Just rethrows errors.
     }
     dependingOnEnvironmentPromise.clear()
+  }
+
+  fun uploadVolumes(progressIndicator: GradleServerProgressIndicator) {
     for (upload in uploads) {
       progressIndicator.checkCanceled()
       upload.volume.upload(upload.relativePath, progressIndicator)

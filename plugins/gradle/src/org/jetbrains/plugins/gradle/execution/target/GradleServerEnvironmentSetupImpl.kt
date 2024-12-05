@@ -115,9 +115,14 @@ internal class GradleServerEnvironmentSetupImpl(
       targetBuildParametersBuilder.useInstallation(it)
     }
 
+    configureJdk(javaParameters, request, consumerOperationParameters, targetPathMapper, environmentConfiguration)
     progressIndicator.checkCanceled()
-    val targetArguments =
-      prepareTargetEnvironmentRequest(request, consumerOperationParameters, targetPathMapper, environmentConfiguration, progressIndicator)
+    val targetArguments = prepareTargetEnvironmentRequest(
+      request,
+      consumerOperationParameters,
+      environmentConfiguration,
+      progressIndicator
+    )
 
     progressIndicator.checkCanceled()
     val targetedCommandLineBuilder = javaParameters.toCommandLine(request)
@@ -130,7 +135,7 @@ internal class GradleServerEnvironmentSetupImpl(
       }
     }
 
-    projectUploadRoot = setupTargetProjectDirectories(consumerOperationParameters, request, targetedCommandLineBuilder)
+    projectUploadRoot = setupTargetProjectDirectories(consumerOperationParameters.projectDir, request, targetedCommandLineBuilder)
     val remoteEnvironment = request.prepareEnvironment(progressIndicator)
     targetEnvironment = remoteEnvironment
     EP.forEachExtensionSafe {
@@ -146,6 +151,7 @@ internal class GradleServerEnvironmentSetupImpl(
 
     progressIndicator.checkCanceled()
     targetEnvironmentProvider.supplyEnvironmentAndRunHandlers(remoteEnvironment, progressIndicator)
+    targetEnvironmentProvider.uploadVolumes(progressIndicator)
 
     val pathsToMap = extractPathsToMapFromInitScripts(initScripts)
     val pathMapperInitScript = createTargetPathMapperInitScript(
@@ -168,20 +174,18 @@ internal class GradleServerEnvironmentSetupImpl(
     return targetedCommandLineBuilder.build()
   }
 
-  private fun setupTargetProjectDirectories(consumerOperationParameters: ConsumerOperationParameters,
-                                            request: TargetEnvironmentRequest,
-                                            targetedCommandLineBuilder: @NotNull TargetedCommandLineBuilder): TargetEnvironment.UploadRoot {
+  private fun setupTargetProjectDirectories(
+    workingDir: File,
+    request: TargetEnvironmentRequest,
+    targetedCommandLineBuilder: @NotNull TargetedCommandLineBuilder,
+  ): TargetEnvironment.UploadRoot {
     val pathsToUpload: MutableSet<String> = HashSet()
 
-    val workingDir = consumerOperationParameters.projectDir
     val gradleProjectDirectory = FileUtilRt.toSystemDependentName(workingDir.path)
     pathsToUpload.add(gradleProjectDirectory)
 
-    val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(
-      ExternalSystemApiUtil.toCanonicalPath(workingDir.path))
-    projectSettings?.modules
-      ?.filter { Files.exists(Path.of(it)) }
-      ?.mapTo(pathsToUpload) { FileUtilRt.toSystemDependentName(it) }
+    val projectModules = getProjectModules(workingDir)
+    pathsToUpload.addAll(projectModules)
 
     val commonAncestor = findCommonAncestor(pathsToUpload)
     val uploadPath = Paths.get(FileUtilRt.toSystemDependentName(commonAncestor!!))
@@ -206,6 +210,16 @@ internal class GradleServerEnvironmentSetupImpl(
     }
     targetedCommandLineBuilder.setWorkingDirectory(targetWorkingDirectory!!)
     return uploadRoot
+  }
+
+  private fun getProjectModules(workingDir: File): Set<String> {
+    val externalProjectPath = ExternalSystemApiUtil.toCanonicalPath(workingDir.path)
+    val projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(externalProjectPath)
+    return projectSettings?.modules
+             ?.filter { Files.exists(Path.of(it)) }
+             ?.map { FileUtilRt.toSystemDependentName(it) }
+             ?.toSet()
+           ?: emptySet()
   }
 
   private fun findCommonAncestor(paths: Set<String>): String? {
@@ -258,11 +272,13 @@ internal class GradleServerEnvironmentSetupImpl(
     return mapperInitScript.toString()
   }
 
-  private fun prepareTargetEnvironmentRequest(request: TargetEnvironmentRequest,
-                                              consumerOperationParameters: ConsumerOperationParameters,
-                                              targetPathMapper: PathMapper?,
-                                              environmentConfiguration: TargetEnvironmentConfiguration,
-                                              progressIndicator: TargetProgressIndicator): List<Pair<String, TargetValue<String>?>> {
+  private fun configureJdk(
+    javaParameters: SimpleJavaParameters,
+    request: TargetEnvironmentRequest,
+    consumerOperationParameters: ConsumerOperationParameters,
+    targetPathMapper: PathMapper?,
+    environmentConfiguration: TargetEnvironmentConfiguration,
+  ) {
     if (request is LocalTargetEnvironmentRequest) {
       javaParameters.vmParametersList.addProperty(Main.LOCAL_BUILD_PROPERTY, "true")
       val javaHomePath = consumerOperationParameters.javaHome.path
@@ -276,9 +292,13 @@ internal class GradleServerEnvironmentSetupImpl(
         environmentConfiguration.addLanguageRuntime(javaLanguageRuntimeConfiguration)
       }
     }
+  }
 
+  private fun prepareTargetEnvironmentRequest(request: TargetEnvironmentRequest,
+                                              consumerOperationParameters: ConsumerOperationParameters,
+                                              environmentConfiguration: TargetEnvironmentConfiguration,
+                                              progressIndicator: TargetProgressIndicator): List<Pair<String, TargetValue<String>?>> {
     val targetArguments = requestFileArgumentsUpload(request, consumerOperationParameters, environmentConfiguration)
-
     EP.forEachExtensionSafe {
       it.prepareTargetEnvironmentRequest(request, this, progressIndicator)
     }
