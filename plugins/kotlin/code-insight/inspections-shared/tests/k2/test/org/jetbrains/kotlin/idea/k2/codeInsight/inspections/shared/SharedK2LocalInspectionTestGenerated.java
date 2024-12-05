@@ -491,6 +491,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/constantConditionIf/delete.kt");
         }
 
+        @TestMetadata("delete_caretInsideCondition.kt")
+        public void testDelete_caretInsideCondition() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/delete_caretInsideCondition.kt");
+        }
+
+        @TestMetadata("delete_caretOnIf.kt")
+        public void testDelete_caretOnIf() throws Exception {
+            runTest("../testData/inspectionsLocal/constantConditionIf/delete_caretOnIf.kt");
+        }
+
         @TestMetadata("endWithElseIf.kt")
         public void testEndWithElseIf() throws Exception {
             runTest("../testData/inspectionsLocal/constantConditionIf/endWithElseIf.kt");
