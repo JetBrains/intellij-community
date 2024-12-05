@@ -11,7 +11,7 @@ import org.jetbrains.jewel.samples.standalone.view.ComponentsView
 import org.jetbrains.jewel.samples.standalone.view.MarkdownDemo
 import org.jetbrains.jewel.samples.standalone.view.WelcomeView
 
-object MainViewModel {
+internal object MainViewModel {
     fun onNavigateTo(destination: String) {
         currentView = views.first { viewInfo -> viewInfo.title == destination }
     }

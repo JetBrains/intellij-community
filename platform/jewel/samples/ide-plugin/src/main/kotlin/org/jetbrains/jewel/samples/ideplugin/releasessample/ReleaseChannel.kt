@@ -4,7 +4,7 @@ import com.intellij.ui.JBColor
 import java.awt.Color
 
 @Suppress("UnregisteredNamedColor") // They exist at runtime
-enum class ReleaseChannel(val background: Color, val foreground: Color) {
+internal enum class ReleaseChannel(val background: Color, val foreground: Color) {
     Stable(
         background =
             JBColor(

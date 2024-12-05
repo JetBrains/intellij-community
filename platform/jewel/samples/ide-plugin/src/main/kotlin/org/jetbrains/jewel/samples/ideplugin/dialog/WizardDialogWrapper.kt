@@ -130,7 +130,7 @@ internal class WizardDialogWrapper(
     }
 }
 
-interface WizardPage {
+internal interface WizardPage {
     @Composable fun PageContent()
 
     val canGoForward: StateFlow<Boolean>

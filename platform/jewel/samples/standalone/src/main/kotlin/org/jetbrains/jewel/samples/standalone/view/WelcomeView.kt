@@ -28,7 +28,7 @@ import org.jetbrains.jewel.ui.painter.hints.Selected
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WelcomeView() {
+internal fun WelcomeView() {
     Column(
         modifier =
             Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground).padding(24.dp),
@@ -73,7 +73,7 @@ fun WelcomeView() {
 }
 
 @Composable
-fun ThemeSelectionChip(theme: IntUiThemes, name: String, iconKey: IconKey) {
+internal fun ThemeSelectionChip(theme: IntUiThemes, name: String, iconKey: IconKey) {
     RadioButtonChip(
         selected = MainViewModel.theme == theme,
         onClick = { MainViewModel.theme = theme },

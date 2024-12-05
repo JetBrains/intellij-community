@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-receivers -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -P plugin:poko-compiler-plugin:pokoAnnotation=org/jetbrains/jewel/foundation/GenerateDataFunctions plugin:poko:pokoAnnotation=org/jetbrains/jewel/foundation/GenerateDataFunctions" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="2.0" />
+            <stringArg name="languageVersion" arg="2.0" />
+          </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>
+                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0.jar</arg>
+                <arg>$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-compiler-plugin/0.18.0/poko-compiler-plugin-0.18.0.jar</arg>
+              </args>
+            </arrayArg>
+          </arrayArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/kotlin" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="com.darkrockstudios.mpfilepicker" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.darkrockstudios:mpfilepicker:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0.jar">
+              <sha256sum>93e571b342f2bc87aa192fc7eb6d177ac5075415617824674b0d5fa063840f4e</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker/3.1.0/mpfilepicker-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="com.darkrockstudios.mpfilepicker.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.darkrockstudios:mpfilepicker-jvm:3.1.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0.jar">
+              <sha256sum>65bb8c814bc66faf28395e7f9d51c74f5cc35d70919c50ea8639388ec46cef2d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/darkrockstudios/mpfilepicker-jvm/3.1.0/mpfilepicker-jvm-3.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.autolink" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.decoratedWindow" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.intUiStandaloneStyling" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
+    <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="org.lwjgl.lwjgl" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.lwjgl:lwjgl:3.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar">
+              <sha256sum>cf83f90e32fb973ff5edfca4ef35f55ca51bb70a579b6a1f290744f552e8e484</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl/3.3.1/lwjgl-3.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="org.lwjgl.lwjgl.tinyfd" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.lwjgl:lwjgl-tinyfd:3.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl-tinyfd/3.3.1/lwjgl-tinyfd-3.3.1.jar">
+              <sha256sum>488f51ed95f0fac48d1d87cb0e3bac08c012dcbf6ef3c1688685d708cdbccd56</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl-tinyfd/3.3.1/lwjgl-tinyfd-3.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/lwjgl/lwjgl-tinyfd/3.3.1/lwjgl-tinyfd-3.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="org.nibor.autolink.autolink" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.nibor.autolink:autolink:0.11.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.11.0/autolink-0.11.0.jar">
+              <sha256sum>39c6588948ab31b98ab1fea4a6abab37243f387cb48cb50ae599410effb70038</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.11.0/autolink-0.11.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/nibor/autolink/autolink/0.11.0/autolink-0.11.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.skiko" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
+  </component>
+</module>
