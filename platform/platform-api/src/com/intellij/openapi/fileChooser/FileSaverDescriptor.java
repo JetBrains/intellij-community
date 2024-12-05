@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @see FileSaverDialog
  * @see FileChooserDescriptor
  */
-public class FileSaverDescriptor extends FileChooserDescriptor implements Cloneable {
+public class FileSaverDescriptor extends FileChooserDescriptor {
   /**
    * Constructs save dialog properties.
    *

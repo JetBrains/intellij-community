@@ -2212,7 +2212,6 @@ com.intellij.openapi.fileChooser.FileChooserPanel
 - a:toggleProjectDetection():Z
 c:com.intellij.openapi.fileChooser.FileSaverDescriptor
 - com.intellij.openapi.fileChooser.FileChooserDescriptor
-- java.lang.Cloneable
 - <init>(java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String[]):V
