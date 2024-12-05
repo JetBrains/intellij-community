@@ -15685,6 +15685,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/safeCastWithReturn/castNeverSucceeds.kt");
         }
 
+        @TestMetadata("castNeverSucceedsK2Version.kt")
+        public void testCastNeverSucceedsK2Version() throws Exception {
+            runTest("testData/inspectionsLocal/safeCastWithReturn/castNeverSucceedsK2Version.kt");
+        }
+
         @TestMetadata("hasParenthesize.kt")
         public void testHasParenthesize() throws Exception {
             runTest("testData/inspectionsLocal/safeCastWithReturn/hasParenthesize.kt");
