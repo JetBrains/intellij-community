@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -274,12 +274,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                       int @NotNull [] toIgnore,
                                                       boolean canChangeDocument,
                                                       boolean readEditorMarkupModel) {
+    SmartPsiElementPointer<PsiFile> filePointer = ReadAction.compute(() -> SmartPointerManager.createPointer(psiFile));
     Project project = psiFile.getProject();
     ensureIndexesUpToDate(project);
-    VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(psiFile))) {
+    VirtualFile virtualFile = filePointer.getVirtualFile();
+    if (!ReadAction.compute(() -> ProblemHighlightFilter.shouldHighlightFile(Objects.requireNonNull(filePointer.getElement())))) {
       boolean inSource = ReadAction.compute(() -> ProjectRootManager.getInstance(project).getFileIndex().isInSource(virtualFile));
-      throw new IllegalStateException("ProblemHighlightFilter.shouldHighlightFile('" + psiFile + "') == false, so can't highlight it." +
+      throw new IllegalStateException("ProblemHighlightFilter.shouldHighlightFile('" + filePointer.getElement() + "') == false, so can't highlight it." +
                                       (inSource ? "" : " Maybe it's because " + virtualFile+ " is outside source folders? (source folders: " +
                                       ReadAction.compute(() -> Arrays.toString(ProjectRootManager.getInstance(project).getContentSourceRoots()))+")"));
     }
@@ -296,7 +297,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         settings.forceUseZeroAutoReparseDelay(true);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
-          codeAnalyzer.runPasses(psiFile, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
+          PsiFile file = filePointer.getElement();
+          assertNotNull(file);
+          codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
           IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
           if (policy != null) {
             policy.waitForHighlighting(project, editor);
