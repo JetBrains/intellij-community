@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
 import java.nio.file.Path;
 
 import static java.util.Objects.requireNonNullElseGet;
@@ -70,7 +69,7 @@ final class NativeFileSaverDialogImpl implements FileSaverDialog {
 
     myHelper.showNativeDialog(myFileDialog);
 
-    var file = myFileDialog.getFile();
-    return file == null ? null : new VirtualFileWrapper(new File(myFileDialog.getDirectory(), file));
+    var files = myFileDialog.getFiles();
+    return files.length != 0 ? new VirtualFileWrapper(files[0]) : null;
   }
 }
