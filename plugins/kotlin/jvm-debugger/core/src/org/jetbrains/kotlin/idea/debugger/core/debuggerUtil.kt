@@ -204,6 +204,7 @@ private class MockStackFrame(private val location: Location, private val vm: Vir
 }
 
 private const val INVOKE_SUSPEND_SIGNATURE = "(Ljava/lang/Object;)Ljava/lang/Object;"
+private const val CONTINUATION_VARIABLE_NAME = "\$continuation"
 
 fun StackFrameProxyImpl.isOnSuspensionPoint(): Boolean {
     val location = this.safeLocation() ?: return false
@@ -247,9 +248,19 @@ fun isOnSuspendReturnOrReenter(location: Location): Boolean {
 
 private fun doesMethodHaveSwitcher(location: Location): Boolean {
     if (DexDebugFacility.isDex(location.virtualMachine())) {
-        return false
+        // For JVM `checkContinuationLabelField` tries to find an instruction like `getfield MainKt$foo$1.label:I`,
+        // thus defining if a state machine was generated for a suspend function.
+        // This approach doesn't work for Android, so this is a simpler approach (see https://github.com/JetBrains/intellij-community/pull/2842):
+        val method = location.safeMethod() ?: return false
+        // State machine is always generated for suspend lambdas
+        if (isInvokeSuspendMethod(method)) {
+            return true
+        }
+        // Otherwise, if state machine is generated, the $continuation
+        // variable will be present in LVT.
+        val variables = method.safeVariables() ?: return false
+        return variables.any { it.name() == CONTINUATION_VARIABLE_NAME }
     }
-
     var result = false
     MethodBytecodeUtil.visit(location.method(), object : MethodVisitor(Opcodes.API_VERSION) {
         override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
