@@ -54,8 +54,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
 
   private final VirtualFile myVirtualFile;
   private final Project myProject;
-
-  private final Map<Language, StructureViewBuilder> myLanguageToBuilderMap = new LinkedHashMap<>();
+  private final Map<Language, @Nullable StructureViewBuilder> myLanguageToBuilderMap = new LinkedHashMap<>();
 
   protected TemplateLanguageStructureViewBuilder(PsiElement psiElement) {
     myProject = psiElement.getProject();
@@ -63,11 +62,9 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
 
     PsiFile file = psiElement.getContainingFile();
     if (file != null) {
-      for (Language language : getLanguages(psiElement.getContainingFile())) {
+      for (Language language : getLanguages(file)) {
         StructureViewBuilder builder = getBuilder(file, language);
-        if (builder != null) {
-          myLanguageToBuilderMap.put(language, builder);
-        }
+        myLanguageToBuilderMap.put(language, builder);
       }
     }
   }
@@ -82,6 +79,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
     for (Language language : myLanguageToBuilderMap.keySet()) {
       StructureViewBuilder builder = myLanguageToBuilderMap.get(language);
+      if (builder == null) continue;
       StructureView structureView = builder.createStructureView(fileEditor, project);
       String title = language.getDisplayName();
       Icon icon = ObjectUtils.notNull(LanguageUtil.getLanguageFileType(language), FileTypes.UNKNOWN).getIcon();
