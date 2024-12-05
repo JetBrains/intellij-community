@@ -310,6 +310,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/KTIJ_27276/");
     }
 
+    @TestMetadata("KTIJ_32378")
+    public void testKTIJ_32378() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_32378/");
+    }
+
     @TestMetadata("MoreSpecificExtensionGeneric")
     public void testMoreSpecificExtensionGeneric() throws Exception {
         runTest("../../completion/testData/basic/multifile/MoreSpecificExtensionGeneric/");
