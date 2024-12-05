@@ -8145,7 +8145,44 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis")
+    public static class NullableBooleanEqualityCheckToElvis extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("eqFalse.kt")
+        public void testEqFalse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/eqFalse.kt");
+        }
+
+        @TestMetadata("eqTrue.kt")
+        public void testEqTrue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/eqTrue.kt");
+        }
+
+        @TestMetadata("flexible.kt")
+        public void testFlexible() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/flexible.kt");
+        }
+
+        @TestMetadata("notEqFalse.kt")
+        public void testNotEqFalse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/notEqFalse.kt");
+        }
+
+        @TestMetadata("notEqTrue.kt")
+        public void testNotEqTrue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/notEqTrue.kt");
+        }
+    }
 
 
 
