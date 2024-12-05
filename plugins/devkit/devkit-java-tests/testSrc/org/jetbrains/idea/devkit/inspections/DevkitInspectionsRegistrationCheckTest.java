@@ -16,8 +16,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
    * Inspections that are finished and intentionally disabled.
    */
   private static final List<String> DISABLED_INSPECTIONS =
-    Stream.of("PluginXmlI18n",
-              "SerializableCtor",
+    Stream.of("SerializableCtor",
               "StatisticsCollectorNotRegistered"
     ).sorted().toList();
 
