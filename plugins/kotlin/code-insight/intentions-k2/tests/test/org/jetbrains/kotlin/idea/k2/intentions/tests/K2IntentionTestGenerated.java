@@ -6016,6 +6016,35 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically")
+    public static class IfToReturnAsymmetrically extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simpleIf.kt")
+        public void testSimpleIf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically/simpleIf.kt");
+        }
+
+        @TestMetadata("simpleIfWithBlocks.kt")
+        public void testSimpleIfWithBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically/simpleIfWithBlocks.kt");
+        }
+
+        @TestMetadata("simpleIfWithComments.kt")
+        public void testSimpleIfWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically/simpleIfWithComments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public abstract static class Intentions extends AbstractK2IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
