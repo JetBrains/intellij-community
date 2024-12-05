@@ -8,6 +8,7 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.nativeThreadId
+import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.mixedMode.MixedModeFramesBuilder
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
@@ -61,22 +62,29 @@ class XMixedModeExecutionStack(
         val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
         logger.info("High level frames obtained")
 
-        val combinedFrames = logger.runCatching {
+        val mixFramesResult = logger.runCatching {
           measureTimedValue {
             framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames)
           }.also { logger.info("Mixed stack built in ${it.duration}") }.value
         }
 
-        val framesToAdd = if (combinedFrames.isFailure) {
-          logger.error("Failed to build mixed stack. Will use low level frames only", combinedFrames.exceptionOrNull())
-          lowLevelFrames
+        if (mixFramesResult.isFailure) {
+          logger.error("Failed to build mixed stack. Will use low level frames only", mixFramesResult.exceptionOrNull())
+          container.addStackFrames(lowLevelFrames, true)
+          computedFrames.complete(lowLevelFrames)
         }
         else {
-          combinedFrames.getOrThrow()
-        }
+          val builtResult = mixFramesResult.getOrThrow()
+          container as XStackFrameContainerEx
 
-        container.addStackFrames(framesToAdd, true)
-        computedFrames.complete(framesToAdd)
+          val frameToSelect = when (val index = builtResult.frameToSelectIndex) {
+            null -> null
+            else -> builtResult.frames[index]
+          }
+
+          container.addStackFrames(builtResult.frames, frameToSelect, true)
+          computedFrames.complete(builtResult.frames)
+        }
       }
     }.invokeOnCompletion {
       computationCompleted.complete(Unit)
