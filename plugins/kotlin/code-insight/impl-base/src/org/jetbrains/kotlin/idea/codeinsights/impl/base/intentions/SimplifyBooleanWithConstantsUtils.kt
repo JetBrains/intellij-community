@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -108,10 +109,11 @@ object SimplifyBooleanWithConstantsUtils {
 
     private fun KtExpression.canBeReducedToFalse(): Boolean = canBeReducedToBooleanConstant(this, false)
 
-    private fun canBeReducedToBooleanConstant(expression: KtExpression, constant: Boolean? = null): Boolean {
-        return analyze(expression) {
-            val value = expression.evaluate()?.value
-            value == constant
+    private fun canBeReducedToBooleanConstant(expression: KtExpression, expectedValue: Boolean? = null): Boolean {
+        analyze(expression) {
+            val value = (expression.evaluate() as? KaConstantValue.BooleanValue)?.value ?: return false
+            
+            return expectedValue == null || value == expectedValue
         }
     }
 
