@@ -127,7 +127,7 @@ public final class IdeaLogger extends JulLogger {
       return;
     }
 
-    logSevere(LogMessage.eventOf(t != null ? t : new Throwable(), message, List.of(attachments)).toString());
+    logSevere(LogMessage.eventOf(t != null ? t : new Throwable(), message, List.of(attachments)).toString(), t);
     if (t != null) {
       reportToFus(t);
     }
