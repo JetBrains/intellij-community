@@ -336,24 +336,28 @@ public abstract class MetaAnnotationUtil {
   }
 
   @Nullable
-  private static PsiAnnotation findMetaAnnotation(PsiClass aClass, String annotation, Set<? super PsiClass> visited) {
-    PsiAnnotation directAnnotation = AnnotationUtil.findAnnotation(aClass, true, annotation);
-    if (directAnnotation != null) {
-      return directAnnotation;
-    }
+private static PsiAnnotation findMetaAnnotation(PsiClass aClass, String annotation, Set<? super PsiClass> visited) {
+    Deque<PsiClass> stack = new ArrayDeque<>();
+    stack.push(aClass);
 
-    List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(aClass);
-    for (PsiClass resolvedAnnotation : resolvedAnnotations) {
-      if (visited.add(resolvedAnnotation)) {
-        PsiAnnotation annotated = findMetaAnnotation(resolvedAnnotation, annotation, visited);
-        if (annotated != null) {
-          return annotated;
+    while (!stack.isEmpty()) {
+        PsiClass currentClass = stack.pop();
+        
+        PsiAnnotation directAnnotation = AnnotationUtil.findAnnotation(currentClass, true, annotation);
+        if (directAnnotation != null) {
+            return directAnnotation;
         }
-      }
+
+        List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(currentClass);
+        for (PsiClass resolvedAnnotation : resolvedAnnotations) {
+            if (visited.add(resolvedAnnotation)) {
+                stack.push(resolvedAnnotation);
+            }
+        }
     }
 
     return null;
-  }
+}
 
   @NotNull
   public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
