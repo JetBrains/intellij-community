@@ -14,7 +14,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import kotlinx.coroutines.cancel
-import org.jetbrains.plugins.terminal.block.BlockTerminalScopeProvider
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.output.highlighting.CompositeTerminalTextHighlighter
@@ -25,6 +24,7 @@ import org.jetbrains.plugins.terminal.block.ui.getDisposed
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.util.*
 import kotlin.math.max
 
@@ -416,7 +416,7 @@ internal class TerminalOutputController(
     }
 
     private fun setupContentUpdating(): TerminalOutputContentUpdatesScheduler {
-      val scope = BlockTerminalScopeProvider.getInstance(project).childScope("Command block content update")
+      val scope = terminalProjectScope(project, "Command block content update")
       Disposer.register(disposable) {
         scope.cancel()
       }
