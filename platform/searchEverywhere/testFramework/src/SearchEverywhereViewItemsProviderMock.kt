@@ -15,8 +15,8 @@ class SearchEverywhereItemsProviderMock(
   private val size: Int = 100,
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
-) : SearchEverywhereItemsProvider {
-  val id = SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_$resultPrefix")
+) : SearchEverywhereItemsProvider, SearchEverywhereCustomProviderIdHolder {
+  override val customProviderId = SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_$resultPrefix")
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem> {
     return flow {

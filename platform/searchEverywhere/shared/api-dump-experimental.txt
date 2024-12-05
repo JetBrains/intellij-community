@@ -6,7 +6,10 @@
 *:com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider
 - a:getItems(com.intellij.platform.searchEverywhere.SearchEverywhereParams):kotlinx.coroutines.flow.Flow
 *:com.intellij.platform.searchEverywhere.SearchEverywhereParams
+- *sf:Companion:com.intellij.platform.searchEverywhere.SearchEverywhereParams$Companion
 - a:getText():java.lang.String
+*f:com.intellij.platform.searchEverywhere.SearchEverywhereParams$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 *f:com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
 - com.intellij.platform.searchEverywhere.SearchEverywhereParams
 - <init>(java.lang.String):V

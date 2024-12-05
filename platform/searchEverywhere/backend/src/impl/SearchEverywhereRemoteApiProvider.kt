@@ -2,7 +2,7 @@
 package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.platform.rpc.backend.RemoteApiProvider
-import com.intellij.platform.searchEverywhere.SearchEverywhereRemoteApi
+import com.intellij.platform.searchEverywhere.impl.SearchEverywhereRemoteApi
 import fleet.rpc.remoteApiDescriptor
 
 private class SearchEverywhereRemoteApiProvider: RemoteApiProvider {

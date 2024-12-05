@@ -7,8 +7,10 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class SearchEverywhereItemDataLocalProvider(private val itemsProvider: SearchEverywhereItemsProvider,
-                                            val id: SearchEverywhereProviderId): SearchEverywhereItemDataProvider {
+class SearchEverywhereItemDataLocalProvider(private val itemsProvider: SearchEverywhereItemsProvider): SearchEverywhereItemDataProvider {
+  override val id: SearchEverywhereProviderId
+    get() = SearchEverywhereProviderId.of(itemsProvider)
+
   override fun getItems(params: SearchEverywhereParams, session: SearchEverywhereSession): Flow<SearchEverywhereItemData> {
     return itemsProvider.getItems(params).map {
       val itemId = session.saveItem(it)

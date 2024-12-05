@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Experimental
-sealed interface SearchEverywhereItemPresentation {
+interface SearchEverywhereItemPresentation {
   val text: String
 }
 

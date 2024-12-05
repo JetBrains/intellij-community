@@ -2,46 +2,43 @@
 package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
+import com.intellij.platform.searchEverywhere.SearchEverywhereItemDataProvider
+import com.intellij.platform.searchEverywhere.SearchEverywhereTextSearchParams
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Internal
 class SearchEverywhereTabVm(
   private val coroutineScope: CoroutineScope,
-  private val info: SearchEverywhereTab,
+  private val providers: Collection<SearchEverywhereItemDataProvider>,
   searchPattern: StateFlow<String>,
 ) {
-  val searchResults: StateFlow<List<SearchEverywhereItemData>> get() = _searchResults.asStateFlow()
+  val searchResults: StateFlow<Flow<SearchEverywhereItemData>> get() = _searchResults.asStateFlow()
 
-  private val _searchResults: MutableStateFlow<List<SearchEverywhereItemData>> = MutableStateFlow(emptyList())
+  private val _searchResults: MutableStateFlow<Flow<SearchEverywhereItemData>> = MutableStateFlow(emptyFlow())
   private val isActiveFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
   private val providerLimit: Int get() =
-    if (info.providers.size > 1) MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT else SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
+    if (providers.size > 1) MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT else SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
+
+  private val searchDispatcher: SearchEverywhereDispatcher = SearchEverywhereDispatcher(providers,
+                                                                                        providers.associate { it.id to providerLimit })
 
   init {
     coroutineScope.launch {
       isActiveFlow.collectLatest { isActive ->
         if (!isActive) return@collectLatest
 
-        //searchPattern.flatMapLatest { searchPatternString ->
-        //  searchDispatcher.search(
-        //    coroutineScope,
-        //    info.providers,
-        //    searchPatternString,
-        //    providerLimit,
-        //    emptyList()
-        //  ) {
-        //    true
-        //  }
-        //}.collectLatest {
-        //  _searchResults.value = it
-        //}
+        searchPattern.mapLatest { searchPatternString ->
+          val params = SearchEverywhereTextSearchParams(searchPatternString)
+          searchDispatcher.getItems(params, emptyList())
+        }.collect {
+          _searchResults.value = it
+        }
       }
     }
   }

@@ -5,8 +5,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface SearchEverywhereSession {
-  val id: String
-
   suspend fun saveItem(item: SearchEverywhereItem): SearchEverywhereItemId
   suspend fun getItem(itemId: SearchEverywhereItemId): SearchEverywhereItem?
   suspend fun dispose()

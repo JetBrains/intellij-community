@@ -2,7 +2,7 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereFrontendDispatcher
+import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereDispatcher
 import com.intellij.platform.searchEverywhere.impl.SearchEverywhereItemDataLocalProvider
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemsProviderMock
@@ -42,19 +42,19 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test search dispatcher`() {
     val providers = listOf(
-      SearchEverywhereItemsProviderMock(delayMillis = 100, delayStep = 1, resultPrefix = "alpha").let { it to it.id },
-      SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5, resultPrefix = "bravo").let { it to it.id },
-      SearchEverywhereItemsProviderMock(delayMillis = 1500, delayStep = 7, resultPrefix = "charlie").let { it to it.id },
-      SearchEverywhereItemsProviderMock(delayMillis = 2000, delayStep = 10, resultPrefix = "delta").let { it to it.id },
+      SearchEverywhereItemsProviderMock(delayMillis = 100, delayStep = 1, resultPrefix = "alpha"),
+      SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5, resultPrefix = "bravo"),
+      SearchEverywhereItemsProviderMock(delayMillis = 1500, delayStep = 7, resultPrefix = "charlie"),
+      SearchEverywhereItemsProviderMock(delayMillis = 2000, delayStep = 10, resultPrefix = "delta"),
     ).map {
-      SearchEverywhereItemDataLocalProvider(it.first, it.second)
+      SearchEverywhereItemDataLocalProvider(it)
     }
 
     runBlocking {
       val searchJob = launch {
 
         val params = SearchEverywhereTextSearchParams("item")
-        SearchEverywhereFrontendDispatcher(providers, emptyMap()).getItems(params, emptyList()).collect {
+        SearchEverywhereDispatcher(providers, emptyMap()).getItems(params, emptyList()).collect {
           println(it.presentation.text)
         }
       }
@@ -78,10 +78,10 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
   @Suppress("unused")
   fun `mock test search dispatcher with limits`() {
     val providers = listOf(
-      SearchEverywhereItemsProviderMock(delayMillis = 100, delayStep = 1, resultPrefix = "alpha").let { it to it.id },
-      SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5, resultPrefix = "bravo").let { it to it.id }
+      SearchEverywhereItemsProviderMock(delayMillis = 100, delayStep = 1, resultPrefix = "alpha"),
+      SearchEverywhereItemsProviderMock(delayMillis = 1000, delayStep = 5, resultPrefix = "bravo")
     ).map {
-      SearchEverywhereItemDataLocalProvider(it.first, it.second)
+      SearchEverywhereItemDataLocalProvider(it)
     }
 
     val providersWithLimits = providers.mapIndexed { index, searchEverywhereViewItemsProvider ->
@@ -101,7 +101,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
     runBlocking {
       val searchJob = launch {
         println("Search will start")
-        SearchEverywhereFrontendDispatcher(providers, providersWithLimits).getItems(SearchEverywhereTextSearchParams("item"), existingResults).collect {
+        SearchEverywhereDispatcher(providers, providersWithLimits).getItems(SearchEverywhereTextSearchParams("item"), existingResults).collect {
           println(it.presentation.text)
         }
       }

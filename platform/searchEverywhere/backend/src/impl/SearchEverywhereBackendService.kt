@@ -3,23 +3,54 @@ package com.intellij.platform.searchEverywhere.backend.impl
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.SearchEverywhereItemData
-import com.intellij.platform.searchEverywhere.SearchEverywhereParams
-import com.intellij.platform.searchEverywhere.SearchEverywhereProviderId
+import com.intellij.platform.kernel.backend.cascadeDeleteBy
+import com.intellij.platform.kernel.backend.delete
+import com.intellij.platform.kernel.backend.findValueEntity
+import com.intellij.platform.kernel.backend.newValueEntity
+import com.intellij.platform.searchEverywhere.*
+import com.jetbrains.rhizomedb.EID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class SearchEverywhereBackendService {
-  fun getProviderIds(): List<SearchEverywhereProviderId> {
-    return emptyList()
+class SearchEverywhereBackendService(val project: Project) {
+
+  suspend fun startSession(): EID {
+    val providers = SearchEverywhereItemsProvider.EP_NAME.extensionList.associate { provider ->
+      val id = SearchEverywhereProviderId(provider.id)
+      id to SearchEverywhereItemDataBackendProvider(id, provider)
+    }
+
+    val session = SearchEverywhereBackendSession.create(providers)
+    val sessionEntity = newValueEntity(session)
+    session.parentEntity.cascadeDeleteBy(sessionEntity)
+
+    return sessionEntity.id
   }
 
-  fun getItems(params: SearchEverywhereParams, providerId: SearchEverywhereProviderId): Flow<SearchEverywhereItemData> {
-    // TODO: Implement
-    return emptyFlow()
+  suspend fun closeSession(sessionId: EID) {
+    sessionId.findValueEntity<SearchEverywhereBackendSession>()?.delete()
+  }
+
+  suspend fun getProviderIds(sessionId: EID): List<SearchEverywhereProviderId> {
+    return sessionId.findValueEntity<SearchEverywhereBackendSession>()?.value?.providers?.keys?.toList() ?: emptyList()
+  }
+
+  suspend fun getItems(sessionId: EID, providerId: SearchEverywhereProviderId, params: SearchEverywhereParams): Flow<SearchEverywhereItemData> {
+    val session = sessionId.findValueEntity<SearchEverywhereBackendSession>()?.value ?: return emptyFlow()
+    return session.providers[providerId]?.getItems(params, session) ?: emptyFlow()
+  }
+
+  suspend fun itemSelected(itemId: EID) {
+    val item = itemId.findValueEntity<SearchEverywhereItem>()
+    if (item == null) {
+      println("item not found: $itemId")
+      return
+    }
+
+    println("item selected: ${item}")
   }
 
   companion object {

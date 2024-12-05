@@ -2,16 +2,14 @@
 package com.intellij.platform.searchEverywhere
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface SearchEverywhereItemsProvider {
-  val id: String
-  fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem>
+interface SearchEverywhereTabProvider {
+  fun getTab(): SearchEverywhereTab
 
   companion object {
     @ApiStatus.Internal
-    val EP_NAME: ExtensionPointName<SearchEverywhereItemsProvider> = ExtensionPointName("com.intellij.searchEverywhere.itemsProvider")
+    val EP_NAME: ExtensionPointName<SearchEverywhereTabProvider> = ExtensionPointName("com.intellij.searchEverywhere.tabProvider")
   }
 }

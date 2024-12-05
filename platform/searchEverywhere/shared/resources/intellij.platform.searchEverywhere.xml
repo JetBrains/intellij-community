@@ -1,2 +1,12 @@
 <idea-plugin package="com.intellij.platform.searchEverywhere">
+  <extensionPoints>
+    <extensionPoint name="searchEverywhere.tabProvider"
+                    interface="com.intellij.platform.searchEverywhere.SearchEverywhereTabProvider"
+                    dynamic="true"/>
+
+
+    <extensionPoint name="searchEverywhere.itemsProvider"
+                    interface="com.intellij.platform.searchEverywhere.SearchEverywhereItemsProvider"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>
