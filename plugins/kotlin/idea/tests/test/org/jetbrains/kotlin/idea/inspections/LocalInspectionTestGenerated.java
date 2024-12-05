@@ -17713,6 +17713,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedReceiverParameter/companionPure.kt");
         }
 
+        @TestMetadata("contextParameter.kt")
+        public void testContextParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/contextParameter.kt");
+        }
+
+        @TestMetadata("contextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/contextReceiver.kt");
+        }
+
+        @TestMetadata("contextReceiverSubtype.kt")
+        public void testContextReceiverSubtype() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/contextReceiverSubtype.kt");
+        }
+
         @TestMetadata("functionInSameClass.kt")
         public void testFunctionInSameClass() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/functionInSameClass.kt");
@@ -17751,6 +17766,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("infix.kt")
         public void testInfix() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/infix.kt");
+        }
+
+        @TestMetadata("iterable.kt")
+        public void testIterable() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/iterable.kt");
         }
 
         @TestMetadata("memberFunctionWithGenericParameter.kt")
