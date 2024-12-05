@@ -35,6 +35,11 @@ public class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK2JvmBasic
         runTest("../../completion/testData/basic/fullJdk/JDKEnumEntryCompletion.kt");
     }
 
+    @TestMetadata("KTIJ-32439.kt")
+    public void testKTIJ_32439() throws Exception {
+        runTest("../../completion/testData/basic/fullJdk/KTIJ-32439.kt");
+    }
+
     @TestMetadata("KT-69416.kt")
     public void testKT_69416() throws Exception {
         runTest("../../completion/testData/basic/fullJdk/KT-69416.kt");
