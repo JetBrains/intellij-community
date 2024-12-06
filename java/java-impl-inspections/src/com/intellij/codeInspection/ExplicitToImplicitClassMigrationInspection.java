@@ -186,10 +186,10 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         }
 
         for (SmartPsiElementPointer<PsiImportStatementBase> pointer : pointers) {
-          PsiImportStatementBase pointerElement = pointer.getElement();
-          if (pointerElement == null) continue;
-          if (!pointerElement.isOnDemand()) continue;
-          ReplaceOnDemandImportIntention.replaceOnDemand(pointerElement);
+          PsiImportStatementBase importStatementBase = pointer.getElement();
+          if (importStatementBase == null) continue;
+          if (!importStatementBase.isOnDemand()) continue;
+          ReplaceOnDemandImportIntention.replaceOnDemand(importStatementBase);
         }
       }
       PsiClass psiClass = ObjectUtils.tryCast(element, PsiClass.class);

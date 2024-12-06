@@ -5,6 +5,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ExplicitToImplicitClassMigrationInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +49,19 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
         """
     );
     doTest();
+  }
+
+  public void testWithImportConflictDemandsOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+       myFixture.addClass(
+         """
+           package p;
+           public class List{}
+           """
+       );
+       doTest();
+     }
+    );
   }
 
   private void doNotFind() {
