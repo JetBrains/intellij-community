@@ -4,3 +4,6 @@
 fun foo() {
     +0.0f <caret>== +0.0f
 }
+
+// IGNORE_K2 
+// (see KT-73758)

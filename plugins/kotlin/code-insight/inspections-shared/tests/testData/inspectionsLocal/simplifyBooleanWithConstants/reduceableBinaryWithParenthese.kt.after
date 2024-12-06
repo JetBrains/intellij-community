@@ -5,3 +5,6 @@ fun foo(y: Boolean) {
     val x = 3
     x != x
 }
+
+// IGNORE_K2 
+// (see KT-73758)
