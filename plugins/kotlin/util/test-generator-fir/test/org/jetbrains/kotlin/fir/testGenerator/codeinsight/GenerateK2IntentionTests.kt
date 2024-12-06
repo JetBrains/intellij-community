@@ -112,7 +112,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/useWithIndex", pattern = pattern, isIgnored = true)
             model("${idea}intentions/joinDeclarationAndAssignment", pattern = pattern, isIgnored = true)
             model("${idea}intentions/moveLambdaInsideParentheses", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertSealedClassToEnum", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertSealedClassToEnum", pattern = pattern)
             model("${idea}intentions/convertTrimMarginToTrimIndent", pattern = pattern, isIgnored = true)
             model("${idea}intentions/usePropertyAccessSyntax", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertFunctionTypeParameterToReceiver", pattern = pattern, isIgnored = true)

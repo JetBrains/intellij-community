@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.intentions
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -42,12 +41,15 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  *  - [org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated.ConvertSealedClassToEnum]
  *  - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertActualSealedClassToEnum]
  *  - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertExpectSealedClassToEnum]
+ *
+ *  - [org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionTestGenerated.ConvertSealedClassToEnum]
+ *  - [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.Other.testConvertActualSealedClassToEnum]
+ *  - [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.Other.testConvertExpectSealedClassToEnum]
  */
-class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
+internal class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
     KotlinBundle.lazyMessage("convert.to.enum.class")
 ) {
-
     override fun startInWriteAction(): Boolean = false
 
     @OptIn(KaAllowAnalysisOnEdt::class)

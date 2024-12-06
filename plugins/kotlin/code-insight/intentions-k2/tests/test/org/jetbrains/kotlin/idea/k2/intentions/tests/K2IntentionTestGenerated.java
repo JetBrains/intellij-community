@@ -8121,7 +8121,74 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertSealedClassToEnum")
+    public static class ConvertSealedClassToEnum extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dropDefaultConstructorCall.kt")
+        public void testDropDefaultConstructorCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/dropDefaultConstructorCall.kt");
+        }
+
+        @TestMetadata("inheritorsWithMultipleSupertypes.kt")
+        public void testInheritorsWithMultipleSupertypes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/inheritorsWithMultipleSupertypes.kt");
+        }
+
+        @TestMetadata("instancesAndMembers.kt")
+        public void testInstancesAndMembers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/instancesAndMembers.kt");
+        }
+
+        @TestMetadata("instancesOnly.kt")
+        public void testInstancesOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/instancesOnly.kt");
+        }
+
+        @TestMetadata("membersOnly.kt")
+        public void testMembersOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/membersOnly.kt");
+        }
+
+        @TestMetadata("nonNestedInheritors.kt")
+        public void testNonNestedInheritors() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/nonNestedInheritors.kt");
+        }
+
+        @TestMetadata("notSealedClass.kt")
+        public void testNotSealedClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/notSealedClass.kt");
+        }
+
+        @TestMetadata("outOfRange.kt")
+        public void testOutOfRange() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/outOfRange.kt");
+        }
+
+        @TestMetadata("sealedInterface.kt")
+        public void testSealedInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/sealedInterface.kt");
+        }
+
+        @TestMetadata("withNonObjectInheritors.kt")
+        public void testWithNonObjectInheritors() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/withNonObjectInheritors.kt");
+        }
+
+        @TestMetadata("withSuperclass.kt")
+        public void testWithSuperclass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/withSuperclass.kt");
+        }
+    }
 
 
 
