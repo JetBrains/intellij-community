@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
@@ -15,8 +17,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 // TODO: should be reused for KTIJ-29043
+@ApiStatus.Internal
 object SimplifyBooleanWithConstantsUtils {
-    private fun KtBinaryExpression.topBinary(): KtBinaryExpression =
+    fun KtBinaryExpression.topBinary(): KtBinaryExpression =
         this.parentsWithSelf.takeWhile { it is KtBinaryExpression }.lastOrNull() as? KtBinaryExpression ?: this
 
     fun performSimplification(element: KtBinaryExpression) {
@@ -144,11 +147,35 @@ object SimplifyBooleanWithConstantsUtils {
                         areThereExpressionsToBeSimplified(element.right) && element.left?.let(::hasNotNullableBooleanType) == true
                     ) return true
                 }
-                //if (isPositiveNegativeZeroComparison(element)) return false
+                if (isPositiveNegativeZeroComparison(element)) return false
             }
         }
 
         return canBeReducedToBooleanConstant(element)
+    }
+    
+    private fun isPositiveNegativeZeroComparison(element: KtBinaryExpression): Boolean {
+        val op = element.operationToken
+        if (op != EQEQ && op != EQEQEQ) {
+            return false
+        }
+
+        val left = element.left?.safeDeparenthesize() ?: return false
+        val right = element.right?.safeDeparenthesize() ?: return false
+
+        fun KtExpression.getConstantValue(): Any? =
+            analyze(this) { evaluate()?.value }
+
+        val leftValue = left.getConstantValue()
+        val rightValue = right.getConstantValue()
+
+        fun isPositiveZero(value: Any?) = value == +0.0 || value == +0.0f
+        fun isNegativeZero(value: Any?) = value == -0.0 || value == -0.0f
+
+        val hasPositiveZero = isPositiveZero(leftValue) || isPositiveZero(rightValue)
+        val hasNegativeZero = isNegativeZero(leftValue) || isNegativeZero(rightValue)
+
+        return hasPositiveZero && hasNegativeZero
     }
 
     private fun hasNotNullableBooleanType(expression: KtExpression): Boolean {
