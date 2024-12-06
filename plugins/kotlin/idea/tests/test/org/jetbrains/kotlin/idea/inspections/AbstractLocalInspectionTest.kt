@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.modcommand.ActionContext
@@ -217,16 +216,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val allLocalFixActions:MutableList<IntentionAction> = ArrayList()
+        val allLocalFixActions: MutableList<HighlightInfo.IntentionActionDescriptor> = mutableListOf()
         highlightInfos.forEach { info ->
             info.findRegisteredQuickFix<Any?> { desc, _ ->
-                allLocalFixActions.add(desc.action)
+                allLocalFixActions.add(desc)
                 null
             }
         }
 
         if (allLocalFixActions.isNotEmpty()) {
-            val actions = allLocalFixActions.map { it.text }
+            val actions = allLocalFixActions.map { it.action.text }
             noLocalFixTextStrings.forEach {
                 assertTrue(
                     "Expected no `$it` fix action",
@@ -238,10 +237,10 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val localFixActions = if (localFixTextString == null || localFixTextString == "none") {
             allLocalFixActions
         } else {
-            allLocalFixActions.filter { fix -> fix.text == localFixTextString }
+            allLocalFixActions.filter { fix -> fix.action.text == localFixTextString }
         }
 
-        val availableDescription = allLocalFixActions.joinToString { "'${it.text}'" }
+        val availableDescription = allLocalFixActions.joinToString { "'${it.action.text}'" }
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
         if (localFixTextString != "none") {
@@ -250,7 +249,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val localFixAction = localFixActions.singleOrNull { it !is EmptyIntentionAction }
+        val localFixAction = localFixActions.singleOrNull { it.action !is EmptyIntentionAction }?.action
         if (localFixTextString == "none") {
             assertTrue("Expected no fix action, actual: `${localFixAction?.text}`", localFixAction == null)
             return false
