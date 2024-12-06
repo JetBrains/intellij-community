@@ -31,4 +31,6 @@ interface FeatureSuggester {
   val minSuggestingIntervalDays: Int
 
   val forceCheckForStatistics: Boolean get() = false
+
+  val enabledByDefault: Boolean? get() = null
 }

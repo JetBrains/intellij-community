@@ -32,6 +32,8 @@ class QuickEvaluateSuggester : AbstractFeatureSuggester() {
 
   override val forceCheckForStatistics = true
 
+  override val enabledByDefault = true
+
   private var lastCopyFromFile = WeakReference<VirtualFile>(null)
   private var lastCopiedText = ""
 
