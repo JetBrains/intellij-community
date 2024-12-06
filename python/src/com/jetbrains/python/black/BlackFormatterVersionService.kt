@@ -5,38 +5,42 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version
 import com.intellij.util.VersionUtil
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.packaging.PyPackage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import kotlinx.coroutines.*
 import java.util.regex.Pattern
 
 @Service(Service.Level.PROJECT)
-class BlackFormatterVersionService(private val project: Project) {
+class BlackFormatterVersionService(private val project: Project, private val serviceScope: CoroutineScope) : Disposable {
   companion object {
 
     private val PATTERN = Pattern.compile("(?<=black, )(([\\d]+\\.[\\d]+\\.?[\\d]*).*)(?= \\(compiled: )")
 
-    val UNKNOWN_VERSION = Version(0, 0, 0)
+    val UNKNOWN_VERSION: Version = Version(0, 0, 0)
 
     private fun getInstance(project: Project): BlackFormatterVersionService = project.service()
 
     fun getVersion(project: Project): Version = getInstance(project).getVersion()
   }
 
-  private var version: Version
+  private var version: Version = UNKNOWN_VERSION
 
   private var configuration: BlackFormatterConfiguration
 
   init {
     configuration = BlackFormatterConfiguration.getBlackConfiguration(project).copy()
     version = getVersionFromSdkOrBinary()
+    subscribeOnChanges()
   }
 
   @Synchronized
@@ -101,5 +105,18 @@ class BlackFormatterVersionService(private val project: Project) {
     }
 
     return Version(parts[0], parts[1], parts[2])
+  }
+
+  private fun subscribeOnChanges() {
+    val connection = project.messageBus.connect(this)
+    connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
+      override fun packagesChanged(sdk: Sdk) {
+        version = getVersionFromSdkOrBinary()
+      }
+    })
+  }
+
+  override fun dispose() {
+    serviceScope.cancel()
   }
 }
