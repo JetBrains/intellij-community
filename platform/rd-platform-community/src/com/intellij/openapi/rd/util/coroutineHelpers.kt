@@ -34,10 +34,10 @@ fun <TReq, TRes> IRdEndpoint<TReq, TRes>.setSuspend(
   val beforeAdviseClientId = currentThreadClientId
   set(null, SynchronousScheduler) { lt, req ->
     // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
-    beforeAdviseClientId?.assertClientIdConsistency("Inside set ($this)")
+    beforeAdviseClientId?.assertClientIdConsistency("Inside set ($this)", fallbackToLocal = false)
     val inAdviseClientId = currentThreadClientId
     lt.coroutineScope.async(coroutineContext + getSuitableDispatcher(coroutineContext), coroutineStart) {
-      inAdviseClientId.assertClientIdConsistency("Inside async ($this)")
+      inAdviseClientId.assertClientIdConsistency("Inside async ($this)", fallbackToLocal = false)
       handler(lt, req)
     }.toRdTask()
   }
@@ -71,10 +71,10 @@ fun<T> ISource<T>.adviseSuspend(lifetime: Lifetime, coroutineContext: CoroutineC
   val beforeAdviseClientId = currentThreadClientId
   advise(lifetime) {
     // use ?. to skip cases when beforeAdviseClientId == null, it's likely valid
-    beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)")
+    beforeAdviseClientId?.assertClientIdConsistency("Inside advise ($this)", fallbackToLocal = false)
     val inAdviseClientId = currentThreadClientId
     lifetime.coroutineScope.launch(coroutineContext + getSuitableDispatcher(coroutineContext), coroutineStart) {
-      inAdviseClientId.assertClientIdConsistency("Inside launch ($this)")
+      inAdviseClientId.assertClientIdConsistency("Inside launch ($this)", fallbackToLocal = false)
       handler(it)
     }
   }

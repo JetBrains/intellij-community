@@ -427,9 +427,10 @@ val currentThreadClientId: ClientId?
   get() = currentThreadContext().clientIdContextElement?.clientId
 
 @Internal
-fun ClientId?.assertClientIdConsistency(message: String) {
-  if (this != ClientId.currentOrNull) {
-    logger<ClientId>().error("$message ClientId=${this} doesn't match Current=${ClientId.currentOrNull}. " +
+fun ClientId?.assertClientIdConsistency(message: String, fallbackToLocal: Boolean = true) {
+  val currentClientIdToCompare = if (fallbackToLocal) ClientId.current else ClientId.currentOrNull
+  if (this != currentClientIdToCompare) {
+    logger<ClientId>().error("$message ClientId=${this} doesn't match Current=${currentClientIdToCompare}. " +
                              "Current thread context is ${currentThreadContextOrNull()}")
   }
 }
