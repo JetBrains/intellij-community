@@ -20,6 +20,7 @@ class ColumnVisualisationUtils:
     NUM_BINS = 20
     MAX_UNIQUE_VALUES = 3
     MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 50
+    MAX_VALUES_LENGTH = 100
 
     TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
     TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
@@ -143,15 +144,24 @@ def __analyze_categorical_column(column, col_name):
     # Sort in descending order to get values with max percent
     value_counts = value_counts.sort(COUNT_COL_NAME).reverse()
 
-    if len(value_counts) <= 3 or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS:
+    if len(value_counts) <= ColumnVisualisationUtils.MAX_UNIQUE_VALUES or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS:
         column_visualisation_type = ColumnVisualisationType.PERCENTAGE
 
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
         num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES - (0 if len(value_counts) == 3 else 1)
         counts = value_counts[:num_unique_values_to_show_in_vis]
         counts = counts.with_columns(((pl.col(COUNT_COL_NAME) / all_values * 100).round(1)).alias(COUNT_COL_NAME))
-        top_values = {label: count for label, count in zip(counts[col_name], counts[COUNT_COL_NAME])}
-        if len(value_counts) == 3:
+        top_values = {}
+        for label, count in zip(counts[col_name], counts[COUNT_COL_NAME]):
+            # we should process separately a case with dtype == pl.List
+            if type(label) == pl.Series or column.dtype == pl.List:
+                label_values = label.to_list()
+                label_values_in_str = str(label_values)
+                top_values[label_values_in_str[:ColumnVisualisationUtils.MAX_VALUES_LENGTH]] = count
+            else:
+                label_in_str = str(label)
+                top_values[label_in_str[:ColumnVisualisationUtils.MAX_VALUES_LENGTH]] = count
+        if len(value_counts) == ColumnVisualisationUtils.MAX_UNIQUE_VALUES:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:
             others_count = value_counts[num_unique_values_to_show_in_vis:][COUNT_COL_NAME].sum()
