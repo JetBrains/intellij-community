@@ -13,7 +13,7 @@ public final class DummyHolderFactory  {
 
   private DummyHolderFactory() {}
 
-  public static void setFactory(HolderFactory factory) {
+  public static void setFactory(@NotNull HolderFactory factory) {
     INSTANCE = factory;
   }
 
@@ -62,7 +62,7 @@ public final class DummyHolderFactory  {
     }
 
     @Override
-    public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
+    public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, @NotNull Language language, PsiElement context) {
       return new DummyHolder(manager, language, context);
     }
 
@@ -77,7 +77,7 @@ public final class DummyHolderFactory  {
     }
 
     @Override
-    public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, Language language) {
+    public @NotNull DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, @NotNull Language language) {
       return new DummyHolder(manager, table, language);
     }
   }
