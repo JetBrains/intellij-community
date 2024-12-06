@@ -1,5 +1,8 @@
 name: Gradle Wrappers Validation
-on: [ push, workflow_dispatch ]
+on:
+  push:
+    paths:
+      - '**.jar'
 jobs:
   validation:
     name: Validation
