@@ -3804,6 +3804,13 @@ public class PyTypeTest extends PyTestCase {
                      expr = UserId(12)""")
     );
 
+    doTest("UserId",
+           """
+             from typing import NewType
+             UserId = NewType(tp=int, name='UserId')
+             expr = UserId(12)
+             """);
+
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> doTest("Type[UserId]",
