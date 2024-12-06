@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -57,6 +57,14 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
         continue;
       }
 
+      // Only calls with arguments may have string literal
+      if (expression.getValueArgumentCount() < 1) continue;
+
+      UIdentifier identifier = expression.getMethodIdentifier();
+      if (identifier == null) continue;
+      PsiElement sourcePsi = identifier.getSourcePsi();
+      if (sourcePsi == null) continue;
+
       ProgressManager.checkCanceled();
 
       PsiType expressionType = expression.getExpressionType();
@@ -86,12 +94,9 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
           }
         }
         if (!constants.isEmpty()) {
-          UIdentifier identifier = expression.getMethodIdentifier();
-          if (identifier != null && identifier.getSourcePsi() != null) {
-            LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getSourcePsi());
-            if (marker != null) {
-              result.add(marker);
-            }
+          LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), sourcePsi);
+          if (marker != null) {
+            result.add(marker);
           }
         }
       }
