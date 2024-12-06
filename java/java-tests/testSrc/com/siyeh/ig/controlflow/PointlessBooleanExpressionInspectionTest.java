@@ -19,6 +19,10 @@ public class PointlessBooleanExpressionInspectionTest extends LightJavaInspectio
     doTest();
   }
 
+  public void testBoxedEqualsCallObject() {
+    doTest();
+  }
+
   public void testBoxedEqualsCallPrimitive() {
     doTest();
   }

@@ -98,9 +98,14 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
     else if (expression instanceof PsiMethodCallExpression methodCallExpr) {
       var result = staticCallOnBoolean(methodCallExpr);
       if (result != null) {
-        PsiExpression theOnlyArgument = methodCallExpr.getArgumentList().getExpressions()[0];
-        if (result) out.append(theOnlyArgument.getText());
-        if (!result) out.append(theOnlyArgument.getText());
+        PsiExpression onlyArgument = methodCallExpr.getArgumentList().getExpressions()[0];
+        PsiExpression negatedOnlyArgument = BoolUtils.getNegated(onlyArgument);
+        if (!result && negatedOnlyArgument != null) {
+          result = true;
+          onlyArgument = negatedOnlyArgument;
+        }
+        if (result) out.append(tracker.text(onlyArgument));
+        if (!result) out.append("!").append(tracker.text(onlyArgument, ParenthesesUtils.PREFIX_PRECEDENCE));
       }
     }
     else if (expression != null) {
@@ -503,8 +508,16 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
       if (theOnlyArgument == null) return null;
       PsiType exprType = theOnlyArgument.getType();
       if (exprType == null) return null;
-      Nullability nullability = NullabilityUtil.getExpressionNullability(theOnlyArgument, true);
-      if (!ClassUtils.isPrimitive(exprType) && nullability != Nullability.NOT_NULL) return null;
+
+      if (!ClassUtils.isPrimitive(exprType)) {
+        if (!exprType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+          return null;
+        }
+        Nullability nullability = NullabilityUtil.getExpressionNullability(theOnlyArgument, true);
+        if (nullability != Nullability.NOT_NULL) {
+          return null;
+        }
+      }
       return BoolUtils.fromBoxedConstantReference(qualifierReferenceExpr);
     }
     return null;

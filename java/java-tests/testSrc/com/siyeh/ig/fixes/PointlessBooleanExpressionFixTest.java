@@ -25,11 +25,17 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
   public void testNoBodySideEffect() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
   public void testPolyadic() { doTest(); }
   public void testBoxed() { doTest(); }
+  public void testBoxedFalseEqualsInstanceof() { doTest(); }
+  public void testBoxedFalseEqualsInstanceofComment() { doTest(); }
   public void testBoxedTrue() { doTest(); }
   public void testBoxedTrueEquals() { doTest(); }
   public void testBoxedTrueEqualsCall() { doTest(); }
+  public void testBoxedTrueEqualsComment() { doTest(); }
   public void testBoxedTrueEqualsFQN() { doTest(); }
-  public void testBoxedTrueEqualsNegated() { doTest(); }
+  public void testBoxedTrueEqualsInstanceof() { doTest(); }
+  public void testBoxedTrueEqualsNegated1() { doTest(); }
+  public void testBoxedTrueEqualsNegated2() { doTest(); }
+  public void testBoxedTrueEqualsNegated3() { doTest(); }
   public void testBoxedTrueParenthesized() { doTest(); }
   public void testSideEffects() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
   public void testSideEffectsField() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
