@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
@@ -22,12 +22,12 @@ internal class SimplifyBooleanWithConstantsInspection : KotlinApplicableInspecti
     override fun getProblemDescription(element: KtBinaryExpression, context: Unit): @InspectionMessage String {
         return KotlinBundle.message("inspection.simplify.boolean.with.constants.display.name")
     }
-    
+
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
-    ): KtVisitorVoid = binaryExpressionVisitor { expression -> 
-        visitTargetElement(expression, holder, isOnTheFly) 
+    ): KtVisitorVoid = binaryExpressionVisitor { expression ->
+        visitTargetElement(expression, holder, isOnTheFly)
     }
 
     context(KaSession)

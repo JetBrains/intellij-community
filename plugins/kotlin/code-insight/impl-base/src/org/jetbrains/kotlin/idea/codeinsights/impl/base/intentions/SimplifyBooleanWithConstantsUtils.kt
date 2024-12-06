@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-// TODO: should be reused for KTIJ-29043
 @ApiStatus.Internal
 object SimplifyBooleanWithConstantsUtils {
     fun KtBinaryExpression.topBinary(): KtBinaryExpression =
