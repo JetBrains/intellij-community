@@ -48,9 +48,7 @@ final class NativeFileChooserDialogImpl implements FileChooserDialog, PathChoose
     if (jbrDialog != null) {
       int hints = jbrDialog.getHints();
       if (myDescriptor.isChooseFolders()) hints |= JBRFileDialog.SELECT_DIRECTORIES_HINT;
-      if (myDescriptor.isChooseFiles() || myDescriptor.isChooseJars() || myDescriptor.isChooseJarContents()) {
-        hints |= JBRFileDialog.SELECT_FILES_HINT;
-      }
+      if (myDescriptor.isChooseFiles() || myDescriptor.isChooseJarContents()) hints |= JBRFileDialog.SELECT_FILES_HINT;
       jbrDialog.setHints(hints);
       jbrDialog.setLocalizationString(JBRFileDialog.OPEN_FILE_BUTTON_KEY, IdeBundle.message("windows.native.common.dialog.open"));
       jbrDialog.setLocalizationString(JBRFileDialog.OPEN_DIRECTORY_BUTTON_KEY, IdeBundle.message("windows.native.common.dialog.select.folder"));

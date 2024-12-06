@@ -36,8 +36,6 @@ public class FileChooserDescriptor implements Cloneable {
 
   private final boolean myChooseFiles;
   private final boolean myChooseFolders;
-  private final boolean myChooseJars;
-  private final boolean myChooseJarsAsFiles;
   private final boolean myChooseJarContents;
   private final boolean myChooseMultiple;
 
@@ -55,34 +53,32 @@ public class FileChooserDescriptor implements Cloneable {
 
   private final Map<String, Object> myUserData = new HashMap<>();
 
-  /**
-   * Use {@link FileChooserDescriptorFactory} for most used descriptors.
-   *
-   * @param chooseFiles       controls whether files can be chosen
-   * @param chooseFolders     controls whether folders can be chosen
-   * @param chooseJars        controls whether .jar files can be chosen
-   * @param chooseJarsAsFiles controls whether .jar files will be returned as files or as folders
-   * @param chooseJarContents controls whether .jar file contents can be chosen
-   * @param chooseMultiple    controls whether multiple files can be chosen
-   */
+  /** Use {@link FileChooserDescriptorFactory} instead */
+  @ApiStatus.Obsolete
   public FileChooserDescriptor(
     boolean chooseFiles,
     boolean chooseFolders,
-    boolean chooseJars,
-    boolean chooseJarsAsFiles,
+    @SuppressWarnings("unused") boolean chooseJars,
+    @SuppressWarnings("unused") boolean chooseJarsAsFiles,
     boolean chooseJarContents,
     boolean chooseMultiple
   ) {
+    this(chooseFiles, chooseFolders, chooseJarContents, chooseMultiple);
+  }
+
+  FileChooserDescriptor(boolean chooseFiles, boolean chooseFolders, boolean chooseJarContents, boolean chooseMultiple) {
     myChooseFiles = chooseFiles;
     myChooseFolders = chooseFolders;
-    myChooseJars = chooseJars;
-    myChooseJarsAsFiles = chooseJarsAsFiles;
     myChooseJarContents = chooseJarContents;
     myChooseMultiple = chooseMultiple;
   }
 
+  /**
+   * Prefer {@link FileChooserDescriptorFactory} and {@link #withExtensionFilter} / {@link #withFileFilter};
+   * use this way only for overriding default behavior.
+   */
   public FileChooserDescriptor(@NotNull FileChooserDescriptor d) {
-    this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJars(), d.isChooseJarsAsFiles(), d.isChooseJarContents(), d.isChooseMultiple());
+    this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJarContents(), d.isChooseMultiple());
     myTitle = d.getTitle();
     myDescription = d.getDescription();
     myHideIgnored = d.isHideIgnored();
@@ -103,14 +99,6 @@ public class FileChooserDescriptor implements Cloneable {
 
   public boolean isChooseFolders() {
     return myChooseFolders;
-  }
-
-  public boolean isChooseJars() {
-    return myChooseJars;
-  }
-
-  public boolean isChooseJarsAsFiles() {
-    return myChooseJarsAsFiles;
   }
 
   public boolean isChooseJarContents() {
@@ -216,6 +204,7 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
+   * Not applicable to directories.
    * <p/>
    * In native choosers, has no effect on visibility (use {@link #withExtensionFilter} for that), only on a final eligibility check.
    * So for simple file type- or extension-based filtering it is better to use {@link #withExtensionFilter}.
@@ -274,11 +263,7 @@ public class FileChooserDescriptor implements Cloneable {
     return this;
   }
 
-  /**
-   * Defines whether a file is visible in the tree.
-   *
-   * @deprecated ignored by native file choosers; use {@link #withFileFilter} and {@link #withExtensionFilter} instead.
-   */
+  /** @deprecated ignored by native file choosers; use {@link #withExtensionFilter} instead */
   @Deprecated
   @ApiStatus.NonExtendable
   @SuppressWarnings("DeprecatedIsStillUsed")
@@ -288,21 +273,15 @@ public class FileChooserDescriptor implements Cloneable {
     }
 
     if (!file.isDirectory()) {
-      if (FileElement.isArchive(file)) {
-        if (!myChooseJars && !myChooseJarContents) {
+      if (isArchive(file)) {
+        if (!myChooseJarContents) {
           return false;
         }
       }
       else if (!myChooseFiles) {
         return false;
       }
-      if (myExtensionFilter != null && !matchesExtFilter(file, myExtensionFilter.second)) {
-        return false;
-      }
-      if (myFileTypeFilter != null && !matchesTypeFilter(file, myFileTypeFilter)) {
-        return false;
-      }
-      if (myFileFilter != null && !myFileFilter.test(file)) {
+      if (!matchesFilters(file)) {
         return false;
       }
     }
@@ -318,43 +297,37 @@ public class FileChooserDescriptor implements Cloneable {
     return true;
   }
 
-  /**
-   * Defines whether a file can be chosen.
-   */
+  /** @deprecated results in bad UX when used with native file choosers; use {@link #withExtensionFilter} and/or {@link #validateSelectedFiles} instead */
   @Contract("null -> false")
+  @Deprecated
+  @ApiStatus.NonExtendable
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFileSelectable(@Nullable VirtualFile file) {
-    if (file == null) return false;
-
-    if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
+    if (file == null || file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
       return false;
     }
-    if (file.isDirectory() && myChooseFolders) {
-      return true;
+    if (file.isDirectory()) {
+      return myChooseFolders;
     }
-    if (!file.isDirectory()) {
-      if (myExtensionFilter != null) {
-        return matchesExtFilter(file, myExtensionFilter.second);
-      }
-      if (myFileTypeFilter != null) {
-        return matchesTypeFilter(file, myFileTypeFilter);
-      }
-      if (myFileFilter != null) {
-        return myFileFilter.test(file);
-      }
+    if (!matchesFilters(file)) {
+      return false;
     }
-    return acceptAsJarFile(file) || acceptAsGeneralFile(file);
+    return myChooseFiles || myChooseJarContents && isArchive(file);
   }
 
-  private static boolean matchesExtFilter(VirtualFile file, List<String> extensions) {
-    return ContainerUtil.exists(extensions, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext));
+  private boolean matchesFilters(VirtualFile file) {
+    return
+      (myExtensionFilter == null || ContainerUtil.exists(myExtensionFilter.second, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext))) &&
+      (myFileTypeFilter == null || ContainerUtil.exists(myFileTypeFilter, type -> FileTypeRegistry.getInstance().isFileOfType(file, type))) &&
+      (myFileFilter == null || myFileFilter.test(file));
   }
 
-  private static boolean matchesTypeFilter(VirtualFile file, FileType[] types) {
-    return ContainerUtil.exists(types, type -> FileTypeRegistry.getInstance().isFileOfType(file, type));
+  private static boolean isArchive(VirtualFile file) {
+    return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
 
   /**
-   * Called upon <em>OK</em> action before closing dialog.
+   * Called upon <em>OK</em> action before closing dialog (after closing for native choosers).
    * Override to customize validation of user input.
    *
    * @param files selected files to be checked
@@ -378,11 +351,6 @@ public class FileChooserDescriptor implements Cloneable {
     return null;
   }
 
-  private boolean acceptAsGeneralFile(VirtualFile file) {
-    if (FileElement.isArchive(file)) return false; // should be handled by `acceptAsJarFile`
-    return !file.isDirectory() && myChooseFiles;
-  }
-
   public boolean isForcedToUseIdeaFileChooser() {
     return myForcedToUseIdeaFileChooser;
   }
@@ -393,25 +361,16 @@ public class FileChooserDescriptor implements Cloneable {
 
   @ApiStatus.Internal
   public final @Nullable VirtualFile getFileToSelect(@NotNull VirtualFile file) {
-    if (file.isDirectory() && (myChooseFolders || isFileSelectable(file))) {
-      return file;
+    if (isFileSelectable(file)) {
+      if (file.isDirectory() || myChooseFiles) {
+        return file;
+      }
+      if (myChooseJarContents) {
+        var path = file.getPath();
+        return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
+      }
     }
-    boolean isJar = FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
-    if (!isJar) {
-      return acceptAsGeneralFile(file) ? file : null;
-    }
-    if (myChooseJarsAsFiles) {
-      return file;
-    }
-    if (!acceptAsJarFile(file)) {
-      return null;
-    }
-    String path = file.getPath();
-    return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
-  }
-
-  private boolean acceptAsJarFile(VirtualFile file) {
-    return myChooseJars && FileElement.isArchive(file);
+    return null;
   }
 
   @ApiStatus.Internal
