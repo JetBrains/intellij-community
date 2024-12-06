@@ -47,7 +47,7 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
   private @Nullable Pair<@Nls String, List<String>> myExtensionFilter = null;
-  private FileType @Nullable [] myFileTypeFilter = null;
+  private @Nullable List<FileType> myFileTypeFilter = null;
   private @Nullable Predicate<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
 
@@ -233,7 +233,7 @@ public class FileChooserDescriptor implements Cloneable {
       .map(matcher -> matcher instanceof ExtensionFileNameMatcher em ? em.getExtension() : null)
       .filter(Objects::nonNull)
       .toArray(String[]::new);
-    myFileTypeFilter = types;
+    myFileTypeFilter = List.of(types);
     return withExtensionFilter(label, extensions);
   }
 
