@@ -132,6 +132,7 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
         newFileActionsPage()
       })
       rightButtonPanel.add(createButton("Save") {
+        loadSession()
         val resultActions = fileActions.actions + session.build()
         fileActions = FileActions(fileActions.path, fileActions.checksum, resultActions.count { it is CallFeature }, resultActions)
         newFileActionsPage()
