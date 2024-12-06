@@ -11853,6 +11853,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testIfThenMultiStatement() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/smartCastImpossibleInIfThen/ifThenMultiStatement.kt");
         }
+
+        @TestMetadata("ifThenNotNullNegateClause.kt")
+        public void testIfThenNotNullNegateClause() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/smartCastImpossibleInIfThen/ifThenNotNullNegateClause.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

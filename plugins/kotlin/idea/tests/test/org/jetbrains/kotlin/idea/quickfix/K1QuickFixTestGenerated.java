@@ -15799,6 +15799,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         public void testIfThenMultiStatement() throws Exception {
             runTest("testData/quickfix/smartCastImpossibleInIfThen/ifThenMultiStatement.kt");
         }
+
+        @TestMetadata("ifThenNotNullNegateClause.kt")
+        public void testIfThenNotNullNegateClause() throws Exception {
+            runTest("testData/quickfix/smartCastImpossibleInIfThen/ifThenNotNullNegateClause.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
