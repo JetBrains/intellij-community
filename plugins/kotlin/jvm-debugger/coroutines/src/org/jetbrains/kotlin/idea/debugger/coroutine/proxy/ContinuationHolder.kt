@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
+import com.intellij.rt.debugger.coroutines.JsonUtils
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
@@ -80,7 +81,8 @@ private fun collectCoroutineAndCreationStack(
     continuation: ObjectReference,
     context: DefaultExecutionContext
 ): Pair<List<MirrorOfStackFrame>, List<StackTraceElement>?>? {
-    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation))
+    val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutineStackTraceDump", listOf(continuation),
+                                     JsonUtils::class.java)
         ?: return fallbackToOldFetchContinuationStack(continuation, context)
     return parseResultFromHelper(array)
 }
