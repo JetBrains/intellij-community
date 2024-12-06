@@ -87,7 +87,6 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       // Remove cumulative coverage data for all the tests
       File(coverageFilePath).delete()
       File("$basePath/.coverage").delete()
-
       return executionLog
     }
     catch (e: Exception) {

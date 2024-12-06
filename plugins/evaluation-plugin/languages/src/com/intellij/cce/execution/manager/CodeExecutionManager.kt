@@ -1,6 +1,10 @@
 package com.intellij.cce.execution.manager
 
 import com.intellij.cce.core.Language
+import com.intellij.cce.evaluable.AIA_EXECUTION_SUCCESS_RATIO
+import com.intellij.cce.evaluable.AIA_TEST_BRANCH_COVERAGE
+import com.intellij.cce.evaluable.AIA_TEST_FILE_PROVIDED
+import com.intellij.cce.evaluable.AIA_TEST_LINE_COVERAGE
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -17,6 +21,12 @@ abstract class CodeExecutionManager {
   abstract val language: Language
   private var shouldSetup: Boolean = true
 
+  private val executionBasedMetrics = listOf(
+    AIA_EXECUTION_SUCCESS_RATIO,
+    AIA_TEST_LINE_COVERAGE,
+    AIA_TEST_BRANCH_COVERAGE,
+    AIA_TEST_FILE_PROVIDED)
+
   protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
   protected abstract fun getGeneratedCodeFile(basePath: String, code: String): File
@@ -24,7 +34,17 @@ abstract class CodeExecutionManager {
   protected abstract fun setupEnvironment(basePath: String, sdk: Sdk?): ProcessExecutionLog
   protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?): ProcessExecutionLog
 
+  // Protected since there can be language-specific metrics
+  protected fun clear() {
+    executionBasedMetrics.forEach {
+      // Setting default value for every metric
+      collectedInfo[it] = 0
+    }
+  }
+
   fun compileAndExecute(project: Project, code: String, target: String): ProcessExecutionLog {
+    // Clear collectedInfo
+    clear()
     val basePath = project.basePath
     val sdk: Sdk? = ProjectRootManager.getInstance(project).projectSdk
 
@@ -50,4 +70,6 @@ abstract class CodeExecutionManager {
 
     return executionLog
   }
+
+  fun getMetricsInfo(): Map<String, Any> = collectedInfo.toMap()
 }
