@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.gson.JsonParseException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
@@ -17,6 +17,7 @@ import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,9 +50,9 @@ public final class RegionUrlMapper {
     }
   }
 
-  private static final LoadingCache<Region, RegionMapping> ourCache = Caffeine.newBuilder()
+  private static final AsyncLoadingCache<Region, RegionMapping> ourCache = Caffeine.newBuilder()
     .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
-    .build(RegionUrlMapper::loadMappingOrEmpty);
+    .buildAsync(RegionUrlMapper::loadMappingOrEmpty);
 
   private RegionUrlMapper() {
   }
@@ -84,7 +85,7 @@ public final class RegionUrlMapper {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String tryMapUrlBlocking(@NotNull String url) {
-    return tryMapUrlBlocking(url, RegionSettings.getRegion());
+    return tryMapUrl(url).join();
   }
 
   /**
@@ -101,8 +102,30 @@ public final class RegionUrlMapper {
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String tryMapUrlBlocking(@NotNull String url, @NotNull Region region) {
-    RegionMapping mappings = ourCache.get(region);
-    return mappings.apply(url);
+    return tryMapUrl(url, region).join();
+  }
+
+  /**
+   * @see #tryMapUrl(String, Region)
+   * @see RegionSettings
+   */
+  public static @NotNull CompletableFuture<@NotNull String> tryMapUrl(@NotNull String url) {
+    return tryMapUrl(url, RegionSettings.getRegion());
+  }
+
+  /**
+   * Maps the specified resource URL to a corresponding region-specific URL.
+   * <p>
+   * <b>IMPORTANT</b>: The operation may involve network calls, and if that fails,
+   * the returned future resolves to the original URL silently (hence, "try" in its name).
+   *
+   * @param url the original resource URL
+   * @param region the region for which the original url might be adjusted
+   * @return a CompletableFuture that resolves to the adjusted url in case the mapping is configured, or the original url otherwise
+   */
+  public static @NotNull CompletableFuture<@NotNull String> tryMapUrl(@NotNull String url, @NotNull Region region) {
+    CompletableFuture<@NotNull RegionMapping> mappingFuture = ourCache.get(region);
+    return mappingFuture.thenApply(mapping -> mapping.apply(url));
   }
 
   private static @NotNull RegionMapping loadMappingOrEmpty(@NotNull Region reg) {
