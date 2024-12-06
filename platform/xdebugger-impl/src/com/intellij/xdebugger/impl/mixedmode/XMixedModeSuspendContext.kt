@@ -61,7 +61,7 @@ class XMixedModeSuspendContext(
       highLevelDebugSuspendContext.computeExecutionStacks(acc)
 
       val highLevelStacks = measureTimedValue { acc.frames.await() }.also { logger.info("High level stacks loaded in ${it.duration}") }.value
-      val threadIdToHighLevelStackMap = highLevelStacks.associateBy { stack ->  stack.nativeThreadId }
+      val threadIdToHighLevelStackMap = highLevelStacks.associateBy { stack -> stack.nativeThreadId }
 
       val combinedContainer = MyMixedModeCombinedContainer(
         activeExecutionStackBasedOnDebugProcesses,
@@ -130,7 +130,7 @@ class XMixedModeSuspendContext(
     val resultContainer: XExecutionStackContainer,
     val mixedModeFramesMatcher: MixedModeFramesBuilder,
     val coroutineScope: CoroutineScope,
-    val suspendContext : XMixedModeSuspendContext
+    val suspendContext: XMixedModeSuspendContext,
   ) : XExecutionStackContainer {
     override fun addExecutionStack(executionStacks: List<XExecutionStack?>, last: Boolean) {
       val mixedStacks = executionStacks.filterNotNull().map {
@@ -157,3 +157,6 @@ class XMixedModeSuspendContext(
     }
   }
 }
+
+fun XSuspendContext.asMixedModeSuspendContext(): XMixedModeSuspendContext = (this as XMixedModeSuspendContext)
+fun XSuspendContext.mixedActiveStack(): XMixedModeExecutionStack = asMixedModeSuspendContext().activeExecutionStack as XMixedModeExecutionStack

@@ -33,9 +33,9 @@ class XMixedModeExecutionStack(
     assert((highLevelExecutionStack == null || lowLevelExecutionStack.nativeThreadId == highLevelExecutionStack.nativeThreadId))
   }
 
-  var computationCompleted: CompletableDeferred<Unit> = CompletableDeferred()
-  var computedFrames: CompletableDeferred<List<XStackFrame>> = CompletableDeferred()
-
+  val computationCompleted: CompletableDeferred<Unit> = CompletableDeferred()
+  val computedMixedFrames: CompletableDeferred<List<XStackFrame>> = CompletableDeferred()
+  val computedFramesMap: CompletableDeferred<Map</*low level frame*/XStackFrame, /*high level frame*/XStackFrame?>> = CompletableDeferred()
   override fun getTopFrame(): XStackFrame? {
     // when we are stopped the top frame is always from a low-level debugger, so no need to look for a corresponding high level frame
     return lowLevelExecutionStack.topFrame
@@ -55,7 +55,7 @@ class XMixedModeExecutionStack(
       if (highLevelExecutionStack == null) {
         logger.trace("No high level stack, adding low level frames")
         container.addStackFrames(lowLevelFrames, true)
-        computedFrames.complete(lowLevelFrames)
+        computedMixedFrames.complete(lowLevelFrames)
       }
       else {
         highLevelExecutionStack.computeStackFrames(firstFrameIndex, highLevelAcc)
@@ -71,25 +71,23 @@ class XMixedModeExecutionStack(
         if (mixFramesResult.isFailure) {
           logger.error("Failed to build mixed stack. Will use low level frames only", mixFramesResult.exceptionOrNull())
           container.addStackFrames(lowLevelFrames, true)
-          computedFrames.complete(lowLevelFrames)
+          computedMixedFrames.complete(lowLevelFrames)
+          computedFramesMap.complete(lowLevelFrames.associateWith { null })
         }
         else {
           val builtResult = mixFramesResult.getOrThrow()
           container as XStackFrameContainerEx
 
-          val frameToSelect = when (val index = builtResult.frameToSelectIndex) {
-            null -> null
-            else -> builtResult.frames[index]
-          }
-
-          container.addStackFrames(builtResult.frames, frameToSelect, true)
-          computedFrames.complete(builtResult.frames)
+          val combinedFrames = builtResult.lowLevelToHighLevelFrameMap.map { /*High frame*/it.value ?: /*Low frame*/it.key }
+          container.addStackFrames(combinedFrames, builtResult.frameToSelect, true)
+          computedMixedFrames.complete(combinedFrames)
+          computedFramesMap.complete(builtResult.lowLevelToHighLevelFrameMap)
         }
       }
     }.invokeOnCompletion {
       computationCompleted.complete(Unit)
-      if (!computedFrames.isCompleted) {
-        computedFrames.completeExceptionally(Exception("computedFrames hasn't been set, possibly due to an exception"))
+      if (!computedMixedFrames.isCompleted) {
+        computedMixedFrames.completeExceptionally(Exception("computedFrames hasn't been set, possibly due to an exception"))
       }
     }
   }

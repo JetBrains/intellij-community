@@ -9,7 +9,7 @@ interface MixedModeFramesBuilder {
   * On exception only low level threads will be shown
    * frameToSelectIndex == null, means we agree to select the highest frame by default
    */
-  data class MixedBuiltStackResult(val frames: List<XStackFrame>, val frameToSelectIndex: Int?)
+  data class MixedBuiltStackResult(val lowLevelToHighLevelFrameMap: Map<XStackFrame, XStackFrame?>, val frameToSelect: XStackFrame?)
   suspend fun buildMixedStack(
     session: XDebugSession,
     lowLevelFrames: List<XStackFrame>,
