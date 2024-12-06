@@ -3839,6 +3839,7 @@ a:com.intellij.openapi.vcs.impl.GenericNotifierImpl
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.notification.NotificationType):V
 - pa:ask(java.lang.Object,java.lang.String):Z
 - f:clear():V
+- p:configureNotification(com.intellij.notification.Notification,java.lang.Object):V
 - ensureNotify(java.lang.Object):Z
 - pf:getAllCurrentKeys():java.util.List
 - pa:getKey(java.lang.Object):java.lang.Object
