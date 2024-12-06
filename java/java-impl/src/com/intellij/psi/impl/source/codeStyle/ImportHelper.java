@@ -628,7 +628,7 @@ public final class ImportHelper {
           }
         }
         if (hasConflict) {
-          PsiClass conflictClass = facade.findClass(packageNameToReimport +"." + name, resolveScope);
+          PsiClass conflictClass = facade.findClass(packageNameToReimport + "." + name, resolveScope);
           if (conflictClass == null || !helper.isAccessible(conflictClass, file, null)) continue;
           outClassesToReimport.add(conflictClass);
         }
