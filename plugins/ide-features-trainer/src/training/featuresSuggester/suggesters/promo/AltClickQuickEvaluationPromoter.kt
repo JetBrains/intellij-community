@@ -81,10 +81,10 @@ internal fun showAltClickGotItPromo(project: Project, evaluateUi: JComponent) {
   val content = altClickPromoContent.createContentComponent()
   builder.withCustomComponentPromo(content)
 
-  val showTooltipAt = Point(evaluateUi.width - JBUIScale.scale(promoWidth + 100), 0)
+  val showTooltipAt = Point(evaluateUi.width, -content.preferredSize.height*2)
 
   val balloon = builder.build(project.service<AltClickServiceForAnimation>()) {
-    setShowCallout(true)
+    setShowCallout(false)
   }
 
   balloon.show(RelativePoint(evaluateUi, showTooltipAt), Balloon.Position.above)
