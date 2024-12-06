@@ -19,7 +19,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Deslint.service.expiration.timeout.ms=5000"
   )
 
-private const val IS_EAP = true
+private const val IS_EAP = false
 
 /**
  * Represents a set of properties specific to the Qodana product.
