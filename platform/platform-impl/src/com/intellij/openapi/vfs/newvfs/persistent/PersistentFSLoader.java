@@ -349,6 +349,9 @@ public final class PersistentFSLoader {
     if (errorsAccumulated > 0) {
       addProblem(HAS_ERRORS_IN_PREVIOUS_SESSION, "VFS accumulated " + errorsAccumulated + " errors in last session");
     }
+    if ((recordsStorage.getFlags() & PersistentFSHeaders.FLAGS_DEFRAGMENTATION_REQUESTED) != 0) {
+      addProblem(DEFRAGMENTATION_REQUESTED, "VFS defragmentation requested");
+    }
 
     if (attributesEnumerator.isEmpty() && !attributesStorage.isEmpty()) {
       addProblem(ATTRIBUTES_STORAGE_CORRUPTED, "Attributes enumerator is empty, while attributesStorage is !empty");

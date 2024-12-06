@@ -34,8 +34,10 @@ public final class VFSInitException extends IOException {
   }
 
   public enum ErrorCategory {
-    /** Rebuild marker was found */
+    /** Rebuild marker was found, see {@linkplain FSRecordsImpl#scheduleRebuild(String, Throwable)}*/
     SCHEDULED_REBUILD,
+    /** See {@linkplain FSRecordsImpl#scheduleDefragmentation()} */
+    DEFRAGMENTATION_REQUESTED,
 
     /** VFS wasn't closed properly -> VFS storages could be in inconsistent state */
     NOT_CLOSED_PROPERLY,

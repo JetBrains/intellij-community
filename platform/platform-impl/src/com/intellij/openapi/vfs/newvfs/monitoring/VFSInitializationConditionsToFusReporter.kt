@@ -53,6 +53,11 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
       HAS_ERRORS_IN_PREVIOUS_SESSION -> VFSInitKind.HAS_ERRORS_IN_PREVIOUS_SESSION
 
       SCHEDULED_REBUILD -> VFSInitKind.SCHEDULED_REBUILD
+      //Logically, defragmentation is not an 'error' nor a 'corruption', it is a regular thing. But since defragmentation is
+      // implemented currently via rebuild => from a user PoV defragmentation 'costs' the same amount of wasted time/irritation.
+      // So from UX PoV defragmentation falls into the same category as VFS corruption: something that makes users to wait and
+      // thus irritates them
+      DEFRAGMENTATION_REQUESTED -> VFSInitKind.DEFRAGMENTATION_REQUESTED
 
       NOT_CLOSED_PROPERLY -> VFSInitKind.NOT_CLOSED_PROPERLY
 
@@ -103,6 +108,9 @@ internal enum class VFSInitKind {
 
   /** VFS was cleared and rebuild from scratch because: rebuild marker was found */
   SCHEDULED_REBUILD,
+
+    /** VFS was cleared and rebuild to 'defragment' because the defragmentation was requested */
+    DEFRAGMENTATION_REQUESTED,
 
   /** VFS was cleared and rebuild from scratch because: application wasn't closed properly,
    *  VFS storages are fractured */
