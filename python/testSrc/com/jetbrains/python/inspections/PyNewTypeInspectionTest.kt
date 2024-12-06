@@ -33,5 +33,28 @@ class PyNewTypeInspectionTest : PyInspectionTestCase() {
     )
   }
 
+  fun testType() {
+    doTestByText(
+      """
+        from typing import NewType, Literal, TypedDict, Protocol
+        
+        class TD(TypedDict):
+            name: str
+        
+        class MyProtocol(Protocol):
+            pass
+        
+        NewType1 = NewType(tp=int, name="NewType1")
+        NewType2 = NewType("NewType2", NewType1)
+        NewType3 = NewType("NewType3", <warning descr="Expected class">int | str</warning>)
+        NewType4 = NewType("NewType4", <warning descr="Expected class">1</warning>)
+        NewType5 = NewType("NewType5", <warning descr="NewType cannot be used with 'Literal[1]'">Literal[1]</warning>)
+        NewType6 = NewType("NewType6", <warning descr="NewType cannot be used with 'TypedDict'">TD</warning>)
+        NewType7 = NewType("NewType7", <warning descr="NewType cannot be used with protocol classes">MyProtocol</warning>)
+        NewType8 = NewType("NewType8", list[int])
+      """.trimIndent()
+    )
+  }
+
   override fun getInspectionClass(): Class<out PyInspection> = PyNewTypeInspection::class.java
 }

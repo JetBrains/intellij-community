@@ -4,16 +4,23 @@
   Reports invalid usages of <a href="https://docs.python.org/3/library/typing.html#typing.NewType">NewType</a>.
 </p>
 <p>
-  <b>Example:</b>
+  <b>Examples:</b>
 </p>
 <pre><code>
-from typing import NewType
+  from typing import NewType
 
-Base = NewType("Base", str)
-A = NewType("B", int)  # Variable name 'A' does not match NewType name 'B'
+  InvalidName = NewType("Name", int)  # Variable name 'InvalidName' does not match NewType name 'Name'
+</code></pre>
+<pre><code>
+  from typing import Literal
 
-class Derived(Base):  # 'Base' cannot be subclassed
-    pass
+  InvalidType = NewType("InvalidType", Literal[1])  # NewType cannot be used with 'Literal[1]'
+</code></pre>
+<pre><code>
+  Base = NewType("Base", str)
+
+  class Derived(Base):  # 'Base' cannot be subclassed
+      pass
 </code></pre>
 </body>
 </html>
