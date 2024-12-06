@@ -15,7 +15,9 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyLiteralType
+import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypingNewType
 
@@ -43,6 +45,9 @@ class PyNewTypeInspection : PyInspection() {
             val type = Ref.deref(PyTypingTypeProvider.getType(typeExpr, myTypeEvalContext))
             if (type !is PyClassType) {
               registerProblem(typeExpr, PyPsiBundle.message("INSP.NAME.new.type.expected.class"))
+            }
+            else if (type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType && it.scopeOwner == null }) {
+              registerProblem(typeExpr, PyPsiBundle.message("INSP.NAME.new.type.new.type.cannot.be.generic"))
             }
             else if (type is PyLiteralType) {
               registerProblem(typeExpr, PyPsiBundle.message("INSP.NAME.new.type.new.type.cannot.be.used.with", type.name))

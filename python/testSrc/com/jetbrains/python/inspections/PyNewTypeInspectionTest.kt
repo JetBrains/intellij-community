@@ -36,7 +36,7 @@ class PyNewTypeInspectionTest : PyInspectionTestCase() {
   fun testType() {
     doTestByText(
       """
-        from typing import NewType, Literal, TypedDict, Protocol
+        from typing import NewType, Literal, TypedDict, Protocol, TypeVar
         
         class TD(TypedDict):
             name: str
@@ -52,6 +52,8 @@ class PyNewTypeInspectionTest : PyInspectionTestCase() {
         NewType6 = NewType("NewType6", <warning descr="NewType cannot be used with 'TypedDict'">TD</warning>)
         NewType7 = NewType("NewType7", <warning descr="NewType cannot be used with protocol classes">MyProtocol</warning>)
         NewType8 = NewType("NewType8", list[int])
+        T = TypeVar("T")
+        NewType9 = NewType("NewType9", <warning descr="NewType cannot be generic">list[T]</warning>)
       """.trimIndent()
     )
   }
