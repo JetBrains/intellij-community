@@ -140,8 +140,8 @@ object SimplifyBooleanWithConstantsUtils {
                 val op = element.operationToken
                 if (op == ANDAND || op == OROR || op == EQEQ || op == EXCLEQ) {
                     if (
-                        areThereExpressionsToBeSimplified(element.left) && element.right?.let(::hasBooleanType) == true ||
-                        areThereExpressionsToBeSimplified(element.right) && element.left?.let(::hasBooleanType) == true
+                        areThereExpressionsToBeSimplified(element.left) && element.right?.let(::hasNotNullableBooleanType) == true ||
+                        areThereExpressionsToBeSimplified(element.right) && element.left?.let(::hasNotNullableBooleanType) == true
                     ) return true
                 }
                 //if (isPositiveNegativeZeroComparison(element)) return false
@@ -151,10 +151,10 @@ object SimplifyBooleanWithConstantsUtils {
         return canBeReducedToBooleanConstant(element)
     }
 
-    private fun hasBooleanType(expression: KtExpression): Boolean {
-        return analyze(expression) {
-            val ktType = expression.expressionType
-            ktType?.isBooleanType == true
+    private fun hasNotNullableBooleanType(expression: KtExpression): Boolean {
+        analyze(expression) {
+            val ktType = expression.expressionType ?: return false
+            return ktType.isBooleanType && !ktType.canBeNull
         }
     }
 }
