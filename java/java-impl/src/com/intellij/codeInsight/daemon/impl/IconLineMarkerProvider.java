@@ -48,9 +48,8 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
-    if (!hasIconTypeExpressions(elements)) {
-      return;
-    }
+    Set<PsiClassType> uniqueTypes = new HashSet<>();
+    Set<PsiClassType> applicableTypes = new HashSet<>();
 
     for (PsiElement element : elements) {
       UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
@@ -60,7 +59,15 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
       ProgressManager.checkCanceled();
 
-      if (!ProjectIconsAccessor.isIconClassType(expression.getExpressionType())) {
+      PsiType expressionType = expression.getExpressionType();
+      if (!(expressionType instanceof PsiClassType)) continue;
+      if (uniqueTypes.add((PsiClassType)expressionType) &&
+          expressionType.isValid() &&
+          ProjectIconsAccessor.isIconClassType(expressionType)) {
+        applicableTypes.add((PsiClassType)expressionType);
+      }
+
+      if (!applicableTypes.contains(expressionType)) {
         continue;
       }
 
@@ -89,24 +96,6 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
     }
-  }
-
-  private static boolean hasIconTypeExpressions(@NotNull List<? extends PsiElement> elements) {
-    Set<PsiClassType> uniqueValues = new HashSet<>();
-    for (PsiElement e : elements) {
-      UCallExpression element = UastContextKt.toUElement(e, UCallExpression.class);
-      if (element != null) {
-        PsiType type = element.getExpressionType();
-        if (type instanceof PsiClassType) {
-          if (uniqueValues.add((PsiClassType)type)
-              && type.isValid()
-              && ProjectIconsAccessor.isIconClassType(type)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 
   private static @Nullable LineMarkerInfo<PsiElement> createIconLineMarker(@Nullable UExpression initializer, PsiElement bindingElement) {
