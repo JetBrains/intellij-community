@@ -92,7 +92,8 @@ public class JBZipFile implements Closeable {
 
   private JBZipOutputStream myOutputStream;
   private long currentCfdOffset;
-  private final boolean myIsReadonly;
+  final boolean myIsReadonly;
+  private final long mySize;
 
 
   /**
@@ -197,10 +198,17 @@ public class JBZipFile implements Closeable {
   public JBZipFile(@NotNull SeekableByteChannel channel, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
     myEncoding = encoding;
     myIsReadonly = readonly;
+    long channelSize = channel.size();
+    if (readonly) {
+      mySize = channelSize;
+    }
+    else {
+      mySize = -1;
+    }
     myArchive = channel;
 
     try {
-      if (myArchive.size() > 0) {
+      if (channelSize > 0) {
         populateFromCentralDirectory(isZip64);
       }
       else {
@@ -326,7 +334,7 @@ public class JBZipFile implements Closeable {
       instead gaining a performance boost.
      */
     ByteBuffer centralDirectoryCached = ByteBuffer.allocate(
-      Math.min((int)(myArchive.size() - myArchive.position()),
+      Math.min((int)(getSize() - myArchive.position()),
                // Sometimes the size of the central directory may be significant -- up to 3 megabytes.
                64 * 1024) // seems enough
     );
@@ -573,7 +581,7 @@ public class JBZipFile implements Closeable {
    */
   private void positionAtCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     boolean found = false;
-    long off = myArchive.size() - MIN_EOCD_SIZE;
+    long off = getSize() - MIN_EOCD_SIZE;
     if (off >= 0) {
       myArchive.position(off);
       byte[] sig = JBZipOutputStream.EOCD_SIG;
@@ -719,5 +727,14 @@ public class JBZipFile implements Closeable {
 
   void ensureFlushed(long end) throws IOException {
     if (myOutputStream != null) myOutputStream.ensureFlushed(end);
+  }
+
+  long getSize() throws IOException {
+    if (mySize == -1) {
+      return myArchive.size();
+    }
+    else {
+      return mySize;
+    }
   }
 }
