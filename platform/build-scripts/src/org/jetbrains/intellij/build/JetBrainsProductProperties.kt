@@ -75,17 +75,20 @@ abstract class JetBrainsProductProperties : ProductProperties() {
           add(InvalidPluginDescriptorError("${result.plugin.pluginId} has no version specified"))
         }
         else try {
-          IdeVersion.createIdeVersion(version)
-        }
-        catch (e: IllegalArgumentException) {
           /**
            * Plugin versions are parsed as [IdeVersion] upon uploading to plugins.jetbrains.com to be able to compare them
            *
            * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.withCustomVersion
-           * @see org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder.kotlinPlugin
            */
-          IdeVersion.createIdeVersionIfValid(version.substringBefore("-"))
-          ?: add(InvalidPluginDescriptorError("${result.plugin.pluginId} version '$version' cannot be parsed: ${e.message}"))
+          IdeVersion.createIdeVersion(version)
+        }
+        catch (e: IllegalArgumentException) {
+          /**
+           * [org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder.kotlinPlugin] is the only exception left
+           */
+          if (pluginId != "org.jetbrains.kotlin") {
+            add(InvalidPluginDescriptorError("${result.plugin.pluginId} version '$version' cannot be parsed: ${e.message}"))
+          }
         }
       }
     }
