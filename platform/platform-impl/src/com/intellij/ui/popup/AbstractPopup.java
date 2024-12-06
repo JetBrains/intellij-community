@@ -1525,6 +1525,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Anchor point " + anchorPoint);
     }
+    var originalY = bounds.y;
     var offsetX = bounds.x - anchorPoint.x;
     var offsetY = bounds.y - anchorPoint.y;
     bounds.x += offsetX;
@@ -1573,10 +1574,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         // if this popup can reduce it height at all.
         if (options.getRelativePosition() == PopupRelativePosition.TOP && options.getMinimumHeight() != null) {
           var reducedHeight = bounds.height - shift;
-          bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
-          adjustedHeight = true;
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
+          if (reducedHeight >= options.getMinimumHeight()) {
+            bounds.height = reducedHeight;
+            adjustedHeight = true;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
+            }
+          }
+          else {
+            // Can't fit even with the reduced height, revert to its original position,
+            // then let the code below do its job and try to fit it there.
+            bounds.y = originalY;
           }
         }
       }
