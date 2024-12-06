@@ -3,8 +3,8 @@ package com.intellij.ide;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.google.gson.JsonParseException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -50,7 +50,9 @@ public final class RegionUrlMapper {
     }
   }
 
-  private static final LoadingCache<Region, List<Pair<String, String>>> ourCache = Caffeine.newBuilder().expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES).build(RegionUrlMapper::loadMappings);
+  private static final LoadingCache<Region, RegionMapping> ourCache = Caffeine.newBuilder()
+    .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
+    .build(RegionUrlMapper::loadMappingOrEmpty);
 
   private RegionUrlMapper() {
   }
@@ -86,43 +88,90 @@ public final class RegionUrlMapper {
   @Nullable
   public static String mapUrl(@Nullable String url, @NotNull Region region) {
     if (url != null) {
-      for (Pair<String, String> pair : ourCache.get(region)) {
-        String pattern = pair.getFirst();
-        int entry = Strings.indexOfIgnoreCase(url, pattern, 0);
-        if (entry >= 0) {
-          String replacement = pair.getSecond();
-          return url.substring(0, entry) + replacement + url.substring(entry + pattern.length());
-        }
-      }
+      RegionMapping mappings = ourCache.get(region);
+      return mappings.apply(url);
     }
     return url;
   }
 
-  private static List<Pair<String, String>> loadMappings(Region reg) {
+  private static @NotNull RegionMapping loadMappingOrEmpty(@NotNull Region reg) {
     String configUrl = getConfigUrl(reg);
     try {
-      List<Pair<String, String>> result = new SmartList<>();
       String json = HttpRequests.request(configUrl).readString();
+      return RegionMapping.fromJson(json);
+    }
+    catch (Throwable e) {
+      LOG.info("Failed to load region-specific url mappings : " + e.getMessage());
+      return RegionMapping.empty();
+    }
+  }
+
+  private static @NotNull String getConfigUrl(@NotNull Region reg) {
+    String overridden = OVERRIDE_CONFIG_URL_TABLE.get(reg);
+    return overridden != null ? overridden : CONFIG_URL_TABLE.getOrDefault(reg, CONFIG_URL_DEFAULT);
+  }
+
+  /**
+   * Mapper for a given region.
+   * Represents the contents of the JSON configuration loaded for a particular region,
+   * and provides the methods for applying the mapping rules found in that configuration.
+   */
+  public static final class RegionMapping {
+    private final @NotNull List<PatternReplacement> myPatternReplacements;
+
+    private RegionMapping(@NotNull List<PatternReplacement> patternReplacements) { this.myPatternReplacements = patternReplacements; }
+
+    public @NotNull String apply(@NotNull String url) {
+      String mappedUrl = applyOrNull(url);
+      return mappedUrl != null ? mappedUrl : url;
+    }
+
+    public @Nullable String applyOrNull(@NotNull String url) {
+      for (PatternReplacement pair : myPatternReplacements) {
+        String pattern = pair.pattern();
+        int entry = Strings.indexOfIgnoreCase(url, pattern, 0);
+        if (entry >= 0) {
+          String replacement = pair.replacement();
+          return url.substring(0, entry) + replacement + url.substring(entry + pattern.length());
+        }
+      }
+      return null;
+    }
+
+    public static @NotNull RegionMapping fromJson(@NotNull String json) throws JsonParseException {
+      List<PatternReplacement> result = new SmartList<>();
       for (Map<String, Object> mapping : JsonUtil.<Map<String, Object>>nextList(new JsonReaderEx(json))) {
         if (mapping.size() == 1) {
           Map.Entry<String, Object> entry = mapping.entrySet().iterator().next();
           String pattern = entry.getKey();
           if (!Strings.isEmpty(pattern) && entry.getValue() instanceof String replacement) {
-            result.add(Pair.create(pattern, replacement));
+            result.add(new PatternReplacement(pattern, replacement));
           }
         }
       }
-      return result;
+      return new RegionMapping(result);
     }
-    catch (Throwable e) {
-      LOG.info("Failed to load region-specific url mappings : " + e.getMessage());
+
+    public static @NotNull RegionMapping empty() {
+      return new RegionMapping(Collections.emptyList());
     }
-    return Collections.emptyList();
-  }
 
-  private static @NotNull String getConfigUrl(Region reg) {
-    String overridden = OVERRIDE_CONFIG_URL_TABLE.get(reg);
-    return overridden != null? overridden : CONFIG_URL_TABLE.getOrDefault(reg, CONFIG_URL_DEFAULT);
-  }
+    @Override
+    public boolean equals(Object obj) {
+      return obj == this || obj instanceof RegionMapping that && Objects.equals(this.myPatternReplacements, that.myPatternReplacements);
+    }
 
+    @Override
+    public int hashCode() {
+      return Objects.hash(myPatternReplacements);
+    }
+
+    @Override
+    public String toString() { return "RegionMapping[mappings=" + myPatternReplacements + ']'; }
+
+    private record PatternReplacement(@NotNull String pattern, @NotNull String replacement) {
+      @Override
+      public String toString() { return pattern + " -> " + replacement; }
+    }
+  }
 }
