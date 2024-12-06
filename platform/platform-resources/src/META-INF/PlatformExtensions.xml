@@ -1782,6 +1782,7 @@
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.opentelemetry.JVMStatsToOTelReporter"/>
 
     <applicationActivity implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckServiceStarter"/>
+    <applicationActivity implementation="com.intellij.openapi.vfs.newvfs.persistent.VFSDefragmentationChecker"/>
     <applicationActivity implementation="com.intellij.diagnostic.JVMResponsivenessMonitorStarter"/>
     <applicationActivity implementation="com.intellij.openapi.application.impl.WriteActionLoggerApplicationActivity"/>
 
