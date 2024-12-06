@@ -119,6 +119,9 @@
     <advancedSetting id="show.line.bookmarks.in.popup" default="true"
                      bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
 
+    <searchEverywhere.itemsProvider implementation="com.intellij.ide.util.gotoByName.SearchEverywhereActionsProvider"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.ide.util.gotoByName.SearchEverywhereActionsTabProvider"/>
+
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>

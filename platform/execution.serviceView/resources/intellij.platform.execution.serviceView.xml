@@ -58,5 +58,8 @@
       <action id="ServiceView.ConfigureServices" icon="AllIcons.General.GearPlain"
               class="com.intellij.platform.execution.serviceView.ConfigureServicesAction"/>
     </group>
+    <action id="SearchEverywhereActionsInitiatorAction"
+            class="com.intellij.platform.execution.serviceView.SearchEverywhereActionsInitiatorAction"
+            text="Search Actions in SE 2.0"/>
   </actions>
 </idea-plugin>
