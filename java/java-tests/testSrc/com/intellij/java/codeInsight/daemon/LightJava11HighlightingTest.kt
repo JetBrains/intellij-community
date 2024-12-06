@@ -62,11 +62,21 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  fun testRequiresTransitiveJavaBase() {
+  fun testRequiresTransitiveJavaBaseWithStatic() {
     IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.minimumLevel){
       myFixture.configureByText("module-info.java", """
       module M {
         requires <error descr="Modifier 'static' not allowed here">static</error> transitive java.base;
+      }""".trimIndent())
+      myFixture.checkHighlighting()
+    }
+  }
+
+  fun testRequiresTransitiveJavaBase() {
+    IdeaTestUtil.withLevel(module, JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE.minimumLevel){
+      myFixture.configureByText("module-info.java", """
+      module M {
+        requires transitive java.base;
       }""".trimIndent())
       myFixture.checkHighlighting()
     }
