@@ -1,0 +1,1 @@
+class KotlinDefaultValue(val age: Int = 1){}
