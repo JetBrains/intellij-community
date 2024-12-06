@@ -335,19 +335,19 @@ public class FileChooserDescriptor implements Cloneable {
    */
   public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception { }
 
-  public Icon getIcon(final VirtualFile file) {
+  public Icon getIcon(VirtualFile file) {
     return dressIcon(file, IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
   }
 
-  protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
+  protected static Icon dressIcon(VirtualFile file, Icon baseIcon) {
     return file.isValid() && file.is(VFileProperty.SYMLINK) ? LayeredIcon.layeredIcon(new Icon[]{baseIcon, PlatformIcons.SYMLINK_ICON}) : baseIcon;
   }
 
-  public String getName(final VirtualFile file) {
+  public String getName(VirtualFile file) {
     return file.getPresentableName();
   }
 
-  public @NlsSafe @Nullable String getComment(final VirtualFile file) {
+  public @NlsSafe @Nullable String getComment(VirtualFile file) {
     return null;
   }
 
