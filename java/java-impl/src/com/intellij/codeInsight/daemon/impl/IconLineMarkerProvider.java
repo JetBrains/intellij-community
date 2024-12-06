@@ -17,12 +17,13 @@ import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UIdentifier;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.evaluation.UEvaluationContextKt;
-import org.jetbrains.uast.values.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
+import org.jetbrains.uast.values.UConstant;
+import org.jetbrains.uast.values.UStringConstant;
+import org.jetbrains.uast.values.UValue;
+import org.jetbrains.uast.values.UValueKt;
 
 import javax.swing.*;
 import java.util.*;
@@ -67,6 +68,11 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
       ProgressManager.checkCanceled();
 
+      UExpression argument = expression.getValueArguments().get(0);
+      if (!canBeStringConstant(argument)) {
+        continue;
+      }
+
       PsiType expressionType = expression.getExpressionType();
       if (!(expressionType instanceof PsiClassType)) continue;
       if (uniqueTypes.add((PsiClassType)expressionType) &&
@@ -79,15 +85,10 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
         continue;
       }
 
-      UValue uValue = UEvaluationContextKt.uValueOf(expression);
-      if (!(uValue instanceof UCallResultValue)) {
-        continue;
-      }
-
-      List<UValue> arguments = ((UCallResultValue)uValue).getArguments();
-      if (!arguments.isEmpty()) {
+      UValue uValue = UEvaluationContextKt.uValueOf(argument);
+      if (uValue != null) {
         Collection<UExpression> constants = new ArrayList<>();
-        for (UConstant constant : UValueKt.toPossibleConstants(arguments.get(0))) {
+        for (UConstant constant : UValueKt.toPossibleConstants(uValue)) {
           if (constant instanceof UStringConstant) {
             UExpression source = constant.getSource();
             constants.add(source);
@@ -101,6 +102,25 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
     }
+  }
+
+  private static boolean canBeStringConstant(@NotNull UExpression expression) {
+    if (expression instanceof UPolyadicExpression ||
+        expression instanceof ULiteralExpression ||
+        expression instanceof UReferenceExpression ||
+        expression instanceof UInjectionHost) {
+      return true;
+    }
+
+    if (expression instanceof UUnaryExpression uUnaryExpression) {
+      return canBeStringConstant(uUnaryExpression.getOperand());
+    }
+
+    if (expression instanceof UParenthesizedExpression uParenthesizedExpression) {
+      return canBeStringConstant(uParenthesizedExpression.getExpression());
+    }
+
+    return false;
   }
 
   private static @Nullable LineMarkerInfo<PsiElement> createIconLineMarker(@Nullable UExpression initializer, PsiElement bindingElement) {
