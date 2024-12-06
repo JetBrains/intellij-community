@@ -29,10 +29,10 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
   }
 
   override fun setupEnvironment(basePath: String, sdk: Sdk?): ProcessExecutionLog {
-    if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1, collectedInfo.toMap())
+    if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
     val setupFile = File("$basePath/setup_tests.sh")
-    if (!setupFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1, collectedInfo.toMap())
+    if (!setupFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1)
     val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", setupFile.path.toString()), sdk)
 
     if (executionLog.exitCode != 0) throw IllegalStateException("Setup was not successful")
@@ -54,16 +54,16 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   override fun compileGeneratedCode(): ProcessExecutionLog {
     // NA
-    return ProcessExecutionLog("", "", 0, collectedInfo.toMap())
+    return ProcessExecutionLog("", "", 0)
   }
 
   override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?): ProcessExecutionLog {
-    if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1, collectedInfo.toMap())
+    if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
     val runFile = File("$basePath/run_tests.sh")
 
-    if (!runFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1, collectedInfo.toMap())
-    if (!codeFilePath.exists()) return ProcessExecutionLog("", "The Python test file does not exist", -1, collectedInfo.toMap())
+    if (!runFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1)
+    if (!codeFilePath.exists()) return ProcessExecutionLog("", "The Python test file does not exist", -1)
 
     val testName = codeFilePath.path
       .removePrefix(basePath)
@@ -91,7 +91,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     }
     catch (e: Exception) {
       e.printStackTrace()
-      return ProcessExecutionLog("", "", -1, collectedInfo.toMap())
+      return ProcessExecutionLog("", "", -1)
     }
   }
 
@@ -109,6 +109,6 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     // Wait for the process to finish and get the exit code
     val exitCode = process.waitFor()
 
-    return ProcessExecutionLog(output, error, exitCode, collectedInfo.toMap())
+    return ProcessExecutionLog(output, error, exitCode)
   }
 }

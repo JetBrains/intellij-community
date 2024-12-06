@@ -48,8 +48,8 @@ abstract class CodeExecutionManager {
     val basePath = project.basePath
     val sdk: Sdk? = ProjectRootManager.getInstance(project).projectSdk
 
-    if (sdk == null && language.needSdk) return ProcessExecutionLog("", "No SDK found", -1, collectedInfo.toMap())
-    basePath ?: return ProcessExecutionLog("", "No project base path found", -1, collectedInfo.toMap())
+    if (sdk == null && language.needSdk) return ProcessExecutionLog("", "No SDK found", -1)
+    basePath ?: return ProcessExecutionLog("", "No project base path found", -1)
 
     // Get the path to the temp file that the generated code should be saved in
     val codeFile = getGeneratedCodeFile(basePath, code)

@@ -4,5 +4,4 @@ data class ProcessExecutionLog(
   val out: String,
   val error: String,
   val exitCode: Int,
-  val collectedInfo: Map<String, Any>,
 )
