@@ -8509,6 +8509,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/implicitNotFromClosestLambda2.kt");
         }
 
+        @TestMetadata("notImplicitInner.kt")
+        public void testNotImplicitInner() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/notImplicitInner.kt");
+        }
+
+        @TestMetadata("notImplicitOuter.kt")
+        public void testNotImplicitOuter() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/notImplicitOuter.kt");
+        }
+
         @TestMetadata("notUseParameter.kt")
         public void testNotUseParameter() throws Exception {
             runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/notUseParameter.kt");
@@ -8517,6 +8527,46 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notUsedItInParentLambda.kt")
         public void testNotUsedItInParentLambda() throws Exception {
             runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/notUsedItInParentLambda.kt");
+        }
+
+        @TestMetadata("outOfScopeAdditionalRun.kt")
+        public void testOutOfScopeAdditionalRun() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outOfScopeAdditionalRun.kt");
+        }
+
+        @TestMetadata("outOfScopeDifferentSubbranches1.kt")
+        public void testOutOfScopeDifferentSubbranches1() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outOfScopeDifferentSubbranches1.kt");
+        }
+
+        @TestMetadata("outOfScopeDifferentSubbranches2.kt")
+        public void testOutOfScopeDifferentSubbranches2() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outOfScopeDifferentSubbranches2.kt");
+        }
+
+        @TestMetadata("outOfScopePeerLambda.kt")
+        public void testOutOfScopePeerLambda() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outOfScopePeerLambda.kt");
+        }
+
+        @TestMetadata("outOfScopePeerLambda2.kt")
+        public void testOutOfScopePeerLambda2() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outOfScopePeerLambda2.kt");
+        }
+
+        @TestMetadata("outerUsageBelow.kt")
+        public void testOuterUsageBelow() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outerUsageBelow.kt");
+        }
+
+        @TestMetadata("outerUsageBelowIntermediateRun.kt")
+        public void testOuterUsageBelowIntermediateRun() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outerUsageBelowIntermediateRun.kt");
+        }
+
+        @TestMetadata("outerUsageBelowIntermediateRunWithItInside.kt")
+        public void testOuterUsageBelowIntermediateRunWithItInside() throws Exception {
+            runTest("testData/inspectionsLocal/nestedLambdaShadowedImplicitParameter/outerUsageBelowIntermediateRunWithItInside.kt");
         }
 
         @TestMetadata("receiver.kt")
