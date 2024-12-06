@@ -658,11 +658,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
-    show(aPoint, new PopupShowOptionsBuilder());
-  }
-
-  @Override
-  public void show(@NotNull RelativePoint aPoint, @NotNull PopupShowOptions options) {
     if (UiInterceptors.tryIntercept(this, aPoint)) return;
 
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
@@ -671,12 +666,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
 
-    showImpl(
-      ((PopupShowOptionsBuilder) options)
-        .withOwner(aPoint.getComponent())
-        .withScreenXY(screenPoint.x, screenPoint.y)
-        .withForcedXY(false)
-    );
+    show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }
 
   @Override
@@ -1047,14 +1037,20 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     );
   }
 
+  @Override
+  public void show(@NotNull PopupShowOptions showOptions) {
+    showImpl((PopupShowOptionsBuilder)showOptions);
+  }
+
   @ApiStatus.Internal
-  protected void showImpl(@NotNull PopupShowOptionsBuilder optionsBuilder) {
-    var options = optionsBuilder.build();
+  protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
+    if (UiInterceptors.tryIntercept(this)) return;
+
+    var options = showOptions.build();
     var owner = options.getOwner();
     var aScreenX = options.getScreenX();
     var aScreenY = options.getScreenY();
     var considerForcedXY = options.getConsiderForcedXY();
-    if (UiInterceptors.tryIntercept(this)) return;
     if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");

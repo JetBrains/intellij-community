@@ -193,10 +193,13 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   @Override
   @ApiStatus.Internal
-  protected void showImpl(@NotNull PopupShowOptionsBuilder options) {
+  protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
+    if (UiInterceptors.tryIntercept(this)) return;
+
+    PopupShowOptionsImpl options = showOptions.build();
+    Component owner = options.getOwner();
     var aScreenX = options.getScreenX();
     var aScreenY = options.getScreenY();
-    if (UiInterceptors.tryIntercept(this)) return;
 
     LOG.assertTrue (!isDisposed());
     Dimension size = getContent().getPreferredSize();
@@ -228,7 +231,8 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     LOG.assertTrue (!isDisposed(), "Disposed popup, parent="+getParent());
     super.showImpl(
-      options
+      new PopupShowOptionsBuilder()
+        .withOwner(owner)
         .withScreenXY(targetBounds.x, targetBounds.y)
         .withForcedXY(true)
     );
