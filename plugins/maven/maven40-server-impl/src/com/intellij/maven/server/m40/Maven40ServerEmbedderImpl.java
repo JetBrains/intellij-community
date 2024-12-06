@@ -241,7 +241,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     String globalSettingsPath = serverSettings.getGlobalSettingsPath();
     if (globalSettingsPath != null && new File(globalSettingsPath).isFile()) {
-      commandLineOptions.add("-gs");
+      commandLineOptions.add("-is");
       commandLineOptions.add(globalSettingsPath);
     }
     String userSettingsPath = serverSettings.getUserSettingsPath();
