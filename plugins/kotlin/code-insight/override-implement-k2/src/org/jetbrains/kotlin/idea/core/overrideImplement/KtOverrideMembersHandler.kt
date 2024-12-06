@@ -44,9 +44,21 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
     }
 }
 
-context(KaSession)
-@OptIn(KaExperimentalApi::class)
-private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<OverrideMember> {
+
+    context(KaSession)
+    fun noConcreteDirectOverriddenSymbol(symbol: KaCallableSymbol): Boolean {
+        fun isConcreteFunction(superSymbol: KaCallableSymbol): Boolean {
+            if (superSymbol.modality == KaSymbolModality.ABSTRACT) return false
+            if ((superSymbol.containingSymbol as? KaNamedClassSymbol)?.classId != StandardClassIds.Any) return true
+            return (superSymbol as? KaNamedFunctionSymbol)?.name?.asString() !in listOf("equals", "hashCode")
+        }
+
+        return symbol.directlyOverriddenSymbols.none { isConcreteFunction(it) }
+    }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<OverrideMember> {
         return buildList {
             classOrObjectSymbol.memberScope.callables.forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
@@ -88,7 +100,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                                 BodyType.Super
                             }
                         }
-                        originalOverriddenSymbol.modality == KaSymbolModality.ABSTRACT ->
+                        originalOverriddenSymbol.modality == KaSymbolModality.ABSTRACT && noConcreteDirectOverriddenSymbol(symbolToProcess) ->
                             BodyType.FromTemplate
                         symbolsToProcess.size > 1 ->
                             BodyType.QualifiedSuper
