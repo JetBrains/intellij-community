@@ -6,11 +6,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class SearchEverywhereProviderId(val value: String, val backendId: String? = null) {
-  companion object {
-    fun of(provider: SearchEverywhereItemsProvider): SearchEverywhereProviderId = when(provider) {
-      is SearchEverywhereCustomProviderIdHolder -> provider.customProviderId
-      else -> SearchEverywhereProviderId(provider.javaClass.name)
-    }
-  }
-}
+data class SearchEverywhereProviderId(val value: String)

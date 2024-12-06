@@ -19,7 +19,8 @@ import java.awt.Component
 
 
 @ApiStatus.Internal
-class ActionsItemsProvider(project: Project?, contextComponent: Component?, editor: Editor?): SearchEverywhereItemsProvider {
+class SearchEverywhereActionsProvider(project: Project? = null, contextComponent: Component? = null, editor: Editor? = null): SearchEverywhereItemsProvider {
+  override val id: String get() = "com.intellij.ActionsItemsProvider"
   private val model: GotoActionModel = GotoActionModel(project, contextComponent, editor)
   private val asyncProvider: ActionAsyncProvider = ActionAsyncProvider(model)
 

@@ -3,7 +3,7 @@ package com.intellij.ide.util.gotoByName
 
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereDispatcher
-import com.intellij.platform.searchEverywhere.impl.SearchEverywhereItemDataLocalProvider
+import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereItemDataLocalProvider
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemMock
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereItemsProviderMock
 import com.intellij.platform.searchEverywhere.testFramework.SearchEverywhereSessionMock
@@ -22,7 +22,7 @@ class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
     runBlocking {
       val params = ActionSearchParams("apply patch", true)
 
-      ActionsItemsProvider(project, null, null).getItems(params).collect {
+      SearchEverywhereActionsProvider(project, null, null).getItems(params).collect {
         println(it.presentation().text)
       }
     }

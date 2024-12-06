@@ -7,5 +7,5 @@ import org.jetbrains.annotations.ApiStatus
 interface SearchEverywhereTab {
   val name: String
   val shortName: String
-  val providers: Collection<String> // [GIT_COMMITS, HG_COMMITS]\
+  val providers: Collection<String>
 }

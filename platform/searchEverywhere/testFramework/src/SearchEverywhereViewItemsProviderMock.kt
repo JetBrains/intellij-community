@@ -6,7 +6,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Internal
 class SearchEverywhereItemsProviderMock(
@@ -15,8 +14,8 @@ class SearchEverywhereItemsProviderMock(
   private val size: Int = 100,
   private val delayMillis: Long = 0,
   private val delayStep: Int = 0,
-) : SearchEverywhereItemsProvider, SearchEverywhereCustomProviderIdHolder {
-  override val customProviderId = SearchEverywhereProviderId("SearchEverywhereItemsProviderMock_$resultPrefix")
+) : SearchEverywhereItemsProvider {
+  override val id = "SearchEverywhereItemsProviderMock_$resultPrefix"
 
   override fun getItems(params: SearchEverywhereParams): Flow<SearchEverywhereItem> {
     return flow {
@@ -41,15 +40,10 @@ class SearchEverywhereItemMock(val text: String) : SearchEverywhereItem {
 
 @ApiStatus.Internal
 class SearchEverywhereSessionMock : SearchEverywhereSession {
-  override val id: String = UUID.randomUUID().toString()
-
   private val items = mutableMapOf<SearchEverywhereItemId, SearchEverywhereItem>()
 
   override suspend fun saveItem(item: SearchEverywhereItem): SearchEverywhereItemId {
-    val id = SearchEverywhereItemId(
-      if (item is SearchEverywhereItemMock) item.text
-      else UUID.randomUUID().toString()
-    )
+    val id = SearchEverywhereItemId(kotlin.random.Random.nextInt())
     items[id] = item
     return id
   }
