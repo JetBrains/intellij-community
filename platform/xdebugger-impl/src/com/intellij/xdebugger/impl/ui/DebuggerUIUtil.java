@@ -227,10 +227,19 @@ public final class DebuggerUIUtil {
                                                   final JComponent component,
                                                   final boolean showAllOptions,
                                                   @NotNull final XBreakpoint breakpoint) {
+    showXBreakpointEditorBalloon(project, point, component, showAllOptions, showAllOptions, breakpoint);
+  }
+
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  @Nullable final Point point,
+                                                  final JComponent component,
+                                                  final boolean showActionOptions,
+                                                  final boolean showAllOptions,
+                                                  @NotNull final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager, (XBreakpointBase)breakpoint,
-                                          showAllOptions, true);
+                                          showActionOptions, showAllOptions, true);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
@@ -244,7 +253,7 @@ public final class DebuggerUIUtil {
         balloonRef.get().hide();
       }
       propertiesPanel.dispose();
-      showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
+      showXBreakpointEditorBalloon(project, point, component, true, false, breakpoint);
       moreOptionsRequested.set(true);
     });
 

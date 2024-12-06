@@ -48,16 +48,16 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
   @SuppressWarnings("UnusedDeclaration")
   public boolean showMoreOptions() {
-    return myShowMoreOptions;
+    return myShowMoreActionOptionsIsAvailable;
   }
 
-  private boolean myShowMoreOptions;
+  private boolean myShowMoreActionOptionsIsAvailable;
 
   @Override
-  public void showMoreOptionsIfNeeded() {
-    if (myShowMoreOptions) {
+  public void showActionOptionsIfNeeded() {
+    if (myShowMoreActionOptionsIsAvailable) {
       if (myDelegate != null) {
-        myDelegate.showMoreOptions();
+        myDelegate.showActionOptions();
       }
     }
   }
@@ -69,7 +69,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   }
 
   public interface Delegate {
-    void showMoreOptions();
+    void showActionOptions();
   }
 
   private JPanel myConditionPanel;
@@ -124,6 +124,11 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
   public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
                                          boolean showAllOptions, boolean isEditorBalloon) {
+    this(project, breakpointManager, breakpoint, showAllOptions, showAllOptions, isEditorBalloon);
+  }
+
+  public XLightBreakpointPropertiesPanel(Project project, XBreakpointManager breakpointManager, XBreakpointBase breakpoint,
+                                         boolean showActionOptions, boolean showAllOptions, boolean isEditorBalloon) {
     myBreakpoint = breakpoint;
     myShowAllOptions = showAllOptions;
     myIsEditorBalloon = isEditorBalloon;
@@ -168,10 +173,15 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myConditionPanel.setVisible(false);
     }
 
-    myShowMoreOptions = false;
+    myShowMoreActionOptionsIsAvailable = false;
     for (XBreakpointPropertiesSubPanel panel : mySubPanels) {
-      if (panel.lightVariant(showAllOptions)) {
-        myShowMoreOptions = true;
+      if (panel instanceof XBreakpointActionsPanel) {
+        if (panel.lightVariant(showActionOptions || myShowAllOptions)) {
+          myShowMoreActionOptionsIsAvailable = true;
+        }
+      }
+      else {
+        panel.lightVariant(myShowAllOptions);
       }
     }
 
@@ -194,7 +204,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     }
 
     XBreakpointCustomPropertiesPanel customRightConditionPanel = breakpointType.createCustomRightPropertiesPanel(project);
-    if (customRightConditionPanel != null && (showAllOptions || customRightConditionPanel.isVisibleOnPopup(breakpoint))) {
+    if (customRightConditionPanel != null && (myShowAllOptions || customRightConditionPanel.isVisibleOnPopup(breakpoint))) {
       myCustomRightPropertiesPanelWrapper.add(customRightConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customRightConditionPanel);
     }
