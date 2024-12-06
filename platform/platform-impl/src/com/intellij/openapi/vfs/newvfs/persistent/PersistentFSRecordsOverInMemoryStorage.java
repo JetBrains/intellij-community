@@ -331,6 +331,24 @@ public final class PersistentFSRecordsOverInMemoryStorage implements PersistentF
   }
 
   @Override
+  public int getFlags() throws IOException {
+    return getIntHeaderField(HEADER_FLAGS_OFFSET);
+  }
+
+  @Override
+  public boolean updateFlags(int flagsToAdd, int flagsToRemove) throws IOException {
+    int currentFlags = (int)INT_HANDLE.getVolatile(records, HEADER_FLAGS_OFFSET);
+    int newFlags = (currentFlags & ~flagsToRemove) | flagsToAdd;
+    if (newFlags == currentFlags) {
+      return false;
+    }
+    //MAYBE RC: use CAS to make an update atomic?
+    INT_HANDLE.setVolatile(records, HEADER_FLAGS_OFFSET, newFlags);
+    markDirty();
+    return true;
+  }
+
+  @Override
   public int getGlobalModCount() {
     return globalModCount.get();
   }

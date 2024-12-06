@@ -320,6 +320,16 @@ public final class PersistentFSConnection {
     scheduleVFSRebuild(persistentFSPaths.getCorruptionMarkerFile(), message, errorCause);
   }
 
+  /**
+   * Currently implementation is == rebuild.
+   * The difference between this method and {@linkplain #scheduleVFSRebuild(String, Throwable)} is that this method is not about
+   * 'rebuild VFS because it is corrupted', but 'defragment VFS because it may contain al lot of garbage' -- this is why there is
+   * no 'message' nor 'errorCause' parameters.
+   */
+  void scheduleDefragmentation() throws IOException {
+    records.updateFlags(/*flagsToAdd: */ PersistentFSHeaders.FLAGS_DEFRAGMENTATION_REQUESTED, /*flagsToRemove: */ 0);
+  }
+
 
   /**
    * @param id - file id, name id, any other positive id

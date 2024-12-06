@@ -16,8 +16,9 @@ public final class PersistentFSHeaders {
   public static final int HEADER_CONNECTION_STATUS_OFFSET        = 12;  // int32
   static final int HEADER_TIMESTAMP_OFFSET                = 16;  // int64
   static final int HEADER_ERRORS_ACCUMULATED_OFFSET       = 24;  // int32
+  static final int HEADER_FLAGS_OFFSET                    = 28;  // int32
 
-  //reserve 3 int32 header fields for the generations to come
+  //reserve a few bytes of header for the generations to come
   //Header size must be int64-aligned, so records start on int64-aligned offset
   static final int HEADER_SIZE                            = 40;
   //@formatter:on
@@ -27,6 +28,12 @@ public final class PersistentFSHeaders {
   //@formatter:off
   public static final int IN_USE_STAMP         = 0x12ad34e4;
   static final int SAFELY_CLOSED_STAMP  = 0;
+  //@formatter:on
+
+  //FLAGS header field values:
+  //@formatter:off
+  /** Current implementation of 'defragmentation' is really 'drop VFS and rebuild from scratch' */
+  static final int FLAGS_DEFRAGMENTATION_REQUESTED    = 1;
   //@formatter:on
 
   @MagicConstant(flagsFromClass = PersistentFSHeaders.class)

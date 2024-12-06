@@ -1689,6 +1689,17 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   /**
+   * Mark VFS to defragment on next restart.
+   * Currently, defragmentation implementation == rebuild.
+   * The difference between this method and {@linkplain #scheduleRebuild(String, Throwable)} is that this method is not about
+   * 'rebuild VFS because it is corrupted', but 'defragment VFS because it may contain al lot of garbage' -- this is why there
+   * is no 'message' nor 'errorCause' parameters.
+   */
+  public void scheduleDefragmentation() throws IOException {
+    connection.scheduleDefragmentation();
+  }
+
+  /**
    * Method is supposed to be called in a pattern like this:
    * <pre>
    * try{

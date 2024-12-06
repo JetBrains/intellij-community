@@ -615,9 +615,32 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
     final T storageReopened = openStorage(storagePath);
     storage = storageReopened;//for tearDown to successfully close it
-    assertEquals("errorsAccumulated be restored",
+    assertEquals("errorsAccumulated must be restored",
                  errorsWritten,
                  storage.getErrorsAccumulated());
+  }
+
+  @Test
+  public void flags_RestoredAfterReopen() throws IOException {
+    int flags = PersistentFSHeaders.FLAGS_DEFRAGMENTATION_REQUESTED;
+
+    //set the flag:
+    storage.updateFlags(/*flagsToAdd: */ flags, /*flagsToRemove: */ 0);
+    storage.close();
+
+    storage = openStorage(storagePath);//for tearDown to successfully close it
+    assertEquals(".flags must be restored",
+                 flags,
+                 storage.getFlags());
+
+    //clean the flag:
+    storage.updateFlags(/*flagsToAdd: */ 0, /*flagsToRemove: */ flags);
+    storage.close();
+
+    storage = openStorage(storagePath);//for tearDown to successfully close it
+    assertEquals(".flags must be restored",
+                 0,
+                 storage.getFlags());
   }
 
 

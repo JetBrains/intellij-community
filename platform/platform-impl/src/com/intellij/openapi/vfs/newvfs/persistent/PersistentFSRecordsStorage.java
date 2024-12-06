@@ -91,6 +91,21 @@ public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage,
 
   int getVersion() throws IOException;
 
+  /**
+   * Additional bit-flags
+   * Values are from {@linkplain PersistentFSHeaders} FLAGS_XXX constants
+   */
+  int getFlags() throws IOException;
+
+  /**
+   * flags values are from {@linkplain PersistentFSHeaders} FLAGS_XXX constants
+   *
+   * @return true if flags actually changed, or false if current flags are the same as were attempted to set (i.e.
+   * current flags already contain all flagsToAdd and do not contain none of flagsToRemove)
+   */
+  boolean updateFlags(int flagsToAdd,
+                      int flagsToRemove) throws IOException;
+
   int getGlobalModCount();
 
   @Override
