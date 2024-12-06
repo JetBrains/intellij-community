@@ -10,6 +10,7 @@
 from typing import NewType
 
 Base = NewType("Base", str)
+A = NewType("B", int)  # Variable name 'A' does not match NewType name 'B'
 
 class Derived(Base):  # 'Base' cannot be subclassed
     pass

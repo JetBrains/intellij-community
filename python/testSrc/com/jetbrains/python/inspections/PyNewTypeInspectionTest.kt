@@ -22,5 +22,16 @@ class PyNewTypeInspectionTest : PyInspectionTestCase() {
     )
   }
 
+  fun testVariableNameDoesNotMatchNewTypeName() {
+    doTestByText(
+      """
+        from typing import NewType
+        
+        <warning descr="Variable name 'A' does not match NewType name 'B'">A</warning> = NewType("B", int)
+        X = NewType("X", str)
+      """.trimIndent()
+    )
+  }
+
   override fun getInspectionClass(): Class<out PyInspection> = PyNewTypeInspection::class.java
 }
