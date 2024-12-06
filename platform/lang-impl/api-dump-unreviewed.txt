@@ -2465,6 +2465,7 @@ a:com.intellij.codeInsight.daemon.impl.StatusItemMerger
 c:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.ErrorStripeRenderer
+- sf:Companion:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$Companion
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):V
 - p:createUIController():com.intellij.openapi.editor.markup.UIController
 - pf:createUIController(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.markup.UIController
@@ -2473,7 +2474,6 @@ c:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 - p:getDaemonCodeAnalyzerStatus(com.intellij.codeInsight.daemon.impl.SeverityRegistrar):com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$DaemonCodeAnalyzerStatus
 - getErrorCounts():I[]
 - pf:getProject():com.intellij.openapi.project.Project
-- f:getSeverityRegistrar():com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 - getStatus():com.intellij.openapi.editor.markup.AnalyzerStatus
 - f:invalidate():V
 - isValid():Z
@@ -2486,6 +2486,7 @@ pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$AbstractUIControlle
 - onClosePopup():V
 - setHighLightLevel(com.intellij.openapi.editor.markup.LanguageHighlightLevel):V
 - toggleProblemsView():V
+f:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$Companion
 pc:com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$DefaultUIController
 - com.intellij.codeInsight.daemon.impl.TrafficLightRenderer$AbstractUIController
 - <init>(com.intellij.codeInsight.daemon.impl.TrafficLightRenderer):V
