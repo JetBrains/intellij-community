@@ -12,16 +12,22 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.liftToExpect
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.util.liftToExpected
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -29,33 +35,48 @@ import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 
+/**
+ * Tests:
+ *
+ *  - [org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated.ConvertSealedClassToEnum]
+ *  - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertActualSealedClassToEnum]
+ *  - [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.Other.testConvertExpectSealedClassToEnum]
+ */
 class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
     KotlinBundle.lazyMessage("convert.to.enum.class")
 ) {
+
+    override fun startInWriteAction(): Boolean = false
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun applicabilityRange(element: KtClass): TextRange? {
         val nameIdentifier = element.nameIdentifier ?: return null
         val sealedKeyword = element.modifierList?.getModifier(KtTokens.SEALED_KEYWORD) ?: return null
 
-        val classDescriptor = element.resolveToDescriptorIfAny() ?: return null
-        if (classDescriptor.getSuperClassNotAny() != null) return null
-
-        return TextRange(sealedKeyword.startOffset, nameIdentifier.endOffset)
+        allowAnalysisOnEdt {
+            analyze(element) {
+                val symbol = element.symbol as? KaClassSymbol ?: return null
+                val superTypesNotAny = symbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }.filter { superClassSymbol ->
+                    superClassSymbol.classId != StandardClassIds.Any
+                }
+                if (superTypesNotAny.isNotEmpty()) return null
+                return TextRange(sealedKeyword.startOffset, nameIdentifier.endOffset)
+            }
+        }
     }
 
     override fun applyTo(element: KtClass, editor: Editor?) {
         val project = element.project
-
-        val klass = element.liftToExpected() as? KtClass ?: element
+        val klass = liftToExpect(element) as? KtClass ?: element
 
         val searchAction = {
             HierarchySearchRequest(klass, klass.useScope, false).searchInheritors().mapNotNull { it.unwrapped }
         }
-        val subclasses: List<PsiElement> = if (element.isPhysical)
+        val subclasses: List<PsiElement> = if (element.isPhysical) {
             project.runSynchronouslyWithProgress(KotlinBundle.message("searching.inheritors"), true, searchAction) ?: return
-        else
+        } else {
             searchAction().map { subClass ->
                 // search finds physical elements
                 try {
@@ -64,12 +85,13 @@ class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
                     return
                 }
             }
+        }
 
         val subclassesByContainer: Map<KtClass?, List<PsiElement>> = subclasses.sortedBy { it.textOffset }.groupBy {
             if (it !is KtObjectDeclaration) return@groupBy null
             if (it.superTypeListEntries.size != 1) return@groupBy null
             val containingClass = it.containingClassOrObject as? KtClass ?: return@groupBy null
-            if (containingClass != klass && containingClass.liftToExpected() != klass) return@groupBy null
+            if (containingClass != klass && liftToExpect(containingClass) != klass) return@groupBy null
             containingClass
         }
 
@@ -94,12 +116,14 @@ class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
             )
         }
 
-        if (subclassesByContainer.isNotEmpty()) {
-            subclassesByContainer.forEach { (currentClass, currentSubclasses) ->
-                processClass(currentClass!!, currentSubclasses, project)
+        runWriteAction {
+            if (subclassesByContainer.isNotEmpty()) {
+                subclassesByContainer.forEach { (currentClass, currentSubclasses) ->
+                    processClass(currentClass!!, currentSubclasses, project)
+                }
+            } else {
+                processClass(klass, emptyList(), project)
             }
-        } else {
-            processClass(klass, emptyList(), project)
         }
     }
 
