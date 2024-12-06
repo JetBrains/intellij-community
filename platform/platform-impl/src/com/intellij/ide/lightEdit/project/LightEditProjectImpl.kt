@@ -33,7 +33,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
   init {
     registerComponents()
     customizeRegisteredComponents()
-    componentStore.setPath(projectPath, false, null)
+    componentStore.setPath(projectPath, null)
     runUnderModalProgressIfIsEdt {
       val project = this@LightEditProjectImpl
       ProjectServiceInitializer.initEssential(project)

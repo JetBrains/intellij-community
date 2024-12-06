@@ -198,7 +198,6 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       builder.setNewProject(true);
       builder.setRunConfigurators(true);
       builder.setProjectCreatedWithWizard(true);
-      builder.setRefreshVfsNeeded(false);
       builder.withBeforeOpenCallback(project -> {
         if (extraUserData != null) {
           extraUserData.accept(project);

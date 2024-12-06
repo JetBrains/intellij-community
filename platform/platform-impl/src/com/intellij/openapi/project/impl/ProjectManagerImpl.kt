@@ -197,10 +197,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     Disposer.dispose(defaultProject)
   }
 
-  override fun loadProject(path: Path): Project = loadProject(path = path, refreshNeeded = true, preloadServices = true)
+  override fun loadProject(path: Path): Project = loadProject(path = path, preloadServices = true)
 
   @RequiresBackgroundThread
-  fun loadProject(path: Path, refreshNeeded: Boolean, preloadServices: Boolean): ProjectImpl {
+  fun loadProject(path: Path, preloadServices: Boolean): ProjectImpl {
     val project = ProjectImpl(filePath = path, projectName = null, parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     @Suppress("DEPRECATION")
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
@@ -209,7 +209,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         initProject(
           file = path,
           project = project,
-          isRefreshVfsNeeded = refreshNeeded,
           preloadServices = preloadServices,
           template = null,
           isTrustCheckNeeded = false,
@@ -536,7 +535,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       initProject(
         file = file,
         project = project,
-        isRefreshVfsNeeded = options.isRefreshVfsNeeded,
         preloadServices = options.preloadServices,
         template = defaultProject,
         isTrustCheckNeeded = false,
@@ -807,7 +805,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         initProject(
           file = file,
           project = project,
-          isRefreshVfsNeeded = options.isRefreshVfsNeeded,
           preloadServices = options.preloadServices,
           template = template,
           isTrustCheckNeeded = false,
@@ -833,7 +830,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     initProject(
       file = file,
       project = project,
-      isRefreshVfsNeeded = options.isRefreshVfsNeeded,
       preloadServices = options.preloadServices,
       template = if (options.useDefaultProjectAsTemplate) defaultProject else null,
       isTrustCheckNeeded = false,
@@ -890,7 +886,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       saveTemplateJob?.join()
       initProject(file = projectStoreBaseDir,
                   project = project,
-                  isRefreshVfsNeeded = options.isRefreshVfsNeeded,
                   preloadServices = options.preloadServices,
                   template = template,
                   isTrustCheckNeeded = false)
@@ -921,7 +916,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     initProject(
       file = projectStoreBaseDir,
       project = project,
-      isRefreshVfsNeeded = options.isRefreshVfsNeeded,
       preloadServices = options.preloadServices,
       template = null,
       projectInitHelper = projectInitHelper,
@@ -1281,7 +1275,6 @@ private class ProjectInitHelper(
 private suspend fun initProject(
   file: Path,
   project: ProjectImpl,
-  isRefreshVfsNeeded: Boolean,
   preloadServices: Boolean,
   template: Project?,
   isTrustCheckNeeded: Boolean,
@@ -1311,7 +1304,7 @@ private suspend fun initProject(
     }
 
     coroutineContext.ensureActive()
-    project.componentStore.setPath(file, isRefreshVfsNeeded, template)
+    project.componentStore.setPath(file, template)
 
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }

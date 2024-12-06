@@ -93,10 +93,10 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   final override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
   final override fun setPath(path: Path) {
-    setPath(file = path, isRefreshVfsNeeded = true, template = null)
+    setPath(file = path, template = null)
   }
 
-  final override fun setPath(file: Path, isRefreshVfsNeeded: Boolean, template: Project?) {
+  final override fun setPath(file: Path, template: Project?) {
     dirOrFile = file
 
     val storageManager = storageManager

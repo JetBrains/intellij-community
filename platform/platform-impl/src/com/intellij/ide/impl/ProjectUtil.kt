@@ -660,7 +660,6 @@ object ProjectUtil {
     return projectManager.openProjectAsync(projectStoreBaseDir = projectFile, options = OpenProjectTask {
       runConfigurators = true
       isProjectCreatedWithWizard = true
-      isRefreshVfsNeeded = false
     })
   }
 

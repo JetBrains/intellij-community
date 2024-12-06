@@ -349,8 +349,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         runConfigurators = true
         isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
         this.projectToClose = projectToClose
-        // doesn't make sense to refresh
-        isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
         useDefaultProjectAsTemplate = true
       }
     }
@@ -360,8 +358,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       runConfigurators = true
       isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
-      // doesn't make sense to refresh
-      isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
       useDefaultProjectAsTemplate = true
     }
   }
