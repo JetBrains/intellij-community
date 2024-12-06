@@ -11,7 +11,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
@@ -68,9 +67,7 @@ public final class RegionUrlMapper {
    */
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @Contract("null -> null")
-  @Nullable
-  public static String mapUrl(@Nullable String url) {
+  public static @NotNull String mapUrl(@NotNull String url) {
     return mapUrl(url, RegionSettings.getRegion());
   }
 
@@ -84,14 +81,9 @@ public final class RegionUrlMapper {
    */
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  @Contract("null, _ -> null")
-  @Nullable
-  public static String mapUrl(@Nullable String url, @NotNull Region region) {
-    if (url != null) {
-      RegionMapping mappings = ourCache.get(region);
-      return mappings.apply(url);
-    }
-    return url;
+  public static @NotNull String mapUrl(@NotNull String url, @NotNull Region region) {
+    RegionMapping mappings = ourCache.get(region);
+    return mappings.apply(url);
   }
 
   private static @NotNull RegionMapping loadMappingOrEmpty(@NotNull Region reg) {
