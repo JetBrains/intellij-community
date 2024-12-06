@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.impl.UtilsKt;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -71,7 +72,7 @@ public class ActionPromoterTest extends LightPlatformTestCase {
   private static @NotNull ActionPromoter newPromoter(@NotNull Function<List<? extends AnAction>, List<AnAction>> function) {
     return new ActionPromoter() {
       @Override
-      public @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+      public @Nullable List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
         return function.apply(actions);
       }
     };
@@ -80,7 +81,7 @@ public class ActionPromoterTest extends LightPlatformTestCase {
   private static @NotNull ActionPromoter newSuppressor(@NotNull Function<List<? extends AnAction>, List<AnAction>> function) {
     return new ActionPromoter() {
       @Override
-      public @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+      public @Nullable List<AnAction> suppress(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
         return function.apply(actions);
       }
     };

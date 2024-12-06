@@ -37,7 +37,7 @@ public interface ActionPromoter {
    * but {@link CommonDataKeys#PSI_FILE} is not.
    */
   @Unmodifiable
-  default @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  default @Nullable List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }
 
@@ -47,7 +47,7 @@ public interface ActionPromoter {
    * See {@link #promote(List, DataContext)} javadoc notes on performance and the provided {@link DataContext}.
    */
   @Unmodifiable
-  default @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+  default @Nullable List<AnAction> suppress(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
   }
 }

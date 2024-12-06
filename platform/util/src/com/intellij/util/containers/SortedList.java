@@ -3,12 +3,14 @@ package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 public final class SortedList<T> extends AbstractList<T>{
   private final SortedMap<T, List<T>> myMap;
   private final Comparator<? super T> myComparator;
+  @Unmodifiable
   private List<T> myDelegate;
 
   public SortedList(@NotNull Comparator<? super T> comparator) {
