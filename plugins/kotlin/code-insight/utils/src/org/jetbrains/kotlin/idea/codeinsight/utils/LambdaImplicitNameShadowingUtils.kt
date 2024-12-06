@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 
-val nonShadowingScopeFunctions: List<FqName> = listOf(
+val scopeFunctionsList: List<FqName> = listOf(
     "kotlin.also",
     "kotlin.let",
     "kotlin.takeIf",

@@ -16,14 +16,13 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
@@ -67,7 +66,7 @@ internal class NestedLambdaShadowedImplicitParameterInspection :
         holder: ProblemsHolder,
         isOnTheFly: Boolean
     ): KtVisitor<*, *> {
-         return referenceExpressionVisitor { referenceExpression ->
+        return referenceExpressionVisitor { referenceExpression ->
             if (referenceExpression is KtNameReferenceExpression) {
                 visitTargetElement(referenceExpression, holder, isOnTheFly)
             }
@@ -90,35 +89,23 @@ internal class NestedLambdaShadowedImplicitParameterInspection :
      */
     context(KaSession)
     override fun prepareContext(element: KtNameReferenceExpression): Context? {
-        analyze(element) {
-            val enclosingLambdaImplicitItSymbol = element.getImplicitLambdaParameterSymbol()
-            if (enclosingLambdaImplicitItSymbol == null) return null
-            val ownerLambda = enclosingLambdaImplicitItSymbol.psi?.getStrictParentOfType<KtLambdaExpression>() ?: return null
-            if (ownerLambda.isAllowedScopeFunctionLambdaArgument()) return null
+        val enclosingLambdaImplicitItSymbol = element.getImplicitLambdaParameterSymbol()
+        if (enclosingLambdaImplicitItSymbol == null) return null
+        val ownerLambda = enclosingLambdaImplicitItSymbol.psi?.getStrictParentOfType<KtLambdaExpression>() ?: return null
+        if (ownerLambda.isAllowedScopeFunctionLambdaArgument()) return null
 
-            val outermostLambdaWithoutParams = ownerLambda.findTopmostParentInFile {
-                it is KtLambdaExpression && it.valueParameters.isEmpty()
-            } as? KtLambdaExpression ?: return null
+        val outermostLambdaWithoutParams = ownerLambda.findTopmostParentInFile {
+            it is KtLambdaExpression && it.valueParameters.isEmpty()
+        } as? KtLambdaExpression ?: return null
 
-            var parentLambdaWithUsedImplicitIt: KtLambdaExpression? = null
-            outermostLambdaWithoutParams.anyDescendantOfType<KtNameReferenceExpression> { referenceExpression ->
-                if (referenceExpression.getReferencedNameAsName() != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME)
-                    return@anyDescendantOfType false
-                if (PsiTreeUtil.isAncestor(ownerLambda, referenceExpression, false))
-                    return@anyDescendantOfType false
-                val implicitItSymbol = referenceExpression.getImplicitLambdaParameterSymbol()
-                if (implicitItSymbol == null)
-                    return@anyDescendantOfType false
-                if (implicitItSymbol != enclosingLambdaImplicitItSymbol) {
-                    parentLambdaWithUsedImplicitIt = implicitItSymbol.psi?.getStrictParentOfType<KtLambdaExpression>()
-                    true
-                } else {
-                    false
-                }
-            }
-            return parentLambdaWithUsedImplicitIt?.let { outerLambda ->
-                Context(ownerLambda.createSmartPointer(), outerLambda.createSmartPointer())
-            }
+        val anotherItReferenceOutside = outermostLambdaWithoutParams.findDescendantOfType<KtNameReferenceExpression> { refExpression ->
+            refExpression.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
+                    && !PsiTreeUtil.isAncestor(ownerLambda, refExpression, false)
+                    && refExpression.getImplicitLambdaParameterSymbol()?.let { it != enclosingLambdaImplicitItSymbol } == true
+        }
+
+        return anotherItReferenceOutside?.getStrictParentOfType<KtLambdaExpression>()?.let { outerLambda ->
+            Context(ownerLambda.createSmartPointer(), outerLambda.createSmartPointer())
         }
     }
 
@@ -126,7 +113,7 @@ internal class NestedLambdaShadowedImplicitParameterInspection :
     private fun KtLambdaExpression.isAllowedScopeFunctionLambdaArgument(): Boolean {
         val qualifiedExpression = getStrictParentOfType<KtQualifiedExpression>() ?: return false
         if (qualifiedExpression.receiverExpression.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier) return false
-        return qualifiedExpression.callExpression?.isCalling(nonShadowingScopeFunctions.asSequence()) == true
+        return qualifiedExpression.callExpression?.isCalling(scopeFunctionsList.asSequence()) == true
     }
 }
 

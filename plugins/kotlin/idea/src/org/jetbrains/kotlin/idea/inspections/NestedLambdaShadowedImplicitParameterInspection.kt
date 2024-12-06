@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.codeInsight.intentions.fake.ReplaceItWithExplicitFunctionLiteralParamIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.addExplicitItParameter
-import org.jetbrains.kotlin.idea.codeinsight.utils.nonShadowingScopeFunctions
+import org.jetbrains.kotlin.idea.codeinsight.utils.scopeFunctionsList
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.psi.*
@@ -43,7 +43,7 @@ internal class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinI
         val qualifiedExpression = lambda.getStrictParentOfType<KtQualifiedExpression>()
         if (qualifiedExpression != null
             && qualifiedExpression.receiverExpression.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
-            && qualifiedExpression.callExpression?.isCalling(nonShadowingScopeFunctions, context) == true
+            && qualifiedExpression.callExpression?.isCalling(scopeFunctionsList, context) == true
         ) return@lambdaExpressionVisitor
 
         lambda.forEachDescendantOfType<KtNameReferenceExpression> { expression ->
