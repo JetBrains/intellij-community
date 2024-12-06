@@ -386,11 +386,11 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     EquivalenceChecker equivalenceChecker = EquivalenceChecker.getCanonicalPsiEquivalence();
     var visitor = new JavaRecursiveElementVisitor() {
 
-      private boolean isNotNull = false;
+      private boolean isNull = true;
 
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (isNotNull) {
+        if (!isNull) {
           return;
         }
         super.visitElement(element);
@@ -405,13 +405,13 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
             codeBlock.getParent() == branch.getStatement() &&
             equivalenceChecker.expressionsAreEquivalent(switchExpression, expression) &&
             getNullability(expression) == Nullability.NOT_NULL) {
-          isNotNull = true;
+          isNull = false;
         }
         super.visitExpression(expression);
       }
     };
     visitor.visitElement(branch.getStatement());
-    return !visitor.isNotNull;
+    return visitor.isNull;
   }
 
 
