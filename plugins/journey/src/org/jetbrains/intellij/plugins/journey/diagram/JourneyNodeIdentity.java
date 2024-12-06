@@ -1,42 +1,32 @@
 package org.jetbrains.intellij.plugins.journey.diagram;
 
-import com.intellij.diagram.LazyPsiElementHolder;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.Objects;
 
-public class JourneyNodeIdentity implements LazyPsiElementHolder {
-  private final PsiFile file;
+public class JourneyNodeIdentity {
+  private final SmartPsiElementPointer identifier;
 
-  public PsiElement getOriginalElement() {
-    return original;
+  public SmartPsiElementPointer getIdentifierElement() {
+    return identifier;
   }
 
-  private final PsiElement original;
-
-  public JourneyNodeIdentity(@NotNull PsiElement psiElement) {
-    original = psiElement;
-    file = ReadAction.compute(() -> psiElement.getContainingFile());
+  public JourneyNodeIdentity(@NotNull SmartPsiElementPointer psiElement) {
+    identifier = psiElement;
   }
 
   public PsiFile getFile() {
-    return file;
-  }
-
-  @Override
-  public @NotNull PsiFile calculatePsiElement() {
-    return getFile();
+    return ReadAction.compute(() -> identifier.getContainingFile());
   }
 
   public @NotNull PsiMember getMember() {
-    PsiMember member = (PsiMember)PsiUtil.tryFindParentOrNull(original, it -> it instanceof PsiMember);
+    return Objects.requireNonNull((PsiMember)PsiUtil.tryFindParentOrNull(identifier.getElement(), it -> it instanceof PsiMember));
     // TODO handle member is null
-    return member;
   }
 
   @Override
@@ -44,11 +34,11 @@ public class JourneyNodeIdentity implements LazyPsiElementHolder {
     if (o == null || getClass() != o.getClass()) return false;
 
     JourneyNodeIdentity identity = (JourneyNodeIdentity)o;
-    return Objects.equals(file, identity.file);
+    return Objects.equals(getFile(), identity.getFile());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(file);
+    return Objects.hashCode(getFile());
   }
 }

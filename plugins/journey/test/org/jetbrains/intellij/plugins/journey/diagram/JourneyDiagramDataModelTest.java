@@ -17,7 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Set;
 
+import static org.jetbrains.intellij.plugins.journey.util.PsiUtil.createSmartPointer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -38,19 +40,20 @@ public class JourneyDiagramDataModelTest extends LightJavaCodeInsightFixtureTest
     JourneyDiagramDataModel model = myDataModel;
     PsiMethod methodA = createPsiMethod(myProject, "a");
     PsiElement methodAIdentifier = PsiUtil.tryFindIdentifier(methodA);
-    JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(methodAIdentifier));
+    JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(createSmartPointer(methodAIdentifier)));
     assertNotNull(nodeA);
     PsiMethod methodB = createPsiMethod(myProject, "b");
     PsiElement methodBIdentifier = PsiUtil.tryFindIdentifier(methodB);
-    JourneyNode nodeB = model.addElement(new JourneyNodeIdentity(methodBIdentifier));
+    JourneyNode nodeB = model.addElement(new JourneyNodeIdentity(createSmartPointer(methodBIdentifier)));
     assertNotNull(nodeB);
     DiagramEdge<JourneyNodeIdentity> edgeAB = model.createEdge(nodeA, nodeB);
     assertNotNull(edgeAB);
     assertEquals(2, model.getNodes().size());
-    assertEquals(methodAIdentifier, model.getNodes().get(0).getIdentifyingElement().getOriginalElement());
-    assertEquals(methodA, model.getNodes().get(0).getIdentifyingElement().getMember());
-    assertEquals(methodBIdentifier, model.getNodes().get(1).getIdentifyingElement().getOriginalElement());
-    assertEquals(methodB, model.getNodes().get(1).getIdentifyingElement().getMember());
+    JourneyNode[] nodes = model.getNodes().toArray(new JourneyNode[0]);
+    assertEquals(methodAIdentifier, nodes[0].getIdentifyingElement().getIdentifierElement());
+    assertEquals(methodA, nodes[0].getIdentifyingElement().getMember());
+    assertEquals(methodBIdentifier, nodes[1].getIdentifyingElement().getIdentifierElement());
+    assertEquals(methodB, nodes[1].getIdentifyingElement().getMember());
     assertEquals(1, model.getEdges().size());
   }
 
@@ -62,11 +65,11 @@ public class JourneyDiagramDataModelTest extends LightJavaCodeInsightFixtureTest
   @Test
   void testDeleteTransitNode() {
     JourneyDiagramDataModel model = myDataModel;
-    JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "a")));
+    JourneyNode nodeA = model.addElement(new JourneyNodeIdentity(createSmartPointer(createPsiMethod(myProject, "a"))));
     assertNotNull(nodeA);
-    JourneyNode nodeB = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "b")));
+    JourneyNode nodeB = model.addElement(new JourneyNodeIdentity(createSmartPointer(createPsiMethod(myProject, "b"))));
     assertNotNull(nodeB);
-    JourneyNode nodeC = model.addElement(new JourneyNodeIdentity(createPsiMethod(myProject, "c")));
+    JourneyNode nodeC = model.addElement(new JourneyNodeIdentity(createSmartPointer(createPsiMethod(myProject, "c"))));
     assertNotNull(nodeC);
     DiagramEdge<JourneyNodeIdentity> edgeAB = model.createEdge(nodeA, nodeB);
     assertNotNull(edgeAB);
@@ -74,9 +77,9 @@ public class JourneyDiagramDataModelTest extends LightJavaCodeInsightFixtureTest
     assertNotNull(edgeBC);
     model.removeNode(nodeB);
 
-    List<JourneyEdge> edges = model.getEdges();
+    Set<JourneyEdge> edges = model.getEdges();
     assertEquals(1, edges.size());
-    JourneyEdge edge = edges.get(0);
+    JourneyEdge edge = (JourneyEdge)edges.toArray()[0];
     assertEquals(nodeA, edge.getSource());
     assertEquals(nodeC, edge.getTarget());
   }

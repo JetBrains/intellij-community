@@ -3,32 +3,38 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 import com.intellij.diagram.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.graph.GraphManager;
+import com.intellij.openapi.graph.geom.YPoint;
+import com.intellij.openapi.graph.view.EdgeRealizer;
+import com.intellij.openapi.graph.view.NodeRealizer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
+import com.intellij.ui.JBColor;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager;
-import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorWrapper;
 import org.jetbrains.intellij.plugins.journey.util.JourneyNavigationUtil;
-import org.jetbrains.intellij.plugins.journey.util.PsiUtil;
 
 import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.editor.ScrollType.CENTER_UP;
 import static org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramLayout.getRealizer;
+import static org.jetbrains.intellij.plugins.journey.util.PsiUtil.contains;
+import static org.jetbrains.intellij.plugins.journey.util.PsiUtil.createSmartPointer;
 
 public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeIdentity> {
 
   private final DiagramProvider<JourneyNodeIdentity> myProvider;
-  private final List<JourneyNode> myNodes = new ArrayList<>();
-  private final List<JourneyEdge> myEdges = new ArrayList<>();
+  private final HashSet<JourneyNode> myNodes = new HashSet<>();
+  private final HashSet<JourneyEdge> myEdges = new HashSet<>();
+  private SmartPsiElementPointer currentPSIatCaret = null;
   public final JourneyEditorManager myEditorManager;
 
   public JourneyDiagramDataModel(
@@ -70,7 +76,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   }
 
   @Override
-  public @NotNull List<JourneyNode> getNodes() {
+  public @NotNull Set<JourneyNode> getNodes() {
     return myNodes;
   }
 
@@ -103,13 +109,23 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     refreshDataModel();
   }
 
+  private void unionEdges(List<JourneyEdge> edgesFromNode, List<JourneyEdge> edgesToNode) {
+    edgesToNode.forEach(inputEdge -> {
+      SmartPsiElementPointer psiTarget = inputEdge.getPsiTarget();
+      edgesFromNode.stream().filter(outputEdge -> {
+        return contains(psiTarget, outputEdge.getPsiSource());
+      }).forEach(outputEdge -> {
+        createEdge(inputEdge.getPsiSource(), outputEdge.getPsiTarget());
+      });
+    });
+  }
+
   @Override
   public void removeNode(@NotNull DiagramNode<JourneyNodeIdentity> node) {
-    List<JourneyEdge> edgesFromNode = findEdgesFrom(node.getIdentifyingElement());
     List<JourneyEdge> edgesToNode = findEdgesTo(node.getIdentifyingElement());
-    if (edgesToNode.size() == 1 && edgesFromNode.size() == 1) {
-      createEdge(edgesToNode.get(0).getSource(), edgesFromNode.get(0).getTarget());
-    }
+    List<JourneyEdge> edgesFromNode = findEdgesFrom(node.getIdentifyingElement());
+
+    unionEdges(edgesFromNode, edgesToNode);
     myEdges.removeAll(edgesFromNode);
     myEdges.removeAll(edgesToNode);
     myEditorManager.closeNode(node.getIdentifyingElement());
@@ -118,11 +134,16 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     queryUpdate(() -> {});
   }
 
-  @Override
-  public @Nullable DiagramEdge<JourneyNodeIdentity> createEdge(@NotNull DiagramNode<JourneyNodeIdentity> from,
-                                                               @NotNull DiagramNode<JourneyNodeIdentity> to) {
-    if (from.equals(to)) return null;
-    JourneyEdge edge = new JourneyEdge(from, to);
+  public void setCurrentPSIatCaret(SmartPsiElementPointer currentPSIatCaret) {
+    this.currentPSIatCaret = currentPSIatCaret;
+  }
+
+  public @Nullable DiagramEdge<JourneyNodeIdentity> createEdge(SmartPsiElementPointer fromPSI,
+                                                               SmartPsiElementPointer toPSI) {
+    assert SmartPointerManager.getInstance(toPSI.getProject()) == SmartPointerManager.getInstance(fromPSI.getProject());
+
+    JourneyEdge edge = new JourneyEdge(Objects.requireNonNull(getNode(new JourneyNodeIdentity(fromPSI))),
+                                       Objects.requireNonNull(getNode(new JourneyNodeIdentity(toPSI))), fromPSI, toPSI);
     if (!myEdges.contains(edge)) {
       myEdges.add(edge);
       myModificationTracker.incModificationCount();
@@ -141,7 +162,7 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   }
 
   @Override
-  public @NotNull List<JourneyEdge> getEdges() {
+  public @NotNull Set<JourneyEdge> getEdges() {
     return myEdges;
   }
 
@@ -163,10 +184,57 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
   }
 
   public void addElementUpdate(PsiElement element) {
-    var node = Optional.of(addElement(new JourneyNodeIdentity(element)));
+    var node = Optional.of(addElement(new JourneyNodeIdentity(createSmartPointer(element))));
     queryUpdate(() -> {
       JourneyDiagramLayout.addElementLayout(getBuilder(), node.get());
     });
+  }
+
+  public void highlightEdges() {
+    for (JourneyEdge edge : myEdges) {
+      Optional<EdgeRealizer> realizer = getRealizer(this.getBuilder(), edge);
+      if (edge.getSource().getIdentifyingElement().equals(edge.getTarget().getIdentifyingElement())) {
+        realizer.get().setVisible(false);
+      }
+      if (realizer.isPresent()) {
+        NodeRealizer source = getRealizer(getBuilder(), (JourneyNode)edge.getSource()).get();
+        NodeRealizer target = getRealizer(getBuilder(), (JourneyNode)edge.getTarget()).get();
+        YPoint point;
+        boolean isIntersect = ContainerUtil.exists(myNodes, node -> {
+          if (!edge.getSource().equals(node) && !edge.getTarget().equals(node)) {
+            return realizer.get().intersects(getRealizer(getBuilder(), node).get().getBoundingBox());
+          }
+          return false;
+        });
+        final JourneyNode sourceNode = (JourneyNode)edge.getSource();
+        final JourneyNode targetNode = (JourneyNode)edge.getTarget();
+        if (!isIntersect && (source.getX() + source.getWidth() < target.getX() || target.getX() + target.getWidth() < source.getX())) {
+          boolean isLeftToRight = source.getX() + source.getWidth() < target.getX();
+          realizer.get().clearPoints();
+          point = GraphManager.getGraphManager().createYPoint((isLeftToRight ? 1 : -1) * source.getWidth() / 2.0,
+                                                              sourceNode.getRealizerCoord(edge.getPsiSource()));
+          realizer.get().setSourcePoint(point);
+          point = GraphManager.getGraphManager().createYPoint((isLeftToRight ? -1 : 1) * target.getWidth() / 2.0,
+                                                              targetNode.getRealizerCoord(edge.getPsiTarget()));
+          realizer.get().setTargetPoint(point);
+        } else {
+          point = GraphManager.getGraphManager().createYPoint(realizer.get().getSourcePoint().getX(),
+                                                              sourceNode.getRealizerCoord(edge.getPsiSource()));
+          realizer.get().setSourcePoint(point);
+          point = GraphManager.getGraphManager().createYPoint(realizer.get().getTargetPoint().getX(),
+                                                              targetNode.getRealizerCoord(edge.getPsiTarget()));
+          realizer.get().setTargetPoint(point);
+        }
+        realizer.get().setDirty();
+
+        if (currentPSIatCaret != null && (contains(currentPSIatCaret, edge.getPsiSource()) ||
+                                          contains(currentPSIatCaret, edge.getPsiTarget()))) {
+          realizer.get().setLineColor(JBColor.GREEN);
+        } else {
+          realizer.get().setLineColor(JBColor.GRAY);
+        }
+      }
+    }
   }
 
   public void queryUpdate(Runnable thenRun) {
@@ -175,7 +243,10 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
         .withDataReload()
         .withNodePresentationsUpdate(true)
         .runAsync()
-        .thenRun(thenRun);
+        .thenRun(thenRun)
+        .thenRun(() -> {
+          updateHighlight();
+        });
     });
   }
 
@@ -195,15 +266,41 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
     return ContainerUtil.find(myNodes, it -> it.getIdentifyingElement().equals(nodeIdentity));
   }
 
-  private @Nullable JourneyNode findNodeForFile(PsiElement from) {
-    if (from == null) return null;
-    return ReadAction.compute(() -> {
-      PsiFile fromFile = ReadAction.nonBlocking(() -> from.getContainingFile()).executeSynchronously();
-      return ContainerUtil.find(getNodes(), node -> {
-        PsiFile toFile = node.getIdentifyingElement().getFile();
-        return toFile.isEquivalentTo(fromFile);
+  private List<SmartPsiElementPointer> getPsiElementsForNode(JourneyNode node) {
+    Set<SmartPsiElementPointer> psiElements = new HashSet<>() ;
+    myEdges.forEach((edge) -> {
+      if (edge.getSource().equals(node)) {
+        psiElements.add(edge.getPsiSource());
+      }
+      if (edge.getTarget().equals(node)) {
+        psiElements.add(edge.getPsiTarget());
+      }
+    });
+    psiElements.add(node.getIdentifyingElement().getIdentifierElement());
+    return new ArrayList<>(psiElements);
+  }
+
+  public void highlightNode(JourneyNode node) {
+    ReadAction.run(() -> {
+      node.highlightMembers(getPsiElementsForNode(node));
+    });
+  }
+
+  private void updateHighlight() {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myNodes.forEach(it -> {
+        highlightNode(it);
       });
     });
+  }
+
+  public void addEdge(JourneyNode from, JourneyNode to, String relation) {
+    JourneyEdge edge = new JourneyEdge(from, to, relation);
+    if (!myEdges.contains(edge)) {
+      myEdges.add(edge);
+      myModificationTracker.incModificationCount();
+      queryUpdate(() -> {});
+    }
   }
 
   private void addEdge(Object from, Object to) {
@@ -213,10 +310,12 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
       // TODO add info to logger
       return;
     }
-    var fromNode = Optional.ofNullable(findNodeForFile(fromPSI)).orElseGet(() -> addElement(new JourneyNodeIdentity(fromPSI)));
-    var toNode = Optional.ofNullable(findNodeForFile(toPSI)).orElseGet(() -> addElement(new JourneyNodeIdentity(toPSI)));
 
-    createEdge(fromNode, toNode);
+    var smartFromPSI = createSmartPointer(fromPSI);
+    var smartToPSI = createSmartPointer(toPSI);
+    var fromNode = addElement(new JourneyNodeIdentity(smartFromPSI));
+    var toNode = addElement(new JourneyNodeIdentity(smartToPSI));
+    createEdge(smartFromPSI, smartToPSI);
     boolean isNewNode = !isNodeExist(fromNode) || !isNodeExist(toNode);
     if (isNewNode) {
       boolean isLeftToRight = isNodeExist(fromNode);
@@ -225,30 +324,33 @@ public final class JourneyDiagramDataModel extends DiagramDataModel<JourneyNodeI
       queryUpdate(() -> {});
     }
 
-    if (!(fromNode.equals(toNode) && toNode.isFullViewState())) {
-      toNode.addElement(toPSI);
-      fromNode.addElement(fromPSI);
-    }
-
     ApplicationManager.getApplication().invokeLater(() -> {
-      JourneyEditorWrapper editor = myEditorManager.NODE_PANELS.get(fromNode.getIdentifyingElement().getFile());
+      if (!myEditorManager.NODE_PANELS.containsKey(fromNode.getIdentifyingElement().getFile())) {
+        return;
+      }
+
+      Editor editor = myEditorManager.NODE_PANELS.get(fromNode.getIdentifyingElement().getFile()).getEditor();
       var navigateNode = toNode;
       var navigatePSI = toPSI;
-      if (!(editor != null && IdeFocusManager.getInstance(editor.editor.getProject()).getFocusedDescendantFor(editor.getEditorComponent()) != null &&
-           fromPSI.getTextRange().contains(editor.editor.getCaretModel().getOffset()))) {
+      if (!(editor != null && IdeFocusManager.getInstance(editor.getProject()).getFocusedDescendantFor(editor.getComponent()) != null &&
+           fromPSI.getTextRange().contains(editor.getCaretModel().getOffset()))) {
         navigateNode = fromNode;
         navigatePSI = fromPSI;
       }
-      editor = myEditorManager.NODE_PANELS.get(navigateNode.getIdentifyingElement().getFile());
-      if (editor != null && editor.editor != null) {
-        editor.editor.getCaretModel().moveToOffset(navigatePSI.getTextRange().getStartOffset());
-        editor.editor.getScrollingModel().scrollToCaret(CENTER_UP);
+      if (myEditorManager.NODE_PANELS.containsKey(navigateNode.getIdentifyingElement().getFile())) {
+        editor = myEditorManager.NODE_PANELS.get(navigateNode.getIdentifyingElement().getFile()).getEditor();
+        if (editor != null) {
+          editor.getCaretModel().moveToOffset(navigatePSI.getTextRange().getStartOffset());
+          editor.getScrollingModel().scrollToCaret(CENTER_UP);
+        }
       }
+
       if (!fromNode.equals(toNode)) {
-        navigateNode.navigate(true);
+        JourneyNode finalNavigateNode = navigateNode;
+        new Alarm().addRequest(() -> {
+          finalNavigateNode.navigate(false);
+        }, 500);
       }
-      PsiMember member = (PsiMember)PsiUtil.tryFindParentOrNull(navigatePSI, it -> it instanceof PsiMember);
-      navigateNode.highlightNode(member, getEdges());
     });
   }
 }

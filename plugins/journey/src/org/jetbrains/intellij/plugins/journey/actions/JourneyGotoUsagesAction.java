@@ -32,20 +32,27 @@ public class JourneyGotoUsagesAction extends AnAction implements JourneyEditorOv
     if (psiFile == null) return;
     PsiElement psiElementAtCaret = psiFile.findElementAt(offset);
     if (psiElementAtCaret == null) return;
-    PsiMember psiMember = PsiTreeUtil.getParentOfType(psiElementAtCaret, PsiMember.class);
-    if (psiMember == null) return;
+    PsiMember finalPsiMember = PsiTreeUtil.getParentOfType(psiElementAtCaret, PsiMember.class);
+    if (finalPsiMember == null) return;
 
     final List<PsiElement> result = new ArrayList<>();
+    PsiMember psiMember = finalPsiMember;
+    if (finalPsiMember instanceof PsiMethod psiMethod) {
+      while (psiMethod.findSuperMethods(true).length > 0) {
+        psiMethod = psiMethod.findSuperMethods()[0];
+      }
+      psiMember = psiMethod;
+    }
+
     ReferencesSearch.search(psiMember).forEach(reference -> {
       PsiElement element = reference.getElement();
       var isImport = ReadAction.compute(() -> {
         PsiImportList importBlock = PsiTreeUtil.getParentOfType(element, PsiImportList.class);
         return importBlock != null;
       });
-      if (isImport) {
-        return;
+      if (!isImport && element instanceof PsiReferenceExpression) {
+        result.add(element);
       }
-      result.add(element);
     });
 
     JourneyGoToActionUtil.navigateWithPopup(
@@ -54,7 +61,7 @@ public class JourneyGotoUsagesAction extends AnAction implements JourneyEditorOv
       result,
       JourneyGoToActionUtil::getPresentationOfClosestMember,
       (e2) -> {
-        diagramDataModel.addEdgeAsync(e2, psiMember);
+        diagramDataModel.addEdgeAsync(e2, finalPsiMember);
       });
   }
 }

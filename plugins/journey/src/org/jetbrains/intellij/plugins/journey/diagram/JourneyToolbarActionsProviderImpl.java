@@ -18,7 +18,7 @@ public class JourneyToolbarActionsProviderImpl implements DiagramToolbarActionsP
   @Override
   public void addToolbarActionsTo(@NotNull DefaultActionGroup group, @NotNull DiagramBuilder builder) {
     DefaultActionGroup defaultActionGroup = UmlActions.getCommonToolbarActions();
-    var exceptionList = List.of("Copy Diagram to Clipboard", "Copy Selection to Clipboard", "Open Diagrams Settings", "Context Help");
+    var exceptionList = List.of("Copy Diagram to Clipboard", "Copy Selection to Clipboard", "Open Diagrams Settings", "Context Help", "Export Diagram");
     var exceptions = Arrays.stream(defaultActionGroup.getChildActionsOrStubs()).
       filter(it -> (it.getTemplateText() != null && exceptionList.contains(it.getTemplateText())));
     exceptions.forEach(defaultActionGroup::remove);

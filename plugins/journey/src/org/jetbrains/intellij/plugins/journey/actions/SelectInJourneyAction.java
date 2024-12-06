@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel;
-import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModelUtil;
+import org.jetbrains.intellij.plugins.journey.util.JourneyDiagramDataModelUtil;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramProvider;
 import org.jetbrains.intellij.plugins.journey.diagram.JourneyNode;
 

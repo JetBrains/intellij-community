@@ -1,6 +1,7 @@
 package org.jetbrains.intellij.plugins.journey.diagram.ui;
 
 import com.intellij.openapi.graph.view.Graph2DView;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.intellij.plugins.journey.editor.JourneyEditorWrapper;
 
 import javax.swing.border.LineBorder;
@@ -19,9 +20,10 @@ public class JourneyLineBorder extends LineBorder {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     Rectangle bounds = editorWrapper.getDrawableRect(view);
-    if (bounds.x + bounds.width < 0 || bounds.y + bounds.height < 0 ||
+    if (editorWrapper.isRemoved() || bounds.x + bounds.width < 0 || bounds.y + bounds.height < 0 ||
         bounds.x > view.getViewSize().width || bounds.y > view.getViewSize().height) {
-      editorWrapper.setVisibleEditor(false);
+      editorWrapper.getEditorComponent().setVisible(false);
+      view.getCanvasComponent().revalidate();
     }
     super.paintBorder(c, g, x, y, width, height);
   }

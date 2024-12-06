@@ -15,6 +15,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static org.jetbrains.intellij.plugins.journey.util.PsiUtil.createSmartPointer;
+
 public class JourneyDiagramExtras extends DiagramExtras<JourneyNodeIdentity> {
   @Override
   public DiagramAddElementAction getAddElementHandler() {
@@ -32,7 +34,7 @@ public class JourneyDiagramExtras extends DiagramExtras<JourneyNodeIdentity> {
           psiElement = psiElement1;
         }
         if (psiElement != null) {
-          return new JourneyNodeIdentity(psiElement);
+          return new JourneyNodeIdentity(createSmartPointer(psiElement));
         }
         return null;
       }

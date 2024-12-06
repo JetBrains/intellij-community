@@ -3,7 +3,6 @@ package org.jetbrains.intellij.plugins.journey.diagram;// Copyright 2000-2024 Je
 import com.intellij.diagram.*;
 import com.intellij.diagram.extras.DiagramExtras;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.graph.builder.GraphBuilder;
 import com.intellij.openapi.graph.builder.event.GraphBuilderEvent;
 import com.intellij.openapi.graph.view.Graph2D;
@@ -11,7 +10,6 @@ import com.intellij.openapi.graph.view.NodeCellRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.uml.presentation.DiagramPresentationModelImpl;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.intellij.lang.annotations.Pattern;
@@ -21,15 +19,15 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.intellij.plugins.journey.diagram.persistence.JourneyUmlFileSnapshotLoader;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
-
-import static org.jetbrains.intellij.plugins.journey.editor.JourneyEditorManager.BASE_FONT_SIZE;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNodeIdentity> {
   public static final String ID = "JOURNEY";
+  private static final float MIN_ZOOM = 0.35f;
+  private static final float MAX_ZOOM = 2.0f;
   private static final Logger LOG = Logger.getInstance(JourneyDiagramProvider.class);
 
   /**
@@ -134,12 +132,24 @@ public final class JourneyDiagramProvider extends BaseDiagramProvider<JourneyNod
       public void actionPerformed(@NotNull GraphBuilder<?, ?> builder, @NotNull GraphBuilderEvent event) {
         super.actionPerformed(builder, event);
         if (event == GraphBuilderEvent.ZOOM_CHANGED) {
+          if (builder.getView().getZoom() < MIN_ZOOM || builder.getView().getZoom() > MAX_ZOOM) {
+            builder.getView().setZoom(Math.min(Math.max(builder.getView().getZoom(), MIN_ZOOM), MAX_ZOOM));
+            return;
+          }
           if (builder.getGraphDataModel() instanceof DiagramDataModelWrapper ddmw
               && ddmw.getModel() instanceof JourneyDiagramDataModel journeyDiagramDataModel
           ) {
+            // TODO maybe replace to builder.getView().updateView();
             journeyDiagramDataModel.myEditorManager.revalidateEditors((float)builder.getZoom());
           }
         }
+      }
+
+      @Override
+      public void customizeSettings(@NotNull GraphBuilder<DiagramNode<?>, DiagramEdge<?>> builder) {
+        super.customizeSettings(builder);
+        final var inputMap = builder.getView().getCanvasComponent().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        inputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0, false));
       }
     };
   }

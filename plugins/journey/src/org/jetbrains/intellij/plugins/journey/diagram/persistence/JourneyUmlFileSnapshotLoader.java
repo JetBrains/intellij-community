@@ -53,7 +53,7 @@ public class JourneyUmlFileSnapshotLoader {
       JourneyNode from = cache2.get(edge.getSrc());
       JourneyNode to = cache2.get(edge.getTrg());
       if (from != null && to != null) {
-        dataModel.createEdge(from, to);
+        dataModel.addEdge(from, to, edge.getRelationshipName());
       }
     }
   }

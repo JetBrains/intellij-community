@@ -7,6 +7,7 @@ import com.intellij.openapi.graph.builder.GraphBuilder;
 import com.intellij.openapi.graph.services.GraphLayoutService;
 import com.intellij.openapi.graph.services.GraphUndoService;
 import com.intellij.openapi.graph.util.Futures;
+import com.intellij.openapi.graph.view.EdgeRealizer;
 import com.intellij.openapi.graph.view.Graph2D;
 import com.intellij.openapi.graph.view.NodeRealizer;
 
@@ -43,6 +44,13 @@ public final class JourneyDiagramLayout {
     Optional<Node> node = Arrays.stream(graph2D.getNodeArray()).filter(
       (n) -> Objects.equals(builder.getNodeObject(n), journeyNode)).findFirst();
     return node.map(graph2D::getRealizer);
+  }
+
+  public static Optional<EdgeRealizer> getRealizer(DiagramBuilder builder, JourneyEdge journeyEdge) {
+    Graph2D graph2D = builder.getGraphBuilder().getGraph();
+    Optional<Edge> edge = Arrays.stream(graph2D.getEdgeArray()).filter(
+      (e) -> Objects.equals(builder.getEdgeObject(e), journeyEdge)).findFirst();
+    return edge.map(graph2D::getRealizer);
   }
 
   public static void addEdgeElementLayout(DiagramBuilder builder, JourneyNode fromJourneyNode, JourneyNode toJourneyNode, boolean isLeftToRight) {

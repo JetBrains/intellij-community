@@ -1,4 +1,4 @@
-package org.jetbrains.intellij.plugins.journey.diagram;
+package org.jetbrains.intellij.plugins.journey.util;
 
 import com.intellij.diagram.DiagramFileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -6,6 +6,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramDataModel;
+import org.jetbrains.intellij.plugins.journey.diagram.JourneyNode;
 
 import java.util.List;
 import java.util.Objects;

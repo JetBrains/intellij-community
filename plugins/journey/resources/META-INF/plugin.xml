@@ -63,22 +63,29 @@
       <keyboard-shortcut first-keystroke="meta B" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta B" keymap="Mac OS X 10.5+"/>
     </action>
-
-    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyCreateEdgesFromSelectionAction"
-            class="org.jetbrains.intellij.plugins.journey.actions.JourneyCreateEdgesFromSelectionAction"
-    >
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneySaveAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneySaveAction">
       <add-to-group group-id="Diagram.DefaultGraphToolbar" anchor="last"/>
     </action>
-    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyReverseSelectedEdgesAction"
-            class="org.jetbrains.intellij.plugins.journey.actions.JourneyReverseSelectedEdgesAction"
-    >
+    <action id="org.jetbrains.intellij.plugins.journey.actions.JourneyAddElementAction"
+            class="org.jetbrains.intellij.plugins.journey.actions.JourneyAddElementAction">
       <add-to-group group-id="Diagram.DefaultGraphToolbar" anchor="last"/>
     </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <uiDataRule implementation="org.jetbrains.intellij.plugins.journey.JourneyUiDataRule"/>
+
+    <applicationService serviceInterface="com.intellij.diagram.DiagramBuilderFactory"
+                        serviceImplementation="org.jetbrains.intellij.plugins.journey.diagram.JourneyGraphBuilderFactory"
+                        overrides="true"/>
+
     <applicationService serviceInterface="com.intellij.diagram.actions.DiagramToolbarActionsProvider"
                         serviceImplementation="org.jetbrains.intellij.plugins.journey.diagram.JourneyToolbarActionsProviderImpl"
+                        overrides="true"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.graph.services.GraphUndoService"
+                        serviceImplementation="org.jetbrains.intellij.plugins.journey.diagram.JourneyGraphUndoService"
                         overrides="true"/>
 
     <diagram.Provider implementation="org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramProvider"/>

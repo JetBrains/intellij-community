@@ -3,6 +3,7 @@ package org.jetbrains.intellij.plugins.journey.diagram;
 import com.intellij.diagnostic.Checks;
 import com.intellij.diagram.DiagramDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Objects;
 
+import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
 import static org.jetbrains.intellij.plugins.journey.diagram.JourneyShowDiagram.JourneyShowDiagramFromNewLocalFile.showDiagramFromFile;
+import static org.jetbrains.intellij.plugins.journey.util.PsiUtil.createSmartPointer;
 
 public class JourneyShowDiagram extends ShowDiagram {
 
@@ -35,7 +38,7 @@ public class JourneyShowDiagram extends ShowDiagram {
     }
     else {
       DiagramSeed seed =
-        createSeed(file.getProject(), JourneyDiagramProvider.getInstance(), new JourneyNodeIdentity(file), Collections.emptyList());
+        createSeed(file.getProject(), JourneyDiagramProvider.getInstance(), new JourneyNodeIdentity(createSmartPointer(file)), Collections.emptyList());
       showUnderProgress(seed, new RelativePoint(new Point()));
     }
   }
@@ -82,13 +85,16 @@ public class JourneyShowDiagram extends ShowDiagram {
       """;
 
     public static void showDiagramFromFile(Project project, PsiElement originalElement) {
-      File file = createLocalFile(project, System.currentTimeMillis() + ".uml", new JourneyNodeIdentity(originalElement));
+      File file = createLocalFile(project, System.currentTimeMillis() + ".uml", new JourneyNodeIdentity(createSmartPointer(originalElement)));
       VirtualFile virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file.toPath());
 
       if (virtualFile != null) {
         // For some reason file is not being opened right after the creation.
         new Alarm().addRequest(() -> {
-          FileEditorManager.getInstance(project).openFileEditor(new OpenFileDescriptor(project, virtualFile), true);
+          Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), true);
+          if (editor == null) {
+            LOG.warn("Failed to open editor for new Journey");
+          }
         }, 500);
       }
       else {
@@ -98,7 +104,7 @@ public class JourneyShowDiagram extends ShowDiagram {
 
     public static File createLocalFile(Project project, String name, JourneyNodeIdentity originalElement) {
       try {
-        File journeyDir = new File(project.getBasePath() + "/.journey");
+        File journeyDir = new File(project.getBasePath() + File.separator + DIRECTORY_STORE_FOLDER + File.separator + ".journey");
         if (!journeyDir.exists()) {
           journeyDir.mkdirs();
         }
