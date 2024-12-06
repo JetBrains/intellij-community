@@ -5,6 +5,7 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserInfo
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
+import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
@@ -481,9 +482,10 @@ sealed interface EelOpenedFile {
     /**
      * Reads data from the current position of the file (see [tell])
      *
-     * If the remote file is read completely, then this function returns [ReadResult] with [ReadResult.EOF].
-     * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes].
-     * Note, that [ReadResult.Bytes] can be `0` if [buf] cannot accept new data.
+     * If the remote file is read completely,
+     * then this function returns [ReadResult] with [ReadResult.EOF].
+     * Otherwise, if there are any data left to read, then it returns [ReadResult.NOT_EOF].
+     * See [ReadResult] for usage receipts.
      *
      * This operation modifies the file's cursor, i.e. [tell] may show different results before and after this function is invoked.
      *
@@ -501,13 +503,6 @@ sealed interface EelOpenedFile {
      */
     @CheckReturnValue
     suspend fun read(buf: ByteBuffer, offset: Long): EelResult<ReadResult, ReadError>
-
-    sealed interface ReadResult {
-      interface EOF : ReadResult
-      interface Bytes : ReadResult {
-        val bytesRead: Int
-      }
-    }
 
     sealed interface ReadError : EelFsError {
       interface UnknownFile : ReadError, EelFsError.UnknownFile
