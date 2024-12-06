@@ -96,7 +96,7 @@ public class StackFrameItem {
       List<StackFrameItem> res = new ArrayList<>(frameProxies.size());
       for (StackFrameProxyImpl frame : frameProxies) {
         try {
-          List<XNamedValue> vars = null;
+          final List<XNamedValue> vars;
           Location location = frame.location();
           if (withVars) {
             if (!DebuggerSettings.getInstance().CAPTURE_VARIABLES) {
@@ -152,6 +152,9 @@ public class StackFrameItem {
                 }
               }
             }
+          }
+          else {
+            vars = null;
           }
 
           StackFrameItem frameItem = new StackFrameItem(location, vars);
