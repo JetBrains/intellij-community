@@ -71,6 +71,7 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
         fileActions = createFileActions()
         newFileActionsPage()
       })
+      repaintButtons()
       displayDataset()
     }
 
@@ -89,6 +90,7 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
         actions.add(fileActions)
         startPage()
       })
+      repaintButtons()
       displayFileActions()
     }
 
@@ -137,8 +139,7 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
         fileActions = FileActions(fileActions.path, fileActions.checksum, resultActions.count { it is CallFeature }, resultActions)
         newFileActionsPage()
       })
-      leftButtonPanel.invalidate()
-      leftButtonPanel.repaint()
+      repaintButtons()
       displaySession()
     }
 
@@ -172,6 +173,13 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
     private fun clearButtons() {
       leftButtonPanel.removeAll()
       rightButtonPanel.removeAll()
+    }
+
+    private fun repaintButtons() {
+      leftButtonPanel.revalidate()
+      leftButtonPanel.repaint()
+      rightButtonPanel.revalidate()
+      rightButtonPanel.repaint()
     }
 
     private fun displayDataset() {
