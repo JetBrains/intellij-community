@@ -4,7 +4,6 @@ package training.featuresSuggester.suggesters.promo
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.hint.HintUtil.installInformationProperties
 import com.intellij.icons.AllIcons
-import com.intellij.lang.Language
 import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,7 +14,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -25,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
@@ -34,17 +31,13 @@ import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBPoint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import training.featuresSuggester.FeatureSuggesterBundle
 import java.awt.*
 import javax.swing.*
@@ -67,45 +60,57 @@ private val evaluationPanelSize get() = JBDimension(45, 35)
 
 private val shortcutOffset get() = 40
 
+internal fun evaluateBox(project: Project): JComponent? {
+  val evaluateUi = UiComponentsSearchUtil.findUiComponent(project) { ui: XDebuggerEmbeddedComboBox<*> ->
+    ui.isShowing && ui.name == "Debugger.EvaluateExpression.combobox"
+  }
+  return evaluateUi
+}
+
+internal fun showAltClickGotItPromo(project: Project, evaluateUi: JComponent) {
+  val builder = GotItComponentBuilder { FeatureSuggesterBundle.message("alt.click.promo.text", "$altModifier + Click") }
+
+  builder.withHeader(FeatureSuggesterBundle.message("alt.click.promo.header", "$altModifier + Click"))
+
+  lateinit var job: Job
+  builder.onButtonClick {
+    job.cancel()
+  }
+
+  val altClickPromoContent = AltClickPromoContent(project)
+  val content = altClickPromoContent.createContentComponent()
+  builder.withCustomComponentPromo(content)
+
+  val showTooltipAt = Point(evaluateUi.width - JBUIScale.scale(promoWidth + 100), 0)
+
+  val balloon = builder.build(project.service<AltClickServiceForAnimation>()) {
+    setShowCallout(true)
+  }
+
+  balloon.show(RelativePoint(evaluateUi, showTooltipAt), Balloon.Position.above)
+  job = altClickPromoContent.initAndStartAnimation()
+}
+
 private class ShowDemoAltClickPromoterAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val evaluateUi = UiComponentsSearchUtil.findUiComponent(project) { ui: XDebuggerEmbeddedComboBox<*> ->
-      ui.isShowing && ui.name == "Debugger.EvaluateExpression.combobox"
-    }
+    val evaluateUi = evaluateBox(project)
 
     if (evaluateUi != null) {
-      val builder = GotItComponentBuilder { FeatureSuggesterBundle.message("alt.click.promo.text", "$altModifier + Click") }
-
-      builder.withHeader(FeatureSuggesterBundle.message("alt.click.promo.header", "$altModifier + Click"))
-
-      val disposable: Disposable = Disposer.newDisposable()
-      builder.onButtonClick {
-        Disposer.dispose(disposable)
-      }
-
-      val altClickPromoContent = AltClickPromoContent(project, disposable)
-      val content = altClickPromoContent.createContentComponent()
-      builder.withCustomComponentPromo(content)
-
-      val showTooltipAt = Point(evaluateUi.width - JBUIScale.scale(promoWidth + 100), 0)
-
-      val balloon = builder.build(project.service<AltClickServiceForAnimation>()) {
-        setShowCallout(true)
-      }
-
-      balloon.show(RelativePoint(evaluateUi, showTooltipAt), Balloon.Position.above)
-      altClickPromoContent.initAndStartAnimation()
+      showAltClickGotItPromo(project, evaluateUi)
     }
     else {
-      SampleDialogWrapper(project).showAndGet()
+      val dialog = SampleDialogWrapper(project)
+      dialog.showAndGet()
+      dialog.job.cancel()
     }
   }
 }
 
 @Suppress("HardCodedStringLiteral")
-private class SampleDialogWrapper(val project: Project) : DialogWrapper(true) {
-  val content = AltClickPromoContent(project, disposable)
+private class SampleDialogWrapper(project: Project) : DialogWrapper(true) {
+  val content = AltClickPromoContent(project)
+  lateinit var job: Job
   init {
     @Suppress("DialogTitleCapitalization")
     title = "Alt+Click demo promoter"
@@ -113,7 +118,7 @@ private class SampleDialogWrapper(val project: Project) : DialogWrapper(true) {
   }
 
   override fun beforeShowCallback() {
-    content.initAndStartAnimation()
+    job = content.initAndStartAnimation()
   }
 
   override fun createCenterPanel(): JComponent? {
@@ -121,12 +126,24 @@ private class SampleDialogWrapper(val project: Project) : DialogWrapper(true) {
   }
 }
 
-private class AltClickPromoContent(val project: Project, val disposable: Disposable) {
+private class AltClickPromoContent(val project: Project) {
   private lateinit var editor: EditorImpl
   private lateinit var panelWithAnimation: PanelWithAnimation
   private lateinit var dialogPane: JBLayeredPane
 
-  fun initAndStartAnimation() {
+  fun initAndStartAnimation(): Job {
+    val job = project.service<AltClickServiceForAnimation>().coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
+      try {
+        animationScript()
+      }
+      catch (_: CancellationException) {
+        // just done
+      }
+    }
+    return job
+  }
+
+  private suspend fun animationScript() {
     val fragment1 = "foo()"
     val (indexOfFoo, target1) = targetPointByOffset(fragment1, 2)
     val fragment2 = "foo().calc()"
@@ -135,52 +152,49 @@ private class AltClickPromoContent(val project: Project, val disposable: Disposa
 
     var length = 500
 
-    val job = project.service<AltClickServiceForAnimation>().coroutineScope.launch(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
-      while (true) {
-        panelWithAnimation.cursorIcon = AllIcons.Windows.Mouse.CursorText
-        animateMouseCursorMove(length, startCursorPosition, target1)
+    while (true) {
+      panelWithAnimation.cursorIcon = AllIcons.Windows.Mouse.CursorText
+      animateMouseCursorMove(length, startCursorPosition, target1)
 
-        var highlighter = addHighlightToFragment(indexOfFoo, fragment1)
-        panelWithAnimation.cursorIcon = AllIcons.Windows.Mouse.CursorPointingHand
-        dialogPane.repaint()
-        delay(200)
+      var highlighter = addHighlightToFragment(indexOfFoo, fragment1)
+      panelWithAnimation.cursorIcon = AllIcons.Windows.Mouse.CursorPointingHand
+      dialogPane.repaint()
+      delay(200)
 
-        addShortcut(altShortcutText, altShortcutWidth)
+      addShortcut(altShortcutText, altShortcutWidth)
 
-        dialogPane.revalidate()
-        dialogPane.repaint()
+      dialogPane.revalidate()
+      dialogPane.repaint()
 
-        animateMouseCursorMove(length, target1, target2)
+      animateMouseCursorMove(length, target1, target2)
 
-        highlighter.dispose()
-        highlighter = addHighlightToFragment(indexOfFoo, fragment2)
+      highlighter.dispose()
+      highlighter = addHighlightToFragment(indexOfFoo, fragment2)
 
-        dialogPane.repaint()
-        animateMouseCursorMove(length, target2, target3)
+      dialogPane.repaint()
+      animateMouseCursorMove(length, target2, target3)
 
-        panelWithAnimation.removeAll()
-        addShortcut(altPlusClickShortcutText, altPlusClickShortcutWidth)
+      panelWithAnimation.removeAll()
+      addShortcut(altPlusClickShortcutText, altPlusClickShortcutWidth)
 
-        dialogPane.revalidate()
-        dialogPane.repaint()
+      dialogPane.revalidate()
+      dialogPane.repaint()
 
-        animateMouseClick(target3)
-        highlighter.dispose()
+      animateMouseClick(target3)
+      highlighter.dispose()
 
-        panelWithAnimation.removeAll()
+      panelWithAnimation.removeAll()
 
-        addEvaluationResult(target3)
-        addShortcut(altPlusClickShortcutText, altPlusClickShortcutWidth)
+      addEvaluationResult(target3)
+      addShortcut(altPlusClickShortcutText, altPlusClickShortcutWidth)
 
-        dialogPane.revalidate()
-        dialogPane.repaint()
+      dialogPane.revalidate()
+      dialogPane.repaint()
 
-        delay(1500)
+      delay(1500)
 
-        panelWithAnimation.removeAll()
-      }
+      panelWithAnimation.removeAll()
     }
-    job.cancelOnDispose(disposable)
   }
 
   private fun addEvaluationResult(target3: Point) {
@@ -304,11 +318,6 @@ private class AltClickPromoContent(val project: Project, val disposable: Disposa
 
     dialogPane.add(behind, DEFAULT_LAYER, 0)
     dialogPane.add(animationLayer, PALETTE_LAYER, 1)
-
-    val fileType = Language.findLanguageByID("kotlin")?.associatedFileType
-    if (fileType != null) {
-      editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType)
-    }
 
     for (part in listOf(editor.contentComponent, editor.gutterComponentEx)) {
       for (listener in part.mouseListeners.toList()) {
