@@ -243,7 +243,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                  AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
 
-    installPopupHandler(customizable, null, null);
+    installPopupHandler(customizable, null, CustomizationUtil.DEFAULT_CUSTOMIZATION_ROOT_DEPTH, null);
     UiInspectorUtil.registerProvider(this, () -> UiInspectorActionUtil.collectActionGroupInfo(
       "Toolbar", myActionGroup, myPlace, myPresentationFactory));
   }
@@ -254,12 +254,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected void installPopupHandler(boolean customizable,
                                      @Nullable ActionGroup popupActionGroup,
+                                     int customizationRootDepth,
                                      @Nullable String popupActionId) {
     PopupHandler popupHandler;
     if (customizable) {
       popupHandler = popupActionGroup == null
                      ? CustomizationUtil.installToolbarCustomizationHandler(this)
-                     : CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, getComponent(), myPlace);
+                     : CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, customizationRootDepth, getComponent(), myPlace);
     }
     else {
       popupHandler = popupActionGroup != null

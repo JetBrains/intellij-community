@@ -3,10 +3,8 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -30,7 +28,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
@@ -69,6 +66,9 @@ import javax.swing.JPanel
 import kotlin.math.min
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
+
+// Only the 2nd level action groups (left, center, right) are customizable
+private const val CUSTOMIZATION_ROOT_DEPTH = 2
 
 private sealed interface MainToolbarFlavor {
   fun addWidget() {
@@ -148,7 +148,7 @@ class MainToolbar(
     val actionGroups = computeMainActionGroups(schema)
     val customizationGroup = schema.getCorrectedActionAsync(MAIN_TOOLBAR_ID)
     val customizationGroupPopupHandler = customizationGroup?.let {
-      CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
+      CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, CUSTOMIZATION_ROOT_DEPTH, this, ActionPlaces.MAIN_TOOLBAR)
     }
 
     val widgets = withContext(Dispatchers.EDT) {
@@ -351,7 +351,7 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   init {
     updateFont()
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
-    installPopupHandler(true, customizationGroup, MAIN_TOOLBAR_ID)
+    installPopupHandler(true, customizationGroup, CUSTOMIZATION_ROOT_DEPTH, MAIN_TOOLBAR_ID)
   }
 
   override fun createPresentationFactory(): PresentationFactory {
