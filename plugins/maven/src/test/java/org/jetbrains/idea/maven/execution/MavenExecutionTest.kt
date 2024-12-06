@@ -38,9 +38,8 @@ class MavenExecutionTest : MavenExecutionTestCase() {
   
   @Test
   fun testExternalExecutor() = runBlocking {
-    if (!hasMavenInstallation()) return@runBlocking
 
-    UsefulTestCase.edt<IOException> {
+  UsefulTestCase.edt<IOException> {
       WriteAction.runAndWait<IOException> { VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}") }
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
@@ -62,8 +61,7 @@ class MavenExecutionTest : MavenExecutionTestCase() {
 
   @Test
   fun testUpdatingExcludedFoldersAfterExecution() = runBlocking {
-    if (!hasMavenInstallation()) return@runBlocking
-
+    needFixForMaven4()
     writeAction {
       createStdProjectFolders()
     }

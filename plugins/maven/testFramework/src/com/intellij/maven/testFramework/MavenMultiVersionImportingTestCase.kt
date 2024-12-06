@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
+import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
@@ -346,6 +348,21 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
         return MavenDistributionsCache.resolveEmbeddedMavenHome().version!!
       }
       return version
+    }
+  }
+
+  protected suspend fun withRealJDK(jdkName: String, block: suspend () -> Unit) {
+    val fixture = MavenProjectJDKTestFixture(project, jdkName)
+    try {
+      writeAction {
+        fixture.setUp()
+      }
+      block()
+    }
+    finally {
+      writeAction {
+        fixture.tearDown()
+      }
     }
   }
 }
