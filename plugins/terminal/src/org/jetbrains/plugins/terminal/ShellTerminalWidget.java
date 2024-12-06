@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 import org.jetbrains.plugins.terminal.action.TerminalSplitAction;
-import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefreshService;
 import org.jetbrains.plugins.terminal.classic.ClassicTerminalVfsRefresher;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.TerminalUtilKt;
@@ -36,6 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static org.jetbrains.plugins.terminal.util.TerminalCoroutineKt.terminalProjectScope;
 
 public class ShellTerminalWidget extends JBTerminalWidget {
 
@@ -64,7 +65,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     super(project, settingsProvider, parent);
     myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
 
-    ClassicTerminalVfsRefresher refresher = project.getService(ClassicTerminalVfsRefreshService.class).create(this);
+    ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this, terminalProjectScope(project));
     getTerminalPanel().addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
       handleAnyKeyPressed();
