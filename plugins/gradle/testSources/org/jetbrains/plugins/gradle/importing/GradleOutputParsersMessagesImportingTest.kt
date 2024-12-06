@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
@@ -436,6 +439,26 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
         .joinToString(separator = "\n")
 
       assertEquals( scriptOutputText + scriptOutputTextWOEol, text)
+    }
+  }
+
+  @Test
+  @TargetVersions("8.8+")
+  fun `test build output project using Daemon Jvm criteria`() {
+    val jdks = ProjectJdkTable.getInstance().allJdks
+    check(jdks.size == 1)
+
+    val jdkPath = jdks.first().homePath!!
+    val jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkPath)
+    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkPath")
+    createProjectSubFile("gradle/gradle-daemon-jvm.properties", "toolchainVersion=${jdkVersionInfo?.version?.feature}")
+    importProject()
+    assertSyncViewSelectedNode("finished", false) {
+      val text = it!!.lineSequence()
+        .takeWhile { s -> s == "Starting Gradle Daemon..." || s.startsWith("Gradle Daemon started in") }
+        .joinToString(separator = "\n")
+
+      assertEquals(2, text.lines().size)
     }
   }
 
