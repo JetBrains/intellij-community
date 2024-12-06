@@ -284,12 +284,12 @@ public final class DfaPsiUtil {
     if (sam != null) {
       PsiParameter parameter = sam.getParameterList().getParameter(index);
       if (parameter != null) {
-        Nullability nullability = getElementNullability(null, parameter);
-        if (nullability != Nullability.UNKNOWN) {
-          return nullability;
-        }
         PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
-        return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
+        NullabilityAnnotationInfo info = getTypeNullabilityInfo(GenericsUtil.eliminateWildcards(parameterType, false, true));
+        if (info != null) {
+          return info.getNullability();
+        }
+        return getElementNullability(null, parameter);
       }
     }
     return Nullability.UNKNOWN;

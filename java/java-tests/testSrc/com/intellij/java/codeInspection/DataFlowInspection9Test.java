@@ -46,4 +46,10 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testJSpecifyUnboxingInLambda() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }
