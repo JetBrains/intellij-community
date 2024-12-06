@@ -715,10 +715,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public @NotNull Pair<@Nullable StubTree, @Nullable FileElement> getStubTreeOrFileElement() {
     assertReadAccessAllowed();
 
-    StubTree derefd = derefStub();
+    StubTree deref = derefStub();
     FileElement treeElement = getTreeElement();
-    if (derefd != null || treeElement != null) {
-      return Pair.create(derefd, treeElement);
+    if (deref != null || treeElement != null) {
+      return Pair.create(deref, treeElement);
     }
 
     if (Boolean.TRUE.equals(getUserData(BUILDING_STUB)) || myLoadingAst || getElementTypeForStubBuilder() == null) {
