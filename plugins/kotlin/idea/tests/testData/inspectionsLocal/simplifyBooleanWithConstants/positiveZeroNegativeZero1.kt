@@ -1,3 +1,4 @@
+// LANGUAGE_VERSION: 1.6
 // PROBLEM: none
 
 fun foo() {
