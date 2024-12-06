@@ -30,7 +30,7 @@ private class StatisticsRegionUrlMapperServiceImpl(val scope: CoroutineScope) : 
     scope.launch {
       while (isActive) {
         withContext(Dispatchers.IO) {
-          url = RegionUrlMapper.mapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE)
+          url = RegionUrlMapper.tryMapUrlBlocking(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE)
         }
         delay(10.minutes)
       }
@@ -42,7 +42,7 @@ private class StatisticsRegionUrlMapperServiceImpl(val scope: CoroutineScope) : 
   fun updateUrl() {
     scope.launch {
       withContext(Dispatchers.IO) {
-        url = RegionUrlMapper.mapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE)
+        url = RegionUrlMapper.tryMapUrlBlocking(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE)
       }
     }
   }

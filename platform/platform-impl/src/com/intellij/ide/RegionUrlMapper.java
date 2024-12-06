@@ -34,7 +34,7 @@ public final class RegionUrlMapper {
     // augment the table with other regions if needed
     Region.CHINA, "https://www.jetbrains.com.cn/config/JetBrainsResourceMapping.json"
   );
-  
+
   private static final Map<Region, String> OVERRIDE_CONFIG_URL_TABLE = new HashMap<>();  // for testing
   static {
     for (Region reg : Region.values()) {
@@ -57,31 +57,50 @@ public final class RegionUrlMapper {
   }
 
   /**
-   * Maps the specified resource URL to a corresponding region-specific URL for the region that is configured for the IDE
-   * see {@link #mapUrl(String, Region)}
-   *
-   * IMPORTANT: the method is potentially long-executing; involves network calls
-   *
-   * @param url the original resource URL
-   * @return the possibly adjusted URL that is specific to the currently specified IDE region.
+   * @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context.
    */
+  @Deprecated
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String mapUrl(@NotNull String url) {
-    return mapUrl(url, RegionSettings.getRegion());
+    return tryMapUrlBlocking(url);
   }
 
   /**
-   * Maps the specified resource URL to a corresponding region-specific URL
-   * IMPORTANT: the method is potentially long-executing; involves network calls
-   *
-   * @param url the original resource URL
-   * @param region the region for which the original url might be adjusted
-   * @return the adjusted url, in case the mapping is configured or the original url, if no adjustments are required
+   * @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context.
    */
+  @Deprecated
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   public static @NotNull String mapUrl(@NotNull String url, @NotNull Region region) {
+    return tryMapUrlBlocking(url, region);
+  }
+
+  /**
+   * @see #tryMapUrlBlocking(String, Region)
+   * @see #tryMapUrl(String) when calling from a suspending context, consider using the async version
+   * @see RegionSettings
+   */
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  public static @NotNull String tryMapUrlBlocking(@NotNull String url) {
+    return tryMapUrlBlocking(url, RegionSettings.getRegion());
+  }
+
+  /**
+   * Maps the specified resource URL to a corresponding region-specific URL.
+   * <p>
+   * <b>IMPORTANT</b>: the method is potentially long-executing; involves network calls.
+   * Also note that in case the network call fails, this method returns the original URL silently (hence, "try" in its name).
+   *
+   * @param url the original resource URL
+   * @param region the region for which the original url might be adjusted
+   * @return the adjusted url in case the mapping is configured, or the original url if no adjustments are required
+   * @see #tryMapUrl(String, Region) when calling from a suspending context, consider using the async version
+   */
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  public static @NotNull String tryMapUrlBlocking(@NotNull String url, @NotNull Region region) {
     RegionMapping mappings = ourCache.get(region);
     return mappings.apply(url);
   }
