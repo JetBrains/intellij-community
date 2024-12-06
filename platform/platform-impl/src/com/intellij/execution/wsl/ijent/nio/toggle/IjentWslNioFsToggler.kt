@@ -186,9 +186,8 @@ private suspend fun tryInitializeEelOnWsl(project: Project) = coroutineScope {
 
   val projectFile = project.projectFilePath
   check(projectFile != null) { "Impossible: project is not default, but it does not have project file" }
-  val path = Path.of(projectFile)
 
-  if (!WslPath.isWslUncPath(path.toString())) {
+  if (!WslPath.isWslUncPath(projectFile)) {
     return@coroutineScope
   }
 
@@ -200,6 +199,7 @@ private suspend fun tryInitializeEelOnWsl(project: Project) = coroutineScope {
     serviceAsync<WslDistributionManager>().installedDistributions
   }
 
+  val path = Path.of(projectFile)
   for (distro in allWslDistributions.await()) {
     val matches =
       try {
