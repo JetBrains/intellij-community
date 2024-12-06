@@ -1,18 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
-import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -21,25 +26,29 @@ import org.jetbrains.kotlin.resolve.CompileTimeConstantUtils
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode.PARTIAL
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isFlexible
 
-@Suppress("DEPRECATION")
-class SimplifyBooleanWithConstantsInspection : IntentionBasedInspection<KtBinaryExpression>(SimplifyBooleanWithConstantsIntention::class) {
-    override fun inspectionProblemText(element: KtBinaryExpression): String {
+internal class SimplifyBooleanWithConstantsInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
+    override fun getProblemDescription(element: KtBinaryExpression, context: Unit): @InspectionMessage String {
         return KotlinBundle.message("inspection.simplify.boolean.with.constants.display.name")
     }
-}
+    
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): KtVisitorVoid = binaryExpressionVisitor { expression -> 
+        visitTargetElement(expression, holder, isOnTheFly) 
+    }
 
-class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
-    KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("simplify.boolean.expression")
-) {
-    override fun isApplicableTo(element: KtBinaryExpression): Boolean = areThereExpressionsToBeSimplified(element.topBinary())
+    context(KaSession)
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
+        return areThereExpressionsToBeSimplified(element.topBinary()).asUnit
+    }
 
     private fun KtBinaryExpression.topBinary(): KtBinaryExpression =
-        this.parentsWithSelf.takeWhile { it is KtBinaryExpression }.lastOrNull() as? KtBinaryExpression ?: this
+      this.parentsWithSelf.takeWhile { it is KtBinaryExpression }.lastOrNull() as? KtBinaryExpression ?: this
 
     private fun areThereExpressionsToBeSimplified(element: KtExpression?): Boolean {
         if (element == null) return false
@@ -48,7 +57,7 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
 
             is KtBinaryExpression -> {
                 val op = element.operationToken
-                if (op == ANDAND || op == OROR || op == EQEQ || op == EXCLEQ) {
+                if (op == KtTokens.ANDAND || op == KtTokens.OROR || op == KtTokens.EQEQ || op == KtTokens.EXCLEQ) {
                     if (areThereExpressionsToBeSimplified(element.left) && element.right.hasBooleanType()) return true
                     if (areThereExpressionsToBeSimplified(element.right) && element.left.hasBooleanType()) return true
                 }
@@ -62,14 +71,14 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
 
     private fun isPositiveNegativeZeroComparison(element: KtBinaryExpression): Boolean {
         val op = element.operationToken
-        if (op != EQEQ && op != EQEQEQ) {
+        if (op != KtTokens.EQEQ && op != KtTokens.EQEQEQ) {
             return false
         }
 
         val left = element.left?.deparenthesize() as? KtExpression ?: return false
         val right = element.right?.deparenthesize() as? KtExpression ?: return false
 
-        val context = element.safeAnalyzeNonSourceRootCode(PARTIAL)
+        val context = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
 
         fun KtExpression.getConstantValue() =
             ConstantExpressionEvaluator.getConstant(this, context)?.toConstantValue(TypeUtils.NO_EXPECTED_TYPE)?.value
@@ -86,14 +95,21 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
         return hasPositiveZero && hasNegativeZero
     }
 
-    override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
-        val topBinary = element.topBinary()
-        val simplified = toSimplifiedExpression(topBinary)
-        val result = topBinary.replaced(KtPsiUtil.safeDeparenthesize(simplified, true))
-        removeRedundantAssertion(result)
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Unit,
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("simplify.boolean.expression")
+
+        override fun applyFix(project: Project, element: KtBinaryExpression, updater: ModPsiUpdater) {
+            val topBinary = element.topBinary()
+            val simplified = toSimplifiedExpression(topBinary)
+            val result = topBinary.replaced(KtPsiUtil.safeDeparenthesize(simplified, true))
+            removeRedundantAssertion(result)
+        }
     }
 
-    internal fun removeRedundantAssertion(expression: KtExpression) {
+    private fun removeRedundantAssertion(expression: KtExpression) {
         val callExpression = expression.getNonStrictParentOfType<KtCallExpression>() ?: return
         val fqName = callExpression.getCallableDescriptor()?.fqNameOrNull()
         val valueArguments = callExpression.valueArguments
@@ -133,7 +149,7 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
                 val left = expression.left
                 val right = expression.right
                 val op = expression.operationToken
-                if (left != null && right != null && (op == ANDAND || op == OROR || op == EQEQ || op == EXCLEQ)) {
+                if (left != null && right != null && (op == KtTokens.ANDAND || op == KtTokens.OROR || op == KtTokens.EQEQ || op == KtTokens.EXCLEQ)) {
                     val simpleLeft = simplifyExpression(left)
                     val simpleRight = simplifyExpression(right)
                     return when {
@@ -162,16 +178,16 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
         otherOperand: KtExpression,
         operation: IElementType
     ): KtExpression {
-        val psiFactory = KtPsiFactory(otherOperand.project)
+        val psiFactory = org.jetbrains.kotlin.psi.KtPsiFactory(otherOperand.project)
         when (operation) {
-            OROR -> {
+            KtTokens.OROR -> {
                 if (constantOperand) return psiFactory.createExpression("true")
             }
-            ANDAND -> {
+            KtTokens.ANDAND -> {
                 if (!constantOperand) return psiFactory.createExpression("false")
             }
-            EQEQ, EXCLEQ -> toSimplifiedExpression(otherOperand).let {
-                return if (constantOperand == (operation == EQEQ)) it
+            KtTokens.EQEQ, KtTokens.EXCLEQ -> toSimplifiedExpression(otherOperand).let {
+                return if (constantOperand == (operation == KtTokens.EQEQ)) it
                 else psiFactory.createExpressionByPattern("!$0", it)
             }
         }
@@ -182,12 +198,12 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
     private fun simplifyExpression(expression: KtExpression) = expression.replaced(toSimplifiedExpression(expression))
 
     private fun KtExpression?.hasBooleanType(): Boolean {
-        val type = this?.getType(safeAnalyzeNonSourceRootCode(PARTIAL)) ?: return false
+        val type = this?.getType(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return false
         return KotlinBuiltIns.isBoolean(type) && !type.isFlexible()
     }
 
     private fun KtExpression.canBeReducedToBooleanConstant(constant: Boolean? = null): Boolean =
-        CompileTimeConstantUtils.canBeReducedToBooleanConstant(this, safeAnalyzeNonSourceRootCode(PARTIAL), constant)
+        CompileTimeConstantUtils.canBeReducedToBooleanConstant(this, safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL), constant)
 
     private fun KtExpression.canBeReducedToTrue() = canBeReducedToBooleanConstant(true)
 

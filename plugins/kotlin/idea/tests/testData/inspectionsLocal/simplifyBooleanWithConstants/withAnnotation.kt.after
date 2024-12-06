@@ -6,7 +6,7 @@ var b = true
 annotation class Ann
 
 fun foo() {
-    if (<caret>@Ann b) {
+    if (@Ann <caret>b) {
 
     }
 }
