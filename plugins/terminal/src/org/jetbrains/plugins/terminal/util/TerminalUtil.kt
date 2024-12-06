@@ -28,10 +28,9 @@ internal fun TtyConnector.waitFor(timeout: Duration, callback: () -> Unit) {
     return
   }
   val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(this)
-  val scope = terminalApplicationScope("WaitFor " + getDebugName())
   if (processTtyConnector != null) {
     val onExit = processTtyConnector.process.onExit()
-    scope.launch(Dispatchers.IO) {
+    terminalApplicationScope().launch(Dispatchers.IO) {
       try {
         withTimeout(timeout) {
           onExit.await() // the future will be canceled on timeout (not affecting the process itself)
@@ -44,7 +43,7 @@ internal fun TtyConnector.waitFor(timeout: Duration, callback: () -> Unit) {
   }
   else {
     val connector = this
-    scope.launch(Dispatchers.IO) {
+    terminalApplicationScope().launch(Dispatchers.IO) {
       try {
         withTimeout(timeout) {
           connector.waitFor()

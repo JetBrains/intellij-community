@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -416,7 +417,7 @@ internal class TerminalOutputController(
     }
 
     private fun setupContentUpdating(): TerminalOutputContentUpdatesScheduler {
-      val scope = terminalProjectScope(project, "Command block content update")
+      val scope = terminalProjectScope(project).childScope("Command block content update")
       Disposer.register(disposable) {
         scope.cancel()
       }
